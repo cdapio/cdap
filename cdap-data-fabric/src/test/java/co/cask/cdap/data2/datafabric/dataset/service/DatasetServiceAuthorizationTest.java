@@ -39,7 +39,6 @@ import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -90,40 +89,27 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     final DatasetId dsId1 = NamespaceId.DEFAULT.dataset("myds1");
     DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
     SecurityRequestContext.setUserId(ALICE.getName());
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
-      }
-    }, "Alice should not be able to add a dataset instance since she does not have ADMIN privileges on the dataset");
+    assertAuthorizationFailure(() -> dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY),
+                               "Alice should not be able to add a dataset instance since she does not have ADMIN" +
+                                 " privileges on the dataset");
     // grant alice ADMIN access to the dsId and ADMIN access on the dataset type
     grantAndAssertSuccess(dsId, ALICE, ImmutableSet.of(Action.ADMIN));
     // now adding an instance should succeed
     dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
     // alice should be able to perform all operations on the dataset
     Assert.assertTrue(dsFramework.hasInstance(dsId));
-    Assert.assertNotNull(dsFramework.getDataset(dsId, ImmutableMap.<String, String>of(), null));
+    Assert.assertNotNull(dsFramework.getDataset(dsId, ImmutableMap.of(), null));
     dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "value").build());
     // operations should fail for bob
     SecurityRequestContext.setUserId(BOB.getName());
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.getDataset(dsId, ImmutableMap.<String, String>of(), null);
-      }
-    }, String.format("Expected %s to not be have access to %s.", BOB, dsId));
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "val").build());
-      }
-    }, String.format("Expected %s to not be have %s privilege on %s.", BOB, Action.ADMIN, dsId));
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.truncateInstance(dsId);
-      }
-    }, String.format("Expected %s to not be have %s privilege on %s.", BOB, Action.ADMIN, dsId));
+    assertAuthorizationFailure(() -> dsFramework.getDataset(dsId, ImmutableMap.of(), null),
+                               String.format("Expected %s to not be have access to %s.", BOB, dsId));
+    assertAuthorizationFailure(
+      () -> dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "val").build()),
+      String.format("Expected %s to not be have %s privilege on %s.", BOB, Action.ADMIN, dsId));
+    assertAuthorizationFailure(() -> dsFramework.truncateInstance(dsId),
+                               String.format("Expected %s to not be have %s privilege on %s.",
+                                             BOB, Action.ADMIN, dsId));
     grantAndAssertSuccess(dsId, BOB, ImmutableSet.of(Action.ADMIN));
     // now update should succeed
     dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "val").build());
@@ -161,12 +147,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
 
     // should get an authorization error if alice tries to delete datasets that she does not have permissions on
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.deleteInstance(dsId1);
-      }
-    }, String.format("Alice should not be able to delete instance %s since she does not have privileges", dsId1));
+    assertAuthorizationFailure(() -> dsFramework.deleteInstance(dsId1),
+                               String.format("Alice should not be able to delete instance %s since she does not " +
+                                               "have privileges", dsId1));
     grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.ADMIN));
     Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
@@ -227,36 +210,17 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // after grant user should be able to check the dataset info
     Assert.assertNull(dsFramework.getDatasetSpec(nonExistingInstance));
     Assert.assertFalse(dsFramework.hasInstance(nonExistingInstance));
-    assertNotFound(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.updateInstance(nonExistingInstance, DatasetProperties.EMPTY);
-      }
-    }, String.format("Expected %s to not exist", nonExistingInstance));
-    assertNotFound(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.deleteInstance(nonExistingInstance);
-      }
-    }, String.format("Expected %s to not exist", nonExistingInstance));
-    assertNotFound(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.truncateInstance(nonExistingInstance);
-      }
-    }, String.format("Expected %s to not exist", nonExistingInstance));
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.addInstance(nonExistingType.getType(), nonExistingInstance, DatasetProperties.EMPTY);
-      }
-    }, "Alice needs to have READ/ADMIN on the dataset type to create the dataset");
-    assertNotFound(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.deleteModule(nonExistingModule);
-      }
-    }, String.format("Expected %s to not exist", nonExistingModule));
+    assertNotFound(() -> dsFramework.updateInstance(nonExistingInstance, DatasetProperties.EMPTY),
+                   String.format("Expected %s to not exist", nonExistingInstance));
+    assertNotFound(() -> dsFramework.deleteInstance(nonExistingInstance),
+                   String.format("Expected %s to not exist", nonExistingInstance));
+    assertNotFound(() -> dsFramework.truncateInstance(nonExistingInstance),
+                   String.format("Expected %s to not exist", nonExistingInstance));
+    assertAuthorizationFailure(
+      () -> dsFramework.addInstance(nonExistingType.getType(), nonExistingInstance, DatasetProperties.EMPTY),
+      "Alice needs to have READ/ADMIN on the dataset type to create the dataset");
+    assertNotFound(() -> dsFramework.deleteModule(nonExistingModule),
+                   String.format("Expected %s to not exist", nonExistingModule));
     grantAndAssertSuccess(nonExistingType, ALICE, EnumSet.of(Action.ADMIN));
     Assert.assertNull(String.format("Expected %s to not exist", nonExistingType),
                       dsFramework.getTypeInfo(nonExistingType));
@@ -272,13 +236,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     DatasetId datasetId = NamespaceId.DEFAULT.dataset("succeed");
     SecurityRequestContext.setUserId(ALICE.getName());
     final Location moduleJar = createModuleJar(TestModule1x.class);
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.addModule(module1, new TestModule1x(), moduleJar);
-      }
-    }, String.format("Expected module add operation to fail for %s because she does not have %s on %s",
-                     ALICE, Action.ADMIN, module1));
+    assertAuthorizationFailure(
+      () -> dsFramework.addModule(module1, new TestModule1x(), moduleJar),
+      String.format("Expected module add operation to fail for %s because she does not have %s on %s",
+                    ALICE, Action.ADMIN, module1));
     // grant alice ADMIN on module1
     grantAndAssertSuccess(module1, ALICE, EnumSet.of(Action.ADMIN));
     // grant all privileges needed to create a dataset
@@ -293,13 +254,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     dsFramework.addInstance(type1x.getType(), datasetId, DatasetProperties.EMPTY);
     // but should fail as Bob
     SecurityRequestContext.setUserId(BOB.getName());
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.addInstance(type1.getType(), NamespaceId.DEFAULT.dataset("fail"), DatasetProperties.EMPTY);
-      }
-    }, String.format(
-      "Creating an instance of a type from %s should fail as %s does not have any privileges on it.", module1, BOB));
+    assertAuthorizationFailure(
+      () -> dsFramework.addInstance(type1.getType(), NamespaceId.DEFAULT.dataset("fail"), DatasetProperties.EMPTY),
+      String.format("Creating an instance of a type from %s should fail as %s does not have any privileges on it.",
+                    module1, BOB));
 
     // granting ADMIN on the module, BOB should now be able to create the dataset type
     grantAndAssertSuccess(module2, BOB, EnumSet.of(Action.ADMIN));
@@ -312,33 +270,21 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
     // but should fail as Alice since Alice does not have ADMIN on module2 or type2
     SecurityRequestContext.setUserId(ALICE.getName());
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.addInstance(type2.getType(), NamespaceId.DEFAULT.dataset("fail"), DatasetProperties.EMPTY);
-      }
-    }, String.format(
-      "Creating an instance of a type from %s should fail as %s does not have any privileges on it.", module2, ALICE));
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.deleteModule(module2);
-      }
-    }, String.format("Deleting module %s should fail as %s does not have any privileges on it.", module2, ALICE));
+    assertAuthorizationFailure(
+      () -> dsFramework.addInstance(type2.getType(), NamespaceId.DEFAULT.dataset("fail"), DatasetProperties.EMPTY),
+      String.format("Creating an instance of a type from %s should fail as %s does not have any privileges on it.",
+                    module2, ALICE));
+    assertAuthorizationFailure(
+      () -> dsFramework.deleteModule(module2),
+      String.format("Deleting module %s should fail as %s does not have any privileges on it.", module2, ALICE));
     SecurityRequestContext.setUserId(BOB.getName());
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.deleteModule(module1);
-      }
-    }, String.format("Deleting module %s should fail as %s does not have any privileges on it.", module1, BOB));
-    assertAuthorizationFailure(new DatasetOperationExecutor() {
-      @Override
-      public void execute() throws Exception {
-        dsFramework.deleteAllModules(NamespaceId.DEFAULT);
-      }
-    }, String.format("Deleting all modules in %s should fail as %s does not have ADMIN privileges on it.",
-                     NamespaceId.DEFAULT, BOB));
+    assertAuthorizationFailure(
+      () -> dsFramework.deleteModule(module1),
+      String.format("Deleting module %s should fail as %s does not have any privileges on it.", module1, BOB));
+    assertAuthorizationFailure(
+      () -> dsFramework.deleteAllModules(NamespaceId.DEFAULT),
+      String.format("Deleting all modules in %s should fail as %s does not have ADMIN privileges on it.",
+                    NamespaceId.DEFAULT, BOB));
 
     // delete all instances so modules can be deleted
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -366,10 +312,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     Assert.assertTrue(summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)).isEmpty());
 
     // should be able to get without authorization
-    Assert.assertNotNull(dsFramework.getDataset(queueConfigDS, ImmutableMap.<String, String>of(), null));
-    Assert.assertNotNull(dsFramework.getDataset(shardedQueueDS, ImmutableMap.<String, String>of(), null));
-    Assert.assertNotNull(dsFramework.getDataset(systemQueueDS, ImmutableMap.<String, String>of(), null));
-    Assert.assertNotNull(dsFramework.getDataset(systemStreamDS, ImmutableMap.<String, String>of(), null));
+    Assert.assertNotNull(dsFramework.getDataset(queueConfigDS, ImmutableMap.of(), null));
+    Assert.assertNotNull(dsFramework.getDataset(shardedQueueDS, ImmutableMap.of(), null));
+    Assert.assertNotNull(dsFramework.getDataset(systemQueueDS, ImmutableMap.of(), null));
+    Assert.assertNotNull(dsFramework.getDataset(systemStreamDS, ImmutableMap.of(), null));
 
     // should be able to update without authorization
     dsFramework.updateInstance(queueConfigDS, DatasetProperties.EMPTY);
@@ -388,12 +334,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
 
   private Set<DatasetId> summaryToDatasetIdSet(Collection<DatasetSpecificationSummary> datasetSpecs) {
     Collection<DatasetId> datasetIds =
-      Collections2.transform(datasetSpecs, new Function<DatasetSpecificationSummary, DatasetId>() {
-        @Override
-        public DatasetId apply(DatasetSpecificationSummary input) {
-          return NamespaceId.DEFAULT.dataset(input.getName());
-        }
-      });
+      Collections2.transform(datasetSpecs, input -> NamespaceId.DEFAULT.dataset(input.getName()));
     return ImmutableSet.copyOf(datasetIds);
   }
 

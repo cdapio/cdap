@@ -58,6 +58,7 @@ import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
@@ -139,6 +140,7 @@ public class AppFabricTestHelper {
       injector.getInstance(StreamCoordinatorClient.class).startAndWait();
       injector.getInstance(NotificationService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
+      injector.getInstance(MetadataSubscriberService.class).startAndWait();
       injector.getInstance(ProgramNotificationSubscriberService.class).startAndWait();
       Scheduler programScheduler = injector.getInstance(Scheduler.class);
       if (programScheduler instanceof Service) {

@@ -142,9 +142,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       List<DatasetModuleMeta> modules = datasetInfo.getType().getModules();
       Assert.assertEquals(2, modules.size());
       DatasetTypeHandlerTest.verify(modules.get(0), "module1", TestModule1.class, ImmutableList.of("datasetType1"),
-                                    Collections.<String>emptyList(), ImmutableList.of("module2"));
+                                    Collections.emptyList(), ImmutableList.of("module2"));
       DatasetTypeHandlerTest.verify(modules.get(1), "module2", TestModule2.class, ImmutableList.of("datasetType2"),
-                                    ImmutableList.of("module1"), Collections.<String>emptyList());
+                                    ImmutableList.of("module1"), Collections.emptyList());
 
       // try to retrieve non-existed instance
       Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());
@@ -323,21 +323,15 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
         new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager),
                                        ImmutableList.of((TransactionAware) table1, (TransactionAware) table2));
 
-      txExecutor.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          table1.put(new Put("key1", "col1", "val1"));
-          table2.put(new Put("key2", "col2", "val2"));
-        }
+      txExecutor.execute(() -> {
+        table1.put(new Put("key1", "col1", "val1"));
+        table2.put(new Put("key2", "col2", "val2"));
       });
 
       // verify that we can read the data
-      txExecutor.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          Assert.assertEquals("val1", table1.get(new Get("key1", "col1")).getString("col1"));
-          Assert.assertEquals("val2", table2.get(new Get("key2", "col2")).getString("col2"));
-        }
+      txExecutor.execute(() -> {
+        Assert.assertEquals("val1", table1.get(new Get("key1", "col1")).getString("col1"));
+        Assert.assertEquals("val2", table2.get(new Get("key2", "col2")).getString("col2"));
       });
 
       // delete table, check that it is deleted, create again and verify that it is empty
@@ -350,14 +344,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // verify that table1 is empty. Note: it is ok for test purpose to re-use the table clients
-      txExecutor.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          Assert.assertTrue(table1.get(new Get("key1", "col1")).isEmpty());
-          Assert.assertEquals("val2", table2.get(new Get("key2", "col2")).getString("col2"));
-          // writing smth to table1 for subsequent test
-          table1.put(new Put("key3", "col3", "val3"));
-        }
+      txExecutor.execute(() -> {
+        Assert.assertTrue(table1.get(new Get("key1", "col1")).isEmpty());
+        Assert.assertEquals("val2", table2.get(new Get("key2", "col2")).getString("col2"));
+        // writing smth to table1 for subsequent test
+        table1.put(new Put("key3", "col3", "val3"));
       });
 
       // delete all tables, check that they deleted, create again and verify that they are empty
@@ -370,12 +361,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(2, getInstances().getResponseObject().size());
 
       // verify that tables are empty. Note: it is ok for test purpose to re-use the table clients
-      txExecutor.execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          Assert.assertTrue(table1.get(new Get("key3", "col3")).isEmpty());
-          Assert.assertTrue(table2.get(new Get("key2", "col2")).isEmpty());
-        }
+      txExecutor.execute(() -> {
+        Assert.assertTrue(table1.get(new Get("key3", "col3")).isEmpty());
+        Assert.assertTrue(table2.get(new Get("key2", "col2")).isEmpty());
       });
     } finally {
       // cleanup

@@ -38,6 +38,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -125,6 +127,7 @@ public class LocalLogAppenderResilientTest {
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       });
 

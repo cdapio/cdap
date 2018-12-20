@@ -48,9 +48,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
-import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
@@ -235,15 +233,14 @@ public abstract class DatasetServiceTestBase {
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, defaultModules);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
                                                                          authenticationContext);
-    MetadataStore metadataStore = new NoOpMetadataStore();
 
     instanceService = new DatasetInstanceService(cConf, typeService, noAuthTypeService,
-                                                 instanceManager, metadataStore, opExecutor, exploreFacade,
+                                                 instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer,
-                                                 authenticationContext);
+                                                 authenticationContext, new NoOpMetadataPublisher());
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
-                                 opExecutor, new HashSet<DatasetMetricsReporter>(), typeService, instanceService);
+                                 opExecutor, new HashSet<>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();

@@ -50,6 +50,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.util.hbase.ConfigurationReader;
 import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -577,7 +579,14 @@ public class MasterServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
-      new OperationalStatsModule()
+      new OperationalStatsModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // TODO (CDAP-14677): find a better way to inject metadata publisher
+          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+        }
+      }
     );
   }
 

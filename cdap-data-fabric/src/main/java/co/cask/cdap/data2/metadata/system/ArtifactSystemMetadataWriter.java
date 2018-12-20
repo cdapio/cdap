@@ -18,10 +18,9 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactInfo;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
 
@@ -33,13 +32,11 @@ import java.util.Map;
 public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ArtifactInfo artifactInfo;
-  private final boolean existing;
 
-  public ArtifactSystemMetadataWriter(MetadataStore metadataStore, ArtifactId artifactId,
+  public ArtifactSystemMetadataWriter(MetadataPublisher metadataPublisher, ArtifactId artifactId,
                                       ArtifactInfo artifactInfo) {
-    super(metadataStore, artifactId);
+    super(metadataPublisher, artifactId);
     this.artifactInfo = artifactInfo;
-    this.existing = !metadataStore.getProperties(MetadataScope.SYSTEM, artifactId.toMetadataEntity()).isEmpty();
   }
 
   @Override
@@ -48,11 +45,9 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
     properties.put(ENTITY_NAME_KEY, artifactInfo.getName());
     ArtifactClasses classes = artifactInfo.getClasses();
     for (PluginClass pluginClass : classes.getPlugins()) {
-      addPlugin(pluginClass, artifactInfo.getVersion(), properties);
+      SystemMetadataProvider.addPlugin(pluginClass, artifactInfo.getVersion(), properties);
     }
-    if (!existing) {
-      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
-    }
+    properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
     return properties.build();
   }
 }

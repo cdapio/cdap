@@ -20,7 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -38,14 +38,14 @@ import java.util.Set;
 public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   private final ProgramId programId;
   private final ProgramSpecification programSpec;
-  private final boolean existing;
+  private final String creationTime;
 
-  public ProgramSystemMetadataWriter(MetadataStore metadataStore, ProgramId programId,
-                                     ProgramSpecification programSpec, boolean existing) {
-    super(metadataStore, programId);
+  public ProgramSystemMetadataWriter(MetadataPublisher metadataPublisher, ProgramId programId,
+                                     ProgramSpecification programSpec, String creationTime) {
+    super(metadataPublisher, programId);
     this.programId = programId;
     this.programSpec = programSpec;
-    this.existing = existing;
+    this.creationTime = creationTime;
   }
 
   @Override
@@ -57,9 +57,7 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (!Strings.isNullOrEmpty(description)) {
       properties.put(DESCRIPTION_KEY, description);
     }
-    if (!existing) {
-      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
-    }
+    properties.put(CREATION_TIME_KEY, creationTime);
     return properties.build();
   }
 

@@ -26,7 +26,6 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -2910,13 +2909,13 @@ public class DataPipelineTest extends HydratorTestBase {
     ImmutableSet<String> inputTagsToAdd = ImmutableSet.of("tOne", "tTwo");
     ImmutableMap<String, String> inputPropToAdd = ImmutableMap.of("kOne", "vOne", "kTwo", "vTwo");
     MetadataOperation op =
-      new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
-                            MetadataOperation.Type.PUT, new Metadata(inputPropToAdd, inputTagsToAdd));
+      new MetadataOperation.Put(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
+                                inputPropToAdd, inputTagsToAdd);
     Set<MetadataOperation> operations = new HashSet<>(Collections.singletonList(op));
 
     // run pipeline with the metadata operations which need to be performed
-    runPipelineForMetadata(operations);
     MetadataAdmin metadataAdmin = getMetadataAdmin();
+    runPipelineForMetadata(metadataAdmin, operations);
     waitForMetadataProcessing(metadataAdmin, 2);
 
     // verify metadata written by the pipeline
@@ -2936,12 +2935,11 @@ public class DataPipelineTest extends HydratorTestBase {
     }
 
     // delete some properties and tag
-    op = new MetadataOperation(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
-                               MetadataOperation.Type.DELETE, new Metadata(ImmutableMap.of("kOne", ""),
-                                                                           ImmutableSet.of("tOne")));
+    op = new MetadataOperation.Delete(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
+                               ImmutableSet.of("kOne"), ImmutableSet.of("tOne"));
     operations = new HashSet<>(Collections.singleton(op));
 
-    runPipelineForMetadata(operations);
+    runPipelineForMetadata(metadataAdmin, operations);
 
     waitForMetadataProcessing(metadataAdmin, 1);
 
@@ -2972,7 +2970,8 @@ public class DataPipelineTest extends HydratorTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
-  private void runPipelineForMetadata(Set<MetadataOperation> operations) throws Exception {
+  private void runPipelineForMetadata(MetadataAdmin metadataAdmin,
+                                      Set<MetadataOperation> operations) throws Exception {
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -2989,6 +2988,15 @@ public class DataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("MetadataTestApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // wait for the system metadata for the app and the dataset to show up - the pipeline validates them
+    Tasks.waitFor(false, () -> metadataAdmin
+                    .getProperties(MetadataScope.SYSTEM, appId.toMetadataEntity()).isEmpty(),
+                  10, TimeUnit.SECONDS);
+    Tasks.waitFor(false, () -> metadataAdmin
+                    .getProperties(MetadataScope.SYSTEM,
+                                   NamespaceId.DEFAULT.dataset("singleInput").toMetadataEntity()).isEmpty(),
+                  10, TimeUnit.SECONDS);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     int numRuns = workflowManager.getHistory().size();

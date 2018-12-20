@@ -37,8 +37,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.app.spark.SparkCompatReader;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
@@ -87,12 +88,13 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
-  private final MetadataStore metadataStore;
+  private final MetadataPublisher metadataPublisher;
   private final Impersonator impersonator;
 
   @VisibleForTesting
   @Inject
-  public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore,
+  public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
+                                   MetadataPublisher metadataPublisher,
                                    ProgramRunnerFactory programRunnerFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;
@@ -118,7 +120,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
     }
     this.configReader = new ArtifactConfigReader();
-    this.metadataStore = metadataStore;
+    this.metadataPublisher = metadataPublisher;
     this.impersonator = impersonator;
   }
 
@@ -412,7 +414,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     // delete the artifact first and then privileges. Not the other way to avoid orphan artifact
     // which does not have any privilege if the artifact delete from store fails. see CDAP-6648
     artifactStore.delete(artifactId);
-    metadataStore.removeMetadata(artifactId.toEntityId().toMetadataEntity());
+    metadataPublisher.publish(NamespaceId.SYSTEM,
+                              new MetadataOperation.Drop(artifactId.toEntityId().toMetadataEntity()));
   }
 
   @Override
@@ -670,7 +673,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   private void writeSystemMetadata(co.cask.cdap.proto.id.ArtifactId artifactId, ArtifactInfo artifactInfo) {
     // add system metadata for artifacts
-    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
+    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataPublisher, artifactId, artifactInfo);
     writer.write();
   }
 }

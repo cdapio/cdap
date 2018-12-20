@@ -20,9 +20,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecordV2;
-import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.EntityId;
@@ -31,7 +29,6 @@ import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 
@@ -41,23 +38,9 @@ import java.util.Set;
 /**
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
  */
-public class DefaultMetadataAdmin implements MetadataAdmin {
-
-  private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
-    .or(CharMatcher.inRange('a', 'z'))
-    .or(CharMatcher.inRange('0', '9'))
-    .or(CharMatcher.is('_'))
-    .or(CharMatcher.is('-'));
-
-  private static final CharMatcher VALUE_MATCHER = CharMatcher.inRange('A', 'Z')
-    .or(CharMatcher.inRange('a', 'z'))
-    .or(CharMatcher.inRange('0', '9'))
-    .or(CharMatcher.is('_'))
-    .or(CharMatcher.is('-'))
-    .or(CharMatcher.WHITESPACE);
+public class DefaultMetadataAdmin extends MetadataValidator implements MetadataAdmin {
 
   private final MetadataStore metadataStore;
-  private final CConfiguration cConf;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
@@ -65,8 +48,8 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   DefaultMetadataAdmin(MetadataStore metadataStore, CConfiguration cConf,
                        AuthorizationEnforcer authorizationEnforcer,
                        AuthenticationContext authenticationContext) {
+    super(cConf);
     this.metadataStore = metadataStore;
-    this.cConf = cConf;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
   }
@@ -161,76 +144,5 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
         AuthorizationUtil.isVisible(results.getResults(), authorizationEnforcer, authenticationContext.getPrincipal(),
                                     input -> EntityId.getSelfOrParentEntityId(input.getMetadataEntity()), null)),
       results.getCursors(), results.isShowHidden(), results.getEntityScope());
-  }
-
-  // Helper methods to validate the metadata entries.
-
-  private void validateProperties(MetadataEntity metadataEntity,
-                                  Map<String, String> properties) throws InvalidMetadataException {
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      // validate key
-      validateKeyAndTagsFormat(metadataEntity, entry.getKey());
-      validateTagReservedKey(metadataEntity, entry.getKey());
-      validateLength(metadataEntity, entry.getKey());
-
-      // validate value
-      validateValueFormat(metadataEntity, entry.getValue());
-      validateLength(metadataEntity, entry.getValue());
-    }
-  }
-
-  private void validateTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException {
-    for (String tag : tags) {
-      validateKeyAndTagsFormat(metadataEntity, tag);
-      validateLength(metadataEntity, tag);
-    }
-  }
-
-  /**
-   * Validate that the key is not reserved {@link MetadataConstants#TAGS_KEY}.
-   */
-  private void validateTagReservedKey(MetadataEntity metadataEntity, String key)
-    throws InvalidMetadataException {
-    if (MetadataConstants.TAGS_KEY.equals(key.toLowerCase())) {
-      throw new InvalidMetadataException(metadataEntity,
-                                         "Could not set metadata with reserved key " + MetadataConstants.TAGS_KEY);
-    }
-  }
-
-  /**
-   * Validate the key matches the {@link #KEY_AND_TAG_MATCHER} character test.
-   */
-  private void validateKeyAndTagsFormat(MetadataEntity metadataEntity, String keyword)
-    throws InvalidMetadataException {
-    if (!KEY_AND_TAG_MATCHER.matchesAllOf(keyword)) {
-      throw new InvalidMetadataException(metadataEntity, String.format("Illegal format for '%s'. " +
-                                                                         "Should only contain alphanumeric characters" +
-                                                                         " (a-z, A-Z, 0-9), underscores and hyphens.",
-                                                                       keyword));
-    }
-  }
-
-  /**
-   * Validate the value of a property matches the {@link #VALUE_MATCHER} character test.
-   */
-  private void validateValueFormat(MetadataEntity metadataEntity, String keyword)
-    throws InvalidMetadataException {
-    if (!VALUE_MATCHER.matchesAllOf(keyword)) {
-      throw new InvalidMetadataException(metadataEntity, String.format("Illegal format for the value '%s'. Should " +
-                                                                         "only contain alphanumeric characters (a-z, " +
-                                                                         "A-Z, 0-9), underscores, hyphens and " +
-                                                                         "whitespaces.", keyword));
-    }
-  }
-
-  /**
-   * Validate that the key length does not exceed the configured limit.
-   */
-  private void validateLength(MetadataEntity metadataEntity, String keyword) throws InvalidMetadataException {
-    // check for max char per value
-    if (keyword.length() > cConf.getInt(Constants.Metadata.MAX_CHARS_ALLOWED)) {
-      throw new InvalidMetadataException(metadataEntity, "Metadata " + keyword + " should not exceed maximum of " +
-        cConf.get(Constants.Metadata.MAX_CHARS_ALLOWED) + " characters.");
-    }
   }
 }

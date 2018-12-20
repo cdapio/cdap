@@ -43,6 +43,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -383,6 +385,8 @@ public class JobQueueDebugger extends AbstractIdleService {
           bind(DatasetFramework.class)
             .annotatedWith(Names.named("datasetMDS"))
             .to(DatasetFramework.class).in(Singleton.class);
+          // TODO (CDAP-14677): find a better way to inject metadata publisher
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       });
   }
