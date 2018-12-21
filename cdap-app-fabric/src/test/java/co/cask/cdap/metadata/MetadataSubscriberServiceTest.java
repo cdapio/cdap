@@ -228,6 +228,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   public void testWorkflow() throws InterruptedException, ExecutionException, TimeoutException {
     ProgramRunId workflowRunId = workflow1.run(RunIds.generate());
 
+    // Try to read, should have nothing
+    Store store = getInjector().getInstance(DefaultStore.class);
+    WorkflowToken workflowToken = store.getWorkflowToken(workflow1, workflowRunId.getRun());
+    Assert.assertNull(workflowToken.get("key"));
+
     BasicWorkflowToken token = new BasicWorkflowToken(1024);
     token.setCurrentNode("node1");
     token.put("key", "value");
@@ -236,11 +241,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     WorkflowStateWriter workflowStateWriter = getInjector().getInstance(MessagingWorkflowStateWriter.class);
     workflowStateWriter.setWorkflowToken(workflowRunId, token);
     workflowStateWriter.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail("action1", NodeStatus.RUNNING));
-
-    // Try to read, should have nothing
-    Store store = getInjector().getInstance(DefaultStore.class);
-    WorkflowToken workflowToken = store.getWorkflowToken(workflow1, workflowRunId.getRun());
-    Assert.assertNull(workflowToken.get("key"));
 
     // Verify the WorkflowToken
     Tasks.waitFor("value", () ->
