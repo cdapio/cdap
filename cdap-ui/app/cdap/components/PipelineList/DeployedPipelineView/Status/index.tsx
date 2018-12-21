@@ -31,7 +31,7 @@ const StatusView: React.SFC<IProps> = ({ statusMap, pipeline }) => {
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
   return (
-    <div className="table-column status">
+    <div className="status">
       <span className={`fa fa-fw ${statusClassName}`}>
         <IconSVG name="icon-circle" />
       </span>

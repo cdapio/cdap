@@ -31,6 +31,7 @@ export default class Tag extends Component {
     onDelete: PropTypes.func,
     isNativeLink: PropTypes.bool,
     viewOnly: PropTypes.bool,
+    preventDefault: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -42,7 +43,11 @@ export default class Tag extends Component {
     searchModalOpen: false,
   };
 
-  toggleSearchModal = () => {
+  toggleSearchModal = (e) => {
+    if (this.props.preventDefault) {
+      e.preventDefault();
+    }
+
     this.setState({
       searchModalOpen: !this.state.searchModalOpen,
     });

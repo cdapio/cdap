@@ -33,6 +33,15 @@ interface IActionsPopoverProps {
   actions: IAction[];
 }
 
+const POPPER_MODIFIERS = {
+  preventOverflow: {
+    enabled: false,
+  },
+  hide: {
+    enabled: false,
+  },
+};
+
 const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
   return (
     <Popover
@@ -41,6 +50,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
       placement="bottom"
       bubbleEvent={false}
       enableInteractionInPopover={true}
+      modifiers={POPPER_MODIFIERS}
     >
       <ul>
         {actions.map((action, i) => {

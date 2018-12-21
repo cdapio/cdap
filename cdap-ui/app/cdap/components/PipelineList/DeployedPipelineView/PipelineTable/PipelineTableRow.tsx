@@ -45,26 +45,18 @@ export default class PipelineTableRow extends React.PureComponent<IProps> {
     });
 
     return (
-      <div className="table-row-container">
-        <div className="table-row">
-          <div className="table-column name">
-            <div className="pipeline-name">
-              <a href={pipelineLink} title={pipeline.name}>
-                <h5>{pipeline.name}</h5>
-              </a>
-            </div>
-          </div>
-          <div className="table-column type">
-            {T.translate(`${PREFIX}.${pipeline.artifact.name}`)}
-          </div>
-          <Status pipeline={pipeline} />
-          <LastStart pipeline={pipeline} />
-          <NextRun pipeline={pipeline} />
-          <RunsCount pipeline={pipeline} />
-          <PipelineTags pipeline={pipeline} />
-          <DeployedActions pipeline={pipeline} />
+      <a href={pipelineLink} className=" grid-row">
+        <div className="name" title={pipeline.name}>
+          <h5>{pipeline.name}</h5>
         </div>
-      </div>
+        <div className="type">{T.translate(`${PREFIX}.${pipeline.artifact.name}`)}</div>
+        <Status pipeline={pipeline} />
+        <LastStart pipeline={pipeline} />
+        <NextRun pipeline={pipeline} />
+        <RunsCount pipeline={pipeline} />
+        <PipelineTags pipeline={pipeline} />
+        <DeployedActions pipeline={pipeline} />
+      </a>
     );
   }
 }
