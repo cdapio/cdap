@@ -935,12 +935,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ProgramId flow = app.flow("WordCountFlow");
     ProgramId service = app.service("WordFrequencyService");
     DatasetId datasetInstance = namespace.dataset("mydataset");
-    Tasks.waitFor(ImmutableSet.of(new MetadataSearchResultRecord(datasetInstance)),
-                  () -> searchMetadata(namespace, "mydataset"),
-                  10, TimeUnit.SECONDS);
-    Tasks.waitFor(ImmutableSet.of(new MetadataSearchResultRecord(app), new MetadataSearchResultRecord(artifact)),
-                  () -> searchMetadata(namespace, "WordCountApp"),
-                  10, TimeUnit.SECONDS);
+
+    // wait for metadata to be processed
+    Tasks.waitFor(false, () -> getProperties(app, MetadataScope.SYSTEM).isEmpty(), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(false, () -> getProperties(flow, MetadataScope.SYSTEM).isEmpty(), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(false, () -> getProperties(service, MetadataScope.SYSTEM).isEmpty(), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(false, () -> getProperties(datasetInstance, MetadataScope.SYSTEM).isEmpty(), 10, TimeUnit.SECONDS);
 
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
 
