@@ -41,6 +41,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,10 +49,17 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -67,6 +75,7 @@ public class DefaultCube implements Cube, MeteredDataset {
   private final Map<Integer, FactTable> resolutionToFactTable;
   private final Map<String, ? extends Aggregation> aggregations;
   private final Map<String, AggregationAlias> aggregationAliasMap;
+  private final ExecutorService executorService;
 
   @Nullable
   private MetricsCollector metrics;
@@ -80,6 +89,9 @@ public class DefaultCube implements Cube, MeteredDataset {
       resolutionToFactTable.put(resolution, factTableSupplier.get(resolution, 3600));
     }
     this.aggregationAliasMap = aggregationAliasMap;
+    this.executorService = new ThreadPoolExecutor(0, resolutions.length, 30, TimeUnit.SECONDS,
+                                                  new LinkedBlockingQueue<>(),
+                                                  Threads.createDaemonThreadFactory("metrics-table-%d"));
   }
 
   @Override
@@ -113,8 +125,30 @@ public class DefaultCube implements Cube, MeteredDataset {
       }
     }
 
-    for (FactTable table : resolutionToFactTable.values()) {
-      table.add(toWrite);
+    Map<Integer, Future> futures = new HashMap<>();
+    for (Map.Entry<Integer, FactTable> table : resolutionToFactTable.entrySet()) {
+      futures.put(table.getKey(), executorService.submit(() -> table.getValue().add(toWrite)));
+    }
+
+    boolean failed = false;
+    Exception failedException = null;
+    StringBuilder failedMessage = new StringBuilder("Failed to add metrics to ");
+    for (Map.Entry<Integer, Future> future : futures.entrySet()) {
+      try {
+        future.getValue().get();
+      } catch (InterruptedException | ExecutionException e) {
+        if (!failed) {
+          failed = true;
+          failedMessage.append(String.format("the %d resolution table", future.getKey()));
+        } else {
+          failedMessage.append(String.format(", the %d resolution table", future.getKey()));
+        }
+        failedException = e;
+      }
+    }
+
+    if (failed) {
+      throw new RuntimeException(failedMessage.append(".").toString(), failedException);
     }
 
     incrementMetric("cube.cubeFact.add.request.count", 1);
@@ -439,8 +473,12 @@ public class DefaultCube implements Cube, MeteredDataset {
 
   @Override
   public void close() throws IOException {
-    for (FactTable factTable : resolutionToFactTable.values()) {
-      factTable.close();
+    try {
+      for (FactTable factTable : resolutionToFactTable.values()) {
+        factTable.close();
+      }
+    } finally {
+      executorService.shutdown();
     }
   }
 
