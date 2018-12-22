@@ -41,8 +41,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.TestRunner;
@@ -255,7 +255,7 @@ public class TestBase {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new LocationRuntimeModule().getInMemoryModules(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule(LocalStreamWriter.class).getInMemoryModules(),
@@ -337,7 +337,7 @@ public class TestBase {
       exploreExecutorService.startAndWait();
       // wait for explore service to be discoverable
       DiscoveryServiceClient discoveryService = injector.getInstance(DiscoveryServiceClient.class);
-      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() ->
         discoveryService.discover(Constants.Service.EXPLORE_HTTP_USER_SERVICE));
       Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                  "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);

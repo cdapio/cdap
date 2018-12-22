@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,9 @@ import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.impersonation.SecurityUtil;
@@ -53,9 +53,9 @@ public class AuthenticationServerMain extends DaemonMain {
   public void init(String[] args) {
     Injector injector = Guice.createInjector(new ConfigModule(),
                                              new IOModule(),
-                                             new SecurityModules().getDistributedModules(),
-                                             new DiscoveryRuntimeModule().getDistributedModules(),
-                                             new ZKClientModule());
+                                             new ZKClientModule(),
+                                             new ZKDiscoveryModule(),
+                                             new SecurityModules().getDistributedModules());
     configuration = injector.getInstance(CConfiguration.class);
 
     if (configuration.getBoolean(Constants.Security.ENABLED)) {

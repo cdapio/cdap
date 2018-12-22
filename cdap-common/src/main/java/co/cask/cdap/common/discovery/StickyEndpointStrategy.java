@@ -18,6 +18,8 @@ package co.cask.cdap.common.discovery;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 
+import java.util.function.Supplier;
+
 /**
  * An {@link EndpointStrategy} that will always return the same endpoint once it's picked
  * until the endpoint is no longer valid, then it'll pick another one.
@@ -31,21 +33,21 @@ public final class StickyEndpointStrategy extends AbstractEndpointStrategy {
   private final EndpointStrategy picker;
   private volatile Discoverable lastPick;
 
-  public StickyEndpointStrategy(ServiceDiscovered serviceDiscovered) {
-    super(serviceDiscovered);
-    this.picker = new RandomEndpointStrategy(serviceDiscovered);
+  public StickyEndpointStrategy(Supplier<ServiceDiscovered> serviceDiscoveredSupplier) {
+    super(serviceDiscoveredSupplier);
+    this.picker = new RandomEndpointStrategy(serviceDiscoveredSupplier);
   }
 
   @Override
-  public Discoverable pick() {
+  protected Discoverable pick(ServiceDiscovered serviceDiscovered) {
     Discoverable lastPick = this.lastPick;
-    if (lastPick == null || !isValid(lastPick)) {
+    if (lastPick == null || !isValid(lastPick, serviceDiscovered)) {
       this.lastPick = lastPick = picker.pick();
     }
     return lastPick;
   }
 
-  private boolean isValid(Discoverable endpoint) {
+  private boolean isValid(Discoverable endpoint, ServiceDiscovered serviceDiscovered) {
     for (Discoverable discoverable : serviceDiscovered) {
       if (discoverable.getSocketAddress().equals(endpoint.getSocketAddress())) {
         return true;

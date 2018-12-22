@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,11 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -97,8 +97,8 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
       }),
       new TransactionMetricsModule(),
       new DataFabricLevelDBModule(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
+      new NamespaceAdminTestModule(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
       new AuthorizationTestModule(),

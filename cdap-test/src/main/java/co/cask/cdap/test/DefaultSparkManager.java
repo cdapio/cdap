@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -52,8 +51,8 @@ public class DefaultSparkManager extends AbstractProgramManager<SparkManager> im
 
   @Override
   public URL getServiceURL(long timeout, TimeUnit timeoutUnit) {
-    ServiceDiscovered discovered = discoveryServiceClient.discover(ServiceDiscoverable.getName(programId));
-    return ServiceDiscoverable.createServiceBaseURL(new RandomEndpointStrategy(discovered).pick(timeout, timeoutUnit),
-                                                    programId);
+    return ServiceDiscoverable.createServiceBaseURL(
+      new RandomEndpointStrategy(() -> discoveryServiceClient.discover(ServiceDiscoverable.getName(programId)))
+        .pick(timeout, timeoutUnit), programId);
   }
 }

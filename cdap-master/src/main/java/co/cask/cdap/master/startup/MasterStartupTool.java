@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,12 @@ package co.cask.cdap.master.startup;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.InsecureFileContextLocationFactory;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.startup.CheckRunner;
 import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.data.runtime.main.ClientVersions;
@@ -162,9 +162,9 @@ public class MasterStartupTool {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
+      new ZKDiscoveryModule(),
       new IOModule(),
       new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

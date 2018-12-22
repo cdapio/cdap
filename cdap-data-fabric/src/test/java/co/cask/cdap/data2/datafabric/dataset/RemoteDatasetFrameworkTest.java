@@ -24,7 +24,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -54,7 +54,6 @@ import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -112,7 +111,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // TODO: Refactor to use injector for everything
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, txConf),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
@@ -190,14 +189,10 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(
-      Constants.Service.DATASET_MANAGER)
-    );
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      () -> discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", service);
-
-    createNamespace(NamespaceId.SYSTEM);
-    createNamespace(NAMESPACE_ID);
   }
 
   // Note: Cannot have these system namespace restrictions in system namespace since we use it internally in
@@ -220,25 +215,8 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     }
   }
 
-  private void createNamespace (NamespaceId namespaceId) throws Exception {
-    // since the namespace admin here is an in memory one we need to create the location explicitly
-    namespacedLocationFactory.get(namespaceId).mkdirs();
-    // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
-  }
-
-  private void deleteNamespace (NamespaceId namespaceId) throws Exception {
-    // since the namespace admin here is an in memory one we need to delete the location explicitly
-    namespacedLocationFactory.get(namespaceId).delete(true);
-    namespaceAdmin.delete(namespaceId);
-  }
-
   @After
-  public void after() throws Exception {
-    // since we stored namespace meta through admin so that framework.delete can lookup namespaceconfig clean the
-    // meta from there too
-    deleteNamespace(NAMESPACE_ID);
-    deleteNamespace(NamespaceId.SYSTEM);
+  public void after() {
     Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 

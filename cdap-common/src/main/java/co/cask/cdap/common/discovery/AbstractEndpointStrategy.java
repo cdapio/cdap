@@ -22,7 +22,10 @@ import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * An abstract {@link EndpointStrategy} that helps implementation of any strategy.
@@ -30,32 +33,31 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractEndpointStrategy implements EndpointStrategy {
 
-  protected final ServiceDiscovered serviceDiscovered;
+  private final Supplier<ServiceDiscovered> serviceDiscoveredSupplier;
 
   /**
    * Constructs an instance with the given {@link ServiceDiscovered}.
    */
-  protected AbstractEndpointStrategy(ServiceDiscovered serviceDiscovered) {
-    this.serviceDiscovered = serviceDiscovered;
+  protected AbstractEndpointStrategy(Supplier<ServiceDiscovered> serviceDiscoveredSupplier) {
+    this.serviceDiscoveredSupplier = serviceDiscoveredSupplier;
+  }
+
+  @Nullable
+  @Override
+  public final Discoverable pick() {
+    return pick(serviceDiscoveredSupplier.get());
   }
 
   @Override
-  public Discoverable pick(long timeout, TimeUnit timeoutUnit) {
+  public final Discoverable pick(long timeout, TimeUnit timeoutUnit) {
     Discoverable discoverable = pick();
     if (discoverable != null) {
       return discoverable;
     }
     final SettableFuture<Discoverable> future = SettableFuture.create();
-    Cancellable cancellable = serviceDiscovered.watchChanges(new ServiceDiscovered.ChangeListener() {
-      @Override
-      public void onChange(ServiceDiscovered serviceDiscovered) {
-        // The serviceDiscovered provided is the same as the one in the field, hence ok to just call pick().
-        Discoverable discoverable = pick();
-        if (discoverable != null) {
-          future.set(discoverable);
-        }
-      }
-    }, Threads.SAME_THREAD_EXECUTOR);
+    Cancellable cancellable = serviceDiscoveredSupplier.get()
+      .watchChanges(serviceDiscovered -> Optional.ofNullable(pick(serviceDiscovered)).ifPresent(future::set),
+                    Threads.SAME_THREAD_EXECUTOR);
     try {
       return future.get(timeout, timeoutUnit);
     } catch (Exception e) {
@@ -64,4 +66,13 @@ public abstract class AbstractEndpointStrategy implements EndpointStrategy {
       cancellable.cancel();
     }
   }
+
+  /**
+   * Picks a {@link Discoverable} using its strategy.
+   *
+   * @param serviceDiscovered the {@link ServiceDiscovered} that contains the endpoint candidates
+   * @return A {@link Discoverable} based on the strategy or {@code null} if no endpoint can be found.
+   */
+  @Nullable
+  protected abstract Discoverable pick(ServiceDiscovered serviceDiscovered);
 }

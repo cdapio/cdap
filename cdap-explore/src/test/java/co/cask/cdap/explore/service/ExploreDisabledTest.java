@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,12 +23,12 @@ import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -225,7 +225,7 @@ public class ExploreDisabledTest {
     return ImmutableList.of(
         new ConfigModule(configuration, hConf),
         new IOModule(),
-        new DiscoveryRuntimeModule().getInMemoryModules(),
+        new InMemoryDiscoveryModule(),
         new NonCustomLocationUnitTestModule().getModule(),
         new DataFabricModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
@@ -236,7 +236,7 @@ public class ExploreDisabledTest {
         new ViewAdminModules().getInMemoryModules(),
         new StreamAdminModules().getInMemoryModules(),
         new NotificationServiceRuntimeModule().getInMemoryModules(),
-        new NamespaceClientRuntimeModule().getInMemoryModules(),
+        new NamespaceAdminTestModule(),
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),
         new AuthenticationContextModules().getMasterModule(),

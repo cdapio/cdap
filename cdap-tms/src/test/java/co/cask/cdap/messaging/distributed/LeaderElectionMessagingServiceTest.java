@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,11 +22,11 @@ import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -95,7 +95,7 @@ public class LeaderElectionMessagingServiceTest {
     cConf.set(Constants.MessagingSystem.SYSTEM_TOPICS, "topic");
     cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, 0L);
 
-    namespaceQueryAdmin = new InMemoryNamespaceClient();
+    namespaceQueryAdmin = new InMemoryNamespaceAdmin();
     levelDBTableFactory = new LevelDBTableFactory(cConf);
   }
 
@@ -243,7 +243,7 @@ public class LeaderElectionMessagingServiceTest {
     return Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
+      new ZKDiscoveryModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override

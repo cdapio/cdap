@@ -59,7 +59,7 @@ public class RemoteClient {
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
-        return new RandomEndpointStrategy(discoveryClient.discover(discoverableServiceName));
+        return new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
       }
     });
     String cleanBasePath = basePath.startsWith("/") ? basePath : "/" + basePath;

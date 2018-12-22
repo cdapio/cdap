@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package co.cask.cdap.common.twill;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.program.ProgramStateWriterWithHeartBeat;
 import co.cask.cdap.messaging.MessagingService;
@@ -115,7 +115,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
         new ConfigModule(cConf, hConf),
         new ZKClientModule(),
         new KafkaClientModule(),
-        new DiscoveryRuntimeModule().getDistributedModules(),
+        new ZKDiscoveryModule(),
         new MessagingClientModule(),
         new AbstractModule() {
           @Override

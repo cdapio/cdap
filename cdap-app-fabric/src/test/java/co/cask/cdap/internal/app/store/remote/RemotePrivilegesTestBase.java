@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -105,8 +105,8 @@ public abstract class RemotePrivilegesTestBase {
     privilegesManager = injector.getInstance(PrivilegesManager.class);
   }
 
-  private static void waitForService(String name) throws InterruptedException {
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(name));
+  private static void waitForService(String name) {
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryService.discover(name));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", name);
   }

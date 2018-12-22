@@ -17,8 +17,8 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.twill.TwillAppNames;
 import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
-import co.cask.cdap.internal.app.runtime.distributed.TwillAppNames;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;

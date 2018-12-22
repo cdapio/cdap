@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,10 +22,10 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.NamespaceClientUnitTestModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -86,10 +86,10 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     Injector injector = Guice.createInjector(new DataFabricModules().getDistributedModules(),
                                              new ConfigModule(cConf, TEST_HBASE.getConfiguration()),
                                              new ZKClientModule(),
-                                             new DiscoveryRuntimeModule().getDistributedModules(),
+                                             new ZKDiscoveryModule(),
                                              new TransactionMetricsModule(),
                                              new LocationRuntimeModule().getDistributedModules(),
-                                             new NamespaceClientUnitTestModule().getModule(),
+                                             new NamespaceAdminTestModule(),
                                              new SystemDatasetRuntimeModule().getDistributedModules(),
                                              new DataSetsModules().getInMemoryModules(),
                                              new AuthorizationTestModule(),

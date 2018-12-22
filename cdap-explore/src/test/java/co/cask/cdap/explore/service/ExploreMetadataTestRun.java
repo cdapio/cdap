@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -158,9 +158,9 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
                           ),
-                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")),
-                                             new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")),
-                                             new QueryResult(Lists.<Object>newArrayList(DEFAULT_DATABASE, "")))
+                          Lists.newArrayList(new QueryResult(Lists.newArrayList(NAMESPACE_DATABASE, "")),
+                                             new QueryResult(Lists.newArrayList(OTHER_NAMESPACE_DATABASE, "")),
+                                             new QueryResult(Lists.newArrayList(DEFAULT_DATABASE, "")))
     );
 
     future = getExploreClient().schemas(null, NAMESPACE_ID.getNamespace());
@@ -169,7 +169,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
                           ),
-                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(NAMESPACE_DATABASE, "")))
+                          Lists.newArrayList(new QueryResult(Lists.newArrayList(NAMESPACE_DATABASE, "")))
     );
 
     future = getExploreClient().schemas(null, OTHER_NAMESPACE_ID.getNamespace());
@@ -178,7 +178,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
                             new ColumnDesc("TABLE_SCHEM", "STRING", 1, "Schema name."),
                             new ColumnDesc("TABLE_CATALOG", "STRING", 2, "Catalog name.")
                           ),
-                          Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(OTHER_NAMESPACE_DATABASE, "")))
+                          Lists.newArrayList(new QueryResult(Lists.newArrayList(OTHER_NAMESPACE_DATABASE, "")))
     );
   }
 

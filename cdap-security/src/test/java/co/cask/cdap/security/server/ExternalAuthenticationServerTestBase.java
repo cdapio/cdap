@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.security.auth.AccessToken;
 import co.cask.cdap.security.auth.AccessTokenCodec;
@@ -117,7 +117,7 @@ public abstract class ExternalAuthenticationServerTestBase {
     Injector injector = Guice.createInjector(new IOModule(), securityModule,
                                              new ConfigModule(getConfiguration(configuration),
                                                               HBaseConfiguration.create(), sConfiguration),
-                                             new DiscoveryRuntimeModule().getInMemoryModules());
+                                             new InMemoryDiscoveryModule());
     server = injector.getInstance(ExternalAuthenticationServer.class);
     tokenCodec = injector.getInstance(AccessTokenCodec.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);

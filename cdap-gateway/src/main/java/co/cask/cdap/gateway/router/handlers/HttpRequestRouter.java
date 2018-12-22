@@ -64,6 +64,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 
@@ -206,7 +207,16 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                  "No endpoint strategy found for request " + getRequestLine(httpRequest));
     }
+    // Do a non-blocking pick first. If the service has been discovered before, this should return an endpoint
+    // immediately.
     Discoverable discoverable = strategy.pick();
+    if (discoverable != null) {
+      return discoverable;
+    }
+
+    // Do a blocking pick for up to 1 second. It is for the case where a service is being discovered for the first time,
+    // in which population of the cache might take time.
+    discoverable = strategy.pick(1, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new HandlerException(HttpResponseStatus.SERVICE_UNAVAILABLE,
                                  "No discoverable found for request " + getRequestLine(httpRequest));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,8 @@ package co.cask.cdap.security.auth;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.io.Codec;
 import co.cask.cdap.security.guice.FileBasedSecurityModule;
 import com.google.inject.Guice;
@@ -46,7 +46,7 @@ public class TestKeyIdentifierCodec {
   @BeforeClass
   public static void setup() throws Exception {
     Injector injector = Guice.createInjector(new IOModule() , new ConfigModule(), new FileBasedSecurityModule(),
-                                             new DiscoveryRuntimeModule().getInMemoryModules());
+                                             new InMemoryDiscoveryModule());
     CConfiguration conf = injector.getInstance(CConfiguration.class);
     keyIdentifierCodec = injector.getInstance(KeyIdentifierCodec.class);
     keyLength = conf.getInt(Constants.Security.TOKEN_DIGEST_KEY_LENGTH);

@@ -17,8 +17,8 @@ package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
@@ -85,7 +85,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
+      new ZKDiscoveryModule(),
       new DataFabricModules().getDistributedModules(),
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override

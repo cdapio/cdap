@@ -23,7 +23,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.io.DatumWriter;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.internal.io.ASMDatumWriterFactory;
@@ -95,7 +95,7 @@ public abstract class MetricsTestBase {
   private List<Module> getModules() {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
-    modules.add(new DiscoveryRuntimeModule().getInMemoryModules());
+    modules.add(new InMemoryDiscoveryModule());
     modules.add(new MessagingServerRuntimeModule().getInMemoryModules());
     modules.add(new AbstractModule() {
       @Override

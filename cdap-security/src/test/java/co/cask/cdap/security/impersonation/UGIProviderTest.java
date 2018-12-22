@@ -19,7 +19,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.DatasetId;
@@ -77,7 +77,7 @@ public class UGIProviderTest {
   private static MiniDFSCluster miniDFSCluster;
   private static LocationFactory locationFactory;
   private static MiniKdc miniKdc;
-  private static InMemoryNamespaceClient namespaceClient;
+  private static InMemoryNamespaceAdmin namespaceClient;
   private static KerberosPrincipalId aliceKerberosPrincipalId;
   private static KerberosPrincipalId bobKerberosPrincipalId;
   private static KerberosPrincipalId eveKerberosPrincipalId;
@@ -102,7 +102,7 @@ public class UGIProviderTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
-    namespaceClient = new InMemoryNamespaceClient();
+    namespaceClient = new InMemoryNamespaceAdmin();
 
     // Start KDC
     miniKdc = new MiniKdc(MiniKdc.createConf(), TEMP_FOLDER.newFolder());

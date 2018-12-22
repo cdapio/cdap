@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,8 @@ import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -70,7 +70,7 @@ public class DefaultPreviewManagerTest {
   private static Injector injector;
 
   @BeforeClass
-  public static void beforeClass() throws Throwable {
+  public static void beforeClass() {
     injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create(), new Configuration()),
       new IOModule(),
@@ -78,7 +78,7 @@ public class DefaultPreviewManagerTest {
       new DataSetsModules().getStandaloneModules(),
       new TransactionExecutorModule(),
       new DataSetServiceModules().getInMemoryModules(),
-      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),

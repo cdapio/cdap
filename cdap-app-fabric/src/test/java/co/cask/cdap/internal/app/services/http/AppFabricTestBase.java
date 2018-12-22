@@ -113,7 +113,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
@@ -241,8 +240,8 @@ public abstract class AppFabricTestBase {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
-    ServiceDiscovered appFabricHttpDiscovered = discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP);
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(appFabricHttpDiscovered);
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
+      () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP));
     Discoverable discoverable = endpointStrategy.pick(5, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceNotEnabledException("Failed to discover service " + Constants.Service.APP_FABRIC_HTTP);
@@ -1272,8 +1271,7 @@ public abstract class AppFabricTestBase {
   }
 
   private static ClientConfig getClientConfig(DiscoveryServiceClient discoveryClient, String service) {
-    EndpointStrategy endpointStrategy =
-      new RandomEndpointStrategy(discoveryClient.discover(service));
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(service));
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
     int port = discoverable.getSocketAddress().getPort();

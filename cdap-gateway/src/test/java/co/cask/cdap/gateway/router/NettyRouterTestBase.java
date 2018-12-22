@@ -487,8 +487,8 @@ public abstract class NettyRouterTestBase {
       defaultServer2.registerServer();
 
       // Make sure the discovery change is in effect
-      ServiceDiscovered discover = ((DiscoveryServiceClient) discoveryService).discover(APP_FABRIC_SERVICE);
-      Assert.assertNotNull(new RandomEndpointStrategy(discover).pick(5, TimeUnit.SECONDS));
+      Assert.assertNotNull(new RandomEndpointStrategy(
+        () -> ((DiscoveryServiceClient) discoveryService).discover(APP_FABRIC_SERVICE)).pick(5, TimeUnit.SECONDS));
 
       // Make a call to sleep for couple seconds
       urlConn = openURL(url);

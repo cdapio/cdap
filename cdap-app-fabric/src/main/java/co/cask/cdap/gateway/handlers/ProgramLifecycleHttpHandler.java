@@ -1744,8 +1744,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     // TODO: CDAP-12959 - Should use the UserServiceEndpointStrategy and discover based on the version
     // and have appVersion nullable for the non versioned endpoint
-    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(discoverableName));
-    if (endpointStrategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
+    EndpointStrategy strategy = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(discoverableName));
+    if (strategy.pick(300L, TimeUnit.MILLISECONDS) == null) {
       LOG.trace("Discoverable endpoint {} not found", discoverableName);
       throw new ServiceUnavailableException(programId.toString(),
                                             "Service is running but not accepting requests at this time.");

@@ -20,7 +20,7 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.route.store.RouteStore;
@@ -118,7 +118,7 @@ public class AuthServerAnnounceTest {
     protected void startUp() {
       SConfiguration sConfiguration = SConfiguration.create();
       Injector injector = Guice.createInjector(new SecurityModules().getInMemoryModules(),
-                                               new DiscoveryRuntimeModule().getInMemoryModules(),
+                                               new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
       AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);

@@ -21,15 +21,15 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -49,7 +49,6 @@ import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.appender.tms.TMSLogAppender;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -151,9 +150,9 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
     modules.add(new ZKClientModule());
+    modules.add(new ZKDiscoveryModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingClientModule());
-    modules.add(new DiscoveryRuntimeModule().getDistributedModules());
     modules.add(new AuditModule().getDistributedModules());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreModules().getDistributedModules());
@@ -201,7 +200,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new LoggingModules().getDistributedModules());
     modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
     modules.add(new DataSetsModules().getDistributedModules());
-    modules.add(new NamespaceClientRuntimeModule().getDistributedModules());
+    modules.add(new NamespaceQueryAdminModule());
     modules.add(new DistributedProgramStreamModule());
   }
 

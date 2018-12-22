@@ -27,6 +27,7 @@ import org.apache.twill.discovery.ServiceDiscovered;
 
 import java.util.Iterator;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -37,29 +38,28 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
   private final ProgramId serviceId;
   private final String version;
   private final RouteFallbackStrategy fallbackStrategy;
-  private final RandomEndpointStrategy versionedRandomEndpointStrategy;
 
-  public UserServiceEndpointStrategy(ServiceDiscovered serviceDiscovered, RouteStore routeStore, ProgramId serviceId,
+  public UserServiceEndpointStrategy(Supplier<ServiceDiscovered> serviceDiscoveredSupplier,
+                                     RouteStore routeStore, ProgramId serviceId,
                                      RouteFallbackStrategy fallbackStrategy, @Nullable String version) {
-    super(serviceDiscovered);
+    super(serviceDiscoveredSupplier);
     this.routeStore = routeStore;
     this.serviceId = serviceId;
     this.version = version;
     this.fallbackStrategy = fallbackStrategy;
-    this.versionedRandomEndpointStrategy = new RandomEndpointStrategy(
-      new VersionFilteredServiceDiscovered(serviceDiscovered, version));
   }
 
   @VisibleForTesting
-  UserServiceEndpointStrategy(ServiceDiscovered serviceDiscovered, RouteStore routeStore, ProgramId serviceId) {
-    this(serviceDiscovered, routeStore, serviceId, RouteFallbackStrategy.RANDOM, null);
+  UserServiceEndpointStrategy(Supplier<ServiceDiscovered> serviceDiscoveredSupplier,
+                              RouteStore routeStore, ProgramId serviceId) {
+    this(serviceDiscoveredSupplier, routeStore, serviceId, RouteFallbackStrategy.RANDOM, null);
   }
 
   @Nullable
   @Override
-  public Discoverable pick() {
+  protected Discoverable pick(ServiceDiscovered serviceDiscovered) {
     if (version != null) {
-      return versionedRandomEndpointStrategy.pick();
+      return RandomEndpointStrategy.pickRandom(new VersionFilteredServiceDiscovered(serviceDiscovered, version));
     }
 
     RouteConfig routeConfig = routeStore.fetch(serviceId);
@@ -70,7 +70,7 @@ public class UserServiceEndpointStrategy extends AbstractEndpointStrategy {
 
       if (fallbackStrategy.equals(RouteFallbackStrategy.RANDOM)) {
         // Since the fallback strategy is RANDOM, we will do pull random pick across all discoverables
-        return versionedRandomEndpointStrategy.pick();
+        return RandomEndpointStrategy.pickRandom(new VersionFilteredServiceDiscovered(serviceDiscovered, version));
       }
     }
 

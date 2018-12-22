@@ -63,7 +63,7 @@ public class UserServiceEndpointStrategyTest {
                                     boolean expectedNull) {
     for (RouteFallbackStrategy fallbackStrategy : RouteFallbackStrategy.values()) {
       UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(
-        serviceDiscovered, configStore, serviceId,
+        () -> serviceDiscovered, configStore, serviceId,
         RouteFallbackStrategy.valueOfRouteFallbackStrategy(fallbackStrategy.name()), "2");
       for (int i = 0; i < 100; i++) {
         Discoverable picked = strategy.pick();
@@ -88,7 +88,8 @@ public class UserServiceEndpointStrategyTest {
     Map<ProgramId, RouteConfig> routeConfigMap = new HashMap<>();
     routeConfigMap.put(serviceId, new RouteConfig(Collections.<String, Integer>emptyMap()));
     RouteStore configStore = new InMemoryRouteStore(routeConfigMap);
-    UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+    UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(() -> serviceDiscovered,
+                                                                           configStore, serviceId,
                                                                            RouteFallbackStrategy.SMALLEST, null);
     for (int i = 0; i < 1000; i++) {
       Discoverable picked = strategy.pick();
@@ -103,7 +104,7 @@ public class UserServiceEndpointStrategyTest {
     }
 
     // Test greatest strategy
-    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+    strategy = new UserServiceEndpointStrategy(() -> serviceDiscovered, configStore, serviceId,
                                                RouteFallbackStrategy.LARGEST, null);
     for (int i = 0; i < 1000; i++) {
       Discoverable picked = strategy.pick();
@@ -118,7 +119,7 @@ public class UserServiceEndpointStrategyTest {
     }
 
     // Test random strategy - remaining versions are 1, 2, 3
-    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+    strategy = new UserServiceEndpointStrategy(() -> serviceDiscovered, configStore, serviceId,
                                                RouteFallbackStrategy.RANDOM, null);
     Set<String> pickedVersions = new HashSet<>();
     for (int i = 0; i < 1000; i++) {
@@ -129,7 +130,7 @@ public class UserServiceEndpointStrategyTest {
     Assert.assertTrue(pickedVersions.size() > 1);
 
     // Test drop strategy
-    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId,
+    strategy = new UserServiceEndpointStrategy(() -> serviceDiscovered, configStore, serviceId,
                                                RouteFallbackStrategy.DROP, null);
     for (int i = 0; i < 1000; i++) {
       Assert.assertNull(strategy.pick());
@@ -148,7 +149,8 @@ public class UserServiceEndpointStrategyTest {
     Map<String, Integer> routeToVersion = ImmutableMap.of("2", 100);
     Map<ProgramId, RouteConfig> routeMap = ImmutableMap.of(serviceId, new RouteConfig(routeToVersion));
     RouteStore configStore = new InMemoryRouteStore(routeMap);
-    UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId);
+    UserServiceEndpointStrategy strategy = new UserServiceEndpointStrategy(() -> serviceDiscovered,
+                                                                           configStore, serviceId);
 
     for (int i = 0; i < 1000; i++) {
       Discoverable picked = strategy.pick();
@@ -189,7 +191,7 @@ public class UserServiceEndpointStrategyTest {
                                     requestRatio, requestsToOne, requestsToTwo), requestRatio <= 1.3);
 
     // Set the payload filter
-    strategy = new UserServiceEndpointStrategy(serviceDiscovered, configStore, serviceId, null, "1");
+    strategy = new UserServiceEndpointStrategy(() -> serviceDiscovered, configStore, serviceId, null, "1");
     for (int i = 0; i < 1000; i++) {
       Discoverable picked = strategy.pick();
       Assert.assertEquals("1", Bytes.toString(picked.getPayload()));

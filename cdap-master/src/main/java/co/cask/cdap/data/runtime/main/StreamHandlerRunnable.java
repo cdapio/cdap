@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,14 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -108,11 +108,11 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new ZKClientModule(),
+      new ZKDiscoveryModule(),
       new KafkaClientModule(),
       new MessagingClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new NamespaceQueryAdminModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
@@ -124,7 +124,6 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new NamespaceClientRuntimeModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),

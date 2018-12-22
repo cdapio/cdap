@@ -34,11 +34,11 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -270,11 +270,11 @@ public class DistributedWorkflowProgramRunnerTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
+      new ZKDiscoveryModule(),
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new IOModule(),
       new KafkaClientModule(),
-      new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules("cdap.master").getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
