@@ -40,6 +40,8 @@ import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,8 @@ import java.util.concurrent.TimeUnit;
  * Class for publishing the profile metadata change request to tms
  */
 public class AdminEventPublisher {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AdminEventPublisher.class);
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
@@ -137,6 +141,7 @@ public class AdminEventPublisher {
   private void publishMessage(EntityId entityId, MetadataMessage.Type type,
                               Object payload) {
     MetadataMessage message = new MetadataMessage(type, entityId, GSON.toJsonTree(payload));
+    LOG.trace("Publishing message: {}", message);
     try {
       Retries.supplyWithRetries(
         () -> {

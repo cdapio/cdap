@@ -22,7 +22,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.data2.metadata.MetadataConstants;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -41,18 +41,14 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
   private final ApplicationSpecification appSpec;
   private final ApplicationId appId;
-  private final boolean existing;
+  private final String creationTime;
 
-  public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId appId, ApplicationSpecification appSpec) {
-    this(metadataStore, appId, appSpec, true);
-  }
-
-  public AppSystemMetadataWriter(MetadataStore metadataStore, ApplicationId entityId,
-                                 ApplicationSpecification appSpec, boolean existing) {
-    super(metadataStore, entityId);
+  public AppSystemMetadataWriter(MetadataPublisher publisher, ApplicationId entityId,
+                                 ApplicationSpecification appSpec, String creationTime) {
+    super(publisher, entityId);
     this.appSpec = appSpec;
     this.appId = entityId;
-    this.existing = existing;
+    this.creationTime = creationTime;
   }
 
   @Override
@@ -64,9 +60,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (!Strings.isNullOrEmpty(description)) {
       properties.put(DESCRIPTION_KEY, description);
     }
-    if (!existing) {
-      properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
-    }
+    properties.put(CREATION_TIME_KEY, creationTime);
     addPrograms(properties);
     addSchedules(properties);
     // appSpec.getPlugins() returns all instances of all plugins, so there may be duplicates.
@@ -74,7 +68,7 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
     Set<PluginClass> existingPluginClasses = new HashSet<>();
     for (Plugin plugin : appSpec.getPlugins().values()) {
       if (!existingPluginClasses.contains(plugin.getPluginClass())) {
-        addPlugin(plugin.getPluginClass(), null, properties);
+        SystemMetadataProvider.addPlugin(plugin.getPluginClass(), null, properties);
         existingPluginClasses.add(plugin.getPluginClass());
       }
     }

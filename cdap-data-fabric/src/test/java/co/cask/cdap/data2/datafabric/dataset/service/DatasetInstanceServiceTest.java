@@ -39,7 +39,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
 
     // deploy a dataset
     instanceService.create(NamespaceId.DEFAULT.getEntityName(), "testds",
-                           new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
+                           new DatasetInstanceConfiguration("table", new HashMap<>()));
 
     // get the dataset meta for two different owners, assert it is the same
     DatasetMeta meta = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
@@ -68,7 +68,7 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
 
     // recreate the dataset
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "testds",
-                           new DatasetInstanceConfiguration("table", new HashMap<String, String>()));
+                           new DatasetInstanceConfiguration("table", new HashMap<>()));
 
     // get the dataset meta, validate it is up to date
     met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));

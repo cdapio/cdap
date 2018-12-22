@@ -22,6 +22,7 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.messaging.MessagingService;
@@ -45,7 +46,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -56,6 +56,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests audit publishing.
@@ -89,7 +90,7 @@ public class AuditPublishTest {
   }
 
   @AfterClass
-  public static void stop() throws Exception {
+  public static void stop() {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
@@ -102,7 +103,8 @@ public class AuditPublishTest {
 
     // Define expected values
     Set<? extends EntityId> expectedMetadataChangeEntities =
-      ImmutableSet.of(Ids.namespace(defaultNs).artifact(WordCountApp.class.getSimpleName(), "1"),
+      ImmutableSet.<EntityId>of(
+        Ids.namespace(defaultNs).artifact(WordCountApp.class.getSimpleName(), "1"),
                       Ids.namespace(defaultNs).app(appName),
                       Ids.namespace(defaultNs).app(appName).flow(WordCountApp.WordCountFlow.class.getSimpleName()),
                       Ids.namespace(defaultNs).app(appName).mr(WordCountApp.VoidMapReduceJob.class.getSimpleName()),
@@ -119,25 +121,26 @@ public class AuditPublishTest {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, WordCountApp.class, null, cConf);
 
     // Verify audit messages
-    List<AuditMessage> publishedMessages = fetchAuditMessages();
-
-    Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
-    for (AuditMessage message : publishedMessages) {
-      EntityId entityId = EntityId.fromMetadataEntity(message.getEntity());
-      if (entityId instanceof NamespacedEntityId) {
-        if (((NamespacedEntityId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
-          // Ignore system audit messages
-          continue;
+    Tasks.waitFor(expectedAuditEntities, () -> {
+      List<AuditMessage> publishedMessages = fetchAuditMessages();
+      Multimap<AuditType, EntityId> actualAuditEntities = HashMultimap.create();
+      for (AuditMessage message : publishedMessages) {
+        EntityId entityId = EntityId.fromMetadataEntity(message.getEntity());
+        if (entityId instanceof NamespacedEntityId) {
+          if (((NamespacedEntityId) entityId).getNamespace().equals(NamespaceId.SYSTEM.getNamespace())) {
+            // Ignore system audit messages
+            continue;
+          }
         }
+        if (entityId.getEntityType() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
+          ArtifactId artifactId = (ArtifactId) entityId;
+          // Version is dynamic for deploys in test cases
+          entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
+        }
+        actualAuditEntities.put(message.getType(), entityId);
       }
-      if (entityId.getEntityType() == EntityType.ARTIFACT && entityId instanceof ArtifactId) {
-        ArtifactId artifactId = (ArtifactId) entityId;
-        // Version is dynamic for deploys in test cases
-        entityId = Ids.namespace(artifactId.getNamespace()).artifact(artifactId.getArtifact(), "1");
-      }
-      actualAuditEntities.put(message.getType(), entityId);
-    }
-    Assert.assertEquals(expectedAuditEntities, actualAuditEntities);
+      return actualAuditEntities;
+    }, 5, TimeUnit.SECONDS);
   }
 
   private List<AuditMessage> fetchAuditMessages() throws TopicNotFoundException, IOException {

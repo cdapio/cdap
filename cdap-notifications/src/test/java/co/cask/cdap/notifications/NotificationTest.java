@@ -36,6 +36,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -121,10 +123,6 @@ public abstract class NotificationTest {
   protected static final NotificationFeedInfo FEED2_INFO =
     new NotificationFeedInfo(FEED2.getNamespace(), FEED2.getCategory(), FEED2.getFeed(), "");
 
-  protected static NotificationService getNotificationService() {
-    return notificationService;
-  }
-
   protected static List<Module> getCommonModules() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
@@ -148,12 +146,13 @@ public abstract class NotificationTest {
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       }
     );
   }
 
-  public static void startServices(Injector injector) throws Exception {
+  public static void startServices(Injector injector) {
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();

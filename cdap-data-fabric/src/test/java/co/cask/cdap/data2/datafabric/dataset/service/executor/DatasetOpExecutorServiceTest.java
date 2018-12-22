@@ -41,6 +41,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
@@ -79,7 +81,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -136,6 +137,7 @@ public class DatasetOpExecutorServiceTest {
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       });
 
@@ -186,30 +188,15 @@ public class DatasetOpExecutorServiceTest {
                                      ImmutableList.of((TransactionAware) table));
 
     // writing smth to table
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        table.put(new Put("key1", "col1", "val1"));
-      }
-    });
+    txExecutor.execute(() -> table.put(new Put("key1", "col1", "val1")));
 
     // verify that we can read the data
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Assert.assertEquals("val1", table.get(new Get("key1", "col1")).getString("col1"));
-      }
-    });
+    txExecutor.execute(() -> Assert.assertEquals("val1", table.get(new Get("key1", "col1")).getString("col1")));
 
     testAdminOp(bob, "truncate", 200, null);
 
     // verify that data is no longer there
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        Assert.assertTrue(table.get(new Get("key1", "col1")).isEmpty());
-      }
-    });
+    txExecutor.execute(() -> Assert.assertTrue(table.get(new Get("key1", "col1")).isEmpty()));
 
     // check upgrade
     testAdminOp(bob, "upgrade", 200, null);
@@ -237,15 +224,16 @@ public class DatasetOpExecutorServiceTest {
     testAdminOp(bob, "exists", 404, null);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void testAdminOp(String instanceName, String opName, int expectedStatus, Object expectedResult)
-    throws URISyntaxException, IOException {
+    throws IOException {
     testAdminOp(NamespaceId.DEFAULT.dataset(instanceName), opName, expectedStatus,
                 expectedResult);
   }
 
   private void testAdminOp(DatasetId datasetInstanceId, String opName, int expectedStatus,
                            Object expectedResult)
-    throws URISyntaxException, IOException {
+    throws IOException {
     String path = String.format("/namespaces/%s/data/datasets/%s/admin/%s",
                                 datasetInstanceId.getNamespace(), datasetInstanceId.getEntityName(), opName);
 
@@ -256,7 +244,7 @@ public class DatasetOpExecutorServiceTest {
     Assert.assertEquals(expectedResult, body.getResult());
   }
 
-  private URL resolve(String path) throws URISyntaxException, MalformedURLException {
+  private URL resolve(String path) throws MalformedURLException {
     @SuppressWarnings("ConstantConditions")
     InetSocketAddress socketAddress = endpointStrategy.pick(1, TimeUnit.SECONDS).getSocketAddress();
     return new URL(String.format("http://%s:%d%s%s", socketAddress.getHostName(),

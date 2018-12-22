@@ -39,10 +39,10 @@ import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
@@ -90,6 +90,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -155,12 +156,13 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testDeletingArtifact() throws Exception {
-    MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.SYSTEM,
-                                                        APP_ARTIFACT_ID.toEntityId().toMetadataEntity());
-    Assert.assertFalse(record.getProperties().isEmpty());
+    Tasks.waitFor(false, () -> metadataStore.getMetadata(MetadataScope.SYSTEM,
+                                                         APP_ARTIFACT_ID.toEntityId().toMetadataEntity())
+      .getProperties().isEmpty(), 5, TimeUnit.SECONDS);
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
-    record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID.toEntityId().toMetadataEntity());
-    Assert.assertTrue(record.getProperties().isEmpty());
+    Tasks.waitFor(true, () -> metadataStore.getMetadata(MetadataScope.SYSTEM,
+                                                        APP_ARTIFACT_ID.toEntityId().toMetadataEntity())
+      .getProperties().isEmpty(), 5, TimeUnit.SECONDS);
   }
 
   @Test(expected = InvalidArtifactException.class)

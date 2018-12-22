@@ -26,12 +26,10 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpStatus;
@@ -49,7 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
 
 /**
  * Unit-test for {@link DatasetTypeHandler}
@@ -59,22 +57,22 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   private static final DatasetModuleMeta MODULE1X_UNUSED =
     new DatasetModuleMeta("module1", TestModule1x.class.getName(), null,
                           ImmutableList.of("datasetType1", "datasetType1x"),
-                          Collections.<String>emptyList());
+                          Collections.emptyList());
 
   private static final DatasetModuleMeta MODULE1X_USED =
     new DatasetModuleMeta("module1", TestModule1x.class.getName(), null,
                           ImmutableList.of("datasetType1", "datasetType1x"),
-                          Collections.<String>emptyList(), ImmutableList.of("module2"));
+                          Collections.emptyList(), ImmutableList.of("module2"));
 
   private static final DatasetModuleMeta MODULE1_UNUSED =
     new DatasetModuleMeta("module1", TestModule1.class.getName(), null,
                           ImmutableList.of("datasetType1"),
-                          Collections.<String>emptyList());
+                          Collections.emptyList());
 
   private static final DatasetModuleMeta MODULE1_USED =
     new DatasetModuleMeta("module1", TestModule1.class.getName(), null,
                           ImmutableList.of("datasetType1"),
-                          Collections.<String>emptyList(), ImmutableList.of("module2"));
+                          Collections.emptyList(), ImmutableList.of("module2"));
 
   private static final DatasetModuleMeta MODULE2 =
     new DatasetModuleMeta("module2", TestModule2.class.getName(), null,
@@ -91,17 +89,17 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
   private static final Map<String, List<String>> NO_DEPENDENCIES = Collections.emptyMap();
   private static final Map<String, List<String>> ONLY_1_DEPENDENCIES =
-    ImmutableMap.<String, List<String>>of("datasetType1", ImmutableList.of("module1"));
+    ImmutableMap.of("datasetType1", ImmutableList.of("module1"));
   private static final Map<String, List<String>> ONLY_1X_DEPENDENCIES =
-    ImmutableMap.<String, List<String>>of("datasetType1", ImmutableList.of("module1"),
-                                          "datasetType1x", ImmutableList.of("module1"));
+    ImmutableMap.of("datasetType1", ImmutableList.of("module1"),
+                    "datasetType1x", ImmutableList.of("module1"));
   private static final Map<String, List<String>> BOTH_1_2_DEPENDENCIES =
-    ImmutableMap.<String, List<String>>of("datasetType1", ImmutableList.of("module1"),
-                                          "datasetType2", ImmutableList.of("module1", "module2"));
+    ImmutableMap.of("datasetType1", ImmutableList.of("module1"),
+                    "datasetType2", ImmutableList.of("module1", "module2"));
   private static final Map<String, List<String>> BOTH_1X_2_DEPENDENCIES =
-    ImmutableMap.<String, List<String>>of("datasetType1", ImmutableList.of("module1"),
-                                          "datasetType1x", ImmutableList.of("module1"),
-                                          "datasetType2", ImmutableList.of("module1", "module2"));
+    ImmutableMap.of("datasetType1", ImmutableList.of("module1"),
+                    "datasetType1x", ImmutableList.of("module1"),
+                    "datasetType2", ImmutableList.of("module1", "module2"));
 
 
   @BeforeClass
@@ -128,7 +126,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
     // create a dataset instance, verify that we cannot redeploy the module with fewer types, even with force option
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
-                           new DatasetInstanceConfiguration("datasetType1x", new HashMap<String, String>()));
+                           new DatasetInstanceConfiguration("datasetType1x", new HashMap<>()));
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class).getResponseCode());
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class, true).getResponseCode());
     verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
@@ -159,9 +157,9 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
 
     // create dataset instances, try force deploy of same module again with fewer types - should fail
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1",
-                           new DatasetInstanceConfiguration("datasetType1", new HashMap<String, String>()));
+                           new DatasetInstanceConfiguration("datasetType1", new HashMap<>()));
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
-                           new DatasetInstanceConfiguration("datasetType1x", new HashMap<String, String>()));
+                           new DatasetInstanceConfiguration("datasetType1x", new HashMap<>()));
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class, true).getResponseCode());
     verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
 
@@ -246,13 +244,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     List<DatasetTypeMeta> actualTypes = getTypes().getResponseObject();
     Assert.assertEquals(actualTypes.size(), typeDependencies.size());
     Assert.assertTrue(Iterables.elementsEqual(
-      typeDependencies.keySet(), Iterables.transform(actualTypes, new Function<DatasetTypeMeta, String>() {
-        @Nullable
-        @Override
-        public String apply(@Nullable DatasetTypeMeta input) {
-          return input == null ? null : input.getName();
-        }
-      })));
+      typeDependencies.keySet(), actualTypes.stream().map(
+        input -> input == null ? null : input.getName()).collect(Collectors.toList())));
     for (DatasetTypeMeta typeMeta : actualTypes) {
       verify(typeMeta, typeMeta.getName(), typeDependencies.get(typeMeta.getName()));
     }
@@ -261,14 +254,8 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
   private void verify(DatasetTypeMeta typeMeta, String typeName, List<String> modules) {
     Assert.assertEquals(typeName, typeMeta.getName());
     Assert.assertArrayEquals(modules.toArray(),
-                             Lists.transform(typeMeta.getModules(),
-                                             new Function<DatasetModuleMeta, String>() {
-                                               @Nullable
-                                               @Override
-                                               public String apply(@Nullable DatasetModuleMeta input) {
-                                                 return input == null ? null : input.getName();
-                                               }
-                                             }).toArray());
+                             typeMeta.getModules().stream().map(
+                               input -> input == null ? null : input.getName()).toArray());
   }
 
   static void verify(DatasetModuleMeta moduleMeta, String moduleName, Class moduleClass,

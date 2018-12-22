@@ -22,7 +22,8 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.writer.MetadataOperation;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -31,6 +32,7 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -57,14 +59,14 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final MetricStore metricStore;
-  private final MetadataStore metadataStore;
+  private final MetadataPublisher metadataPublisher;
   private final Impersonator impersonator;
   private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
                                     QueueAdmin queueAdmin, MetricStore metricStore,
-                                    MetadataStore metadataStore, Impersonator impersonator,
+                                    MetadataPublisher metadataPublisher, Impersonator impersonator,
                                     Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
@@ -72,7 +74,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.metricStore = metricStore;
-    this.metadataStore = metadataStore;
+    this.metadataPublisher = metadataPublisher;
     this.impersonator = impersonator;
     this.programScheduler = programScheduler;
   }
@@ -101,7 +103,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       }
 
       // Remove metadata for the deleted program
-      metadataStore.removeMetadata(programId.toMetadataEntity());
+      metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(programId.toMetadataEntity()));
     }
     if (!deletedFlows.isEmpty()) {
       deleteMetrics(appSpec.getApplicationId(), deletedFlows);

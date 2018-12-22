@@ -62,6 +62,7 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
+import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramHistory;
@@ -105,6 +106,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -196,6 +198,7 @@ public abstract class AppFabricTestBase {
   private static StreamService streamService;
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
+  private static MetadataSubscriberService metadataSubscriberService;
   private static LocationFactory locationFactory;
   private static StreamClient streamClient;
   private static DatasetClient datasetClient;
@@ -220,6 +223,7 @@ public abstract class AppFabricTestBase {
         protected void configure() {
           // needed because we set Kerberos to true in DefaultNamespaceAdminTest
           bind(UGIProvider.class).to(CurrentUGIProvider.class);
+          bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
         }
       }));
 
@@ -258,6 +262,8 @@ public abstract class AppFabricTestBase {
     serviceStore.startAndWait();
     metadataService = injector.getInstance(MetadataService.class);
     metadataService.startAndWait();
+    metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    metadataSubscriberService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
     streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
@@ -287,6 +293,7 @@ public abstract class AppFabricTestBase {
     dsOpService.stopAndWait();
     txManager.stopAndWait();
     serviceStore.stopAndWait();
+    metadataSubscriberService.stopAndWait();
     metadataService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();

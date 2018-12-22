@@ -27,12 +27,12 @@ import co.cask.cdap.proto.id.ProgramRunId;
 public interface MetadataPublisher {
 
   /**
-   * Publishes the {@link MetadataOperation} from the given {@link ProgramRunId}
+   * Publishes the {@link MetadataOperation} from the given publisher's {@link EntityId}.
    *
-   * @param programRunId the {@link ProgramRunId}
+   * @param publisher the id of the publisher - typically a {@link ProgramRunId}
    * @param metadataOperation the {@link MetadataOperation}
    */
-  void publish(ProgramRunId programRunId, MetadataOperation metadataOperation);
+  void publish(EntityId publisher, MetadataOperation metadataOperation);
 
   /**
    * Publishes the {@link DatasetInstanceOperation}.

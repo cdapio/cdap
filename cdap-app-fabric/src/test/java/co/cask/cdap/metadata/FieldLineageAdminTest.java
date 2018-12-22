@@ -24,8 +24,11 @@ import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
+import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -63,7 +66,6 @@ import java.util.stream.Collectors;
 public class FieldLineageAdminTest extends AppFabricTestBase {
 
   private static MetadataAdmin metadataAdmin;
-
   private static DatasetFramework datasetFramework;
 
   @Before
@@ -117,7 +119,13 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
     TableProperties.Builder props = TableProperties.builder();
     TableProperties.setSchema(props, schema);
     TableProperties.setRowFieldName(props, "name");
-    datasetFramework.addInstance("table", new DatasetId(NamespaceId.DEFAULT.getNamespace(), "file"), props.build());
+    DatasetId datasetId = NamespaceId.DEFAULT.dataset("file");
+    MetadataEntity entity = datasetId.toMetadataEntity();
+    datasetFramework.addInstance("table", datasetId, props.build());
+
+    // wait until the metadata for this dataset has been stored
+    Tasks.waitFor(false, () -> metadataAdmin.getProperties(MetadataScope.SYSTEM, entity).isEmpty(),
+                  5, TimeUnit.SECONDS);
 
     // test all fields expected should have all the fields which was known the lineage store but should not contains
     // any dataset schema field since the includeCurrent is set to false

@@ -38,7 +38,7 @@ public class TwillRunnableTest {
   }
 
   @Test
-  public void testDatasetOpExecutorTwillRunnableInjector() throws Exception {
+  public void testDatasetOpExecutorTwillRunnableInjector() {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
                                                                             HBaseConfiguration.create(), "");
     Store store = injector.getInstance(Store.class);
@@ -63,7 +63,7 @@ public class TwillRunnableTest {
   }
 
   @Test
-  public void testMetricsTwillRunnableInjector() throws Exception {
+  public void testMetricsTwillRunnableInjector() {
     MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
   }
 
