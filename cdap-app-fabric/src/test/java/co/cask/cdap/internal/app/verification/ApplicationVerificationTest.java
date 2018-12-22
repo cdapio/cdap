@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.verification;
 
-import co.cask.cdap.WebCrawlApp;
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -35,13 +35,13 @@ public class ApplicationVerificationTest {
    * Good test
    */
   @Test
-  public void testGoodApplication() throws Exception {
-    ApplicationSpecification appSpec = Specifications.from(new WebCrawlApp());
+  public void testGoodApplication() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
     VerifyResult result = app.verify(new ApplicationId("test", newSpec.getName()), newSpec);
-    Assert.assertTrue(result.getMessage(), result.getStatus() == VerifyResult.Status.SUCCESS);
+    Assert.assertSame(result.getMessage(), result.getStatus(), VerifyResult.Status.SUCCESS);
   }
 
 }

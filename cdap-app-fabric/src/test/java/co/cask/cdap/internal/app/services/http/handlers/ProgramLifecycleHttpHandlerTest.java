@@ -471,14 +471,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
   }
-    /**
-     * Tests history of a flow.
-     */
-  @Test
-  public void testFlowHistory() throws Exception {
-    testHistory(WordCountApp.class,
-                Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
-  }
 
   /**
    * Tests history of a mapreduce.
@@ -642,12 +634,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
         getVersionedAPIPath("apps/" + SLEEP_WORKFLOW_APP_ID, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
       Assert.assertEquals(200, deleteResponse.getResponseCode());
     }
-  }
-
-  @Test
-  public void testFlowRuntimeArgs() throws Exception {
-    testRuntimeArgs(WordCountApp.class, TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
-                    WORDCOUNT_FLOW_NAME);
   }
 
   @Test
@@ -990,72 +976,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, getProgramSpecificationResponseCode(TEST_NAMESPACE2, AppWithWorker.NAME,
                                                                  ProgramType.WORKER.getCategoryName(),
                                                                  AppWithWorker.WORKER));
-  }
-
-  @Test
-  public void testFlows() throws Exception {
-    // deploy WordCountApp in namespace1 and verify
-    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-
-    // check initial flowlet instances
-    int initial = getFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME);
-    Assert.assertEquals(1, initial);
-
-    // request two more instances
-    Assert.assertEquals(200, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
-                                                     WORDCOUNT_FLOWLET_NAME, 3));
-    // verify
-    int after = getFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME, WORDCOUNT_FLOWLET_NAME);
-    Assert.assertEquals(3, after);
-
-    // invalid namespace
-    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE2, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
-                                                     WORDCOUNT_FLOWLET_NAME, 3));
-    // invalid app
-    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE1, APP_WITH_SERVICES_APP_ID, WORDCOUNT_FLOW_NAME,
-                                                     WORDCOUNT_FLOWLET_NAME, 3));
-    // invalid flow
-    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random",
-                                                     WORDCOUNT_FLOWLET_NAME, 3));
-    // invalid flowlet
-    Assert.assertEquals(404, requestFlowletInstances(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME,
-                                                     "random", 3));
-
-    // test live info
-    // send invalid program type to live info
-    HttpResponse response = sendLiveInfoRequest(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "random", WORDCOUNT_FLOW_NAME);
-    Assert.assertEquals(400, response.getResponseCode());
-
-    // test valid live info
-    JsonObject liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
-                                      WORDCOUNT_FLOW_NAME);
-    Assert.assertEquals(WORDCOUNT_APP_NAME, liveInfo.get("app").getAsString());
-    Assert.assertEquals(ProgramType.FLOW.getPrettyName(), liveInfo.get("type").getAsString());
-    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("name").getAsString());
-
-    // start flow
-    Id.Program wordcountFlow1 =
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
-    startProgram(wordcountFlow1);
-    waitState(wordcountFlow1, RUNNING);
-
-    liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
-                           WORDCOUNT_FLOW_NAME);
-    Assert.assertEquals(WORDCOUNT_APP_NAME, liveInfo.get("app").getAsString());
-    Assert.assertEquals(ProgramType.FLOW.getPrettyName(), liveInfo.get("type").getAsString());
-    Assert.assertEquals(WORDCOUNT_FLOW_NAME, liveInfo.get("name").getAsString());
-    Assert.assertEquals("in-memory", liveInfo.get("runtime").getAsString());
-
-    // should not delete queues while running
-    Assert.assertEquals(403, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
-    Assert.assertEquals(403, deleteQueues(TEST_NAMESPACE1));
-
-    // stop
-    stopProgram(wordcountFlow1);
-    waitState(wordcountFlow1, STOPPED);
-
-    // delete queues
-    Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
   }
 
   @Test

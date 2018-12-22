@@ -16,17 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -52,7 +47,6 @@ import org.apache.twill.filesystem.Location;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Collections;
 
 public class DistributedProgramRunnerTxTimeoutTest {
@@ -61,14 +55,12 @@ public class DistributedProgramRunnerTxTimeoutTest {
   private static CConfiguration cConf = CConfiguration.create();
   private static YarnConfiguration yConf = new YarnConfiguration();
 
-  private static Program flow = createProgram(ProgramType.FLOW, "flow");
   private static Program service = createProgram(ProgramType.SERVICE, "service");
   private static Program worker = createProgram(ProgramType.WORKER, "worker");
   private static Program mapreduce = createProgram(ProgramType.MAPREDUCE, "mapreduce");
   private static Program spark = createProgram(ProgramType.SPARK, "spark");
   private static Program workflow = createProgram(ProgramType.WORKFLOW, "workflow");
 
-  private static DistributedProgramRunner flowRunner;
   private static DistributedProgramRunner serviceRunner;
   private static DistributedProgramRunner workerRunner;
   private static DistributedProgramRunner mapreduceRunner;
@@ -85,8 +77,6 @@ public class DistributedProgramRunnerTxTimeoutTest {
     // System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(appSpec));
 
     cConf.setInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 60);
-    flowRunner = new DistributedFlowProgramRunner(cConf, yConf, null, null, null, null, null,
-                                                  ClusterMode.ON_PREMISE, null);
     serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
     workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
     mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
@@ -97,10 +87,6 @@ public class DistributedProgramRunnerTxTimeoutTest {
 
   @Test
   public void testValid() {
-    flowRunner.validateOptions(flow, createOptions(flow));
-    flowRunner.validateOptions(flow, createOptions(flow, 30));
-    flowRunner.validateOptions(flow, createOptions(flow, 1000, "flowlet", "nosuch"));
-
     serviceRunner.validateOptions(service, createOptions(service));
     serviceRunner.validateOptions(service, createOptions(service, 30));
 
@@ -116,16 +102,6 @@ public class DistributedProgramRunnerTxTimeoutTest {
     workflowRunner.validateOptions(workflow, createOptions(workflow));
     workflowRunner.validateOptions(workflow, createOptions(workflow, 30));
     workflowRunner.validateOptions(workflow, createOptions(workflow, 30, "action", "nosuch"));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testInvalidFlow() {
-    flowRunner.validateOptions(flow, createOptions(flow, 61));
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testInvalidFlowlet() {
-    flowRunner.validateOptions(flow, createOptions(flow, 61, "flowlet", "ticker"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -164,14 +140,14 @@ public class DistributedProgramRunnerTxTimeoutTest {
 
   private static ProgramOptions createOptions(Program program, int timeout) {
     return new SimpleProgramOptions(program.getId(),
-                                    new BasicArguments(Collections.<String, String>emptyMap()),
+                                    new BasicArguments(Collections.emptyMap()),
                                     new BasicArguments(Collections.singletonMap(SystemArguments.TRANSACTION_TIMEOUT,
                                                                                 String.valueOf(timeout))));
   }
 
   private static ProgramOptions createOptions(Program program, int timeout, String scope, String name) {
     return new SimpleProgramOptions(program.getId(),
-                                    new BasicArguments(Collections.<String, String>emptyMap()),
+                                    new BasicArguments(Collections.emptyMap()),
                                     new BasicArguments(Collections.singletonMap(
                                       RuntimeArguments.addScope(scope, name, SystemArguments.TRANSACTION_TIMEOUT),
                                       String.valueOf(timeout))));
@@ -184,7 +160,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
         return null;
       }
       @Override
-      public <T> Class<T> getMainClass() throws ClassNotFoundException {
+      public <T> Class<T> getMainClass() {
         return null;
       }
       @Override
@@ -220,7 +196,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
         return null;
       }
       @Override
-      public void close() throws IOException {
+      public void close() {
       }
     };
   }
@@ -229,15 +205,6 @@ public class DistributedProgramRunnerTxTimeoutTest {
     @Override
     public void configure() {
       setName("app");
-      addFlow(new AbstractFlow() {
-        @Override
-        protected void configure() {
-          setName("flow");
-          addFlowlet(new Ticker());
-          addFlowlet(new Counter());
-          connect("ticker", "counter");
-        }
-      });
       addWorker(new AbstractWorker() {
         @Override
         public void configure() {
@@ -274,35 +241,12 @@ public class DistributedProgramRunnerTxTimeoutTest {
           setName("workflow");
           addAction(new AbstractCustomAction("noop") {
             @Override
-            public void run() throws Exception {
+            public void run() {
               // no-op
             }
           });
         }
       });
-    }
-  }
-
-  public static class Ticker extends AbstractFlowlet {
-    private OutputEmitter<Integer> out;
-    @Override
-    protected void configure() {
-      setName("ticker");
-    }
-    @Tick(delay = 100)
-    public void tick() {
-      out.emit(1);
-    }
-  }
-
-  public static class Counter extends AbstractFlowlet {
-    @Override
-    protected void configure() {
-      setName("counter");
-    }
-    @ProcessInput
-    public void process(int i) {
-      // no-op
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.client.ApplicationClient;
@@ -23,7 +24,6 @@ import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
@@ -52,39 +52,21 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
   }
 
   @Test
-  public void testFlowManager() throws Exception {
-    ApplicationManager applicationManager = deployApplication(TestApplication.class);
-    FlowManager flowManager = applicationManager.getFlowManager(TestFlow.NAME).start();
-    flowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
-    flowManager.stop();
-  }
-
-  @Test
   public void testDeployApplicationInNamespace() throws Exception {
     NamespaceId namespace = new NamespaceId("Test1");
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespace).build();
     getNamespaceClient().create(namespaceMeta);
     ClientConfig clientConfig = new ClientConfig.Builder(getClientConfig()).build();
-    deployApplication(namespace, TestApplication.class);
+    deployApplication(namespace, AllProgramsApp.class);
 
     // Check the default namespaces applications to see whether the application wasn't made in the default namespace
     ClientConfig defaultClientConfig = new ClientConfig.Builder(getClientConfig()).build();
-    Assert.assertEquals(0, new ApplicationClient(defaultClientConfig).list(NamespaceId.DEFAULT).size());
+    Assert.assertTrue(new ApplicationClient(defaultClientConfig).list(NamespaceId.DEFAULT).isEmpty());
 
     ApplicationClient applicationClient = new ApplicationClient(clientConfig);
-    Assert.assertEquals(TestApplication.NAME, applicationClient.list(namespace).get(0).getName());
-    applicationClient.delete(namespace.app(TestApplication.NAME));
-    Assert.assertEquals(0, new ApplicationClient(clientConfig).list(namespace).size());
-
-  }
-
-  @Test
-  public void testGetApplicationManager() throws Exception {
-    ApplicationManager applicationManager = deployApplication(TestApplication.class);
-    ApplicationId applicationId = NamespaceId.DEFAULT.app(TestApplication.NAME);
-    ApplicationManager testApplicationManager = getApplicationManager(applicationId);
-    Assert.assertEquals(applicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME),
-                        testApplicationManager.getFlowManager(TestFlow.NAME).getFlowletInstances(TestFlowlet.NAME));
+    Assert.assertEquals(AllProgramsApp.NAME, applicationClient.list(namespace).get(0).getName());
+    applicationClient.delete(namespace.app(AllProgramsApp.NAME));
+    Assert.assertTrue(new ApplicationClient(clientConfig).list(namespace).isEmpty());
 
   }
 

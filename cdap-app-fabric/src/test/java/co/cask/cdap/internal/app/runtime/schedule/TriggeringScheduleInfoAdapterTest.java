@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.WebCrawlApp;
+import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.TriggerInfo;
@@ -48,13 +48,14 @@ public class TriggeringScheduleInfoAdapterTest {
     BasicWorkflowToken token = new BasicWorkflowToken(1);
     token.setCurrentNode("node");
     token.put("tokenKey", "tokenVal");
-    List<TriggerInfo> triggerInfos =
-      ImmutableList.<TriggerInfo>of(
-        new DefaultProgramStatusTriggerInfo("ns", Specifications.from(new WebCrawlApp()), ProgramType.WORKFLOW,
-                                            "workflow", RunIds.generate(), ProgramStatus.COMPLETED,
-                                            token, Collections.<String, String>emptyMap()),
+    List<TriggerInfo> triggerInfos = ImmutableList.of(
+        new DefaultProgramStatusTriggerInfo("ns", Specifications.from(new WorkflowAppWithFork()), ProgramType.WORKFLOW,
+                                            WorkflowAppWithFork.WorkflowWithFork.class.getSimpleName(),
+                                            RunIds.generate(), ProgramStatus.COMPLETED,
+                                            token, Collections.emptyMap()),
         new DefaultPartitionTriggerInfo("ns", "ds", 10, 11),
-        new DefaultTimeTriggerInfo("1 * * * *", 0L));
+        new DefaultTimeTriggerInfo("1 * * * *", 0L)
+    );
     TriggeringScheduleInfo scheduleInfo = new DefaultTriggeringScheduleInfo("schedule", "description", triggerInfos,
                                                                             ImmutableMap.of("key", "value"));
 

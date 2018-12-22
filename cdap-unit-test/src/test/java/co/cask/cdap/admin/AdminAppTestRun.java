@@ -34,10 +34,8 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ProgramManager;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
@@ -79,49 +77,6 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     addAppArtifact(ADMIN_APP_ARTIFACT, AdminApp.class);
     AppRequest<Void> appRequest = new AppRequest<>(ADMIN_ARTIFACT_SUMMARY);
     appManager = deployApplication(NamespaceId.DEFAULT.app("AdminApp"), appRequest);
-  }
-
-  @Test
-  public void testAdminFlow() throws Exception {
-
-    // start the worker and wait for it to finish
-    FlowManager flowManager = appManager.getFlowManager(AdminApp.FLOW_NAME).start();
-
-    try {
-      flowManager.waitForRun(ProgramRunStatus.RUNNING, 5, TimeUnit.MINUTES);
-
-      // send some events to the stream
-      StreamManager streamManager = getStreamManager("events");
-      streamManager.send("aa ab bc aa bc");
-      streamManager.send("xx xy aa ab aa");
-
-      // wait for flow to process them
-      flowManager.getFlowletMetrics("counter").waitForProcessed(10, 30, TimeUnit.SECONDS);
-
-      // validate that the flow created tables for a, b, and x, and that the counts are correct
-      DataSetManager<KeyValueTable> aManager = getDataset("counters_a");
-      Assert.assertNotNull(aManager.get());
-      Assert.assertEquals(4L, Bytes.toLong(aManager.get().read("aa")));
-      Assert.assertEquals(2L, Bytes.toLong(aManager.get().read("ab")));
-
-      DataSetManager<KeyValueTable> bManager = getDataset("counters_b");
-      Assert.assertNotNull(bManager.get());
-      Assert.assertEquals(2L, Bytes.toLong(bManager.get().read("bc")));
-
-      DataSetManager<KeyValueTable> xManager = getDataset("counters_x");
-      Assert.assertNotNull(xManager.get());
-      Assert.assertEquals(1L, Bytes.toLong(xManager.get().read("xx")));
-      Assert.assertEquals(1L, Bytes.toLong(xManager.get().read("xy")));
-
-    } finally {
-      flowManager.stop();
-    }
-    flowManager.waitForRun(ProgramRunStatus.KILLED, 30, TimeUnit.SECONDS);
-
-    // flowlet destroy() deletes all the tables - validate
-    Assert.assertNull(getDataset("counters_a").get());
-    Assert.assertNull(getDataset("counters_b").get());
-    Assert.assertNull(getDataset("counters_x").get());
   }
 
   @Test
