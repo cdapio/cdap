@@ -23,7 +23,6 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
@@ -33,19 +32,16 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
- * Default implementation of the service that manages access to the Secure Store,
+ * Default implementation of the service that manages access to the Secure Store.
  */
 public class DefaultSecureStoreService implements SecureStore, SecureStoreManager {
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -79,12 +75,7 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
     Principal principal = authenticationContext.getPrincipal();
     Map<String, String> metadatas = new HashMap<>(secureStore.listSecureData(namespace));
     metadatas.keySet().retainAll(AuthorizationUtil.isVisible(metadatas.keySet(), authorizationEnforcer, principal,
-                                                             new Function<String, EntityId>() {
-                                                               @Override
-                                                               public EntityId apply(String input) {
-                                                                 return new SecureKeyId(namespace, input);
-                                                               }
-                                                             }, null));
+                                                             input -> new SecureKeyId(namespace, input), null));
     return metadatas;
   }
 

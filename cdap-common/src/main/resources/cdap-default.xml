@@ -3448,10 +3448,15 @@
 
   <property>
     <name>security.store.provider</name>
-    <value>none</value>
+    <value>cloud_kms</value>
     <description>
       Backend provider for the secure store; use 'none' if no secure store
     </description>
+  </property>
+
+  <property>
+    <name>security.store.extensions.dir</name>
+    <value>/opt/cdap/master/ext/operations</value>
   </property>
 
   <property>

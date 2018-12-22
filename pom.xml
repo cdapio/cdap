@@ -23,6 +23,7 @@
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
   <version>6.0.0-SNAPSHOT</version>
+
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -2747,6 +2748,8 @@
         <module>cdap-runtime-ext-emr</module>
         <module>cdap-runtime-ext-remote-hadoop</module>
         <module>cdap-runtime-spi</module>
+        <module>cdap-securestore-spi</module>
+        <module>cdap-securestore-ext-cloudkms</module>
         <module>cdap-notifications</module>
         <module>cdap-notifications-api</module>
         <module>cdap-operational-stats-core</module>

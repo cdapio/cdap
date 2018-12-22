@@ -445,6 +445,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-securestore-ext-cloudkms</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -660,6 +666,14 @@
                     <resource>
                       <directory>${project.parent.basedir}/cdap-runtime-ext-emr/target/libexec</directory>
                       <targetPath>ext/runtimeproviders/aws-emr</targetPath>
+                      <includes>
+                        <include>*.jar</include>
+                        <include>*.json</include>
+                      </includes>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>
+                      <targetPath>ext/securestore/cloudkms</targetPath>
                       <includes>
                         <include>*.jar</include>
                         <include>*.json</include>

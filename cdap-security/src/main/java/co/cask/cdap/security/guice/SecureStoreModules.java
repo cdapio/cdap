@@ -26,6 +26,7 @@ import co.cask.cdap.security.store.DefaultSecureStoreService;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
 import co.cask.cdap.security.store.SecureStoreUtils;
+import co.cask.cdap.security.store.WrappedSecureStore;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -132,6 +133,11 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
+      boolean cloudBacked = SecureStoreUtils.isCloudKMSBacked(cConf);
+      if (cloudBacked) {
+        return (T) injector.getInstance(WrappedSecureStore.class);
+      }
+
       boolean kmsBacked = SecureStoreUtils.isKMSBacked(cConf);
       if (kmsBacked && SecureStoreUtils.isKMSCapable()) {
         return (T) injector.getInstance(SecureStoreUtils.getKMSSecureStore());
@@ -169,6 +175,11 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
+      boolean cloudBacked = SecureStoreUtils.isCloudKMSBacked(cConf);
+      if (cloudBacked) {
+        return (T) injector.getInstance(WrappedSecureStore.class);
+      }
+
       boolean fileBacked = SecureStoreUtils.isFileBacked(cConf);
       boolean validPassword = !Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD));
 

@@ -31,7 +31,7 @@ public final class SecureStoreMetadata {
   private final long createdEpochMs;
   private final Map<String, String> properties;
 
-  private SecureStoreMetadata(String name, String description, long created, Map<String, String> properties) {
+  public SecureStoreMetadata(String name, String description, long created, Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.createdEpochMs = created;

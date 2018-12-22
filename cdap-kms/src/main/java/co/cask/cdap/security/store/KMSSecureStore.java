@@ -211,7 +211,8 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
     if (metadata == null) {
       throw new NotFoundException(new SecureKeyId(namespace, name));
     }
-    SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(), metadata.getAttributes());
+    SecureStoreMetadata meta = SecureStoreMetadata.of(name, metadata.getDescription(),
+                                                       metadata.getAttributes());
     KeyProvider.KeyVersion keyVersion = provider.getCurrentKey(keyName);
     return new SecureStoreData(meta, keyVersion.getMaterial());
   }

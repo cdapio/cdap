@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  */
 public class SecureKeyId extends NamespacedEntityId implements ParentedId<NamespaceId> {
   // KMS only supports lower case keys.
-  private static final Pattern secureKeyNamePattern = Pattern.compile("[a-z0-9_-]+");
+  private static final Pattern SECURE_KEY_NAME_PATTERN = Pattern.compile("[a-z0-9_-]+");
 
   private final String name;
   private transient Integer hashCode;
@@ -92,6 +92,6 @@ public class SecureKeyId extends NamespacedEntityId implements ParentedId<Namesp
   }
 
   private static boolean isValidSecureKey(String name) {
-    return secureKeyNamePattern.matcher(name).matches();
+    return SECURE_KEY_NAME_PATTERN.matcher(name).matches();
   }
 }
