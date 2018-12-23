@@ -28,6 +28,7 @@ var promise = require('q'),
   decoder = new StringDecoder('utf8'),
   log4js = require('log4js'),
   cache = {},
+  nodepath = require('path'),
   path,
   buffer = '';
 
@@ -61,7 +62,7 @@ function extractConfig(param) {
 
   if (process.env.NODE_ENV === 'production') {
     buffer = '';
-    tool = spawn(__dirname + '/../../bin/cdap', ['config-tool', '--' + param]);
+    tool = spawn(nodepath.join(__dirname, 'bin', 'cdap'), ['config-tool', '--' + param]);
     tool.stderr.on('data', configReadFail.bind(this));
     tool.stdout.on('data', configRead.bind(this));
     tool.stdout.on('end', onConfigReadEnd.bind(this, deferred, param));

@@ -148,6 +148,7 @@
               <configuration>
                 <excludes>
                   <exclude>**/*.editorconfig</exclude>
+                  <exclude>**/server_dist/**</exclude>
                   <exclude>**/*.babelrc</exclude>
                   <exclude>**/*.jshintrc</exclude>
                   <exclude>**/*.jshintignore</exclude>
@@ -268,42 +269,12 @@
                 </configuration>
               </execution>
               <execution>
-                <id>clean-node-modules</id>
+                <id>build-node-app</id>
                 <goals>
                   <goal>yarn</goal>
                 </goals>
                 <configuration>
-                  <arguments>install --production --frozen-lockfile</arguments>
-                </configuration>
-              </execution>
-              <execution>
-                <id>remove-unnecessary-node-modules</id>
-                <goals>
-                  <goal>yarn</goal>
-                </goals>
-                <configuration>
-                  <arguments>run clean-node-modules</arguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.3.1</version>
-            <executions>
-              <execution>
-                <id>clean-bower-components</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <executable>rm</executable>
-                  <arguments>
-                    <argument>-rf</argument>
-                    <argument>bower_components</argument>
-                  </arguments>
+                  <arguments>run ncc</arguments>
                 </configuration>
               </execution>
             </executions>
@@ -321,57 +292,13 @@
                 </goals>
                 <configuration>
                   <target>
-                    <copy todir = "${stage.opt.dir}/server">
-                      <fileset dir = "server" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/dist">
-                      <fileset dir = "dist" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/old_dist">
-                      <fileset dir = "old_dist" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/common_dist">
-                      <fileset dir = "common_dist" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/cdap_dist">
-                      <fileset dir = "cdap_dist" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/dll">
-                      <fileset dir = "dll">
-                        <exclude name="*development*" />
-                      </fileset>
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/login_dist">
-                      <fileset dir = "login_dist" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/bin">
-                      <fileset dir = "node">
-                        <include name="node" />
-                      </fileset>
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/node_modules">
-                      <fileset dir = "node_modules" />
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/templates">
-                      <fileset dir = "templates" />
-                    </copy>
                     <copy todir = "${stage.opt.dir}">
-                      <fileset dir = "./">
-                        <include name="LICENSE-node" />
+                      <fileset dir = "server_dist">
+                        <exclude name="node_modules/**" />
                       </fileset>
                     </copy>
-                    <copy todir = "${stage.opt.dir}">
-                      <fileset dir = "./">
-                        <include name="package.json" />
-                      </fileset>
-                    </copy>
-                    <copy todir = "${stage.opt.dir}">
-                      <fileset dir = "./">
-                        <include name="server.js" />
-                      </fileset>
-                    </copy>
-                    <copy todir = "${stage.opt.dir}/cdap-ui-upgrade">
-                      <fileset dir = "cdap-ui-upgrade" />
+                    <copy todir = "${stage.opt.dir}/server/config/themes">
+                      <fileset dir = "server/config/themes" />
                     </copy>
                   </target>
                 </configuration>
