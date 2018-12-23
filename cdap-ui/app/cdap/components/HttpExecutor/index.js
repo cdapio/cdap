@@ -33,14 +33,6 @@ export default class HttpExecutor extends Component {
     super(props);
   }
 
-  componentDidMount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'none';
-  }
-
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
-  }
-
   render() {
     return (
       <Provider store={HttpExecutorStore}>

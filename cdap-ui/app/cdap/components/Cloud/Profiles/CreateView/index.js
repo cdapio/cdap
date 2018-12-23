@@ -80,14 +80,9 @@ class ProfileCreateView extends Component {
   componentDidMount() {
     let { selectedProvisioner } = this.state;
     fetchProvisionerSpec(selectedProvisioner);
-    // FIXME: Since we are already in admin we shouldn't have to do this explicitly from the create profile view.
-    if (this.state.isSystem) {
-      document.querySelector('#header-namespace-dropdown').style.display = 'none';
-    }
   }
 
   componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
     resetCreateProfileStore();
   }
 

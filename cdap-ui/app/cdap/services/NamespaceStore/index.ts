@@ -14,14 +14,26 @@
  * the License.
  */
 
-import { combineReducers, createStore } from 'redux';
+import { combineReducers, createStore, Store as InterfaceStore } from 'redux';
 import NamespaceActions from './NamespaceActions';
 import { composeEnhancers, objectQuery, isNilOrEmpty } from 'services/helpers';
 import { SYSTEM_NAMESPACE } from 'services/global-constants';
+import { IAction } from 'services/redux-helpers';
 
+export interface INamespace {
+  name: string;
+  description: string;
+  config: any;
+}
+
+export interface INamespaceStoreState {
+  username: string;
+  selectedNamespace: string;
+  namespaces: INamespace[];
+}
 const defaultAction = {
-  action: '',
-  payload: {},
+  type: '',
+  payload: {} as any,
 };
 
 const defaultInitialState = {
@@ -30,7 +42,7 @@ const defaultInitialState = {
   namespaces: [],
 };
 
-const username = (state = '', action = defaultAction) => {
+const username = (state = '', action: IAction = defaultAction) => {
   switch (action.type) {
     case NamespaceActions.updateUsername:
       return action.payload.username;
@@ -39,7 +51,7 @@ const username = (state = '', action = defaultAction) => {
   }
 };
 
-const selectedNamespace = (state = '', action = defaultAction) => {
+const selectedNamespace = (state = '', action: IAction = defaultAction) => {
   switch (action.type) {
     case NamespaceActions.selectNamespace: {
       if (action.payload.selectedNamespace === SYSTEM_NAMESPACE) {
@@ -48,7 +60,7 @@ const selectedNamespace = (state = '', action = defaultAction) => {
       return action.payload.selectedNamespace;
     }
     case NamespaceActions.updateNamespaces: {
-      let previouslyAccessedNs = localStorage.getItem('CurrentNamespace');
+      const previouslyAccessedNs = localStorage.getItem('CurrentNamespace');
       if (isNilOrEmpty(state) || state === SYSTEM_NAMESPACE) {
         return !isNilOrEmpty(previouslyAccessedNs)
           ? previouslyAccessedNs
@@ -69,8 +81,11 @@ const namespaces = (state = [], action) => {
       return state;
   }
 };
-
-const NamespaceStore = createStore(
+/**
+ * Store to manage namespace globally across CDAP UI.
+ * Stores list of namespaces and current namespace the user is in.
+ */
+const NamespaceStore: InterfaceStore<INamespaceStoreState> = createStore(
   combineReducers({
     username,
     selectedNamespace,
@@ -81,7 +96,7 @@ const NamespaceStore = createStore(
 );
 
 const getCurrentNamespace = () => {
-  let { selectedNamespace: namespace } = NamespaceStore.getState();
+  const { selectedNamespace: namespace } = NamespaceStore.getState();
   return namespace;
 };
 

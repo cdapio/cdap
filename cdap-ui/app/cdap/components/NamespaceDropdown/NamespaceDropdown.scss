@@ -25,6 +25,7 @@ $dark-font: #666666;
 $grey-font: #bbbbbb;
 $success-color: #7ed321;
 $star-color: #373a3c;
+$namespace-card-width: 225px;
 
 #header-namespace-dropdown {
   padding-left: 0;
@@ -32,18 +33,19 @@ $star-color: #373a3c;
   height: 100%;
 }
 .namespace-dropdown {
-  width: 160px;
-  border-left: 1px solid $dark-font;
+  width: 100%;
   padding: 0;
   font-size: 14px;
   user-select: none;
   display: inline-block;
   line-height: 50px;
   cursor: initial;
+  padding-left: 24px;
+  padding-right: 24px;
 
   &.opened,
   &:hover {
-    background: $cdap-white-light;
+    background-color: rgba(0, 0, 0, 0.08);
   }
 
   div[disabled] { cursor: not-allowed; }
@@ -70,7 +72,7 @@ $star-color: #373a3c;
     border: 0;
     text-align: left;
     padding: 0;
-    padding-left: 10px;
+    padding-left: 0;
     color: inherit;
 
     &:hover,
@@ -110,9 +112,7 @@ $star-color: #373a3c;
     }
   }
   .dropdown-menu {
-    position: absolute;
-    width: 220px;
-    left: -60px;
+    width: $namespace-card-width;
     border-bottom-left-radius: 3px;
     outline: none;
     border-top-left-radius: 0;
@@ -270,6 +270,9 @@ $star-color: #373a3c;
             color: $success-color;
           }
         }
+      }
+      a {
+        text-decoration: none;
       }
     }
 

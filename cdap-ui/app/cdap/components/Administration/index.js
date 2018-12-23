@@ -44,7 +44,6 @@ class Administration extends Component {
   componentDidMount() {
     this.getUptime();
     this.getPlatformDetails();
-    document.querySelector('#header-namespace-dropdown').style.display = 'none';
   }
 
   componentWillReceiveProps(nextProps) {
@@ -57,10 +56,6 @@ class Administration extends Component {
         accordionToExpand,
       });
     }
-  }
-
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
   getUptime() {

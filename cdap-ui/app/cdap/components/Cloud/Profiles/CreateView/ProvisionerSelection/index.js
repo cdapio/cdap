@@ -54,13 +54,6 @@ class ProfileCreateProvisionerSelection extends Component {
 
   componentDidMount() {
     fetchProvisioners();
-    if (this.state.isSystem) {
-      document.querySelector('#header-namespace-dropdown').style.display = 'none';
-    }
-  }
-
-  componentWillUnmount() {
-    document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
   }
 
   renderProvisionerBox(provisioner) {

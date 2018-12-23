@@ -16,7 +16,7 @@
 
 angular.module(PKG.name + '.commons')
   .directive('caskHeader', function(reactDirective) {
-    return reactDirective(window.CaskCommon.Header);
+    return reactDirective(window.CaskCommon.AppHeader);
   })
   .directive('keyValuePairs', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValuePairs);
