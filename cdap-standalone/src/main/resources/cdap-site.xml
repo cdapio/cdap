@@ -194,6 +194,16 @@
     </description>
   </property>
 
+  <!--Secure store Configuration -->
+  <property>
+    <name>security.store.extensions.dir</name>
+    <value>ext/securestores</value>
+    <description>
+      Semicolon-separated list of local directories on the CDAP Master that
+      are scanned for program runtime extensions
+    </description>
+  </property>
+
   <!-- Tephra Configuration -->
   <property>
     <name>data.tx.prune.enable</name>
@@ -253,7 +263,7 @@
   <!-- Secure Storage Configuration -->
   <property>
     <name>security.store.provider</name>
-    <value>file</value>
+    <value>cloudkms</value>
     <description>
       The secure store provider that defines the actual storage system backing the CDAP secure
       store APIs. Secure store APIs are used by custom programs that need to write or look up

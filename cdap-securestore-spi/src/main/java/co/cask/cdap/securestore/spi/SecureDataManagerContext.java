@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  *
  */
-public interface SecureDataStoreContext {
+public interface SecureDataManagerContext {
   /**
    * Provide properties needed for the secure store. This information can not be seen by end user.
    *

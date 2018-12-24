@@ -20,7 +20,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.extension.AbstractExtensionLoader;
-import co.cask.cdap.securestore.spi.SecureDataStore;
+import co.cask.cdap.securestore.spi.SecureDataManager;
 
 import java.util.Collections;
 import java.util.Set;
@@ -28,15 +28,15 @@ import java.util.Set;
 /**
  * Secure Store extension loader.
  */
-public class SecureStoreExtensionLoader extends AbstractExtensionLoader<String, SecureDataStore> {
+public class SecureStoreExtensionLoader extends AbstractExtensionLoader<String, SecureDataManager> {
 
   public SecureStoreExtensionLoader(CConfiguration cConf) {
     super(cConf.get(Constants.Security.Store.EXTENSIONS_DIR));
   }
 
   @Override
-  protected Set<String> getSupportedTypesForProvider(SecureDataStore secureDataStore) {
-    return Collections.singleton("cloud_kms");
+  protected Set<String> getSupportedTypesForProvider(SecureDataManager secureDataManager) {
+    return Collections.singleton("cloudkms");
   }
 
   // filter all non-spi classes to provide isolation from CDAP's classes.

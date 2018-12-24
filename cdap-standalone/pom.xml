@@ -671,12 +671,12 @@
                         <include>*.json</include>
                       </includes>
                     </resource>
+                    <!-- copy secure store extensions -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>
-                      <targetPath>ext/securestore/cloudkms</targetPath>
+                      <targetPath>ext/securestores/cloudkms</targetPath>
                       <includes>
                         <include>*.jar</include>
-                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>

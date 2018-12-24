@@ -25,7 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
-  private static final String CLOUD_KMS_BACKED = "cloud_kms";
+  private static final String CLOUD_KMS_BACKED = "cloudkms";
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));

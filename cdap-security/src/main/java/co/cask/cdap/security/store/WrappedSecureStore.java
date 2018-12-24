@@ -22,7 +22,8 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.securestore.spi.SecureData;
-import co.cask.cdap.securestore.spi.SecureDataStore;
+import co.cask.cdap.securestore.spi.SecureDataManager;
+import co.cask.cdap.securestore.spi.SecureDataManagerContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -35,20 +36,24 @@ import java.util.Optional;
  */
 @Singleton
 public class WrappedSecureStore implements SecureStore, SecureStoreManager {
-  private SecureDataStore secureDataStore;
+  private SecureDataManager secureDataManager;
 
   @Inject
-  public WrappedSecureStore(CConfiguration cConf) {
+  public WrappedSecureStore(CConfiguration cConf) throws Exception {
     SecureStoreExtensionLoader secureStoreExtensionLoader = new SecureStoreExtensionLoader(cConf);
-    Map<String, SecureDataStore> all = secureStoreExtensionLoader.getAll();
+    Map<String, SecureDataManager> all = secureStoreExtensionLoader.getAll();
+
+    secureDataManager = secureStoreExtensionLoader.getAll().get("cloudkms");
+    secureDataManager.initialize(HashMap::new);
 
     // get secure data manager from the classloader
-    for (Map.Entry<String, SecureDataStore> entry : all.entrySet()) {
-      if (entry.getKey().equals("cloud_kms")) {
-        secureDataStore = entry.getValue();
-        break;
-      }
-    }
+//    for (Map.Entry<String, SecureDataManager> entry : all.entrySet()) {
+//      if (entry.getKey().equals("cloudkms")) {
+//        secureDataManager = entry.getValue();
+//        secureDataManager.initialize(HashMap::new);
+//        break;
+//      }
+//    }
   }
 
   /**
@@ -60,7 +65,7 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
   @Override
   public Map<String, String> listSecureData(String namespace) throws Exception {
     Map<String, String> map = new HashMap<>();
-    for (SecureData data : secureDataStore.getSecureData(namespace)) {
+    for (SecureData data : secureDataManager.getSecureData(namespace)) {
       map.put(data.getMetadata().getName(), data.getMetadata().getDescription());
     }
 
@@ -76,7 +81,7 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    Optional<SecureData> data = secureDataStore.getSecureData(namespace, name);
+    Optional<SecureData> data = secureDataManager.getSecureData(namespace, name);
     if (data.isPresent()) {
       SecureData secureData = data.get();
       return new SecureStoreData(new SecureStoreMetadata(secureData.getMetadata().getName(),
@@ -101,7 +106,7 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
   @Override
   public void putSecureData(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
-    secureDataStore.storeSecureData(namespace, name, data.getBytes(), description, properties);
+    secureDataManager.storeSecureData(namespace, name, data.getBytes(), description, properties);
   }
 
   /**
@@ -112,6 +117,6 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void deleteSecureData(String namespace, String name) throws Exception {
-    secureDataStore.deleteSecureData(namespace, name);
+    secureDataManager.deleteSecureData(namespace, name);
   }
 }

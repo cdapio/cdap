@@ -224,7 +224,7 @@
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
-        <stage.securestore.ext.dir>${stage.opt.dir}/ext/securestore</stage.securestore.ext.dir>
+        <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
@@ -542,28 +542,6 @@
                 </configuration>
               </execution>
 
-              <!--Copy secure store extensions -->
-              <execution>
-                <id>copy-securestore-ext-cloudkms</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.securestore.ext.dir}/cloudkms</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec/
-                      </directory>
-                      <includes>
-                        <include>*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-
               <!-- Copy runtime provider extensions -->
               <execution>
                 <id>copy-runtime-ext-emr</id>
@@ -644,6 +622,28 @@
                       </directory>
                       <includes>
                         <include>remote-hadoop.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!--Copy secure store extensions-->
+              <execution>
+                <id>copy-securestore-ext-cloudkms</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.securestores.ext.dir}/cloudkms</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
                       </includes>
                     </resource>
                   </resources>

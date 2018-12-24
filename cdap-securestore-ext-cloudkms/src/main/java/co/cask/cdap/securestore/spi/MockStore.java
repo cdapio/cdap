@@ -16,12 +16,22 @@
 
 package co.cask.cdap.securestore.spi;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * Stores
+ *
  */
-public interface SecureDataStore {
+public class MockStore implements SecureDataStore {
+  private final Map<String, SecureData> inMemoryDataStore = new HashMap<>();
 
-  SecureData getSecureData(String key);
+  @Override
+  public SecureData getSecureData(String key) {
+    return inMemoryDataStore.get(key);
+  }
 
-  void storeSecureData(String key, SecureData data);
+  @Override
+  public void storeSecureData(String key, SecureData data) {
+    inMemoryDataStore.put(key, data);
+  }
 }
