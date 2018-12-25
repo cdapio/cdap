@@ -53,6 +53,7 @@ import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -91,6 +92,9 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   @Inject
   public FileSecureStore(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
     throws IOException {
+    System.setProperty("jceks.key.serialFilter", "java.lang.Enum;java.security.KeyRep;java.security.KeyRep$Type;" +
+      "javax.crypto.spec.SecretKeySpec;co.cask.cdap.security.store.KeyStoreEntry;!*");
+
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);

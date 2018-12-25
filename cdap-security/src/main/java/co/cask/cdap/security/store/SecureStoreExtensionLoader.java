@@ -36,7 +36,7 @@ public class SecureStoreExtensionLoader extends AbstractExtensionLoader<String, 
 
   @Override
   protected Set<String> getSupportedTypesForProvider(SecureDataManager secureDataManager) {
-    return Collections.singleton("cloudkms");
+    return Collections.singleton(secureDataManager.getType());
   }
 
   // filter all non-spi classes to provide isolation from CDAP's classes.

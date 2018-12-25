@@ -26,6 +26,8 @@ import co.cask.cdap.securestore.spi.SecureDataManager;
 import co.cask.cdap.securestore.spi.SecureDataManagerContext;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +38,7 @@ import java.util.Optional;
  */
 @Singleton
 public class WrappedSecureStore implements SecureStore, SecureStoreManager {
+  private static final Logger LOG = LoggerFactory.getLogger(WrappedSecureStore.class);
   private SecureDataManager secureDataManager;
 
   @Inject
@@ -43,17 +46,15 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
     SecureStoreExtensionLoader secureStoreExtensionLoader = new SecureStoreExtensionLoader(cConf);
     Map<String, SecureDataManager> all = secureStoreExtensionLoader.getAll();
 
-    secureDataManager = secureStoreExtensionLoader.getAll().get("cloudkms");
-    secureDataManager.initialize(HashMap::new);
-
     // get secure data manager from the classloader
-//    for (Map.Entry<String, SecureDataManager> entry : all.entrySet()) {
-//      if (entry.getKey().equals("cloudkms")) {
-//        secureDataManager = entry.getValue();
-//        secureDataManager.initialize(HashMap::new);
-//        break;
-//      }
-//    }
+    for (Map.Entry<String, SecureDataManager> entry : all.entrySet()) {
+      if (entry.getKey().equals("cloudkms")) {
+        LOG.info("######### Got cloud kms..");
+        secureDataManager = entry.getValue();
+        secureDataManager.initialize(HashMap::new);
+        break;
+      }
+    }
   }
 
   /**
