@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.cube.Measurement;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import com.google.common.collect.HashBasedTable;
@@ -35,10 +36,12 @@ import com.google.common.collect.Table;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test base for {@link co.cask.cdap.data2.dataset2.lib.timeseries.FactTable}.
@@ -562,6 +565,72 @@ public class FactTableTest {
     Assert.assertEquals(3, splitsWithRows.size());
   }
 
+  @Test
+  public void testCache() throws Exception {
+    String tableName = "testCacheTable";
+    String entityTableName = "testCacheEntityTable";
+    InMemoryTableService.create(tableName);
+    InMemoryTableService.create(entityTableName);
+    int resolution = 5;
+
+    InMemoryMetricsTable metricsTable = new InMemoryMetricsTable(tableName);
+    FactTable table = new FactTable(metricsTable,
+                                    new EntityTable(new InMemoryMetricsTable(entityTableName)), resolution, 2);
+
+    // set the metrics collector for the table
+    FactTableMetricsCollector metricsCollector = new FactTableMetricsCollector(resolution);
+    table.setMetricsCollector(metricsCollector);
+
+    // Initially the cache should be empty
+    Assert.assertEquals(0, table.getFactCounterCache().size());
+
+    // add some value with current ts
+    long timestampNow = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) / resolution * resolution;
+    List<DimensionValue> dims = dimValues("dim1", "dim2");
+    List<Fact> metrics = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      metrics.add(new Fact(timestampNow, dims, new Measurement("metric" + i, MeasureType.COUNTER, 1)));
+    }
+    table.add(metrics);
+
+    // Since no previous add to the metric store, these increment should still be considered as COUNTER, and the
+    // cache should be updated.
+    Assert.assertEquals(10, metricsCollector.getLastIncrementSize());
+    Assert.assertEquals(0, metricsCollector.getLastGaugeSize());
+    Assert.assertEquals(10, table.getFactCounterCache().size());
+    for (long value : table.getFactCounterCache().asMap().values()) {
+      Assert.assertEquals(timestampNow, value);
+    }
+
+    // Add metrics older than the current timestamp, these increment should still be considered as COUNTER, and the
+    // cache should NOT be updated.
+    metrics = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      metrics.add(new Fact(timestampNow - 5, dims, new Measurement("metric" + i, MeasureType.COUNTER, 1)));
+    }
+    table.add(metrics);
+    Assert.assertEquals(10, metricsCollector.getLastIncrementSize());
+    Assert.assertEquals(0, metricsCollector.getLastGaugeSize());
+    Assert.assertEquals(10, table.getFactCounterCache().size());
+    for (long value : table.getFactCounterCache().asMap().values()) {
+      Assert.assertEquals(timestampNow, value);
+    }
+
+    // Now insert metrics newer than the current timestamp, the increment should be considered as GAUGE, and the cache
+    // should be updated
+    metrics = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      metrics.add(new Fact(timestampNow + 5, dims, new Measurement("metric" + i, MeasureType.COUNTER, 1)));
+    }
+    table.add(metrics);
+    Assert.assertEquals(0, metricsCollector.getLastIncrementSize());
+    Assert.assertEquals(10, metricsCollector.getLastGaugeSize());
+    Assert.assertEquals(10, table.getFactCounterCache().size());
+    for (long value : table.getFactCounterCache().asMap().values()) {
+      Assert.assertEquals(timestampNow + 5, value);
+    }
+  }
+
   private List<TimeValue> timeValues(long ts, int resolution, long... values) {
     List<TimeValue> timeValues = Lists.newArrayList();
     for (int i = 0; i < values.length; i++) {
@@ -570,9 +639,7 @@ public class FactTableTest {
     return timeValues;
   }
 
-  private void writeInc(FactTable table, String metric, long ts, int value, String... dims)
-    throws Exception {
-
+  private void writeInc(FactTable table, String metric, long ts, int value, String... dims) {
     table.add(ImmutableList.of(new Fact(ts, dimValues(dims), new Measurement(metric, MeasureType.COUNTER, value))));
   }
 
@@ -585,7 +652,7 @@ public class FactTableTest {
   }
 
   private void assertScan(FactTable table, Table<String, List<DimensionValue>, List<TimeValue>> expected,
-                          FactScan scan) throws Exception {
+                          FactScan scan) {
     Table<String, List<DimensionValue>, List<TimeValue>> resultTable = HashBasedTable.create();
     FactScanner scanner = table.scan(scan);
     try {
@@ -603,5 +670,42 @@ public class FactTableTest {
     }
 
     Assert.assertEquals(expected, resultTable);
+  }
+
+  /**
+   * This metrics collector will remember the last value of number of increments and gauges of the fact table
+   */
+  private class FactTableMetricsCollector implements MetricsCollector {
+    private long lastIncrementSize;
+    private long lastGaugeSize;
+    private String putCountMetric;
+    private String incrementCountMetric;
+
+    FactTableMetricsCollector(int resolution) {
+      this.putCountMetric = "factTable." + resolution + ".put.count";
+      this.incrementCountMetric = "factTable." + resolution + ".increment.count";
+    }
+
+    @Override
+    public void increment(String metricName, long value) {
+      if (putCountMetric.equals(metricName)) {
+        lastGaugeSize = value;
+      } else if (incrementCountMetric.equals(metricName)) {
+        lastIncrementSize = value;
+      }
+    }
+
+    @Override
+    public void gauge(String metricName, long value) {
+      // no-op
+    }
+
+    long getLastIncrementSize() {
+      return lastIncrementSize;
+    }
+
+    long getLastGaugeSize() {
+      return lastGaugeSize;
+    }
   }
 }

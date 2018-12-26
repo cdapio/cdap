@@ -25,8 +25,10 @@ import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import com.google.common.base.Function;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -45,8 +47,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -62,14 +66,6 @@ public final class FactTable implements Closeable {
   private static final int MAX_RECORDS_TO_SCAN_DURING_SEARCH = 10 * 1000 * 1000;
   private static final int MAX_SCANS_DURING_SEARCH = 10 * 1000;
 
-  private static final Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>
-    TRANSFORM_MAP_BYTE_ARRAY_TO_LONG = new Function<NavigableMap<byte[], byte[]>, NavigableMap<byte[], Long>>() {
-    @Override
-    public NavigableMap<byte[], Long> apply(NavigableMap<byte[], byte[]> input) {
-      return Maps.transformValues(input, Bytes::toLong);
-    }
-  };
-
   private final MetricsTable timeSeriesTable;
   private final EntityTable entityTable;
   private final FactCodec codec;
@@ -79,6 +75,7 @@ public final class FactTable implements Closeable {
 
   private final String putCountMetric;
   private final String incrementCountMetric;
+  private final Cache<FactCacheKey, Long> factCounterCache;
 
   @Nullable
   private MetricsCollector metrics;
@@ -106,6 +103,10 @@ public final class FactTable implements Closeable {
     this.rollTime = rollTime;
     this.putCountMetric = "factTable." + resolution + ".put.count";
     this.incrementCountMetric = "factTable." + resolution + ".increment.count";
+
+    // only use the cache if the resolution is not the total resolution
+    this.factCounterCache = resolution == Integer.MAX_VALUE ? null :
+      CacheBuilder.newBuilder().expireAfterAccess(1L, TimeUnit.MINUTES).maximumSize(100000).build();
   }
 
   public void setMetricsCollector(MetricsCollector metrics) {
@@ -116,13 +117,43 @@ public final class FactTable implements Closeable {
     // Simply collecting all rows/cols/values that need to be put to the underlying table.
     NavigableMap<byte[], NavigableMap<byte[], Long>> gaugesTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     NavigableMap<byte[], NavigableMap<byte[], Long>> incrementsTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+
+    // this map is used to store metrics which was COUNTER type, but can be considered as GAUGE, which means it is
+    // guaranteed to be a new row key in the underlying table.
+    NavigableMap<byte[], NavigableMap<byte[], Long>> incGaugeTable = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    // this map is used to store the updated timestamp for the cache
+    Map<FactCacheKey, Long> cacheUpdates = new HashMap<>();
     for (Fact fact : facts) {
       for (Measurement measurement : fact.getMeasurements()) {
         byte[] rowKey = codec.createRowKey(fact.getDimensionValues(), measurement.getName(), fact.getTimestamp());
         byte[] column = codec.createColumn(fact.getTimestamp());
 
         if (MeasureType.COUNTER == measurement.getType()) {
-          inc(incrementsTable, rowKey, column, measurement.getValue());
+          if (factCounterCache != null) {
+            // round to the resolution timestamp
+            long tsToResolution = fact.getTimestamp() / resolution * resolution;
+            FactCacheKey cacheKey = new FactCacheKey(fact.getDimensionValues(), measurement.getName());
+            Long existingTs = factCounterCache.getIfPresent(cacheKey);
+
+            // if there is no existing ts or existing ts is greater than or equal to the current ts, this metric value
+            // cannot be considered as a gauge, and we should update the incrementsTable
+            if (existingTs == null || existingTs >= tsToResolution) {
+              inc(incrementsTable, rowKey, column, measurement.getValue());
+              // if the current ts is greater than existing ts, then we can consider this metric as a newly seen metric
+              // and perform gauge on this metric
+            } else {
+              inc(incGaugeTable, rowKey, column, measurement.getValue());
+            }
+
+            // if there is no existing value or the current ts is greater than the existing ts, the value in the cache
+            // should be updated
+            if (existingTs == null || existingTs < tsToResolution) {
+              cacheUpdates.compute(
+                cacheKey, (key, oldValue) -> oldValue == null || tsToResolution > oldValue ? tsToResolution : oldValue);
+            }
+          } else {
+            inc(incrementsTable, rowKey, column, measurement.getValue());
+          }
         } else {
           gaugesTable
             .computeIfAbsent(rowKey, k -> Maps.newTreeMap(Bytes.BYTES_COMPARATOR))
@@ -131,6 +162,10 @@ public final class FactTable implements Closeable {
       }
     }
 
+    if (factCounterCache != null) {
+      gaugesTable.putAll(incGaugeTable);
+      factCounterCache.putAll(cacheUpdates);
+    }
     // todo: replace with single call, to be able to optimize rpcs in underlying table
     timeSeriesTable.put(gaugesTable);
     timeSeriesTable.increment(incrementsTable);
@@ -414,6 +449,11 @@ public final class FactTable implements Closeable {
     return FactCodec.getSplits(aggGroupsCount);
   }
 
+  @VisibleForTesting
+  Cache<FactCacheKey, Long> getFactCounterCache() {
+    return factCounterCache;
+  }
+
   private FuzzyRowFilter createFuzzyRowFilter(FactScan scan, List<String> measureNames) {
     List<ImmutablePair<byte[], byte[]>> fuzzyPairsList = new ArrayList<>();
     for (String measureName : measureNames) {
@@ -450,5 +490,33 @@ public final class FactTable implements Closeable {
     }
 
     values.put(column, newValue);
+  }
+
+  class FactCacheKey {
+    private final List<DimensionValue> dimensionValues;
+    private final String metricName;
+
+    FactCacheKey(List<DimensionValue> dimensionValues, String metricName) {
+      this.dimensionValues = dimensionValues;
+      this.metricName = metricName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      FactCacheKey that = (FactCacheKey) o;
+      return Objects.equals(dimensionValues, that.dimensionValues) &&
+        Objects.equals(metricName, that.metricName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(dimensionValues, metricName);
+    }
   }
 }
