@@ -29,7 +29,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableMap;
 
@@ -55,7 +54,6 @@ public final class EntityIdKeyHelper {
       .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
       // TODO (CDAP-14584) remove stream and view
       .put(StreamId.class, EntityTypeSimpleName.STREAM.getSerializedForm())
-      .put(StreamViewId.class, EntityTypeSimpleName.VIEW.getSerializedForm())
       .put(ScheduleId.class, EntityTypeSimpleName.SCHEDULE.getSerializedForm())
       .build();
 
@@ -93,15 +91,6 @@ public final class EntityIdKeyHelper {
       String streamId = stream.getStream();
       builder.add(namespaceId);
       builder.add(streamId);
-    } else if (type.equals(TYPE_MAP.get(StreamViewId.class))) {
-      // TODO (CDAP-14584) remove stream and view
-      StreamViewId view = (StreamViewId) namespacedEntityId;
-      String namespaceId = view.getNamespace();
-      String streamId = view.getStream();
-      String viewId = view.getView();
-      builder.add(namespaceId);
-      builder.add(streamId);
-      builder.add(viewId);
     } else if (type.equals(TYPE_MAP.get(ArtifactId.class))) {
       ArtifactId artifactId = (ArtifactId) namespacedEntityId;
       String namespaceId = artifactId.getNamespace();
@@ -154,11 +143,6 @@ public final class EntityIdKeyHelper {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return new StreamId(namespaceId, instanceId);
-    } else if (type.equals(TYPE_MAP.get(StreamViewId.class)) || type.equals("view")) {
-      String namespaceId = keySplitter.getString();
-      String streamId  = keySplitter.getString();
-      String viewId = keySplitter.getString();
-      return new StreamViewId(namespaceId, streamId, viewId);
     } else if (type.equals(TYPE_MAP.get(ScheduleId.class))) {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();

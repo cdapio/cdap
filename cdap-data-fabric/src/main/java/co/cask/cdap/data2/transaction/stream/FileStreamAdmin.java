@@ -18,8 +18,6 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -30,7 +28,6 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -42,7 +39,6 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.id.EntityId;
@@ -51,7 +47,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
@@ -104,7 +99,6 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamMetaStore streamMetaStore;
   private final OwnerAdmin ownerAdmin;
   private final ExploreTableNaming tableNaming;
-  private final ViewAdmin viewAdmin;
   private final Impersonator impersonator;
 
   private ExploreFacade exploreFacade;
@@ -121,7 +115,6 @@ public class FileStreamAdmin implements StreamAdmin {
                          StreamMetaStore streamMetaStore,
                          OwnerAdmin ownerAdmin,
                          ExploreTableNaming tableNaming,
-                         ViewAdmin viewAdmin,
                          Impersonator impersonator) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
@@ -134,7 +127,6 @@ public class FileStreamAdmin implements StreamAdmin {
     this.streamMetaStore = streamMetaStore;
     this.ownerAdmin = ownerAdmin;
     this.tableNaming = tableNaming;
-    this.viewAdmin = viewAdmin;
     this.impersonator = impersonator;
   }
 
@@ -455,63 +447,6 @@ public class FileStreamAdmin implements StreamAdmin {
   }
 
   @Override
-  public boolean createOrUpdateView(final StreamViewId viewId, final ViewSpecification spec) throws Exception {
-    final StreamId stream = viewId.getParent();
-    return streamCoordinatorClient.exclusiveAction(
-      stream, new Callable<Boolean>() {
-        @Override
-        public Boolean call() throws Exception {
-          if (!exists(stream)) {
-            throw new NotFoundException(stream);
-          }
-          return viewAdmin.createOrUpdate(viewId, spec);
-        }
-      });
-  }
-
-  @Override
-  public void deleteView(final StreamViewId viewId) throws Exception {
-    final StreamId stream = viewId.getParent();
-    streamCoordinatorClient.exclusiveAction(
-      stream, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          if (!exists(stream)) {
-            throw new StreamNotFoundException(stream);
-          }
-          viewAdmin.delete(viewId);
-          return null;
-        }
-      });
-  }
-
-  @Override
-  public List<StreamViewId> listViews(final StreamId streamId) throws Exception {
-    if (!exists(streamId)) {
-      throw new StreamNotFoundException(streamId);
-    }
-    return viewAdmin.list(streamId);
-  }
-
-  @Override
-  public ViewSpecification getView(final StreamViewId viewId) throws Exception {
-    final StreamId stream = viewId.getParent();
-    if (!exists(stream)) {
-      throw new StreamNotFoundException(stream);
-    }
-    return viewAdmin.get(viewId);
-  }
-
-  @Override
-  public boolean viewExists(StreamViewId viewId) throws Exception {
-    StreamId stream = viewId.getParent();
-    if (!exists(stream)) {
-      throw new StreamNotFoundException(stream);
-    }
-    return viewAdmin.exists(viewId);
-  }
-
-  @Override
   public void register(Iterable<? extends EntityId> owners, StreamId streamId) {
     usageWriter.registerAll(owners, streamId);
   }
@@ -631,13 +566,6 @@ public class FileStreamAdmin implements StreamAdmin {
           }
           alterExploreStream(streamId.getParent().stream(StreamUtils.getStreamNameFromLocation(streamLocation)), false,
                                                          null);
-
-          // Drop the associated views
-          List<StreamViewId> views = viewAdmin.list(streamId);
-          for (StreamViewId view : views) {
-            viewAdmin.delete(view);
-          }
-
 
           impersonator.doAs(streamId, new Callable<Void>() {
             @Override

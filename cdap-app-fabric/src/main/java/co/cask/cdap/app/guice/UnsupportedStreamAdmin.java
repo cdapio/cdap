@@ -21,12 +21,10 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 
 import java.io.IOException;
 import java.util.List;
@@ -104,31 +102,6 @@ final class UnsupportedStreamAdmin implements StreamAdmin {
 
   @Override
   public void drop(StreamId streamId) throws Exception {
-    throw new UnsupportedOperationException("Stream is not supported");
-  }
-
-  @Override
-  public boolean createOrUpdateView(StreamViewId viewId, ViewSpecification spec) throws Exception {
-    throw new UnsupportedOperationException("Stream is not supported");
-  }
-
-  @Override
-  public void deleteView(StreamViewId viewId) throws Exception {
-    throw new UnsupportedOperationException("Stream is not supported");
-  }
-
-  @Override
-  public List<StreamViewId> listViews(StreamId streamId) throws Exception {
-    throw new UnsupportedOperationException("Stream is not supported");
-  }
-
-  @Override
-  public ViewSpecification getView(StreamViewId viewId) throws Exception {
-    throw new UnsupportedOperationException("Stream is not supported");
-  }
-
-  @Override
-  public boolean viewExists(StreamViewId viewId) throws Exception {
     throw new UnsupportedOperationException("Stream is not supported");
   }
 

@@ -34,7 +34,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
@@ -104,7 +103,6 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new NotificationFeedServiceRuntimeModule().getInMemoryModules());
     install(new NotificationServiceRuntimeModule().getInMemoryModules());
     install(new ConfigStoreModule().getInMemoryModule());
-    install(new ViewAdminModules().getInMemoryModules());
     install(new StreamAdminModules().getInMemoryModules());
     install(new StreamServiceRuntimeModule().getInMemoryModules());
     install(new NamespaceStoreModule().getStandaloneModules());

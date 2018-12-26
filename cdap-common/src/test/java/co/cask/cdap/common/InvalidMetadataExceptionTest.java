@@ -36,13 +36,6 @@ public class InvalidMetadataExceptionTest {
       "which exists in namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
-    // test view
-    invalidMetadataException =
-      new InvalidMetadataException(NamespaceId.DEFAULT.stream("st").view("v").toMetadataEntity(), "error");
-    expectedMessage =
-      "Unable to set metadata for namespace=default,stream=st,view=v of type 'view'. error";
-    Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
-
     // test program
     invalidMetadataException =
       new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.FLOW, "myflow")

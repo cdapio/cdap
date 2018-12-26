@@ -28,7 +28,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.gson.JsonDeserializationContext;
@@ -74,13 +73,11 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
         return deserializeDatasetId(jsonObj);
       case "stream":
         return deserializeStreamId(jsonObj);
-      case "stream_view":
-        return deserializeViewId(jsonObj);
       case "artifact":
         return deserializeArtifactId(jsonObj);
       default:
         throw new UnsupportedOperationException(
-          String.format("Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
+          String.format("Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, " +
                           "%s, %s, %s, %s, %s is supported.",
                         entity,
                         ApplicationId.class.getSimpleName(),
@@ -93,7 +90,6 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
                         WorkflowId.class.getSimpleName(),
                         DatasetId.class.getSimpleName(),
                         StreamId.class.getSimpleName(),
-                        StreamViewId.class.getSimpleName(),
                         ArtifactId.class.getSimpleName()
           )
         );
@@ -167,12 +163,6 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
     NamespaceId namespace = deserializeNamespace(id);
     String streamName = id.get("stream").getAsString();
     return new StreamId(namespace.getNamespace(), streamName);
-  }
-
-  private StreamViewId deserializeViewId(JsonObject id) {
-    StreamId streamId = deserializeStreamId(id);
-    String view = id.get("view").getAsString();
-    return new StreamViewId(streamId.getNamespace(), streamId.getStream(), view);
   }
 
   @Override

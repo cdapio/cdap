@@ -21,13 +21,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
@@ -163,36 +161,6 @@ public class AuthorizationStreamAdmin implements StreamAdmin {
     // User should have ADMIN access to drop the stream
     ensureAccess(streamId, Action.ADMIN);
     delegate.drop(streamId);
-  }
-
-  @Override
-  public boolean createOrUpdateView(StreamViewId viewId, ViewSpecification spec) throws Exception {
-    AuthorizationUtil.ensureAccess(viewId.getParent(), authorizationEnforcer, authenticationContext.getPrincipal());
-    return delegate.createOrUpdateView(viewId, spec);
-  }
-
-  @Override
-  public void deleteView(StreamViewId viewId) throws Exception {
-    AuthorizationUtil.ensureAccess(viewId.getParent(), authorizationEnforcer, authenticationContext.getPrincipal());
-    delegate.deleteView(viewId);
-  }
-
-  @Override
-  public List<StreamViewId> listViews(StreamId streamId) throws Exception {
-    AuthorizationUtil.ensureAccess(streamId, authorizationEnforcer, authenticationContext.getPrincipal());
-    return delegate.listViews(streamId);
-  }
-
-  @Override
-  public ViewSpecification getView(StreamViewId viewId) throws Exception {
-    AuthorizationUtil.ensureAccess(viewId.getParent(), authorizationEnforcer, authenticationContext.getPrincipal());
-    return delegate.getView(viewId);
-  }
-
-  @Override
-  public boolean viewExists(StreamViewId viewId) throws Exception {
-    AuthorizationUtil.ensureAccess(viewId.getParent(), authorizationEnforcer, authenticationContext.getPrincipal());
-    return delegate.viewExists(viewId);
   }
 
   @Override

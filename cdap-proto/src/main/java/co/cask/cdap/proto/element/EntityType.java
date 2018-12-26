@@ -34,7 +34,6 @@ import co.cask.cdap.proto.id.QueryId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -58,7 +57,6 @@ public enum EntityType {
   PROGRAM_RUN(ProgramRunId.class),
 
   STREAM(StreamId.class),
-  STREAM_VIEW(StreamViewId.class),
 
   DATASET_TYPE(DatasetTypeId.class),
   DATASET_MODULE(DatasetModuleId.class),

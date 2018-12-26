@@ -51,9 +51,4 @@ public interface CDAPEntitiesMXBean {
    * Returns the number of streams in CDAP
    */
   int getStreams();
-
-  /**
-   * Returns the number of stream views in CDAP
-   */
-  int getStreamViews();
 }

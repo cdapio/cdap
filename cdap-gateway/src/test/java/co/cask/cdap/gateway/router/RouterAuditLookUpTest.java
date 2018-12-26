@@ -48,8 +48,6 @@ public class RouterAuditLookUpTest {
                   new AuditLogConfig(HttpMethod.PUT, false, false, ImmutableList.of("X-Class-Name")));
     // endpoints from StreamHandler
     assertContent("/v3/namespaces/default/streams/myStream", DEFAULT_AUDIT);
-    // endpoints from StreamViewHttpHandler
-    assertContent("/v3/namespaces/default/streams/foo/views/myView", DEFAULT_AUDIT);
   }
 
   @Test

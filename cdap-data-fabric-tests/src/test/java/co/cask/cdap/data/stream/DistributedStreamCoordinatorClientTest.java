@@ -28,7 +28,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -109,7 +108,6 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
         }
       },
       new ExploreClientModule(),
-      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override

@@ -567,13 +567,6 @@ public final class Constants {
 
     // ZooKeeper namespace in which to keep the coordination metadata
     public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
-
-    /**
-     * Stream view constants.
-     */
-    public static final class View {
-      public static final String STORE_TABLE = "explore.stream.view.table";
-    }
   }
 
   /**

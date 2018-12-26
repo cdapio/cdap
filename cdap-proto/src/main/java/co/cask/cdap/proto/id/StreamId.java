@@ -95,10 +95,6 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
     return EntityId.fromString(string, StreamId.class);
   }
 
-  public StreamViewId view(String view) {
-    return new StreamViewId(namespace, stream, view);
-  }
-
   public byte[] toBytes() {
     if (idBytes == null) {
       idBytes = Bytes.toBytes(toString());
