@@ -474,9 +474,13 @@ public class DefaultCube implements Cube, MeteredDataset {
   @Override
   public void close() throws IOException {
     try {
+      // wait for 15 seocnds since the thread operation can be around 10 seconds if there are compaction happening
+      executorService.awaitTermination(15, TimeUnit.SECONDS);
       for (FactTable factTable : resolutionToFactTable.values()) {
         factTable.close();
       }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     } finally {
       executorService.shutdown();
     }
