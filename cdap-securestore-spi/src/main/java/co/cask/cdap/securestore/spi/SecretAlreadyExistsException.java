@@ -17,11 +17,19 @@
 package co.cask.cdap.securestore.spi;
 
 /**
- * Stores
+ * Exception that indicates a secret already exists.
  */
-public interface SecureDataStore {
+public class SecretAlreadyExistsException extends IllegalArgumentException {
+  public SecretAlreadyExistsException(String message) {
+    super(message);
+  }
 
-  SecureData getSecureData(String key);
+  public SecretAlreadyExistsException(Throwable cause) {
+    super(cause);
+  }
 
-  void storeSecureData(String key, SecureData data);
+  public SecretAlreadyExistsException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
 }

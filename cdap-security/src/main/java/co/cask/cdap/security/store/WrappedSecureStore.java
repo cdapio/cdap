@@ -21,9 +21,8 @@ import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.securestore.spi.SecureData;
-import co.cask.cdap.securestore.spi.SecureDataManager;
-import co.cask.cdap.securestore.spi.SecureDataManagerContext;
+import co.cask.cdap.securestore.spi.secret.Secret;
+import co.cask.cdap.securestore.spi.SecretsManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -39,21 +38,18 @@ import java.util.Optional;
 @Singleton
 public class WrappedSecureStore implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(WrappedSecureStore.class);
-  private SecureDataManager secureDataManager;
+  private SecretsManager secretsManager;
 
   @Inject
   public WrappedSecureStore(CConfiguration cConf) throws Exception {
     SecureStoreExtensionLoader secureStoreExtensionLoader = new SecureStoreExtensionLoader(cConf);
-    Map<String, SecureDataManager> all = secureStoreExtensionLoader.getAll();
+    Map<String, SecretsManager> all = secureStoreExtensionLoader.getAll();
 
     // get secure data manager from the classloader
-    for (Map.Entry<String, SecureDataManager> entry : all.entrySet()) {
-      if (entry.getKey().equals("cloudkms")) {
-        LOG.info("######### Got cloud kms..");
-        secureDataManager = entry.getValue();
-        secureDataManager.initialize(HashMap::new);
-        break;
-      }
+    // TODO Make sure only one secure store is initialized. Decide that from the cConf variable
+    for (Map.Entry<String, SecretsManager> entry : all.entrySet()) {
+        secretsManager = entry.getValue();
+        secretsManager.initialize(HashMap::new);
     }
   }
 
@@ -66,7 +62,7 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
   @Override
   public Map<String, String> listSecureData(String namespace) throws Exception {
     Map<String, String> map = new HashMap<>();
-    for (SecureData data : secureDataManager.getSecureData(namespace)) {
+    for (Secret data : secretsManager.getSecret(namespace)) {
       map.put(data.getMetadata().getName(), data.getMetadata().getDescription());
     }
 
@@ -82,14 +78,14 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    Optional<SecureData> data = secureDataManager.getSecureData(namespace, name);
+    Optional<Secret> data = secretsManager.getSecret(namespace, name);
     if (data.isPresent()) {
-      SecureData secureData = data.get();
-      return new SecureStoreData(new SecureStoreMetadata(secureData.getMetadata().getName(),
-                                                         secureData.getMetadata().getDescription(),
-                                                         secureData.getMetadata().getCreateTimeMs(),
-                                                         secureData.getMetadata().getProperties()),
-                                 secureData.getData());
+      Secret secret = data.get();
+      return new SecureStoreData(new SecureStoreMetadata(secret.getMetadata().getName(),
+                                                         secret.getMetadata().getDescription(),
+                                                         secret.getMetadata().getCreateTimeMs(),
+                                                         secret.getMetadata().getProperties()),
+                                 secret.getData());
     }
 
     throw new Exception("Secure Data not found.");
@@ -107,7 +103,7 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
   @Override
   public void putSecureData(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
-    secureDataManager.storeSecureData(namespace, name, data.getBytes(), description, properties);
+    secretsManager.storeSecret(namespace, name, data.getBytes(), description, properties);
   }
 
   /**
@@ -118,6 +114,6 @@ public class WrappedSecureStore implements SecureStore, SecureStoreManager {
    */
   @Override
   public void deleteSecureData(String namespace, String name) throws Exception {
-    secureDataManager.deleteSecureData(namespace, name);
+    secretsManager.deleteSecret(namespace, name);
   }
 }

@@ -16,16 +16,19 @@
 
 package co.cask.cdap.securestore.spi;
 
-import java.util.Map;
-
 /**
- *
+ * An Exception that indicates secret is not found.
  */
-public interface SecureDataManagerContext {
-  /**
-   * Provide properties needed for the secure store. This information can not be seen by end user.
-   *
-   * @return
-   */
-  Map<String, String> getProperties();
+public class SecretNotFoundException extends IllegalArgumentException {
+  public SecretNotFoundException(String message) {
+    super(message);
+  }
+
+  public SecretNotFoundException(Throwable cause) {
+    super(cause);
+  }
+
+  public SecretNotFoundException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

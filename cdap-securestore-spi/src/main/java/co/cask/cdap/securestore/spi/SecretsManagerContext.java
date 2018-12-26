@@ -16,22 +16,25 @@
 
 package co.cask.cdap.securestore.spi;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * Secrets Manager context.
  */
-public class MockStore implements SecureDataStore {
-  private final Map<String, SecureData> inMemoryDataStore = new HashMap<>();
+public interface SecretsManagerContext {
 
-  @Override
-  public SecureData getSecureData(String key) {
-    return inMemoryDataStore.get(key);
-  }
+  /**
+   * System properties are derived from the CDAP configuration. Anything in the CDAP configuration that is prefixed by
+   * 'securestore.system.properties.[securestore-name].' will be adding as an entry in the system properties.
+   *
+   * @return unmodifiable system properties for the secrets manager
+   */
+  Map<String, String> getProperties();
 
-  @Override
-  public void storeSecureData(String key, SecureData data) {
-    inMemoryDataStore.put(key, data);
-  }
+  /**
+   * Secrets metadata store to store metadata and associated
+   *
+   * @return secrets metadata store
+   */
+  SecretsMetadataStore getSecretsMetadataStore();
 }
