@@ -292,6 +292,16 @@
                 </goals>
                 <configuration>
                   <target>
+                   <copy todir = "${stage.opt.dir}/bin">
+                      <fileset dir = "node">
+                        <include name="node" />
+                      </fileset>
+                    </copy>
+                    <copy todir = "${stage.opt.dir}">
+                      <fileset dir = "./">
+                        <include name="LICENSE-node" />
+                      </fileset>
+                    </copy>
                     <copy todir = "${stage.opt.dir}">
                       <fileset dir = "server_dist">
                         <exclude name="node_modules/**" />
