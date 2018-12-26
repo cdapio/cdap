@@ -3447,6 +3447,14 @@
   </property>
 
   <property>
+    <name>security.store.file.jceks.key.serialFilter</name>
+    <value>${local.data.dir}/store</value>
+    <description>
+
+    </description>
+  </property>
+
+  <property>
     <name>security.store.provider</name>
     <value>none</value>
     <description>
