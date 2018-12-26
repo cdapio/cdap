@@ -28,23 +28,24 @@ import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.Charsets;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class FileSecureStoreTest {
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final String NAMESPACE1 = "default";
   private static final String NAMESPACE2 = "namespace2";
-  private static final String STORE_PATH = System.getProperty("java.io.tmpdir");
   private static final String KEY1 = "key1";
   private static final String VALUE1 = "value1";
   private static final String DESCRIPTION1 = "This is the first key.";
@@ -70,7 +71,7 @@ public class FileSecureStoreTest {
   @Before
   public void setUp() throws Exception {
     CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.Security.Store.FILE_PATH, STORE_PATH);
+    conf.set(Constants.Security.Store.FILE_PATH, TEMP_FOLDER.newFolder().getAbsolutePath());
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
     InMemoryNamespaceClient namespaceClient = new InMemoryNamespaceClient();
@@ -85,11 +86,6 @@ public class FileSecureStoreTest {
     FileSecureStore fileSecureStore = new FileSecureStore(conf, sConf, namespaceClient);
     secureStoreManager = fileSecureStore;
     secureStore = fileSecureStore;
-  }
-
-  @After
-  public void tearDown() throws IOException {
-    Files.deleteIfExists(Paths.get(STORE_PATH, "securestore"));
   }
 
   private void populateStore() throws Exception {
