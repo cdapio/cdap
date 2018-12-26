@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,6 +91,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   @Inject
   public FileSecureStore(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
     throws IOException {
+    System.setProperty("jceks.key.serialFilter", cConf.get(Constants.Security.Store.SERIAL_FILTER_SYSTEM_PROPERTY));
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);

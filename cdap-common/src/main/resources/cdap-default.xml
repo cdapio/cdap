@@ -3448,9 +3448,12 @@
 
   <property>
     <name>security.store.file.jceks.key.serialFilter</name>
-    <value>${local.data.dir}/store</value>
+    <value>java.lang.Enum;java.security.KeyRep;java.security.KeyRep$Type;javax.crypto.spec.SecretKeySpec;co.cask.cdap.security.store.KeyStoreEntry;!*</value>
     <description>
-
+      Java 8u171 has introduced new jceks.key.serialFilter which allows java.lang.Enum, java.security.KeyRep,
+      java.security.KeyRep$Type, and javax.crypto.spec.SecretKeySpec but rejects all the others. The value of this
+      property will be set as java system property in file secure store.
+      See https://www.java.com/en/download/faq/release_changes.xml for more information on jceks.key.serialFilter.
     </description>
   </property>
 
