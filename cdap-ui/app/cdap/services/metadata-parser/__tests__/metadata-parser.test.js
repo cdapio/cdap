@@ -112,22 +112,6 @@ describe('metadata-parser', () => {
     expect(parsedMetadata.type).toBe('dataset');
   });
 
-  it('should parse stream metadata', () => {
-    const streamMetadata = {
-      metadataEntity: {
-        details: {
-          stream: 'StreamName',
-        },
-        type: 'stream',
-      },
-    };
-
-    const parsedMetadata = parseMetadata(streamMetadata);
-
-    expect(parsedMetadata.id).toBe('StreamName');
-    expect(parsedMetadata.type).toBe('stream');
-  });
-
   it('should parse program metadata', () => {
     const programMetadata = {
       metadataEntity: {

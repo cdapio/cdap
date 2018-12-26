@@ -63,21 +63,12 @@ commons:
     spark:
       plural: Spark
       singular: Spark
-    stream:
-      plural: Streams
-      singular: Stream
-      programs: Programs
-      events: Events
-      bytes: Bytes
     worker:
       plural: Workers
       singular: Worker
     workflow:
       plural: Workflows
       singular: Workflow
-    view:
-      plural: Stream Views
-      singular: Stream View
   export: Export
   formatLabel: Format
   hydrator: Cask Hydrator
@@ -100,7 +91,6 @@ commons:
   secondsShortLabel: secs
   secShortLabel: sec
   status: Status
-  stream: Stream
   then: Then
   tracker: Cask Tracker
   typeLabel: Type
@@ -191,7 +181,6 @@ features:
       remote_system_operation: Remote System Operation
       requested: Requested
       setBtn: Set
-      streams: Streams
       transaction: Transaction
       viewlogs: View Logs
     systemMetrics: System metrics
@@ -1550,8 +1539,6 @@ features:
 
   Market:
     action-types:
-      create_stream:
-        name: Create
       create_app:
         name: Create
       create_pipeline_draft:
@@ -1658,7 +1645,6 @@ features:
       applications: Applications
       datasets: Datasets
       namespaceLabel: Namespace
-      streams: Streams
     pipelinesLabel: Pipelines
     ProductDropdown:
       aboutLabel: About {productName}
@@ -1743,7 +1729,7 @@ features:
 
   Overview:
     DatasetTab:
-      title: "Datasets and streams used by \"{appId}\""
+      title: "Datasets used by \"{appId}\""
     deployedLabel:
       data: Created
       app: Deployed
@@ -2345,10 +2331,6 @@ features:
       description: A plugin is an easy way to extend the functionality of an application.
       label: Plugin
       modalheadertitle: Upload plugin artifact
-    Stream:
-      actionbtn0: Create
-      description: A stream is used to ingest data into HDFS in real-time or batch.
-      label: Stream
   RulesEngine:
     AddRulesEngineToPipelineModal:
       batchPipelineBtn: Batch pipeline
@@ -2454,9 +2436,6 @@ features:
 
   StatusAlertMessage:
     message: 'Services are back online'
-  StreamDetailedView:
-    Title: '{productName} | Stream | {streamId}'
-
   Tags:
     allTags: All Tags
     labelWithCount: Tags ({count})
@@ -2486,7 +2465,7 @@ features:
 
   ViewSwitch:
     actionsLabel: Actions
-    DatasetStreamTable:
+    DatasetTable:
       readsLabel: Reads
       writesLabel: Writes
       eventsLabel: Events
@@ -2770,48 +2749,4 @@ features:
         title: Configure a pipeline
       success: You have successfully created the pipeline "{pipelineName}".
     Skip: Skipped
-    StreamCreate:
-      callToAction: View Stream Details
-      headerlabel: Create stream
-      secondaryCallToAction:
-        queryStream: Query stream
-        uploadData: Upload data to stream
-      Step1:
-        description: Provide information about the stream you want to create.
-        shorttitle: General information
-        title: General
-        ttl-placeholder: Specify the time-to-live for events in seconds
-        ttllabel: TTL
-      Step2:
-        description: Setting format and schema allows you to perform schema-on-read.
-        shorttitle: Setup format and schema
-        title: Set format and schema
-      Step3:
-        description: Setting up a trigger notifies systems observing to start processing.
-        mblabel: Megabytes (MB)
-        shorttitle: Trigger setup
-        thresholdlabel: The stream will notify any observers upon reaching this threshold to start processing the data in this stream.
-        title: Setup a trigger
-      Step4:
-        description: Upload data to the stream you created.
-        shorttitle: Upload data
-        title: Upload data
-      success: You have successfully created the stream "{streamName}".
-    UploadData:
-      callToAction: View Stream Details
-      headerlabel: Upload data
-      Step1:
-        description: Shows the data that would be uploaded to a destination for your reference.
-        shorttitle: View data
-        title: View data
-      Step2:
-        dataentitynameplaceholder: Dataset/Stream name
-        description: Select the destination where the data needs to be uploaded.
-        destinationname: Destination name
-        destinationtype: Destination type
-        shorttitle: Select destination
-        title: Select a destination
-        tooltiptext: The stream will be created if it does not exist
-      subtitle: to the stream "{streamId}".
-      success: You have successfully uploaded the datapack "{datapackName}"
 ...

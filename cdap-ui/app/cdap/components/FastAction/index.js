@@ -21,10 +21,8 @@ import DeleteAction from 'components/FastAction/DeleteAction';
 import TruncateAction from 'components/FastAction/TruncateAction';
 import StartStopAction from 'components/FastAction/StartStopAction';
 import ExploreAction from 'components/FastAction/ExploreAction';
-import SendEventAction from 'components/FastAction/SendEventAction';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
 import LogAction from 'components/FastAction/LogAction';
-import ViewEventsAction from 'components/FastAction/ViewEventsAction';
 import { objectQuery } from 'services/helpers';
 
 export default class FastAction extends Component {
@@ -69,15 +67,6 @@ export default class FastAction extends Component {
             argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
-      case 'sendEvents':
-        return (
-          <SendEventAction
-            entity={this.props.entity}
-            onSuccess={this.props.onSuccess}
-            opened={this.props.opened}
-            argsToAction={objectQuery(this.props.argsToAction)}
-          />
-        );
       case 'setPreferences':
         return (
           <SetPreferenceAction
@@ -93,13 +82,8 @@ export default class FastAction extends Component {
             argsToAction={objectQuery(this.props.argsToAction)}
           />
         );
-      case 'viewEvents':
-        return (
-          <ViewEventsAction
-            entity={this.props.entity}
-            argsToAction={objectQuery(this.props.argsToAction)}
-          />
-        );
+      default:
+        return null;
     }
   }
 
@@ -109,16 +93,7 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf([
-    'delete',
-    'truncate',
-    'startStop',
-    'sendEvents',
-    'explore',
-    'setPreferences',
-    'log',
-    'viewEvents',
-  ]),
+  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'explore', 'setPreferences', 'log']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func,
   opened: PropTypes.bool,

@@ -30,7 +30,6 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Home from 'components/Home';
 import AppHeader from 'components/AppHeader';
 import Footer from 'components/Footer';
-import ConnectionExample from 'components/ConnectionExample';
 import cookie from 'react-cookie';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
@@ -162,14 +161,6 @@ class CDAP extends Component {
                   render={(props) => (
                     <ErrorBoundary>
                       <Home {...props} />
-                    </ErrorBoundary>
-                  )}
-                />
-                <Route
-                  path="/socket-example"
-                  render={(props) => (
-                    <ErrorBoundary>
-                      <ConnectionExample {...props} />
                     </ErrorBoundary>
                   )}
                 />

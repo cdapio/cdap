@@ -36,9 +36,6 @@ export default class FastActions extends Component {
       case 'application':
         fastActionTypes = ['setPreferences', 'delete'];
         break;
-      case 'stream':
-        fastActionTypes = ['truncate', 'delete', 'explore', 'sendEvents', 'viewEvents'];
-        break;
       case 'dataset':
         fastActionTypes = ['truncate', 'delete', 'explore'];
         break;

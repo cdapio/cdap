@@ -40,7 +40,6 @@ const DEFAULTSERVICES = [
   'metadata.service',
   'metrics',
   'metrics.processor',
-  'streams',
   'transaction',
 ];
 const tableHeaders = [

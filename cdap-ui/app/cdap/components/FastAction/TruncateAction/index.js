@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import NamespaceStore from 'services/NamespaceStore';
 import { MyDatasetApi } from 'api/dataset';
-import { MyStreamApi } from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
 import { Tooltip } from 'reactstrap';
@@ -83,10 +82,8 @@ export default class TruncateAction extends Component {
         api = MyDatasetApi.truncate;
         params.datasetId = this.props.entity.id;
         break;
-      case 'stream':
-        api = MyStreamApi.truncate;
-        params.streamId = this.props.entity.id;
-        break;
+      default:
+        return;
     }
 
     api(params).subscribe(
@@ -158,7 +155,7 @@ TruncateAction.propTypes = {
   entity: PropTypes.shape({
     id: PropTypes.string.isRequired,
     uniqueId: PropTypes.string,
-    type: PropTypes.oneOf(['dataset', 'stream']).isRequired,
+    type: PropTypes.oneOf(['dataset']).isRequired,
   }),
   onSuccess: PropTypes.func,
 };

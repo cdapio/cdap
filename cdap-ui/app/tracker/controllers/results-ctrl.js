@@ -66,20 +66,6 @@ class TrackerResultsController {
         filter: 'Dataset',
         count: 0
       },
-      {
-        name: 'Streams',
-        isActive: true,
-        isHover: false,
-        filter: 'Stream',
-        count: 0
-      },
-      {
-        name: 'Stream Views',
-        isActive: true,
-        isHover: false,
-        filter: 'Stream View',
-        count: 0
-      }
     ];
 
     this.metadataFiltersList = [
@@ -185,37 +171,6 @@ class TrackerResultsController {
       }
       obj.queryFound = this.findQueries(entity, obj);
       this.entityFiltersList[0].count++;
-    } else if (entity.metadataEntity.type === 'stream') {
-      angular.extend(obj, {
-        name: entity.metadataEntity.details.stream,
-        type: 'Stream',
-        entityTypeState: 'streams',
-        icon: 'icon-streams'
-      });
-      if (system && sysProps) {
-        angular.extend(obj, {
-          description: query(sysProps, 'description') || 'No description provided for this Stream.',
-          createDate: query(sysProps, 'creation-time') || null,
-        });
-      }
-      obj.queryFound = this.findQueries(entity, obj);
-      this.entityFiltersList[1].count++;
-    } else if (entity.metadataEntity.type === 'view') {
-      // THIS SECTION NEEDS TO BE UPDATED
-      angular.extend(obj, {
-        name: entity.metadataEntity.details.view,
-        type: 'Stream View',
-        entityTypeState: 'views:' + entity.metadataEntity.details.stream,
-        icon: 'icon-streams'
-      });
-      if (system && sysProps) {
-        angular.extend(obj, {
-          description: query(sysProps, 'description') || 'No description provided for this Stream View.',
-          createDate: query(sysProps, 'creation-time') || null
-        });
-      }
-      obj.queryFound = this.findQueries(entity, obj);
-      this.entityFiltersList[2].count++;
     }
     return obj;
   }

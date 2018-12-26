@@ -28,28 +28,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
 
   let watchProperty = myHelpers.objectQuery(vm.config, 'property-watch') || myHelpers.objectQuery(vm.config, 'widget-attributes', 'property-watch');
 
-  // Special Case for stream, we need a display only schema prefix of ts and headers
-  if (vm.pluginName === 'Stream') {
-    vm.schemaPrefix = {
-      name: 'schemaPrefix',
-      type: 'record',
-      fields: [
-        {
-          name: 'ts',
-          type: 'long'
-        },
-        {
-          name: 'headers',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string'
-          }
-        }
-      ]
-    };
-  }
-
   if (watchProperty) {
     $scope.$watch(function () {
       return vm.pluginProperties[watchProperty];
@@ -117,10 +95,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
       return schema;
     });
 
-    if (vm.pluginName === 'Stream') {
-      vm.schemas[0].fields = vm.schemaPrefix.fields.concat(vm.schemas[0].fields);
-    }
-
     var blob = new Blob([JSON.stringify(vm.schemas, null, 4)], { type: 'application/json'});
     vm.url = URL.createObjectURL(blob);
     vm.exportFileName = 'schema';
@@ -140,14 +114,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
         vm.clearDOM = false;
       }, 500);
     });
-  }
-
-  function modifyStreamSchema(record) {
-    if (record.fields && record.fields.length === 0) { return; }
-
-    if (record.fields[0].name === 'ts' && record.fields[1].name === 'headers') {
-      record.fields = record.fields.slice(2);
-    }
   }
 
   let datasetSelectedEvtListner = EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
@@ -224,10 +190,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
           });
           vm.clearDOM = false;
           return;
-        }
-
-        if (vm.pluginName === 'Stream') {
-          modifyStreamSchema(jsonSchema);
         }
 
         schema.schema = avsc.parse(jsonSchema, { wrapUnions: true });

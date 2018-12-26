@@ -17,9 +17,6 @@
 import PropTypes from 'prop-types';
 
 import React from 'react';
-import StreamCreateWizard from 'components/CaskWizards/StreamCreate';
-import UploadDataWizard from 'components/CaskWizards/UploadData';
-import UploadDataUsecaseWizard from 'components/CaskWizards/UploadDataUsecase';
 import PublishPipelineWizard from 'components/CaskWizards/PublishPipeline';
 import PublishPipelineUsecaseWizard from 'components/CaskWizards/PublishPipelineUsecase';
 import InformationalWizard from 'components/CaskWizards/Informational';
@@ -35,9 +32,6 @@ import OneStepDeployApp from 'components/CaskWizards/OneStepDeploy/OneStepDeploy
 import OneStepDeployPlugin from 'components/CaskWizards/OneStepDeploy/OneStepDeployPlugin';
 import OneStepDeployPluginUsecase from 'components/CaskWizards/OneStepDeploy/OneStepDeployPluginUsecase';
 import OneStepDeployAppUsecase from 'components/CaskWizards/OneStepDeploy/OneStepDeployAppUsecase';
-
-import CreateStreamStore from 'services/WizardStores/CreateStream/CreateStreamStore';
-import UploadDataStore from 'services/WizardStores/UploadData/UploadDataStore';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
 import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
 import AddNamespaceStore from 'services/WizardStores/AddNamespace/AddNamespaceStore';
@@ -83,14 +77,6 @@ const WizardTypesMap = {
     tag: InformationalWizard,
     store: InformationalStore,
   },
-  load_datapack: {
-    tag: UploadDataWizard,
-    store: UploadDataStore,
-  },
-  load_datapack_usecase: {
-    tag: UploadDataUsecaseWizard,
-    store: UploadDataStore,
-  },
   create_pipeline: {
     tag: PublishPipelineUsecaseWizard,
     store: PublishPipelineStore,
@@ -102,10 +88,6 @@ const WizardTypesMap = {
   add_namespace: {
     tag: AddNamespaceWizard,
     store: AddNamespaceStore,
-  },
-  create_stream: {
-    tag: StreamCreateWizard,
-    store: CreateStreamStore,
   },
   one_step_deploy_app: {
     tag: OneStepDeployApp,

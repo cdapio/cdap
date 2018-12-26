@@ -174,50 +174,16 @@ class HydratorPlusPlusHydratorService {
   }
 
   formatSchema (node) {
-    let isStreamSource = node.name === 'Stream';
     let schema;
     let input;
     let jsonSchema;
 
-    if (isStreamSource) {
-      let availableImplicitSchema = Object.keys(this.IMPLICIT_SCHEMA);
-
-      if (availableImplicitSchema.indexOf(node.plugin.properties.format) !== -1) {
-        jsonSchema = this.IMPLICIT_SCHEMA[node.plugin.properties.format];
-      } else {
-        jsonSchema = node.outputSchema;
-      }
-    } else {
-      jsonSchema = node.outputSchema;
-    }
+    jsonSchema = node.outputSchema;
 
     try {
       input = JSON.parse(jsonSchema);
     } catch (e) {
       input = null;
-    }
-
-    if (isStreamSource) {
-      // Must be in this order!!
-      if (!input) {
-        input = {
-          fields: [{ name: 'body', type: 'string' }]
-        };
-
-        input.fields.unshift({
-          name: 'headers',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string'
-          }
-        });
-
-        input.fields.unshift({
-          name: 'ts',
-          type: 'long'
-        });
-      }
     }
 
     schema = input ? input.fields : null;

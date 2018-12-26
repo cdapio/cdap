@@ -70,7 +70,7 @@ export default class AppOverviewTab extends Component {
                 }}
               >
                 {T.translate('features.AppDetailedView.Tabs.datasetsLabel')} (
-                {this.state.entity.datasets.length + this.state.entity.streams.length})
+                {this.state.entity.datasets.length})
               </NavLink>
             </NavItem>
           </Nav>

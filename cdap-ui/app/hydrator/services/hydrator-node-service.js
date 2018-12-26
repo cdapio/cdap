@@ -42,7 +42,6 @@ class HydratorPlusPlusNodeService {
   configurePluginInfo(node, appType, sourceConnections, sourceNodes) {
     const getInputSchema = (sourceNode, targetNode, sourceConnections) => {
       let schema = '';
-      let isStreamSource = sourceNode.plugin.name === 'Stream';
       let inputSchema;
 
       if (!sourceNode.outputSchema || typeof sourceNode.outputSchema === 'string') {
@@ -77,14 +76,6 @@ class HydratorPlusPlusNodeService {
       } else {
         inputSchema = schema;
       }
-
-      if (isStreamSource) {
-        let streamSchemaPrefix = this.getStreamSchemaPrefix(inputSchema);
-
-        inputSchema = this.HydratorPlusPlusHydratorService.formatSchemaToAvro({
-          fields: streamSchemaPrefix.concat(this.myHelpers.objectQuery(inputSchema, 'fields') || [])
-        });
-      }
       return inputSchema;
     };
 
@@ -96,31 +87,6 @@ class HydratorPlusPlusNodeService {
     }
 
     return node;
-  }
-
-  getStreamSchemaPrefix(existingSchema) {
-    let streamSchemaPrefix = [];
-    const tsField = {
-      name: 'ts',
-      type: 'long'
-    };
-    const headersField = {
-      name: 'headers',
-      type: {
-        type: 'map',
-        keys: 'string',
-        values: 'string'
-      }
-    };
-
-    if (!this.isFieldExistsInSchema(tsField, existingSchema)) {
-      streamSchemaPrefix.push(tsField);
-    }
-
-    if (!this.isFieldExistsInSchema(headersField, existingSchema)) {
-      streamSchemaPrefix.push(headersField);
-    }
-    return streamSchemaPrefix;
   }
 
   getOutputSchemaObj(schema, schemaObjName = this.GLOBALS.defaultSchemaName) {

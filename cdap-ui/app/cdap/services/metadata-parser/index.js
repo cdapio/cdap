@@ -32,8 +32,6 @@ export function parseMetadata(entity) {
       return createDatasetObj(entity);
     case EntityType.program:
       return createProgramObj(entity);
-    case EntityType.stream:
-      return createStreamObj(entity);
     case EntityType.view:
       return createViewObj(entity);
   }
@@ -139,15 +137,6 @@ function createProgramObj(entity) {
     programType: entity.metadataEntity.details.type,
     metadata: entity,
     icon: EntityIconMap[entity.metadataEntity.details.type],
-  };
-}
-
-function createStreamObj(entity) {
-  return {
-    id: entity.metadataEntity.details.stream,
-    type: entity.metadataEntity.type.toLowerCase(),
-    metadata: entity,
-    icon: EntityIconMap['stream'],
   };
 }
 

@@ -26,7 +26,7 @@ class myLineageService {
    **/
   parseLineageResponse(response, params) {
     let currentActiveNode = [
-      params.entityType === 'datasets' ? 'dataset' : 'stream',
+      'dataset',
       params.namespace,
       params.entityId
     ].join('.');
@@ -148,7 +148,7 @@ class myLineageService {
 
   secondLineageParser(response, params) {
     let currentActiveNode = [
-      params.entityType === 'datasets' ? 'dataset' : 'stream',
+      'dataset',
       params.namespace,
       params.entityId
     ].join('.');
@@ -304,13 +304,6 @@ class myLineageService {
         type: 'datasets',
         icon: 'icon-datasets',
         displayType: 'Dataset'
-      };
-    } else {
-      return {
-        name: data.entityId.stream,
-        type: 'streams',
-        icon: 'icon-streams',
-        displayType: 'Stream'
       };
     }
   }

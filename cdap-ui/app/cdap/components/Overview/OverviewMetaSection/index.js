@@ -51,25 +51,6 @@ export default class OverviewMetaSection extends Component {
     return formattedTime;
   }
 
-  renderStreamInfo() {
-    if (this.props.entity.type !== 'stream') {
-      return null;
-    }
-
-    const TWENTY_YEARS = 20 * 365 * 24 * 60 * 60;
-
-    let ttl = objectQuery(this.props, 'entity', 'properties', 'ttl');
-    ttl = parseInt(ttl, 10);
-    ttl = ttl < TWENTY_YEARS ? moment.duration(ttl).humanize() : 'Forever';
-
-    return (
-      <div className="entity-info">
-        <strong>{T.translate('features.Overview.Metadata.ttl')}</strong>
-        <span>{ttl}</span>
-      </div>
-    );
-  }
-
   renderDatasetInfo() {
     if (this.props.entity.type !== 'dataset') {
       return null;
@@ -127,7 +108,7 @@ export default class OverviewMetaSection extends Component {
               </span>
             ) : null}
             <small>
-              {['dataset', 'stream'].indexOf(this.props.entity.type) !== -1
+              {['dataset'].indexOf(this.props.entity.type) !== -1
                 ? T.translate('features.Overview.deployedLabel.data')
                 : T.translate('features.Overview.deployedLabel.app')}
               {!isNil(creationTime) ? renderCreationTime(creationTime) : null}
@@ -151,7 +132,6 @@ export default class OverviewMetaSection extends Component {
 
         <Description description={description} />
         {this.renderDatasetInfo()}
-        {this.renderStreamInfo()}
         <Tags entity={this.props.entity} />
       </div>
     );

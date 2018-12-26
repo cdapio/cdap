@@ -20,12 +20,11 @@ import T from 'i18n-react';
 require('./DatasetTab.scss');
 import { objectQuery } from 'services/helpers';
 import ViewSwitch from 'components/ViewSwitch';
-import DatasetStreamCards from 'components/DatasetStreamCards';
-import DatasetStreamTable from 'components/DatasetStreamTable';
+import DatasetCards from 'components/DatasetCards';
+import DatasetTable from 'components/DatasetTable';
 import NamespaceStore from 'services/NamespaceStore';
 import { MyMetricApi } from 'api/metric';
 import { MyDatasetApi } from 'api/dataset';
-import { MyStreamApi } from 'api/stream';
 import { humanReadableNumber, HUMANREADABLESTORAGE_NODECIMAL } from 'services/helpers';
 
 export default class DatasetTab extends Component {
@@ -36,7 +35,6 @@ export default class DatasetTab extends Component {
       entitiesForTable: this.getEntitiesForTable(this.props.entity),
     };
     this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
-    this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
   }
   componentWillReceiveProps(nextProps) {
     let entitiesMatch =
@@ -47,65 +45,17 @@ export default class DatasetTab extends Component {
         entitiesForTable: this.getEntitiesForTable(nextProps.entity),
       });
       this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
-      this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
     }
   }
   onTabSwitch() {
     this.state.entity.datasets.forEach(this.addDatasetMetrics.bind(this));
-    this.state.entity.streams.forEach(this.addStreamMetrics.bind(this));
   }
-  getEntitiesForTable({ datasets, streams }) {
-    return datasets
-      .map((dataset) => Object.assign({}, dataset, { type: 'dataset', id: dataset.name }))
-      .concat(
-        streams.map((stream) => Object.assign({}, stream, { type: 'stream', id: stream.name }))
-      );
+  getEntitiesForTable({ datasets }) {
+    return datasets.map((dataset) =>
+      Object.assign({}, dataset, { type: 'dataset', id: dataset.name })
+    );
   }
-  addStreamMetrics(stream) {
-    let currentNamespace = NamespaceStore.getState().selectedNamespace;
-    const streamParams = {
-      namespace: currentNamespace,
-      streamId: this.props.entity.name,
-    };
-    const metricsParams = {
-      tag: [`namespace:${currentNamespace}`, `stream:${stream.name}`],
-      metric: ['system.collect.events', 'system.collect.bytes'],
-      aggregate: true,
-    };
 
-    MyMetricApi.query(metricsParams)
-      .combineLatest(MyStreamApi.getPrograms(streamParams))
-      .subscribe((res) => {
-        let events = 0,
-          bytes = 0;
-        if (res[0].series.length > 0) {
-          res[0].series.forEach((metric) => {
-            if (metric.metricName === 'system.collect.events') {
-              events = humanReadableNumber(metric.data[0].value);
-            } else if (metric.metricName === 'system.collect.bytes') {
-              bytes = humanReadableNumber(metric.data[0].value, HUMANREADABLESTORAGE_NODECIMAL);
-            }
-          });
-        }
-
-        let entities = this.state.entitiesForTable.map((e) => {
-          if (e.name === stream.name) {
-            return Object.assign({}, e, {
-              events,
-              reads: 'n/a',
-              writes: 'n/a',
-              bytes,
-              programs: res[1].length,
-              loading: false,
-            });
-          }
-          return e;
-        });
-        this.setState({
-          entitiesForTable: entities,
-        });
-      });
-  }
   addDatasetMetrics(dataset) {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     const datasetParams = {
@@ -172,10 +122,8 @@ export default class DatasetTab extends Component {
         </div>
         {
           <ViewSwitch onSwitch={this.onTabSwitch.bind(this)}>
-            <DatasetStreamCards
-              dataEntities={this.state.entity.datasets.concat(this.state.entity.streams)}
-            />
-            <DatasetStreamTable dataEntities={this.state.entitiesForTable} />
+            <DatasetCards dataEntities={this.state.entity.datasets} />
+            <DatasetTable dataEntities={this.state.entitiesForTable} />
           </ViewSwitch>
         }
       </div>
@@ -188,12 +136,6 @@ DatasetTab.propTypes = {
     id: PropTypes.string,
     name: PropTypes.string,
     datasets: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string,
-        type: PropTypes.string,
-      })
-    ),
-    streams: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,
         type: PropTypes.string,

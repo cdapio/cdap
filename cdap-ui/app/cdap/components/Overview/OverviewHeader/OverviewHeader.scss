@@ -50,10 +50,6 @@
     @include generate-color($dataset-entity-header-bg);
   }
 
-  &.stream {
-    @include generate-color($stream-entity-header-bg);
-  }
-
   .success-message {
     position: absolute;
     width: 100%;

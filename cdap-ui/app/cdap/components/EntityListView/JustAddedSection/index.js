@@ -46,7 +46,6 @@ export default class JustAddedSection extends Component {
     this.fetchEntities = this.fetchEntities.bind(this);
     this.eventEmitter = ee(ee);
     this.eventEmitter.on(globalEvents.APPUPLOAD, this.fetchEntities);
-    this.eventEmitter.on(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
     this.eventEmitter.on(globalEvents.DELETEENTITY, this.fetchEntities);
     this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
@@ -94,7 +93,6 @@ export default class JustAddedSection extends Component {
   }
   componentWillUnmount() {
     this.eventEmitter.off(globalEvents.APPUPLOAD, this.fetchEntities);
-    this.eventEmitter.off(globalEvents.STREAMCREATE, this.fetchEntities);
     this.eventEmitter.off(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
     this.eventEmitter.off(globalEvents.DELETEENTITY, this.fetchEntities);
     this.eventEmitter.off(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
@@ -111,7 +109,7 @@ export default class JustAddedSection extends Component {
     let numColumns = SearchStore.getState().search.numColumns;
     const params = {
       namespace,
-      target: ['app', 'artifact', 'dataset', 'stream'],
+      target: ['app', 'artifact', 'dataset'],
       limit: numColumns,
       query: '*',
       sort: 'creation-time desc',

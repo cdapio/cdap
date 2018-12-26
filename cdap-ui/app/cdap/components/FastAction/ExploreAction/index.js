@@ -36,7 +36,7 @@ export default class ExploreAction extends Component {
       version: PropTypes.string,
       uniqueId: PropTypes.string,
       scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
-      type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
+      type: PropTypes.oneOf(['application', 'artifact', 'dataset']).isRequired,
     }),
     opened: PropTypes.bool,
     renderActionButton: PropTypes.func,

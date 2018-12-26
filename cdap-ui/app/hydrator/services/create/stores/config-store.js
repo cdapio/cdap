@@ -699,10 +699,6 @@ class HydratorPlusPlusConfigStore {
         return field;
       });
 
-      if (nodesMap[pluginId].plugin.name === 'Stream') {
-        schema.fields = this.HydratorPlusPlusNodeService.getStreamSchemaPrefix(schema).concat(schema.fields);
-      }
-
       outputSchema = [this.HydratorPlusPlusNodeService.getOutputSchemaObj(JSON.stringify(schema))];
     } catch (e) {
       console.log('Failed to parse output schema of plugin: ', pluginId);

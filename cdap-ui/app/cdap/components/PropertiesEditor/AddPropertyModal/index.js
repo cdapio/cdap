@@ -199,7 +199,7 @@ export default class AddPropertyModal extends Component {
 
 AddPropertyModal.propTypes = {
   entityId: PropTypes.string,
-  entityType: PropTypes.oneOf(['datasets', 'streams', 'apps']),
+  entityType: PropTypes.oneOf(['datasets', 'apps']),
   existingProperties: PropTypes.array,
   onSave: PropTypes.func,
 };

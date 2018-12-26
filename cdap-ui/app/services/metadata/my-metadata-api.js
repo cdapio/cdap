@@ -20,7 +20,6 @@ angular.module(PKG.name + '.services')
     var url = myCdapUrl.constructUrl,
         programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/metadata',
         datasetsPath = '/namespaces/:namespace/datasets/:datasetId/metadata',
-        streamsPath = '/namespaces/:namespace/streams/:streamId/metadata',
         appsPath = '/namespaces/:namespace/apps/:appId/metadata';
 
     return $resource(
@@ -43,10 +42,5 @@ angular.module(PKG.name + '.services')
       setDatasetsMetadata: myHelpers.getConfig('POST', 'REQUEST', datasetsPath + '/tags'),
       getDatasetsMetadata: myHelpers.getConfig('GET', 'REQUEST', datasetsPath, true),
       deleteDatasetsMetadata: myHelpers.getConfig('DELETE', 'REQUEST', datasetsPath + '/tags/:tag'),
-
-      setStreamsMetadata: myHelpers.getConfig('POST', 'REQUEST', streamsPath + '/tags'),
-      getStreamsMetadata: myHelpers.getConfig('GET', 'REQUEST', streamsPath, true),
-      deleteStreamsMetadata: myHelpers.getConfig('DELETE', 'REQUEST', streamsPath + '/tags/:tag'),
-
     });
   });

@@ -23,7 +23,6 @@ angular.module(PKG.name + '.services')
         appPath = basePath + '/apps/:appId',
         programPath = appPath + '/:programType/:programId',
         datasetPath = basePath + '/datasets/:datasetId',
-        streamsPath = basePath + '/streams/:streamId',
         searchPath = basePath + '/metadata/search';
 
     return $resource(
@@ -31,7 +30,6 @@ angular.module(PKG.name + '.services')
     {
       namespaceId: '@namespaceId',
       datasetId: '@datasetId',
-      streamId: '@streamId',
       programType: '@programType',
       programId: '@programId',
       appId: '@appId'
@@ -40,7 +38,6 @@ angular.module(PKG.name + '.services')
       getAppTags: myHelpers.getConfig('GET', 'REQUEST', appPath + metadataPath, true),
       getProgramTags: myHelpers.getConfig('GET', 'REQUEST', programPath + metadataPath, true),
       getDatasetTags: myHelpers.getConfig('GET', 'REQUEST', datasetPath + metadataPath, true),
-      getStreamTags: myHelpers.getConfig('GET', 'REQUEST', streamsPath + metadataPath, true),
       searchTags: myHelpers.getConfig('GET', 'REQUEST', searchPath , false)
     }
   );

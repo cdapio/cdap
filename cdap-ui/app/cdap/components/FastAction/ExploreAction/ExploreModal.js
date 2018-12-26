@@ -428,7 +428,7 @@ ExploreModal.propTypes = {
     id: PropTypes.string.isRequired,
     version: PropTypes.string,
     scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
-    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
+    type: PropTypes.oneOf(['application', 'artifact', 'dataset']).isRequired,
     databaseName: PropTypes.string,
     tableName: PropTypes.string,
   }),

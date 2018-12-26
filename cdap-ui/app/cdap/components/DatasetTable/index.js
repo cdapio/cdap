@@ -24,9 +24,9 @@ import classnames from 'classnames';
 import isNil from 'lodash/isNil';
 import FastActions from 'components/EntityCard/FastActions';
 import T from 'i18n-react';
-require('./DatasetStreamTable.scss');
+require('./DatasetTable.scss');
 
-export default class DatasetStreamTable extends Component {
+export default class DatasetTable extends Component {
   constructor(props) {
     super(props);
 
@@ -43,16 +43,16 @@ export default class DatasetStreamTable extends Component {
         label: T.translate('features.ViewSwitch.typeLabel'),
       },
       {
-        label: T.translate('features.ViewSwitch.DatasetStreamTable.readsLabel'),
+        label: T.translate('features.ViewSwitch.DatasetTable.readsLabel'),
       },
       {
-        label: T.translate('features.ViewSwitch.DatasetStreamTable.writesLabel'),
+        label: T.translate('features.ViewSwitch.DatasetTable.writesLabel'),
       },
       {
-        label: T.translate('features.ViewSwitch.DatasetStreamTable.eventsLabel'),
+        label: T.translate('features.ViewSwitch.DatasetTable.eventsLabel'),
       },
       {
-        label: T.translate('features.ViewSwitch.DatasetStreamTable.sizeLabel'),
+        label: T.translate('features.ViewSwitch.DatasetTable.sizeLabel'),
       },
       {
         label: '',
@@ -77,8 +77,8 @@ export default class DatasetStreamTable extends Component {
       <tbody>
         {entities.map((dataEntity) => {
           let currentNamespace = NamespaceStore.getState().selectedNamespace;
-          let icon = dataEntity.type === 'dataset' ? 'icon-datasets' : 'icon-streams';
-          let type = dataEntity.type === 'dataset' ? 'Dataset' : 'Stream';
+          let icon = 'icon-datasets';
+          let type = 'Dataset';
           let link = `/ns/${currentNamespace}/${convertEntityTypeToApi(dataEntity.type)}/${
             dataEntity.id
           }`;
@@ -157,6 +157,6 @@ export default class DatasetStreamTable extends Component {
     );
   }
 }
-DatasetStreamTable.propTypes = {
+DatasetTable.propTypes = {
   dataEntities: PropTypes.arrayOf(PropTypes.object),
 };

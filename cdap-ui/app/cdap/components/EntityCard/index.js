@@ -23,7 +23,6 @@ import ApplicationMetrics from './ApplicationMetrics';
 import ArtifactMetrics from './ArtifactMetrics';
 import DatasetMetrics from './DatasetMetrics';
 import ProgramMetrics from './ProgramMetrics';
-import StreamMetrics from './StreamMetrics';
 import classnames from 'classnames';
 import FastActions from 'components/EntityCard/FastActions';
 import FastActionToMessage from 'services/fast-action-message-helper';
@@ -67,9 +66,8 @@ export default class EntityCard extends Component {
         return <DatasetMetrics entity={this.props.entity} />;
       case 'program':
         return <ProgramMetrics entity={this.props.entity} poll={this.props.poll} />;
-      case 'stream':
-        return <StreamMetrics entity={this.props.entity} />;
       case 'view':
+      default:
         return null;
     }
   }

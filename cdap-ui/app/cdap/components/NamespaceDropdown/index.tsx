@@ -53,7 +53,6 @@ interface INamespaceDropdownState {
   preferencesSavedMessage: boolean;
   numApplications: number;
   numDatasets: number;
-  numStreams: number;
   namespaceList: INamespace[];
   defaultNamespace: string;
   currentNamespace: string;
@@ -99,7 +98,6 @@ export default class NamespaceDropdown extends React.PureComponent<
     numMetricsLoading: false,
     numApplications: 0,
     numDatasets: 0,
-    numStreams: 0,
     error: '',
   };
 
@@ -217,13 +215,12 @@ export default class NamespaceDropdown extends React.PureComponent<
     this.setState({ numMetricsLoading: true });
     const params = {
       namespace: NamespaceStore.getState().selectedNamespace,
-      target: ['app', 'dataset', 'stream'],
+      target: ['app', 'dataset'],
       query: '*',
       sort: 'entity-name asc',
       showCustom: true,
     };
     let numApplications = 0;
-    let numStreams = 0;
     let numDatasets = 0;
     this.apiSubscription = MySearchApi.search(params).subscribe(
       (res) => {
@@ -231,15 +228,12 @@ export default class NamespaceDropdown extends React.PureComponent<
           const entityType = entity.metadataEntity.type;
           if (entityType === EntityType.application) {
             numApplications += 1;
-          } else if (entityType === EntityType.stream) {
-            numStreams += 1;
           } else {
             numDatasets += 1;
           }
         });
         this.setState({
           numApplications,
-          numStreams,
           numDatasets,
           numMetricsLoading: false,
         });
@@ -325,7 +319,6 @@ export default class NamespaceDropdown extends React.PureComponent<
                           <tr>
                             <th>{T.translate('features.Navbar.NamespaceDropdown.applications')}</th>
                             <th>{T.translate('features.Navbar.NamespaceDropdown.datasets')}</th>
-                            <th>{T.translate('features.Navbar.NamespaceDropdown.streams')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -342,13 +335,6 @@ export default class NamespaceDropdown extends React.PureComponent<
                                 <IconSVG name="icon-spinner" className="fa-spin" />
                               ) : (
                                 this.state.numDatasets
-                              )}
-                            </td>
-                            <td>
-                              {this.state.numMetricsLoading ? (
-                                <IconSVG name="icon-spinner" className="fa-spin" />
-                              ) : (
-                                this.state.numStreams
                               )}
                             </td>
                           </tr>

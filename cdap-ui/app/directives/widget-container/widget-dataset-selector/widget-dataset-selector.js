@@ -25,21 +25,15 @@ angular.module(PKG.name + '.commons')
         stageName: '='
       },
       templateUrl: 'widget-container/widget-dataset-selector/widget-dataset-selector.html',
-      controller: function ($scope, myDatasetApi, myStreamApi, $state, EventPipe, $uibModal) {
+      controller: function ($scope, myDatasetApi, $state, EventPipe, $uibModal) {
 
         $scope.textPlaceholder = '';
         if ($scope.config['widget-attributes'] && $scope.config['widget-attributes']['placeholder']) {
           $scope.textPlaceholder = $scope.config['widget-attributes']['placeholder'];
         }
 
-        var resource;
+        var resource = myDatasetApi;
         $scope.list = [];
-
-        if ($scope.datasetType === 'stream') {
-          resource = myStreamApi;
-        } else if ($scope.datasetType === 'dataset') {
-          resource = myDatasetApi;
-        }
 
         var params = {
           namespace: $state.params.namespace || $state.params.nsadmin
@@ -140,35 +134,26 @@ angular.module(PKG.name + '.commons')
             return;
           }
 
-          if ($scope.datasetType === 'stream') {
-            params.streamId = $scope.model;
-          } else if ($scope.datasetType === 'dataset') {
-            params.datasetId = $scope.model;
-          }
+          params.datasetId = $scope.model;
 
           resource.get(params)
             .$promise
             .then(function (res) {
-              if ($scope.datasetType === 'stream') {
-                schema = JSON.stringify(res.format.schema);
-                var format = res.format.name;
-                EventPipe.emit('dataset.selected', schema, format);
+              if ($scope.datasetType === 'dataset') {
+                schema = res.spec.properties.schema;
 
-              } else if ($scope.datasetType === 'dataset') {
-                  schema = res.spec.properties.schema;
+                if (initialized && !isCurrentlyExistingDataset && newDataset !== oldDataset) {
+                  if (!modalOpen) {
+                    debouncedPopup(schema, oldDataset);
+                  }
+                } else {
+                  initialized = true;
 
-                  if (initialized && !isCurrentlyExistingDataset && newDataset !== oldDataset) {
-                    if (!modalOpen) {
-                      debouncedPopup(schema, oldDataset);
-                    }
-                  } else {
-                    initialized = true;
-
-                    if (schema) {
-                      EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
-                    }
+                  if (schema) {
+                    EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
                   }
                 }
+              }
             });
         });
 

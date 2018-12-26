@@ -121,7 +121,7 @@ export default class ProgramsTab extends Component {
           appId: this.state.entity.name,
         });
 
-        if (['dataset', 'stream'].indexOf(this.state.entity.type) !== -1) {
+        if (['dataset'].indexOf(this.state.entity.type) !== -1) {
           title = T.translate('features.Overview.ProgramTab.altTitle', {
             entityId: this.state.entity.id,
             entityType: this.state.entity.type,

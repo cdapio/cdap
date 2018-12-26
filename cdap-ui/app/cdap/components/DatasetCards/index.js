@@ -22,9 +22,9 @@ import { parseMetadata } from 'services/metadata-parser';
 import { convertEntityTypeToApi } from 'services/entity-type-api-converter';
 import { Link } from 'react-router-dom';
 import uuidV4 from 'uuid/v4';
-require('./DataStreamCards.scss');
+require('./DatasetCards.scss');
 
-export default function DatasetStreamCards({ dataEntities }) {
+export default function DatasetCards({ dataEntities }) {
   let currentNamespace = NamespaceStore.getState().selectedNamespace;
   let data = dataEntities.map((dataEntity) => {
     let entity = {
@@ -62,6 +62,6 @@ export default function DatasetStreamCards({ dataEntities }) {
   );
 }
 
-DatasetStreamCards.propTypes = {
+DatasetCards.propTypes = {
   dataEntities: PropTypes.arrayOf(PropTypes.object),
 };

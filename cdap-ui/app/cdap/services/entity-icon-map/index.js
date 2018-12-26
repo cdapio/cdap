@@ -26,7 +26,6 @@ const EntityIconMap = {
   application: 'icon-fist',
   artifact: 'icon-archive',
   dataset: 'icon-datasets',
-  stream: 'icon-streams',
   view: 'icon-streamview',
 };
 

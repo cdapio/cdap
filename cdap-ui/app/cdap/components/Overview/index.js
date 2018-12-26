@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import AppOverview from 'components/Overview/AppOverview';
 import DatasetOverview from 'components/Overview/DatasetOverview';
-import StreamOverview from 'components/Overview/StreamOverview';
 import { objectQuery } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import classnames from 'classnames';
@@ -45,7 +44,6 @@ export default class Overview extends Component {
     this.typeToComponentMap = {
       application: AppOverview,
       dataset: DatasetOverview,
-      stream: StreamOverview,
     };
   }
   componentDidMount() {
@@ -83,7 +81,7 @@ export default class Overview extends Component {
               errorContent: null,
               showOverview: true,
               loading: false,
-              tag: this.typeToComponentMap[objectQuery(searchState.overviewEntity, 'type')],
+              tag: this.typeToComponentMap[objectQuery(searchState.overviewEntity, 'type')] || null,
             },
             this.scrollEntityToView.bind(this)
           );
@@ -232,6 +230,7 @@ export default class Overview extends Component {
         return <div className="fa fa-spinner fa-spin fa-3x" />;
       }
 
+      // huh??
       if (Tag === 'div') {
         return <div />;
       }
