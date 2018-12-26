@@ -59,6 +59,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -69,8 +70,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -341,9 +340,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
           Locations.mkdirsIfNotExists(archiveDir);
 
           LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
-          try (OutputStream os = tmpLocation.getOutputStream()) {
-            Files.copy(uploadedFile.toPath(), os);
-          }
+          Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
 
           // Finally, move archive to final location
           LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);

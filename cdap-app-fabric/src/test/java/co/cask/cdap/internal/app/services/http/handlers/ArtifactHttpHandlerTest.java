@@ -35,7 +35,6 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
@@ -64,6 +63,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -177,17 +177,17 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     ArtifactId wordcountId2 = NamespaceId.DEFAULT.artifact("wordcount", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(wordcountId1),
-                                    Locations.toLocation(wordCountArtifact), Collections.emptySet())
+                                    Files.newInputStreamSupplier(wordCountArtifact), Collections.emptySet())
                           .getResponseCode());
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(wordcountId2),
-                                    Locations.toLocation(wordCountArtifact), Collections.emptySet())
+                                    Files.newInputStreamSupplier(wordCountArtifact), Collections.emptySet())
                           .getResponseCode());
     // and 1 version of another app that uses a config
     ArtifactId configTestAppId = NamespaceId.DEFAULT.artifact("cfgtest", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(configTestAppId),
-                                    Locations.toLocation(configTestArtifact), Collections.emptySet())
+                                    Files.newInputStreamSupplier(configTestArtifact), Collections.emptySet())
                           .getResponseCode());
 
     // test get /artifacts endpoint
@@ -342,7 +342,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(defaultId),
-                                    Locations.toLocation(systemArtifact), Collections.emptySet())
+                                    Files.newInputStreamSupplier(systemArtifact), Collections.emptySet())
                           .getResponseCode());
 
     // add system artifact
@@ -396,7 +396,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     try {
       ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
       artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId),
-                                     systemArtifact, new HashSet<>(), null);
+                                     systemArtifact, new HashSet<ArtifactRange>(), null);
       Assert.fail();
     } catch (Exception e) {
       // no-op - expected exception while adding artifact in system namespace
@@ -447,7 +447,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=user
     ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
-    Assert.assertNull(actualInfo);
+    Assert.assertEquals(null , actualInfo);
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=system
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);

@@ -58,7 +58,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -179,7 +178,7 @@ public class PluginService extends AbstractIdleService {
   private class Instantiators implements Closeable {
     private final CloseableClassLoader parentClassLoader;
     private final Map<ArtifactDescriptor, InstantiatorInfo> instantiatorInfoMap;
-    private final java.nio.file.Path pluginBaseDir;
+    private final File pluginDir;
 
     private Instantiators(ArtifactDescriptor parentArtifactDescriptor) throws Exception {
       // todo : shouldn't pass null, should use ArtifactId instead of ArtifactDescriptor so we have namespace.
@@ -189,7 +188,7 @@ public class PluginService extends AbstractIdleService {
           // change Instantiators to accept ArtifactId instead of ArtifactDescriptor
           parentArtifactDescriptor.getLocation(), new EntityImpersonator(null, impersonator));
       this.instantiatorInfoMap = new ConcurrentHashMap<>();
-      this.pluginBaseDir = Files.createTempDirectory(stageDir.toPath(), "pluginBase");
+      this.pluginDir = DirUtils.createTempDir(stageDir);
     }
 
     private boolean hasArtifactChanged(ArtifactDescriptor artifactDescriptor) {
@@ -202,7 +201,6 @@ public class PluginService extends AbstractIdleService {
 
     private void addInstantiatorAndAddArtifact(ArtifactDetail artifactDetail,
                                                ArtifactId artifactId) throws IOException {
-      File pluginDir = Files.createTempDirectory(pluginBaseDir, "plugin").toFile();
       PluginInstantiator instantiator = new PluginInstantiator(cConf, parentClassLoader, pluginDir);
       instantiatorInfoMap.put(artifactDetail.getDescriptor(),
                               new InstantiatorInfo(artifactDetail.getDescriptor().getLocation(), instantiator));
@@ -230,7 +228,7 @@ public class PluginService extends AbstractIdleService {
         Closeables.closeQuietly(instantiatorInfo.getPluginInstantiator());
       }
       Closeables.closeQuietly(parentClassLoader);
-      DirUtils.deleteDirectoryContents(pluginBaseDir.toFile());
+      DirUtils.deleteDirectoryContents(pluginDir);
     }
   }
 

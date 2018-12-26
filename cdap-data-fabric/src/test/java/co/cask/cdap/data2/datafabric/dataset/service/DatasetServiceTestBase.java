@@ -78,6 +78,7 @@ import co.cask.http.HttpHandler;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
@@ -295,11 +296,11 @@ public abstract class DatasetServiceTestBase {
 
   protected Location createModuleJar(Class moduleClass, Location...bundleEmbeddedJars) throws IOException {
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    File destDir = TMP_FOLDER.newFolder();
     File[] embeddedJars = new File[bundleEmbeddedJars.length];
     for (int i = 0; i < bundleEmbeddedJars.length; i++) {
-      File file = new File(destDir, bundleEmbeddedJars[i].getName());
-      embeddedJars[i] = Locations.linkOrCopy(bundleEmbeddedJars[i], file);
+      File file = TMP_FOLDER.newFile();
+      Files.copy(Locations.newInputSupplier(bundleEmbeddedJars[i]), file);
+      embeddedJars[i] = file;
     }
 
     return AppJarHelper.createDeploymentJar(lf, moduleClass, embeddedJars);

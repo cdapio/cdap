@@ -19,6 +19,7 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
@@ -31,6 +32,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -59,9 +61,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -308,9 +308,7 @@ public class UGIProviderTest {
   private Location copyFileToHDFS(Location hdfsKeytabDir, File localFile) throws IOException {
     Location remoteFile = hdfsKeytabDir.append(localFile.getName());
     Assert.assertTrue(remoteFile.createNew());
-    try (OutputStream os = remoteFile.getOutputStream()) {
-      Files.copy(localFile.toPath(), os);
-    }
+    Files.copy(localFile, Locations.newOutputSupplier(remoteFile));
     return remoteFile;
   }
 

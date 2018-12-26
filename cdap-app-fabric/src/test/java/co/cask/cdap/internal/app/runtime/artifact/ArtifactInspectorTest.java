@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,7 @@ import co.cask.cdap.security.impersonation.EntityImpersonator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -163,7 +164,7 @@ public class ArtifactInspectorTest {
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
       cls, manifest);
     DirUtils.mkdirs(destFile.getParentFile());
-    Locations.linkOrCopy(deploymentJar, destFile);
+    Files.copy(Locations.newInputSupplier(deploymentJar), destFile);
     return destFile;
   }
 }

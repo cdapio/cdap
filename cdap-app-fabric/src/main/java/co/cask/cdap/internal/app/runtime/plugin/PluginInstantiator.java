@@ -46,6 +46,7 @@ import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
@@ -55,16 +56,12 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -133,13 +130,7 @@ public class PluginInstantiator implements Closeable {
    */
   public void addArtifact(Location artifactLocation, ArtifactId destArtifact) throws IOException {
     File destFile = new File(pluginDir, Artifacts.getFileName(destArtifact));
-    try {
-      Locations.linkOrCopy(artifactLocation, destFile);
-    } catch (FileAlreadyExistsException e) {
-      try (InputStream is = artifactLocation.getInputStream()) {
-        Files.copy(is, destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-      }
-    }
+    Files.copy(Locations.newInputSupplier(artifactLocation), destFile);
   }
 
   /**

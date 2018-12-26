@@ -76,6 +76,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Injector;
@@ -108,15 +109,12 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1105,9 +1103,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyFileToLocation(File file, Location targetDir) throws IOException {
     Location targetLocation = targetDir.append(file.getName()).getTempFile(".jar");
-    try (OutputStream os = targetLocation.getOutputStream()) {
-      Files.copy(file.toPath(), os);
-    }
+    Files.copy(file, Locations.newOutputSupplier(targetLocation));
     return targetLocation;
   }
 
@@ -1118,10 +1114,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    */
   private Location copyProgramJar(Location targetDir) throws IOException {
     Location programJarCopy = targetDir.append("program.jar");
-    try (InputStream is = programJarLocation.getInputStream();
-         OutputStream os = programJarCopy.getOutputStream()) {
-      ByteStreams.copy(is, os);
-    }
+
+    ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
     LOG.debug("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }
@@ -1345,9 +1339,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     final File target = new File(tempDir, hbaseDDLExtensionJarName);
     BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
     Location targetLocation = tempLocation.append(hbaseDDLExtensionJarName);
-    try (OutputStream os = targetLocation.getOutputStream()) {
-      Files.copy(target.toPath(), os);
-    }
+    Files.copy(target, Locations.newOutputSupplier(targetLocation));
     job.addCacheArchive(targetLocation.toURI());
     return target.getName();
   }
