@@ -36,6 +36,8 @@ import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -56,6 +58,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.crypto.spec.SecretKeySpec;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -130,7 +133,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
       if (keyStore.containsAlias(keyName)) {
         throw new AlreadyExistsException(new SecureKeyId(namespace, name));
       }
-      keyStore.setKeyEntry(keyName, new KeyStoreEntry(secureStoreData, meta), password, null);
+      keyStore.setKeyEntry(keyName, new SecretKeySpec(serialize(secureStoreData), "none"), password, null);
       // Attempt to persist the store.
       flush();
       LOG.debug(String.format("Successfully stored %s in namespace %s", name, namespace));
@@ -233,7 +236,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
         throw new NotFoundException(name + " not found in the secure store.");
       }
       Key key = keyStore.getKey(keyName, password);
-      return ((KeyStoreEntry) key).getData();
+      return deserialize(key.getEncoded());
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
       throw new IOException("Unable to retrieve the key " + name, e);
     } finally {
@@ -279,7 +282,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
         throw new NotFoundException(new SecureKeyId(namespace, name));
       }
       Key key = keyStore.getKey(keyName, password);
-      return ((KeyStoreEntry) key).getMetadata();
+      return deserialize(key.getEncoded()).getMetadata();
     } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
       throw new IOException("Unable to retrieve the metadata for " + name + " in namespace " + namespace, e);
     } finally {
@@ -366,6 +369,51 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
       // Should not happen as we are not storing certificates in the keystore.
       throw new IOException("Failed to store the certificates included in the keystore data.", e);
     }
+  }
+
+  private byte[] serialize(SecureStoreData data) throws IOException {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (DataOutputStream dos = new DataOutputStream(bos)) {
+      // Writing the metadata
+      SecureStoreMetadata meta = data.getMetadata();
+      dos.writeUTF(meta.getName());
+      dos.writeUTF(meta.getDescription());
+      dos.writeLong(meta.getLastModifiedTime());
+
+      Map<String, String> properties = meta.getProperties();
+      dos.writeInt(properties.size());
+      for (Map.Entry<String, String> entry : properties.entrySet()) {
+        dos.writeUTF(entry.getKey());
+        dos.writeUTF(entry.getValue());
+      }
+
+      byte[] secret = data.get();
+      dos.writeInt(secret.length);
+      dos.write(secret);
+    }
+
+    return bos.toByteArray();
+  }
+
+  private SecureStoreData deserialize(byte[] data) throws IOException {
+    DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
+
+    String name = dis.readUTF();
+    String description = dis.readUTF();
+    long lastModified = dis.readLong();
+
+    Map<String, String> properties = new HashMap<>();
+    int len = dis.readInt();
+    for (int i = 0; i < len; i++) {
+      properties.put(dis.readUTF(), dis.readUTF());
+    }
+
+    SecureStoreMetadata meta = new SecureStoreMetadata(name, description, lastModified, properties);
+
+    byte[] secret = new byte[dis.readInt()];
+    dis.readFully(secret);
+
+    return new SecureStoreData(meta, secret);
   }
 
   private static String getKeyName(final String namespace, final String name) {
