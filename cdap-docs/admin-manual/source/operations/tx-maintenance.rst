@@ -50,25 +50,7 @@ To prune the invalid list manually, follow these steps:
  
 #. Wait for the major compaction to complete.
  
-#. Find the minimum prune time across all queues by running the tool
-   ``SimpleHBaseQueueDebugger`` (note that authorization is disabled when running the tool
-   so that CDAP can read all users' queue tables)::
- 
- 
-     $ /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.SimpleHBaseQueueDebugger
- 
-     Results for queue queue:///ns1/WordCount/WordCounter/counter/queue: min tx timestamp: 1440198510309
-     Results for queue queue:///ns1/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440198510280
-     Results for queue queue:///ns2/WordCount/WordCounter/counter/queue: min tx timestamp: n/a
-     Results for queue queue:///ns2/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: n/a
-     Results for queue queue:///default/WordCount/WordCounter/counter/queue: min tx timestamp: 1440194184568
-     Results for queue queue:///default/WordCount/WordCounter/splitter/wordArrayOut: min tx timestamp: 1440194184476
-     Results for queue queue:///default/WordCount/WordCounter/splitter/wordOut: min tx timestamp: 1440194184476
-     Total results for all queues: min tx timestamp: 1440194184476
- 
-   Pick the timestamp from the line beginning ``Total results for all queues``. In this case, ``1440194184476``.
- 
-#. Get the minimum time from the above two steps, to obtain the ``pruneTime``. In this case, ``1440194184476``.
+#. Get the minimum time to obtain the ``pruneTime``. In this case, ``1440202895873``.
  
 #. If the CDAP tables are replicated to other clusters, see the section below
    (:ref:`tx-maintenance-pruning-replicated`) to obtain the ``pruneTime`` for the slave
@@ -108,40 +90,3 @@ If CDAP is not able to list the table descriptors of all CDAP tables, running au
 can lead to data inconsistency.
 
 Note that the automated pruning in 4.1 works only on a *non-replicated* cluster.
-
-
-Using the Queue Debugger Tool
-=============================
-The Queue Debugger Tool allows you to calculate queue statistics, and can be useful in
-solving problems with queues. This is a debug tool for a queue, returning information such
-as how many entries are in a queue, how many have been processed, and how many are not yet
-processed. 
-
-Background
-----------
-Each flow has a queue table. Within each queue table are multiple queues. There is one
-queue for each connection between flowlets. As each flowlet may have multiple consuming
-flowlets, this results in there being multiple queues.
-
-The name of a queue is determined by the producer flowlet. The consumer flowlet (required
-for the command line parameters of the tool) is referred to as the consumer. 
-
-Running the Tool
-----------------
-It's important that the tool be run with the same classpath as CDAP Master to avoid
-problems with the ordering of classes and to ensure that the CDAP classes appear before
-the HBase classpath. This is to avoid the invocation of any older versions of the ASM
-library that are present in the HBase classpath.
-
-The easiest way to start the tool with the same classpath as CDAP Master is to use::
-
-  $ /etc/init.d/cdap-master run co.cask.cdap.data.tools.HBaseQueueDebugger
-  
-or::
-
-  $ /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.HBaseQueueDebugger
-  
-Running the ``help`` option will give a summary of commands and required parameters.
-
-The tool ``SimpleHBaseQueueDebugger`` is a wrapper of the tool that that uses a set of
-defaults useful for displaying the minimum transaction time for all events in all queues.
