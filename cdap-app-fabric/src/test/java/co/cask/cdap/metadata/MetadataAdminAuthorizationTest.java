@@ -143,7 +143,12 @@ public class MetadataAdminAuthorizationTest {
                      Collections.singleton(Action.EXECUTE));
 
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
-    EnumSet<EntityTypeSimpleName> types = EnumSet.allOf(EntityTypeSimpleName.class);
+
+    // query for all metadata entity type except schedule
+    // TODO: https://issues.cask.co/browse/CDAP-14705, add back schedule type when the JIRA is fixed.
+    EnumSet<EntityTypeSimpleName> types = EnumSet.of(EntityTypeSimpleName.NAMESPACE, EntityTypeSimpleName.ARTIFACT,
+                                                     EntityTypeSimpleName.APP, EntityTypeSimpleName.PROGRAM,
+                                                     EntityTypeSimpleName.DATASET);
     SearchRequest searchRequest =
       new SearchRequest(NamespaceId.DEFAULT, "*", types, SortInfo.DEFAULT, 0,
                         Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class));
