@@ -17,7 +17,6 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.BadRequestException;
@@ -25,10 +24,8 @@ import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
@@ -246,28 +243,6 @@ public class StreamClientTestRun extends ClientTestBase {
     streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
     Assert.assertTrue(events.isEmpty());
   }
-
-  @Test
-  public void testStreamDeleteAfterCreatingView() throws Exception {
-    StreamId testStream = NamespaceId.DEFAULT.stream("testStream");
-    streamClient.create(testStream);
-    // should throw StreamNotFoundException if the stream has not been successfully created in the previous step
-    streamClient.getConfig(testStream);
-    StreamViewClient streamViewClient = new StreamViewClient(clientConfig);
-    StreamViewId testView = testStream.view("testView");
-    ViewSpecification testViewSpec = new ViewSpecification(new FormatSpecification("csv", null, null));
-    Assert.assertTrue(streamViewClient.createOrUpdate(testView, testViewSpec));
-    // test stream delete
-    streamClient.delete(testStream);
-    // recreate the stream and the view
-    streamClient.create(testStream);
-    // should throw StreamNotFoundException if the stream has not been successfully created in the previous step
-    streamClient.getConfig(testStream);
-    Assert.assertTrue(streamViewClient.createOrUpdate(testView, testViewSpec));
-    // test that namespace deletion succeeds
-    namespaceClient.delete(NamespaceId.DEFAULT);
-  }
-
 
   private void testSendFile(String msgPrefix, int msgCount) throws Exception {
     StreamId streamId = namespaceId.stream("testSendFile");

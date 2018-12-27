@@ -59,7 +59,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected ApplicationClient appClient;
   protected ProgramClient programClient;
   protected StreamClient streamClient;
-  protected StreamViewClient streamViewClient;
   protected DatasetClient datasetClient;
 
   @Before
@@ -71,7 +70,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
     appClient = new ApplicationClient(getClientConfig());
     programClient = new ProgramClient(getClientConfig());
     streamClient = new StreamClient(getClientConfig());
-    streamViewClient = new StreamViewClient(getClientConfig());
     datasetClient = new DatasetClient(getClientConfig());
   }
 

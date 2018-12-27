@@ -17,24 +17,20 @@
 package co.cask.cdap.internal.app.runtime.entity;
 
 import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -59,7 +55,6 @@ public class EntityExistenceTest {
   private static final String DOES_NOT_EXIST = "doesNotExist";
   private static final NamespaceId NAMESPACE = new NamespaceId(EXISTS);
   private static final ArtifactId ARTIFACT = NAMESPACE.artifact(EXISTS, "1");
-  private static final StreamViewId VIEW = NAMESPACE.stream(AllProgramsApp.STREAM_NAME).view(EXISTS);
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -75,8 +70,6 @@ public class EntityExistenceTest {
     File artifactFile = new File(AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class).toURI());
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(ARTIFACT), artifactFile);
     AppFabricTestHelper.deployApplication(Id.Namespace.fromEntityId(NAMESPACE), AllProgramsApp.class, null, cConf);
-    StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
-    streamAdmin.createOrUpdateView(VIEW, new ViewSpecification(new FormatSpecification("csv", null)));
   }
 
   @Test
@@ -90,7 +83,6 @@ public class EntityExistenceTest {
     existenceVerifier.ensureExists(app.mr(AllProgramsApp.NoOpMR.NAME));
     existenceVerifier.ensureExists(NAMESPACE.dataset(AllProgramsApp.DATASET_NAME));
     existenceVerifier.ensureExists(NAMESPACE.stream(AllProgramsApp.STREAM_NAME));
-    existenceVerifier.ensureExists(VIEW);
   }
 
   @Test
@@ -103,7 +95,6 @@ public class EntityExistenceTest {
     assertDoesNotExist(app.mr(DOES_NOT_EXIST));
     assertDoesNotExist(NamespaceId.DEFAULT.dataset(DOES_NOT_EXIST));
     assertDoesNotExist(NamespaceId.DEFAULT.stream(DOES_NOT_EXIST));
-    assertDoesNotExist(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME).view(DOES_NOT_EXIST));
   }
 
   @SuppressWarnings("unchecked")

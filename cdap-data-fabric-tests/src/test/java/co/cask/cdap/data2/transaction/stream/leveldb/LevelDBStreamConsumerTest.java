@@ -31,7 +31,6 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -86,7 +85,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
       new TransactionMetricsModule(),
       new InMemoryDiscoveryModule(),
       new ExploreClientModule(),
-      new ViewAdminModules().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),

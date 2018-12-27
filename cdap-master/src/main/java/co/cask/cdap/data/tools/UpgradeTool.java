@@ -40,7 +40,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -216,7 +215,6 @@ public class UpgradeTool {
           }
         }
       ),
-      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),

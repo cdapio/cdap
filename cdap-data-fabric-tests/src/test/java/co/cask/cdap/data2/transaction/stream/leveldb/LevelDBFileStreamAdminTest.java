@@ -33,7 +33,6 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -89,7 +88,6 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
       new TransactionMetricsModule(),
       new InMemoryDiscoveryModule(),
       new ExploreClientModule(),
-      new ViewAdminModules().getInMemoryModules(),
       new AuditModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),

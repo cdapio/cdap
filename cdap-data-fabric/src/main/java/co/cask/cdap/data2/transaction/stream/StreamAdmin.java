@@ -19,12 +19,10 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.StreamProperties;
-import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 
 import java.io.IOException;
 import java.util.List;
@@ -132,46 +130,6 @@ public interface StreamAdmin {
    * @throws Exception if deletion fails
    */
   void drop(StreamId streamId) throws Exception;
-
-  /**
-   * Creates or updates a stream view.
-   *
-   * @param viewId the view
-   * @param spec specification for the view
-   * @return true if a stream view was created
-   */
-  boolean createOrUpdateView(StreamViewId viewId, ViewSpecification spec) throws Exception;
-
-  /**
-   * Deletes a stream view.
-   *
-   * @param viewId the view
-   */
-  void deleteView(StreamViewId viewId) throws Exception;
-
-  /**
-   * Lists views associated with a stream.
-   *
-   * @param streamId the stream
-   * @return the associated views
-   */
-  List<StreamViewId> listViews(StreamId streamId) throws Exception;
-
-  /**
-   * Gets the details of a stream view.
-   *
-   * @param viewId the view
-   * @return the details of the view
-   */
-  ViewSpecification getView(StreamViewId viewId) throws Exception;
-
-  /**
-   * Checks if the view exists
-   *
-   * @param viewId the view
-   * @return boolean which is true if view exists else false
-   */
-  boolean viewExists(StreamViewId viewId) throws Exception;
 
   /**
    * Register stream used by program.

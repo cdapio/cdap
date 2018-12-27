@@ -28,7 +28,6 @@ import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Predicates;
 import com.google.inject.Injector;
 
@@ -52,7 +51,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
   private int programs;
   private int datasets;
   private int streams;
-  private int streamViews;
 
   @Override
   public void initialize(Injector injector) {
@@ -100,11 +98,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
   }
 
   @Override
-  public int getStreamViews() {
-    return streamViews;
-  }
-
-  @Override
   public void collect() throws Exception {
     reset();
     List<NamespaceMeta> namespaceMetas;
@@ -124,10 +117,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();
       List<StreamSpecification> streamSpecs = streamAdmin.listStreams(meta.getNamespaceId());
       streams += streamSpecs.size();
-      for (StreamSpecification streamSpec : streamSpecs) {
-        StreamId streamId = meta.getNamespaceId().stream(streamSpec.getName());
-        streamViews += streamAdmin.listViews(streamId).size();
-      }
     }
   }
 
@@ -138,6 +127,5 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     programs = 0;
     datasets = 0;
     streams = 0;
-    streamViews = 0;
   }
 }

@@ -56,14 +56,12 @@ import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -267,7 +265,6 @@ public class TestBase {
         protected void configure() {
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
-          bind(StreamViewHttpHandler.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
@@ -466,7 +463,6 @@ public class TestBase {
 
   private static Module createDataFabricModule() {
     return Modules.override(new DataFabricModules().getInMemoryModules(),
-                            new ViewAdminModules().getInMemoryModules(),
                             new StreamAdminModules().getInMemoryModules())
       .with(new AbstractModule() {
 

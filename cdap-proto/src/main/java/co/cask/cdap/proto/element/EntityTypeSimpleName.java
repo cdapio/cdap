@@ -33,7 +33,6 @@ public enum EntityTypeSimpleName {
   DATASET(MetadataEntity.DATASET),
   // TODO (CDAP-14584) remove stream and view
   STREAM("stream"),
-  VIEW("stream_view"),
   SCHEDULE(MetadataEntity.SCHEDULE);
 
   private final String serializedForm;

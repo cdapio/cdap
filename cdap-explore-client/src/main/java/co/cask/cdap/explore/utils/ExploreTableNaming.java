@@ -19,7 +19,6 @@ package co.cask.cdap.explore.utils;
 import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 
 import java.util.Map;
 
@@ -44,10 +43,6 @@ public final class ExploreTableNaming {
       }
     }
     return String.format("dataset_%s", cleanTableName(datasetID.getDataset()));
-  }
-
-  public String getTableName(StreamViewId viewId) {
-    return String.format("stream_%s_%s", cleanTableName(viewId.getStream()), cleanTableName(viewId.getView()));
   }
 
   public String cleanTableName(String name) {

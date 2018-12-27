@@ -34,7 +34,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -120,7 +119,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new ViewAdminModules().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),

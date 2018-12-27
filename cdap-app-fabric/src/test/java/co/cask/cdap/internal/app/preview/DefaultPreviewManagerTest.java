@@ -35,7 +35,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
@@ -91,7 +90,6 @@ public class DefaultPreviewManagerTest {
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new ConfigStoreModule().getInMemoryModule(),
-      new ViewAdminModules().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),

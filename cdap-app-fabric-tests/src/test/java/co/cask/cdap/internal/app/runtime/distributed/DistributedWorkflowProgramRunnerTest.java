@@ -45,7 +45,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -287,7 +286,6 @@ public class DistributedWorkflowProgramRunnerTest {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),

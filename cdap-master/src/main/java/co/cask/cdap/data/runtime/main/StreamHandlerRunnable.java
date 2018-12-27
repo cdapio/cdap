@@ -33,7 +33,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -120,7 +119,6 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getDistributedModules(),
-      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new NotificationServiceRuntimeModule().getDistributedModules(),

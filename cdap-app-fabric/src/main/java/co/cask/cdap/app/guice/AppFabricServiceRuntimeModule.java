@@ -30,7 +30,6 @@ import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.stream.StreamServiceManager;
-import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
@@ -164,9 +163,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(
-                               StreamHandler.class, StreamFetchHandler.class,
-                               StreamViewHttpHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule().getInMemoryModule(),
                            new EntityVerifierModule(),
@@ -209,9 +206,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(
-                             StreamHandler.class, StreamFetchHandler.class,
-                             StreamViewHttpHandler.class, PreviewHttpHandler.class),
+    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class,
+                                                      PreviewHttpHandler.class),
                            new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule().getStandaloneModule(),
                            new EntityVerifierModule(),

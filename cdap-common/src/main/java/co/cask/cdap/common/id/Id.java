@@ -35,7 +35,6 @@ import co.cask.cdap.proto.id.QueryId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
@@ -824,68 +823,6 @@ public abstract class Id implements EntityIdCompatible {
       return from(Id.Namespace.fromEntityId(streamId.getNamespaceId()), streamId.getStream());
     }
 
-    /**
-     * Uniquely identifies a stream view.
-     */
-    public static final class View extends NamespacedId {
-      private final Stream stream;
-      private final String id;
-
-      public View(Stream stream, String id) {
-        if (id == null) {
-          throw new NullPointerException("ID cannot be null.");
-        }
-        if (!isValidId(id)) {
-          throw new IllegalArgumentException(String.format("ID can only contain alphanumeric, " +
-                                                             "'-' and '_' characters: %s", id));
-        }
-        this.stream = stream;
-        this.id = id;
-      }
-
-      @Override
-      public Namespace getNamespace() {
-        return stream.getNamespace();
-      }
-
-      public String getNamespaceId() {
-        return stream.getNamespace().getId();
-      }
-
-      public Id.Stream getStream() {
-        return stream;
-      }
-
-      public String getStreamId() {
-        return stream.getId();
-      }
-
-      @Override
-      public String getId() {
-        return id;
-      }
-
-      public static View from(Id.Stream streamId, String id) {
-        return new View(streamId, id);
-      }
-
-      public static View from(Namespace namespace, String streamId, String id) {
-        return new View(Id.Stream.from(namespace, streamId), id);
-      }
-
-      public static View from(String namespace, String streamId, String id) {
-        return new View(Id.Stream.from(namespace, streamId), id);
-      }
-
-      @Override
-      public StreamViewId toEntityId() {
-        return new StreamViewId(stream.getNamespaceId(), stream.getId(), id);
-      }
-
-      public static View fromEntityId(StreamViewId viewId) {
-        return from(Id.Namespace.fromEntityId(viewId.getNamespaceId()), viewId.getStream(), viewId.getView());
-      }
-    }
   }
 
   /**

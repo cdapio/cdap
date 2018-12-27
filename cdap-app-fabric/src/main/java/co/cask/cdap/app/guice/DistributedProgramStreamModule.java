@@ -17,7 +17,6 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
@@ -36,7 +35,6 @@ public class DistributedProgramStreamModule extends AbstractModule {
   protected void configure() {
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
 
-    install(new ViewAdminModules().getDistributedModules());
     install(new StreamAdminModules().getDistributedModules());
     install(new NotificationFeedClientModule());
     install(new AbstractModule() {

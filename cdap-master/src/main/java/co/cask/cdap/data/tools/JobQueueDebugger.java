@@ -40,7 +40,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -353,7 +352,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new LocationRuntimeModule().getDistributedModules(),
-      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),

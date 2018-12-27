@@ -72,7 +72,6 @@ public enum ArgumentName {
   APP("app-id"),
   APP_VERSION("app-version"),
   PROGRAM_TYPES("program-types"),
-  VIEW("view-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
   HEADERS("headers"),
@@ -155,7 +154,7 @@ public enum ArgumentName {
   public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "<%s> " +
     "is of the form <entity-type>:<entity-id>, where <entity-type> is one of " +
     "%s" +
-    "'artifact', 'application', 'dataset', 'program', 'stream', or 'view'.\n" +
+    "'artifact', 'application', 'dataset', 'program', or 'stream'.\n" +
     "\n" +
     "%s" +
     "For artifacts and apps, " +
@@ -174,9 +173,6 @@ public enum ArgumentName {
     "For datasets and streams, " +
     "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name> " +
     "or <namespace-name>.<stream-name>.\n" +
-    "\n" +
-    "For (stream) views, <entity-id> includes the stream " +
-    "that they were created from: <namespace-name>.<stream-name>.<view-name>.\n" +
     "\n" +
     "Custom entities can be specified as hierarchical key-value pair with an optional type if the last key in " +
     "hierarchy is not the type of the entity. For example a 'field' in dataset can be specified as: " +
