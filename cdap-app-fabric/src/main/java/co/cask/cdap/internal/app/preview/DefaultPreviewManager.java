@@ -59,7 +59,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.guice.preview.PreviewSecureStoreModule;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -214,7 +213,6 @@ public class DefaultPreviewManager implements PreviewManager {
       new ConfigModule(previewCConf, previewHConf),
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
-      new SecurityModules().getStandaloneModules(),
       new PreviewSecureStoreModule(secureStore),
       new PreviewStreamAdminModule(streamAdmin),
       new PreviewDiscoveryRuntimeModule(discoveryService),
