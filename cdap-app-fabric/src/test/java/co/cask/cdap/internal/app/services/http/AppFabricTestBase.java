@@ -90,7 +90,6 @@ import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
@@ -98,6 +97,8 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -418,7 +419,7 @@ public abstract class AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
 
     try {
-      return addArtifact(artifactId, appJar, Collections.emptySet());
+      return addArtifact(artifactId, Locations.newInputSupplier(appJar), Collections.emptySet());
     } finally {
       appJar.delete();
     }
@@ -439,6 +440,7 @@ public abstract class AppFabricTestBase {
    * @param parents parents range of artifact
    * @param pluginClassesJSON JSON representation for plugin classes
    * @return {@link HttpResponse} recieved response
+   * @throws Exception
    */
   protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
                                            Manifest manifest,
@@ -446,14 +448,14 @@ public abstract class AppFabricTestBase {
                                            @Nullable String pluginClassesJSON) throws Exception {
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
     try {
-      return addArtifact(artifactId, appJar, parents, pluginClassesJSON);
+      return addArtifact(artifactId, Locations.newInputSupplier(appJar), parents, pluginClassesJSON);
     } finally {
       appJar.delete();
     }
   }
 
   // add an artifact and return the response code
-  protected HttpResponse addArtifact(Id.Artifact artifactId, Location artifactContents,
+  protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
                                      Set<ArtifactRange> parents) throws Exception {
     return addArtifact(artifactId, artifactContents, parents, null);
   }
@@ -461,7 +463,7 @@ public abstract class AppFabricTestBase {
   /**
    * This method accepts GSON serialized form of plugin classes for testing purpose.
    */
-  private HttpResponse addArtifact(Id.Artifact artifactId, Location artifactContents,
+  private HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
                                    Set<ArtifactRange> parents, @Nullable String pluginClassesJSON)
     throws Exception {
     String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
@@ -478,7 +480,7 @@ public abstract class AppFabricTestBase {
     if (pluginClassesJSON != null) {
       builder.addHeader("Artifact-Plugins", pluginClassesJSON);
     }
-    builder.withBody((ContentProvider<? extends InputStream>) artifactContents::getInputStream);
+    builder.withBody(artifactContents);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
   }
 
@@ -1242,8 +1244,8 @@ public abstract class AppFabricTestBase {
 
   protected File buildAppArtifact(Class<?> cls, Manifest manifest, File destination) throws IOException {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
-    destination.delete();
-    return Locations.linkOrCopy(appJar, destination);
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    return destination;
   }
 
   protected DatasetMeta getDatasetMeta(DatasetId datasetId)

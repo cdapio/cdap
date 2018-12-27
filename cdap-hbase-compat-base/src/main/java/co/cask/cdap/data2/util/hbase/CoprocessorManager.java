@@ -22,6 +22,8 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.spi.hbase.CoprocessorDescriptor;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
+import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
@@ -36,7 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -175,9 +176,14 @@ public class CoprocessorManager {
     // multiple CoprocessorManagers we called at the same time. This should never be the case in distributed
     // mode, as coprocessors should all be loaded beforehand using the CoprocessorBuildTool.
     final Location tmpLocation = jarDir.getTempFile(".jar");
-    try (OutputStream os = tmpLocation.getOutputStream()) {
+    try {
       // Copy jar file into filesystem (HDFS)
-      Files.copy(jarFile.toPath(), os);
+      Files.copy(jarFile, new OutputSupplier<OutputStream>() {
+        @Override
+        public OutputStream getOutput() throws IOException {
+          return tmpLocation.getOutputStream();
+        }
+      });
     } catch (IOException e) {
       LOG.error("Unable to copy local coprocessor jar to filesystem at {}.", tmpLocation, e);
       if (tmpLocation.exists()) {

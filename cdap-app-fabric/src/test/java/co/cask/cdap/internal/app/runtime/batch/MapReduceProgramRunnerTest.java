@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -46,6 +47,7 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -63,18 +65,15 @@ import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -94,7 +93,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   public static final ExternalResource RESOURCE = new ExternalResource() {
     private final Map<String, String> previousProperties = new HashMap<>();
     @Override
-    protected void before() {
+    protected void before() throws Throwable {
       // store the previous property
       previousProperties.put(TxConstants.Manager.CFG_TX_TIMEOUT,
                              System.getProperty(TxConstants.Manager.CFG_TX_TIMEOUT));
@@ -326,11 +325,9 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertFalse(resultLocation.isDirectory());
 
     // read output and verify result
-    String line;
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(resultLocation.getInputStream(),
-                                                                          StandardCharsets.UTF_8))) {
-      line = reader.readLine();
-    }
+    String line = CharStreams.readFirstLine(
+      CharStreams.newReaderSupplier(
+        Locations.newInputSupplier(resultLocation), Charsets.UTF_8));
     Assert.assertNotNull(line);
     String[] fields = line.split(outputSeparator == null ? ":" : outputSeparator);
     Assert.assertEquals(2, fields.length);

@@ -60,6 +60,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionAware;
@@ -76,11 +77,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Collections;
@@ -449,17 +448,15 @@ public class UnitTestManager extends AbstractTestManager {
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, pluginClass, pluginClasses);
     File destination =
       new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
-    try (InputStream is = appJar.getInputStream()) {
-      Files.copy(is, destination.toPath());
-    }
+    Files.copy(Locations.newInputSupplier(appJar), destination);
     appJar.delete();
     return destination;
   }
 
   private void addArtifact(ArtifactId artifactId, Location jar) throws Exception {
-    File destination = new File(tmpDir, String.format("%s-%s-%d.jar", artifactId.getArtifact(),
-                                                      artifactId.getVersion(), System.nanoTime()));
-    Locations.linkOrCopy(jar, destination);
+    File destination =
+      new File(tmpDir, String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
+    Files.copy(Locations.newInputSupplier(jar), destination);
     jar.delete();
 
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(artifactId), destination);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,11 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceRunnerTestBase;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
@@ -27,10 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -72,9 +71,7 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
   private List<String> readFromOutput(FileSet fileSet, String relativePath) throws IOException {
     // small amount of data, so expect all data from just 1 file
     Location location = fileSet.getLocation(relativePath).append("part-m-00000");
-    try (Reader reader = new InputStreamReader(location.getInputStream(), StandardCharsets.UTF_8)) {
-      return CharStreams.readLines(reader);
-    }
+    return CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(location), Charsets.UTF_8));
   }
 
   @Test
