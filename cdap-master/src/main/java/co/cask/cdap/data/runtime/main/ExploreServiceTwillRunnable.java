@@ -39,7 +39,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.explore.service.hive.BaseHiveExploreService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
@@ -425,7 +425,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new NamespaceQueryAdminModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new ExploreRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
       new StreamAdminModules().getDistributedModules(),

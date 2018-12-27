@@ -52,7 +52,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
@@ -273,7 +273,7 @@ public class DistributedWorkflowProgramRunnerTest {
       new ConfigModule(cConf),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
-      new LoggingModules().getDistributedModules(),
+      new LocalLogAppenderModule(),
       new LocationRuntimeModule().getStandaloneModules(),
       new IOModule(),
       new KafkaClientModule(),

@@ -28,7 +28,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
@@ -113,7 +113,7 @@ public class HBaseTableExporter {
       new DataSetsModules().getDistributedModules(),
       new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new ExploreClientModule(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),

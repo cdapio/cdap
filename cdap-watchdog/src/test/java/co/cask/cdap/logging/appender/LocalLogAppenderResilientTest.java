@@ -45,7 +45,7 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.ReadRange;
@@ -117,7 +117,7 @@ public class LocalLogAppenderResilientTest {
       new DataSetServiceModules().getInMemoryModules(),
       new TransactionMetricsModule(),
       new ExploreClientModule(),
-      new LoggingModules().getInMemoryModules(),
+      new LocalLogAppenderModule(),
       new NamespaceAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),

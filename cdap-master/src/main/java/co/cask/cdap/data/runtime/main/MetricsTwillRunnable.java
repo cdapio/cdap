@@ -32,8 +32,8 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -105,7 +105,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new DataSetsModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceQueryAdminModule(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new LogReaderRuntimeModules().getDistributedModules(),
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),

@@ -34,7 +34,7 @@ import co.cask.cdap.data.runtime.main.transaction.TransactionHttpService;
 import co.cask.cdap.data.runtime.main.transaction.TransactionPingHandler;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -106,7 +106,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceQueryAdminModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new AuditModule().getDistributedModules(),
       // needed by RemoteDatasetFramework while making an HTTP call to DatasetService
       new AuthorizationEnforcementModule().getDistributedModules(),
