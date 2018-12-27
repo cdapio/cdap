@@ -22,6 +22,7 @@ $connections-panel-border-color: $grey-05;
 $connections-menu-active-color: var(--brand-primary-color);
 $connections-menu-item-color: $grey-01;
 $info-font-color: $grey-03;
+$expanded-menu-icon-width: 40px;
 
 .dataprep-connections-container {
   height: calc(100vh - 104px);
@@ -59,7 +60,7 @@ $info-font-color: $grey-03;
       overflow-y: auto;
 
       .menu-item {
-        padding: 10px 15px 10px 35px;
+        padding: 0;
         cursor: pointer;
 
         .fa { margin-right: 10px; }
@@ -69,12 +70,13 @@ $info-font-color: $grey-03;
         }
 
         &.expandable-menu {
-          padding: 10px 15px 10px 8px;
+          padding: 10px 0;
         }
         a {
           color: $connections-menu-item-color;
           display: inline-block;
           width: 100%;
+          padding: 10px 15px 10px 35px;
 
           &:active,
           &:focus {
@@ -89,12 +91,17 @@ $info-font-color: $grey-03;
           &.active {
             font-weight: 600;
             color: $connections-menu-active-color;
+            background: white;
+
+            ~ .expanded-menu-popover-icon {
+              background: white;
+            }
           }
         }
 
         .menu-item-expanded-list {
           padding: 10px 0 10px 54px;
-          width: calc(100% - 25px);
+          width: calc(100% - #{$expanded-menu-icon-width});
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
@@ -102,6 +109,7 @@ $info-font-color: $grey-03;
 
         .expanded-menu-popover-icon > .fa {
           margin-right: 0;
+          width: $expanded-menu-icon-width;
         }
 
         &.expandable {

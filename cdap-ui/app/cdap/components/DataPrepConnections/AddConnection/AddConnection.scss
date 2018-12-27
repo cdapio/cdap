@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import "~styles/colors.scss";
+
 $popover-border-color: #999999;
 $popover-bg-color: white;
 $connection-options-hover-bg-color: #efefef;
@@ -23,13 +25,13 @@ $connection-options-hover-bg-color: #efefef;
     &:active,
     &:focus,
     &:active:focus {
-      outline: none;
+      box-shadow: none;
     }
 
-    .fa {
-      margin-right: 10px;
-      vertical-align: top;
-    }
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    vertical-align: top;
   }
   .popper {
     border-radius: 0;
