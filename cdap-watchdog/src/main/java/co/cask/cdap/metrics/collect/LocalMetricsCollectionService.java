@@ -28,7 +28,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -69,9 +71,11 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Override
   protected void publish(Iterator<MetricValues> metrics) {
+    List<MetricValues> metricValues = new ArrayList<>();
     while (metrics.hasNext()) {
-      metricStore.add(metrics.next());
+      metricValues.add(metrics.next());
     }
+    metricStore.add(metricValues);
   }
 
   @Override

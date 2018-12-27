@@ -41,6 +41,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,7 +126,7 @@ public class DefaultCube implements Cube, MeteredDataset {
       }
     }
 
-    Map<Integer, Future> futures = new HashMap<>();
+    Map<Integer, Future<?>> futures = new HashMap<>();
     for (Map.Entry<Integer, FactTable> table : resolutionToFactTable.entrySet()) {
       futures.put(table.getKey(), executorService.submit(() -> table.getValue().add(toWrite)));
     }
@@ -133,17 +134,21 @@ public class DefaultCube implements Cube, MeteredDataset {
     boolean failed = false;
     Exception failedException = null;
     StringBuilder failedMessage = new StringBuilder("Failed to add metrics to ");
-    for (Map.Entry<Integer, Future> future : futures.entrySet()) {
+    for (Map.Entry<Integer, Future<?>> future : futures.entrySet()) {
       try {
-        future.getValue().get();
-      } catch (InterruptedException | ExecutionException e) {
+        Uninterruptibles.getUninterruptibly(future.getValue());
+      } catch (ExecutionException e) {
         if (!failed) {
           failed = true;
           failedMessage.append(String.format("the %d resolution table", future.getKey()));
         } else {
           failedMessage.append(String.format(", the %d resolution table", future.getKey()));
         }
-        failedException = e;
+        if (failedException == null) {
+          failedException = e;
+        } else {
+          failedException.addSuppressed(e);
+        }
       }
     }
 
