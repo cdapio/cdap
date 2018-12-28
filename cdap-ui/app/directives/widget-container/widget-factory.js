@@ -267,6 +267,14 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig'
         }
+      },
+      'multi-keyvalue': {
+        element: '<my-multi-key-value></my-multi-key-value>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'input-schema': 'inputSchema'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];

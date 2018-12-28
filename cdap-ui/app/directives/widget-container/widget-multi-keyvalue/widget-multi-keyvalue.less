@@ -1,0 +1,46 @@
+@import "../../../styles/variables.less";
+my-multi-key-value {
+  .multi-keyvalue-container {
+    background-color: @body-bg;
+    border: 1px solid #dddddd;
+    border-radius: @border-radius-base;
+    padding: 20px 10px;
+    .row {
+      margin-bottom: 2px;
+      div {
+        .form-control {
+          display: inline-block;
+          width: 40%;
+        }
+        .key-value-input {
+          width: 120px;
+        }
+        .custom-input-span,
+        .custom-input-wrapper {
+          display: inline !important;
+        }
+      }
+    }
+    .dropdown-menu.dropdown-menu-form {
+      overflow: auto !important; // This is because the lib makes overflow scroll and it looks bad.
+      background: white;
+    }
+    .dropdown-multiselect .btn-default.dropdown-toggle + .dropdown-menu > li > a {
+      background: white;
+      color: black;
+    }
+  }
+}
+
+body.theme-cdap {
+  my-multi-key-value {
+    .dropdown-menu.dropdown-menu-form {
+      overflow: auto !important; // This is because the lib makes overflow scroll and it looks bad.
+      background: white;
+    }
+    .dropdown-multiselect .btn-default.dropdown-toggle + .dropdown-menu > li > a {
+      background: white;
+      color: black;
+    }
+  }
+}

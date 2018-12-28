@@ -1,0 +1,77 @@
+<!--
+  Copyright © 2015-2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="multi-keyvalue-container">
+  <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
+    <div class="col-xs-10 col-lg-8">
+      <div class="custom-input-wrapper" ng-if="property.enableCustomKeyInput">
+          <input type="text" class="form-control" ng-model="property.keyInputValue" placeholder="{{ keyPlaceholder }}"/>
+          <span class="custom-input-span" ng-click="onKeyInputClose(property)" ng-if="!isCustomInputType(keyInputType)">
+            <i class="fa fa-times"></i>
+          </span>
+      </div>
+
+      <div class="select-container" style="display: inline-block" ng-if="!property.enableCustomKeyInput">
+        <select class="form-control key-value-input"
+          ng-options="option as option.label for option in keyOptions"
+          ng-change="onKeyChange(property)"
+          ng-model="property.keySelectValue">
+        </select>
+        <span class="custom-input-span" ng-click="onCustomKey(property)">
+          <i class="fa fa-edit"></i>
+        </span>
+      </div>
+
+      <div class="custom-input-wrapper" ng-if="property.enableCustomValueInput">
+        <input type="text" class="form-control" ng-model="property.inputValue" placeholder="{{ valuePlaceholder }}"/>
+        <span class="custom-input-span" ng-click="onValueInputClose(property)" ng-if="!isCustomInputType(valueInputType)">
+            <i class="fa fa-times"></i>
+        </span>
+      </div>
+
+      <div class="multi-select-container" style="display: inline-block" ng-if="!property.enableCustomValueInput">
+        <div
+        ng-dropdown-multiselect=""
+        options="valueOptions"
+        checkboxes="true"
+        translation-texts="{dynamicButtonTextSuffix: 'Selected'}"
+        selected-model="property.selectedValues"
+        extra-settings="extraSettings"
+        style="display:inline-block"
+        ></div>
+        <span class="custom-input-span" ng-click="onCustomValue(property)">
+          <i class="fa fa-edit"></i>
+        </span>
+      </div>
+    </div>
+
+    <div class="col-xs-2 col-lg-4 field-actions">
+      <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
+        <span class="fa fa-fw fa-trash"> </span>
+      </a>
+      <a class="btn btn-info btn-transparent" ng-click="addProperty()" ng-if=$last>
+        <span class="fa fa-fw fa-plus"></span>
+      </a>
+    </div>
+  </div>
+
+  <div ng-if="properties.length === 0" class="empty-container">
+    <a class="btn btn-blue" ng-click="addProperty()">
+      <span class="fa fa-fw fa-plus"></span>
+      <span>Add Property</span>
+    </a>
+  </div>
+</div>
