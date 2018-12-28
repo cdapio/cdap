@@ -24,8 +24,11 @@ require('./MemoryTextbox.scss');
 // backend in MB. we are "big data". We don't talk in Mb we only start with Gb -_-
 export default function MemoryTextbox({ ...props }) {
   let { onChange, value, widgetProps } = props;
-  let min = Math.floor(widgetProps.min / 1024);
-  let max = Math.floor(widgetProps.max / 1024);
+  let min, max;
+  min = widgetProps.min || Number.MIN_SAFE_INTEGER;
+  max = widgetProps.max || Number.MAX_SAFE_INTEGER;
+  min = Math.floor(min / 1024);
+  max = Math.floor(max / 1024);
   let numberValue = parseInt(value, 10);
   value = isNaN(numberValue) ? value : numberValue;
   let memoryInGB = Math.floor(value / 1024);

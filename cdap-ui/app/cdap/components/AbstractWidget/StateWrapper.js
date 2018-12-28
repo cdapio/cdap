@@ -14,12 +14,12 @@
  * the License.
 */
 
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { objectQuery } from 'services/helpers';
 import PropTypes from 'prop-types';
 import isNil from 'lodash/isNil';
 
-export default class StateWrapper extends Component {
+export default class StateWrapper extends PureComponent {
   static propTypes = {
     comp: PropTypes.any,
     value: PropTypes.oneOfType([PropTypes.array, PropTypes.string, PropTypes.number]),

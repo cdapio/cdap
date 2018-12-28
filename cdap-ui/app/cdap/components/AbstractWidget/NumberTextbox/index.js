@@ -21,8 +21,8 @@ require('./NumberTextbox.scss');
 
 export default function NumberTextbox({ ...props }) {
   let { onChange, value, widgetProps } = props;
-  let min = widgetProps.min || -Infinity;
-  let max = widgetProps.max || Infinity;
+  let min = widgetProps.min || Number.MIN_SAFE_INTEGER;
+  let max = widgetProps.max || Number.MAX_SAFE_INTEGER;
   let numberValue = parseInt(value, 10);
   value = isNaN(numberValue) ? value : numberValue;
   return (

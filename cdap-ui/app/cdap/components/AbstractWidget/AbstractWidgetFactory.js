@@ -24,6 +24,7 @@ import SecureKeyTextarea from 'components/AbstractWidget/SecureKeyTextarea';
 
 const WIDGET_FACTORY = {
   text: DefaultInput,
+  textbox: DefaultInput,
   textarea: TextArea,
   number: NumberTextbox,
   select: SelectWidget,

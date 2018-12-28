@@ -19,7 +19,9 @@ import { Input } from 'reactstrap';
 import { WIDGET_PROPTYPES, DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 
 export default function DefaultInput({ ...props }) {
-  let { onChange, value, widgetProps } = props;
+  let { onChange, value = '', widgetProps } = props;
+  delete widgetProps.default; // default value is already set at the state wrapper level.
+  delete widgetProps.size;
 
   return <Input value={value} onChange={onChange} {...widgetProps} />;
 }
