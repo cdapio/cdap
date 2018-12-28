@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ import co.cask.cdap.logging.appender.LoggingTester;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.ReadRange;
@@ -88,7 +88,7 @@ public class TestFileLogging {
       new ConfigModule(cConf, hConf),
       new NonCustomLocationUnitTestModule().getModule(),
       new TransactionModules().getInMemoryModules(),
-      new LoggingModules().getInMemoryModules(),
+      new LocalLogAppenderModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),

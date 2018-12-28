@@ -23,6 +23,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
+import co.cask.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
+import co.cask.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;
@@ -44,6 +46,7 @@ final class RemoteExecutionProgramRunnerModule extends PrivateModule {
     // Bind the TwillRunner for remote exeuction used in isolated cluster.
     // The binding is added in here instead of in TwillModule is because this module can be used
     // in standalone env as well and it doesn't require YARN.
+    bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
     bind(twillRunnerServiceKey).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
     expose(twillRunnerServiceKey);
 

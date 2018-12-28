@@ -14,19 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.logging.remote;
+package co.cask.cdap.logging.guice;
 
-import java.util.Iterator;
+import co.cask.cdap.logging.appender.LogAppender;
+import co.cask.cdap.logging.framework.local.LocalLogAppender;
+import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
 
 /**
- * Interface defining how to process logs from coming from a remote program execution.
+ * A Guice module to provide binding for {@link LogAppender} that writes log entries locally.
  */
-public interface RemoteExecutionLogProcessor {
+public class LocalLogAppenderModule extends AbstractModule {
 
-  /**
-   * Processes the message.
-   *
-   * @param loggingEventBytes the event coming from the remote execution
-   */
-  void process(Iterator<byte[]> loggingEventBytes);
+  @Override
+  protected void configure() {
+    bind(LogAppender.class).to(LocalLogAppender.class).in(Scopes.SINGLETON);
+  }
 }

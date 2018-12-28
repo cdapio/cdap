@@ -24,7 +24,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.kafka.KafkaTester;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -62,7 +62,7 @@ public abstract class KafkaTestBase {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

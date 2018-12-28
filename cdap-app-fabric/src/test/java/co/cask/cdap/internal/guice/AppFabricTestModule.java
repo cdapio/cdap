@@ -36,8 +36,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -95,7 +95,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new ServiceStoreModules().getInMemoryModules());
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule().getModule());
-    install(new LoggingModules().getInMemoryModules());
+    install(new LocalLogAppenderModule());
     install(new LogReaderRuntimeModules().getInMemoryModules());
     install(new MetricsHandlerModule());
     install(new MetricsClientRuntimeModule().getInMemoryModules());

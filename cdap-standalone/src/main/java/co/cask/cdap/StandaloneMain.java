@@ -58,8 +58,8 @@ import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -464,7 +464,7 @@ public class StandaloneMain {
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),
-      new LoggingModules().getStandaloneModules(),
+      new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
       new SecurityModules().getStandaloneModules(),

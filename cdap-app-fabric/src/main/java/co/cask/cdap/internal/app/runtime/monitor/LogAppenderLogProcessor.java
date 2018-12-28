@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.remote;
+package co.cask.cdap.internal.app.runtime.monitor;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -22,7 +22,6 @@ import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,12 +47,17 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
 
   @Override
   public void process(Iterator<byte[]> loggingEventBytes) {
+    LoggingEventSerializer serializer = LOGGING_EVENT_SERIALIZER.get();
     loggingEventBytes.forEachRemaining(bytes -> {
       try {
-        ILoggingEvent iLoggingEvent =
-                LOGGING_EVENT_SERIALIZER.get().fromBytes(ByteBuffer.wrap(bytes));
+        ILoggingEvent iLoggingEvent = serializer.fromBytes(ByteBuffer.wrap(bytes));
         LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(iLoggingEvent.getMDCPropertyMap());
-        logAppender.append(new LogMessage(iLoggingEvent, Preconditions.checkNotNull(loggingContext)));
+        if (loggingContext == null) {
+          // This shouldn't happen
+          LOG.debug("Ignore logging event due to missing logging context: {}", iLoggingEvent);
+          return;
+        }
+        logAppender.append(new LogMessage(iLoggingEvent, loggingContext));
       } catch (IOException e) {
         LOG.warn("Ignore logging event due to decode failure: {}", e.getMessage());
         LOG.debug("Ignore logging event stack trace", e);

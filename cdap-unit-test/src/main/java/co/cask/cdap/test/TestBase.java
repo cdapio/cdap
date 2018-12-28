@@ -77,8 +77,8 @@ import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.BasicMessagingAdmin;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
@@ -274,7 +274,7 @@ public class TestBase {
       // todo: do we need handler?
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getInMemoryModules(),
+      new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),

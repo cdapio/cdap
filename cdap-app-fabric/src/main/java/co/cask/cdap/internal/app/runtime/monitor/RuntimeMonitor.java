@@ -35,7 +35,6 @@ import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteProcessControl
 import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeDataset;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.profile.ProfileMetricService;
-import co.cask.cdap.logging.remote.RemoteExecutionLogProcessor;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;

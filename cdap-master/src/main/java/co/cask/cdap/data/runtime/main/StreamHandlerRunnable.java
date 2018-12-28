@@ -36,7 +36,7 @@ import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
@@ -116,7 +116,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
       new MetricsStoreModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),

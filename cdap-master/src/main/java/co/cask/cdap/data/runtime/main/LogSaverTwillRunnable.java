@@ -31,7 +31,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.framework.distributed.DistributedLogFramework;
 import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.logging.service.LogSaverStatusService;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -106,7 +106,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new DistributedLogFrameworkModule(twillContext),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),

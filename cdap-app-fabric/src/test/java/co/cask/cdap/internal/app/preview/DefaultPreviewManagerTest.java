@@ -37,8 +37,8 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.ProvisionerModule;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -82,7 +82,7 @@ public class DefaultPreviewManagerTest {
       new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new NonCustomLocationUnitTestModule().getModule(),
-      new LoggingModules().getInMemoryModules(),
+      new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),

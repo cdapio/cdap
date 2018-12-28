@@ -48,7 +48,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.provision.ProvisionerModule;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -229,7 +229,7 @@ public class DefaultPreviewManager implements PreviewManager {
       // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
       // save threads for reading metrics from TMS, as there won't be metrics in TMS.
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LoggingModules().getStandaloneModules(),
+      new LocalLogAppenderModule(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new MetadataReaderWriterModules().getInMemoryModules(),

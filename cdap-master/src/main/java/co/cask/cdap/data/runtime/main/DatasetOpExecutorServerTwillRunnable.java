@@ -41,7 +41,7 @@ import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
-import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -114,7 +114,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
-      new LoggingModules().getDistributedModules(),
+      new KafkaLogAppenderModule(),
       new ExploreClientModule(),
       new MetadataServiceModule(),
       new StreamAdminModules().getDistributedModules(),
