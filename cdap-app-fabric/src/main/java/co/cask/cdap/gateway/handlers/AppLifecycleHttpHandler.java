@@ -34,8 +34,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.utils.DirUtils;
@@ -114,7 +114,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private final CConfiguration configuration;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final File tmpDir;
 
@@ -122,12 +122,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   AppLifecycleHttpHandler(CConfiguration configuration,
                           ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
-                          NamespacedLocationFactory namespacedLocationFactory,
+                          NamespacePathLocator namespacePathLocator,
                           ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.runtimeService = runtimeService;
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
     this.applicationLifecycleService = applicationLifecycleService;
     this.tmpDir = new File(new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR)),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -427,7 +427,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          final boolean updateSchedules) throws IOException {
 
     Id.Namespace idNamespace = Id.Namespace.fromEntityId(namespace);
-    Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
+    Location namespaceHomeLocation = namespacePathLocator.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
                                  namespaceHomeLocation, namespace.getNamespace());

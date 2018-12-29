@@ -17,8 +17,8 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
@@ -63,7 +63,7 @@ public final class LocationRuntimeModule extends RuntimeModule {
     @Override
     protected void configure() {
       bind(LocationFactory.class).to(LocalLocationFactory.class);
-      bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
+      bind(NamespacePathLocator.class).to(DefaultNamespacePathLocator.class);
     }
 
     @Provides
@@ -77,11 +77,11 @@ public final class LocationRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
+      bind(NamespacePathLocator.class).to(DefaultNamespacePathLocator.class);
       bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
 
       expose(LocationFactory.class);
-      expose(NamespacedLocationFactory.class);
+      expose(NamespacePathLocator.class);
     }
 
 

@@ -24,7 +24,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.stream.StreamEventCodec;
 import co.cask.cdap.data2.queue.QueueClientFactory;
@@ -86,9 +86,9 @@ public class OpenCloseDataSetTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    NamespacedLocationFactory namespacedLocationFactory =
-      AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespaceHomeLocation = namespacedLocationFactory.get(DefaultId.NAMESPACE);
+    NamespacePathLocator namespacePathLocator =
+      AppFabricTestHelper.getInjector().getInstance(NamespacePathLocator.class);
+    namespaceHomeLocation = namespacePathLocator.get(DefaultId.NAMESPACE);
     NamespaceAdmin namespaceAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(DefaultId.NAMESPACE).build());
     Locations.mkdirsIfNotExists(namespaceHomeLocation);

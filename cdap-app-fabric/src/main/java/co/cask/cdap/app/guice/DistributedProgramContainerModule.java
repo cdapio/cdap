@@ -26,9 +26,9 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -48,8 +48,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
-import co.cask.cdap.logging.appender.LogAppender;
-import co.cask.cdap.logging.appender.tms.TMSLogAppender;
 import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.logging.guice.TMSLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -221,7 +219,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(Modules.override(new LocationRuntimeModule().getDistributedModules()).with(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(NamespacedLocationFactory.class).to(NoLookupNamespacedLocationFactory.class);
+        bind(NamespacePathLocator.class).to(NoLookupNamespacePathLocator.class);
       }
     }));
 

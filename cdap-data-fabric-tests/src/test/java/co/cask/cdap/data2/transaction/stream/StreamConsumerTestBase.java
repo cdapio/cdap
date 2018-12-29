@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data2.queue.ConsumerConfig;
@@ -80,9 +80,9 @@ public abstract class StreamConsumerTestBase {
 
   protected abstract StreamFileWriterFactory getFileWriterFactory();
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
+  protected static void setupNamespaces(NamespacePathLocator namespacePathLocator) throws IOException {
+    namespacePathLocator.get(TEST_NAMESPACE).mkdirs();
+    namespacePathLocator.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @Test

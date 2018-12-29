@@ -25,7 +25,7 @@ import java.io.IOException;
 /**
  * Interface for managing locations in a namespace
  */
-public interface NamespacedLocationFactory {
+public interface NamespacePathLocator {
 
   /**
    * Returns the base {@link Location} for the specified namespace on the filesystem

@@ -19,8 +19,8 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -46,7 +46,7 @@ public final class StreamFileJanitor {
   private static final Logger LOG = LoggerFactory.getLogger(StreamFileJanitor.class);
 
   private final StreamAdmin streamAdmin;
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
   private final String streamBaseDirPath;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Impersonator impersonator;
@@ -54,11 +54,11 @@ public final class StreamFileJanitor {
   @Inject
   public StreamFileJanitor(CConfiguration cConf,
                            @Named(StreamAdminModules.NOAUTH_STREAM_ADMIN) StreamAdmin streamAdmin,
-                           NamespacedLocationFactory namespacedLocationFactory,
+                           NamespacePathLocator namespacePathLocator,
                            NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
     this.streamAdmin = streamAdmin;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.impersonator = impersonator;
   }
@@ -73,7 +73,7 @@ public final class StreamFileJanitor {
       final Location streamBaseLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          return namespacedLocationFactory.get(namespaceId).append(streamBaseDirPath);
+          return namespacePathLocator.get(namespaceId).append(streamBaseDirPath);
         }
       });
 

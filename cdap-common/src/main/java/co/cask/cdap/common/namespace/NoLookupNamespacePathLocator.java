@@ -28,15 +28,15 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 
 /**
- * Implementation of {@link NamespacedLocationFactory} that does not perform lookup for {@link NamespaceMeta}.
+ * Implementation of {@link NamespacePathLocator} that does not perform lookup for {@link NamespaceMeta}.
  */
-public class NoLookupNamespacedLocationFactory implements NamespacedLocationFactory {
+public class NoLookupNamespacePathLocator implements NamespacePathLocator {
 
   private final LocationFactory locationFactory;
   private final String namespaceDir;
 
   @Inject
-  public NoLookupNamespacedLocationFactory(CConfiguration cConf, LocationFactory locationFactory) {
+  public NoLookupNamespacePathLocator(CConfiguration cConf, LocationFactory locationFactory) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
   }

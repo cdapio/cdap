@@ -16,7 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -34,9 +34,9 @@ public class StreamFileTestUtils {
   private StreamFileTestUtils() {
   }
 
-  public static Location getStreamBaseLocation(NamespacedLocationFactory namespacedLocationFactory,
+  public static Location getStreamBaseLocation(NamespacePathLocator namespacePathLocator,
                                                StreamId streamId) throws IOException {
-    return namespacedLocationFactory.get(streamId.getParent()).append(streamId.getEntityName());
+    return namespacePathLocator.get(streamId.getParent()).append(streamId.getEntityName());
   }
 
   public static StreamEvent createEvent(long timestamp, String body) {

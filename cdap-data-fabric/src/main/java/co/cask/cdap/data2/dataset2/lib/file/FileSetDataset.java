@@ -28,7 +28,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Function;
@@ -83,14 +83,14 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
    * @param datasetContext the context for the dataset
    * @param cConf the CDAP configuration
    * @param spec the dataset specification
-   * @param namespacedLocationFactory a factory for namespaced {@link Location}
+   * @param namespacePathLocator a factory for namespaced {@link Location}
    * @param runtimeArguments the runtime arguments
    */
   @SuppressWarnings("WeakerAccess")
   public FileSetDataset(DatasetContext datasetContext, CConfiguration cConf,
                         DatasetSpecification spec,
                         LocationFactory locationFactory,
-                        NamespacedLocationFactory namespacedLocationFactory,
+                        NamespacePathLocator namespacePathLocator,
                         @Nonnull Map<String, String> runtimeArguments) throws IOException {
 
     Preconditions.checkNotNull(datasetContext, "Dataset context must not be null");
@@ -101,7 +101,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
 
     Location baseLocation = determineBaseLocation(datasetContext, cConf, spec,
-                                                  locationFactory, namespacedLocationFactory);
+                                                  locationFactory, namespacePathLocator);
     this.baseLocation = new FileSetLocation(baseLocation,
                                             new FileSetLocationFactory(baseLocation.getLocationFactory()));
     this.outputLocation = determineOutputLocation();
@@ -132,7 +132,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
    */
   static Location determineBaseLocation(DatasetContext datasetContext, CConfiguration cConf,
                                         DatasetSpecification spec, LocationFactory locationFactory,
-                                        NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+                                        NamespacePathLocator namespacePathLocator) throws IOException {
 
     // older versions of file set incorrectly interpret absolute paths as relative to the namespace's
     // data directory. These file sets do not have the file set version property.
@@ -162,7 +162,7 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
     }
     NamespaceId namespaceId = new NamespaceId(datasetContext.getNamespaceId());
     String dataDir = cConf.get(Constants.Dataset.DATA_DIR, Constants.Dataset.DEFAULT_DATA_DIR);
-    return namespacedLocationFactory.get(namespaceId).append(dataDir).append(basePath);
+    return namespacePathLocator.get(namespaceId).append(dataDir).append(basePath);
   }
 
   private Location determineOutputLocation() {

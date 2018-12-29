@@ -42,7 +42,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -187,7 +187,7 @@ public class ArtifactStore {
     .create();
 
   private final LocationFactory locationFactory;
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final Impersonator impersonator;
@@ -195,12 +195,12 @@ public class ArtifactStore {
 
   @Inject
   ArtifactStore(CConfiguration cConf, DatasetFramework datasetFramework,
-                NamespacedLocationFactory namespacedLocationFactory,
+                NamespacePathLocator namespacePathLocator,
                 LocationFactory locationFactory,
                 TransactionSystemClient txClient,
                 Impersonator impersonator) {
     this.locationFactory = locationFactory;
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -734,7 +734,7 @@ public class ArtifactStore {
   }
 
   private Location copyFile(Id.Artifact artifactId, File artifactContent) throws IOException {
-    Location fileDirectory = namespacedLocationFactory.get(artifactId.getNamespace().toEntityId())
+    Location fileDirectory = namespacePathLocator.get(artifactId.getNamespace().toEntityId())
                                                       .append(ARTIFACTS_PATH).append(artifactId.getName());
     Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
     Locations.mkdirsIfNotExists(fileDirectory);
@@ -775,7 +775,7 @@ public class ArtifactStore {
   @VisibleForTesting
   void clear(final NamespaceId namespace) throws IOException {
     final Id.Namespace namespaceId = Id.Namespace.fromEntityId(namespace);
-    namespacedLocationFactory.get(namespace).append(ARTIFACTS_PATH).delete(true);
+    namespacePathLocator.get(namespace).append(ARTIFACTS_PATH).delete(true);
 
     Transactionals.execute(transactional, context -> {
       // delete all rows about artifacts in the namespace

@@ -18,8 +18,8 @@ package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
+import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
 import co.cask.cdap.data.stream.StreamDataFileWriter;
 import co.cask.cdap.data.stream.StreamFileTestUtils;
@@ -48,12 +48,12 @@ public class StreamFileSizeFetcherTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static final CConfiguration cConf = CConfiguration.create();
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
 
   @BeforeClass
   public static void init() throws IOException {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    namespacedLocationFactory = new NoLookupNamespacedLocationFactory(cConf, locationFactory);
+    namespacePathLocator = new NoLookupNamespacePathLocator(cConf, locationFactory);
   }
 
   @Test
@@ -61,7 +61,7 @@ public class StreamFileSizeFetcherTest {
     final String streamName = "testFetchSize";
     StreamId streamId = NamespaceId.DEFAULT.stream(streamName);
     final int nbEvents = 100;
-    StreamAdmin streamAdmin = new TestStreamAdmin(namespacedLocationFactory, Long.MAX_VALUE, 1000);
+    StreamAdmin streamAdmin = new TestStreamAdmin(namespacePathLocator, Long.MAX_VALUE, 1000);
 
     streamAdmin.create(streamId);
     StreamConfig config = streamAdmin.getConfig(streamId);
@@ -97,13 +97,13 @@ public class StreamFileSizeFetcherTest {
 
   private static final class TestStreamAdmin extends NoopStreamAdmin {
 
-    private final NamespacedLocationFactory namespacedLocationFactory;
+    private final NamespacePathLocator namespacePathLocator;
     private final long partitionDuration;
     private final long indexInterval;
 
-    private TestStreamAdmin(NamespacedLocationFactory namespacedLocationFactory, long partitionDuration,
+    private TestStreamAdmin(NamespacePathLocator namespacePathLocator, long partitionDuration,
                             long indexInterval) {
-      this.namespacedLocationFactory = namespacedLocationFactory;
+      this.namespacePathLocator = namespacePathLocator;
       this.partitionDuration = partitionDuration;
       this.indexInterval = indexInterval;
     }
@@ -115,7 +115,7 @@ public class StreamFileSizeFetcherTest {
 
     @Override
     public StreamConfig getConfig(StreamId streamId) throws IOException {
-      Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacedLocationFactory, streamId);
+      Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacePathLocator, streamId);
       return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }

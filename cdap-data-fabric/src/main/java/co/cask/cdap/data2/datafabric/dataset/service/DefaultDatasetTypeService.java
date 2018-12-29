@@ -31,8 +31,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
@@ -87,7 +87,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
 
   private final DatasetTypeManager typeManager;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
 
   private final CConfiguration cConf;
   private final Impersonator impersonator;
@@ -100,7 +100,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   @Inject
   @VisibleForTesting
   public DefaultDatasetTypeService(DatasetTypeManager typeManager, NamespaceQueryAdmin namespaceQueryAdmin,
-                                   NamespacedLocationFactory namespacedLocationFactory,
+                                   NamespacePathLocator namespacePathLocator,
                                    CConfiguration cConf, Impersonator impersonator,
                                    TransactionSystemClientService txClientService,
                                    @Named("datasetMDS") DatasetFramework datasetFramework,
@@ -108,7 +108,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
                                        Map<String, DatasetModule> modules) {
     this.typeManager = typeManager;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
     this.cConf = cConf;
     this.impersonator = impersonator;
     this.txClientService = txClientService;
@@ -286,7 +286,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
       namespaceHomeLocation = impersonator.doAs(namespaceId, new Callable<Location>() {
         @Override
         public Location call() throws Exception {
-          return namespacedLocationFactory.get(namespaceId);
+          return namespacePathLocator.get(namespaceId);
         }
       });
     } catch (Exception e) {

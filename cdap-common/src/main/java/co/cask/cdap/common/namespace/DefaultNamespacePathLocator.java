@@ -29,9 +29,9 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 
 /**
- * Default implementation of {@link NamespacedLocationFactory}
+ * Default implementation of {@link NamespacePathLocator}
  */
-public class DefaultNamespacedLocationFactory implements NamespacedLocationFactory {
+public class DefaultNamespacePathLocator implements NamespacePathLocator {
 
   private final LocationFactory locationFactory;
   private final String namespaceDir;
@@ -39,9 +39,9 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  public DefaultNamespacedLocationFactory(CConfiguration cConf,
-                                          LocationFactory locationFactory,
-                                          NamespaceQueryAdmin namespaceQueryAdmin) {
+  public DefaultNamespacePathLocator(CConfiguration cConf,
+                                     LocationFactory locationFactory,
+                                     NamespaceQueryAdmin namespaceQueryAdmin) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
