@@ -152,7 +152,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionInMemoryModule(),
       new NamespaceAdminTestModule(),
       new AuditModule().getInMemoryModules(),

@@ -23,7 +23,7 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -201,7 +201,7 @@ public class DefaultMetadataStoreTest {
           bind(MetadataStore.class).to(DefaultMetadataStore.class);
         }
       }),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocalLocationModule(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new NamespaceAdminTestModule(),

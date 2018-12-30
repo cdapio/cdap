@@ -30,7 +30,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
@@ -216,7 +216,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new PreviewSecureStoreModule(secureStore),
       new PreviewStreamAdminModule(streamAdmin),
       new PreviewDiscoveryRuntimeModule(discoveryService),
-      new LocationRuntimeModule().getStandaloneModules(),
+      new LocalLocationModule(),
       new ConfigStoreModule().getStandaloneModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
                               privilegesManager, streamCoordinatorClient, preferencesService),

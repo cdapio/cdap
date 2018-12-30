@@ -27,7 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -206,7 +206,7 @@ public class DistributedLogFrameworkTest {
       new ZKClientModule(),
       new InMemoryDiscoveryModule(),
       new KafkaClientModule(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocalLocationModule(),
       new DistributedLogFrameworkModule(new MockTwillContext()),
       new DataSetsModules().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),

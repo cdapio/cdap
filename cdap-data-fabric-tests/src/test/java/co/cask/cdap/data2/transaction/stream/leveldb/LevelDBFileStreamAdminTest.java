@@ -81,7 +81,7 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
     addCConfProperties(cConf);
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new DataFabricLevelDBModule(),

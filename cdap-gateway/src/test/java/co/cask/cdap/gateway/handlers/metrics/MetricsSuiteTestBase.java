@@ -146,7 +146,7 @@ public abstract class MetricsSuiteTestBase {
   public static Injector startMetricsService(CConfiguration conf) {
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(conf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),

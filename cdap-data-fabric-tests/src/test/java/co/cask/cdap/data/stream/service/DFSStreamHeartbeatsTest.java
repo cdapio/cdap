@@ -131,7 +131,7 @@ public class DFSStreamHeartbeatsTest {
         new DataFabricModules().getInMemoryModules(),
         new ConfigModule(cConf, new Configuration()),
         new InMemoryDiscoveryModule(),
-        new NonCustomLocationUnitTestModule().getModule(),
+        new NonCustomLocationUnitTestModule(),
         new ExploreClientModule(),
         new DataSetServiceModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),

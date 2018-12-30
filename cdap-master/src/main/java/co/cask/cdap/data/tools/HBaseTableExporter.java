@@ -18,9 +18,9 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
@@ -108,7 +108,7 @@ public class HBaseTableExporter {
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new KafkaClientModule(),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new DataFabricModules(HBaseTableExporter.class.getName()).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new MessagingClientModule(),

@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98.MessageTableRegionObserver;
@@ -240,6 +240,6 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NamespaceAdminTestModule(),
-      new LocationRuntimeModule().getDistributedModules());
+      new DFSLocationModule());
   }
 }

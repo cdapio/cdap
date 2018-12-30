@@ -84,7 +84,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       Modules.override(new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
         @Override

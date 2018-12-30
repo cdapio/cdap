@@ -30,9 +30,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -351,7 +351,7 @@ public class JobQueueDebugger extends AbstractIdleService {
       new IOModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),

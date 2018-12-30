@@ -73,7 +73,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
         }
       }),
       new DataFabricModules().getInMemoryModules(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),

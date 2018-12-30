@@ -21,9 +21,9 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
@@ -194,7 +194,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private void addOnPremiseModules(List<Module> modules) {
     String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
 
-    modules.add(new LocationRuntimeModule().getDistributedModules());
+    modules.add(new DFSLocationModule());
     modules.add(new KafkaClientModule());
     modules.add(new KafkaLogAppenderModule());
     modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
@@ -205,6 +205,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   private void addIsolatedModules(List<Module> modules) {
     modules.add(new TMSLogAppenderModule());
+    modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());
     modules.add(new DataSetServiceModules().getStandaloneModules());
     modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
@@ -216,12 +217,12 @@ public class DistributedProgramContainerModule extends AbstractModule {
     }));
 
     // In isolated mode, ignore the namespace mapping
-    modules.add(Modules.override(new LocationRuntimeModule().getDistributedModules()).with(new AbstractModule() {
+    modules.add(new AbstractModule() {
       @Override
       protected void configure() {
         bind(NamespacePathLocator.class).to(NoLookupNamespacePathLocator.class);
       }
-    }));
+    });
 
     modules.add(new AbstractModule() {
       @Override

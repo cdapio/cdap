@@ -104,7 +104,7 @@ public class FileMetadataCleanerTest {
 
     injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionModules().getInMemoryModules(),
       new LocalLogAppenderModule(),
       new DataSetsModules().getInMemoryModules(),

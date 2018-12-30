@@ -19,7 +19,7 @@ package co.cask.cdap.store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -59,7 +59,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new DataSetsModules().getInMemoryModules(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocalLocationModule(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new NamespaceAdminTestModule(),

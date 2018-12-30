@@ -123,7 +123,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionMetricsModule(),
       new DataFabricModules().getDistributedModules(),
       new AbstractModule() {

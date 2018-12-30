@@ -80,7 +80,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
 
     injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),

@@ -113,7 +113,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),

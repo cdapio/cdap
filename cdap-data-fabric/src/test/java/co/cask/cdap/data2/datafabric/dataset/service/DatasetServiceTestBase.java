@@ -155,7 +155,7 @@ public abstract class DatasetServiceTestBase {
     injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new NamespaceAdminTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),

@@ -17,20 +17,14 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.FileContextProvider;
-import co.cask.cdap.common.guice.InsecureFileContextLocationFactory;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
-import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -39,10 +33,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -84,24 +75,7 @@ public class CoprocessorBuildTool {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      // for LocationFactory
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
-          expose(LocationFactory.class);
-        }
-
-        @Provides
-        @Singleton
-        private LocationFactory providesLocationFactory(Configuration hConf, CConfiguration cConf, FileContext fc) {
-          final String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
-          if (UserGroupInformation.isSecurityEnabled()) {
-            return new FileContextLocationFactory(hConf, namespace);
-          }
-          return new InsecureFileContextLocationFactory(hConf, namespace, fc);
-        }
-      }
+      new DFSLocationModule()
     );
 
     try {

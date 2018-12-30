@@ -109,7 +109,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
     injector = Guice.createInjector(new ConfigModule(conf),
-                                    new NonCustomLocationUnitTestModule().getModule(),
+                                    new NonCustomLocationUnitTestModule(),
                                     new InMemoryDiscoveryModule(),
                                     new MetricsClientRuntimeModule().getInMemoryModules(),
                                     new DataFabricModules().getInMemoryModules(),
