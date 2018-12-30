@@ -23,7 +23,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 
 /**
- * Interface for managing locations in a namespace
+ * Interface for retrieving namespace {@link Location} based on namespace metadata.
  */
 public interface NamespacePathLocator {
 
