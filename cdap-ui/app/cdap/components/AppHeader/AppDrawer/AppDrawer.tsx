@@ -76,6 +76,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
         classes={{
           paper: classes.drawerPaper,
         }}
+        data-cy="navbar-drawer"
       >
         <div className={classes.toolbar} />
         <NamespaceDropdown
@@ -104,6 +105,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureFlag={Theme.showPipelines}
             featureUrl={`/ns/${namespace}/pipelines`}
             componentDidNavigate={this.props.componentDidNavigate}
+            data-cy="navbar-pipelines-link"
           />
           <DrawerFeatureLink
             featureName={Theme.featureNames.dataPrep}

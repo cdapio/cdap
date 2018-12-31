@@ -50,6 +50,7 @@ var express = require('express'),
   objectQuery = require('lodash/get');
 
 var log = log4js.getLogger('default');
+const uiThemePropertyName = 'ui.theme.file';
 
 const isModeDevelopment = () => process.env.NODE_ENV === 'development';
 const isModeProduction = () => process.env.NODE_ENV === 'production';
@@ -80,8 +81,12 @@ function getFaviconPath(uiThemeConfig) {
   return faviconPath;
 }
 
-function extractUITheme(cdapConfig) {
-  const uiThemePropertyName = 'ui.theme.file';
+function extractUIThemeWrapper(cdapConfig) {
+  const uiThemePath = cdapConfig[uiThemePropertyName];
+  extractUITheme(cdapConfig, uiThemePath);
+}
+
+function extractUITheme(cdapConfig, uiThemePath) {
   const DEFAULT_CONFIG = {};
 
   if (!(uiThemePropertyName in cdapConfig)) {
@@ -91,7 +96,6 @@ function extractUITheme(cdapConfig) {
   }
 
   let uiThemeConfig = DEFAULT_CONFIG;
-  let uiThemePath = cdapConfig[uiThemePropertyName];
   /**
    *
    * The first check assumes that its linux based environment.
@@ -141,13 +145,14 @@ function extractUITheme(cdapConfig) {
     uiThemePath = path.join('..', uiThemePath);
     if (require.resolve(uiThemePath)) {
       uiThemeConfig = require(uiThemePath);
-      log.info(`UI using theme located at ${cdapConfig[uiThemePropertyName]}`);
+      log.info(`UI using theme located at ${uiThemePath}`);
       return uiThemeConfig;
     }
   } catch (e) {
     // The error can either be file doesn't exist, or file contains invalid json
     log.error(e.toString());
     log.warn(`UI using default theme`);
+    throw e;
   }
   return uiThemeConfig;
 }
@@ -155,7 +160,13 @@ function extractUITheme(cdapConfig) {
 function makeApp(authAddress, cdapConfig, uiSettings) {
   var app = express();
 
-  const uiThemeConfig = extractUITheme(cdapConfig);
+  let uiThemeConfig = {};
+  try {
+    uiThemeConfig = extractUIThemeWrapper(cdapConfig);
+  } catch (e) {
+    // This means there was error reading the theme file.
+    // We can ignore this as the extract theme takes care of it.
+  }
   const faviconPath = getFaviconPath(uiThemeConfig);
   // middleware
   try {
@@ -632,6 +643,31 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       }
     },
   ]);
+
+  /**
+   * This is right now purely for testing purposes. This helps us
+   * update the theme from API and test different theming scenarios.
+   *
+   * This won't be for production as we don't persist this state anywhere.
+   * In the future if we alow the user to change the theme from UI this API could
+   * be used and we need to persist this information somewhere.
+   */
+  app.post('/updateTheme', function(req, res) {
+    const uiThemePath = req.body.uiThemePath;
+    if (!uiThemePath) {
+      return res.status(500).send('UnKnown theme file. Please make sure the path is valid');
+    }
+    try {
+      uiThemeConfig = extractUITheme(cdapConfig, uiThemePath);
+    } catch (e) {
+      return res
+        .status(500)
+        .send(
+          'Error parsing theme file. Please make sure the path and the file contents are valid'
+        );
+    }
+    res.send('Theme updated');
+  });
 
   // any other path, serve index.html
   app.all(

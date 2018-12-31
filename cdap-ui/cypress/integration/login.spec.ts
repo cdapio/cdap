@@ -16,23 +16,26 @@
 const DUMMY_USERNAME = 'alice';
 const DUMMY_PW = 'alicepassword';
 const INCORRECT_LOGIN = '__UI_test';
-
-describe('Logging in', function() {
-  before(function() {
+let isAuthEnabled = false;
+describe('Logging in', () => {
+  before(() => {
     cy.visit('/');
     cy.request({
       method: 'GET',
       url: `http://${Cypress.env('host')}:11015/v3/namespaces`,
-      failOnStatusCode: false,
     }).then((response) => {
       // only login when ping request returns 401
-      if (response.status !== 401) {
-        this.skip();
+      if (response.status === 401) {
+        isAuthEnabled = true;
       }
     });
   });
 
-  it('logs user in when given correct credentials', function() {
+  it('logs user in when given correct credentials', () => {
+    if (!isAuthEnabled) {
+      cy.log('Effectively skipping test as auth is not enabled');
+      return;
+    }
     cy.visit('/');
     cy.get('#username')
       .click()
@@ -46,7 +49,11 @@ describe('Logging in', function() {
     cy.getCookie('CDAP_Auth_User').should('have.property', 'value', DUMMY_USERNAME);
   });
 
-  it("doesn't log user in when given incorrect credentials", function() {
+  it("doesn't log user in when given incorrect credentials", () => {
+    if (!isAuthEnabled) {
+      cy.log('Effectively skipping test as auth is not enabled');
+      return;
+    }
     cy.visit('/');
     cy.get('#username')
       .click()

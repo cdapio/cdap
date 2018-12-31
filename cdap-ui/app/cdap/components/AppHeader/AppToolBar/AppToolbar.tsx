@@ -104,11 +104,12 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     const cdapVersion = VersionStore.getState().version;
     const docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
     return (
-      <Toolbar className={classes.customToolbar}>
+      <Toolbar className={classes.customToolbar} data-cy="navbar-toolbar">
         <IconButton
           onClick={onMenuIconClick}
           color="inherit"
           className={classnames(classes.iconButton, classes.iconButtonFocus)}
+          data-cy="navbar-hamburger-icon"
         >
           <MenuIcon />
         </IconButton>

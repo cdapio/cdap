@@ -14,7 +14,7 @@
  * the License.
 */
 
-import { loginIfRequired, getAuthHeaders } from '../helpers';
+import * as Helpers from '../helpers';
 
 const TEST_PIPELINE_NAME = '__UI_test_pipeline';
 const TEST_PATH = '__UI_test_path';
@@ -54,26 +54,26 @@ function cleanUpPipeline(headers) {
   });
 }
 
-describe('Creating a pipeline', function() {
+describe('Creating a pipeline', () => {
   // Uses API call to login instead of logging in manually through UI
-  before(function() {
-    loginIfRequired();
+  before(() => {
+    Helpers.loginIfRequired();
   });
 
-  beforeEach(function() {
-    const headers = getAuthHeaders();
+  beforeEach(() => {
+    const headers = Helpers.getAuthHeaders();
     // Delete TEST_PIPELINE_NAME pipeline in case it's already there
     cleanUpPipeline(headers);
     getArtifactsPoll(headers);
   });
 
-  afterEach(function() {
+  afterEach(() => {
     // Delete the pipeline to clean up
-    const headers = getAuthHeaders();
+    const headers = Helpers.getAuthHeaders();
     cleanUpPipeline(headers);
   });
 
-  it('is configured correctly', function() {
+  it('is configured correctly', () => {
     // Go to Pipelines studio
     cy.visit('/');
     cy.get('#resource-center-btn').click();

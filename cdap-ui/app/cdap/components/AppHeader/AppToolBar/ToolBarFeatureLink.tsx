@@ -45,6 +45,7 @@ class ToolBarFeatureLink extends React.PureComponent<IToolBarFeatureLinkProps> {
         component={isNativeLink ? 'a' : ExtendedLinkButton(featureUrl)}
         className={classnames(classes.buttonLink)}
         href={`/cdap${featureUrl}`}
+        data-cy={featureName}
       >
         {featureName}
       </Button>
