@@ -56,6 +56,7 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
   @Inject
   LocalMetricsCollectionService(CConfiguration cConf, MetricStore metricStore) {
+    super(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION));
     this.cConf = cConf;
     this.metricStore = metricStore;
     metricStore.setMetricsContext(this.getContext(METRICS_PROCESSOR_CONTEXT));
@@ -92,10 +93,9 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
 
     // It will only do cleanup if the underlying table doesn't supports TTL.
     scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-cleanup"));
-    long secRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.SECOND_RESOLUTION +
-                                            Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+    long minimumRetentionSecs = cConf.getLong(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS);
     // Try right away if there's anything to cleanup, we will then schedule based on the min retention interval
-    scheduler.schedule(createCleanupTask(secRetentionSecs), 1, TimeUnit.SECONDS);
+    scheduler.schedule(createCleanupTask(minimumRetentionSecs), 1, TimeUnit.SECONDS);
   }
 
   @Override
@@ -141,7 +141,6 @@ public final class LocalMetricsCollectionService extends AggregatedMetricsCollec
       public void run() {
         // We perform CleanUp only in LocalMetricsCollectionService , where TTL is NOT supported
         // by underlying data store.
-        long currentTime = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         try {
           // delete metrics from metrics resolution table
           metricStore.deleteTTLExpired();

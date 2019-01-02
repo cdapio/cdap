@@ -562,11 +562,14 @@ public final class Constants {
     public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
     public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
 
+    public static final String METRICS_MINIMUM_RESOLUTION = "metrics.minimum.resolution.seconds";
+    public static final String MINIMUM_RESOLUTION_RETENTION_SECONDS =
+      "metrics.data.table.retention.minimum.resolution.seconds";
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
     public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution.";
-    public static final int SECOND_RESOLUTION = 1;
     public static final int MINUTE_RESOLUTION = 60;
     public static final int HOUR_RESOLUTION = 3600;
+    public static final long PROCESS_INTERVAL_MILLIS = 60000;
     public static final String RETENTION_SECONDS_SUFFIX = ".seconds";
 
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
@@ -727,13 +730,6 @@ public final class Constants {
     public static final String ADDRESS = "metrics.processor.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
-  }
-
-  /**
-   * Configurations for metrics collector.
-   */
-  public static final class MetricsCollector {
-    public static final long DEFAULT_FREQUENCY_SECONDS = 1;
   }
 
   /**

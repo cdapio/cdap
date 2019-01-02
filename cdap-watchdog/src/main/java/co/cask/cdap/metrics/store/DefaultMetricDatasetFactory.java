@@ -68,8 +68,9 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     TableProperties.Builder props = TableProperties.builder();
     // don't add TTL for MAX_RESOLUTION table. CDAP-1626
     if (resolution != Integer.MAX_VALUE) {
-      int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution +
-                               Constants.Metrics.RETENTION_SECONDS_SUFFIX);
+      int ttl = resolution < 60 ? cConf.getInt(Constants.Metrics.MINIMUM_RESOLUTION_RETENTION_SECONDS) :
+        cConf.getInt(Constants.Metrics.RETENTION_SECONDS + resolution +
+                       Constants.Metrics.RETENTION_SECONDS_SUFFIX);
       if (ttl > 0) {
         props.setTTL(ttl);
       }
@@ -131,20 +132,24 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
 
   /**
-   * Creates the metrics tables and kafka-meta table using the factory {@link DefaultMetricDatasetFactory}
+   * Creates the metrics tables and metrics meta table using the factory {@link DefaultMetricDatasetFactory}
    * <p>
    * It is primarily used by upgrade and data-migration tool.
    *
-   * @param factory : metrics dataset factory
+   * @param cConf configuration
+   * @param factory metrics dataset factory
    */
-  public static void setupDatasets(DefaultMetricDatasetFactory factory) {
+  public static void setupDatasets(CConfiguration cConf, DefaultMetricDatasetFactory factory) {
     // adding all fact tables
-    factory.getOrCreateFactTable(Constants.Metrics.SECOND_RESOLUTION);
+    int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION);
+    if (minimumResolution < Constants.Metrics.MINUTE_RESOLUTION) {
+      factory.getOrCreateFactTable(minimumResolution);
+    }
     factory.getOrCreateFactTable(Constants.Metrics.MINUTE_RESOLUTION);
     factory.getOrCreateFactTable(Constants.Metrics.HOUR_RESOLUTION);
     factory.getOrCreateFactTable(Integer.MAX_VALUE);
 
-    // adding kafka consumer meta
+    // adding consumer meta
     factory.createConsumerMeta();
   }
 

@@ -50,9 +50,14 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
   private final LoadingCache<Map<String, String>, MetricsContext> collectors;
   private final LoadingCache<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> emitters;
+  // maximum number of milliseconds to sleep between each publish
+  private final long publishIntervalInMillis;
   private Thread runThread;
 
-  public AggregatedMetricsCollectionService() {
+  public AggregatedMetricsCollectionService(long publishIntervalInMillis) {
+    // the longest sleep time will be 1 min
+    this.publishIntervalInMillis = publishIntervalInMillis < Constants.Metrics.PROCESS_INTERVAL_MILLIS ?
+      publishIntervalInMillis : Constants.Metrics.PROCESS_INTERVAL_MILLIS;
     this.collectors = CacheBuilder.newBuilder()
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
       .build(createCollectorLoader());
@@ -89,17 +94,11 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   protected abstract void publish(Iterator<MetricValues> metrics) throws Exception;
 
   /**
-   * Returns the initial delay in milliseconds for the first metrics to be published.
+   * Returns the initial delay in milliseconds for the first metrics to be published. By default this will be the
+   * publish intervals
    */
   protected long getInitialDelayMillis() {
-    return TimeUnit.SECONDS.toMillis(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS);
-  }
-
-  /**
-   * Returns the period in milliseconds for metrics to be published periodically after the initial delay.
-   */
-  protected long getPeriodMillis() {
-    return TimeUnit.SECONDS.toMillis(Constants.MetricsCollector.DEFAULT_FREQUENCY_SECONDS);
+    return publishIntervalInMillis;
   }
 
   @Override
@@ -115,7 +114,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
         TimeUnit.MILLISECONDS.sleep(sleepMillis);
         long startTime = System.currentTimeMillis();
         publishMetrics(startTime);
-        sleepMillis = Math.max(0, getPeriodMillis() - (System.currentTimeMillis() - startTime));
+        sleepMillis = Math.max(0, publishIntervalInMillis - (System.currentTimeMillis() - startTime));
       } catch (InterruptedException e) {
         // Expected when stop is called.
         break;

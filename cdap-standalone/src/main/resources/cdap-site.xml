@@ -167,10 +167,10 @@
   <!-- Metrics Configuration -->
 
   <property>
-    <name>metrics.data.table.retention.resolution.1.seconds</name>
+    <name>metrics.data.table.retention.minimum.resolution.seconds</name>
     <value>7200</value>
     <description>
-      Retention resolution in seconds of the 1-second resolution table;
+      Retention resolution in seconds of the minimum resolution table;
       default retention period is 2 hours
     </description>
   </property>

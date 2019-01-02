@@ -65,6 +65,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   MessagingMetricsCollectionService(CConfiguration cConf,
                                     MessagingService messagingService,
                                     DatumWriter<MetricValues> recordWriter) {
+    super(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION));
 
     String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     int totalTopicNum = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
