@@ -1,0 +1,17 @@
+.add-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  border: solid 1px;
+  .title {
+    font-size: 14px;
+  }
+  .operation {
+    font-size: 20px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+}

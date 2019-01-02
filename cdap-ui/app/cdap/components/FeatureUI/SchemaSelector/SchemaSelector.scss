@@ -1,0 +1,8 @@
+.schema-step-container {
+  display: grid;
+  width: 100%;
+  height: calc(100% - 40px);
+  grid-gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  overflow: auto;
+}

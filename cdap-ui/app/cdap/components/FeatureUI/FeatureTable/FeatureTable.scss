@@ -1,0 +1,22 @@
+.feature-table {
+  border-collapse: collapse;
+  width: 100%;
+  td {
+    border: 1px solid #d0d0d0;
+    padding: 8px;
+  }
+  th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    padding-left: 12px;
+    text-align: left;
+    background-color: #a0a0a0;
+    color: white;
+  }
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+  tr:hover {
+    background-color: #d0d0d0;
+  }
+}

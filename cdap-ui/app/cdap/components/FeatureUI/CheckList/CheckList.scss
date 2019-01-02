@@ -1,0 +1,28 @@
+.checklist-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  .title {
+    font-size: 14px;
+  }
+  .list {
+    display: flex;
+    flex-direction: column;
+    .list-item {
+      display: flex;
+      margin: 3px 20px;
+      min-height: 25px;
+      border-bottom: solid 1px lightgrey;
+      .check-box-container {
+        width: 60%;
+        input {
+          margin-right: 10px;
+        }
+      }
+      .property {
+        padding-left: 20px;
+        width: 40%;
+      }
+    }
+  }
+}

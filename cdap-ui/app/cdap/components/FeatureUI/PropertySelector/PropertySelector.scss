@@ -1,0 +1,50 @@
+.property-step-container {
+  display: flex;
+  width: 100%;
+  height: calc(100% - 40px);
+  overflow: auto;
+  .property-container {
+    width: 30%;
+  }
+  .schema-container {
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    .filter-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: solid 1px lightgray;
+      input {
+        width: 200px;
+      }
+    }
+    .schemas {
+      display: flex;
+      flex-direction: row;
+      overflow: auto;
+      .schema {
+        margin-right: 10px;
+        min-width: 210px;
+        .checklist-container {
+          .list {
+            .list-item {
+              .check-box-container {
+                width: 100%;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.accordion__title {
+  padding: 5px 20px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
