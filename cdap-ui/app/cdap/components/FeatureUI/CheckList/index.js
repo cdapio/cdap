@@ -24,7 +24,13 @@ class CheckList extends React.Component {
 
   onItemClick(index, event) {
     const isChecked = event.target.checked;
-    this.setState(prevState => ({ checkedItems: prevState.checkedItems.set(index, isChecked) }));
+    if(this.props.isSingleSelect) {
+      let checkedItem = new Map();
+      checkedItem.set(index, isChecked);
+      this.setState({ checkedItems: checkedItem });
+    } else {
+      this.setState(prevState => ({ checkedItems: prevState.checkedItems.set(index, isChecked) }));
+    }
     setTimeout(() =>  this.props.handleChange(this.state.checkedItems));
   }
 
