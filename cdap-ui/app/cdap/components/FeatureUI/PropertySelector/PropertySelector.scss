@@ -48,3 +48,23 @@
   text-overflow: ellipsis;
   overflow: hidden;
 }
+
+.accordion__body {
+  padding: 10px;
+}
+
+.list-header {
+  font-size: 14px;
+  background-color: lightgray;
+}
+
+.list-header:hover {
+  font-size: 14px;
+  background-color: darkgrey;
+}
+
+.list-header-selected {
+  font-size: 14px;
+  color: white;
+  background-color: gray;
+}

@@ -9,13 +9,14 @@ class List extends React.Component {
 
   render() {
     let listData = isEmpty(this.props.dataProvider) ? []: this.props.dataProvider;
-    console.log("Rendering list ", listData);
+    console.log("Rendering list ", listData, this.props.header, this.props.headerClass);
     return (
       <div>
         {
           this.props.header &&
-          <h3 onClick = {this.props.onHeaderClick}>this.props.header
-          </h3>
+          <div className = {this.props.headerClass} key = {this.props.header}
+            onClick = {this.props.onHeaderClick}>{this.props.header}
+          </div>
         }
         {
           listData.map(item => <div>{item}</div>)

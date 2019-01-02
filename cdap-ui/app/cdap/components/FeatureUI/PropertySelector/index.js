@@ -1,7 +1,10 @@
 import React from 'react';
 import cloneDeep from 'lodash/cloneDeep'
+import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
+import find from 'lodash/find';
+import remove from 'lodash/remove';
 import CheckList from '../CheckList';
 import { Input } from 'reactstrap';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -21,11 +24,11 @@ require('./PropertySelector.scss');
 
 class PropertySelector extends React.Component {
   currentPropertyIndex = 0;
+  currentProperty = undefined;
+  currentSubProperty = "none";
   propertyMap;
-  properties;
   constructor(props) {
     super(props);
-    this.properties = [];
     this.state = {
       schemas: isEmpty(this.props.selectedSchemas) ? [] : cloneDeep(this.props.selectedSchemas),
       columnTypes: new Set(),
@@ -44,64 +47,122 @@ class PropertySelector extends React.Component {
         })
       })
     };
-    console.log("Mounting Property Selector", Array.from(this.state.columnTypes));
   }
 
   handleColumnChange(schema, checkList) {
-    let updateObj = {
-      property: this.properties[this.currentPropertyIndex],
-      schemaName: schema.schemaName,
-      schemaColumns: schema.schemaColumns.filter((item, index) => checkList.get(index))
+    if (this.currentProperty) {
+      let updateObj = {
+        property: this.currentProperty.paramName,
+        schemaName: schema.schemaName,
+        schemaColumns: schema.schemaColumns.filter((item, index) => checkList.get(index))
+      }
+      if (isEmpty(this.currentProperty.subParams)) {
+        updateObj.subProperty = "none";
+        updateObj.isSingleSelect = !this.currentProperty.isCollection
+      } else {
+        updateObj.subProperty = this.currentSubProperty;
+        let subProperty = find(this.currentProperty.subParams, { paramName: this.currentSubProperty })
+        updateObj.isSingleSelect = subProperty && !subProperty.isCollection;
+      }
+      let updatePropMap = this.getUpdatedPropertyMap(this.props.propertyMap, updateObj);
+      this.props.updatePropertyMap(updatePropMap);
     }
-    this.props.updatePropertyMap(this.getUpdatedPropertyMap(this.props.propertyMap, updateObj));
-    this.render();
+
+    this.setState({
+      schemas: this.getUpdateSchemas()
+    })
   }
 
   getUpdatedPropertyMap(prevPropertyMap, updateObj) {
     let propertyMap = cloneDeep(prevPropertyMap);
     let mappedProperty = propertyMap.get(updateObj.property);
     if (mappedProperty) {
-      if(isEmpty(updateObj.schemaColumns)) {
-        mappedProperty.delete(updateObj.schemaName);
-      } else {
-        mappedProperty.set(updateObj.schemaName, updateObj.schemaColumns);
+      let mappedPropertyValue = find(mappedProperty, { header: updateObj.subProperty });
+      if (mappedPropertyValue) {
+        if (!updateObj.isSingleSelect) {
+          let schemaValueMap = mappedPropertyValue.value;
+          if (isEmpty(updateObj.schemaColumns)) {
+            schemaValueMap.delete(updateObj.schemaName);
+          } else {
+            schemaValueMap.set(updateObj.schemaName, updateObj.schemaColumns);
+          }
+        } else {
+          if (isEmpty(updateObj.schemaColumns)) {
+            remove(mappedProperty, { header: updateObj.subProperty });
+          } else {
+            mappedPropertyValue.value = new Map([[updateObj.schemaName, updateObj.schemaColumns]]);
+          }
+        }
+      } else if (!isEmpty(updateObj.schemaColumns)) {
+        mappedProperty.push({
+          header: updateObj.subProperty,
+          isCollection: !updateObj.isSingleSelect,
+          value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
+        })
       }
-    } else if(!isEmpty(updateObj.schemaColumns)){
-      propertyMap.set(updateObj.property, new Map([[updateObj.schemaName, updateObj.schemaColumns]]));
+    } else if (!isEmpty(updateObj.schemaColumns)) {
+      propertyMap.set(updateObj.property, [{
+        header: updateObj.subProperty,
+        isCollection: !updateObj.isSingleSelect,
+        value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
+      }]);
     }
     return propertyMap;
   }
 
-  onAccordionChange(index) {
-    this.currentPropertyIndex = index % this.properties.length;
-    let propertyMap = this.props.propertyMap;
-    let property = this.properties[this.currentPropertyIndex];
-    let schemas = isEmpty(this.props.selectedSchemas) ? [] : cloneDeep(this.props.selectedSchemas);
-    schemas.forEach((schema) => {
-      if (propertyMap.has(property)) {
-        let checkedCols = propertyMap.get(property).get(schema.schemaName);
-        if(checkedCols) {
-            schema.schemaColumns.map(column => {
-              column.checked = findIndex(checkedCols, {columnName: column.columnName }) >= 0;
-              return column;
-            })
-        }
-      }
-    });
+  onHeaderClick(property, subProperty) {
+    this.currentSubProperty = subProperty;
     this.setState({
-      schemas: schemas
+      schemas: this.getUpdateSchemas()
     })
   }
 
-  getColumns(propertyMap, property) {
-    console
-    let columns = [];
-    if (propertyMap.has(property)) {
-      propertyMap.get(property).forEach((value, key) => {
-        value.map(column => {
-          columns.push(key + ': ' + column.columnName)
-        })
+  getUpdateSchemas() {
+    let propertyMap = this.props.propertyMap;
+    let schemas = isEmpty(this.props.selectedSchemas) ? [] : cloneDeep(this.props.selectedSchemas);
+    let checkedCols = this.getSchemaColumns(propertyMap, this.currentProperty.paramName, this.currentSubProperty);
+    schemas.forEach((schema) => {
+      if (propertyMap.has(this.currentProperty.paramName)) {
+        if (checkedCols) {
+          schema.schemaColumns.map(column => {
+            column.checked = findIndex(checkedCols, { schema: schema.schemaName, column: column.columnName }) >= 0;
+            return column;
+          })
+        }
+      }
+    });
+    return schemas;
+  }
+
+  onAccordionChange(index) {
+    this.currentPropertyIndex = index % this.props.availableProperties.length;
+    this.currentProperty = this.props.availableProperties[this.currentPropertyIndex];
+    if (this.currentProperty) {
+      if (isEmpty(this.currentProperty.subParams)) {
+        this.currentSubProperty = "none";
+      } else {
+        this.currentSubProperty = this.currentProperty.subParams[0].paramName;
+      }
+      this.setState({
+        schemas: this.getUpdateSchemas()
       })
+    }
+  }
+
+  getSchemaColumns(propertyMap, propertyName, subPropertyName) {
+    let columns = [];
+    if (propertyMap.has(propertyName)) {
+      let subSchemaMap = find(propertyMap.get(propertyName), { header: subPropertyName });
+      if (subSchemaMap) {
+        subSchemaMap.value.forEach((value, key) => {
+          value.map(column => {
+            columns.push({
+              schema: key,
+              column: column.columnName
+            })
+          });
+        });
+      }
     }
     return columns;
   }
@@ -129,7 +190,7 @@ class PropertySelector extends React.Component {
     return true;
   }
 
-  toggleDropDown(){
+  toggleDropDown() {
     this.setState(prevState => ({
       dropdownOpen: !prevState.dropdownOpen
     }));
@@ -141,26 +202,45 @@ class PropertySelector extends React.Component {
     });
   }
 
+  isSingleSelect(propMap, subProperty) {
+    if (propMap) {
+      if (isEmpty(propMap.subParams)) {
+        return !propMap.isCollection;
+      } else {
+        let subProp = find(propMap.subParams, { paramName: subProperty });
+        if (subProp) {
+          return !subProp.isCollection;
+        }
+      }
+    }
+    return false;
+  }
+
   render() {
     let updatedPropMap = new Map();
-    this.properties = this.props.availableProperties.map((property) => {
-      if(isEmpty(property.subParams)){
+    if (isNil(this.currentProperty) && !isEmpty(this.props.availableProperties)) {
+      this.currentProperty = this.props.availableProperties[this.currentPropertyIndex];
+    }
+    this.props.availableProperties.map((property) => {
+      if (isEmpty(property.subParams)) {
         updatedPropMap.set(property.paramName, [{
           header: "none",
           isCollection: true,
-          values: this.getColumns(this.props.propertyMap, property.paramName)
-          }]);
+          isSelected: false,
+          values: this.getSchemaColumns(this.props.propertyMap, property.paramName, "none").map(obj => obj.schema + ': ' + obj.column)
+        }]);
       } else {
         let subParamValues = [];
         property.subParams.forEach(subParam => {
           subParamValues.push({
             header: subParam.paramName,
             isCollection: subParam.isCollection,
-            values: this.getColumns(this.props.propertyMap, property.paramName, subParam.paramName)
+            isSelected: this.currentProperty.paramName == property.paramName && this.currentSubProperty == subParam.paramName,
+            values: this.getSchemaColumns(this.props.propertyMap, property.paramName, subParam.paramName).map(obj => obj.schema + ': ' + obj.column)
           })
         })
+        updatedPropMap.set(property.paramName, subParamValues);
       }
-      return property.paramName;
     });
 
     return (
@@ -175,6 +255,16 @@ class PropertySelector extends React.Component {
                       {property}
                     </AccordionItemTitle>
                     <AccordionItemBody>
+                      {
+                        updatedPropMap.get(property).map(propValue => {
+                          return <List dataProvider={propValue.values}
+                            key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
+                            header={(propValue.header == "none") ? undefined : propValue.header}
+                            headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
+                            onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />
+                        })
+                      }
+
                       {/* <List dataProvider={updatedPropMap.get(property)} /> */}
                     </AccordionItemBody>
                   </AccordionItem>
@@ -189,12 +279,12 @@ class PropertySelector extends React.Component {
             <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
               <DropdownToggle caret>
                 {this.state.filterType}
-            </DropdownToggle>
+              </DropdownToggle>
               <DropdownMenu>
                 {
                   ["All"].concat(Array.from(this.state.columnTypes)).map((type) => {
                     return (
-                      <DropdownItem  onClick={this.onColumnTypeChange.bind(this,type)}>{type}</DropdownItem>
+                      <DropdownItem onClick={this.onColumnTypeChange.bind(this, type)}>{type}</DropdownItem>
                     )
                   })
                 }
@@ -210,7 +300,7 @@ class PropertySelector extends React.Component {
                   return column;
                 }).filter((item) => this.columnfilter(item, this.state.filterKey, this.state.filterType))
                 return <div className="schema">
-                  <CheckList dataProvider={columns}
+                  <CheckList dataProvider={columns} isSingleSelect={this.isSingleSelect(this.currentProperty, this.currentSubProperty)}
                     title={schema.schemaName} handleChange={this.handleColumnChange.bind(this, schema)} />
                 </div>
               })
