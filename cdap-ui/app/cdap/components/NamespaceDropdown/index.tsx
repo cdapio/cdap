@@ -143,6 +143,10 @@ export default class NamespaceDropdown extends React.PureComponent<
         selectedNamespace: name,
       },
     });
+    this.onNamespaceChange();
+  };
+
+  private onNamespaceChange = () => {
     if (this.props.onNamespaceChange) {
       this.props.onNamespaceChange();
     }
@@ -309,9 +313,8 @@ export default class NamespaceDropdown extends React.PureComponent<
                 <LinkEl
                   to={`/ns/${currentNamespace}/details`}
                   href={`/cdap/ns/${currentNamespace}/details`}
-                  onClick={this.toggle}
                 >
-                  <div className="current-namespace-metadata">
+                  <div className="current-namespace-metadata" onClick={this.onNamespaceChange}>
                     {this.state.preferencesSavedMessage === true
                       ? preferenceSpecificCardHeader
                       : currentNamespaceCardHeader}

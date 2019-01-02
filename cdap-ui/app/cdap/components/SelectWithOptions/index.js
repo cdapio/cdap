@@ -45,6 +45,7 @@ SelectWithOptions.propTypes = {
   options: PropTypes.arrayOf(
     PropTypes.oneOfType([
       PropTypes.string,
+      PropTypes.number,
       PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
