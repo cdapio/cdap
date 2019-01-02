@@ -122,6 +122,17 @@ angular.module(PKG.name + '.commons')
           placeholder: '{{::myconfig["widget-attributes"].default}}'
         }
       },
+      'sql-editor': {
+        element: '<div my-ace-editor></div>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'mode': 'sql',
+          'disabled': 'disabled',
+          'row': '20',
+          placeholder: '{{::myconfig["widget-attributes"].default}}'
+        }
+      },
       'schema': {
         element: '<my-schema-editor></my-schema-editor>',
         attributes: {

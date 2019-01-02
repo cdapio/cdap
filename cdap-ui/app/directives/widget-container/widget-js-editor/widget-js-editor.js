@@ -48,7 +48,7 @@ angular.module(PKG.name + '.commons')
         };
         let height;
         // textarea widget
-        if ($scope.mode && $scope.mode === 'plain_text') {
+        if ($scope.mode && ['plain_text', 'sql'].indexOf($scope.mode) !== -1) {
           height = DEFAULT_TEXTAREA_HEIGHT;
           if ($scope.rows && $scope.rows > 0) {
             height = $scope.rows * LINE_HEIGHT;

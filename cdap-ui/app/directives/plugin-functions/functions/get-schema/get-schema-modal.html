@@ -26,7 +26,7 @@
 <div class="modal-body">
   <div class="row">
     <div class="col-xs-12">
-      <textarea class="form-control query-input pull-left" ng-model="GetSchemaModalController.query"></textarea>
+      <div my-ace-editor mode="sql" class="query-input pull-left" ng-model="GetSchemaModalController.query"></div>
 
       <button class="btn btn-default pull-right"
               ng-click="GetSchemaModalController.fetchSchema()">
