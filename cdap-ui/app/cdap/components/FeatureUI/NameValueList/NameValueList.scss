@@ -1,0 +1,25 @@
+.list-row {
+  display: flex;
+  padding-bottom: 10px;
+  .name {
+    width: 250px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 0.25rem;
+    line-height: 2.5;
+    padding-left: 10px;
+    height: 32px;
+  }
+  .colon {
+    height: 32px;
+    padding: 4px 10px;
+    color: grey;
+  }
+  .value {
+    width: 250px;
+    height: 32px;
+  }
+  .field-info {
+    padding-top: 7px;
+    padding-left: 10px;
+  }
+}
