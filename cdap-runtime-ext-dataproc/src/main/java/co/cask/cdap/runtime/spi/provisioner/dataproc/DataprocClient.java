@@ -312,7 +312,7 @@ public class DataprocClient implements AutoCloseable {
       }
 
       String direction = firewall.getDirection();
-      if (!"INGRESS".equals(direction)) {
+      if (!"INGRESS".equals(direction) || firewall.getAllowed() == null) {
         continue;
       }
 
