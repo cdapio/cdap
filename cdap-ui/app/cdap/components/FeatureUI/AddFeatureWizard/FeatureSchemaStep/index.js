@@ -1,4 +1,3 @@
-/* eslint react/prop-types: 0 */
 /*
  * Copyright © 2016-2018 Cask Data, Inc.
  *
@@ -24,8 +23,7 @@ import AddFeatureStore from '../../../../services/WizardStores/AddFeature/AddFea
 const mapStateToSelectSchemaProps = (state) => {
   return {
     availableSchemas: state.featureState.availableSchemas,
-    selectedSchemas: state.featureState.selectedSchemas,
-    propertyMap: state.featureState.propertyMap
+    selectedSchemas: state.featureState.selectedSchemas
   };
 };
 
@@ -40,18 +38,6 @@ const mapDispatchToSelectSchemaProps = (dispatch) => {
     addSelectedSchema: (schema) => {
       dispatch({
         type: AddFeatureActions.addSelectedSchema,
-        payload: schema
-      });
-    },
-    updateSelectedSchema: (schema) => {
-      dispatch({
-        type: AddFeatureActions.updateSelectedSchema,
-        payload: schema
-      });
-    },
-    updatePropertyMap: (schema) => {
-      dispatch({
-        type: AddFeatureActions.updatePropertyMap,
         payload: schema
       });
     },

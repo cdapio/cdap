@@ -1,4 +1,3 @@
-//* eslint react/prop-types: 0 */
 /*
  * Copyright © 2016-2018 Cask Data, Inc.
  *
@@ -20,16 +19,14 @@ import LandingPage from './LandingPage';
 import AddFeatureActions from '../../services/WizardStores/AddFeature/AddFeatureActions';
 import AddFeatureStore from '../../services/WizardStores/AddFeature/AddFeatureStore';
 
+
 const mapStateToFeatureUIProps = (state) => {
   return {
     availableSchemas: state.featureState.availableSchemas,
-    availableProperties: state.featureState.availableProperties,
-    availableConfigurations: state.featureState.availableConfigurations,
     selectedSchemas: state.featureState.selectedSchemas,
     propertyMap: state.featureState.propertyMap,
     configurationList: state.featureState.configurationList,
     featureName: state.featureState.featureName,
-    operationType:  state.featureState.operationType
   };
 };
 
@@ -39,12 +36,6 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
       dispatch({
         type: AddFeatureActions.onReset,
         payload: undefined
-      });
-    },
-    updateOperationType: (operationType) => {
-      dispatch({
-        type: AddFeatureActions.updateOperationType,
-        payload: operationType
       });
     },
     updateFeatureName: (featureName) => {
@@ -71,6 +62,12 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
         payload: configurations
       });
     },
+    setAvailableConfigurations: (configurations) => {
+      dispatch({
+        type: AddFeatureActions.setAvailableConfigurations,
+        payload: configurations
+      });
+    },
     setSelectedSchemas: (value) => {
       dispatch({
         type: AddFeatureActions.setSelectedSchemas,
@@ -84,6 +81,7 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
       });
     },
     updateConfigurationList: (list) => {
+      console.log("updateConfigurationList -> " ,list);
       dispatch({
         type: AddFeatureActions.updateConfigurationList,
         payload: list

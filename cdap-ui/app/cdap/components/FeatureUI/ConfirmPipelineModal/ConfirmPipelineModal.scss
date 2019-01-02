@@ -1,12 +1,10 @@
-.list-row {
+.field-row {
   display: flex;
   padding-bottom: 10px;
   .name {
-    width: 250px;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    width: 200px;
     border-radius: 0.25rem;
     line-height: 2.5;
-    padding-left: 10px;
     height: 32px;
   }
   .colon {
@@ -18,8 +16,7 @@
     width: 250px;
     height: 32px;
   }
-  .field-info {
-    padding-top: 7px;
-    padding-left: 10px;
+  .btn-margin {
+    margin: 5px;
   }
 }
