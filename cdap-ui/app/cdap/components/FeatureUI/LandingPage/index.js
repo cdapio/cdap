@@ -183,19 +183,52 @@ class LandingPage extends React.Component {
       featureObject["dataSchemaNames"] = props.selectedSchemas.map(schema => schema.schemaName);
     }
     if (!isNil(props.propertyMap)) {
-      props.propertyMap.forEach((schemas, property) => {
-        if (schemas) {
+      props.propertyMap.forEach((value, property) => {
+        if (value) {
           featureObject[property] = [];
-          schemas.forEach((columns, schema) => {
-            if (!isEmpty(columns)) {
-              columns.forEach((column) => {
-                featureObject[property].push({
-                  table: schema,
-                  column: column.columnName
-                });
+          value.forEach(subParam => {
+            if(subParam.header == "none") {
+              subParam.value.forEach((columns, schema) => {
+                if (!isEmpty(columns)) {
+                  columns.forEach((column) => {
+                    if(subParam.isCollection) {
+                      featureObject[property].push({
+                        table: schema,
+                        column: column.columnName
+                      });
+                    } else {
+                      featureObject[property] = {
+                        table: schema,
+                        column: column.columnName
+                      }
+                    }
+                  });
+                }
+              });
+            } else {
+              subParam.value.forEach((columns, schema) => {
+                if (!isEmpty(columns)) {
+                  let subPropValue = subParam.isCollection? []: {};
+                  columns.forEach((column) => {
+                    if(subParam.isCollection) {
+                      subPropValue.push({
+                        table: schema,
+                        column: column.columnName
+                      });
+                    } else {
+                      subPropValue = {
+                        table: schema,
+                        column: column.columnName
+                      }
+                    }
+                  });
+                  let subPropObj = {};
+                  subPropObj[subParam.header] = subPropValue;
+                  featureObject[property].push(subPropObj);
+                }
               });
             }
-          });
+          })
         }
       })
     }
