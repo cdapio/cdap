@@ -20,29 +20,10 @@ class TrackerEntityController{
 
     this.$state = $state;
 
-    let entityParams = this.$state.params.entityType;
-    let entitySplit = entityParams.split(':');
-
-    switch (entitySplit[0]) {
-      case 'streams':
-        this.entityInfo = {
-          name: 'Stream',
-          icon: 'icon-streams'
-        };
-        break;
-      case 'datasets':
-        this.entityInfo = {
-          name: 'Dataset',
-          icon: 'icon-datasets'
-        };
-        break;
-      case 'views':
-        this.entityInfo = {
-          name: 'Stream View',
-          icon: 'icon-streams'
-        };
-        break;
-    }
+    this.entityInfo = {
+      name: 'Dataset',
+      icon: 'icon-datasets'
+    };
   }
 
   goBack() {

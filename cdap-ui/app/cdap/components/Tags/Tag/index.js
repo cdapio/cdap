@@ -69,7 +69,7 @@ export default class Tag extends Component {
         {this.state.searchModalOpen ? (
           <SpotlightModal
             tag={this.props.value}
-            target={['app', 'dataset', 'stream']}
+            target={['app', 'dataset']}
             isOpen={this.state.searchModalOpen}
             toggle={this.toggleSearchModal}
             isNativeLink={this.props.isNativeLink}

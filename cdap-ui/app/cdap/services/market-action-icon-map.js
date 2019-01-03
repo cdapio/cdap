@@ -15,7 +15,6 @@
  */
 
 const iconMap = {
-  create_stream: 'icon-streams',
   create_app: 'icon-app',
   create_pipeline: 'icon-pipelines',
   create_pipeline_draft: 'icon-pipelines',

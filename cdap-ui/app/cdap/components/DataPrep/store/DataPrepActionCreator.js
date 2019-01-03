@@ -271,14 +271,14 @@ export function getWorkspaceList(workspaceId) {
       // Check for existance of the workspaceId
       let workspaceObj = find(workspaceList, { id: workspaceId });
 
-      let workspaceStream;
+      let workspaceObservable$;
       if (workspaceObj) {
-        workspaceStream = setWorkspace(workspaceId);
+        workspaceObservable$ = setWorkspace(workspaceId);
       } else {
-        workspaceStream = setWorkspace(workspaceList[0].id);
+        workspaceObservable$ = setWorkspace(workspaceList[0].id);
       }
 
-      workspaceStream.subscribe();
+      workspaceObservable$.subscribe();
     }
   });
 }

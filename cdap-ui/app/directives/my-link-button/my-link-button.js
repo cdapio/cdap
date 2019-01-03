@@ -20,7 +20,7 @@ class MyLinkButtonCtrl {
       entity.url = window.getAbsUIUrl({
         namespaceId: $stateParams.namespace,
         entityType: entity.entityType,
-        entityId: entity.entityType === 'streams' ? entity.streamId : entity.datasetId
+        entityId: entity.datasetId
       });
     });
   }

@@ -129,7 +129,7 @@ angular.module(`${PKG.name}.commons`)
         vm.pluginConfig = {
           _backendProperties: vm.plugin.properties,
           plugin: {
-            name: vm.plugin.name, // only important for Stream
+            name: vm.plugin.name,
             properties: {}
           },
           outputSchema: [

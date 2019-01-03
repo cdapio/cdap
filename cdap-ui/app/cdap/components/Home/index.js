@@ -53,11 +53,6 @@ const DatasetDetailedView = Loadable({
     import(/* webpackChunkName: "DatasetDetailedView" */ 'components/DatasetDetailedView'),
   loading: LoadingSVGCentered,
 });
-const StreamDetailedView = Loadable({
-  loader: () =>
-    import(/* webpackChunkName: "StreamDetailedView" */ 'components/StreamDetailedView'),
-  loading: LoadingSVGCentered,
-});
 const AppDetailedView = Loadable({
   loader: () => import(/* webpackChunkName: "AppDetailedView" */ 'components/AppDetailedView'),
   loading: LoadingSVGCentered,
@@ -123,7 +118,6 @@ export default class Home extends Component {
             component={FieldLevelLineage}
           />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
-          <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
           <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />

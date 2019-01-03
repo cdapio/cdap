@@ -235,8 +235,6 @@ function getIcon(entity) {
       return 'icon-fist';
     case 'dataset':
       return 'icon-datasets';
-    case 'stream':
-      return 'icon-streams';
     default:
       return 'fa-exclamation-triangle';
   }

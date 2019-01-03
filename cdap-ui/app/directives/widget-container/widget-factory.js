@@ -185,14 +185,6 @@ angular.module(PKG.name + '.commons')
           'ng-init': 'model = model.length ? model : (myconfig.properties.default || myconfig["widget-attributes"].default)'
         }
       },
-      'stream-selector': {
-        element: '<my-dataset-selector></my-dataset-selector>',
-        attributes: {
-          'ng-model': 'model',
-          'dataset-type': 'stream',
-          'config': 'myconfig'
-        }
-      },
       'dataset-selector': {
         element: '<my-dataset-selector></my-dataset-selector>',
         attributes: {

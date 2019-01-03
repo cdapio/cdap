@@ -80,7 +80,6 @@ angular.module(PKG.name + '.services')
         runs: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/runs', true),
         get: myHelpers.getConfig('GET', 'REQUEST', pipelinePath),
         datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
-        streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
         action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action'),
 
         // Batch runs count for pipelines

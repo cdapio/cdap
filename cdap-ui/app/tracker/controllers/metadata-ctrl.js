@@ -21,7 +21,6 @@
 
  /*
    TODO:
-     - Add support for Stream Views
      - What to do with externalDataset type
  */
 
@@ -41,28 +40,18 @@ class TrackerMetadataController {
       value: ''
     };
 
-    let entitySplit = this.$state.params.entityType.split(':');
-    this.entityType = entitySplit;
+    let entityType = this.$state.params.entityType;
+    let entityId = this.$state.params.entityId;
 
     let params = {
       scope: this.$scope,
       namespace: this.$state.params.namespace,
-      entityType: entitySplit[0],
+      entityType,
       showCustom: true,
+      entityId,
     };
 
-    let metadataApi;
-
-    if (entitySplit.length > 1) {
-      params.entityId = entitySplit[1];
-      params.entityType = 'streams';
-      params.viewId = this.$state.params.entityId;
-      metadataApi = this.myTrackerApi.viewsProperties(params).$promise;
-    } else {
-      params.entityId = this.$state.params.entityId;
-      params.entityType = entitySplit[0];
-      metadataApi = this.myTrackerApi.properties(params).$promise;
-    }
+    let metadataApi = this.myTrackerApi.properties(params).$promise;
 
     this.systemTags = {};
     this.userTags = [];
@@ -87,7 +76,7 @@ class TrackerMetadataController {
   }
 
   processResponse(res) {
-    let systemMetadata, userMetadata;
+    let systemMetadata = {}, userMetadata = {};
 
     angular.forEach(res, (response) => {
       if (response.scope === 'USER') {
@@ -216,7 +205,7 @@ class TrackerMetadataController {
     const params = {
       namespace: this.$state.params.namespace,
       entityId: this.$state.params.entityId,
-      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      entityType: 'dataset',
       scope: this.$scope
     };
 
@@ -231,7 +220,7 @@ class TrackerMetadataController {
     const params = {
       namespace: this.$state.params.namespace,
       entityId: this.$state.params.entityId,
-      entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+      entityType: 'dataset',
       tag,
       scope: this.$scope
     };
@@ -256,7 +245,7 @@ class TrackerMetadataController {
       const params = {
         namespace: this.$state.params.namespace,
         entityId: this.$state.params.entityId,
-        entityType: this.$state.params.entityType === 'streams' ? 'stream' : 'dataset',
+        entityType: 'dataset',
         scope: this.$scope
       };
 

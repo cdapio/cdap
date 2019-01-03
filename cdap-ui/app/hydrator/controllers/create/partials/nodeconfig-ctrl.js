@@ -277,12 +277,10 @@ class HydratorPlusPlusNodeConfigCtrl {
               return;
             }
             const generateJumpConfig = (jumpConfig, properties) => {
-              let streams = [], datasets = [];
-              let jumpConfigStreams = jumpConfig.streams || [],
-                  jumpConfigDatasets = jumpConfig.datasets || [];
-              streams = jumpConfigStreams.map(stream => ({ streamId: properties[stream['ref-property-name']] , entityType: 'streams' }));
+              let datasets = [];
+              let jumpConfigDatasets = jumpConfig.datasets || [];
               datasets = jumpConfigDatasets.map(dataset => ({ datasetId: properties[dataset['ref-property-name']], entityType: 'datasets' }));
-              return {streams, datasets};
+              return {datasets};
             };
             if (res.errorDataset || this.state.node.errorDatasetName) {
               this.state.showErrorDataset = true;
@@ -291,8 +289,8 @@ class HydratorPlusPlusNodeConfigCtrl {
             }
 
             if (this.$scope.isDisabled && this.state.groupsConfig.jumpConfig && Object.keys(this.state.groupsConfig.jumpConfig).length) {
-              let {streams, datasets} = generateJumpConfig(this.state.groupsConfig.jumpConfig, this.state.node.plugin.properties);
-              this.state.groupsConfig.jumpConfig.datasets = streams.concat(datasets);
+              let {datasets} = generateJumpConfig(this.state.groupsConfig.jumpConfig, this.state.node.plugin.properties);
+              this.state.groupsConfig.jumpConfig.datasets = datasets;
             } else {
               // If we isDisabled is set to false then we are in studio mode & hence remove jump config.
               // Jumpconfig is only for published view where everything is disabled.

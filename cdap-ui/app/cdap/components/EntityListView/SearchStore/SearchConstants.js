@@ -28,14 +28,10 @@ const DEFAULT_SEARCH_FILTER_OPTIONS = [
     displayName: T.translate('commons.entity.dataset.plural'),
     id: 'dataset',
   },
-  {
-    displayName: T.translate('commons.entity.stream.plural'),
-    id: 'stream',
-  },
 ];
 
 const DEFAULT_SEARCH_FILTERS = DEFAULT_SEARCH_FILTER_OPTIONS.filter((f) => {
-  return f.id !== 'artifact' && f.id !== 'stream';
+  return f.id !== 'artifact';
 }).map((filter) => filter.id);
 
 const DEFAULT_SEARCH_SORT_OPTIONS = [

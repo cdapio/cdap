@@ -16,7 +16,7 @@
 
 function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
   var url = myCdapUrl.constructUrl,
-      searchPath = '/namespaces/:namespace/metadata/search?limit=25&target=stream&target=dataset&target=view',
+      searchPath = '/namespaces/:namespace/metadata/search?limit=25&target=dataset&target=view',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
       propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
@@ -37,7 +37,6 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
     viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
     getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage?collapse=access&collapse=run&collapse=component'),
     getProgramRunStatus: myHelpers.getConfig('GET', 'REQUEST', programPath),
-    getStreamProperties: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/streams/:entityId'),
     getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM', false, { suppressErrors: true }),
     getSystemTags: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/tags?scope=SYSTEM', true),
     getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),

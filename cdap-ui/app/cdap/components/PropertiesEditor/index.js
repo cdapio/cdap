@@ -191,5 +191,5 @@ export default class PropertiesEditor extends Component {
 
 PropertiesEditor.propTypes = {
   entityId: PropTypes.string,
-  entityType: PropTypes.oneOf(['datasets', 'streams', 'apps']),
+  entityType: PropTypes.oneOf(['datasets', 'apps']),
 };

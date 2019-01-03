@@ -19,7 +19,6 @@ const EntityType = {
   artifact: 'artifact',
   dataset: 'dataset',
   program: 'program',
-  stream: 'stream',
   view: 'view',
 };
 

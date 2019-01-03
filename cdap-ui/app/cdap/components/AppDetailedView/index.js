@@ -49,7 +49,6 @@ export default class AppDetailedView extends Component {
       entityDetail: objectQuery(this.props.location, 'state', 'entityDetail') || {
         programs: [],
         datasets: [],
-        streams: [],
         routeToHome: false,
         selectedNamespace: null,
         successMessage: null,
@@ -111,17 +110,6 @@ export default class AppDetailedView extends Component {
               dataset.uniqueId = uuidV4();
               return dataset;
             });
-            let streams = entityDetail.streams.map((stream) => {
-              stream.metadataEntity = {
-                details: {
-                  stream: stream.name,
-                },
-                type: EntityType.stream,
-              };
-              stream.uniqueId = uuidV4();
-              return stream;
-            });
-            entityDetail.streams = streams;
             entityDetail.datasets = datasets;
             entityDetail.programs = programs;
             entityDetail.properties = properties;

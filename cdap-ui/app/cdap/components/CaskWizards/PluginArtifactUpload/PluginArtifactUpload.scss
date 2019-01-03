@@ -40,16 +40,3 @@
     }
   }
 }
-
-// Specific hack for hydrator.
-body {
-  .modal {
-    .wizard-modal.create-stream-wizard {
-      &.artifact-upload-wizard {
-        &.modal-dialog {
-          margin-top: $wizard-modal-margin-top;
-        }
-      }
-    }
-  }
-}

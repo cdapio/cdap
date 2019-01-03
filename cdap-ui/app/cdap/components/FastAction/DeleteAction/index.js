@@ -21,7 +21,6 @@ import NamespaceStore from 'services/NamespaceStore';
 import { MyAppApi } from 'api/app';
 import { MyArtifactApi } from 'api/artifact';
 import { MyDatasetApi } from 'api/dataset';
-import { MyStreamApi } from 'api/stream';
 import FastActionButton from '../FastActionButton';
 import ConfirmationModal from 'components/ConfirmationModal';
 import { Tooltip } from 'reactstrap';
@@ -85,10 +84,8 @@ export default class DeleteAction extends Component {
         api = MyDatasetApi.delete;
         params.datasetId = this.props.entity.id;
         break;
-      case 'stream':
-        api = MyStreamApi.delete;
-        params.streamId = this.props.entity.id;
-        break;
+      default:
+        return;
     }
 
     api(params).subscribe(
@@ -163,7 +160,7 @@ DeleteAction.propTypes = {
     uniqueId: PropTypes.string,
     version: PropTypes.string,
     scope: PropTypes.oneOf([SCOPES.SYSTEM, SCOPES.USER]),
-    type: PropTypes.oneOf(['application', 'artifact', 'dataset', 'stream']).isRequired,
+    type: PropTypes.oneOf(['application', 'artifact', 'dataset']).isRequired,
   }),
   onSuccess: PropTypes.func,
 };

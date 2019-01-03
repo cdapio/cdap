@@ -76,16 +76,12 @@ $jump-button-container-size: 80px;
     &.dataset {
       @include selected-card($dataset-entity-header-bg);
     }
-    &.stream {
-      @include selected-card($stream-entity-header-bg);
-    }
   }
 
   // FIXME: Right now only programs and artifacts will not be clickable.
   &.datapipeline,
   &.application,
-  &.dataset,
-  &.stream {
+  &.dataset {
     .cask-card {
       cursor: pointer;
     }
