@@ -34,10 +34,10 @@ function loginIfRequired() {
           username: DUMMY_USERNAME,
           password: DUMMY_PW,
         }),
-      }).then((response) => {
-        expect(response.status).to.be.at.least(200);
-        expect(response.status).to.be.lessThan(300);
-        const respBody = JSON.parse(response.body);
+      }).then((res) => {
+        expect(res.status).to.be.at.least(200);
+        expect(res.status).to.be.lessThan(300);
+        const respBody = JSON.parse(res.body);
         cy.setCookie('CDAP_Auth_Token', respBody.access_token);
         cy.setCookie('CDAP_Auth_User', DUMMY_USERNAME);
         cy.visit('/', {
@@ -54,7 +54,7 @@ function loginIfRequired() {
 }
 
 function getAuthHeaders() {
-  let authTokenCookie = cy.getCookie('CDAP_Auth_Token');
+  const authTokenCookie = cy.getCookie('CDAP_Auth_Token');
   let headers = null;
   if (authTokenCookie) {
     Cypress.Cookies.preserveOnce('CDAP_Auth_Token');

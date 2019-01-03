@@ -115,7 +115,11 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
       isNativeLink: this.props.nativeLink,
     };
     return (
-      <AppBar position="fixed" className={classnames(classes.grow, classes.appbar)}>
+      <AppBar
+        position="fixed"
+        className={classnames(classes.grow, classes.appbar)}
+        data-cy="app-navbar"
+      >
         <NamespaceLinkContext.Provider value={namespaceLinkContext}>
           <AppToolbar onMenuIconClick={this.toggleDrawer} nativeLink={this.props.nativeLink} />
           <AppDrawer
