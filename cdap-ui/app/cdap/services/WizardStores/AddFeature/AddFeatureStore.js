@@ -44,6 +44,9 @@ const defaultInitialState = {
 
 
 const isFeatureComplete = (state) => {
+  if(isEmpty(state.featureName)) {
+    return false;
+  }
   if(isEmpty(state.selectedSchemas)) {
      return false;
   }
