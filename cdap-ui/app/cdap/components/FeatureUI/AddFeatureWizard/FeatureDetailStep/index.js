@@ -1,4 +1,3 @@
-/* eslint react/prop-types: 0 */
 /*
  * Copyright © 2016-2018 Cask Data, Inc.
  *
@@ -23,7 +22,6 @@ import DetailProvider from '../../DetailProvider';
 
 const mapStateToSelectSchemaProps = (state) => {
   return {
-    operationType: state.featureState.operationType,
     featureName: state.featureState.featureName,
   };
 };

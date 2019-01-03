@@ -18,6 +18,7 @@ import React from 'react';
 import FeatureSchemaStep from '../../components/FeatureUI/AddFeatureWizard/FeatureSchemaStep';
 import FeaturePropertiesStep from '../../components/FeatureUI/AddFeatureWizard/FeaturePropertiesStep';
 import FeatureConfigurationStep from '../../components/FeatureUI/AddFeatureWizard/FeatureConfigurationStep';
+import FeatureDetailStep from '../../components/FeatureUI/AddFeatureWizard/FeatureDetailStep';
 
 
 const AddFeatureWizardConfig = {
@@ -39,9 +40,16 @@ const AddFeatureWizardConfig = {
     {
       id: 'configuration',
       shorttitle: 'Configuration',
-      title: 'Select Configuration',
+      title: 'Set Configuration',
       description: '',
       content: (<FeatureConfigurationStep />)
+    },
+    {
+      id: 'detail',
+      shorttitle: 'Details',
+      title: 'Set Details',
+      description: '',
+      content: (<FeatureDetailStep />)
     },
   ]
 };

@@ -3,7 +3,6 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import AddFeatureWizard from '../AddFeatureWizard';
-import ConfirmPipelineModal from '../ConfirmPipelineModal';
 import FeatureTable from '../FeatureTable';
 import {
   PIPELINE_TYPES,
@@ -21,6 +20,7 @@ import {
   IS_OFFLINE,
   SAVE_REQUEST
 } from '../config';
+import { Observable } from 'rxjs/Observable';
 
 
 require('./LandingPage.scss');
@@ -145,12 +145,9 @@ class LandingPage extends React.Component {
   }
 
 
-  saveFeature(featureName) {
-    this.props.updateFeatureName(featureName);
-    this.closeConfirmationModal();
+  saveFeature() {
     let featureObject = this.getFeatureObject(this.props);
     let saveUrl = SERVER_IP + SAVE_REQUEST.replace('$NAME', featureObject.pipelineRunName);
-
     console.log(featureObject);
     return Observable.create((observer) => {
       fetch(saveUrl, {
@@ -161,16 +158,16 @@ class LandingPage extends React.Component {
           (result) => {
             if (isNil(result) || (result.status && result.status > 200)) {
               this.handleError(result, SAVE_PIPELINE);
-              observer.error(err);
+              observer.error(result);
             } else {
               this.getPipelines(this.state.selectedPipelineType);
-              observer.next(successInfo);
+              observer.next(result);
               observer.complete();
             }
           },
           (error) => {
             this.handleError(error, SAVE_PIPELINE);
-            observer.error(err);
+            observer.error(error);
           }
         )
     });
@@ -189,6 +186,7 @@ class LandingPage extends React.Component {
       props.propertyMap.forEach((value, property) => {
         if (value) {
           featureObject[property] = [];
+          let subPropObj = {};
           value.forEach(subParam => {
             if (subParam.header == "none") {
               subParam.value.forEach((columns, schema) => {
@@ -225,13 +223,14 @@ class LandingPage extends React.Component {
                       }
                     }
                   });
-                  let subPropObj = {};
                   subPropObj[subParam.header] = subPropValue;
-                  featureObject[property].push(subPropObj);
                 }
               });
             }
           })
+          if(!isEmpty(subPropObj)) {
+            featureObject[property].push(subPropObj);
+          }
         }
       })
     }
@@ -348,11 +347,7 @@ class LandingPage extends React.Component {
           onDelete={this.deletePipeline.bind(this)} />
         <AddFeatureWizard showWizard={this.state.showFeatureWizard}
           onClose={this.onWizardClose}
-          onSubmit={this.openConfirmationModal.bind(this)} />
-        <ConfirmPipelineModal open={this.state.openConfirmation}
-          name={this.props.featureName}
-          onClose={this.closeConfirmationModal.bind(this)}
-          onSave={this.saveFeature.bind(this)} />
+          onSubmit={this.saveFeature.bind(this)} />
       </div>
     );
   }
