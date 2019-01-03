@@ -79,8 +79,7 @@ class HydratorPlusPlusTopPanelCtrl {
       );
     }
 
-    this.isPreviewEnabled = angular.isObject(MY_CONFIG.hydrator) &&
-                            MY_CONFIG.hydrator.previewEnabled === true;
+    this.isPreviewEnabled = true;
 
     this.previewMode = false;
     this.previewLoading = true;
