@@ -18,6 +18,7 @@ class Configurator extends React.Component {
         value: '',
         dataType: config.dataType,
         isCollection: config.isCollection,
+        isMandatory: config.isMandatory,
         toolTip: "Type: " + (config.isCollection ? ("Collection of "+ config.dataType): config.dataType)
       };
     });

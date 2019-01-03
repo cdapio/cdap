@@ -227,6 +227,7 @@ class PropertySelector extends React.Component {
           header: "none",
           isCollection: true,
           isSelected: false,
+          isMandatory: property.isMandatory,
           values: this.getSchemaColumns(this.props.propertyMap, property.paramName, "none").map(obj => obj.schema + ': ' + obj.column)
         }]);
       } else {
@@ -235,6 +236,7 @@ class PropertySelector extends React.Component {
           subParamValues.push({
             header: subParam.paramName,
             isCollection: subParam.isCollection,
+            isMandatory: property.isMandatory,
             isSelected: this.currentProperty.paramName == property.paramName && this.currentSubProperty == subParam.paramName,
             values: this.getSchemaColumns(this.props.propertyMap, property.paramName, subParam.paramName).map(obj => obj.schema + ': ' + obj.column)
           })
@@ -249,17 +251,22 @@ class PropertySelector extends React.Component {
           <Accordion onChange={this.onAccordionChange.bind(this)}>
             {
               Array.from(updatedPropMap.keys()).map(property => {
+                let isMandatory = false;
+                let subParams = updatedPropMap.get(property);
+                if(!isEmpty(subParams)){
+                  isMandatory = subParams[0].isMandatory
+                }
                 return (
                   <AccordionItem key={property}>
                     <AccordionItemTitle>
-                      {property}
+                      {property + (isMandatory ? "*" : "")}
                     </AccordionItemTitle>
                     <AccordionItemBody>
                       {
                         updatedPropMap.get(property).map(propValue => {
                           return <List dataProvider={propValue.values}
                             key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
-                            header={(propValue.header == "none") ? undefined : propValue.header}
+                            header={(propValue.header == "none") ? undefined : (propValue.header + "*")}
                             headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
                             onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />
                         })
