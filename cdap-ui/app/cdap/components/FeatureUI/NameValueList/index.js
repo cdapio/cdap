@@ -53,7 +53,7 @@ class NameValueList extends React.Component {
           listData.map((item, index) => {
             return (
               <div className='list-row'>
-                <div className='name'>{item.name}</div>
+                <div className='name'>{item.name + (item.isMandatory ? "*":"")}</div>
                 <div className='colon'>:</div>
                 <Input className='value' type="text" name="value" placeholder='value'
                   defaultValue={item.value} onChange={this.onValueUpdated.bind(this,index,item)}/>

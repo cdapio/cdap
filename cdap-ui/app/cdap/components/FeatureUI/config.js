@@ -1,4 +1,4 @@
-export const SERVER_IP = "http://192.168.133.92:11015";
+export const SERVER_IP = "http://192.168.156.36:11015";
 
 export const PIPELINES_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/FeatureEngineeringPipelineService/methods/featureengineering/pipeline/getall";
 export const PIPELINES_REQUEST_PARAMS = "?pipelineType=";
@@ -9,6 +9,7 @@ export const CONFIGURATION_REQUEST = "/v3/namespaces/default/apps/FeatureEnginee
 export const SAVE_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/create";
 export const EDIT_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/edit";
 export const READ_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/read";
+export const DELETE_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/delete";
 
 export const PIPELINE_TYPES = ["All", "featureGeneration", "featureSelection"];
 
