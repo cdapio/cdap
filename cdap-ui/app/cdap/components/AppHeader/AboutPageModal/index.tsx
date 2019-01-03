@@ -17,7 +17,7 @@
 import React from 'react';
 import { Modal, ModalBody } from 'reactstrap';
 import T from 'i18n-react';
-import { getModeWithCloudProvider } from 'components/Header/ProductDropdown/helper';
+import { getModeWithCloudProvider } from 'components/AppHeader/AboutPageModal/helper';
 import Footer from 'components/Footer';
 import { Theme } from 'services/ThemeHelper';
 import IconSVG from 'components/IconSVG';
