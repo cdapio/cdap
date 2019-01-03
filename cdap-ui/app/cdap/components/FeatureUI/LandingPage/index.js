@@ -36,24 +36,7 @@ class LandingPage extends React.Component {
     this.toggleFeatureWizard = this.toggleFeatureWizard.bind(this);
     this.onWizardClose = this.onWizardClose.bind(this);
     this.state = {
-      data:
-        [
-          {
-            "name": "DS_FS_01",
-            "status": "DRAFT",
-            "time": "1 min ago"
-          },
-          {
-            "name": "DS_FS_02",
-            "status": "READY",
-            "time": "52 mins ago"
-          },
-          {
-            "name": "DS_FS_03",
-            "status": "PROGRESS",
-            "time": "1 hour ago"
-          },
-        ],
+      data: [],
       dropdownOpen: false,
       showFeatureWizard: false,
       openConfirmation: false,
@@ -80,7 +63,7 @@ class LandingPage extends React.Component {
     let open = !this.state.showFeatureWizard;
     if (open) {
       this.props.resetStore();
-      if(IS_OFFLINE) {
+      if (IS_OFFLINE) {
         this.runOffline();
       } else {
         this.fetchWizardData();
@@ -103,9 +86,9 @@ class LandingPage extends React.Component {
     this.getPipelines(type);
   }
 
-  getPipelines(type){
+  getPipelines(type) {
     let request = SERVER_IP + PIPELINES_REQUEST;
-    if(type != "All") {
+    if (type != "All") {
       request = request + PIPELINES_REQUEST_PARAMS + '=' + type;
     }
     fetch(request)
@@ -126,8 +109,20 @@ class LandingPage extends React.Component {
       )
   }
 
-  handleError(error,type) {
-    error.message? alert(error.message): alert(error);
+  viewPipeline(pipeline) {
+
+  }
+
+  editPipeline(pipeline) {
+
+  }
+
+  deletePipeline(pipeline) {
+
+  }
+
+  handleError(error, type) {
+    error.message ? alert(error.message) : alert(error);
   }
 
   onWizardClose() {
@@ -155,24 +150,32 @@ class LandingPage extends React.Component {
     this.closeConfirmationModal();
     let featureObject = this.getFeatureObject(this.props);
     let saveUrl = SERVER_IP + SAVE_REQUEST.replace('$NAME', featureObject.pipelineRunName);
-    fetch(saveUrl, {
-      method: 'POST',
-      body: JSON.stringify(featureObject)
-    }).then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["dataSchemaList"])) {
-            this.handleError(result, SAVE_PIPELINE);
-          } else {
-            this.getPipelines(this.state.selectedPipelineType);
-          }
-        },
-        (error) => {
-          this.handleError(error, SAVE_PIPELINE);
-        }
-      )
+
     console.log(featureObject);
+    return Observable.create((observer) => {
+      fetch(saveUrl, {
+        method: 'POST',
+        body: JSON.stringify(featureObject)
+      }).then(res => res.json())
+        .then(
+          (result) => {
+            if (isNil(result) || (result.status && result.status > 200)) {
+              this.handleError(result, SAVE_PIPELINE);
+              observer.error(err);
+            } else {
+              this.getPipelines(this.state.selectedPipelineType);
+              observer.next(successInfo);
+              observer.complete();
+            }
+          },
+          (error) => {
+            this.handleError(error, SAVE_PIPELINE);
+            observer.error(err);
+          }
+        )
+    });
   }
+
 
   getFeatureObject(props) {
     let featureObject = {
@@ -187,11 +190,11 @@ class LandingPage extends React.Component {
         if (value) {
           featureObject[property] = [];
           value.forEach(subParam => {
-            if(subParam.header == "none") {
+            if (subParam.header == "none") {
               subParam.value.forEach((columns, schema) => {
                 if (!isEmpty(columns)) {
                   columns.forEach((column) => {
-                    if(subParam.isCollection) {
+                    if (subParam.isCollection) {
                       featureObject[property].push({
                         table: schema,
                         column: column.columnName
@@ -208,9 +211,9 @@ class LandingPage extends React.Component {
             } else {
               subParam.value.forEach((columns, schema) => {
                 if (!isEmpty(columns)) {
-                  let subPropValue = subParam.isCollection? []: {};
+                  let subPropValue = subParam.isCollection ? [] : {};
                   columns.forEach((column) => {
-                    if(subParam.isCollection) {
+                    if (subParam.isCollection) {
                       subPropValue.push({
                         table: schema,
                         column: column.columnName
@@ -234,21 +237,23 @@ class LandingPage extends React.Component {
     }
     if (!isEmpty(props.configurationList)) {
       props.configurationList.forEach((configuration) => {
-        switch (configuration.dataType) {
-          case 'int':
-            if (configuration.isCollection) {
-              let values = configuration.value.split(",");
-              featureObject[configuration.name] = values.map(value => parseInt(value));
-            } else {
-              featureObject[configuration.name] = parseInt(configuration.value);
-            }
-            break;
-          default:
-            if (configuration.isCollection) {
-              featureObject[configuration.name] = configuration.value.split(",");
-            } else {
-              featureObject[configuration.name] = configuration.value;
-            }
+        if (!isEmpty(configuration.value)) {
+          switch (configuration.dataType) {
+            case 'int':
+              if (configuration.isCollection) {
+                let values = configuration.value.split(",");
+                featureObject[configuration.name] = values.map(value => parseInt(value));
+              } else {
+                featureObject[configuration.name] = parseInt(configuration.value);
+              }
+              break;
+            default:
+              if (configuration.isCollection) {
+                featureObject[configuration.name] = configuration.value.split(",");
+              } else {
+                featureObject[configuration.name] = configuration.value;
+              }
+          }
         }
       });
     }
@@ -321,28 +326,31 @@ class LandingPage extends React.Component {
     return (
       <div className='landing-page-container'>
         <div className='top-control'>
-        <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
-              <DropdownToggle caret>
-                {this.state.selectedPipelineType}
+          <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
+            <DropdownToggle caret>
+              {this.state.selectedPipelineType}
             </DropdownToggle>
-              <DropdownMenu>
-                {
-                  this.state.pipelineTypes.map((type) => {
-                    return (
-                      <DropdownItem  onClick={this.onPipeLineTypeChange.bind(this,type)}>{type}</DropdownItem>
-                    )
-                  })
-                }
-              </DropdownMenu>
-            </Dropdown>
+            <DropdownMenu>
+              {
+                this.state.pipelineTypes.map((type) => {
+                  return (
+                    <DropdownItem onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
+                  )
+                })
+              }
+            </DropdownMenu>
+          </Dropdown>
           <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
         </div>
-        <FeatureTable data={this.state.data} />
+        <FeatureTable data={this.state.data}
+          onView={this.viewPipeline.bind(this)}
+          onEdit={this.editPipeline.bind(this)}
+          onDelete={this.deletePipeline.bind(this)} />
         <AddFeatureWizard showWizard={this.state.showFeatureWizard}
           onClose={this.onWizardClose}
           onSubmit={this.openConfirmationModal.bind(this)} />
         <ConfirmPipelineModal open={this.state.openConfirmation}
-          name = {this.props.featureName}
+          name={this.props.featureName}
           onClose={this.closeConfirmationModal.bind(this)}
           onSave={this.saveFeature.bind(this)} />
       </div>

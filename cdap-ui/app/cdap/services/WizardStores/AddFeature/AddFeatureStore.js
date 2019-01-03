@@ -47,25 +47,47 @@ const isFeatureComplete = (state) => {
   if(isEmpty(state.selectedSchemas)) {
      return false;
   }
-  if(state.propertyMap.has("Indexes")) {
-    let size = state.propertyMap.get("Indexes").size;
-    if(size == 0 ) {
-      return false;
+
+  let mandatoryProperties = state.availableProperties.filter(item => item.isMandatory == true).map(item => item.paramName);
+
+  let mandatoryPropsSet = 0;
+  state.propertyMap.forEach((value,key) => {
+    if(mandatoryProperties.indexOf(key) >= 0) {
+      for(let i= 0; i < value.length; i++){
+        let size = state.propertyMap.get(key).size;
+        if(size == 0 ) {
+          return false;
+        } else {
+          mandatoryPropsSet++;
+        }
+      }
+    } else {
+      let property = find(state.availableProperties, {paramName: key});
+      if(property && !isEmpty(property.subParams)) {
+        if(property.subParams.length != value.length) {
+          return false;
+        }
+      }
     }
-  } else {
+  });
+
+  if(mandatoryPropsSet < mandatoryProperties.length) {
     return false;
   }
+
   if(isEmpty(state.configurationList)) {
     return false;
   } else {
-    for(let i= 0; i < state.availableConfigurations.length; i++){
-      let configuredProperty = find(state.configurationList, { name: state.availableConfigurations[i].paramName });
-      if(configuredProperty) {
-        if(isEmpty(configuredProperty.value)){
+    for(let i= 0; i < state.availableConfigurations.length; i++) {
+      if(state.availableConfigurations[i].isMandatory) {
+        let configuredProperty = find(state.configurationList, { name: state.availableConfigurations[i].paramName });
+        if(configuredProperty) {
+          if(isEmpty(configuredProperty.value)){
+            return false;
+          }
+        } else {
           return false;
         }
-      } else {
-        return false;
       }
     }
   }
