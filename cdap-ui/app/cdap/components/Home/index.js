@@ -22,19 +22,10 @@ import EntityListView from 'components/EntityListView';
 import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import {
-  setActiveBrowser,
-  setDatabaseProperties,
-} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 require('./Home.scss');
 
-const DataPrepBrowser = Loadable({
-  loader: () =>
-    import(/* webpackChunkName: "DataPrepBrowser" */ 'components/DataPrep/DataPrepBrowser'),
-  loading: LoadingSVGCentered,
-});
 const DataPrepConnections = Loadable({
   loader: () =>
     import(/* webpackChunkName: "DataPrepConnections" */ 'components/DataPrepConnections'),
@@ -121,21 +112,6 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
-          <Route
-            path="/ns/:namespace/databasebrowser"
-            render={() => {
-              setActiveBrowser({ name: 'database' });
-              setDatabaseProperties({
-                properties: {
-                  connectionString: 'jdbc:mysql://localhost:3306/test',
-                  userName: 'root',
-                  password: 'root',
-                  databasename: 'test',
-                },
-              });
-              return <DataPrepBrowser />;
-            }}
-          />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
