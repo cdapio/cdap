@@ -10,6 +10,7 @@ export const SAVE_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/s
 export const EDIT_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/edit";
 export const READ_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/read";
 export const DELETE_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/AutoFeatureGenerationService/methods/featureengineering/$NAME/features/delete";
+export const GET_PIPE_LINE_DATA = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/ManualFeatureSelectionService/methods/featureengineering/features/stats/get?pipelineName=";
 
 export const PIPELINE_TYPES = ["All", "featureGeneration", "featureSelection"];
 
