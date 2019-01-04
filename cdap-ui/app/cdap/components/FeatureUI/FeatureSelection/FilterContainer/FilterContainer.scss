@@ -1,0 +1,27 @@
+.filter-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: gray;
+    text-align: left;
+    padding-left: 15px;
+    padding-top: 20px;
+
+  }
+
+  .orderby-box{
+    padding-top: 15px;
+    padding-bottom: 20px;
+    display: inline-flex;
+    .orderby-label{
+      padding-right: 20px;
+    }
+  }
+
+
+
+
+
+  .filter-item-Container{
+    padding-bottom: 30px
+  }

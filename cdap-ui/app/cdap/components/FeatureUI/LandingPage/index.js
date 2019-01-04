@@ -26,11 +26,14 @@ import {
   READ_REQUEST,
   READ_PIPELINE,
   EDIT_PIPELINE,
-  EDIT_REQUEST
+  EDIT_REQUEST,
+  GET_PIPE_LINE_DATA
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
-import { getPropertyUpdateObj, getFeatureObject, updatePropertyMapWithObj } from '../util';
+import { Observable } from 'rxjs/Observable';
+import AlertModal from '../AlertModal';
+import FeatureSelection from '../FeatureSelection';
 
 
 require('./LandingPage.scss');
@@ -41,6 +44,10 @@ const ConfigurationData = [{ "paramName": "DFSDepth", "description": "", "isColl
 
 class LandingPage extends React.Component {
   currentPipeline;
+
+  sampleData = [
+    { "featureName": "plusonelog_first_errors_numwords_event_hostname____24", "featureStatistics": { "Mean": 0.04316484976694808, "Norm L1": 59.61065752815533, "Norm L2": 6.427982513741404, "Max": 0.6931471805599453, "50 Percentile": 0.6931471805599453, "Variance": 0.02807672037699529, "No. of Non Zeros": 86.0, "25 Percentile": 0.6931471805599453, "Min": 0.0, "No. of Nulls": 1295, "Inter Quartile Percentile": 0.0, "75 Percentile": 0.6931471805599453 } }
+  ]
   constructor(props) {
     super(props);
     this.toggleFeatureWizard = this.toggleFeatureWizard.bind(this);
@@ -53,6 +60,8 @@ class LandingPage extends React.Component {
       alertMessage: "",
       pipelineTypes: PIPELINE_TYPES,
       selectedPipelineType: 'All',
+      displayFeatureSelection: false,
+      pipeLineData: this.sampleData
     };
   }
   componentWillMount() {
@@ -119,6 +128,25 @@ class LandingPage extends React.Component {
 
   viewPipeline(pipeline) {
     this.currentPipeline = pipeline;
+    let request = SERVER_IP + GET_PIPE_LINE_DATA + pipeline.pipelineName;
+    // fetch(request)
+    //   .then(res => res.json())
+    //   .then(
+    //     (result) => {
+    //       if (isNil(result) || isNil(result["pipelineInfoList"])) {
+    //         alert("Pipeline Data Error");
+    //       } else {
+    //         this.setState({
+    //           data: result["pipelineInfoList"]
+    //         });
+    //       }
+    //     },
+    //     (error) => {
+    //       this.handleError(error, GET_PIPELINE);
+    //     }
+    //   )
+    this.setState({ displayFeatureSelection: true })
+
   }
 
   editPipeline(pipeline) {
@@ -350,6 +378,101 @@ class LandingPage extends React.Component {
     });
   }
 
+
+  getFeatureObject(props) {
+    let featureObject = {
+      pipelineRunName: props.featureName
+    };
+
+    if (!isEmpty(props.selectedSchemas)) {
+      featureObject["dataSchemaNames"] = props.selectedSchemas.map(schema => schema.schemaName);
+    }
+    if (!isNil(props.propertyMap)) {
+      props.propertyMap.forEach((value, property) => {
+        if (value) {
+          featureObject[property] = [];
+          let subPropObj = {};
+          value.forEach(subParam => {
+            if (subParam.header == "none") {
+              subParam.value.forEach((columns, schema) => {
+                if (!isEmpty(columns)) {
+                  columns.forEach((column) => {
+                    if (subParam.isCollection) {
+                      featureObject[property].push({
+                        table: schema,
+                        column: column.columnName
+                      });
+                    } else {
+                      featureObject[property] = {
+                        table: schema,
+                        column: column.columnName
+                      }
+                    }
+                  });
+                }
+              });
+            } else {
+              subParam.value.forEach((columns, schema) => {
+                if (!isEmpty(columns)) {
+                  let subPropValue = subParam.isCollection ? [] : {};
+                  columns.forEach((column) => {
+                    if (subParam.isCollection) {
+                      subPropValue.push({
+                        table: schema,
+                        column: column.columnName
+                      });
+                    } else {
+                      subPropValue = {
+                        table: schema,
+                        column: column.columnName
+                      }
+                    }
+                  });
+                  subPropObj[subParam.header] = subPropValue;
+                }
+              });
+            }
+          })
+          if (!isEmpty(subPropObj)) {
+            featureObject[property].push(subPropObj);
+          }
+        }
+      })
+    }
+    if (!isEmpty(props.configurationList)) {
+      props.configurationList.forEach((configuration) => {
+        if (!isEmpty(configuration.value)) {
+          switch (configuration.dataType) {
+            case 'int':
+              if (configuration.isCollection) {
+                let values = configuration.value.split(",");
+                featureObject[configuration.name] = values.map(value => parseInt(value));
+              } else {
+                featureObject[configuration.name] = parseInt(configuration.value);
+              }
+              break;
+            default:
+              if (configuration.isCollection) {
+                featureObject[configuration.name] = configuration.value.split(",");
+              } else {
+                featureObject[configuration.name] = configuration.value;
+              }
+          }
+        }
+      });
+    }
+    return featureObject;
+  }
+
+
+
+  initWizard(data) {
+    this.props.setAvailableSchemas(data);
+    this.setState({
+      showFeatureWizard: true
+    });
+  }
+
   fetchSchemas() {
     let fetchUrl = SERVER_IP + SCHEMA_REQUEST;
     fetch(fetchUrl)
@@ -436,6 +559,10 @@ class LandingPage extends React.Component {
           onClose={this.onAlertClose.bind(this)} />
       </div>
     );
+  }
+
+  viewFeatureGeneration = () => {
+    this.setState({ displayFeatureSelection: false })
   }
 }
 export default LandingPage;
