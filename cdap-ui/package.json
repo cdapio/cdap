@@ -90,6 +90,7 @@
     "node-dir": "0.1.16",
     "node-sass": "4.5.3",
     "npm-run-all": "^4.1.2",
+    "parallel-webpack": "2.2.0",
     "postcss-loader": "2.0.8",
     "react-addons-test-utils": "15.3.2",
     "sass-loader": "6.0.6",
@@ -102,7 +103,6 @@
     "url-loader": "0.6.2",
     "webpack": "4.16.0",
     "webpack-cli": "3.1.1",
-    "parallel-webpack": "2.2.0",
     "webpack-livereload-plugin": "2.1.1"
   },
   "dependencies": {
