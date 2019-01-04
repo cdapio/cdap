@@ -47,6 +47,13 @@ $action-hover-bg-color: $grey-08;
 
     &:hover { background-color: $action-hover-bg-color; }
   }
+  .arrow {
+    &:before {
+      // This is because the active state of link is white bg color and the arrow
+      // becomes invisible when opened.
+      border-bottom-color: black;
+    }
+  }
 }
 
 .connection-delete-confirmation-modal {

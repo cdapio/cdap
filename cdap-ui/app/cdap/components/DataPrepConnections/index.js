@@ -414,7 +414,18 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/database/${database.id}`}
                 activeClassName="active"
-                className="menu-item-expanded-list"
+                className={classnames('menu-item-expanded-list', {
+                  active:
+                    this.state.activeConnectionType === ConnectionType.DATABASE &&
+                    this.state.activeConnectionid === database.name,
+                })}
+                isActive={(match) => {
+                  return (
+                    (this.state.activeConnectionType === ConnectionType.DATABASE &&
+                      this.state.activeConnectionid === database.name) ||
+                    match
+                  );
+                }}
                 onClick={this.handlePropagation.bind(this, {
                   ...database,
                   name: ConnectionType.DATABASE,
@@ -447,7 +458,18 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/kafka/${kafka.id}`}
                 activeClassName="active"
-                className="menu-item-expanded-list"
+                isActive={(match) => {
+                  return (
+                    (this.state.activeConnectionType === ConnectionType.KAFKA &&
+                      this.state.activeConnectionid === kafka.name) ||
+                    match
+                  );
+                }}
+                className={classnames('menu-item-expanded-list', {
+                  active:
+                    this.state.activeConnectionType === ConnectionType.KAFKA &&
+                    this.state.activeConnectionid === kafka.name,
+                })}
                 onClick={this.handlePropagation.bind(this, {
                   ...kafka,
                   name: ConnectionType.KAFKA,
@@ -480,7 +502,18 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/s3/${s3.id}`}
                 activeClassName="active"
-                className="menu-item-expanded-list"
+                isActive={(match) => {
+                  return (
+                    (this.state.activeConnectionType === ConnectionType.S3 &&
+                      this.state.activeConnectionid === s3.name) ||
+                    match
+                  );
+                }}
+                className={classnames('menu-item-expanded-list', {
+                  active:
+                    this.state.activeConnectionType === ConnectionType.S3 &&
+                    this.state.activeConnectionid === s3.name,
+                })}
                 onClick={this.handlePropagation.bind(this, { ...s3, name: ConnectionType.S3 })}
                 isNativeLink={this.props.singleWorkspaceMode}
               >
@@ -510,7 +543,18 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/gcs/${gcs.id}`}
                 activeClassName="active"
-                className="menu-item-expanded-list"
+                isActive={(match) => {
+                  return (
+                    (this.state.activeConnectionType === ConnectionType.GCS &&
+                      this.state.activeConnectionid === gcs.name) ||
+                    match
+                  );
+                }}
+                className={classnames('menu-item-expanded-list', {
+                  active:
+                    this.state.activeConnectionType === ConnectionType.GCS &&
+                    this.state.activeConnectionid === gcs.name,
+                })}
                 onClick={this.handlePropagation.bind(this, { ...gcs, name: ConnectionType.GCS })}
                 isNativeLink={this.props.singleWorkspaceMode}
               >
@@ -540,7 +584,18 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/bigquery/${bq.id}`}
                 activeClassName="active"
-                className="menu-item-expanded-list"
+                isActive={(match) => {
+                  return (
+                    (this.state.activeConnectionType === ConnectionType.BIGQUERY &&
+                      this.state.activeConnectionid === bq.name) ||
+                    match
+                  );
+                }}
+                className={classnames('menu-item-expanded-list', {
+                  active:
+                    this.state.activeConnectionType === ConnectionType.BIGQUERY &&
+                    this.state.activeConnectionid === bq.name,
+                })}
                 onClick={this.handlePropagation.bind(this, {
                   ...bq,
                   name: ConnectionType.BIGQUERY,
@@ -573,7 +628,18 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/spanner/${spanner.id}`}
                 activeClassName="active"
-                className="menu-item-expanded-list"
+                isActive={(match) => {
+                  return (
+                    (this.state.activeConnectionType === ConnectionType.SPANNER &&
+                      this.state.activeConnectionid === spanner.name) ||
+                    match
+                  );
+                }}
+                className={classnames('menu-item-expanded-list', {
+                  active:
+                    this.state.activeConnectionType === ConnectionType.SPANNER &&
+                    this.state.activeConnectionid === spanner.name,
+                })}
                 onClick={this.handlePropagation.bind(this, {
                   ...spanner,
                   name: ConnectionType.SPANNER,
@@ -637,6 +703,11 @@ export default class DataPrepConnections extends Component {
               <NavLinkWrapper
                 to={`${baseLinkPath}/file`}
                 activeClassName="active"
+                /** This is here for non-react environments. Coming from pipeline to dataprep */
+                className={this.state.activeConnectionType === ConnectionType.FILE ? 'active' : ''}
+                isActive={(match) => {
+                  return this.state.activeConnectionType === ConnectionType.FILE || match;
+                }}
                 onClick={this.handlePropagation.bind(this, { type: ConnectionType.FILE })}
                 isNativeLink={this.props.singleWorkspaceMode}
               >
