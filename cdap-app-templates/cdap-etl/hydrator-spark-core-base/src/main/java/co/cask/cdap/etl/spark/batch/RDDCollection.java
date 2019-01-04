@@ -48,6 +48,7 @@ import co.cask.cdap.etl.spark.function.TransformFunction;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -88,7 +89,12 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<T> cache() {
-    return wrap(rdd.cache());
+    SparkConf sparkconf = jsc.getConf();
+    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+      return wrap(rdd.cache());
+    } else {
+      return wrap(rdd);
+    }
   }
 
   @SuppressWarnings("unchecked")
