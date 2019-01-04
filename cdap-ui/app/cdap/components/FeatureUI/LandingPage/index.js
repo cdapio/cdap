@@ -18,9 +18,12 @@ import {
   GET_PROPERTY,
   GET_CONFIGURATION,
   IS_OFFLINE,
-  SAVE_REQUEST
+  SAVE_REQUEST,
+  DELETE_REQUEST,
+  DELETE_PIPELINE
 } from '../config';
 import { Observable } from 'rxjs/Observable';
+import AlertModal from '../AlertModal';
 
 
 require('./LandingPage.scss');
@@ -30,7 +33,7 @@ const PropertyData = [{ "paramName": "Indexes", "description": "" }, { "paramNam
 const ConfigurationData = [{ "paramName": "DFSDepth", "description": "", "isCollection": false, "dataType": "int" }, { "paramName": "TrainingWindows", "description": "", "isCollection": true, "dataType": "int" }, { "paramName": "WindowEndTime", "description": "", "isCollection": false, "dataType": "string" }];
 
 class LandingPage extends React.Component {
-  //let optionsState = "Apple";
+  currentPipeline;
   constructor(props) {
     super(props);
     this.toggleFeatureWizard = this.toggleFeatureWizard.bind(this);
@@ -39,9 +42,10 @@ class LandingPage extends React.Component {
       data: [],
       dropdownOpen: false,
       showFeatureWizard: false,
-      openConfirmation: false,
+      openAlertModal: false,
+      alertMessage: "",
       pipelineTypes: PIPELINE_TYPES,
-      selectedPipelineType: 'All'
+      selectedPipelineType: 'All',
     }
   }
   componentWillMount() {
@@ -110,15 +114,48 @@ class LandingPage extends React.Component {
   }
 
   viewPipeline(pipeline) {
-
+    this.currentPipeline = pipeline;
   }
 
   editPipeline(pipeline) {
+    this.currentPipeline = pipeline;
+  }
 
+  onDeletePipeline(pipeline) {
+    this.currentPipeline = pipeline;
+    this.setState({
+      openAlertModal: true,
+      alertMessage: 'Are you sure you want to delete: ' + pipeline.pipelineName,
+    })
+  }
+
+  onAlertClose(action) {
+    if (action === 'OK' && this.currentPipeline) {
+      this.deletePipeline(this.currentPipeline);
+    }
+    this.setState({
+      openAlertModal: false
+    })
   }
 
   deletePipeline(pipeline) {
-
+    let fetchUrl = SERVER_IP + DELETE_REQUEST.replace('$NAME', pipeline.pipelineName);
+    fetch(fetchUrl, {
+      method: 'DELETE',
+    })
+      .then(res => res.json())
+      .then(
+        (result) => {
+          if (isNil(result) || (result.status && result.status > 200)) {
+            this.handleError(result, DELETE_PIPELINE);
+          } else {
+            this.getPipelines(this.state.selectedPipelineType);
+          }
+        },
+        (error) => {
+          this.handleError(error, DELETE_PIPELINE);
+        }
+      )
   }
 
   handleError(error, type) {
@@ -344,10 +381,12 @@ class LandingPage extends React.Component {
         <FeatureTable data={this.state.data}
           onView={this.viewPipeline.bind(this)}
           onEdit={this.editPipeline.bind(this)}
-          onDelete={this.deletePipeline.bind(this)} />
+          onDelete={this.onDeletePipeline.bind(this)} />
         <AddFeatureWizard showWizard={this.state.showFeatureWizard}
           onClose={this.onWizardClose}
           onSubmit={this.saveFeature.bind(this)} />
+        <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
+            onClose={this.onAlertClose.bind(this)} />
       </div>
     );
   }
