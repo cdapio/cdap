@@ -53,7 +53,6 @@ import java.security.cert.CertificateException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -76,7 +75,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-public class FileSecureStore implements SecureStore, SecureStoreManager {
+public class FileSecureStore extends NoopLifeCycle implements SecureStore, SecureStoreManager {
   private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
   private static final String SCHEME_NAME = "jceks";
   /** Separator between the namespace name and the key name */
@@ -92,9 +91,6 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   @Inject
   public FileSecureStore(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
     throws IOException {
-    System.setProperty("jceks.key.serialFilter", "java.lang.Enum;java.security.KeyRep;java.security.KeyRep$Type;" +
-      "javax.crypto.spec.SecretKeySpec;co.cask.cdap.security.store.KeyStoreEntry;!*");
-
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
     Path dir = Paths.get(pathString);

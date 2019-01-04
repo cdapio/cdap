@@ -57,7 +57,7 @@ import java.util.Map;
  */
 // TODO: Find a better way to handle javadoc so this class does not need to be public.
 @SuppressWarnings("unused")
-public class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
+public class KMSSecureStore extends NoopLifeCycle implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";

@@ -17,7 +17,9 @@
 package co.cask.cdap.securestore.spi;
 
 import co.cask.cdap.securestore.spi.secret.Secret;
+import co.cask.cdap.securestore.spi.secret.SecretMetadata;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -26,14 +28,13 @@ import java.util.Map;
  *
  * TODO CDAP-14699 Expose dataset through context in initialize method.
  */
-public interface SecretsManager {
-
+public interface SecretManager {
   /**
    * Returns the name of the secrets manager.
    *
    * @return non-empty name of this secrets manager
    */
-  String getSecretsManagerName();
+  String getName();
 
   /**
    * Initialize the secrets manager. This method is guaranteed to be called before any other method is called.
@@ -41,43 +42,41 @@ public interface SecretsManager {
    *
    * @param context the context that can be used to initialize the secrets manager
    */
-  void initialize(SecretsManagerContext context) throws Exception;
+  void initialize(SecretManagerContext context) throws Exception;
 
   /**
-   * Encrypts and stores the secret for a given namespace.
+   * Securely stores secret for a given namespace.
    *
    * @param namespace the namespace that this secret belongs to
    * @param name the name of the secret
    * @param secret the sensitive data that has to be securely stored
    * @param description user provided description of the secret
-   * @param properties associated properties and metadata
-   *
+   * @param properties unmodifiable properties map representing associated properties for the secret
    * @throws SecretAlreadyExistsException if the secret already exists in the namespace
-   * @throws Exception if unable to encrypt or store the secret
+   * @throws Exception if unable to store the secret securely
    */
-  void storeSecret(String namespace, String name, byte[] secret, String description,
-                   Map<String, String> properties) throws Exception;
+  void store(String namespace, String name, byte[] secret, String description,
+             Map<String, String> properties) throws Exception;
 
   /**
-   * Retrieves stored encrypted secret, decrypts it and returns secret in plain text along with its metadata
-   * as a {@link Secret}.
+   * Returns securely stored secret along with its metadata as a {@link Secret}.
    *
    * @param namespace the namespace that this secret belongs to
    * @param name the name of the secret
    * @return the sensitive data and associated metadata.
-   * @throws SecretNotFoundException if the secret is not present in the namespace
-   * @throws Exception if unable to retrieve or decrypt the secret
+   * @throws SecretNotFoundException if the secret is not present in the` namespace
+   * @throws Exception if unable to retrieve the secret
    */
-  Secret getSecret(String namespace, String name) throws Exception;
+  Secret get(String namespace, String name) throws Exception;
 
   /**
-   * Retrieves and returns {@link Map} of secret name and its description for the provided namespace.
+   * Returns {@link Collection} of metadata of all the secrets in the provided namespace.
    *
    * @param namespace the namespace that secrets belong to
-   * @return a {@code Map} of secret name to description
-   * @throws Exception if unable to retrieve secrets name or description
+   * @return a {@code Collection} of metadata of all the secrets in the provided namespace
+   * @throws Exception if unable to list secrets
    */
-  Map<String, String> listSecrets(String namespace) throws Exception;
+  Collection<SecretMetadata> list(String namespace) throws Exception;
 
   /**
    * Deletes the secret with the provided name.
@@ -87,5 +86,12 @@ public interface SecretsManager {
    * @throws SecretNotFoundException if the secret is not present in the namespace
    * @throws Exception if unable to delete the secret or associated metadata
    */
-  void deleteSecret(String namespace, String name) throws Exception;
+  void delete(String namespace, String name) throws Exception;
+
+  /**
+   * Cleans up initialized resources. It will only be called once for the lifetime of the secrets manager.
+   *
+   * @param context secret manager context
+   */
+  void destroy(SecretManagerContext context);
 }

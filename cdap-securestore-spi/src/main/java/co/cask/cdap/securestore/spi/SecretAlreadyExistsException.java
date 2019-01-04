@@ -20,16 +20,21 @@ package co.cask.cdap.securestore.spi;
  * Exception that indicates a secret already exists.
  */
 public class SecretAlreadyExistsException extends IllegalArgumentException {
-  public SecretAlreadyExistsException(String message) {
-    super(message);
+  private final String namespace;
+  private final String secretName;
+
+  public SecretAlreadyExistsException(String namespace, String secretName) {
+    super(String.format("Secret %s already exists in the namespace %s. Please provide different secret name.",
+                        namespace, secretName));
+    this.namespace = namespace;
+    this.secretName = secretName;
   }
 
-  public SecretAlreadyExistsException(Throwable cause) {
-    super(cause);
+  public String getNamespace() {
+    return namespace;
   }
 
-  public SecretAlreadyExistsException(String message, Throwable cause) {
-    super(message, cause);
+  public String getSecretName() {
+    return secretName;
   }
-
 }

@@ -22,11 +22,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.security.store.DefaultSecureStoreService;
+import co.cask.cdap.security.store.DefaultSecureStore;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.SecureStoreLifeCycle;
 import co.cask.cdap.security.store.SecureStoreUtils;
-import co.cask.cdap.security.store.WrappedSecureStore;
+import co.cask.cdap.security.store.ExtensionSecureStore;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -61,6 +62,7 @@ import com.google.inject.name.Names;
 public class SecureStoreModules extends RuntimeModule {
   public static final String DELEGATE_SECURE_STORE = "delegateSecureStore";
   public static final String DELEGATE_SECURE_STORE_MANAGER = "delegateSecureStoreManager";
+  public static final String DELEGATE_SECURE_STORE_LIFECYCLE = "delegateSecureStoreLifeCycle";
 
   @Override
   public final Module getInMemoryModules() {
@@ -73,10 +75,15 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreLifeCycle.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_LIFECYCLE))
+          .toProvider(new TypeLiteral<StoreProvider<SecureStoreLifeCycle>>() { });
+        bind(SecureStore.class).to(DefaultSecureStore.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
+        bind(SecureStoreLifeCycle.class).to(DefaultSecureStore.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
+        expose(SecureStoreLifeCycle.class);
       }
     };
   }
@@ -92,10 +99,15 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreLifeCycle.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_LIFECYCLE))
+          .toProvider(new TypeLiteral<StoreProvider<SecureStoreLifeCycle>>() { });
+        bind(SecureStore.class).to(DefaultSecureStore.class);
         expose(SecureStore.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
         expose(SecureStoreManager.class);
+        bind(SecureStoreLifeCycle.class).to(DefaultSecureStore.class);
+        expose(SecureStoreLifeCycle.class);
       }
     };
   }
@@ -111,10 +123,15 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreLifeCycle.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_LIFECYCLE))
+          .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreLifeCycle>>() { });
+        bind(SecureStore.class).to(DefaultSecureStore.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
+        bind(SecureStoreLifeCycle.class).to(DefaultSecureStore.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
+        expose(SecureStoreLifeCycle.class);
       }
     };
   }
@@ -135,7 +152,7 @@ public class SecureStoreModules extends RuntimeModule {
     public T get() {
       boolean cloudBacked = SecureStoreUtils.isCloudKMSBacked(cConf);
       if (cloudBacked) {
-        return (T) injector.getInstance(WrappedSecureStore.class);
+        return (T) injector.getInstance(ExtensionSecureStore.class);
       }
 
       boolean kmsBacked = SecureStoreUtils.isKMSBacked(cConf);
@@ -177,7 +194,7 @@ public class SecureStoreModules extends RuntimeModule {
     public T get() {
       boolean cloudBacked = SecureStoreUtils.isCloudKMSBacked(cConf);
       if (cloudBacked) {
-        return (T) injector.getInstance(WrappedSecureStore.class);
+        return (T) injector.getInstance(ExtensionSecureStore.class);
       }
 
       boolean fileBacked = SecureStoreUtils.isFileBacked(cConf);

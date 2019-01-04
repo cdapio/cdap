@@ -27,7 +27,7 @@ import java.util.Map;
  * A dummy class that is loaded when the user has set the provider to "kms" but the cluster does not
  * have the required libraries. All operations on this class throw an UnsupportedOperationException.
  */
-public class DummySecureStore implements SecureStore, SecureStoreManager {
+public class DummySecureStore extends NoopLifeCycle implements SecureStore, SecureStoreManager {
 
   private static final String SECURE_STORE_SETUP = "Secure store is not configured. To use secure store the provider " +
     "needs to be set using the \"security.store.provider\" property in cdap-site.xml. " +

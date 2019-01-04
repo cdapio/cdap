@@ -34,7 +34,7 @@ public class CloudKMSConf {
   private static final String LOCATION_ID = "global";
   // All the crypto keys are created under keyring named cdap
   private static final String KEYRING_ID = "cdap";
-  private String projectId;
+  private final String projectId;
 
   /**
    * Constructs cloud kms conf.

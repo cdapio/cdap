@@ -16,6 +16,8 @@
 
 package co.cask.cdap.securestore.spi.secret;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,24 +25,24 @@ import java.util.Objects;
  * Represents metadata for the sensitive data to be stored.
  */
 public class SecretMetadata {
-  private String name;
-  private String description;
-  private long createTimeMs;
-  private Map<String, String> properties;
+  private final String name;
+  private final String description;
+  private final long creationTimeMs;
+  private final Map<String, String> properties;
 
   /**
    * Constructs metadata with provided secret name, description, creation time and properties.
    *
    * @param name the name of the secret to which this metadata belongs to
    * @param description description of the secret to which this metadata belongs to
-   * @param createTimeMs creation time of the secret in milli seconds
+   * @param creationTimeMs creation time of the secret in milli seconds
    * @param properties properties of the secret
    */
-  public SecretMetadata(String name, String description, long createTimeMs, Map<String, String> properties) {
+  public SecretMetadata(String name, String description, long creationTimeMs, Map<String, String> properties) {
     this.name = name;
     this.description = description;
-    this.createTimeMs = createTimeMs;
-    this.properties = properties;
+    this.creationTimeMs = creationTimeMs;
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**
@@ -60,8 +62,8 @@ public class SecretMetadata {
   /**
    * @return creation time of the secret in milli seconds
    */
-  public long getCreateTimeMs() {
-    return createTimeMs;
+  public long getCreationTimeMs() {
+    return creationTimeMs;
   }
 
   /**
@@ -80,7 +82,7 @@ public class SecretMetadata {
       return false;
     }
     SecretMetadata that = (SecretMetadata) o;
-    return createTimeMs == that.createTimeMs &&
+    return creationTimeMs == that.creationTimeMs &&
       Objects.equals(name, that.name) &&
       Objects.equals(description, that.description) &&
       Objects.equals(properties, that.properties);
@@ -88,6 +90,6 @@ public class SecretMetadata {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, createTimeMs, properties);
+    return Objects.hash(name, description, creationTimeMs, properties);
   }
 }

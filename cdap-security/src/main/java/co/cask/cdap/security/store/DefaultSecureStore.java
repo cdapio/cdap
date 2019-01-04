@@ -41,24 +41,38 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Default implementation of the service that manages access to the Secure Store.
+ * Default implementation of {@link SecureStore},{@link SecureStoreManager} and {@link SecureStoreLifeCycle}
+ * that manages access to the Secure Store.
  */
-public class DefaultSecureStoreService implements SecureStore, SecureStoreManager {
+public class DefaultSecureStore implements SecureStore, SecureStoreManager, SecureStoreLifeCycle {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
+  private final SecureStoreLifeCycle lifeCycle;
 
   @Inject
-  DefaultSecureStoreService(AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
-                              SecureStoreManager secureStoreManager) {
+  DefaultSecureStore(AuthorizationEnforcer authorizationEnforcer,
+                     AuthenticationContext authenticationContext,
+                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
+                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
+                              SecureStoreManager secureStoreManager,
+                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE_LIFECYCLE) SecureStoreLifeCycle lifeCycle) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
+    this.lifeCycle = lifeCycle;
+  }
+
+  @Override
+  public void initialize() throws Exception {
+    lifeCycle.initialize();
+  }
+
+  @Override
+  public void destroy() {
+    lifeCycle.destroy();
   }
 
   /**

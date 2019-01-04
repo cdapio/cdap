@@ -86,7 +86,7 @@ public final class FilterClassLoader extends ClassLoader {
    * given parent ClassLoader
    *
    * @param parentClassLoader the ClassLoader to filter from.
-   * @return a new intance of {@link FilterClassLoader}.
+   * @return a new instance of {@link FilterClassLoader}.
    */
   public static FilterClassLoader create(ClassLoader parentClassLoader) {
     return new FilterClassLoader(parentClassLoader, defaultFilter());

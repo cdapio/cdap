@@ -17,18 +17,24 @@
 package co.cask.cdap.securestore.spi;
 
 /**
- * An Exception that indicates secret is not found.
+ * An Exception that indicates a secret is not found.
  */
 public class SecretNotFoundException extends IllegalArgumentException {
-  public SecretNotFoundException(String message) {
-    super(message);
+  private final String namespace;
+  private final String secretName;
+
+  public SecretNotFoundException(String namespace, String secretName) {
+    super(String.format("Secret %s is not found the namespace %s. Please provide correct secret name that was stored " +
+                          "in %s namespace.", namespace, secretName, namespace));
+    this.namespace = namespace;
+    this.secretName = secretName;
   }
 
-  public SecretNotFoundException(Throwable cause) {
-    super(cause);
+  public String getNamespace() {
+    return namespace;
   }
 
-  public SecretNotFoundException(String message, Throwable cause) {
-    super(message, cause);
+  public String getSecretName() {
+    return secretName;
   }
 }

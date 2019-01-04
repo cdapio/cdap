@@ -21,20 +21,21 @@ import java.util.Map;
 /**
  * Secrets Manager context.
  */
-public interface SecretsManagerContext {
+public interface SecretManagerContext {
 
   /**
    * System properties are derived from the CDAP configuration. Anything in the CDAP configuration that is prefixed by
-   * 'securestore.system.properties.[securestore-name].' will be adding as an entry in the system properties.
+   * 'securestore.system.properties.[securestore-name].' will be added as an entry in the system properties.
    *
    * @return unmodifiable system properties for the secrets manager
    */
   Map<String, String> getProperties();
 
   /**
-   * Secrets metadata store to store metadata and associated
+   * Secrets metadata store to store metadata for the secrets. This store will store metadata in store owned by cdap.
+   * This means it should not contain any sensitive information in plain text.
    *
    * @return secrets metadata store
    */
-  SecretsMetadataStore getSecretsMetadataStore();
+  SecretStore getSecretsMetadataStore();
 }

@@ -23,8 +23,8 @@ import java.util.Objects;
  * Represents sensitive data to be stored securely.
  */
 public class Secret {
-  private byte[] data;
-  private SecretMetadata metadata;
+  private final byte[] data;
+  private final SecretMetadata metadata;
 
   /**
    * Constructs a secret with the given sensitive data and metadata.
@@ -33,12 +33,12 @@ public class Secret {
    * @param metadata metadata for this secret
    */
   public Secret(byte[] data, SecretMetadata metadata) {
-    this.data = data;
+    this.data = Arrays.copyOf(data, data.length);
     this.metadata = metadata;
   }
 
   /**
-   * @return sensitive data represented by this secret
+   * @return sensitive data represented by this secret.
    */
   public byte[] getData() {
     return data;

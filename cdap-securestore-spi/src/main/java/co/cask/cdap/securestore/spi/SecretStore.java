@@ -16,53 +16,53 @@
 
 package co.cask.cdap.securestore.spi;
 
-import java.util.Map;
+import java.util.Collection;
 
 /**
- * Stores and retrieves secret's metadata.
+ * Stores and retrieves secrets and associated metadata for the secrets. It must not be used to store
+ * secrets/sensitive information in plain text.
  *
- * @param <T> the type of the metadata to be stored.
  */
-public interface SecretsMetadataStore<T> {
+public interface SecretStore {
 
   /**
-   * Retrieves metadata for the secret for a given namespace.
+   * Retrieves stored data for the secret.
    *
    * @param namespace the namespace to which secret belongs to
    * @param name the name of the secret to be retrieved
-   * @return stored metadata
+   * @return stored data
    * @throws SecretNotFoundException if secret is not found in provided namespace
-   * @throws Exception if not able to retrieve the secret in plain text
+   * @throws Exception if unable to retrieve the secret
    */
-  T get(String namespace, String name) throws Exception;
+  byte[] get(String namespace, String name) throws Exception;
 
   /**
-   * Provides list of all the secrets for which metadata is stored.
+   * Provides list of all the secrets for which data is stored.
    *
    * @param namespace the namespace to which secrets belong to
-   * @return map of secret to description. If there is no secret metadata stored, empty map is returned
-   * @throws Exception if not able to get metadata for the secrets in the provided namespace
+   * @return list of all the secrets stored in provided namespace
+   * @throws Exception if not able to get data for the secrets in the provided namespace
    */
-  Map<String, String> list(String namespace) throws Exception;
+  Collection<byte[]> list(String namespace) throws Exception;
 
   /**
-   * Stores metadata for the secrets
+   * Persists provided data in the store for a given secret.
    *
    * @param namespace the namespace to which secret belong to
    * @param name the name of the secret
-   * @param metadata the metadata to be stored
-   * @throws SecretAlreadyExistsException if the metadata for the secret is already stored
-   * @throws Exception if not able to store the metadata for the secret
+   * @param data the data to be stored
+   * @throws SecretAlreadyExistsException if the data for the secret is already stored
+   * @throws Exception if unable to store the data of the secret
    */
-  void store(String namespace, String name, T metadata) throws Exception;
+  <T> void store(String namespace, String name, byte[] data) throws Exception;
 
   /**
-   * Deletes the metadata for provided secret.
+   * Deletes the data for the provided secret.
    *
    * @param namespace the namespace to which secret belongs to
-   * @param name the name of the secret to be retrieved
+   * @param name the name of the secret to be deleted
    * @throws SecretNotFoundException if secret is not found in provided namespace
-   * @throws Exception
+   * @throws Exception if unable to delete the data of the secret
    */
   void delete(String namespace, String name) throws Exception;
 }

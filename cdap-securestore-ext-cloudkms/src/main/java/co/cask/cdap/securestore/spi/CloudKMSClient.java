@@ -41,19 +41,18 @@ import java.util.List;
 public class CloudKMSClient {
   private final CloudKMS cloudKMS;
   private final CloudKMSConf conf;
+  // In-memory cache to hold created crypto keys, this is to avoid checking if a given crypto key exists
   private final List<String> crypoKeyList;
 
   /**
-   * Constructs Cloud KMS client
+   * Constructs Cloud KMS client.
    *
-   * @param conf cloud kms conf used to initialize cloud kms
-   * @throws IOException if cloud kms client can not be authorized or cdap key ring can not be created
+   * @throws IOException if cloud kms client can not be created
    */
-  public CloudKMSClient(CloudKMSConf conf) throws IOException {
-    this.conf = conf;
+  public CloudKMSClient() throws IOException {
+    this.conf = new CloudKMSConf();
     this.crypoKeyList = new ArrayList<>();
     this.cloudKMS = createAuthorizedClient();
-    createKeyRing(conf.getKeyringId());
   }
 
   /**
@@ -63,14 +62,10 @@ public class CloudKMSClient {
    * @throws IOException if there's an error getting the default credentials
    */
   private CloudKMS createAuthorizedClient() throws IOException {
-    // Create the credential
     HttpTransport transport = new NetHttpTransport();
     JsonFactory jsonFactory = new JacksonFactory();
     GoogleCredential credential = GoogleCredential.getApplicationDefault(transport, jsonFactory);
 
-    // Depending on the environment that provides the default credentials (e.g. Compute Engine, App
-    // Engine), the credentials may require us to specify the scopes we need explicitly.
-    // Check for this case, and inject the scope if required.
     if (credential.createScopedRequired()) {
       credential = credential.createScoped(CloudKMSScopes.all());
     }
@@ -83,15 +78,15 @@ public class CloudKMSClient {
   /**
    * Creates a new key ring with the given id.
    *
-   * @param keyRingId key ring id
-   * @throws IOException if there's an error creating key ring
+   * @throws IOException if there's an error while creating the key ring
    */
-  private void createKeyRing(String keyRingId) throws IOException {
+  void createKeyRing() throws IOException {
     String parent = String.format("projects/%s/locations/%s", conf.getProjectId(), conf.getLocationId());
+
     try {
       cloudKMS.projects().locations().keyRings()
         .create(parent, new KeyRing())
-        .setKeyRingId(keyRingId)
+        .setKeyRingId(conf.getKeyringId())
         .execute();
     } catch (GoogleJsonResponseException e) {
       // if key ring already exists, then do not throw any exception.
@@ -102,7 +97,7 @@ public class CloudKMSClient {
   }
 
   /**
-   * Creates a new crypto key on cloud kms with the given id.
+   * Creates a new crypto key on google cloud kms with the given id.
    *
    * @param cryptoKeyId crypto key id
    * @throws IOException if there's an error creating crypto key
