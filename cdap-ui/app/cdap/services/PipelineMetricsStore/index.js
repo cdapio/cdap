@@ -53,6 +53,8 @@ const metrics = (state = DEFAULT_METRICS_STATE, action = defaultAction) => {
       };
     case PipelineMetricsActions.RESET:
       return DEFAULT_METRICS_STATE;
+    default:
+      return DEFAULT_METRICS_STATE;
   }
 };
 

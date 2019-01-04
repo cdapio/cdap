@@ -20,7 +20,6 @@
 @import "./color-constants.less";
 
 @node-box-width: 200px;
-@node-box-height: 87px;
 @node-box-height-big: 100px;
 @condition-box-width: 105px;
 @condition-box-height: 105px;
@@ -140,10 +139,10 @@ my-dag-plus {
       cursor: move;
       top: 150px;
       padding: 0;
-      height: @node-box-height;
+      height: @node-box-height-big;
       width: @node-box-width;
       z-index: 2;
-      .border-color-hover(@node-box-height);
+      .border-color-hover(@node-box-height-big);
 
       // Setting default node color
       color: @transform-plugins-color;
@@ -168,7 +167,7 @@ my-dag-plus {
           border-radius: 100%;
           position: absolute;
           right: -@endpoint-circle-radius;
-          top: 35px;
+          top: 41px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -298,6 +297,11 @@ my-dag-plus {
           width: ~"-moz-calc(100% - 24px)";
           width: ~"-webkit-calc(100% - 24px)";
           width: ~"calc(100% - 24px)";
+        }
+        .node-preview-data-btn {
+          position: absolute;
+          bottom: 20px;
+          left: 13px;
         }
 
         .node-alerts-errors {
