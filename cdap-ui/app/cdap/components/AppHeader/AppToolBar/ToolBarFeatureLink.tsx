@@ -19,6 +19,7 @@ import ExtendedLinkButton from 'components/AppHeader/ExtendedLinkButton';
 import classnames from 'classnames';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
+const colors = require('styles/colors.scss');
 
 interface IToolBarFeatureLinkProps extends WithStyles<typeof styles> {
   context: INamespaceLinkContext;
@@ -29,7 +30,11 @@ interface IToolBarFeatureLinkProps extends WithStyles<typeof styles> {
 
 const styles = (theme) => {
   return {
-    buttonLink: theme.buttonLink,
+    buttonLink: {
+      ...theme.buttonLink,
+      fontWeight: 300,
+      color: colors.grey08,
+    },
   };
 };
 

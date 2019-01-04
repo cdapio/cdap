@@ -14,37 +14,37 @@
  * the License.
 */
 
-import * as React from "react";
+import * as React from 'react';
 import { storiesOf } from '@storybook/react';
-const cdaplogo = require('../app/cdap/styles/img/company_logo.png');
+const cdaplogo = require('../app/cdap/styles/img/company_logo-20-all.png');
 import { withInfo } from '@storybook/addon-info';
 
 // Eventually all the style attributes will be changed to styled-components
 // Since this is a one-of component meh.
 export default function Welcome() {
   return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: '#3b78e7',
-      color: 'white',
-    }}>
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: '#3b78e7',
+        color: 'white',
+      }}
+    >
       <img src={cdaplogo} />
       <h1>😍 Welcome to CDAP UI storybook!</h1>
-      <p>
-        Repository of components used in CDAP UI
-      </p>
+      <p>Repository of components used in CDAP UI</p>
       <img src="https://i2.wp.com/blog.codepen.io/wp-content/uploads/2018/07/happy-michael-scott.gif" />
     </div>
   );
 }
 
-storiesOf('Welcome', module)
-  .add(
-    'with text',
-    withInfo({
-      text: 'Welcome page',
-    })(() => (<Welcome />)));
+storiesOf('Welcome', module).add(
+  'with text',
+  withInfo({
+    text: 'Welcome page',
+  })(() => <Welcome />)
+);
