@@ -84,10 +84,6 @@ function getBabelBuildPipeline() {
   });
 
   var source = getEs6Directives();
-  source = source.concat([
-    './app/features/userprofile/module.js',
-    './app/features/userprofile/**/*.js',
-  ]);
   return gulp
     .src(source)
     .pipe(plug.plumber())
@@ -143,7 +139,6 @@ gulp.task('css:lint', function() {
       './app/styles/common.less',
       './app/styles/themes/*.less',
       './app/directives/**/*.{less,css}',
-      './app/features/**/*.{less,css}',
     ])
     .pipe(
       plug.stylelint({
@@ -319,7 +314,6 @@ gulp.task('html:partials', function() {
   return gulp
     .src([
       './app/{hydrator,tracker,logviewer}/**/*.html',
-      './app/features/{userprofile,}/**/*.html',
       '!./app/tracker/tracker.html',
       '!./app/hydrator/hydrator.html',
       '!./app/logviewer/logviewer.html',
