@@ -18,5 +18,8 @@ export const GET_SCHEMA = "GET_SCHEMA";
 export const GET_PROPERTY = "GET_PROPERTY";
 export const GET_CONFIGURATION = "GET_CONFIGURATION";
 export const SAVE_PIPELINE = "SAVE_PIPELINE";
+export const EDIT_PIPELINE = "EDIT_PIPELINE";
+export const DELETE_PIPELINE = "DELETE_PIPELINE";
+
 
 export const IS_OFFLINE = false;
