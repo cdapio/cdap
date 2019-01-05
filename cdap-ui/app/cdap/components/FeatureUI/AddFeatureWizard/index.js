@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 
 import React from 'react';
 import WizardModal from 'components/WizardModal';
@@ -11,26 +12,26 @@ class AddFeatureWizard extends React.Component {
     this.state = {
       successInfo: {},
       activeStepId: 'schema',
-    }
+    };
   }
 
   render() {
     return (
-          <WizardModal
-            title= "New Feature"
-            isOpen={this.props.showWizard}
-            toggle={this.props.onClose}
-            className="add-feature-wizard">
-            <Wizard
-              wizardConfig={AddFeatureWizardConfig}
-              wizardType="Add-Feature"
-              onSubmit={this.props.onSubmit}
-              successInfo={this.state.successInfo}
-              onClose={this.props.onClose}
-              activeStepId={this.state.activeStepId}
-              store={AddFeatureStore}
-            />
-          </WizardModal>
+      <WizardModal
+        title="New Feature"
+        isOpen={this.props.showWizard}
+        toggle={this.props.onClose}
+        className="add-feature-wizard">
+        <Wizard
+          wizardConfig={AddFeatureWizardConfig}
+          wizardType="Add-Feature"
+          onSubmit={this.props.onSubmit}
+          successInfo={this.state.successInfo}
+          onClose={this.props.onClose}
+          activeStepId={this.state.activeStepId}
+          store={AddFeatureStore}
+        />
+      </WizardModal>
     );
   }
 }

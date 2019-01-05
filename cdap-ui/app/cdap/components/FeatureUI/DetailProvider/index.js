@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 
 import React from 'react';
 import { Input } from 'reactstrap';
@@ -9,7 +10,7 @@ class DetailProvider extends React.Component {
     super(props);
   }
 
-  onNameUpdated() {
+  onNameUpdated(event) {
     this.name =  event.target.value;
     this.props.updateFeatureName(this.name);
   }

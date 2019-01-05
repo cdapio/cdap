@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
 import { Provider, connect } from 'react-redux';
 import AddFeatureActions from '../../../../services/WizardStores/AddFeature/AddFeatureActions';

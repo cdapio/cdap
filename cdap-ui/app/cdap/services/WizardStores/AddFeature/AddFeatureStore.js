@@ -44,48 +44,48 @@ const defaultInitialState = {
 
 
 const isFeatureComplete = (state) => {
-  if(isEmpty(state.featureName)) {
+  if (isEmpty(state.featureName)) {
     return false;
   }
-  if(isEmpty(state.selectedSchemas)) {
-     return false;
+  if (isEmpty(state.selectedSchemas)) {
+    return false;
   }
 
   let mandatoryProperties = state.availableProperties.filter(item => item.isMandatory == true).map(item => item.paramName);
 
   let mandatoryPropsSet = 0;
-  state.propertyMap.forEach((value,key) => {
-    if(mandatoryProperties.indexOf(key) >= 0) {
-      for(let i= 0; i < value.length; i++){
+  state.propertyMap.forEach((value, key) => {
+    if (mandatoryProperties.indexOf(key) >= 0) {
+      for (let i = 0; i < value.length; i++) {
         let size = state.propertyMap.get(key).size;
-        if(size == 0 ) {
+        if (size == 0) {
           return false;
         } else {
           mandatoryPropsSet++;
         }
       }
     } else {
-      let property = find(state.availableProperties, {paramName: key});
-      if(property && !isEmpty(property.subParams)) {
-        if(property.subParams.length != value.length) {
+      let property = find(state.availableProperties, { paramName: key });
+      if (property && !isEmpty(property.subParams)) {
+        if (property.subParams.length != value.length) {
           return false;
         }
       }
     }
   });
 
-  if(mandatoryPropsSet < mandatoryProperties.length) {
+  if (mandatoryPropsSet < mandatoryProperties.length) {
     return false;
   }
 
-  if(isEmpty(state.configurationList)) {
+  if (isEmpty(state.configurationList)) {
     return false;
   } else {
-    for(let i= 0; i < state.availableConfigurations.length; i++) {
-      if(state.availableConfigurations[i].isMandatory) {
+    for (let i = 0; i < state.availableConfigurations.length; i++) {
+      if (state.availableConfigurations[i].isMandatory) {
         let configuredProperty = find(state.configurationList, { name: state.availableConfigurations[i].paramName });
-        if(configuredProperty) {
-          if(isEmpty(configuredProperty.value)){
+        if (configuredProperty) {
+          if (isEmpty(configuredProperty.value)) {
             return false;
           }
         } else {
@@ -103,12 +103,14 @@ const featureState = (state = defaultState, action = defaultAction) => {
     case AddFeatureActions.saveFeature:
       break;
     case AddFeatureActions.onReset:
-      state = {...defaultState,
+      state = {
+        ...defaultState,
         propertyMap: new Map()
       };
       break;
     case AddFeatureActions.updateFeatureName:
-      state = {...state,
+      state = {
+        ...state,
         featureName: action.payload
       };
       break;
@@ -125,17 +127,17 @@ const featureState = (state = defaultState, action = defaultAction) => {
       };
       break;
     case AddFeatureActions.setAvailableSchemas:
-        state = {
-          ...state,
-          availableSchemas: action.payload
-        };
-        break;
+      state = {
+        ...state,
+        availableSchemas: action.payload
+      };
+      break;
     case AddFeatureActions.setSelectedSchemas:
-        state = {
-          ...state,
-          selectedSchemas: action.payload
-        };
-        break;
+      state = {
+        ...state,
+        selectedSchemas: action.payload
+      };
+      break;
     case AddFeatureActions.addSelectedSchema:
       state = {
         ...state,
@@ -143,13 +145,13 @@ const featureState = (state = defaultState, action = defaultAction) => {
       };
       break;
     case AddFeatureActions.deleteSelectedSchema: {
-        let selectedSchemas = state.selectedSchemas;
-        remove(selectedSchemas, { schemaName : action.payload.schemaName});
-        state = {
-          ...state,
-          selectedSchemas: selectedSchemas
-        };
-      }
+      let selectedSchemas = state.selectedSchemas;
+      remove(selectedSchemas, { schemaName: action.payload.schemaName });
+      state = {
+        ...state,
+        selectedSchemas: selectedSchemas
+      };
+    }
       break;
     case AddFeatureActions.updatePropertyMap: {
       state = {
