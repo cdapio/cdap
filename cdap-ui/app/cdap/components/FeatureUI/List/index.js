@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
 
@@ -19,7 +20,9 @@ class List extends React.Component {
           </div>
         }
         {
-          listData.map(item => <div>{item}</div>)
+          listData.map(item => {
+            return (<div key = {item}>{item}</div>);
+          })
         }
       </div>
     );

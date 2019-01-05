@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
 import NameValueList from '../NameValueList';
 import cloneDeep from 'lodash/cloneDeep';

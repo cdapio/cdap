@@ -1,5 +1,5 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
-
 import AddSchema from '../AddSchema';
 import SchemaSelectorModal from '../SchemaSelectorModal';
 import AlertModal from '../AlertModal';
@@ -21,21 +21,21 @@ class SchemaSelector extends React.Component {
       schemaSelected: null,
       alertMessage: '',
       schemaDP: []
-    }
+    };
   }
 
   openSchemaSelectorModal() {
     this.setState({
       schemaDP: isEmpty(this.props.availableSchemas) ? [] :
-                this.props.availableSchemas.map((item) => {
-                  return {
-                    schemaName: item.schemaName,
-                    schemaColumns: item.schemaColumns,
-                    selected: false
-                  }
-                }),
+        this.props.availableSchemas.map((item) => {
+          return {
+            schemaName: item.schemaName,
+            schemaColumns: item.schemaColumns,
+            selected: false
+          };
+        }),
       openSchemaModal: true
-    })
+    });
   }
 
   onDeleteSchema(action, data) {
@@ -44,13 +44,13 @@ class SchemaSelector extends React.Component {
         schemaSelected: data,
         alertMessage: 'Are you sure you want to delete: ' + data.schemaName,
         openAlertModal: true
-      })
+      });
     }
   }
 
   onAddSchemaClose(action, data) {
     if (action == 'OK') {
-      if(this.isSchemaAlreadyAdded(data.schemaName)){
+      if (this.isSchemaAlreadyAdded(data.schemaName)) {
         alert("Schema already added");
         return;
       }
@@ -58,11 +58,11 @@ class SchemaSelector extends React.Component {
     }
     this.setState({
       openSchemaModal: false,
-    })
+    });
   }
 
-  isSchemaAlreadyAdded(schemaName){
-    return findIndex(this.props.selectedSchemas, {schemaName: schemaName}) >= 0;
+  isSchemaAlreadyAdded(schemaName) {
+    return findIndex(this.props.selectedSchemas, { schemaName: schemaName }) >= 0;
   }
 
   onAlertClose(action) {
@@ -72,25 +72,25 @@ class SchemaSelector extends React.Component {
     }
     this.setState({
       openAlertModal: false
-    })
+    });
   }
 
   render() {
     return (
-        <div className="schema-step-container">
-          <AddSchema operation={this.openSchemaSelectorModal.bind(this)} />
-          {
-            this.props.selectedSchemas.map((schemaItem) => {
-              return <AddSchema title={schemaItem.schemaName} data={schemaItem} key = {schemaItem.schemaName} type='ADDED'
-                operation={this.onDeleteSchema} />
-            })
-          }
-          <SchemaSelectorModal open={this.state.openSchemaModal} onClose={this.onAddSchemaClose}
-            dataProvider = {this.state.schemaDP} />
-          <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
-            onClose={this.onAlertClose} />
-        </div>
-    )
+      <div className="schema-step-container">
+        <AddSchema operation={this.openSchemaSelectorModal.bind(this)} />
+        {
+          this.props.selectedSchemas.map((schemaItem) => {
+            return (<AddSchema title={schemaItem.schemaName} data={schemaItem} key={schemaItem.schemaName} type='ADDED'
+              operation={this.onDeleteSchema} />);
+          })
+        }
+        <SchemaSelectorModal open={this.state.openSchemaModal} onClose={this.onAddSchemaClose}
+          dataProvider={this.state.schemaDP} />
+        <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
+          onClose={this.onAlertClose} />
+      </div>
+    );
   }
 }
 
