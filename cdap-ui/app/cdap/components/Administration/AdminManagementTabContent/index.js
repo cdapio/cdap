@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import PlatformsDetails from 'components/Administration/AdminManagementTabContent/PlatformsDetails';
 import ServicesTable from 'components/Administration/AdminManagementTabContent/ServicesTable';
+import SystemApps from 'components/Administration/AdminManagementTabContent/SystemApps';
 import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
 
@@ -41,6 +42,9 @@ export default function AdminManagementTabContent(props) {
         </div>
         <div className="platform-section">
           <PlatformsDetails platformDetails={props.platformsDetails} />
+        </div>
+        <div>
+          <SystemApps />
         </div>
       </div>
     </div>

@@ -19,13 +19,14 @@ $grey-theme-color: $grey-08;
 
 .admin-management-tab-content {
   .services-details {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     width: 100%;
     background: $grey-theme-color;
     padding: 10px;
 
     > div {
-      width: calc(50% - 20px);
+      width: calc(100% - 20px);
       margin: 10px;
     }
     .services-table-section {
