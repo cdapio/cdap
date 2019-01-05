@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import isNil from 'lodash/isNil';
@@ -46,7 +47,7 @@ class LandingPage extends React.Component {
       alertMessage: "",
       pipelineTypes: PIPELINE_TYPES,
       selectedPipelineType: 'All',
-    }
+    };
   }
   componentWillMount() {
     this.getPipelines(this.state.selectedPipelineType);
@@ -110,7 +111,7 @@ class LandingPage extends React.Component {
         (error) => {
           this.handleError(error, GET_PIPELINE);
         }
-      )
+      );
   }
 
   viewPipeline(pipeline) {
@@ -126,7 +127,7 @@ class LandingPage extends React.Component {
     this.setState({
       openAlertModal: true,
       alertMessage: 'Are you sure you want to delete: ' + pipeline.pipelineName,
-    })
+    });
   }
 
   onAlertClose(action) {
@@ -135,7 +136,7 @@ class LandingPage extends React.Component {
     }
     this.setState({
       openAlertModal: false
-    })
+    });
   }
 
   deletePipeline(pipeline) {
@@ -155,10 +156,11 @@ class LandingPage extends React.Component {
         (error) => {
           this.handleError(error, DELETE_PIPELINE);
         }
-      )
+      );
   }
 
   handleError(error, type) {
+    console.log(type, error);
     error.message ? alert(error.message) : alert(error);
   }
 
@@ -178,7 +180,7 @@ class LandingPage extends React.Component {
   closeConfirmationModal() {
     this.setState({
       openConfirmation: false
-    })
+    });
   }
 
 
@@ -206,7 +208,7 @@ class LandingPage extends React.Component {
             this.handleError(error, SAVE_PIPELINE);
             observer.error(error);
           }
-        )
+        );
     });
   }
 
@@ -238,7 +240,7 @@ class LandingPage extends React.Component {
                       featureObject[property] = {
                         table: schema,
                         column: column.columnName
-                      }
+                      };
                     }
                   });
                 }
@@ -257,19 +259,19 @@ class LandingPage extends React.Component {
                       subPropValue = {
                         table: schema,
                         column: column.columnName
-                      }
+                      };
                     }
                   });
                   subPropObj[subParam.header] = subPropValue;
                 }
               });
             }
-          })
-          if(!isEmpty(subPropObj)) {
+          });
+          if (!isEmpty(subPropObj)) {
             featureObject[property].push(subPropObj);
           }
         }
-      })
+      });
     }
     if (!isEmpty(props.configurationList)) {
       props.configurationList.forEach((configuration) => {
@@ -320,7 +322,7 @@ class LandingPage extends React.Component {
         (error) => {
           this.handleError(error, GET_SCHEMA);
         }
-      )
+      );
   }
 
   fetchProperties() {
@@ -338,7 +340,7 @@ class LandingPage extends React.Component {
         (error) => {
           this.handleError(error, GET_PROPERTY);
         }
-      )
+      );
   }
 
   fetchConfiguration() {
@@ -356,8 +358,9 @@ class LandingPage extends React.Component {
         (error) => {
           this.handleError(error, GET_CONFIGURATION);
         }
-      )
+      );
   }
+
   render() {
     return (
       <div className='landing-page-container'>
@@ -370,8 +373,8 @@ class LandingPage extends React.Component {
               {
                 this.state.pipelineTypes.map((type) => {
                   return (
-                    <DropdownItem onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
-                  )
+                    <DropdownItem key = {type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
+                  );
                 })
               }
             </DropdownMenu>
@@ -386,7 +389,7 @@ class LandingPage extends React.Component {
           onClose={this.onWizardClose}
           onSubmit={this.saveFeature.bind(this)} />
         <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
-            onClose={this.onAlertClose.bind(this)} />
+          onClose={this.onAlertClose.bind(this)} />
       </div>
     );
   }

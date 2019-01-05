@@ -1,3 +1,4 @@
+//* eslint react/prop-types: 0 */
 /*
  * Copyright © 2016-2018 Cask Data, Inc.
  *
@@ -54,12 +55,6 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
       dispatch({
         type: AddFeatureActions.setAvailableProperties,
         payload: properties
-      });
-    },
-    setAvailableConfigurations: (configurations) => {
-      dispatch({
-        type: AddFeatureActions.setAvailableConfigurations,
-        payload: configurations
       });
     },
     setAvailableConfigurations: (configurations) => {

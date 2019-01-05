@@ -15,42 +15,39 @@
 */
 import * as React from 'react';
 import NavLinkWrapper from 'components/NavLinkWrapper';
-import { withContext } from 'components/Header/NamespaceLinkContext';
+import { Theme } from 'services/ThemeHelper';
+import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./FELink.scss');
 
 interface IFELinkProps {
   context: {
     namespace: string;
-    isNativeLink: boolean;
   };
 }
 
 class FELink extends React.PureComponent<IFELinkProps> {
   public render() {
+    if (Theme.showDataPrep === false) {
+      return null;
+    }
+
     const featureName = "Feature Engineering";
     const { namespace } = this.props.context;
+    const feURL = `/ns/${namespace}/featureEngineering`;
 
     return (
       <li
         id="navbar-fe"
-        className={classnames({
-          active: this.isFEActive(),
-        })}
-        onClick = {this.navigateToFeature.bind(this, namespace)}
-      >{featureName}
+      >
+        <NavLinkWrapper
+          isNativeLink={false}
+          to={feURL}
+        >
+          {featureName}
+        </NavLinkWrapper>
       </li>
     );
-  }
-
-  protected navigateToFeature = (namespace) => {
-    const feURL = `/ns/${namespace}/featureEngineering`;
-    const fePath = `/cdap${feURL}`;
-    window.location.href = fePath;
-  }
-
-  protected isFEActive = (location = window.location): boolean => {
-    return (location.pathname.indexOf("featureEngineering") >= 0);
   }
 }
 

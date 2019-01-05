@@ -1,5 +1,6 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
-import cloneDeep from 'lodash/cloneDeep'
+import cloneDeep from 'lodash/cloneDeep';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
@@ -35,18 +36,21 @@ class PropertySelector extends React.Component {
       filterKey: '',
       dropdownOpen: false,
       filterType: 'All',
-    }
+    };
   }
 
   componentDidMount() {
     if (!isEmpty(this.props.selectedSchemas)) {
-      this.state.schemas = isEmpty(this.props.selectedSchemas) ? [] : cloneDeep(this.props.selectedSchemas);
-      this.state.schemas.map(schema => {
+      let schemas = isEmpty(this.props.selectedSchemas) ? [] : cloneDeep(this.props.selectedSchemas);
+      schemas.map(schema => {
         schema.schemaColumns.map(column => {
           this.state.columnTypes.add(column.columnType);
-        })
-      })
-    };
+        });
+      });
+      this.setState({
+        schemas: schemas
+      });
+    }
   }
 
   handleColumnChange(schema, checkList) {
@@ -55,13 +59,13 @@ class PropertySelector extends React.Component {
         property: this.currentProperty.paramName,
         schemaName: schema.schemaName,
         schemaColumns: schema.schemaColumns.filter((item, index) => checkList.get(index))
-      }
+      };
       if (isEmpty(this.currentProperty.subParams)) {
         updateObj.subProperty = "none";
-        updateObj.isSingleSelect = !this.currentProperty.isCollection
+        updateObj.isSingleSelect = !this.currentProperty.isCollection;
       } else {
         updateObj.subProperty = this.currentSubProperty;
-        let subProperty = find(this.currentProperty.subParams, { paramName: this.currentSubProperty })
+        let subProperty = find(this.currentProperty.subParams, { paramName: this.currentSubProperty });
         updateObj.isSingleSelect = subProperty && !subProperty.isCollection;
       }
       let updatePropMap = this.getUpdatedPropertyMap(this.props.propertyMap, updateObj);
@@ -70,7 +74,7 @@ class PropertySelector extends React.Component {
 
     this.setState({
       schemas: this.getUpdateSchemas()
-    })
+    });
   }
 
   getUpdatedPropertyMap(prevPropertyMap, updateObj) {
@@ -98,7 +102,7 @@ class PropertySelector extends React.Component {
           header: updateObj.subProperty,
           isCollection: !updateObj.isSingleSelect,
           value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
-        })
+        });
       }
     } else if (!isEmpty(updateObj.schemaColumns)) {
       propertyMap.set(updateObj.property, [{
@@ -114,7 +118,7 @@ class PropertySelector extends React.Component {
     this.currentSubProperty = subProperty;
     this.setState({
       schemas: this.getUpdateSchemas()
-    })
+    });
   }
 
   getUpdateSchemas() {
@@ -127,7 +131,7 @@ class PropertySelector extends React.Component {
           schema.schemaColumns.map(column => {
             column.checked = findIndex(checkedCols, { schema: schema.schemaName, column: column.columnName }) >= 0;
             return column;
-          })
+          });
         }
       }
     });
@@ -145,7 +149,7 @@ class PropertySelector extends React.Component {
       }
       this.setState({
         schemas: this.getUpdateSchemas()
-      })
+      });
     }
   }
 
@@ -159,7 +163,7 @@ class PropertySelector extends React.Component {
             columns.push({
               schema: key,
               column: column.columnName
-            })
+            });
           });
         });
       }
@@ -239,8 +243,8 @@ class PropertySelector extends React.Component {
             isMandatory: property.isMandatory,
             isSelected: this.currentProperty.paramName == property.paramName && this.currentSubProperty == subParam.paramName,
             values: this.getSchemaColumns(this.props.propertyMap, property.paramName, subParam.paramName).map(obj => obj.schema + ': ' + obj.column)
-          })
-        })
+          });
+        });
         updatedPropMap.set(property.paramName, subParamValues);
       }
     });
@@ -253,8 +257,8 @@ class PropertySelector extends React.Component {
               Array.from(updatedPropMap.keys()).map(property => {
                 let isMandatory = false;
                 let subParams = updatedPropMap.get(property);
-                if(!isEmpty(subParams)){
-                  isMandatory = subParams[0].isMandatory
+                if (!isEmpty(subParams)) {
+                  isMandatory = subParams[0].isMandatory;
                 }
                 return (
                   <AccordionItem key={property}>
@@ -264,18 +268,18 @@ class PropertySelector extends React.Component {
                     <AccordionItemBody>
                       {
                         updatedPropMap.get(property).map(propValue => {
-                          return <List dataProvider={propValue.values}
+                          return (<List dataProvider={propValue.values}
                             key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
                             header={(propValue.header == "none") ? undefined : (propValue.header + "*")}
                             headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
-                            onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />
+                            onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
                         })
                       }
 
                       {/* <List dataProvider={updatedPropMap.get(property)} /> */}
                     </AccordionItemBody>
                   </AccordionItem>
-                )
+                );
               })
             }
           </Accordion>
@@ -291,8 +295,8 @@ class PropertySelector extends React.Component {
                 {
                   ["All"].concat(Array.from(this.state.columnTypes)).map((type) => {
                     return (
-                      <DropdownItem onClick={this.onColumnTypeChange.bind(this, type)}>{type}</DropdownItem>
-                    )
+                      <DropdownItem key = {type} onClick={this.onColumnTypeChange.bind(this, type)}>{type}</DropdownItem>
+                    );
                   })
                 }
               </DropdownMenu>
@@ -305,17 +309,17 @@ class PropertySelector extends React.Component {
                 let columns = schema.schemaColumns.map(column => {
                   column.name = column.columnName;
                   return column;
-                }).filter((item) => this.columnfilter(item, this.state.filterKey, this.state.filterType))
-                return <div className="schema">
+                }).filter((item) => this.columnfilter(item, this.state.filterKey, this.state.filterType));
+                return (<div className="schema" key = {schema.schemaName}>
                   <CheckList dataProvider={columns} isSingleSelect={this.isSingleSelect(this.currentProperty, this.currentSubProperty)}
                     title={schema.schemaName} handleChange={this.handleColumnChange.bind(this, schema)} />
-                </div>
+                </div>);
               })
             }
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 

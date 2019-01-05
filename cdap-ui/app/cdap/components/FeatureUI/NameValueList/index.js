@@ -1,3 +1,4 @@
+/* eslint react/prop-types: 0 */
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
 import { Input } from 'reactstrap';
@@ -10,29 +11,31 @@ class NameValueList extends React.Component {
     this.state = {
       newName: '',
       newValue: ''
-    }
+    };
   }
   onNewNameChange(event) {
     this.setState({
       newName: event.target.value
-    })
+    });
   }
 
   onNewValueChange(event) {
     this.setState({
       newValue: event.target.value
-    })
+    });
   }
 
   onValueUpdated(index, item, event) {
-    this.props.updateNameValue(index, {...item,
-      value: event.target.value});
+    this.props.updateNameValue(index, {
+      ...item,
+      value: event.target.value
+    });
   }
 
   onAdd() {
-    if(!isEmpty(this.state.newName) && !isEmpty(this.state.newValue)){
+    if (!isEmpty(this.state.newName) && !isEmpty(this.state.newValue)) {
       this.props.addNameValue({
-        name : this.state.newName,
+        name: this.state.newName,
         value: this.state.newValue,
         dataType: "string",
         isCollection: false
@@ -52,14 +55,14 @@ class NameValueList extends React.Component {
         {
           listData.map((item, index) => {
             return (
-              <div className='list-row'>
-                <div className='name'>{item.name + (item.isMandatory ? "*":"")}</div>
+              <div className='list-row' key = {item.name}>
+                <div className='name'>{item.name + (item.isMandatory ? "*" : "")}</div>
                 <div className='colon'>:</div>
                 <Input className='value' type="text" name="value" placeholder='value'
-                  defaultValue={item.value} onChange={this.onValueUpdated.bind(this,index,item)}/>
+                  defaultValue={item.value} onChange={this.onValueUpdated.bind(this, index, item)} />
                 {
                   item.toolTip &&
-                  <i className="fa fa-info-circle field-info" title = {item.toolTip}></i>
+                  <i className="fa fa-info-circle field-info" title={item.toolTip}></i>
                 }
               </div>
             );
@@ -67,12 +70,12 @@ class NameValueList extends React.Component {
         }
         <div className='list-row'>
           <Input className='value' type="text" name="value" placeholder='Custom Key'
-            value = {this.state.newName} onChange={this.onNewNameChange.bind(this)} />
+            value={this.state.newName} onChange={this.onNewNameChange.bind(this)} />
           <div className='colon'>:</div>
           <Input className='value' type="text" name="value" placeholder='value'
-            value = {this.state.newValue} onChange={this.onNewValueChange.bind(this)} />
+            value={this.state.newValue} onChange={this.onNewValueChange.bind(this)} />
         </div>
-        <button onClick = {this.onAdd.bind(this)}  >Add</button>
+        <button onClick={this.onAdd.bind(this)}  >Add</button>
       </div>
     );
   }
