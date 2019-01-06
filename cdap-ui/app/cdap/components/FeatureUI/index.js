@@ -24,10 +24,13 @@ import AddFeatureStore from '../../services/WizardStores/AddFeature/AddFeatureSt
 const mapStateToFeatureUIProps = (state) => {
   return {
     availableSchemas: state.featureState.availableSchemas,
+    availableProperties: state.featureState.availableProperties,
+    availableConfigurations: state.featureState.availableConfigurations,
     selectedSchemas: state.featureState.selectedSchemas,
     propertyMap: state.featureState.propertyMap,
     configurationList: state.featureState.configurationList,
     featureName: state.featureState.featureName,
+    operationType:  state.featureState.operationType
   };
 };
 
@@ -37,6 +40,12 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
       dispatch({
         type: AddFeatureActions.onReset,
         payload: undefined
+      });
+    },
+    updateOperationType: (operationType) => {
+      dispatch({
+        type: AddFeatureActions.updateOperationType,
+        payload: operationType
       });
     },
     updateFeatureName: (featureName) => {
@@ -76,7 +85,6 @@ const mapDispatchToFeatureUIProps = (dispatch) => {
       });
     },
     updateConfigurationList: (list) => {
-      console.log("updateConfigurationList -> " ,list);
       dispatch({
         type: AddFeatureActions.updateConfigurationList,
         payload: list

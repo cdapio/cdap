@@ -17,6 +17,7 @@
 const AddFeatureActions = {
   saveFeature: 'SAVE-FEATURE',
   onReset: 'RESET-STORE',
+  updateOperationType: 'UPDATE-OPERATION-TYPE',
   updateFeatureName: 'UPDATE-FEATURE-NAME',
   setAvailableSchemas: 'SET-AVAILABLE-SCHEMAS',
   setAvailableProperties: 'SET-AVAILABLE-PROPERTIES',

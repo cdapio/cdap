@@ -23,6 +23,7 @@ import DetailProvider from '../../DetailProvider';
 
 const mapStateToSelectSchemaProps = (state) => {
   return {
+    operationType: state.featureState.operationType,
     featureName: state.featureState.featureName,
   };
 };

@@ -13,22 +13,10 @@ class Configurator extends React.Component {
   }
 
   componentDidMount() {
-    this.configPropList = this.props.availableConfigurations.map((config)=> {
-      return {
-        name: config.paramName,
-        value: '',
-        dataType: config.dataType,
-        isCollection: config.isCollection,
-        isMandatory: config.isMandatory,
-        toolTip: "Type: " + (config.isCollection ? ("Collection of "+ config.dataType): config.dataType)
-      };
-    });
-    this.props.updateConfigurationList(this.configPropList);
+    this.configPropList = cloneDeep(this.props.configurationList);
   }
 
-
   addConfiguration(nameValue) {
-    this.configPropList = cloneDeep(this.props.configurationList);
     this.configPropList.push(nameValue);
     this.props.updateConfigurationList(this.configPropList);
   }

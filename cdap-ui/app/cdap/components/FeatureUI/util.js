@@ -1,27 +1,6 @@
-/*
- * Copyright © 2018 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
-
-export function toCamelCase(value) {
-  return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
-      return result ? (group1.toUpperCase() + (group2 ? group2:'')): result;
-  });
-}
 
 export function getPropertyUpdateObj(property, subPropertyName, schemaName, schemaColumns) {
   let updateObj = {
@@ -72,18 +51,6 @@ export function updatePropertyMapWithObj(propertyMap, updateObj) {
       isCollection: !updateObj.isSingleSelect,
       value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
     }]);
-  }
-}
-
-export function removeSchemaFromPropertyMap(propertyMap, schema) {
-  if (!isEmpty(propertyMap)) {
-    propertyMap.forEach((value) => {
-      if (value) {
-        value.forEach(subParam => {
-          subParam.value.delete(schema);
-        });
-      }
-    });
   }
 }
 
