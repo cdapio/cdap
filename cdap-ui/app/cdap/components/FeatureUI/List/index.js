@@ -10,7 +10,6 @@ class List extends React.Component {
 
   render() {
     let listData = isEmpty(this.props.dataProvider) ? []: this.props.dataProvider;
-    console.log("Rendering list ", listData, this.props.header, this.props.headerClass);
     return (
       <div>
         {
