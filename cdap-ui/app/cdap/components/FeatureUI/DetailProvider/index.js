@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Input } from 'reactstrap';
+import { EDIT_PIPELINE } from '../config';
 require('./DetailProvider.scss');
 
 class DetailProvider extends React.Component {
@@ -21,7 +22,7 @@ class DetailProvider extends React.Component {
         <div className='field-row'>
             <div className='name'>Name</div>
             <div className='colon'>:</div>
-            <Input className='value' type="text" name="value" placeholder='value'
+            <Input className='value' type="text" name="value" placeholder='value'  readOnly = {this.props.operationType == EDIT_PIPELINE}
               defaultValue = {this.props.featureName} onChange={this.onNameUpdated.bind(this)}/>
         </div>
       </div>

@@ -20,13 +20,13 @@ import isEmpty from 'lodash/isEmpty';
 import remove from 'lodash/remove';
 import find from 'lodash/find';
 
-
 const defaultAction = {
   type: '',
   payload: {}
 };
 const defaultState = {
   steps: [],
+  operationType: 'CREATE_PIPELINE',
   featureName: '',
   availableSchemas: [],
   availableProperties: [],
@@ -106,6 +106,12 @@ const featureState = (state = defaultState, action = defaultAction) => {
       state = {
         ...defaultState,
         propertyMap: new Map()
+      };
+      break;
+    case AddFeatureActions.updateOperationType:
+      state = {
+        ...state,
+        operationType: action.payload
       };
       break;
     case AddFeatureActions.updateFeatureName:

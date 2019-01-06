@@ -5,7 +5,6 @@ import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import find from 'lodash/find';
-import remove from 'lodash/remove';
 import CheckList from '../CheckList';
 import { Input } from 'reactstrap';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -20,6 +19,7 @@ import {
 // Demo styles, see 'Styles' section below for some notes on use.
 import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
+import { getPropertyUpdateObj, updatePropertyMapWithObj } from '../util';
 
 require('./PropertySelector.scss');
 
@@ -55,20 +55,13 @@ class PropertySelector extends React.Component {
 
   handleColumnChange(schema, checkList) {
     if (this.currentProperty) {
-      let updateObj = {
-        property: this.currentProperty.paramName,
-        schemaName: schema.schemaName,
-        schemaColumns: schema.schemaColumns.filter((item, index) => checkList.get(index))
-      };
-      if (isEmpty(this.currentProperty.subParams)) {
-        updateObj.subProperty = "none";
-        updateObj.isSingleSelect = !this.currentProperty.isCollection;
-      } else {
-        updateObj.subProperty = this.currentSubProperty;
-        let subProperty = find(this.currentProperty.subParams, { paramName: this.currentSubProperty });
-        updateObj.isSingleSelect = subProperty && !subProperty.isCollection;
-      }
-      let updatePropMap = this.getUpdatedPropertyMap(this.props.propertyMap, updateObj);
+      let schemaColumns = schema.schemaColumns.filter((item, index) => checkList.get(index)).map(column => {
+        column.checked = true;
+        return column;
+      });
+      let updateObj = getPropertyUpdateObj(this.currentProperty, this.currentSubProperty, schema.schemaName, schemaColumns);
+      let updatePropMap = cloneDeep(this.props.propertyMap);
+      updatePropertyMapWithObj(updatePropMap, updateObj);
       this.props.updatePropertyMap(updatePropMap);
     }
 
@@ -77,42 +70,7 @@ class PropertySelector extends React.Component {
     });
   }
 
-  getUpdatedPropertyMap(prevPropertyMap, updateObj) {
-    let propertyMap = cloneDeep(prevPropertyMap);
-    let mappedProperty = propertyMap.get(updateObj.property);
-    if (mappedProperty) {
-      let mappedPropertyValue = find(mappedProperty, { header: updateObj.subProperty });
-      if (mappedPropertyValue) {
-        if (!updateObj.isSingleSelect) {
-          let schemaValueMap = mappedPropertyValue.value;
-          if (isEmpty(updateObj.schemaColumns)) {
-            schemaValueMap.delete(updateObj.schemaName);
-          } else {
-            schemaValueMap.set(updateObj.schemaName, updateObj.schemaColumns);
-          }
-        } else {
-          if (isEmpty(updateObj.schemaColumns)) {
-            remove(mappedProperty, { header: updateObj.subProperty });
-          } else {
-            mappedPropertyValue.value = new Map([[updateObj.schemaName, updateObj.schemaColumns]]);
-          }
-        }
-      } else if (!isEmpty(updateObj.schemaColumns)) {
-        mappedProperty.push({
-          header: updateObj.subProperty,
-          isCollection: !updateObj.isSingleSelect,
-          value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
-        });
-      }
-    } else if (!isEmpty(updateObj.schemaColumns)) {
-      propertyMap.set(updateObj.property, [{
-        header: updateObj.subProperty,
-        isCollection: !updateObj.isSingleSelect,
-        value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
-      }]);
-    }
-    return propertyMap;
-  }
+
 
   onHeaderClick(property, subProperty) {
     this.currentSubProperty = subProperty;
