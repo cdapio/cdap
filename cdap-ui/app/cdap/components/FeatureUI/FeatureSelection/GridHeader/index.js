@@ -17,7 +17,7 @@ class GridHeader extends Component {
       <h3>Feature Selection</h3>
 
       </div>
-      <label>Pipeline: </label>
+      <label className="subtitle">Pipeline: </label>
       {
         this.props.selectedPipeline &&
           <label>{this.props.selectedPipeline.pipelineName}</label>
