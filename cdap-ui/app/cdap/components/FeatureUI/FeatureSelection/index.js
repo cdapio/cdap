@@ -10,13 +10,7 @@ class FeatureSelection extends Component {
 
   constructor(props) {
     super(props)
-    this.state = {
-      dummy: "hello",
-      gridColumnDefs: [],
-      gridRowData: [],
-      filterColumns: []//this.filterColumnList
-    }
-    //this.dataParser(this.sampleData);
+    this.state =   this.dataParser(this.props.pipeLineData);
   }
 
   dataParser = (data) => {
@@ -54,25 +48,24 @@ class FeatureSelection extends Component {
 
         rowData.push(rowObj);
       }
-
-
     });
-
-    this.setState({
+    return {
       gridColumnDefs: columDefs,
       gridRowData: rowData,
       filterColumns: columns
-    })
+    }
   }
 
   navigateToParentWindow = ()=> {
     this.props.nagivateToParent();
   }
 
-  componentDidMount() {
-    this.dataParser(this.props.pipeLineData)
-    console.log("call feature selection mount");
-  }
+  // componentDidMount() {
+  //   if(!isNil(this.props.pipeLineData)){
+  //     this.dataParser(this.props.pipeLineData)
+  //     console.log("call feature selection mount");
+  //   }
+  // }
 
 
 
@@ -81,11 +74,11 @@ class FeatureSelection extends Component {
       <div className="feature-selection-box">
         <div className="grid-box">
           <button onClick={this.navigateToParentWindow}>Back</button>
-          <GridHeader></GridHeader>
-          <GridContainer></GridContainer>
+          <GridHeader selectedPipeline={this.props.selectedPipeline}></GridHeader>
+          <GridContainer gridColums={this.state.gridColumnDefs} rowData={this.state.gridRowData}></GridContainer>
         </div>
         <div className="filter-box">
-           <FilterContainer ></FilterContainer>
+           <FilterContainer filterColumns={this.state.filterColumns} ></FilterContainer>
         </div>
       </div>
 

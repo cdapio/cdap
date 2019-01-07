@@ -11,6 +11,8 @@ class FilterContainer extends Component {
 
     constructor(props) {
         super(props);
+        this.filterColumnList = this.props.filterColumns;
+    //   this.updateIntialState();
         this.state = {
             orderbyOpen:false,
             selectedOrderbyColumn:{id:-1, name:'Select'},
@@ -78,12 +80,12 @@ class FilterContainer extends Component {
         this.setState({filterItemList:itemList});
     }
 
-    updateIntialState = () =>{
-      this.setState({
-        orderByCOlumnList: cloneDeep(this.filterColumnList),
-        filterItemList:this.getFilterItemVO(),
-      });
-    }
+    // updateIntialState = () =>{
+    //   this.setState({
+    //     orderByCOlumnList: cloneDeep(this.filterColumnList),
+    //     filterItemList:[this.getFilterItemVO()],
+    //   });
+    // }
     // componentDidMount() {
     //   this.filterColumnList = this.props.filterColumns;
     //   this.updateIntialState();
@@ -106,10 +108,6 @@ class FilterContainer extends Component {
 
 
     render() {
-     // let { filterColumns } = this.props;
-      //this.filterColumnList = filterColumns;
-      //this.updateIntialState();
-
         let filterItems = (
             <div className="filter-item-Container">
                 {
