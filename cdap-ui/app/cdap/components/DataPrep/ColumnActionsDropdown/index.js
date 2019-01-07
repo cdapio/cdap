@@ -286,13 +286,50 @@ export default class ColumnActionsDropdown extends Component {
         className="column_actions_dropdown-element"
         modifiers={{
           shift: {
-            order: 800,
             enabled: true,
+            order: 800,
+            fn: (data) => {
+              /**
+               * WTH??
+               *
+               * 1. With tether we used to be able to leave this calculation to tether to figure
+               *    out the optimal placement for popover based on container's(dataprep table) boundaries
+               * 2. Now that we have moved to popper.js thats no longer the case and we need to position
+               *    the popover manually based on our requirement,
+               *
+               * Conditions:
+               *
+               *    If selection is close to the left end of the container(table)
+               *      - the LEFT of reference element(down arrow) aligns to the LEFT of the popover element
+               *    If selection close to the right end of the container(table)
+               *      - the RIGHT of the reference element(down arrow) aligns to the RIGHT of the popover element
+               *
+               * This is so that we can prevent the third level menu to not hide beyond the right edges of
+               * the container.
+               *
+               * JIRA: https://issues.cask.co/browse/CDAP-14714
+               *
+               */
+              if (data.offsets.popper.left < data.popper.width) {
+                data.offsets.popper.left = data.offsets.reference.left;
+                data.popper.left = data.offsets.popper.left;
+                data.placement = 'bottom-start';
+                data.originalPlacement = 'bottom-start';
+                return data;
+              }
+              if (data.offsets.reference.right < data.offsets.popper.right) {
+                data.offsets.popper.left = data.offsets.reference.right - data.popper.width;
+                data.popper.left = data.offsets.popper.left;
+                data.placement = 'bottom-end';
+                data.originalPlacement = 'bottom-end';
+              }
+              return data;
+            },
           },
           preventOverflow: {
+            enabled: true,
             boundariesElement: tableContainer,
-            priority: ['top', 'bottom'],
-            escapeWithReference: true,
+            priority: ['left'],
           },
         }}
         hideArrow
