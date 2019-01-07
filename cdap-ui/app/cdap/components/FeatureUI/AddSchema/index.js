@@ -26,8 +26,8 @@ class AddSchema extends React.Component {
         {
           (this.state.type == 'NEW') ? <i class="fa fa-plus-circle add-operation" onClick={this.onClick}></i>:
           <div>
-            <i class="fa fa-pencil edit-operation" onClick={this.onClick}></i>
-            <i class="fa fa-trash delete-operation" onClick={this.onClick}></i>
+            <i className="fa fa-pencil edit-operation" onClick={this.onClick}></i>
+            <i className="fa fa-trash delete-operation" onClick={this.onClick}></i>
           </div>
 
         }

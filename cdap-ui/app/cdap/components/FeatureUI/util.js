@@ -2,6 +2,12 @@ import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
 
+export function toCamelCase(value) {
+  return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
+      return result ? (group1.toUpperCase() + (group2 ? group2.toLowerCase():'')): result;
+  });
+}
+
 export function getPropertyUpdateObj(property, subPropertyName, schemaName, schemaColumns) {
   let updateObj = {
     property: property.paramName,

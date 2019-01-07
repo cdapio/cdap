@@ -43,7 +43,9 @@ class CheckList extends React.Component {
 
     return (
       <div className="checklist-container">
-        <div className="title">{title}</div>
+        {
+          title &&  <div className="title">{title}</div>
+        }
         <div className='list'>
           {
             isEmpty(listData) ? 'No Data' : (
