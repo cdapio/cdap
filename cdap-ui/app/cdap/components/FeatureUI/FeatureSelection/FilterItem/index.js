@@ -1,16 +1,17 @@
+/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import { isNil } from 'lodash'
-import './FilterItem.scss'
+import { isNil } from 'lodash';
+import './FilterItem.scss';
 
 
-class filterItem extends Component {
+class FilterItem extends Component {
 
     state = {
         filterTypeOpen: false,
         columnOpen: false,
         doubleView: false,
-    }
+    };
 
     toggleFilterTypeDropDown = () => {
         this.setState(prevState => ({
@@ -27,33 +28,33 @@ class filterItem extends Component {
     filterTypeChange = (item) => {
         const mapItem = this.props.itemVO.filterViewMaps.find((element) => element.name === item.name);
         if (mapItem !== undefined && mapItem.view === 'double') {
-            this.setState({ 'doubleView': true })
+            this.setState({ 'doubleView': true });
         } else {
-            this.setState({ 'doubleView': false })
+            this.setState({ 'doubleView': false });
             //remove the max value
             this.maxValueChange(null);
         }
-        const result = { selectedFilterType: item }
+        const result = { selectedFilterType: item };
         this.props.changFilterItem(result, this.props.itemIndex);
     }
 
     filterColumnChange = (item) => {
-        const result = { selectedFilterColumn: item }
+        const result = { selectedFilterColumn: item };
         this.props.changFilterItem(result, this.props.itemIndex);
     }
 
     minValueChange = (evt) => {
-        console.log("min value :: " + evt.target.value)
-        const result = { minValue: evt.target.value }
+        console.log("min value :: " + evt.target.value);
+        const result = { minValue: evt.target.value };
         this.props.changFilterItem(result, this.props.itemIndex);
     }
 
     maxValueChange = (evt) => {
-        let result = { maxValue: "" }
+        let result = { maxValue: "" };
         if (!isNil(evt)) {
           result = { maxValue: evt.target.value };
         }
-        this.props.changFilterItem(result, this.props.itemIndex)
+        this.props.changFilterItem(result, this.props.itemIndex);
     }
 
 
@@ -73,7 +74,7 @@ class filterItem extends Component {
                                         <DropdownItem onClick={this.filterTypeChange.bind(this, type)}
                                         key={'ft_'+type.id.toString()}
                                         >{type.name}</DropdownItem>
-                                    )
+                                    );
                                 })
                             }
                         </DropdownMenu>
@@ -96,7 +97,7 @@ class filterItem extends Component {
                                         <DropdownItem onClick={this.filterColumnChange.bind(this, column)}
                                         key={'c_'+column.id.toString()}
                                         >{column.name}</DropdownItem>
-                                    )
+                                    );
                                 })
                             }
                         </DropdownMenu>
@@ -114,8 +115,8 @@ class filterItem extends Component {
                     }
                 </div>
             </div>
-        )
+        );
     }
 }
 
-export default filterItem;
+export default FilterItem;
