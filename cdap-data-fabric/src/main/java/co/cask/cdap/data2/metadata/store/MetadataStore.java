@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
 import java.util.Map;
 import java.util.Set;
@@ -66,22 +66,22 @@ public interface MetadataStore {
   void addTags(MetadataScope scope, MetadataEntity metadataEntity, Set<String> tagsToAdd);
 
   /**
-   * @return a set of {@link MetadataRecordV2} representing all the metadata (including properties and tags) for the
+   * @return a set of {@link MetadataRecord} representing all the metadata (including properties and tags) for the
    * specified {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity);
+  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
 
   /**
-   * @return a {@link MetadataRecordV2} representing all the metadata (including properties and tags) for the specified
+   * @return a {@link MetadataRecord} representing all the metadata (including properties and tags) for the specified
    * {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
-  MetadataRecordV2 getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
-   * @return a set of {@link MetadataRecordV2}s representing all the metadata (including properties and tags)
+   * @return a set of {@link MetadataRecord}s representing all the metadata (including properties and tags)
    * for the specified set of {@link MetadataEntity}s in the specified {@link MetadataScope}.
    */
-  Set<MetadataRecordV2> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntitys);
+  Set<MetadataRecord> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntitys);
 
   /**
    * @return the properties for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
@@ -161,9 +161,9 @@ public interface MetadataStore {
    * {@link MetadataScope#SYSTEM}.
    *
    * @param request the {@link SearchRequest}
-   * @return the {@link MetadataSearchResponseV2} containing search results for the specified search query and filters
+   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
-  MetadataSearchResponseV2 search(SearchRequest request);
+  MetadataSearchResponse search(SearchRequest request);
 
   /**
    * Returns the snapshot of the metadata for entities on or before the given time in the specified
@@ -174,7 +174,7 @@ public interface MetadataStore {
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  Set<MetadataRecordV2> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
-                                              long timeMillis);
+  Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
+                                            long timeMillis);
 
 }

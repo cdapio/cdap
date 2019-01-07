@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package co.cask.cdap.examples.sparkpagerank;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -28,7 +28,6 @@ import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
-import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpRequest;
@@ -105,9 +104,9 @@ public class SparkPageRankAppTest extends TestBaseWithSpark2 {
 
     // verify that the tag written by the program is accessible
     Tasks.waitFor(true, () -> {
-      Set<MetadataRecordV2> metadataRecordV2s =
+      Set<MetadataRecord> metadataRecords =
         getMetadataAdmin().getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "ranks"));
-      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+      for (MetadataRecord actualRecord : metadataRecords) {
         if (actualRecord.getScope() == MetadataScope.USER) {
           if (actualRecord.getTags().size() == 1) {
             String tag = actualRecord.getTags().iterator().next();

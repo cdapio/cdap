@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,35 +17,47 @@ package co.cask.cdap.proto.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.Metadata;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 /**
  * Represent the Metadata search result record.
- * @deprecated As of release 5.0, replaced by {@link MetadataSearchResultRecordV2}
  */
 @Beta
-@Deprecated
 public class MetadataSearchResultRecord {
-  private final NamespacedEntityId entityId;
+  private final MetadataEntity metadataEntity;
   private final Map<MetadataScope, Metadata> metadata;
 
   public MetadataSearchResultRecord(NamespacedEntityId entityId) {
-    this.entityId = entityId;
-    this.metadata = Collections.emptyMap();
+    this(entityId.toMetadataEntity());
+  }
+
+  public MetadataSearchResultRecord(MetadataEntity metadataEntity) {
+    this(metadataEntity, Collections.emptyMap());
   }
 
   public MetadataSearchResultRecord(NamespacedEntityId entityId, Map<MetadataScope, Metadata> metadata) {
-    this.entityId = entityId;
-    this.metadata = metadata;
+    this(entityId.toMetadataEntity(), metadata);
+  }
+
+  public MetadataSearchResultRecord(MetadataEntity metadataEntity, Map<MetadataScope, Metadata> metadata) {
+    this.metadataEntity = metadataEntity;
+    this.metadata = new HashMap<>(metadata);
   }
 
   public NamespacedEntityId getEntityId() {
-    return entityId;
+    return EntityId.fromMetadataEntity(metadataEntity);
+  }
+
+  public MetadataEntity getMetadataEntity() {
+    return metadataEntity;
   }
 
   public Map<MetadataScope, Metadata> getMetadata() {
@@ -61,19 +73,19 @@ public class MetadataSearchResultRecord {
       return false;
     }
     MetadataSearchResultRecord that = (MetadataSearchResultRecord) o;
-    return Objects.equals(entityId, that.entityId) &&
+    return Objects.equals(metadataEntity, that.metadataEntity) &&
       Objects.equals(metadata, that.metadata);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, metadata);
+    return Objects.hash(metadataEntity, metadata);
   }
 
   @Override
   public String toString() {
     return "MetadataSearchResultRecord{" +
-      "entityId=" + entityId +
+      "metadataEntity=" + metadataEntity +
       ", metadata=" + metadata +
       '}';
   }

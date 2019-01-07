@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.macro.MacroFunction;
 import co.cask.cdap.api.macro.Macros;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.Plugin;
@@ -310,7 +309,7 @@ public class ArtifactRepositoryTest {
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
-          Plugin pluginInfo = new Plugin(new ArrayList<ArtifactId>(), entry.getKey().getArtifactId(), pluginClass,
+          Plugin pluginInfo = new Plugin(new ArrayList<>(), entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
                                            .add("nullableLongFlag", "10")
                                            .add("host", "example.com")
@@ -343,7 +342,7 @@ public class ArtifactRepositoryTest {
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
-          Plugin pluginInfo = new Plugin(new ArrayList<ArtifactId>(), entry.getKey().getArtifactId(), pluginClass,
+          Plugin pluginInfo = new Plugin(new ArrayList<>(), entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
                                            .add("nullableLongFlag", numericValue)
                                            .add("host", "example.com")
@@ -390,7 +389,7 @@ public class ArtifactRepositoryTest {
   }
 
   @Test
-  public void testPluginProperties() throws Exception {
+  public void testPluginProperties() {
     PluginProperties pluginProperties = PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
       .add("timeout", "10")
       .add("name", "${macro}")
@@ -399,8 +398,7 @@ public class ArtifactRepositoryTest {
     Set<String> lookups = new HashSet<>();
     lookups.add("macro");
 
-    PluginProperties updatedPluginProperties = pluginProperties.setMacros(new Macros(lookups,
-                                                                                     new HashSet<MacroFunction>()));
+    PluginProperties updatedPluginProperties = pluginProperties.setMacros(new Macros(lookups, new HashSet<>()));
     Assert.assertTrue(pluginProperties.getMacros().getLookups().isEmpty());
     Assert.assertEquals(lookups, updatedPluginProperties.getMacros().getLookups());
     Assert.assertTrue(updatedPluginProperties.getMacros().getMacroFunctions().isEmpty());
@@ -450,7 +448,7 @@ public class ArtifactRepositoryTest {
 
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
-          Plugin pluginInfo = new Plugin(new ArrayList<ArtifactId>(), entry.getKey().getArtifactId(), pluginClass,
+          Plugin pluginInfo = new Plugin(new ArrayList<>(), entry.getKey().getArtifactId(), pluginClass,
                                          PluginProperties.builder().add("class.name", TEST_EMPTY_CLASS)
                                            .add("nullableLongFlag", "10")
                                            .add("host", "${expansiveHostname}")
@@ -464,8 +462,7 @@ public class ArtifactRepositoryTest {
                                            .add("aShort", "${aShort}")
                                            .build());
 
-          TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions,
-                                                                         new HashMap<String, String>());
+          TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions, new HashMap<>());
           Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
           Assert.assertEquals("localhost/index.html:80,true,101,k,64.0,52.0,42,32,81", plugin.call());
 

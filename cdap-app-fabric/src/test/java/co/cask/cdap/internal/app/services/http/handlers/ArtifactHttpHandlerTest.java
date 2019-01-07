@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -301,20 +301,21 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                         getArtifactProperties(wordcountId1));
 
     // delete a single property
-    deleteArtifact(wordcountId1, false, "key1", 200);
+    deleteArtifact(wordcountId1, false, "key1");
     Assert.assertEquals(ImmutableMap.of("key2", "value2", "key3", "value3"), getArtifactProperties(wordcountId1));
 
     // delete all properties
-    deleteArtifact(wordcountId1, false, null, 200);
+    deleteArtifact(wordcountId1, false, null);
     Assert.assertEquals(ImmutableMap.of(), getArtifactProperties(wordcountId1));
 
-    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
+    Set<MetadataRecord> metadataRecords =
+      metadataClient.getMetadata(wordcountId1.toMetadataEntity(), MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     Assert.assertEquals(new MetadataRecord(wordcountId1, MetadataScope.USER),
                         metadataRecords.iterator().next());
     // delete artifact
-    deleteArtifact(wordcountId1, true, null, 200);
-    Set<MetadataRecord> metadata = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
+    deleteArtifact(wordcountId1, true, null);
+    Set<MetadataRecord> metadata = metadataClient.getMetadata(wordcountId1.toMetadataEntity(), MetadataScope.USER);
     // the properties and tags should be empty since there is no metadata anymore
     Assert.assertEquals(1, metadata.size());
     MetadataRecord record = metadata.iterator().next();
@@ -324,14 +325,14 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     Assert.assertTrue(actualArtifacts.isEmpty());
   }
 
-  protected void deleteArtifact(ArtifactId artifact, boolean deleteArtifact,
-                                @Nullable String property, int expectedResponseCode) throws Exception {
+  private void deleteArtifact(ArtifactId artifact, boolean deleteArtifact,
+                              @Nullable String property) throws Exception {
     String path = String.format("artifacts/%s/versions/%s/", artifact.getArtifact(), artifact.getVersion());
     if (!deleteArtifact) {
       path += property == null ? "properties" : String.format("properties/%s", property);
     }
     HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace()));
-    Assert.assertEquals(expectedResponseCode, response.getResponseCode());
+    Assert.assertEquals(200, response.getResponseCode());
   }
 
   @Test
@@ -396,7 +397,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     try {
       ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
       artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId),
-                                     systemArtifact, new HashSet<ArtifactRange>(), null);
+                                     systemArtifact, new HashSet<>(), null);
       Assert.fail();
     } catch (Exception e) {
       // no-op - expected exception while adding artifact in system namespace
@@ -447,7 +448,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=user
     ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
-    Assert.assertEquals(null , actualInfo);
+    Assert.assertNull(actualInfo);
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=system
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);

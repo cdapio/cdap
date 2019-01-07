@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package co.cask.cdap.data2.audit.payload.builder;
 
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 
 import java.util.HashMap;
@@ -38,7 +38,7 @@ public class MetadataPayloadBuilder {
    * @param record previous value of metadata record
    * @return the builder object
    */
-  public MetadataPayloadBuilder addPrevious(MetadataRecordV2 record) {
+  public MetadataPayloadBuilder addPrevious(MetadataRecord record) {
     previous.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
@@ -49,7 +49,7 @@ public class MetadataPayloadBuilder {
    * @param record additions to the metadata
    * @return the builder object
    */
-  public MetadataPayloadBuilder addAdditions(MetadataRecordV2 record) {
+  public MetadataPayloadBuilder addAdditions(MetadataRecord record) {
     additions.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }
@@ -60,7 +60,7 @@ public class MetadataPayloadBuilder {
    * @param record deletions to metadata
    * @return the builder object
    */
-  public MetadataPayloadBuilder addDeletions(MetadataRecordV2 record) {
+  public MetadataPayloadBuilder addDeletions(MetadataRecord record) {
     deletions.put(record.getScope(), new Metadata(record.getProperties(), record.getTags()));
     return this;
   }

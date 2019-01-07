@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,12 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecordV2;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -68,12 +68,12 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) {
+  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
     return metadataStore.getMetadata(metadataEntity);
   }
 
   @Override
-  public Set<MetadataRecordV2> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+  public Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
     return ImmutableSet.of(metadataStore.getMetadata(scope, metadataEntity));
   }
 
@@ -123,20 +123,20 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public MetadataSearchResponseV2 search(SearchRequest searchRequest) throws Exception {
+  public MetadataSearchResponse search(SearchRequest searchRequest) throws Exception {
     return filterAuthorizedSearchResult(metadataStore.search(searchRequest));
   }
 
   /**
-   * Filter a list of {@link MetadataSearchResultRecordV2} that ensures the logged-in user has a privilege on
+   * Filter a list of {@link MetadataSearchResultRecord} that ensures the logged-in user has a privilege on
    *
-   * @param results the {@link MetadataSearchResponseV2} to filter
-   * @return filtered {@link MetadataSearchResponseV2}
+   * @param results the {@link MetadataSearchResponse} to filter
+   * @return filtered {@link MetadataSearchResponse}
    */
-  private MetadataSearchResponseV2 filterAuthorizedSearchResult(final MetadataSearchResponseV2 results)
+  private MetadataSearchResponse filterAuthorizedSearchResult(final MetadataSearchResponse results)
     throws Exception {
     //noinspection ConstantConditions
-    return new MetadataSearchResponseV2(
+    return new MetadataSearchResponse(
       results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
       // For authorization either use the known entity and if it is custom entity do enforcement on the parent.
       // TODO CDAP-13574 Support authorization for custom entities/resources
