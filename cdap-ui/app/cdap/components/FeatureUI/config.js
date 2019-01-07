@@ -20,7 +20,7 @@ export const GET_PROPERTY = "GET_PROPERTY";
 export const GET_CONFIGURATION = "GET_CONFIGURATION";
 export const SAVE_PIPELINE = "SAVE_PIPELINE";
 export const CREATE_PIPELINE = "CREATE_PIPELINE";
-export const COPY_PIPELINE = "COPY_PIPELINE";
+export const CLONE_PIPELINE = "CLONE_PIPELINE";
 export const READ_PIPELINE = "READ_PIPELINE";
 export const EDIT_PIPELINE = "EDIT_PIPELINE";
 export const DELETE_PIPELINE = "DELETE_PIPELINE";
@@ -31,4 +31,7 @@ export const IS_OFFLINE = false;
 export const PIPELINE_RUN_NAME = "pipelineRunName";
 export const PIPELINE_SCHEMAS = "dataSchemaNames";
 
+export const COMPLETED = "COMPLETED";
+export const DEPLOYED = "Deployed";
+export const FAILED = "Failed";
 
