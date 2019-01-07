@@ -27,3 +27,8 @@ export const DELETE_PIPELINE = "DELETE_PIPELINE";
 
 
 export const IS_OFFLINE = false;
+
+export const PIPELINE_RUN_NAME = "pipelineRunName";
+export const PIPELINE_SCHEMAS = "dataSchemaNames";
+
+

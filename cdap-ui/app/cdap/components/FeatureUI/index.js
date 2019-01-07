@@ -19,8 +19,6 @@ import { Provider, connect } from 'react-redux';
 import LandingPage from './LandingPage';
 import AddFeatureActions from '../../services/WizardStores/AddFeature/AddFeatureActions';
 import AddFeatureStore from '../../services/WizardStores/AddFeature/AddFeatureStore';
-import FeatureSelection from './FeatureSelection';
-
 
 const mapStateToFeatureUIProps = (state) => {
   return {

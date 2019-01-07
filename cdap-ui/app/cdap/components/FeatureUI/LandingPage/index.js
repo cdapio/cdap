@@ -15,7 +15,6 @@ import {
   PROPERTY_REQUEST,
   CONFIGURATION_REQUEST,
   GET_PIPELINE,
-  SAVE_PIPELINE,
   GET_SCHEMA,
   GET_PROPERTY,
   GET_CONFIGURATION,
@@ -27,13 +26,14 @@ import {
   READ_PIPELINE,
   EDIT_PIPELINE,
   EDIT_REQUEST,
-  GET_PIPE_LINE_DATA
+  GET_PIPE_LINE_DATA,
+  PIPELINE_RUN_NAME,
+  PIPELINE_SCHEMAS
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
-import { Observable } from 'rxjs/Observable';
-import AlertModal from '../AlertModal';
 import FeatureSelection from '../FeatureSelection';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject } from '../util';
 
 
 require('./LandingPage.scss');
@@ -62,7 +62,7 @@ class LandingPage extends React.Component {
       selectedPipelineType: 'All',
       displayFeatureSelection: false,
       pipeLineData: this.sampleData,
-      selectedPipeline:{}
+      selectedPipeline: {}
     };
   }
 
@@ -71,7 +71,7 @@ class LandingPage extends React.Component {
     if (IS_OFFLINE) {
       this.props.setAvailableProperties(PropertyData);
       this.props.setAvailableConfigurations(ConfigurationData);
-      this.props.setAvailableSchemas(data);
+      this.props.setAvailableSchemas(SchemaData);
     } else {
       this.fetchWizardData();
     }
@@ -139,16 +139,17 @@ class LandingPage extends React.Component {
             alert("Pipeline Data Error");
           } else {
             this.setState({
-              pipeLineData:result["featureStatsList"],
+              pipeLineData: result["featureStatsList"],
               data: result["featureStatsList"],
-              selectedPipeline:this.currentPipeline,
-              displayFeatureSelection: true })
+              selectedPipeline: this.currentPipeline,
+              displayFeatureSelection: true
+            });
           }
         },
         (error) => {
           this.handleError(error, GET_PIPELINE);
         }
-      )
+      );
   }
 
   editPipeline(pipeline) {
@@ -178,38 +179,40 @@ class LandingPage extends React.Component {
       this.props.updateOperationType(type);
       for (let property in pipelineData) {
         switch (property) {
-          case "pipelineRunName":
+          case PIPELINE_RUN_NAME: {
             this.props.updateFeatureName(pipelineData.pipelineRunName);
+            }
             break;
-          case "dataSchemaNames":
-            let selectedSchemas = [];
-            pipelineData.dataSchemaNames.forEach((schema) => {
-              let schemaData = find(this.props.availableSchemas, { schemaName: schema });
-              if (!isNil(schemaData)) {
-                selectedSchemas.push({
-                  schemaName: schema,
-                  selected: true,
-                  schemaColumns: schemaData.schemaColumns
-                });
+          case PIPELINE_SCHEMAS: {
+              let selectedSchemas = [];
+              pipelineData.dataSchemaNames.forEach((schema) => {
+                let schemaData = find(this.props.availableSchemas, { schemaName: schema });
+                if (!isNil(schemaData)) {
+                  selectedSchemas.push({
+                    schemaName: schema,
+                    selected: true,
+                    schemaColumns: schemaData.schemaColumns
+                  });
+                }
+              });
+              if (!isEmpty(selectedSchemas)) {
+                this.props.setSelectedSchemas(selectedSchemas);
               }
-            });
-            if (!isEmpty(selectedSchemas)) {
-              this.props.setSelectedSchemas(selectedSchemas);
             }
             break;
           default:
             {
               let propertyData = find(this.props.availableProperties, { paramName: property });
               if (!isNil(propertyData)) {
-                if(isEmpty(propertyData.subParams)) {
-                  if(propertyData.isCollection) {
+                if (isEmpty(propertyData.subParams)) {
+                  if (propertyData.isCollection) {
                     let schemaMap = new Map();
                     pipelineData[property].forEach(propData => {
-                      if(schemaMap.has(propData.table)) {
-                        let columns =  schemaMap.get(propData.table).push({columnName: propData.column});
-                        schemaMap.set(propData.table,columns)
+                      if (schemaMap.has(propData.table)) {
+                        let columns = schemaMap.get(propData.table).push({ columnName: propData.column });
+                        schemaMap.set(propData.table, columns);
                       } else {
-                        schemaMap.set(propData.table, [{columnName: propData.column}])
+                        schemaMap.set(propData.table, [{ columnName: propData.column }]);
                       }
                     });
                     schemaMap.forEach((value, key) => {
@@ -218,23 +221,23 @@ class LandingPage extends React.Component {
                     });
                   } else {
                     let updatedObj = getPropertyUpdateObj(propertyData, "none", pipelineData[property].table,
-                        [{columnName: pipelineData[property].column}]);
+                      [{ columnName: pipelineData[property].column }]);
                     updatePropertyMapWithObj(propertyMap, updatedObj);
                   }
                 } else {
-                  if(!isEmpty(pipelineData[property])) {
+                  if (!isEmpty(pipelineData[property])) {
                     let dataObj = pipelineData[property][0];
                     for (let subPropertyName in dataObj) {
                       let subProperty = find(propertyData.subParams, { paramName: subPropertyName });
-                      if(!isNil(subProperty)) {
-                        if(subProperty.isCollection) {
+                      if (!isNil(subProperty)) {
+                        if (subProperty.isCollection) {
                           let schemaMap = new Map();
                           dataObj[subPropertyName].forEach(propData => {
-                            if(schemaMap.has(propData.table)) {
-                              let columns =  schemaMap.get(propData.table).push({columnName: propData.column});
-                              schemaMap.set(propData.table,columns)
+                            if (schemaMap.has(propData.table)) {
+                              let columns = schemaMap.get(propData.table).push({ columnName: propData.column });
+                              schemaMap.set(propData.table, columns);
                             } else {
-                              schemaMap.set(propData.table, [{columnName: propData.column}])
+                              schemaMap.set(propData.table, [{ columnName: propData.column }]);
                             }
                           });
                           schemaMap.forEach((value, key) => {
@@ -243,7 +246,7 @@ class LandingPage extends React.Component {
                           });
                         } else {
                           let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, dataObj[subPropertyName].table,
-                              [{columnName: dataObj[subPropertyName].column}]);
+                            [{ columnName: dataObj[subPropertyName].column }]);
                           updatePropertyMapWithObj(propertyMap, updatedObj);
                         }
                       }
@@ -254,13 +257,13 @@ class LandingPage extends React.Component {
                 configurationList.push({
                   name: property,
                   value: pipelineData[property].toString(),
-                })
+                });
               }
             }
             break;
         }
       }
-      if(propertyMap.size > 0) {
+      if (propertyMap.size > 0) {
         this.props.updatePropertyMap(propertyMap);
       }
       if (!isEmpty(configurationList)) {
@@ -273,15 +276,15 @@ class LandingPage extends React.Component {
   }
 
   updateConfigurationList(availableConfigurations, configList) {
-   let configurationList =  availableConfigurations.map((config)=> {
-      let configObj = find(configList, {name: config.paramName});
+    let configurationList = availableConfigurations.map((config) => {
+      let configObj = find(configList, { name: config.paramName });
       return {
         name: config.paramName,
-        value: isEmpty(configObj) ? "": configObj.value,
+        value: isEmpty(configObj) ? "" : configObj.value,
         dataType: config.dataType,
         isCollection: config.isCollection,
         isMandatory: config.isMandatory,
-        toolTip: "Type: " + (config.isCollection ? ("Collection of "+ config.dataType): config.dataType)
+        toolTip: "Type: " + (config.isCollection ? ("Collection of " + config.dataType) : config.dataType)
       };
     });
     this.props.updateConfigurationList(configurationList);
@@ -352,7 +355,7 @@ class LandingPage extends React.Component {
     let featureObject = getFeatureObject(this.props);
     let saveUrl = SERVER_IP + SAVE_REQUEST.replace('$NAME', featureObject.pipelineRunName);
     let type = this.props.operationType;
-    if(type == EDIT_PIPELINE) {
+    if (type == EDIT_PIPELINE) {
       saveUrl = SERVER_IP + EDIT_REQUEST.replace('$NAME', featureObject.pipelineRunName);
     }
     console.log(featureObject);
@@ -408,7 +411,7 @@ class LandingPage extends React.Component {
                       featureObject[property] = {
                         table: schema,
                         column: column.columnName
-                      }
+                      };
                     }
                   });
                 }
@@ -427,19 +430,19 @@ class LandingPage extends React.Component {
                       subPropValue = {
                         table: schema,
                         column: column.columnName
-                      }
+                      };
                     }
                   });
                   subPropObj[subParam.header] = subPropValue;
                 }
               });
             }
-          })
+          });
           if (!isEmpty(subPropObj)) {
             featureObject[property].push(subPropObj);
           }
         }
-      })
+      });
     }
     if (!isEmpty(props.configurationList)) {
       props.configurationList.forEach((configuration) => {
@@ -532,43 +535,45 @@ class LandingPage extends React.Component {
 
   render() {
     return (
-      // <div className="feature-selection">
-      //         <FeatureSelection nagivateToParent={this.viewFeatureGeneration}
-      //           pipeLineData={this.state.pipeLineData}></FeatureSelection>
-      // </div>
-      <div className='landing-page-container'>
-        <div className='top-control'>
-          <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
-            <DropdownToggle caret>
-              {this.state.selectedPipelineType}
-            </DropdownToggle>
-            <DropdownMenu>
-              {
-                this.state.pipelineTypes.map((type) => {
-                  return (
-                    <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
-                  );
-                })
-              }
-            </DropdownMenu>
-          </Dropdown>
-          <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
+      <div>
+        <div className="feature-selection">
+                <FeatureSelection nagivateToParent={this.viewFeatureGeneration}
+                  pipeLineData={this.state.pipeLineData}></FeatureSelection>
         </div>
-        <FeatureTable data={this.state.data}
-          onView={this.viewPipeline.bind(this)}
-          onEdit={this.editPipeline.bind(this)}
-          onDelete={this.onDeletePipeline.bind(this)} />
-        <AddFeatureWizard showWizard={this.state.showFeatureWizard}
-          onClose={this.onWizardClose}
-          onSubmit={this.saveFeature.bind(this)} />
-        <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
-          onClose={this.onAlertClose.bind(this)} />
+        <div className='landing-page-container'>
+          <div className='top-control'>
+            <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
+              <DropdownToggle caret>
+                {this.state.selectedPipelineType}
+              </DropdownToggle>
+              <DropdownMenu>
+                {
+                  this.state.pipelineTypes.map((type) => {
+                    return (
+                      <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
+                    );
+                  })
+                }
+              </DropdownMenu>
+            </Dropdown>
+            <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
+          </div>
+          <FeatureTable data={this.state.data}
+            onView={this.viewPipeline.bind(this)}
+            onEdit={this.editPipeline.bind(this)}
+            onDelete={this.onDeletePipeline.bind(this)} />
+          <AddFeatureWizard showWizard={this.state.showFeatureWizard}
+            onClose={this.onWizardClose}
+            onSubmit={this.saveFeature.bind(this)} />
+          <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
+            onClose={this.onAlertClose.bind(this)} />
+        </div>
       </div>
     );
   }
 
   viewFeatureGeneration = () => {
-    this.setState({ displayFeatureSelection: false })
+    this.setState({ displayFeatureSelection: false });
   }
 }
 export default LandingPage;

@@ -1,16 +1,15 @@
+/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import FilterContainer from './FilterContainer';
 import './FeatureSelection.scss';
 import GridHeader from './GridHeader';
-import GridContainer from './GridContainer'
-import { isNil } from 'lodash'
+import GridContainer from './GridContainer';
+import { isNil } from 'lodash';
 
 class FeatureSelection extends Component {
-  //filterColumnList = [{id:1, name:'max'},{id:2, name:'min'},{id:3, name:'percentile'}, {id:4, name:'variance'}]
-
   constructor(props) {
-    super(props)
-    this.state =   this.dataParser(this.props.pipeLineData);
+    super(props);
+    this.state = this.dataParser(this.props.pipeLineData);
   }
 
   dataParser = (data) => {
@@ -31,21 +30,20 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "featureName", field: "featureName", width: 250, checkboxSelection: true })
+          columDefs.push({ headerName: "featureName", field: "featureName", width: 250, checkboxSelection: true });
         }
         columns.forEach(element => {
-          columDefs.push({ headerName: element.name, field: element.name })
+          columDefs.push({ headerName: element.name, field: element.name });
         });
       }
 
       // generate grid data
       if (!isNil(item.featureStatistics)) {
-        //let counter = 0;
+        // let counter = 0;
         const rowObj = { featureName: item.featureName };
         columns.forEach(element => {
-          rowObj[element.name] = item.featureStatistics[element.name]
+          rowObj[element.name] = item.featureStatistics[element.name];
         });
-
         rowData.push(rowObj);
       }
     });
@@ -53,10 +51,10 @@ class FeatureSelection extends Component {
       gridColumnDefs: columDefs,
       gridRowData: rowData,
       filterColumns: columns
-    }
+    };
   }
 
-  navigateToParentWindow = ()=> {
+  navigateToParentWindow = () => {
     this.props.nagivateToParent();
   }
 
@@ -78,11 +76,10 @@ class FeatureSelection extends Component {
           <GridContainer gridColums={this.state.gridColumnDefs} rowData={this.state.gridRowData}></GridContainer>
         </div>
         <div className="filter-box">
-           <FilterContainer filterColumns={this.state.filterColumns} ></FilterContainer>
+          <FilterContainer filterColumns={this.state.filterColumns} ></FilterContainer>
         </div>
       </div>
-
-    )
+    );
   }
 }
 
