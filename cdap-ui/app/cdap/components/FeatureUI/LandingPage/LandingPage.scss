@@ -6,13 +6,25 @@
   .feature-generation {
     height: 100%;
     width: 100%;
+    background-color: #e5e5e5;
     .top-control {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       padding: 10px;
+      background-color: white;
+      .type-selector {
+        display: flex;
+        flex-direction: row;
+        .type-label {
+          font-size: 16px;
+          padding-right: 10px;
+          font-weight: 500;
+          line-height: 2;
+        }
+      }
     }
-    .add-button {
+    .feature-button {
       background: #665ef1;
       padding: 10px;
       border-radius: 2px;

@@ -28,7 +28,8 @@ import {
   EDIT_REQUEST,
   GET_PIPE_LINE_DATA,
   PIPELINE_RUN_NAME,
-  PIPELINE_SCHEMAS
+  PIPELINE_SCHEMAS,
+  CLONE_PIPELINE
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
@@ -128,7 +129,7 @@ class LandingPage extends React.Component {
       );
   }
 
-  viewPipeline(pipeline) {
+  onFeatureSelection(pipeline) {
     this.currentPipeline = pipeline;
     let request = SERVER_IP + GET_PIPE_LINE_DATA + pipeline.pipelineName;
     fetch(request)
@@ -152,7 +153,11 @@ class LandingPage extends React.Component {
       );
   }
 
-  editPipeline(pipeline) {
+  viewPipeline(pipeline) {
+    console("Direct t0 -> ", pipeline.pipelineName);
+  }
+
+  editPipeline(type, pipeline) {
     this.currentPipeline = pipeline;
     let fetchUrl = SERVER_IP + READ_REQUEST.replace('$NAME', pipeline.pipelineName);
     fetch(fetchUrl)
@@ -162,7 +167,7 @@ class LandingPage extends React.Component {
           if (isNil(result) || isNil(result["featureGenerationRequest"])) {
             this.handleError(result, READ_PIPELINE);
           } else {
-            this.updateStoreForEdit(result["featureGenerationRequest"], EDIT_PIPELINE);
+            this.updateStoreForEdit(type, result["featureGenerationRequest"]);
           }
         },
         (error) => {
@@ -171,7 +176,7 @@ class LandingPage extends React.Component {
       );
   }
 
-  updateStoreForEdit(pipelineData, type) {
+  updateStoreForEdit(type, pipelineData) {
     if (!isEmpty(pipelineData)) {
       console.log("Pipeline Props ->", pipelineData);
       let propertyMap = new Map();
@@ -180,25 +185,29 @@ class LandingPage extends React.Component {
       for (let property in pipelineData) {
         switch (property) {
           case PIPELINE_RUN_NAME: {
-            this.props.updateFeatureName(pipelineData.pipelineRunName);
+            if(type == CLONE_PIPELINE) {
+              this.props.updateFeatureName("Copy_of_" + pipelineData.pipelineRunName);
+            } else {
+              this.props.updateFeatureName(pipelineData.pipelineRunName);
             }
+          }
             break;
           case PIPELINE_SCHEMAS: {
-              let selectedSchemas = [];
-              pipelineData.dataSchemaNames.forEach((schema) => {
-                let schemaData = find(this.props.availableSchemas, { schemaName: schema });
-                if (!isNil(schemaData)) {
-                  selectedSchemas.push({
-                    schemaName: schema,
-                    selected: true,
-                    schemaColumns: schemaData.schemaColumns
-                  });
-                }
-              });
-              if (!isEmpty(selectedSchemas)) {
-                this.props.setSelectedSchemas(selectedSchemas);
+            let selectedSchemas = [];
+            pipelineData.dataSchemaNames.forEach((schema) => {
+              let schemaData = find(this.props.availableSchemas, { schemaName: schema });
+              if (!isNil(schemaData)) {
+                selectedSchemas.push({
+                  schemaName: schema,
+                  selected: true,
+                  schemaColumns: schemaData.schemaColumns
+                });
               }
+            });
+            if (!isEmpty(selectedSchemas)) {
+              this.props.setSelectedSchemas(selectedSchemas);
             }
+          }
             break;
           default:
             {
@@ -535,45 +544,54 @@ class LandingPage extends React.Component {
 
   render() {
     return (
-      <div>
-        <div className="feature-selection">
-                <FeatureSelection nagivateToParent={this.viewFeatureGeneration}
-                  pipeLineData={this.state.pipeLineData}></FeatureSelection>
-        </div>
-        <div className='landing-page-container'>
-          <div className='top-control'>
-            <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
-              <DropdownToggle caret>
-                {this.state.selectedPipelineType}
-              </DropdownToggle>
-              <DropdownMenu>
-                {
-                  this.state.pipelineTypes.map((type) => {
-                    return (
-                      <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
-                    );
-                  })
-                }
-              </DropdownMenu>
-            </Dropdown>
-            <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
+      <div className='landing-page-container'>{
+        this.state.displayFeatureSelection ?
+          <div className="feature-selection">
+            <FeatureSelection nagivateToParent={this.viewFeatureGeneration}
+              selectedPipeline={this.state.selectedPipeline}
+              pipeLineData={this.state.pipeLineData}></FeatureSelection>
           </div>
-          <FeatureTable data={this.state.data}
-            onView={this.viewPipeline.bind(this)}
-            onEdit={this.editPipeline.bind(this)}
-            onDelete={this.onDeletePipeline.bind(this)} />
-          <AddFeatureWizard showWizard={this.state.showFeatureWizard}
-            onClose={this.onWizardClose}
-            onSubmit={this.saveFeature.bind(this)} />
-          <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
-            onClose={this.onAlertClose.bind(this)} />
-        </div>
+          : <div className="feature-generation">
+            <div className='top-control'>
+              <div className = 'type-selector'>
+                <div className = "type-label">Pipeline Type:</div>
+                <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
+                  <DropdownToggle caret>
+                    {this.state.selectedPipelineType}
+                  </DropdownToggle>
+                  <DropdownMenu>
+                    {
+                      this.state.pipelineTypes.map((type) => {
+                        return (
+                          <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
+                        );
+                      })
+                    }
+                  </DropdownMenu>
+                </Dropdown>
+              </div>
+              <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
+            </div>
+            <FeatureTable data={this.state.data}
+              onView={this.viewPipeline.bind(this)}
+              onEdit={this.editPipeline.bind(this, EDIT_PIPELINE)}
+              onClone={this.editPipeline.bind(this, CLONE_PIPELINE)}
+              onFeatureSelection={this.onFeatureSelection.bind(this)}
+              onDelete={this.onDeletePipeline.bind(this)} />
+            <AddFeatureWizard showWizard={this.state.showFeatureWizard}
+              onClose={this.onWizardClose}
+              onSubmit={this.saveFeature.bind(this)} />
+            <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
+              onClose={this.onAlertClose.bind(this)} />
+          </div>
+      }
       </div>
     );
   }
 
   viewFeatureGeneration = () => {
     this.setState({ displayFeatureSelection: false });
+    this.getPipelines(this.state.selectedPipelineType);
   }
 }
 export default LandingPage;
