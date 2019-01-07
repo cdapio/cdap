@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.table.TableSchema;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
 import java.util.HashMap;

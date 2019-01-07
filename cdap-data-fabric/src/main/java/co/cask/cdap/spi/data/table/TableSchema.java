@@ -14,10 +14,8 @@
  * the License.
  */
 
-package co.cask.cdap.data2.nosql;
+package co.cask.cdap.spi.data.table;
 
-import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
 import java.util.Collection;
@@ -38,7 +36,7 @@ public class TableSchema {
   private final Set<String> primaryKeys;
   private final Set<String> indexes;
 
-  TableSchema(StructuredTableId tableId, Collection<FieldType> fields, Collection<String> primaryKeys,
+  public TableSchema(StructuredTableId tableId, Collection<FieldType> fields, Collection<String> primaryKeys,
               Collection<String> indexes) {
     this.tableId = tableId;
     this.fields = Collections.unmodifiableMap(fields.stream().collect(Collectors.toMap(FieldType::getName,
@@ -47,7 +45,7 @@ public class TableSchema {
     this.indexes = Collections.unmodifiableSet(new HashSet<>(indexes));
   }
 
-  TableSchema(StructuredTableSpecification spec) {
+  public TableSchema(StructuredTableSpecification spec) {
     this(spec.getTableId(), spec.getFieldTypes(), spec.getPrimaryKeys(), spec.getIndexes());
   }
 
@@ -55,11 +53,11 @@ public class TableSchema {
     return tableId;
   }
 
-  boolean isKey(String fieldName) {
+  public boolean isKey(String fieldName) {
     return primaryKeys.contains(fieldName);
   }
 
-  boolean isIndex(String fieldName) {
+  public boolean isIndex(String fieldName) {
     return indexes.contains(fieldName);
   }
 

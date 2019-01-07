@@ -152,6 +152,10 @@
       <artifactId>hbase-client</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.opentable.components</groupId>
+      <artifactId>otj-pg-embedded</artifactId>
+    </dependency>
 
     <!-- Test dependencies -->
     <dependency>

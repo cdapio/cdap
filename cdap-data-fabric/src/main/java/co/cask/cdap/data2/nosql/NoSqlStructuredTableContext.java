@@ -24,6 +24,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.TableInstantiationException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.TableSchema;
 
 /**
  *
@@ -33,7 +34,8 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
   private final DatasetContext datasetContext;
   private final StructuredTableAdmin tableAdmin;
 
-  public NoSqlStructuredTableContext(NamespaceId namespaceId, DatasetContext datasetContext, StructuredTableAdmin tableAdmin) {
+  public NoSqlStructuredTableContext(NamespaceId namespaceId, DatasetContext datasetContext,
+                                     StructuredTableAdmin tableAdmin) {
     this.namespaceId = namespaceId;
     this.datasetContext = datasetContext;
     this.tableAdmin = tableAdmin;

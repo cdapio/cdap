@@ -26,6 +26,7 @@ import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.TableSchema;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import co.cask.cdap.spi.data.table.field.Range;

@@ -26,6 +26,12 @@ public class InvalidFieldException extends IllegalArgumentException {
   private final String fieldName;
   private final StructuredTableId tableId;
 
+  public InvalidFieldException(String message) {
+    super(message);
+    this.fieldName = null;
+    this.tableId = null;
+  }
+
   /**
    * Create an exception when a field is not part of a table schema
    * @param tableId table

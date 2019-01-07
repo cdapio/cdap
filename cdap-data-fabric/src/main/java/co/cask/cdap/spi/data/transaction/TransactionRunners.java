@@ -33,8 +33,8 @@ public class TransactionRunners {
    * @param txRunner the {@link TransactionRunner} to use for txRunner execution.
    * @param runnable the {@link TxRunnable} to be executed inside a transaction
    * @param <X> exception type of propagate type
-   * @throws X if failed to execute the given {@link co.cask.cdap.api.TxRunnable} in a transaction. If the TransactionFailureException
-   * has a cause in it, the cause is thrown as-is if it is an instance of X.
+   * @throws X if failed to execute the given {@link co.cask.cdap.api.TxRunnable} in a transaction.
+   * If the TransactionFailureException has a cause in it, the cause is thrown as-is if it is an instance of X.
    * @throws RuntimeException if cause is not an instance of X. The cause is wrapped with {@link RuntimeException}
    * if it is not already a {@link RuntimeException}.
    */

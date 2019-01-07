@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  */
 public abstract class StructuredTableTest {
-  private static final StructuredTableId SIMPLE_TABLE = StructuredTableId.of("simpleTable");
+  private static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simpleTable");
   private static final String KEY = "key";
   public static final String COL = "col";
   private static final String VAL = "val";
@@ -136,9 +136,7 @@ public abstract class StructuredTableTest {
       });
 
       Optional<StructuredRow> row = rowRef.get();
-      if (row.isPresent()) {
-        actual.add(Arrays.asList(key, Fields.of(COL, row.get().getString(COL))));
-      }
+      row.ifPresent(structuredRow -> actual.add(Arrays.asList(key, Fields.of(COL, structuredRow.getString(COL)))));
     }
     return actual;
   }
@@ -158,8 +156,7 @@ public abstract class StructuredTableTest {
     List<Collection<Field<?>>> actual = new ArrayList<>(max);
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
-      try (CloseableIterator<StructuredRow> iterator =
-             table.scan(range, max)) {
+      try (CloseableIterator<StructuredRow> iterator = table.scan(range, max)) {
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
           actual.add(Arrays.asList(Fields.of(KEY, row.getInteger(KEY)), Fields.of(COL, row.getString(COL))));

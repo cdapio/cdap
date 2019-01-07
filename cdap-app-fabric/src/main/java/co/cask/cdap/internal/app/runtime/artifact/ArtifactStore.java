@@ -182,10 +182,10 @@ public class ArtifactStore {
     .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
     .create();
 
-  private static final StructuredTableId ARTIFACT_DATA_TABLE = StructuredTableId.of("artifact_data");
-  private static final StructuredTableId APP_DATA_TABLE = StructuredTableId.of("app_data");
-  private static final StructuredTableId PLUGIN_DATA_TABLE = StructuredTableId.of("plugin_data");
-  private static final StructuredTableId UNIV_PLUGIN_DATA_TABLE = StructuredTableId.of("universal_plugin_data");
+  private static final StructuredTableId ARTIFACT_DATA_TABLE = new StructuredTableId("artifact_data");
+  private static final StructuredTableId APP_DATA_TABLE = new StructuredTableId("app_data");
+  private static final StructuredTableId PLUGIN_DATA_TABLE = new StructuredTableId("plugin_data");
+  private static final StructuredTableId UNIV_PLUGIN_DATA_TABLE = new StructuredTableId("universal_plugin_data");
 
   private static final String NAMESPACE_FIELD = "namespace";
   private static final String ARTIFACT_NAMESPACE_FIELD = "artifact_namespace";
@@ -1061,7 +1061,7 @@ public class ArtifactStore {
     }
   }
 
-  private void deleteAllPlugins(StructuredTable pluginDataTable, PluginKey pluginKey) {
+  private void deleteAllPlugins(StructuredTable pluginDataTable, PluginKey pluginKey) throws IOException {
     try (CloseableIterator<StructuredRow> iterator =
            pluginDataTable.scan(Range.singleton(pluginKey.getKeyFields()), Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
@@ -1071,7 +1071,8 @@ public class ArtifactStore {
     }
   }
 
-  private void deleteAllUniversalPlugins(StructuredTable univPluginDataTable, UniversalPluginKey pluginKey) {
+  private void deleteAllUniversalPlugins(StructuredTable univPluginDataTable,
+                                         UniversalPluginKey pluginKey) throws IOException {
     try (CloseableIterator<StructuredRow> iterator =
            univPluginDataTable.scan(Range.singleton(pluginKey.getKeyFields()), Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
@@ -1081,7 +1082,7 @@ public class ArtifactStore {
     }
   }
 
-  private void deleteAllAppClasses(StructuredTable appClassTable, AppClassKey appClassKey) {
+  private void deleteAllAppClasses(StructuredTable appClassTable, AppClassKey appClassKey) throws IOException {
     try (CloseableIterator<StructuredRow> iterator =
            appClassTable.scan(Range.singleton(appClassKey.getKeyFields()), Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
@@ -1094,7 +1095,7 @@ public class ArtifactStore {
   private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(StructuredTable artifactDataTable,
                                                                                Id.Artifact artifactId,
                                                                                Predicate<PluginClass> filter)
-    throws ArtifactNotFoundException {
+    throws ArtifactNotFoundException, IOException {
     SortedMap<ArtifactDescriptor, Set<PluginClass>> result = new TreeMap<>();
 
     // Make sure the artifact exists

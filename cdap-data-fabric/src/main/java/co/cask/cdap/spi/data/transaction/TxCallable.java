@@ -19,7 +19,7 @@ package co.cask.cdap.spi.data.transaction;
 import co.cask.cdap.spi.data.StructuredTableContext;
 
 /**
- *
+ * @param <V> type of the return value.
  */
 public interface TxCallable<V> {
   V call(StructuredTableContext context) throws Exception;

@@ -32,6 +32,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableTest;
 import co.cask.cdap.spi.data.TransactionRunner;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.TableSchema;
 import co.cask.cdap.spi.data.table.field.Fields;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -62,7 +63,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
 
   private static final DatasetContext CONTEXT1 = DatasetContext.from("ns1");
   private static final NamespaceId NS1 = new NamespaceId(CONTEXT1.getNamespaceId());
-  private static final TableSchema SCHEMA = new TableSchema(StructuredTableId.of("MockTable"),
+  private static final TableSchema SCHEMA = new TableSchema(new StructuredTableId("MockTable"),
                                                             Arrays.asList(Fields.intType("key"),
                                                                           Fields.stringType("col1")),
                                                             Collections.singleton("key"),

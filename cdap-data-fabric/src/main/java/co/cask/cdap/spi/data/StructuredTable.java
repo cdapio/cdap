@@ -21,6 +21,7 @@ import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Range;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -39,7 +40,7 @@ public interface StructuredTable extends AutoCloseable {
    * @throws InvalidFieldException if any of the fields are not part of the table schema, or the types of the value
    *                               do not match
    */
-  void write(Collection<Field<?>> fields) throws InvalidFieldException;
+  void write(Collection<Field<?>> fields) throws InvalidFieldException, IOException;
 
   /**
    * Read a single row with all the columns from the table.
@@ -50,7 +51,7 @@ public interface StructuredTable extends AutoCloseable {
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match.
    */
-  Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException;
+  Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
 
   /**
    * Read a single row with the specified columns from the table.
@@ -61,7 +62,8 @@ public interface StructuredTable extends AutoCloseable {
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match.
    */
-  Optional<StructuredRow> read(Collection<Field<?>> keys, Collection<String> columns) throws InvalidFieldException;
+  Optional<StructuredRow> read(Collection<Field<?>> keys,
+                               Collection<String> columns) throws InvalidFieldException, IOException;
 
   /**
    * Read a set of rows from the table matching the key range.
@@ -73,7 +75,7 @@ public interface StructuredTable extends AutoCloseable {
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match.
    */
-  CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException;
+  CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
 
   /**
    * Delete a single row from the table.
@@ -82,5 +84,5 @@ public interface StructuredTable extends AutoCloseable {
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match.
    */
-  void delete(Collection<Field<?>> keys) throws InvalidFieldException;
+  void delete(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
 }
