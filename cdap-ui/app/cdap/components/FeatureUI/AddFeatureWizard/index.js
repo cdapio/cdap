@@ -6,6 +6,8 @@ import Wizard from 'components/Wizard';
 import AddFeatureWizardConfig from '../../../services/WizardConfigs/AddFeatureWizardConfig';
 import AddFeatureStore from '../../../services/WizardStores/AddFeature/AddFeatureStore';
 
+require('./AddFeatureWizard.scss');
+
 class AddFeatureWizard extends React.Component {
   constructor(props) {
     super(props);
