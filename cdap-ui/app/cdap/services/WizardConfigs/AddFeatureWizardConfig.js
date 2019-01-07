@@ -32,21 +32,21 @@ const AddFeatureWizardConfig = {
     },
     {
       id: 'properties',
-      shorttitle: 'Properties',
+      shorttitle: 'Metadata Config',
       title: 'Select Properties',
       description: '',
       content: (<FeaturePropertiesStep />)
     },
     {
       id: 'configuration',
-      shorttitle: 'Configuration',
+      shorttitle: 'Engine Config',
       title: 'Set Configuration',
       description: '',
       content: (<FeatureConfigurationStep />)
     },
     {
       id: 'detail',
-      shorttitle: 'Details',
+      shorttitle: 'Pipeline',
       title: 'Set Details',
       description: '',
       content: (<FeatureDetailStep />)

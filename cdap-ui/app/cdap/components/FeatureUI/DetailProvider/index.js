@@ -20,10 +20,15 @@ class DetailProvider extends React.Component {
     return (
       <div className = "detail-step-container">
         <div className='field-row'>
-            <div className='name'>Name</div>
+            <div className='name'>Name*</div>
             <div className='colon'>:</div>
-            <Input className='value' type="text" name="value" placeholder='value'  readOnly = {this.props.operationType == EDIT_PIPELINE}
+            <Input className='value' type="text" name="name" placeholder='name'  readOnly = {this.props.operationType == EDIT_PIPELINE}
               defaultValue = {this.props.featureName} onChange={this.onNameUpdated.bind(this)}/>
+        </div>
+        <div className='field-row'>
+            <div className='name'>Description</div>
+            <div className='colon'>:</div>
+            <textarea className='description'></textarea>
         </div>
       </div>
     );
