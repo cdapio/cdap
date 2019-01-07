@@ -2,9 +2,9 @@
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import FilterItem from '../FilterItem/index';
+import './FilterContainer.scss';
 import { cloneDeep } from "lodash";
-
-require('./FilterContainer.scss');
+// import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
 class FilterContainer extends Component {
   filterTypeList = [{ id: 1, name: 'TopN' }, { id: 2, name: 'LowN' }, { id: 3, name: 'Range' }]
@@ -20,6 +20,8 @@ class FilterContainer extends Component {
       selectedOrderbyColumn: { id: -1, name: 'Select' },
       orderByCOlumnList: cloneDeep(this.filterColumnList),
       filterItemList: [this.getFilterItemVO()],
+      minLimitValue:"",
+      maxLimitValue:""
     };
   }
 
@@ -33,7 +35,6 @@ class FilterContainer extends Component {
   orderbyColumnChange = (item) => {
     this.setState({ selectedOrderbyColumn: item });
   }
-
 
   addFilterItem = () => {
     const filterItems = [...this.state.filterItemList];
@@ -83,31 +84,18 @@ class FilterContainer extends Component {
     this.setState({ filterItemList: itemList });
   }
 
-  // updateIntialState = () =>{
-  //   this.setState({
-  //     orderByCOlumnList: cloneDeep(this.filterColumnList),
-  //     filterItemList:[this.getFilterItemVO()],
-  //   });
-  // }
-  // componentDidMount() {
-  //   this.filterColumnList = this.props.filterColumns;
-  //   this.updateIntialState();
-  //   console.log("call filter container mount");
-  // }
+  minLimitChanged = (evt)=> {
+    this.setState({minLimitValue: evt.target.value});
+  }
 
-  // componentWillReceiveProps(nextProps) {
-  //   // Any time props.email changes, update state.
-  //   console.log("state change challed from parent :: "+filterColumns)
-  //   if (nextProps.filterColumns !== this.props.filterColumns) {
-  //     this.filterColumnList = this.props.filterColumns;
-  //     this.updateIntialState();
-  //   }
-  // }
+  maxLimitChanged = (evt)=> {
+    this.setState({maxLimitValue: evt.target.value});
+  }
 
-  // componentWillMount(){
-  //   this.parse
+  applyFilter = () => {
+    this.props.applyFilter(this.state);
+  }
 
-  // }
 
 
   render() {
@@ -131,7 +119,7 @@ class FilterContainer extends Component {
       <div className="filter-container">
         <h3>Filters</h3>
         <div className="orderby-box">
-          <label className="orderby-label">Orderby:   </label>
+          <label className="orderby-label">Orderby: </label>
           <Dropdown isOpen={this.state.orderbyOpen} toggle={this.toggleOrderbyDropDown}>
             <DropdownToggle caret>
               {this.state.selectedOrderbyColumn.name}
@@ -151,9 +139,30 @@ class FilterContainer extends Component {
 
         </div>
         {filterItems}
-        <button onClick={this.addFilterItem}>+Add</button>
+        <div className="control-box">
+          <button onClick={this.addFilterItem}>+Add</button>
+          <button onClick={this.applyFilter}>Apply</button>
+
+        </div>
+        <div className="limit-box">
+          <label className="limit-label">Limit Within:   </label>
+          <input className="limit-input" type="number" min="0" value={this.state.minLimitValue}
+            onChange={this.minLimitChanged}></input>
+          <label className="value-seperator">-</label>
+          <input className="limit-input" type="number" min="0" value={this.state.maxLimitValue}
+            onChange={this.maxLimitChanged}></input>
+        </div>
       </div>
     );
+
+  }
+
+  removeFilterItem = (index) => {
+    const itemList = [...this.state.filterItemList];
+    if (itemList.length > 1) {
+      itemList.splice(index, 1);
+    }
+    this.setState({ filterItemList: itemList });
   }
 }
 
