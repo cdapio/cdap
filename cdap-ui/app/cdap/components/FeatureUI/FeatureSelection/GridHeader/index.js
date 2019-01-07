@@ -11,16 +11,23 @@ class GridHeader extends Component {
   }
 
   render() {
+
     return (
       <div className="grid-header-box">
         <div className="title-box">
           <h3>Feature Selection</h3>
+          <div className="subtitle">
+            <label className="subtitle-label">Pipeline: </label>
+            {
+              this.props.selectedPipeline &&
+              <label className="pipeline-name">{this.props.selectedPipeline.pipelineName}</label>
+            }
+          </div>
         </div>
-        <label className="subtitle">Pipeline: </label>
-        {
-          this.props.selectedPipeline &&
-          <label>{this.props.selectedPipeline.pipelineName}</label>
-        }
+        <div className="header-control">
+          <button className = "feature-button left-margin" onClick={this.props.backnavigation}>Back</button>
+          <button className = "feature-button left-margin" onClick={this.navigateToParentWindow}>Save</button>
+        </div>
       </div>
     );
   }

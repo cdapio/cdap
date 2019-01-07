@@ -1,13 +1,23 @@
 .grid-header-box {
   width: 100%;
-  padding-left: 15px;
-  padding-top: 15px;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   .title-box {
-    display: inline-flex;
-    width: 100%;
+    display: flex;
+    flex-direction: column;
   }
   .subtitle {
-    padding-right: 10px;
-    font-weight: 600;
+    .subtitle-label {
+      font-weight: 600;
+      padding-right: 5px;
+    }
+    .pipeline-name {
+      color: #150e9a;
+    }
+  }
+  .left-margin {
+    margin-left: 12px;
   }
 }
