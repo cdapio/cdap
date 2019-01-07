@@ -765,6 +765,13 @@ public abstract class AppFabricTestBase {
   }
 
   /**
+   * Starts the given program.
+   */
+  protected void startProgram(ProgramId program) throws Exception {
+    startProgram(program, 200);
+  }
+
+  /**
    * Tries to start the given program and expect the call completed with the status.
    */
   protected void startProgram(Id.Program program, int expectedStatusCode) throws Exception {
@@ -838,6 +845,13 @@ public abstract class AppFabricTestBase {
   }
 
   /**
+   * Stops the given program.
+   */
+  protected void stopProgram(ProgramId program) throws Exception {
+    stopProgram(program, null, 200, null);
+  }
+
+  /**
    * Tries to stop the given program and expect the call completed with the status.
    */
   protected void stopProgram(Id.Program program, int expectedStatusCode) throws Exception {
@@ -861,7 +875,7 @@ public abstract class AppFabricTestBase {
     stopProgram(path, program.getNamespaceId(), expectedStatusCode, expectedMessage);
   }
 
-  protected void stopProgram(ProgramId program, String runId, int expectedStatusCode,
+  protected void stopProgram(ProgramId program, @Nullable String runId, int expectedStatusCode,
                              String expectedMessage) throws Exception {
     String path;
     if (runId == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,10 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.app.deploy.ConfigResponse;
 import co.cask.cdap.app.deploy.Configurator;
@@ -37,12 +38,10 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultImpersonator;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.inject.Guice;
@@ -72,7 +71,6 @@ public class ConfiguratorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   private static CConfiguration conf;
-  private static Authorizer authorizer;
   private static AuthorizationEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
 
@@ -84,7 +82,6 @@ public class ConfiguratorTest {
                                              new AuthorizationTestModule(),
                                              new AuthorizationEnforcementModule().getInMemoryModules(),
                                              new AuthenticationContextModules().getNoOpModule());
-    authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     authEnforcer = injector.getInstance(AuthorizationEnforcer.class);
     authenticationContext = injector.getInstance(AuthenticationContext.class);
   }
@@ -92,8 +89,8 @@ public class ConfiguratorTest {
   @Test
   public void testInMemoryConfigurator() throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, AllProgramsApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository baseArtifactRepo = new DefaultArtifactRepository(conf, null, null,
                                                                         new DummyProgramRunnerFactory(),
@@ -108,7 +105,7 @@ public class ConfiguratorTest {
              appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
                                             new DefaultImpersonator(cConf, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
-                                                           WordCountApp.class.getName(), artifactRepo,
+                                                           AllProgramsApp.class.getName(), artifactRepo,
                                                            artifactClassLoader, null, null, "");
       // Extract response from the configurator.
       ListenableFuture<ConfigResponse> result = configurator.config();
@@ -119,8 +116,13 @@ public class ConfiguratorTest {
       ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
       ApplicationSpecification specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
-      Assert.assertTrue(specification.getName().equals("WordCountApp")); // Simple checks.
-      Assert.assertTrue(specification.getFlows().size() == 1); // # of flows.
+      Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
+
+      ApplicationSpecification expectedSpec = Specifications.from(new AllProgramsApp());
+      for (ProgramType programType : ProgramType.values()) {
+        Assert.assertEquals(expectedSpec.getProgramsByType(programType), specification.getProgramsByType(programType));
+      }
+      Assert.assertEquals(expectedSpec.getDatasets(), specification.getDatasets());
     }
   }
 
@@ -136,7 +138,7 @@ public class ConfiguratorTest {
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
 
-    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
     // Create a configurator that is testable. Provide it an application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
@@ -153,9 +155,7 @@ public class ConfiguratorTest {
       ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
       ApplicationSpecification specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
-      Assert.assertTrue(specification.getStreams().size() == 1);
-      Assert.assertTrue(specification.getStreams().containsKey("myStream"));
-      Assert.assertTrue(specification.getDatasets().size() == 1);
+      Assert.assertEquals(1, specification.getDatasets().size());
       Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
       Configurator configuratorWithoutConfig = new InMemoryConfigurator(
@@ -167,9 +167,7 @@ public class ConfiguratorTest {
 
       specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
-      Assert.assertTrue(specification.getStreams().size() == 1);
-      Assert.assertTrue(specification.getStreams().containsKey(ConfigTestApp.DEFAULT_STREAM));
-      Assert.assertTrue(specification.getDatasets().size() == 1);
+      Assert.assertEquals(1, specification.getDatasets().size());
       Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
       Assert.assertNotNull(specification.getProgramSchedules().get(ConfigTestApp.SCHEDULE_NAME));
 

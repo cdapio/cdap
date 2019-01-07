@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,14 +31,18 @@ import javax.ws.rs.Path;
  * Test Application with services for the new application API.
  */
 public class AppWithServices extends AbstractApplication {
+
+  public static final String NAME = AppWithServices.class.getSimpleName();
+  public static final String SERVICE_NAME = "NoOpService";
+
   /**
    * Override this method to configure the application.
    */
   @Override
   public void configure() {
-    setName("AppWithServices");
+    setName(NAME);
     setDescription("Application with Services");
-    addService(new BasicService("NoOpService", new PingHandler(), new MultiPingHandler()));
+    addService(new BasicService(SERVICE_NAME, new PingHandler(), new MultiPingHandler()));
     addWorker(new DummyWorker());
   }
 

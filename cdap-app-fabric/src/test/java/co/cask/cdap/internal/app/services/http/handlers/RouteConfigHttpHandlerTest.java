@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -38,27 +38,24 @@ import java.util.Map;
  */
 public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
 
-  private static final String WORDCOUNT_APP_NAME = "WordCountApp";
-  private static final String WORDCOUNT_SERVICE_NAME = "WordFrequencyService";
-
   @Test
   public void testRouteStore() throws Exception {
     // deploy, check the status
-    Id.Artifact artifactId = Id.Artifact.from(new Id.Namespace(TEST_NAMESPACE1), "wordcountapp", VERSION1);
-    addAppArtifact(artifactId, WordCountApp.class).getResponseCode();
+    Id.Artifact artifactId = Id.Artifact.from(new Id.Namespace(TEST_NAMESPACE1), "app", VERSION1);
+    addAppArtifact(artifactId, AllProgramsApp.class).getResponseCode();
 
-    ApplicationId appIdV1 = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "v1");
-    ApplicationId appIdV2 = new ApplicationId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, "v2");
+    ApplicationId appIdV1 = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME, "v1");
+    ApplicationId appIdV2 = new ApplicationId(TEST_NAMESPACE1, AllProgramsApp.NAME, "v2");
     AppRequest<ConfigTestApp.ConfigClass> request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()), null);
     Assert.assertEquals(200, deploy(appIdV1, request).getResponseCode());
     Assert.assertEquals(200, deploy(appIdV2, request).getResponseCode());
 
-    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     Map<String, Integer> routes = ImmutableMap.<String, Integer>builder().put("v1", 30).put("v2", 70).build();
     String routeAPI = getVersionedAPIPath(
-      String.format("apps/%s/services/%s/routeconfig", WORDCOUNT_APP_NAME, WORDCOUNT_SERVICE_NAME),
+      String.format("apps/%s/services/%s/routeconfig", AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     doPut(routeAPI, GSON.toJson(routes));
     JsonObject jsonObject = GSON.fromJson(doGet(routeAPI).getResponseBodyAsString(), JsonObject.class);
@@ -80,13 +77,13 @@ public class RouteConfigHttpHandlerTest extends AppFabricTestBase {
     routes = ImmutableMap.<String, Integer>builder().put("v1", 30).put("v2", 70).build();
 
     String nonexistNamespaceRouteAPI = getVersionedAPIPath(
-      String.format("apps/%s/services/%s/routeconfig", WORDCOUNT_APP_NAME, WORDCOUNT_SERVICE_NAME),
+      String.format("apps/%s/services/%s/routeconfig", AllProgramsApp.NAME, AllProgramsApp.NoOpService.NAME),
       Constants.Gateway.API_VERSION_3_TOKEN, "_NONEXIST_NAMESPACE_");
     response = doPut(nonexistNamespaceRouteAPI, GSON.toJson(routes));
     Assert.assertEquals(400, response.getResponseCode());
 
     String nonexistAppRouteAPI = getVersionedAPIPath(
-      String.format("apps/%s/services/%s/routeconfig", "_NONEXIST_APP", WORDCOUNT_SERVICE_NAME),
+      String.format("apps/%s/services/%s/routeconfig", "_NONEXIST_APP", AllProgramsApp.NoOpService.NAME),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     response = doPut(nonexistAppRouteAPI, GSON.toJson(routes));
     Assert.assertEquals(400, response.getResponseCode());

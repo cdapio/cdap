@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,8 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorker;
-import co.cask.cdap.FlowMapReduceApp;
+import co.cask.cdap.DefaultStoreTestApp;
 import co.cask.cdap.NoProgramsApp;
-import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -602,7 +601,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRemoveAllApplications() {
-    ApplicationSpecification spec = Specifications.from(new WordCountApp());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
     store.addApplication(appId, spec);
@@ -617,7 +616,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRemoveAll() {
-    ApplicationSpecification spec = Specifications.from(new WordCountApp());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app("application1");
     store.addApplication(appId, spec);
@@ -632,7 +631,7 @@ public class DefaultStoreTest {
 
   @Test
   public void testRemoveApplication() {
-    ApplicationSpecification spec = Specifications.from(new WordCountApp());
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     NamespaceId namespaceId = new NamespaceId("account1");
     ApplicationId appId = namespaceId.app(spec.getName());
     store.addApplication(appId, spec);
@@ -744,7 +743,7 @@ public class DefaultStoreTest {
     ApplicationId appId1 = namespaceId.app(spec.getName());
     store.addApplication(appId1, spec);
 
-    spec = Specifications.from(new WordCountApp());
+    spec = Specifications.from(new AppWithServices());
     ApplicationId appId2 = namespaceId.app(spec.getName());
     store.addApplication(appId2, spec);
 
@@ -752,7 +751,7 @@ public class DefaultStoreTest {
     ProgramId workflowProgramId1 = appId1.workflow("NoOpWorkflow");
     ArtifactId artifactId = appId1.getNamespaceId().artifact("testArtifact", "1.0").toApiArtifactId();
 
-    ProgramId mapreduceProgramId2 = appId2.mr(WordCountApp.VoidMapReduceJob.class.getSimpleName());
+    ProgramId serviceId = appId2.service(AppWithServices.SERVICE_NAME);
 
     Assert.assertNotNull(store.getApplication(appId1));
     Assert.assertNotNull(store.getApplication(appId2));
@@ -769,15 +768,15 @@ public class DefaultStoreTest {
     store.setStop(workflowProgramId1.run(runId.getId()), now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    ProgramRunId mapreduceProgramRunId2 = mapreduceProgramId2.run(RunIds.generate(now - 1000));
-    setStartAndRunning(mapreduceProgramRunId2, artifactId);
-    store.setStop(mapreduceProgramRunId2, now, ProgramController.State.COMPLETED.getRunStatus(),
+    ProgramRunId serviceRunId = serviceId.run(RunIds.generate(now - 1000));
+    setStartAndRunning(serviceRunId, artifactId);
+    store.setStop(serviceRunId, now, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
     verifyRunHistory(mapreduceProgramId1, 1);
     verifyRunHistory(workflowProgramId1, 1);
 
-    verifyRunHistory(mapreduceProgramId2, 1);
+    verifyRunHistory(serviceId, 1);
 
     // removing application
     store.removeApplication(appId1);
@@ -788,13 +787,13 @@ public class DefaultStoreTest {
     verifyRunHistory(mapreduceProgramId1, 0);
     verifyRunHistory(workflowProgramId1, 0);
 
-    // Check to see if the flow history of second app is not deleted
-    verifyRunHistory(mapreduceProgramId2, 1);
+    // Check to see if the history of second app is not deleted
+    verifyRunHistory(serviceId, 1);
 
     // remove all
     store.removeAll(namespaceId);
-    
-    verifyRunHistory(mapreduceProgramId2, 0);
+
+    verifyRunHistory(serviceId, 0);
   }
 
   private void verifyRunHistory(ProgramId programId, int count) {
@@ -856,7 +855,7 @@ public class DefaultStoreTest {
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);
-    Assert.assertEquals(7, deletedSpecs.size());
+    Assert.assertEquals(6, deletedSpecs.size());
 
     for (ProgramSpecification specification : deletedSpecs) {
       //Remove the spec that is verified, to check the count later.
@@ -880,7 +879,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(1, specsToBeDeleted.size());
 
     //Get the spec for app that contains only flow and mapreduce - removing workflows.
-    spec = Specifications.from(new FlowMapReduceApp());
+    spec = Specifications.from(new DefaultStoreTestApp());
 
     //Get the deleted program specs by sending a spec with same name as AllProgramsApp but with no programs
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appId, spec);

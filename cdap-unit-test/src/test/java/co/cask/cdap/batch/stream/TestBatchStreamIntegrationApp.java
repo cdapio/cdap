@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,7 @@ public class TestBatchStreamIntegrationApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("TestFlowStreamIntegrationApp");
+    setName("TestBatchStreamIntegrationApp");
     addStream(new Stream("s_1"));
     createDataset("results", KeyValueTable.class);
     addMapReduce(new StreamTestBatch());

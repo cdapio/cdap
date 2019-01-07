@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,19 @@
 package co.cask.cdap.client.app;
 
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletContext;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpServiceRequest;
+import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
+import com.google.common.base.Throwables;
+import org.apache.tephra.TransactionFailureException;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
 
 /**
@@ -43,118 +42,95 @@ public class ConfigurableProgramsApp2 extends AbstractApplication<ConfigurablePr
    */
   public static class Programs extends Config {
     @Nullable
-    private String flow;
-    @Nullable
     private String worker;
-    @Nullable
-    private String stream;
     @Nullable
     private String dataset;
     @Nullable
     private String service;
+    @Nullable
+    private String workflow;
 
     public Programs() {
-      this.stream = "streem";
       this.dataset = "dutaset";
     }
 
-    public Programs(String flow, String worker, String stream, String dataset, String service) {
-      this.flow = flow;
+    public Programs(String worker, String service, String workflow, String dataset) {
       this.worker = worker;
-      this.stream = stream;
-      this.dataset = dataset;
       this.service = service;
+      this.workflow = workflow;
+      this.dataset = dataset;
     }
   }
 
   @Override
   public void configure() {
-    Programs config = getConfig();
-    if (config.flow != null) {
-      addFlow(new Floh(config.flow, config.stream, config.dataset));
-    }
+    ConfigurableProgramsApp2.Programs config = getConfig();
     if (config.worker != null) {
-      addWorker(new Wurker(config.stream));
+      addWorker(new ConfigurableProgramsApp2.Wurker(config.worker, config.dataset));
     }
     if (config.service != null) {
-      addService(config.service, new PingService());
+      addService(config.service, new ConfigurableProgramsApp2.PingHandler());
+    }
+    if (config.workflow != null) {
+      addWorkflow(new TestWorkflow(config.workflow));
     }
   }
 
-  private static class Floh extends AbstractFlow {
-    private final String name;
-    private final String stream;
-    private final String dataset;
+  /**
+   * Test Workflow.
+   */
+  public static final class TestWorkflow extends AbstractWorkflow {
 
-    Floh(String name, String stream, String dataset) {
+    private String name;
+
+    TestWorkflow(String name) {
       this.name = name;
-      this.stream = stream;
-      this.dataset = dataset;
     }
 
     @Override
     protected void configure() {
       setName(name);
-      addFlowlet("flohlet", new Flohlet(dataset));
-      connectStream(stream, "flohlet");
     }
   }
 
-  private static class Flohlet extends AbstractFlowlet {
+  /**
+   * Test handler.
+   */
+  public static final class PingHandler extends AbstractHttpServiceHandler {
 
-    @Property
-    private final String datasetName;
-
-    private KeyValueTable keyValueTable;
-
-    Flohlet(String datasetName) {
-      this.datasetName = datasetName;
-    }
-
-    @ProcessInput
-    public void process(StreamEvent event) {
-      String data = Bytes.toString(event.getBody());
-      String[] fields = data.split(",");
-      keyValueTable.write(fields[0], fields[1]);
-    }
-
-    @Override
-    public void initialize(FlowletContext context) throws Exception {
-      super.initialize(context);
-      keyValueTable = context.getDataset(datasetName);
+    @GET
+    @Path("/ping")
+    public void ping(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(200);
     }
   }
 
   private static class Wurker extends AbstractWorker {
-    private final String streamName;
-    private volatile boolean running;
 
-    Wurker(String streamName) {
-      this.streamName = streamName;
+    private final String workerName;
+    private final String datasetName;
+
+    Wurker(String workerName, String datasetName) {
+      this.workerName = workerName;
+      this.datasetName = datasetName;
+    }
+
+    @Override
+    protected void configure() {
+      setName(workerName);
     }
 
     @Override
     public void run() {
-      running = true;
-      while (running) {
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-          // shouldn't happen in test
-        }
-
-        try {
-          getContext().write(streamName, "Samuel,L. Jackson");
-          getContext().write(streamName, "Dwayne,Johnson");
-        } catch (IOException e) {
-          // shouldn't happen in test
-        }
+      try {
+        getContext().execute(context -> {
+          KeyValueTable keyValueTable = context.getDataset(datasetName);
+          keyValueTable.write("Samuel", "L. Jackson");
+          keyValueTable.write("Dwayne", "Johnson");
+        });
+      } catch (TransactionFailureException e) {
+        throw Throwables.propagate(e);
       }
-    }
-
-    @Override
-    public void stop() {
-      running = false;
     }
   }
 }

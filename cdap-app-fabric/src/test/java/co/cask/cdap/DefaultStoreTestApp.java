@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 /**
  * App with Flow and MapReduce. used for testing MDS.
  */
-public class FlowMapReduceApp extends AbstractApplication {
+public class DefaultStoreTestApp extends AbstractApplication {
 
   @Override
   public void configure() {
@@ -31,7 +31,6 @@ public class FlowMapReduceApp extends AbstractApplication {
     setDescription("Application which has everything");
     addStream(new Stream("stream"));
     createDataset("kvt", KeyValueTable.class);
-    addFlow(new AllProgramsApp.NoOpFlow());
     addMapReduce(new AllProgramsApp.NoOpMR());
     addService(new AllProgramsApp.NoOpService());
     addWorker(new AllProgramsApp.NoOpWorker());

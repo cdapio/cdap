@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.client.app.AppReturnsArgs;
-import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.ConfigurableProgramsApp;
 import co.cask.cdap.client.app.ConfigurableProgramsApp2;
 import co.cask.cdap.client.app.FakeApp;
@@ -118,17 +118,14 @@ public class ApplicationClientTestRun extends ClientTestBase {
       // check program list
       LOG.info("Checking program list for app");
       Map<ProgramType, List<ProgramRecord>> programs = appClient.listProgramsByType(app);
-      verifyProgramNames(FakeApp.FLOWS, programs.get(ProgramType.FLOW));
       verifyProgramNames(FakeApp.MAPREDUCES, programs.get(ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, programs.get(ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, programs.get(ProgramType.SERVICE));
 
-      verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(app, ProgramType.FLOW));
       verifyProgramNames(FakeApp.MAPREDUCES, appClient.listPrograms(app, ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, appClient.listPrograms(app, ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, appClient.listPrograms(app, ProgramType.SERVICE));
 
-      verifyProgramNames(FakeApp.FLOWS, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.FLOW));
       verifyProgramNames(FakeApp.MAPREDUCES, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.MAPREDUCE));
       verifyProgramNames(FakeApp.WORKFLOWS, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.WORKFLOW));
       verifyProgramNames(FakeApp.SERVICES, appClient.listAllPrograms(NamespaceId.DEFAULT, ProgramType.SERVICE));
@@ -149,7 +146,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @Test
   public void testAppConfig() throws Exception {
-    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testStream", "testDataset");
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("testDataset");
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(ConfigTestApp.class), config);
     Assert.assertEquals(1, appClient.list(NamespaceId.DEFAULT).size());
 
@@ -180,24 +177,24 @@ public class ApplicationClientTestRun extends ClientTestBase {
     try {
       // deploy the app with just the worker
       ConfigurableProgramsApp.Programs conf =
-        new ConfigurableProgramsApp.Programs(null, "worker1", "stream1", "dataset1");
+        new ConfigurableProgramsApp.Programs("worker1", null, "dataset1");
       AppRequest<ConfigurableProgramsApp.Programs> request = new AppRequest<>(
         new ArtifactSummary(artifactIdV1.getArtifact(), artifactIdV1.getVersion()), conf);
       appClient.deploy(appId, request);
 
       // should only have the worker
-      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.FLOW).isEmpty());
+      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.SERVICE).isEmpty());
       Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.WORKER).size());
 
-      // update to use just the flow
-      conf = new ConfigurableProgramsApp.Programs("flow1", null, "stream1", "dataset1");
+      // update to use just the service
+      conf = new ConfigurableProgramsApp.Programs(null, "service", "dataset1");
       request = new AppRequest<>(
         new ArtifactSummary(artifactIdV1.getArtifact(), artifactIdV1.getVersion()), conf);
       appClient.update(appId, request);
 
-      // should only have the flow
+      // should only have the service
       Assert.assertTrue(appClient.listPrograms(appId, ProgramType.WORKER).isEmpty());
-      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.FLOW).size());
+      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.SERVICE).size());
 
       // check nonexistent app is not found
       try {
@@ -227,17 +224,17 @@ public class ApplicationClientTestRun extends ClientTestBase {
         // expected
       }
 
-      // update artifact version. This version uses a different app class with that can add a service
+      // update artifact version. This version uses a different app class with that can add a workflow
       ConfigurableProgramsApp2.Programs conf2 =
-        new ConfigurableProgramsApp2.Programs(null, null, "stream1", "dataset1", "service2");
+        new ConfigurableProgramsApp2.Programs(null, null, "workflow1", "dataset1");
       AppRequest<ConfigurableProgramsApp2.Programs> request2 = new AppRequest<>(
         new ArtifactSummary(artifactIdV2.getArtifact(), artifactIdV2.getVersion()), conf2);
       appClient.update(appId, request2);
 
-      // should only have a single service
+      // should only have a single workflow
       Assert.assertTrue(appClient.listPrograms(appId, ProgramType.WORKER).isEmpty());
-      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.FLOW).isEmpty());
-      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.SERVICE).size());
+      Assert.assertTrue(appClient.listPrograms(appId, ProgramType.SERVICE).isEmpty());
+      Assert.assertEquals(1, appClient.listPrograms(appId, ProgramType.WORKFLOW).size());
     } finally {
       appClient.delete(appId);
       appClient.waitForDeleted(appId, 30, TimeUnit.SECONDS);

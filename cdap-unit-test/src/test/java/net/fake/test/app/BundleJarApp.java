@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,12 @@
 
 package net.fake.test.app;
 
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.schedule.Trigger;
@@ -35,7 +29,6 @@ import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -46,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -61,13 +55,12 @@ public class BundleJarApp extends AbstractApplication {
   public void configure() {
     setName("BundleJarApp");
     setDescription("Demonstrates usage of bundle jar applications");
-    addStream(new Stream("simpleInputStream"));
     createDataset("simpleInputDataset", KeyValueTable.class);
     createDataset("simpleOutputDataset", KeyValueTable.class);
-    addFlow(new SimpleFlow());
     addService(new BasicService("SimpleGetOutput", new SimpleGetOutput()));
     addService(new BasicService("SimpleGetInput", new SimpleGetInput()));
     addService(new BasicService("PrintService", new PrintHandler()));
+    addService("SimpleWrite", new SimpleWriteHandler());
     addMapReduce(new SimpleMapReduce());
   }
 
@@ -240,59 +233,20 @@ public class BundleJarApp extends AbstractApplication {
   }
 
   /**
-   * Runs a workflow action that calls loadTestClasses().
+   * Handler that writes to simpleInputDataset.
    */
-  public static class SimpleWorkflow extends AbstractWorkflow {
-    private static final Logger LOG = LoggerFactory.getLogger(SimpleWorkflow.class);
+  public static final class SimpleWriteHandler extends AbstractHttpServiceHandler {
 
-    @Override
-    public void configure() {
-        setName("SimpleWorkflow");
-        setDescription("Description");
-        addAction(new SimpleWorkflowAction());
-    }
+    @UseDataSet("simpleInputDataset")
+    private KeyValueTable input;
 
-    private class SimpleWorkflowAction extends AbstractCustomAction {
-      @Override
-      public void configure() {
-        setName("SimpleWorkflowAction");
-        setDescription("Description");
-      }
-
-      @Override
-      public void run() {
-        LOG.info("Hello " + loadTestClasses());
-      }
-    }
-  }
-
-  /**
-   * Flow that writes from simpleInputStream to simpleInputDataset.
-   */
-  public static class SimpleFlow extends AbstractFlow {
-
-    @Override
-    protected void configure() {
-      setName("SimpleFlow");
-      setDescription("Description");
-      addFlowlet("simpleFlowlet", new SimpleFlowlet());
-      connectStream("simpleInputStream", "simpleFlowlet");
-    }
-
-    private static class SimpleFlowlet extends AbstractFlowlet {
-      private static final Logger LOG = LoggerFactory.getLogger(SimpleFlowlet.class);
-
-      @UseDataSet("simpleInputDataset")
-      private KeyValueTable input;
-
-      @ProcessInput
-      public void process(StreamEvent event) {
-        LOG.info("Hello " + loadTestClasses());
-        String body = Bytes.toString(event.getBody());
-        String key = body.split(":")[0];
-        String value = body.split(":")[1];
-        input.write(key, value + loadTestClasses());
-      }
+    @PUT
+    @Path("/put/{key}")
+    public void put(HttpServiceRequest request, HttpServiceResponder responder,
+                    @PathParam("key") String key) {
+      String value = Bytes.toString(request.getContent());
+      input.write(key, value + loadTestClasses());
+      responder.sendStatus(200);
     }
   }
 }

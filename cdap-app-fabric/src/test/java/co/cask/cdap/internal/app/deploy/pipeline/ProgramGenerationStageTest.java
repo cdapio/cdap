@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.ToyApp;
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -46,7 +46,7 @@ public class ProgramGenerationStageTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
-  public void testProgramGenerationForToyApp() throws Exception {
+  public void testProgramGeneration() throws Exception {
     cConf.set(Constants.AppFabric.OUTPUT_DIR, "programs");
     LocationFactory lf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     // have to do this since we are not going through the route of create namespace -> deploy application
@@ -54,13 +54,13 @@ public class ProgramGenerationStageTest {
     Location namespaceLocation = lf.create(DefaultId.APPLICATION.getNamespace());
     Locations.mkdirsIfNotExists(namespaceLocation);
     LocationFactory jarLf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
-    Location appArchive = AppJarHelper.createDeploymentJar(jarLf, ToyApp.class);
-    ApplicationSpecification appSpec = Specifications.from(new ToyApp());
+    Location appArchive = AppJarHelper.createDeploymentJar(jarLf, AllProgramsApp.class);
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage();
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
-    pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("ToyApp", "1.0"), appArchive,
+    pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("AllProgramApp", "1.0"), appArchive,
                                                DefaultId.APPLICATION, newSpec, null,
                                                ApplicationDeployScope.USER));
     Assert.assertTrue(true);

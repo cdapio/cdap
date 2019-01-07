@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,39 +16,31 @@
 
 package co.cask.cdap.test.app;
 
-import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
 
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
  * An application for testing bytecode generated classes ClassLoading behavior.
- * In specific, it tests DatumWriter in Flow and HttpHandler in Service.
+ * In specific, it tests HttpHandler in Service.
  */
 public class ClassLoaderTestApp extends AbstractApplication {
 
   @Override
   public void configure() {
     createDataset("records", KeyValueTable.class);
-    addFlow(new BasicFlow());
-    addService("RecordQuery", new RecordQueryHandler());
+    addService("RecordHandler", new RecordHandler());
   }
 
   /**
@@ -74,50 +66,18 @@ public class ClassLoaderTestApp extends AbstractApplication {
     }
   }
 
-  public static final class BasicFlow extends AbstractFlow {
-
-    @Override
-    protected void configure() {
-      setName("BasicFlow");
-      setDescription("BasicFlow");
-      addFlowlet(new Source());
-      addFlowlet(new Sink());
-      connect(new Source(), new Sink());
-    }
-  }
-
-  public static final class Source extends AbstractFlowlet {
-    private OutputEmitter<List<Record>> output;
-    private Random random = new Random();
-
-    @Tick(delay = 1L, unit = TimeUnit.MILLISECONDS)
-    public void generate() {
-      // Emit PUBLIC or PRIVATE type randomly
-      List<Record> records = Lists.newArrayList();
-      for (int i = 0; i < 10; i++) {
-        records.add(new Record(Record.Type.values()[random.nextInt(Record.Type.values().length)]));
-      }
-      output.emit(records);
-    }
-  }
-
-  public static final class Sink extends AbstractFlowlet {
+  public static final class RecordHandler extends AbstractHttpServiceHandler {
 
     @UseDataSet("records")
     private KeyValueTable records;
 
-    @ProcessInput
-    public void process(List<Record> inputs) {
-      for (Record record : inputs) {
-        records.increment(Bytes.toBytes(record.getType().name()), 1L);
-      }
+    @POST
+    @Path("/increment/{type}")
+    public void increment(HttpServiceRequest request, HttpServiceResponder responder,
+                          @PathParam("type") String type) {
+      records.increment(Bytes.toBytes(new Record(type).getType().name()), 1L);
+      responder.sendStatus(200);
     }
-  }
-
-  public static final class RecordQueryHandler extends AbstractHttpServiceHandler {
-
-    @UseDataSet("records")
-    private KeyValueTable records;
 
     @GET
     @Path("/query")

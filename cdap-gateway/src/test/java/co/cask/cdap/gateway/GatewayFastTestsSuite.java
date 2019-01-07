@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.PingHandlerTestRun;
 import co.cask.cdap.gateway.handlers.RuntimeArgumentTestRun;
 import co.cask.cdap.gateway.handlers.hooks.MetricsReporterHookTestRun;
-import co.cask.cdap.gateway.run.StreamWriterTestRun;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.Files;
 import org.apache.http.Header;
@@ -55,8 +54,7 @@ import java.io.IOException;
 @Suite.SuiteClasses(value = {
   PingHandlerTestRun.class,
   MetricsReporterHookTestRun.class,
-  RuntimeArgumentTestRun.class,
-  StreamWriterTestRun.class
+  RuntimeArgumentTestRun.class
 })
 
 public class GatewayFastTestsSuite {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.client.app.DatasetWriterService;
 import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
@@ -28,12 +28,15 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.SingletonExternalResource;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -42,7 +45,10 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -60,7 +66,7 @@ public class QueryClientTest extends AbstractClientTest {
   private QueryClient queryClient;
   private NamespaceClient namespaceClient;
   private ProgramClient programClient;
-  private StreamClient streamClient;
+  private ServiceClient serviceClient;
   private ExploreClient exploreClient;
 
   @Override
@@ -75,7 +81,7 @@ public class QueryClientTest extends AbstractClientTest {
     appClient = new ApplicationClient(clientConfig);
     queryClient = new QueryClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
-    streamClient = new StreamClient(clientConfig);
+    serviceClient = new ServiceClient(clientConfig);
     String accessToken = (clientConfig.getAccessToken() == null) ? null : clientConfig.getAccessToken().getValue();
     ConnectionConfig connectionConfig = clientConfig.getConnectionConfig();
     exploreClient = new FixedAddressExploreClient(connectionConfig.getHostname(), connectionConfig.getPort(),
@@ -91,20 +97,24 @@ public class QueryClientTest extends AbstractClientTest {
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
 
     ApplicationId app = namespace.app(FakeApp.NAME);
-    FlowId flow = app.flow(FakeFlow.NAME);
+    ServiceId service = app.service(DatasetWriterService.NAME);
     DatasetId dataset = namespace.dataset(FakeApp.DS_NAME);
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
 
     try {
-      programClient.start(flow);
-      assertProgramRunning(programClient, flow);
+      programClient.start(service);
+      assertProgramRunning(programClient, service);
 
-      StreamId stream = namespace.stream(FakeApp.STREAM_NAME);
-      streamClient.sendEvent(stream, "bob:123");
-      streamClient.sendEvent(stream, "joe:321");
+      // Write some data through the service
+      Map<String, String> data = new HashMap<>();
+      data.put("bob", "123");
+      data.put("joe", "321");
 
-      Thread.sleep(3000);
+      URL writeURL = new URL(serviceClient.getServiceURL(service), "write");
+      HttpResponse response = HttpRequests.execute(HttpRequest.post(writeURL)
+                                                     .withBody(new Gson().toJson(data)).build());
+      Assert.assertEquals(200, response.getResponseCode());
 
       executeBasicQuery(namespace, FakeApp.DS_NAME);
 
@@ -126,8 +136,8 @@ public class QueryClientTest extends AbstractClientTest {
         // expected
       }
     } finally {
-      programClient.stop(flow);
-      assertProgramStopped(programClient, flow);
+      programClient.stop(service);
+      assertProgramStopped(programClient, service);
 
       try {
         appClient.delete(app);

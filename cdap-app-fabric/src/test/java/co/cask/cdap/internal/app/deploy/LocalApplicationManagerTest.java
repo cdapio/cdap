@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,13 @@
 
 package co.cask.cdap.internal.app.deploy;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.ToyApp;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -31,6 +33,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -43,6 +46,11 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -92,21 +100,31 @@ public class LocalApplicationManagerTest {
    */
   @Test
   public void testGoodPipeline() throws Exception {
-    Location deployedJar = AppJarHelper.createDeploymentJar(lf, ToyApp.class);
-    ArtifactId artifactId = new ArtifactId("toyapp", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
+    Location deployedJar = AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class);
+    ArtifactId artifactId = new ArtifactId("app", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   ToyApp.class.getName(), null, null, null);
+                                                   AllProgramsApp.class.getName(), null, null, null);
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(info).get();
 
-    Assert.assertEquals(input.getPrograms().iterator().next().getProgramId().getType(), ProgramType.FLOW);
-    Assert.assertEquals(input.getPrograms().iterator().next().getProgramId().getProgram(), "ToyFlow");
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Validate that all programs are being captured by the deployment pipeline
+    Map<ProgramType, Set<String>> programByTypes = new HashMap<>();
+    for (ProgramDescriptor desc : input.getPrograms()) {
+      ProgramId programId = desc.getProgramId();
+      programByTypes.computeIfAbsent(programId.getType(), k -> new HashSet<>()).add(programId.getProgram());
+    }
+    for (co.cask.cdap.api.app.ProgramType programType : co.cask.cdap.api.app.ProgramType.values()) {
+      Assert.assertEquals(appSpec.getProgramsByType(programType),
+                          programByTypes.getOrDefault(ProgramType.valueOf(programType.name()), Collections.emptySet()));
+    }
   }
 
   @Test
   public void testValidConfigPipeline() throws Exception {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
-    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
+    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
     ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.WordCountApp;
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.store.Store;
@@ -114,66 +114,71 @@ public class PreferencesHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testApplication() throws Exception {
-    addApplication(TEST_NAMESPACE1, new WordCountApp());
+    String appName = AllProgramsApp.NAME;
+
+    addApplication(TEST_NAMESPACE1, new AllProgramsApp());
     Map<String, String> propMap = Maps.newHashMap();
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), false, 200));
-    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), true, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), false, 200));
+    Assert.assertEquals(propMap, getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200));
     getPreferences(getPreferenceURI(TEST_NAMESPACE1, "InvalidAppName"), false, 404);
     setPreferences(getPreferenceURI(), ImmutableMap.of("k1", "instance"), 200);
     setPreferences(getPreferenceURI(TEST_NAMESPACE1), ImmutableMap.of("k1", "namespace"), 200);
-    setPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), ImmutableMap.of("k1", "application"), 200);
+    setPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), ImmutableMap.of("k1", "application"), 200);
     Assert.assertEquals("application",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), false, 200).get("k1"));
+                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), false, 200).get("k1"));
     Assert.assertEquals("application",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), true, 200).get("k1"));
+                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
     Assert.assertEquals("namespace", getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200).get("k1"));
     Assert.assertEquals("namespace", getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200).get("k1"));
     Assert.assertEquals("instance", getPreferences(getPreferenceURI(), true, 200).get("k1"));
     Assert.assertEquals("instance", getPreferences(getPreferenceURI(), false, 200).get("k1"));
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), 200);
+    deletePreferences(getPreferenceURI(TEST_NAMESPACE1, appName), 200);
     Assert.assertEquals("namespace",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), true, 200).get("k1"));
-    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), false, 200).get("k1"));
+                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
+    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), false, 200).get("k1"));
     deletePreferences(getPreferenceURI(TEST_NAMESPACE1), 200);
     Assert.assertEquals("instance",
-                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), true, 200).get("k1"));
+                        getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
     Assert.assertEquals("instance",
                         getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200).get("k1"));
     Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1), false, 200).get("k1"));
     deletePreferences(getPreferenceURI(), 200);
     Assert.assertNull(getPreferences(getPreferenceURI(), true, 200).get("k1"));
     Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1), true, 200).get("k1"));
-    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1, "WordCountApp"), true, 200).get("k1"));
+    Assert.assertNull(getPreferences(getPreferenceURI(TEST_NAMESPACE1, appName), true, 200).get("k1"));
   }
 
   @Test
   public void testProgram() throws Exception {
-    addApplication(TEST_NAMESPACE2, new WordCountApp());
+    String appName = AllProgramsApp.NAME;
+    String serviceName = AllProgramsApp.NoOpService.NAME;
+
+    addApplication(TEST_NAMESPACE2, new AllProgramsApp());
     Map<String, String> propMap = Maps.newHashMap();
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), false, 200));
-    getPreferences(getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "invalidType", "somename"), false, 400);
-    getPreferences(getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "somename"), false, 404);
+      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
+    getPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "invalidType", "somename"), false, 400);
+    getPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", "somename"), false, 404);
     propMap.put("k1", "k349*&#$");
-    setPreferences(getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), propMap, 200);
+    setPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), propMap, 200);
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), false, 200));
+      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
     propMap.put("k1", "instance");
     setPreferences(getPreferenceURI(), propMap, 200);
     Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), true, 200));
     propMap.put("k1", "k349*&#$");
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), false, 200));
-    deletePreferences(getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), 200);
+      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
+    deletePreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), 200);
     propMap.put("k1", "instance");
-    Assert.assertEquals(0, getPreferences(getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"),
+    Assert.assertEquals(0, getPreferences(getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName),
                                           false, 200).size());
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), true, 200));
+      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), true, 200));
     deletePreferences(getPreferenceURI(), 200);
     propMap.clear();
     Assert.assertEquals(propMap, getPreferences(
-      getPreferenceURI(TEST_NAMESPACE2, "WordCountApp", "flows", "WordCountFlow"), false, 200));
+      getPreferenceURI(TEST_NAMESPACE2, appName, "services", serviceName), false, 200));
     Assert.assertEquals(propMap, getPreferences(getPreferenceURI(), false, 200));
   }
 

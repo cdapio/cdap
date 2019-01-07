@@ -22,7 +22,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
@@ -65,137 +64,9 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LineageHttpHandlerTestRun.class);
 
   @Test
-  public void testFlowLineage() throws Exception {
-    NamespaceId namespace = new NamespaceId("testFlowLineage");
-    ApplicationId app = namespace.app(AllProgramsApp.NAME);
-    ProgramId flow = app.flow(AllProgramsApp.NoOpFlow.NAME);
-    DatasetId dataset = namespace.dataset(AllProgramsApp.DATASET_NAME);
-    StreamId stream = namespace.stream(AllProgramsApp.STREAM_NAME);
-
-    namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
-    try {
-      appClient.deploy(namespace, createAppJarFile(AllProgramsApp.class));
-
-      // Add metadata to applicaton
-      ImmutableMap<String, String> appProperties = ImmutableMap.of("app-key1", "app-value1");
-      addProperties(app, appProperties);
-      Assert.assertEquals(appProperties, getProperties(app, MetadataScope.USER));
-      ImmutableSet<String> appTags = ImmutableSet.of("app-tag1");
-      addTags(app, appTags);
-      Assert.assertEquals(appTags, getTags(app, MetadataScope.USER));
-
-      // Add metadata to flow
-      ImmutableMap<String, String> flowProperties = ImmutableMap.of("flow-key1", "flow-value1");
-      addProperties(flow, flowProperties);
-      Assert.assertEquals(flowProperties, getProperties(flow, MetadataScope.USER));
-      ImmutableSet<String> flowTags = ImmutableSet.of("flow-tag1", "flow-tag2");
-      addTags(flow, flowTags);
-      Assert.assertEquals(flowTags, getTags(flow, MetadataScope.USER));
-
-      // Add metadata to dataset
-      ImmutableMap<String, String> dataProperties = ImmutableMap.of("data-key1", "data-value1");
-      addProperties(dataset, dataProperties);
-      Assert.assertEquals(dataProperties, getProperties(dataset, MetadataScope.USER));
-      ImmutableSet<String> dataTags = ImmutableSet.of("data-tag1", "data-tag2");
-      addTags(dataset, dataTags);
-      Assert.assertEquals(dataTags, getTags(dataset, MetadataScope.USER));
-
-      // Add metadata to stream
-      ImmutableMap<String, String> streamProperties = ImmutableMap.of("stream-key1", "stream-value1");
-      addProperties(stream, streamProperties);
-      Assert.assertEquals(streamProperties, getProperties(stream, MetadataScope.USER));
-      ImmutableSet<String> streamTags = ImmutableSet.of("stream-tag1", "stream-tag2");
-      addTags(stream, streamTags);
-      Assert.assertEquals(streamTags, getTags(stream, MetadataScope.USER));
-
-      long startTime = TimeMathParser.nowInSeconds();
-      RunId flowRunId = runAndWait(flow);
-      // Wait for few seconds so that the stop time secs is more than start time secs.
-      TimeUnit.SECONDS.sleep(2);
-      waitForStop(flow, true);
-      long stopTime = TimeMathParser.nowInSeconds();
-
-      // Fetch dataset lineage
-      LineageRecord lineage = fetchLineage(dataset, startTime, stopTime, 10);
-
-      LineageRecord expected =
-        LineageSerializer.toLineageRecord(
-          startTime,
-          stopTime,
-          new Lineage(ImmutableSet.of(
-            new Relation(dataset, flow, AccessType.UNKNOWN,
-                         flowRunId,
-                         ImmutableSet.of(flow.flowlet(AllProgramsApp.A.NAME))),
-            new Relation(stream, flow, AccessType.READ,
-                         flowRunId,
-                         ImmutableSet.of(flow.flowlet(AllProgramsApp.A.NAME)))
-          )),
-          Collections.emptySet());
-      Assert.assertEquals(expected, lineage);
-
-      // Fetch dataset lineage with time strings
-      lineage = fetchLineage(dataset, "now-1h", "now+1h", 10);
-      Assert.assertEquals(expected.getRelations(), lineage.getRelations());
-
-      // Fetch stream lineage
-      lineage = fetchLineage(stream, startTime, stopTime, 10);
-      // same as dataset's lineage
-      Assert.assertEquals(expected, lineage);
-
-      // Fetch stream lineage with time strings
-      lineage = fetchLineage(stream, "now-1h", "now+1h", 10);
-      // same as dataset's lineage
-      Assert.assertEquals(expected.getRelations(), lineage.getRelations());
-
-      // Assert metadata
-      // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
-      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, appProperties, appTags),
-                                new MetadataRecord(flow, MetadataScope.USER, flowProperties,
-                                                   flowTags),
-                                new MetadataRecord(dataset, MetadataScope.USER, dataProperties, dataTags),
-                                new MetadataRecord(stream, MetadataScope.USER, streamProperties,
-                                                   streamTags)),
-                          getMetadataForRun(flow.run(flowRunId.getId()).toMetadataEntity()));
-
-      // Assert with a time range after the flow run should return no results
-      long laterStartTime = stopTime + 1000;
-      long laterEndTime = stopTime + 5000;
-      // Fetch stream lineage
-      lineage = fetchLineage(stream, laterStartTime, laterEndTime, 10);
-
-      Assert.assertEquals(
-        LineageSerializer.toLineageRecord(laterStartTime, laterEndTime, new Lineage(ImmutableSet.of()),
-                                          Collections.emptySet()),
-        lineage);
-
-      // Assert with a time range before the flow run should return no results
-      long earlierStartTime = startTime - 5000;
-      long earlierEndTime = startTime - 1000;
-      // Fetch stream lineage
-      lineage = fetchLineage(stream, earlierStartTime, earlierEndTime, 10);
-
-      Assert.assertEquals(
-        LineageSerializer.toLineageRecord(earlierStartTime, earlierEndTime, new Lineage(ImmutableSet.of()),
-                                          Collections.emptySet()),
-        lineage);
-
-      // Test bad time ranges
-      fetchLineage(dataset, "sometime", "sometime", 10, BadRequestException.class);
-      fetchLineage(dataset, "now+1h", "now-1h", 10, BadRequestException.class);
-
-      // Test non-existent run
-      assertRunMetadataNotFound(flow.run(RunIds.generate(1000).getId()));
-    } finally {
-      removeMetadata(stream);
-      namespaceClient.delete(namespace);
-    }
-  }
-
-  @Test
   public void testAllProgramsLineage() throws Exception {
     NamespaceId namespace = new NamespaceId("testAllProgramsLineage");
     ApplicationId app = namespace.app(AllProgramsApp.NAME);
-    ProgramId flow = app.flow(AllProgramsApp.NoOpFlow.NAME);
     ProgramId mapreduce = app.mr(AllProgramsApp.NoOpMR.NAME);
     ProgramId mapreduce2 = app.mr(AllProgramsApp.NoOpMR2.NAME);
     ProgramId spark = app.spark(AllProgramsApp.NoOpSpark.NAME);
@@ -225,7 +96,6 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
       Assert.assertEquals(datasetProperties, getProperties(dataset, MetadataScope.USER));
 
       // Start all programs
-      RunId flowRunId = runAndWait(flow);
       RunId mrRunId = runAndWait(mapreduce);
       RunId mrRunId2 = runAndWait(mapreduce2);
       RunId sparkRunId = runAndWait(spark);
@@ -237,7 +107,6 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
       RunId workerRunId = runAndWait(worker);
 
       // Wait for programs to finish
-      waitForStop(flow, true);
       waitForStop(mapreduce, false);
       waitForStop(mapreduce2, false);
       waitForStop(spark, false);
@@ -258,8 +127,6 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
           now + oneHour,
           new Lineage(ImmutableSet.of(
             // Dataset access
-            new Relation(dataset, flow, AccessType.UNKNOWN, flowRunId,
-                         toSet(flow.flowlet(AllProgramsApp.A.NAME))),
             new Relation(dataset, mapreduce, AccessType.WRITE, mrRunId),
             new Relation(dataset, mapreduce2, AccessType.WRITE, mrRunId2),
             new Relation(dataset2, mapreduce2, AccessType.READ, mrRunId2),
@@ -272,8 +139,6 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
             new Relation(dataset, worker, AccessType.WRITE, workerRunId),
 
             // Stream access
-            new Relation(stream, flow, AccessType.READ, flowRunId,
-                         ImmutableSet.of(flow.flowlet(AllProgramsApp.A.NAME))),
             new Relation(stream, mapreduce, AccessType.READ, mrRunId),
             new Relation(stream, spark, AccessType.READ, sparkRunId),
             new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),
@@ -289,15 +154,6 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
       Assert.assertEquals(expected, lineage);
 
       // Assert metadata
-      // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
-      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, emptyMap(), emptySet()),
-                                new MetadataRecord(flow, MetadataScope.USER, emptyMap(),
-                                                   emptySet()),
-                                new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
-                                                   emptySet()),
-                                new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          getMetadataForRun(flow.run(flowRunId.getId()).toMetadataEntity()));
-
       // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
       ProgramId programForWorker = new ProgramId(worker.getNamespace(), worker.getApplication(), worker.getType(),
                                                  worker.getEntityName());
@@ -330,8 +186,8 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
   public void testLineageInNonExistingNamespace() throws Exception {
     NamespaceId namespace = new NamespaceId("nonExistent");
     ApplicationId app = namespace.app(AllProgramsApp.NAME);
-    ProgramId flow = app.flow(AllProgramsApp.NoOpFlow.NAME);
-    assertRunMetadataNotFound(flow.run(RunIds.generate(1000).getId()));
+    ProgramId mr = app.mr(AllProgramsApp.NoOpMR.NAME);
+    assertRunMetadataNotFound(mr.run(RunIds.generate(1000).getId()));
   }
 
   @Test

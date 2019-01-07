@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -120,9 +120,6 @@ public class MetadataAdminAuthorizationTest {
                      ALICE,
                      Collections.singleton(Action.ADMIN));
     // no auto grant now, need to have privileges on the program to be able to see the programs
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME)),
-                     ALICE,
-                     Collections.singleton(Action.EXECUTE));
     authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
                                                                      AllProgramsApp.NoOpService.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));

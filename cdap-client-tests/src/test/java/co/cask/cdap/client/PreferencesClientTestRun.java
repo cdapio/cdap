@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.XSlowTests;
@@ -201,29 +200,29 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
 
       propMap.put("k1", "program");
-      FlowId flow = FAKE_APP_ID.flow(FakeApp.FLOWS.get(0));
-      client.setProgramPreferences(flow, propMap);
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, true));
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, false));
-      client.deleteProgramPreferences(flow);
+      ServiceId service = FAKE_APP_ID.service(FakeApp.SERVICES.get(0));
+      client.setProgramPreferences(service, propMap);
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
+      client.deleteProgramPreferences(service);
 
       propMap.put("k1", "application");
-      Assert.assertTrue(client.getProgramPreferences(flow, false).isEmpty());
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, true));
+      Assert.assertTrue(client.getProgramPreferences(service, false).isEmpty());
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
       client.deleteApplicationPreferences(FAKE_APP_ID);
 
       propMap.put("k1", "namespace");
       Assert.assertTrue(client.getApplicationPreferences(FAKE_APP_ID, false).isEmpty());
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, true));
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
       client.deleteNamespacePreferences(NamespaceId.DEFAULT);
       propMap.put("k1", "instance");
       Assert.assertTrue(client.getNamespacePreferences(NamespaceId.DEFAULT, false).isEmpty());
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, true));
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, true));
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
       client.deleteInstancePreferences();
       propMap.clear();
@@ -231,7 +230,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, true));
       Assert.assertEquals(propMap, client.getNamespacePreferences(NamespaceId.DEFAULT, true));
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, true));
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, true));
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, true));
 
 
       //Test Deleting Application
@@ -240,8 +239,8 @@ public class PreferencesClientTestRun extends ClientTestBase {
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
 
       propMap.put("k1", "program");
-      client.setProgramPreferences(flow, propMap);
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, false));
+      client.setProgramPreferences(service, propMap);
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
 
       appClient.delete(FAKE_APP_ID);
       // deleting the app should have deleted the preferences that were stored. so deploy the app and check
@@ -250,7 +249,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       appClient.deploy(NamespaceId.DEFAULT, jarFile);
       propMap.clear();
       Assert.assertEquals(propMap, client.getApplicationPreferences(FAKE_APP_ID, false));
-      Assert.assertEquals(propMap, client.getProgramPreferences(flow, false));
+      Assert.assertEquals(propMap, client.getProgramPreferences(service, false));
     } finally {
       try {
         appClient.delete(FAKE_APP_ID);

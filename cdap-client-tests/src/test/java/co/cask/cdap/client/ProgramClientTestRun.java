@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 
 package co.cask.cdap.client;
 
+import co.cask.cdap.client.app.DatasetWriterService;
 import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.utils.Tasks;
@@ -25,12 +25,9 @@ import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
-import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
@@ -41,7 +38,6 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -68,16 +64,16 @@ public class ProgramClientTestRun extends ClientTestBase {
   public void testBatchProgramCalls() throws Exception {
     final NamespaceId namespace = NamespaceId.DEFAULT;
     final ApplicationId appId = namespace.app(FakeApp.NAME);
-    BatchProgram flow = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
-    BatchProgram service = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
-    BatchProgram missing = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, "not" + FakeFlow.NAME);
+    BatchProgram pingService = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
+    BatchProgram writerService = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, DatasetWriterService.NAME);
+    BatchProgram missing = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, "not" + PingService.NAME);
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
     try {
       // make a batch call to start multiple programs, one of which does not exist
       List<BatchProgramStart> programStarts = ImmutableList.of(
-        new BatchProgramStart(flow),
-        new BatchProgramStart(service),
+        new BatchProgramStart(pingService),
+        new BatchProgramStart(writerService),
         new BatchProgramStart(missing)
       );
       List<BatchProgramResult> results = programClient.start(namespace, programStarts);
@@ -91,13 +87,13 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // wait for all programs to be in RUNNING status
-      assertProgramRuns(programClient, namespace.app(flow.getAppId()).flow(flow.getProgramId()),
+      assertProgramRuns(programClient, namespace.app(pingService.getAppId()).service(pingService.getProgramId()),
                         ProgramRunStatus.RUNNING, 1, 10);
-      assertProgramRuns(programClient, namespace.app(service.getAppId()).service(service.getProgramId()),
+      assertProgramRuns(programClient, namespace.app(writerService.getAppId()).service(writerService.getProgramId()),
                         ProgramRunStatus.RUNNING, 1, 10);
 
       // make a batch call for status of programs, one of which does not exist
-      List<BatchProgram> programs = ImmutableList.of(flow, service, missing);
+      List<BatchProgram> programs = ImmutableList.of(pingService, writerService, missing);
       List<BatchProgramStatus> statusList = programClient.getStatus(namespace, programs);
       // check status is running for programs that exist, and that we get a 404 for the one that doesn't
       for (BatchProgramStatus status : statusList) {
@@ -121,7 +117,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // check programs are in stopped state
-      final List<BatchProgram> stoppedPrograms = ImmutableList.of(flow, service);
+      final List<BatchProgram> stoppedPrograms = ImmutableList.of(pingService, writerService);
       Tasks.waitFor(true, new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
@@ -142,62 +138,6 @@ public class ProgramClientTestRun extends ClientTestBase {
         appClient.delete(appId);
       } catch (Exception e) {
         LOG.error("Error deleting app {} during test cleanup.", appId, e);
-      }
-    }
-  }
-
-  @Test
-  public void testAll() throws Exception {
-    NamespaceId namespace = NamespaceId.DEFAULT;
-    ApplicationId app = namespace.app(FakeApp.NAME);
-    FlowId flow = app.flow(FakeFlow.NAME);
-    FlowletId flowlet = flow.flowlet(FakeFlow.FLOWLET_NAME);
-
-    appClient.deploy(namespace, createAppJarFile(FakeApp.class));
-
-    try {
-      // start, scale, and stop flow
-      verifyProgramNames(FakeApp.FLOWS, appClient.listPrograms(app, ProgramType.FLOW));
-
-      LOG.info("Starting flow");
-      programClient.start(flow);
-      assertProgramRunning(programClient, flow);
-
-      LOG.info("Getting flow history");
-      programClient.getAllProgramRuns(flow, 0, Long.MAX_VALUE, Integer.MAX_VALUE);
-
-      LOG.info("Scaling flowlet");
-      Assert.assertEquals(1, programClient.getFlowletInstances(flowlet));
-      programClient.setFlowletInstances(flowlet, 3);
-      assertFlowletInstances(programClient, flowlet, 3);
-
-      List<BatchProgram> statusRequest = new ArrayList<>();
-      for (ProgramRecord programRecord : appClient.listPrograms(app)) {
-        statusRequest.add(BatchProgram.from(programRecord));
-      }
-      List<BatchProgramStatus> statuses = programClient.getStatus(namespace, statusRequest);
-      for (BatchProgramStatus status : statuses) {
-        if (status.getProgramType() == ProgramType.FLOW && status.getProgramId().equals(FakeFlow.NAME)) {
-          Assert.assertEquals("RUNNING", status.getStatus());
-        } else {
-          Assert.assertEquals("STOPPED", status.getStatus());
-        }
-      }
-
-      LOG.info("Stopping flow");
-      programClient.stop(flow);
-      assertProgramStopped(programClient, flow);
-
-      LOG.info("Starting flow with debug");
-      programClient.start(flow, true);
-      assertProgramRunning(programClient, flow);
-      programClient.stop(flow);
-      assertProgramStopped(programClient, flow);
-    } finally {
-      try {
-        appClient.delete(app);
-      } catch (Exception e) {
-        LOG.error("Error deleting app {} during test cleanup.", app, e);
       }
     }
   }
