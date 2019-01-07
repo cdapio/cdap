@@ -20,7 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.NoopStreamAdmin;
@@ -79,7 +79,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final StreamCoordinatorClient COORDINATOR_CLIENT = new InMemoryStreamCoordinatorClient();
 
-  protected abstract NamespacedLocationFactory getNamespacedLocationFactory();
+  protected abstract NamespacePathLocator getNamespacedLocationFactory();
 
   @BeforeClass
   public static void startUp() {
@@ -149,7 +149,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     final ConcurrentStreamWriter streamWriter = createStreamWriter(streamId, streamAdmin, threads, fileWriterFactory);
 
     int msgCount = 10000;
-    NamespacedLocationFactory locationFactory = getNamespacedLocationFactory();
+    NamespacePathLocator locationFactory = getNamespacedLocationFactory();
     // Half of the threads will be calling appendFile, then other half append event one by one
 
     // Prepare the files first, each file has 10000 events.
@@ -287,7 +287,7 @@ public abstract class ConcurrentStreamWriterTestBase {
     return new LocationStreamFileWriterFactory(cConf, impersonator);
   }
 
-  private FileInfo generateFile(NamespacedLocationFactory locationFactory, int id, int events) throws IOException {
+  private FileInfo generateFile(NamespacePathLocator locationFactory, int id, int events) throws IOException {
     NamespaceId dummyNs = new NamespaceId("dummy");
     Location eventLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
     Location indexLocation = locationFactory.get(dummyNs).append(UUID.randomUUID().toString());
@@ -321,13 +321,13 @@ public abstract class ConcurrentStreamWriterTestBase {
 
   private static final class TestStreamAdmin extends NoopStreamAdmin {
 
-    private final NamespacedLocationFactory namespacedLocationFactory;
+    private final NamespacePathLocator namespacePathLocator;
     private final long partitionDuration;
     private final long indexInterval;
 
-    private TestStreamAdmin(NamespacedLocationFactory namespacedLocationFactory, long partitionDuration,
+    private TestStreamAdmin(NamespacePathLocator namespacePathLocator, long partitionDuration,
                             long indexInterval) {
-      this.namespacedLocationFactory = namespacedLocationFactory;
+      this.namespacePathLocator = namespacePathLocator;
       this.partitionDuration = partitionDuration;
       this.indexInterval = indexInterval;
     }
@@ -339,7 +339,7 @@ public abstract class ConcurrentStreamWriterTestBase {
 
     @Override
     public StreamConfig getConfig(StreamId streamId) throws IOException {
-      Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacedLocationFactory, streamId);
+      Location streamLocation = StreamFileTestUtils.getStreamBaseLocation(namespacePathLocator, streamId);
       return new StreamConfig(streamId, partitionDuration, indexInterval, Long.MAX_VALUE, streamLocation, null, 1000);
     }
   }

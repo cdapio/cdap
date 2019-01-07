@@ -23,8 +23,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.lang.FilterClassLoader;
@@ -135,7 +135,7 @@ public class ContextManager {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
       new ZKDiscoveryModule(),
       new DataFabricModules("cdap.explore.ContextManager").getDistributedModules(),

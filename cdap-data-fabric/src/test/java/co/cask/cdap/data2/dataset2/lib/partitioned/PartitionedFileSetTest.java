@@ -34,7 +34,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.test.SlowTests;
@@ -122,7 +122,7 @@ public class PartitionedFileSetTest {
     group = UserGroupInformation.getCurrentUser().getPrimaryGroupName();
     tablePermissions = ImmutableMap.of("@" + group, "RWX");
     // determine the default permissions of created directories (we want to test with different perms)
-    Location loc = dsFrameworkUtil.getInjector().getInstance(NamespacedLocationFactory.class)
+    Location loc = dsFrameworkUtil.getInjector().getInstance(NamespacePathLocator.class)
       .get(DatasetFrameworkTestUtil.NAMESPACE2_ID);
     loc.mkdirs();
     loc = loc.append("permcheckfile");

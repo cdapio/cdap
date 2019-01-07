@@ -24,7 +24,7 @@ import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -68,7 +68,7 @@ import java.io.IOException;
 public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
   private static LocationFactory locationFactory;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
   private static StreamAdmin streamAdmin;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
@@ -84,7 +84,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       Modules.override(new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
@@ -122,7 +122,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
     locationFactory = injector.getInstance(LocationFactory.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     janitor = injector.getInstance(StreamFileJanitor.class);
@@ -144,8 +144,8 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   }
 
   @Override
-  protected NamespacedLocationFactory getNamespacedLocationFactory() {
-    return namespacedLocationFactory;
+  protected NamespacePathLocator getNamespacedLocationFactory() {
+    return namespacePathLocator;
   }
 
   @Override

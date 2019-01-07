@@ -81,7 +81,7 @@ public class DefaultPreviewManagerTest {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new MetricsHandlerModule(),

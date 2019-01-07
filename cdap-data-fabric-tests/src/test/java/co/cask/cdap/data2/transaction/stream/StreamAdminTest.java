@@ -23,7 +23,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -92,9 +92,9 @@ public abstract class StreamAdminTest {
 
   protected abstract OwnerAdmin getOwnerAdmin();
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(FOO_NAMESPACE).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
+  protected static void setupNamespaces(NamespacePathLocator namespacePathLocator) throws IOException {
+    namespacePathLocator.get(FOO_NAMESPACE).mkdirs();
+    namespacePathLocator.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @ClassRule

@@ -97,7 +97,7 @@ public class InMemoryExploreServiceTest {
         new ConfigModule(configuration, hConf),
         new IOModule(),
         new InMemoryDiscoveryModule(),
-        new NonCustomLocationUnitTestModule().getModule(),
+        new NonCustomLocationUnitTestModule(),
         new DataFabricModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
         new DataSetServiceModules().getInMemoryModules(),

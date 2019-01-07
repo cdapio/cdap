@@ -43,7 +43,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.common.utils.OSDetector;
@@ -252,7 +252,7 @@ public class TestBase {
       new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
       new IOModule(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),

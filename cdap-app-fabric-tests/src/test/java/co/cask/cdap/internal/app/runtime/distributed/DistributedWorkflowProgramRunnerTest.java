@@ -36,7 +36,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.id.Id;
@@ -274,7 +274,7 @@ public class DistributedWorkflowProgramRunnerTest {
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new LocalLogAppenderModule(),
-      new LocationRuntimeModule().getStandaloneModules(),
+      new LocalLocationModule(),
       new IOModule(),
       new KafkaClientModule(),
       new DataSetServiceModules().getDistributedModules(),

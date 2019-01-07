@@ -37,7 +37,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -162,7 +162,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final MapReduceSpecification specification;
   private final Location programJarLocation;
   private final BasicMapReduceContext context;
-  private final NamespacedLocationFactory locationFactory;
+  private final NamespacePathLocator locationFactory;
   private final StreamAdmin streamAdmin;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
@@ -179,7 +179,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           final MapReduce mapReduce, MapReduceSpecification specification,
                           final BasicMapReduceContext context, Location programJarLocation,
-                          NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
+                          NamespacePathLocator locationFactory, StreamAdmin streamAdmin,
                           AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                           FieldLineageWriter fieldLineageWriter, ClusterMode clusterMode) {
     this.injector = injector;

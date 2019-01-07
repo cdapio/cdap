@@ -32,9 +32,9 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 
 /**
- * Tests for {@link DefaultNamespacedLocationFactory}.
+ * Tests for {@link DefaultNamespacePathLocator}.
  */
-public class DefaultNamespacedLocationFactoryTest {
+public class DefaultNamespacePathLocatorTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -54,11 +54,11 @@ public class DefaultNamespacedLocationFactoryTest {
     nsAdmin.create(ns1NSMeta);
 
     CConfiguration cConf = CConfiguration.create();
-    NamespacedLocationFactory namespacedLocationFactory =
-      new DefaultNamespacedLocationFactory(cConf, locationFactory, nsAdmin);
+    NamespacePathLocator namespacePathLocator =
+      new DefaultNamespacePathLocator(cConf, locationFactory, nsAdmin);
 
-    Location defaultLoc = namespacedLocationFactory.get(NamespaceId.DEFAULT);
-    Location ns1Loc = namespacedLocationFactory.get(ns1);
+    Location defaultLoc = namespacePathLocator.get(NamespaceId.DEFAULT);
+    Location ns1Loc = namespacePathLocator.get(ns1);
 
     // check if location was as expected
     Location expectedLocation = locationFactory.create(cConf.get(Constants.Namespace.NAMESPACES_DIR))
@@ -71,8 +71,8 @@ public class DefaultNamespacedLocationFactoryTest {
     Assert.assertNotEquals(defaultLoc, ns1Loc);
 
     // test subdirectories in a namespace
-    Location sub1 = namespacedLocationFactory.get(ns1).append("sub1");
-    Location sub2 = namespacedLocationFactory.get(ns1).append("sub2");
+    Location sub1 = namespacePathLocator.get(ns1).append("sub1");
+    Location sub2 = namespacePathLocator.get(ns1).append("sub2");
     Assert.assertNotEquals(sub1, sub2);
   }
 }

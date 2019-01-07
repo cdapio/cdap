@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.stream.CoordinatorStreamProperties;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -88,7 +88,7 @@ public class FileStreamAdmin implements StreamAdmin {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
 
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final CConfiguration cConf;
   private final StreamConsumerStateStoreFactory stateStoreFactory;
@@ -105,7 +105,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private AuditPublisher auditPublisher;
 
   @Inject
-  public FileStreamAdmin(NamespacedLocationFactory namespacedLocationFactory,
+  public FileStreamAdmin(NamespacePathLocator namespacePathLocator,
                          CConfiguration cConf,
                          StreamCoordinatorClient streamCoordinatorClient,
                          StreamConsumerStateStoreFactory stateStoreFactory,
@@ -116,7 +116,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          OwnerAdmin ownerAdmin,
                          ExploreTableNaming tableNaming,
                          Impersonator impersonator) {
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
@@ -531,7 +531,7 @@ public class FileStreamAdmin implements StreamAdmin {
    * Returns the location for the given namespace that contains all streams belong to that namespace.
    */
   private Location getStreamBaseLocation(NamespaceId namespace) throws IOException {
-    return namespacedLocationFactory.get(namespace).append(streamBaseDirPath);
+    return namespacePathLocator.get(namespace).append(streamBaseDirPath);
   }
 
   private void doTruncate(final StreamId streamId, final Location streamLocation) throws Exception {

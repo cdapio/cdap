@@ -19,7 +19,7 @@ package co.cask.cdap.messaging.store.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.ConfigurationReader;
@@ -102,6 +102,6 @@ public class HBasePayloadTableTestRun extends PayloadTableTest {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NamespaceAdminTestModule(),
-      new LocationRuntimeModule().getDistributedModules());
+      new DFSLocationModule());
   }
 }

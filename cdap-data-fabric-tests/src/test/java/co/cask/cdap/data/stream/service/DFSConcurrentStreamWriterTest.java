@@ -17,8 +17,8 @@
 package co.cask.cdap.data.stream.service;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
+import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.twill.filesystem.FileContextLocationFactory;
@@ -33,7 +33,7 @@ import java.io.IOException;
  */
 public class DFSConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBase {
 
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
   private static MiniDFSCluster dfsCluster;
 
 
@@ -44,7 +44,7 @@ public class DFSConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBas
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     LocationFactory locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    namespacedLocationFactory = new NoLookupNamespacedLocationFactory(CConfiguration.create(), locationFactory);
+    namespacePathLocator = new NoLookupNamespacePathLocator(CConfiguration.create(), locationFactory);
 
   }
 
@@ -54,7 +54,7 @@ public class DFSConcurrentStreamWriterTest extends ConcurrentStreamWriterTestBas
   }
 
   @Override
-  protected NamespacedLocationFactory getNamespacedLocationFactory() {
-    return namespacedLocationFactory;
+  protected NamespacePathLocator getNamespacedLocationFactory() {
+    return namespacePathLocator;
   }
 }

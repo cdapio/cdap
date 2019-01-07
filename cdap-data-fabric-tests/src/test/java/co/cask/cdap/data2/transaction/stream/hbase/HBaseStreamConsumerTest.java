@@ -21,8 +21,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
@@ -113,7 +113,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),
@@ -155,7 +155,7 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(TEST_NAMESPACE));
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(OTHER_NAMESPACE));
-    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacePathLocator.class));
   }
 
   @AfterClass

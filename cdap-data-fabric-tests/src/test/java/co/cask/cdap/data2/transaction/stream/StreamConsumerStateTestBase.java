@@ -16,7 +16,7 @@
 package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data.stream.StreamFileOffset;
 import co.cask.cdap.data.stream.StreamFileType;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -45,9 +45,9 @@ public abstract class StreamConsumerStateTestBase {
   protected static final NamespaceId TEST_NAMESPACE = new NamespaceId("streamConsumerStateTestNamespace");
   protected static final NamespaceId OTHER_NAMESPACE = new NamespaceId("otherNamespace");
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
-    namespacedLocationFactory.get(TEST_NAMESPACE).mkdirs();
-    namespacedLocationFactory.get(OTHER_NAMESPACE).mkdirs();
+  protected static void setupNamespaces(NamespacePathLocator namespacePathLocator) throws IOException {
+    namespacePathLocator.get(TEST_NAMESPACE).mkdirs();
+    namespacePathLocator.get(OTHER_NAMESPACE).mkdirs();
   }
 
   @Test

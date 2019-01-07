@@ -53,7 +53,7 @@ public abstract class KafkaTestBase {
       .put("log.pipeline.cdap.file.sync.interval.bytes", "5120")
       .build(),
     ImmutableList.of(
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),

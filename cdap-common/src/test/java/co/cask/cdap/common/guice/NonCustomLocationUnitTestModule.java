@@ -15,31 +15,23 @@
  */
 package co.cask.cdap.common.guice;
 
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
+import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
 import co.cask.cdap.proto.NamespaceMeta;
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
-import com.google.inject.util.Modules;
 
 /**
- * Location Factory guice binding for unit tests. These binding are similar to
- * {@link LocationRuntimeModule#getInMemoryModules()} but the {@link NamespacedLocationFactory} is binded to a
- * {@link NoLookupNamespacedLocationFactory} which does not perform {@link NamespaceMeta} lookup like
- * {@link DefaultNamespacedLocationFactory} and hence in unit tests the namespace does not need to be created to get
+ * Location Factory guice binding for unit tests. It extends from the
+ * {@link LocalLocationModule}, and also defines the {@link NamespacePathLocator} binding to
+ * {@link NoLookupNamespacePathLocator}, which does not perform {@link NamespaceMeta} lookup like
+ * {@link DefaultNamespacePathLocator} and hence in unit tests the namespace does not need to be created to get
  * namespaces locations.
  */
-public class NonCustomLocationUnitTestModule {
-  public Module getModule() {
+public class NonCustomLocationUnitTestModule extends LocalLocationModule {
 
-    return Modules.override(new LocationRuntimeModule().getInMemoryModules()).with(
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(NamespacedLocationFactory.class).to(NoLookupNamespacedLocationFactory.class);
-        }
-      }
-    );
+  @Override
+  protected void configure() {
+    super.configure();
+    bind(NamespacePathLocator.class).to(NoLookupNamespacePathLocator.class);
   }
 }

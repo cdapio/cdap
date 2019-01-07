@@ -59,7 +59,7 @@ public class SystemDatasetDefinitionTest {
   public static void createInjector() {
     injector = Guice.createInjector(
       new ConfigModule(CConfiguration.create()),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules());
   }
 

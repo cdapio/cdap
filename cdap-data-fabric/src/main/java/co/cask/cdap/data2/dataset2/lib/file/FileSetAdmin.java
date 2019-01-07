@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.Updatable;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -47,11 +47,11 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
   private final CConfiguration cConf;
   private final DatasetContext datasetContext;
   private final LocationFactory locationFactory;
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
 
   FileSetAdmin(DatasetContext datasetContext, CConfiguration cConf,
                LocationFactory locationFactory,
-               NamespacedLocationFactory namespacedLocationFactory,
+               NamespacePathLocator namespacePathLocator,
                DatasetSpecification spec) throws IOException {
 
     this.spec = spec;
@@ -59,11 +59,11 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     this.useExisting = FileSetProperties.isUseExisting(spec.getProperties());
     this.possessExisting = FileSetProperties.isPossessExisting(spec.getProperties());
     this.baseLocation = FileSetDataset.determineBaseLocation(datasetContext, cConf, spec,
-                                                             locationFactory, namespacedLocationFactory);
+                                                             locationFactory, namespacePathLocator);
     this.datasetContext = datasetContext;
     this.cConf = cConf;
     this.locationFactory = locationFactory;
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
   }
 
   @Override
@@ -172,7 +172,7 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
     // all we need to do is therefore to move it to the new base location if that location has changed
     if (isExternal && !FileSetProperties.isDataExternal(oldSpec.getProperties())) {
       Location oldBaseLocation = FileSetDataset.determineBaseLocation(
-        datasetContext, cConf, oldSpec, locationFactory, namespacedLocationFactory);
+        datasetContext, cConf, oldSpec, locationFactory, namespacePathLocator);
       if (!baseLocation.equals(oldBaseLocation)) {
         oldBaseLocation.renameTo(baseLocation);
       }

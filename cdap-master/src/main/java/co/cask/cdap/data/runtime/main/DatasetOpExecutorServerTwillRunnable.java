@@ -21,9 +21,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -109,7 +109,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new KafkaClientModule(),
       new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),

@@ -21,7 +21,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -73,7 +73,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
       new DataFabricModules().getInMemoryModules(),
       new ExploreClientModule(),
       new InMemoryDiscoveryModule(),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocalLocationModule(),
       new NamespaceAdminTestModule(),
       new NamespaceStoreModule().getStandaloneModules(),
       new AuthorizationTestModule(),

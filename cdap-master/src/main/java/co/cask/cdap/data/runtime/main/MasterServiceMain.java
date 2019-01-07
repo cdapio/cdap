@@ -28,10 +28,10 @@ import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.FileContextProvider;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.io.URLConnections;
@@ -554,7 +554,7 @@ public class MasterServiceMain extends DaemonMain {
         }
       },
       new KafkaLogAppenderModule(),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new IOModule(),
       new ZKDiscoveryModule(),
       new KafkaClientModule(),

@@ -123,7 +123,7 @@ public class TransactionServiceTest {
       new ConfigModule(cConf),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionMetricsModule(),
       new AbstractModule() {
         @Override
@@ -250,7 +250,7 @@ public class TransactionServiceTest {
 
     final Injector injector =
       Guice.createInjector(new ConfigModule(cConf, hConf),
-                           new NonCustomLocationUnitTestModule().getModule(),
+                           new NonCustomLocationUnitTestModule(),
                            new ZKClientModule(),
                            new ZKDiscoveryModule(),
                            new TransactionMetricsModule(),

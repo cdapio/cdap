@@ -49,7 +49,7 @@ public class InMemoryMetricsTableTest extends MetricsTableTest {
   public static void setup() {
     Injector injector = Guice.createInjector(
       new ConfigModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new DataFabricModules().getInMemoryModules(),
       new TransactionMetricsModule(),

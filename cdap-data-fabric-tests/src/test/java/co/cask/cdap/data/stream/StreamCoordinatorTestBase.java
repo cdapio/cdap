@@ -16,7 +16,7 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.StreamProperties;
@@ -53,10 +53,10 @@ public abstract class StreamCoordinatorTestBase {
 
   protected abstract StreamAdmin getStreamAdmin();
 
-  protected static void setupNamespaces(NamespacedLocationFactory namespacedLocationFactory) throws IOException {
+  protected static void setupNamespaces(NamespacePathLocator namespacePathLocator) throws IOException {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
-    namespacedLocationFactory.get(NamespaceId.DEFAULT).mkdirs();
+    namespacePathLocator.get(NamespaceId.DEFAULT).mkdirs();
   }
 
   @Test

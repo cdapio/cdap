@@ -24,7 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -45,7 +45,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
   private static CConfiguration cConf;
   private static NamespaceAdmin namespaceAdmin;
   private static LocationFactory baseLocationFactory;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -57,8 +57,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     baseLocationFactory = getInjector().getInstance(LocationFactory.class);
-    namespacedLocationFactory =
-      getInjector().getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator =
+      getInjector().getInstance(NamespacePathLocator.class);
   }
 
   @Test
@@ -357,7 +357,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // create a namespace with default settings, validate that data dir exists and has
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd1").build());
 
-    Location homeDir = namespacedLocationFactory.get(new NamespaceId("dd1"));
+    Location homeDir = namespacePathLocator.get(new NamespaceId("dd1"));
     Location dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     Location tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
     Location streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
@@ -379,7 +379,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // create and validate a namespace with a default settings except that a group is configured
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("dd2").setGroupName(nsGroup).build());
 
-    homeDir = namespacedLocationFactory.get(new NamespaceId("dd2"));
+    homeDir = namespacePathLocator.get(new NamespaceId("dd2"));
     dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
     streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));

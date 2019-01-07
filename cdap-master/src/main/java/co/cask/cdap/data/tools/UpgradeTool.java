@@ -27,8 +27,8 @@ import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -193,7 +193,7 @@ public class UpgradeTool {
   Injector createInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new MessagingClientModule(),

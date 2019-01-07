@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
 import co.cask.cdap.proto.id.DatasetId;
@@ -130,7 +130,7 @@ public class FileSetTest {
     dsFrameworkUtil.createInstance("fileSet", OTHER_NAMESPACE.dataset("dummy"), DatasetProperties.EMPTY);
 
     // determine the default permissions of created directories (we want to test with different perms)
-    String defaultPermissions = dsFrameworkUtil.getInjector().getInstance(NamespacedLocationFactory.class)
+    String defaultPermissions = dsFrameworkUtil.getInjector().getInstance(NamespacePathLocator.class)
       .get(OTHER_NAMESPACE).getPermissions();
     if (fsPermissions.equals(defaultPermissions)) {
       // swap the permissions so we can test with different file set permissions than the default

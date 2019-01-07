@@ -18,14 +18,16 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.inject.ImplementedBy;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 
 /**
- * Interface for managing locations in a namespace
+ * Interface for retrieving namespace {@link Location} based on namespace metadata.
  */
-public interface NamespacedLocationFactory {
+@ImplementedBy(DefaultNamespacePathLocator.class)
+public interface NamespacePathLocator {
 
   /**
    * Returns the base {@link Location} for the specified namespace on the filesystem

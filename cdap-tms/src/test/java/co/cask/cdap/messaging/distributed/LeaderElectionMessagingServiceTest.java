@@ -22,7 +22,7 @@ import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
@@ -244,7 +244,7 @@ public class LeaderElectionMessagingServiceTest {
       new ConfigModule(cConf),
       new ZKClientModule(),
       new ZKDiscoveryModule(),
-      new LocationRuntimeModule().getDistributedModules(),
+      new DFSLocationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

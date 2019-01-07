@@ -25,7 +25,7 @@ import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -159,7 +159,7 @@ public class BaseHiveExploreServiceTest {
   protected static NamespaceAdmin namespaceAdmin;
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
 
   protected static Injector injector;
 
@@ -223,7 +223,7 @@ public class BaseHiveExploreServiceTest {
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
 
     // create namespaces
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
@@ -258,7 +258,7 @@ public class BaseHiveExploreServiceTest {
    * Create a namespace because app fabric is not started in explore tests.
    */
   protected static void createNamespace(NamespaceId namespaceId) throws Exception {
-    namespacedLocationFactory.get(namespaceId).mkdirs();
+    namespacePathLocator.get(namespaceId).mkdirs();
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId).build();
     namespaceAdmin.create(namespaceMeta);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
@@ -270,7 +270,7 @@ public class BaseHiveExploreServiceTest {
    * Delete a namespace because app fabric is not started in explore tests.
    */
   protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
-    namespacedLocationFactory.get(namespaceId).delete(true);
+    namespacePathLocator.get(namespaceId).delete(true);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
       exploreService.deleteNamespace(namespaceId);
     }
@@ -412,7 +412,7 @@ public class BaseHiveExploreServiceTest {
       new IOModule(),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
@@ -473,7 +473,7 @@ public class BaseHiveExploreServiceTest {
       new IOModule(),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new DataFabricModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),

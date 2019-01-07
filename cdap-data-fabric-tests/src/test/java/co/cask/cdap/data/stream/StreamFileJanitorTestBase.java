@@ -20,7 +20,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -67,7 +67,7 @@ public abstract class StreamFileJanitorTestBase {
 
   protected abstract LocationFactory getLocationFactory();
 
-  protected abstract NamespacedLocationFactory getNamespacedLocationFactory();
+  protected abstract NamespacePathLocator getNamespacedLocationFactory();
 
   protected abstract StreamAdmin getStreamAdmin();
 
