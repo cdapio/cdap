@@ -1,12 +1,13 @@
 /* eslint react/prop-types: 0 */
 import React from 'react';
-import { Button, Modal, ModalBody, ModalFooter } from 'reactstrap';
+import { Button, Modal, ModalHeader,  ModalBody, ModalFooter } from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
 import cloneDeep from 'lodash/cloneDeep';
 
 
 import { ListGroup, ListGroupItem } from 'reactstrap';
 import CheckList from '../CheckList';
+import { toCamelCase } from '../util';
 
 require('./SchemaSelectorModal.scss');
 
@@ -57,17 +58,19 @@ class SchemaSelectorModal extends React.Component {
 
   render() {
     let columns = isEmpty(this.state.selectedSchema) ? [] : this.state.selectedSchema.schemaColumns.map(column => {
-      return { name: column.columnName, description: column.columnType, checked: false };
+      return { name: column.columnName, description: toCamelCase(column.columnType), checked: false };
     });
     this.changedColumnList = new Map();
     return (
       <div>
         <Modal isOpen={this.props.open}
           zIndex='1070'>
+          <ModalHeader>Select Columns</ModalHeader>
           <ModalBody>
             <div className='body-container'>
               <div className='schema-container'>
-                <ListGroup>Schema
+                <div className='schema-header'>Schema</div>
+                <ListGroup>
                   {
                     this.props.dataProvider.map((item) => {
                       return (<ListGroupItem active={item.selected} key = {item.schemaName}
@@ -77,7 +80,21 @@ class SchemaSelectorModal extends React.Component {
                 </ListGroup>
               </div>
               <div className='column-container'>
-                <CheckList dataProvider={columns} title="Select Columns" handleChange={this.handleColumnChange.bind(this)} />
+                 <div className='schema-header'>{"Select Columns: " + (this.state.selectedSchema? this.state.selectedSchema.schemaName : "")}</div>
+                 {
+                   !isEmpty(columns) &&
+                   <div className='column-control'>
+                    <label className='select-all-container'>
+                        <input type="checkbox"/>
+                        Select All
+                    </label>
+                    <div className='column-header'>
+                        <div className='column-name'>Column Name</div>
+                        <div className='column-type'>Type</div>
+                    </div>
+                   </div>
+                 }
+                 <CheckList className = "column-list" dataProvider={columns} handleChange={this.handleColumnChange.bind(this)} />
               </div>
             </div>
           </ModalBody>
