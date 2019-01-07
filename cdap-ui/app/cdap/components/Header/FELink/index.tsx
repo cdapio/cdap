@@ -39,6 +39,9 @@ class FELink extends React.PureComponent<IFELinkProps> {
     return (
       <li
         id="navbar-fe"
+        className={classnames({
+          active: this.isFEActive(),
+        })}
       >
         <NavLinkWrapper
           isNativeLink={false}
@@ -48,6 +51,10 @@ class FELink extends React.PureComponent<IFELinkProps> {
         </NavLinkWrapper>
       </li>
     );
+  }
+
+  protected isFEActive = (location = window.location): boolean => {
+    return (location.pathname.indexOf("featureEngineering") >= 0);
   }
 }
 
