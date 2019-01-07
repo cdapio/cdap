@@ -9,17 +9,20 @@ class GridContainer extends Component {
         super(props);
 
         this.state = {
-            columnDefs: [
-                {headerName: "Make", field: "make", width: 250, checkboxSelection: true},
-                {headerName: "Model", field: "model"},
-                {headerName: "Price", field: "price"}
+          columnDefs:this.props.gridColums,
+          rowData:this.props.rowData
+            // columnDefs:
+            // [
+            //     {headerName: "Make", field: "make", width: 250, checkboxSelection: true},
+            //     {headerName: "Model", field: "model"},
+            //     {headerName: "Price", field: "price"}
 
-            ],
-            rowData: [
-                {make: "Toyota", model: "Celica", price: 35000},
-                {make: "Ford", model: "Mondeo", price: 32000},
-                {make: "Porsche", model: "Boxter", price: 72000}
-            ]
+            // ],
+            // rowData: [
+            //     {make: "Toyota", model: "Celica", price: 35000},
+            //     {make: "Ford", model: "Mondeo", price: 32000},
+            //     {make: "Porsche", model: "Boxter", price: 72000}
+            // ]
         }
     }
 
@@ -28,7 +31,10 @@ class GridContainer extends Component {
 
     }
 
-    refreshGridData = (data) => {
+    onSelectionChanged = (data) => {
+      if(isnil)
+
+      alert("I am an alert box!");
 
     }
 
@@ -39,7 +45,8 @@ class GridContainer extends Component {
                     <AgGridReact
                         columnDefs={this.state.columnDefs}
                         rowSelection="multiple"
-                        rowData={this.state.rowData}>
+                        rowData={this.state.rowData}
+                        onSelectionChanged={this.onSelectionChanged.bind(this)}>
                     </AgGridReact>
                 </div>
             );

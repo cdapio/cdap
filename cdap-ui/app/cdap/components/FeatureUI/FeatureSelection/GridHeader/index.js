@@ -18,7 +18,10 @@ class GridHeader extends Component {
 
       </div>
       <label>Pipeline: </label>
-      <label>{}</label>
+      {
+        this.props.selectedPipeline &&
+          <label>{this.props.selectedPipeline.pipelineName}</label>
+      }
       </div>
     )
   }
