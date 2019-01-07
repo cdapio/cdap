@@ -8,7 +8,7 @@ class AddSchema extends React.Component {
     super(props);
     this.onClick = this.onClick.bind(this);
     this.state = {
-      title: props.title ? props.title : 'Add Schema',
+      title: props.title ? props.title : 'Schema',
       type: props.type ? props.type : 'NEW',
     };
   }
@@ -21,9 +21,16 @@ class AddSchema extends React.Component {
 
   render() {
     return (
-      <div className="add-container">
+      <div className= { this.state.type == 'NEW' ? "add-container" : "scheme-container"}>
         <div className="tilte">{this.state.title}</div>
-        <div className="operation" onClick={this.onClick}>{this.state.type == 'NEW' ? '+' : 'x'}</div>
+        {
+          (this.state.type == 'NEW') ? <i class="fa fa-plus-circle add-operation" onClick={this.onClick}></i>:
+          <div>
+            <i class="fa fa-pencil edit-operation" onClick={this.onClick}></i>
+            <i class="fa fa-trash delete-operation" onClick={this.onClick}></i>
+          </div>
+
+        }
       </div>
     );
   }

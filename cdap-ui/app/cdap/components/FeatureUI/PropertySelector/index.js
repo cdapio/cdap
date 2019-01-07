@@ -243,7 +243,7 @@ class PropertySelector extends React.Component {
           </Accordion>
         </div>
         <div className="schema-container">
-          <div className="filter-container">
+          <div className="schema-filter-container">
             <label>Column Selection</label>
             <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
               <DropdownToggle caret>
