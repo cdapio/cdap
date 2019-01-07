@@ -1,5 +1,6 @@
 .detail-step-container {
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: calc(100% - 40px);
   overflow: auto;
@@ -20,6 +21,12 @@
     .value {
       width: 250px;
       height: 32px;
+    }
+    .description {
+      width: 250px;
+      min-height: 120px;
+      border-radius: 0.25rem;
+      border-color: grey;
     }
     .btn-margin {
       margin: 5px;
