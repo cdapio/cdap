@@ -17,14 +17,12 @@ import * as React from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import BrandImage from 'components/AppHeader/BrandImage';
-import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import IconSVG from 'components/IconSVG';
 import MenuIcon from '@material-ui/icons/Menu';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
-import ExtendedLinkButton from 'components/AppHeader/ExtendedLinkButton';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ToolBarFeatureLink from 'components/AppHeader/AppToolBar/ToolBarFeatureLink';
 import HubButton from 'components/AppHeader/HubButton';
@@ -33,6 +31,7 @@ import VersionStore from 'services/VersionStore';
 import T from 'i18n-react';
 import If from 'components/If';
 import AboutPageModal from 'components/AppHeader/AboutPageModal';
+import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 
 const styles = (theme) => {
   return {
@@ -100,7 +99,7 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
   public render() {
     const { onMenuIconClick, classes } = this.props;
     const { anchorEl } = this.state;
-    const { namespace, isNativeLink } = this.props.context;
+    const { namespace } = this.props.context;
     const cdapVersion = VersionStore.getState().version;
     const docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
     return (
@@ -115,6 +114,7 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
         </IconButton>
         <div className={classes.grow}>
           <BrandImage />
+          <FeatureHeading />
         </div>
         <div>
           <ToolBarFeatureLink
@@ -128,13 +128,11 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             featureUrl={`/ns/${namespace}/reports`}
           />
           <HubButton />
-          <Button
-            component={isNativeLink ? 'a' : ExtendedLinkButton(`/administration`)}
-            className={classnames(classes.buttonLink)}
-            href={`/cdap/administration`}
-          >
-            {Theme.featureNames.systemAdmin}
-          </Button>
+          <ToolBarFeatureLink
+            featureFlag={true}
+            featureName={Theme.featureNames.systemAdmin}
+            featureUrl={`/administration`}
+          />
         </div>
         <div onClick={this.openSettings}>
           <IconButton className={classnames(classes.buttonLink, classes.iconButtonFocus)}>

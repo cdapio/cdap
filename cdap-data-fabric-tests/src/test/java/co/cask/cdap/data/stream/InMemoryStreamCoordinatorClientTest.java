@@ -19,8 +19,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -73,7 +73,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
         }
       }),
       new DataFabricModules().getInMemoryModules(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
@@ -92,7 +92,7 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
         })
     );
 
-    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacePathLocator.class));
     streamAdmin = injector.getInstance(StreamAdmin.class);
     coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     coordinatorClient.startAndWait();

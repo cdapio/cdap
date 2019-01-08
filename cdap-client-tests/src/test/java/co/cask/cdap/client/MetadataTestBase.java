@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -30,14 +29,12 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +45,7 @@ import javax.annotation.Nullable;
 /**
  * Base class for metadata tests.
  */
+@SuppressWarnings({"WeakerAccess", "SameParameterValue"})
 public abstract class MetadataTestBase extends ClientTestBase {
 
   protected static final NamespaceId TEST_NAMESPACE1 = new NamespaceId("testnamespace1");
@@ -62,7 +60,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected DatasetClient datasetClient;
 
   @Before
-  public void beforeTest() throws IOException {
+  public void beforeTest() {
     metadataClient = new MetadataClient(getClientConfig());
     lineageClient = new LineageClient(getClientConfig());
     artifactClient = new ArtifactClient(getClientConfig());
@@ -98,29 +96,18 @@ public abstract class MetadataTestBase extends ClientTestBase {
     }, expectedExceptionClass);
   }
 
-  protected void addProperties(final MetadataEntity metadataEntity, @Nullable final Map<String, String> properties,
-                               Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException((Callable<Void>) () -> {
-      addProperties(metadataEntity, properties);
-      return null;
-    }, expectedExceptionClass);
-  }
-
-  protected Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) throws Exception {
+  protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) throws Exception {
     return getMetadata(metadataEntity, null);
   }
 
-  protected Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
+  protected Set<MetadataRecord> getMetadataForRun(MetadataEntity metadataEntity)
+    throws Exception {
+    return metadataClient.getMetadata(metadataEntity, null, true);
+  }
+
+  protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws Exception {
     return metadataClient.getMetadata(metadataEntity, scope);
-  }
-
-  protected Set<MetadataRecord> getMetadata(EntityId entityId) throws Exception {
-    return getMetadata(entityId, null);
-  }
-
-  protected Set<MetadataRecord> getMetadata(EntityId entityId, @Nullable MetadataScope scope) throws Exception {
-    return metadataClient.getMetadata(entityId, scope);
   }
 
   protected Map<String, String> getProperties(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
@@ -155,14 +142,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
     metadataClient.removeProperty(metadataEntity, propertyToRemove);
   }
 
-  protected void addTags(final MetadataEntity metadataEntity, @Nullable final Set<String> tags,
-                         Class<? extends Exception> expectedExceptionClass) throws IOException {
-    expectException((Callable<Void>) () -> {
-      addTags(metadataEntity, tags);
-      return null;
-    }, expectedExceptionClass);
-  }
-
   protected void addTags(MetadataEntity metadataEntity, @Nullable Set<String> tags)
     throws Exception {
     metadataClient.addTags(metadataEntity, tags);
@@ -185,7 +164,8 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                            Set<EntityTypeSimpleName> targets) throws Exception {
     // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
     // methods, to strip out metadata from search results for easier assertions.
-    return metadataClient.searchMetadata(namespaceId, query, targets).getResults();
+    return metadataClient.searchMetadata(namespaceId, query, targets,
+                                         null, 0, Integer.MAX_VALUE, 0, null, false).getResults();
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
@@ -201,15 +181,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                   @Nullable String cursor, boolean showHiddden) throws Exception {
     return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,
                                          cursor, showHiddden);
-  }
-
-  protected MetadataSearchResponseV2 searchMetadata(@Nullable NamespaceId namespaceId, String query,
-                                                    Set<EntityTypeSimpleName> targets,
-                                                    @Nullable String sort, int offset, int limit, int numCursors,
-                                                    @Nullable String cursor, boolean showHiddden,
-                                                    boolean showCustom) throws Exception {
-    return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,
-                                         cursor, showHiddden, showCustom);
   }
 
   protected Set<String> getTags(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
@@ -237,19 +208,16 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   // expect an exception during fetching of lineage
   protected void fetchLineage(DatasetId datasetInstance, long start, long end, int levels,
-                              Class<? extends Exception> expectedExceptionClass) throws Exception {
+                              Class<? extends Exception> expectedExceptionClass) {
     fetchLineage(datasetInstance, Long.toString(start), Long.toString(end), levels, expectedExceptionClass);
   }
 
   // expect an exception during fetching of lineage
   protected void fetchLineage(final DatasetId datasetInstance, final String start, final String end,
-                              final int levels, Class<? extends Exception> expectedExceptionClass) throws Exception {
-    expectException(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        fetchLineage(datasetInstance, start, end, levels);
-        return null;
-      }
+                              final int levels, Class<? extends Exception> expectedExceptionClass) {
+    expectException((Callable<Void>) () -> {
+      fetchLineage(datasetInstance, start, end, levels);
+      return null;
     }, expectedExceptionClass);
   }
 
@@ -281,13 +249,8 @@ public abstract class MetadataTestBase extends ClientTestBase {
     return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
-  protected void getPropertiesFromInvalidEntity(EntityId entityId) throws Exception {
-    Map<String, String> properties = getProperties(entityId, MetadataScope.USER);
-    Assert.assertTrue(properties.isEmpty());
-  }
-
   protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {
-    Set<MetadataRecord> metadataRecords = getMetadata(run);
+    Set<MetadataRecord> metadataRecords = getMetadataForRun(run.toMetadataEntity());
     Assert.assertEquals(0, metadataRecords.size());
   }
 

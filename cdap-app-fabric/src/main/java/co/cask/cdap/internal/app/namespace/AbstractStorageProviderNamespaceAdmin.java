@@ -19,8 +19,8 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
@@ -44,17 +44,17 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStorageProviderNamespaceAdmin.class);
 
   private final CConfiguration cConf;
-  private final NamespacedLocationFactory namespacedLocationFactory;
+  private final NamespacePathLocator namespacePathLocator;
   private final ExploreFacade exploreFacade;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
 
   AbstractStorageProviderNamespaceAdmin(CConfiguration cConf,
-                                        NamespacedLocationFactory namespacedLocationFactory,
+                                        NamespacePathLocator namespacePathLocator,
                                         ExploreFacade exploreFacade,
                                         NamespaceQueryAdmin namespaceQueryAdmin) {
     this.cConf = cConf;
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -107,7 +107,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
 
   private void deleteLocation(NamespaceId namespaceId) throws IOException {
     // TODO: CDAP-1581: Implement soft delete
-    Location namespaceHome = namespacedLocationFactory.get(namespaceId);
+    Location namespaceHome = namespacePathLocator.get(namespaceId);
     try {
       if (hasCustomLocation(namespaceQueryAdmin.get(namespaceId))) {
         LOG.debug("Custom location mapping {} was found while deleting namespace {}. Deleting all data inside it but" +
@@ -136,7 +136,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       namespaceHome = validateCustomLocation(namespaceMeta);
     } else {
       // no namespace custom location was provided one must be created by cdap
-      namespaceHome = namespacedLocationFactory.get(namespaceMeta);
+      namespaceHome = namespacePathLocator.get(namespaceMeta);
       if (namespaceHome.exists()) {
         throw new FileAlreadyExistsException(null, null,
                                              String.format("Directory '%s' for '%s' already exists.",
@@ -246,7 +246,7 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
   private Location validateCustomLocation(NamespaceMeta namespaceMeta) throws IOException {
     // since this is a custom location we expect it to exist. Get the custom location for the namespace from
     // namespaceLocationFactory since the location needs to be aware of local/distributed fs.
-    Location customNamespacedLocation = namespacedLocationFactory.get(namespaceMeta);
+    Location customNamespacedLocation = namespacePathLocator.get(namespaceMeta);
     if (!customNamespacedLocation.exists()) {
       throw new IOException(String.format(
         "The provided home directory '%s' for namespace '%s' does not exist. Please create it on filesystem " +

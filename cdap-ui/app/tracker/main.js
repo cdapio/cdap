@@ -21,7 +21,6 @@ angular
 
     angular.module(PKG.name+'.features', [
       PKG.name+'.feature.tracker',
-      PKG.name+'.feature.userprofile'
     ]).name,
 
     angular.module(PKG.name+'.commons', [

@@ -22,11 +22,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
 import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -74,7 +74,7 @@ import java.io.IOException;
 public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
   private static LocationFactory locationFactory;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
   private static StreamAdmin streamAdmin;
   private static MiniDFSCluster dfsCluster;
   private static StreamFileWriterFactory fileWriterFactory;
@@ -95,7 +95,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
     namespaceAdmin = new InMemoryNamespaceAdmin();
-    final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf, namespaceAdmin);
+    final NamespacePathLocator nlf = new DefaultNamespacePathLocator(cConf, lf, namespaceAdmin);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, hConf),
@@ -104,7 +104,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         @Override
         protected void configure() {
           bind(LocationFactory.class).toInstance(lf);
-          bind(NamespacedLocationFactory.class).toInstance(nlf);
+          bind(NamespacePathLocator.class).toInstance(nlf);
           bind(NamespaceAdmin.class).toInstance(namespaceAdmin);
           bind(NamespaceQueryAdmin.class).toInstance(namespaceAdmin);
           bind(UGIProvider.class).to(RemoteUGIProvider.class);
@@ -146,7 +146,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     janitor = injector.getInstance(StreamFileJanitor.class);
@@ -168,8 +168,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   }
 
   @Override
-  protected NamespacedLocationFactory getNamespacedLocationFactory() {
-    return namespacedLocationFactory;
+  protected NamespacePathLocator getNamespacedLocationFactory() {
+    return namespacePathLocator;
   }
 
   @Override

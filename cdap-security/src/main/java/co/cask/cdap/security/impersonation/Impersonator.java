@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 
 /**
- * Responsible for executing code for a user.
- *
- * TODO: CDAP-1698. Ideally there should be an explicit binding in some Module. However, adding that is too complicated
- * now, due to the poor organization of Guice usage in CDAP.
+ * Interface to execute code by impersonating as a particular user.
  */
 @ImplementedBy(DefaultImpersonator.class)
 public interface Impersonator {

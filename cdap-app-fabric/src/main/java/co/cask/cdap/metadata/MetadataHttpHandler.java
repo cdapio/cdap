@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,7 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataCompat;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
@@ -36,7 +34,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
@@ -87,7 +84,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
-  private static final Type SET_METADATA_RECORD_V2_TYPE = new TypeToken<Set<MetadataRecordV2>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
   private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
@@ -106,18 +102,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
                           @QueryParam("scope") String scope, @QueryParam("type") String type,
-                          @QueryParam("showCustom") boolean showCustom,
                           @DefaultValue("true") @QueryParam("aggregateRun") boolean aggregateRun)
     throws BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
-    Set<MetadataRecordV2> metadata = getMetadata(metadataEntity, scope, aggregateRun);
-    if (showCustom) {
-      // if user has specified to show custom entity resources then no need to make the result compatible
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_V2_TYPE));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.filterForCompatibility(metadata),
-                                                            SET_METADATA_RECORD_TYPE));
-    }
+    Set<MetadataRecord> metadata = getMetadata(metadataEntity, scope, aggregateRun);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_TYPE));
   }
 
   @GET
@@ -224,19 +213,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("numCursors") @DefaultValue("0") int numCursors,
                              @QueryParam("cursor") @DefaultValue("") String cursor,
                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
-                             @QueryParam("showCustom") boolean showCustom,
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     SearchRequest searchRequest = getValidatedSearchRequest(null, searchQuery, targets, sort, offset,
                                                             limit, numCursors, cursor, showHidden, entityScope);
 
-    MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
-    if (showCustom) {
-      // if user has specified to show custom entity/resource then there is no need to filter them
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponseV2.class));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.makeCompatible(response),
-                                                            MetadataSearchResponse.class));
-    }
+    MetadataSearchResponse response = metadataAdmin.search(searchRequest);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponse.class));
   }
 
   @GET
@@ -252,19 +234,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("numCursors") @DefaultValue("0") int numCursors,
                              @QueryParam("cursor") @DefaultValue("") String cursor,
                              @QueryParam("showHidden") @DefaultValue("false") boolean showHidden,
-                             @QueryParam("showCustom") boolean showCustom,
                              @Nullable @QueryParam("entityScope") String entityScope) throws Exception {
     SearchRequest searchRequest = getValidatedSearchRequest(namespaceId, searchQuery, targets, sort, offset,
                                                             limit, numCursors, cursor, showHidden, entityScope);
 
-    MetadataSearchResponseV2 response = metadataAdmin.search(searchRequest);
-    if (showCustom) {
-      // if user has specified to show custom entity/resource then there is no need to filter them
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponseV2.class));
-    } else {
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(MetadataCompat.makeCompatible(response),
-                                                            MetadataSearchResponse.class));
-    }
+    MetadataSearchResponse response = metadataAdmin.search(searchRequest);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response, MetadataSearchResponse.class));
   }
 
   private SearchRequest getValidatedSearchRequest(@Nullable String namespace, @Nullable String searchQuery,
@@ -412,10 +387,10 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     return toReturn;
   }
 
-  private Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity,
-                                            @Nullable String scope, boolean aggregateRun) throws BadRequestException {
+  private Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity,
+                                          @Nullable String scope, boolean aggregateRun) throws BadRequestException {
     // the lineage admin handles the metadata call for program runs so delegate the call to that
-    Set<MetadataRecordV2> metadata;
+    Set<MetadataRecord> metadata;
     if (aggregateRun && metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
       // CDAP-13721 for backward compatibility we need to support metadata aggregation of runId.
       metadata = lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));

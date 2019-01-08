@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,9 +42,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tests for {@link MetadataRecordV2}
+ * Tests for {@link MetadataRecord}
  */
-public class MetadataRecordV2Test {
+public class MetadataRecordTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
@@ -70,44 +70,44 @@ public class MetadataRecordV2Test {
     tags.add("tag1");
     tags.add("t1");
     // verify with ApplicationId
-    MetadataRecordV2 appRecord = new MetadataRecordV2(applicationId, MetadataScope.USER, properties, tags);
+    MetadataRecord appRecord = new MetadataRecord(applicationId, MetadataScope.USER, properties, tags);
     String appRecordJson = GSON.toJson(appRecord);
-    Assert.assertEquals(appRecord, GSON.fromJson(appRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(appRecord, GSON.fromJson(appRecordJson, MetadataRecord.class));
     // verify with ProgramId
-    MetadataRecordV2 programRecord = new MetadataRecordV2(flowId1, MetadataScope.USER, properties, tags);
+    MetadataRecord programRecord = new MetadataRecord(flowId1, MetadataScope.USER, properties, tags);
     String programRecordJson = GSON.toJson(programRecord);
-    Assert.assertEquals(programRecord, GSON.fromJson(programRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(programRecord, GSON.fromJson(programRecordJson, MetadataRecord.class));
     // verify with FlowId
-    MetadataRecordV2 flowRecord = new MetadataRecordV2(flowId2, MetadataScope.USER, properties, tags);
+    MetadataRecord flowRecord = new MetadataRecord(flowId2, MetadataScope.USER, properties, tags);
     String flowRecordJson = GSON.toJson(flowRecord);
-    Assert.assertEquals(flowRecord, GSON.fromJson(flowRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(flowRecord, GSON.fromJson(flowRecordJson, MetadataRecord.class));
     // verify with FlowletId
-    MetadataRecordV2 flowletRecord = new MetadataRecordV2(flowletId, MetadataScope.USER, properties, tags);
+    MetadataRecord flowletRecord = new MetadataRecord(flowletId, MetadataScope.USER, properties, tags);
     String flowletRecordJson = GSON.toJson(flowletRecord);
-    Assert.assertEquals(flowletRecord, GSON.fromJson(flowletRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(flowletRecord, GSON.fromJson(flowletRecordJson, MetadataRecord.class));
     // verify with Id.Service
-    MetadataRecordV2 serviceRecord = new MetadataRecordV2(serviceId, MetadataScope.USER, properties, tags);
+    MetadataRecord serviceRecord = new MetadataRecord(serviceId, MetadataScope.USER, properties, tags);
     String serviceRecordJson = GSON.toJson(serviceRecord);
-    Assert.assertEquals(serviceRecord, GSON.fromJson(serviceRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(serviceRecord, GSON.fromJson(serviceRecordJson, MetadataRecord.class));
     // verify with Id.Schedule
-    MetadataRecordV2 scheduleRecord = new MetadataRecordV2(scheduleId, MetadataScope.USER, properties, tags);
+    MetadataRecord scheduleRecord = new MetadataRecord(scheduleId, MetadataScope.USER, properties, tags);
     String scheduleRecordJson = GSON.toJson(scheduleRecord);
-    Assert.assertEquals(scheduleRecord, GSON.fromJson(scheduleRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(scheduleRecord, GSON.fromJson(scheduleRecordJson, MetadataRecord.class));
     // verify with Id.Worker
-    MetadataRecordV2 workerRecord = new MetadataRecordV2(workerId, MetadataScope.USER, properties, tags);
+    MetadataRecord workerRecord = new MetadataRecord(workerId, MetadataScope.USER, properties, tags);
     String workerRecordJson = GSON.toJson(workerRecord);
-    Assert.assertEquals(workerRecord, GSON.fromJson(workerRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(workerRecord, GSON.fromJson(workerRecordJson, MetadataRecord.class));
     // verify with Id.Workflow
-    MetadataRecordV2 workflowRecord = new MetadataRecordV2(workflowId, MetadataScope.USER, properties, tags);
+    MetadataRecord workflowRecord = new MetadataRecord(workflowId, MetadataScope.USER, properties, tags);
     String workflowRecordJson = GSON.toJson(workflowRecord);
-    Assert.assertEquals(workflowRecord, GSON.fromJson(workflowRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(workflowRecord, GSON.fromJson(workflowRecordJson, MetadataRecord.class));
     // verify with Id.DatasetInstance
-    MetadataRecordV2 datasetRecord = new MetadataRecordV2(datasetId, MetadataScope.USER, properties, tags);
+    MetadataRecord datasetRecord = new MetadataRecord(datasetId, MetadataScope.USER, properties, tags);
     String datasetRecordJson = GSON.toJson(datasetRecord);
-    Assert.assertEquals(datasetRecord, GSON.fromJson(datasetRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(datasetRecord, GSON.fromJson(datasetRecordJson, MetadataRecord.class));
     // verify with Id.Stream
-    MetadataRecordV2 streamRecord = new MetadataRecordV2(streamId, MetadataScope.USER, properties, tags);
+    MetadataRecord streamRecord = new MetadataRecord(streamId, MetadataScope.USER, properties, tags);
     String streamRecordJson = GSON.toJson(streamRecord);
-    Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, MetadataRecordV2.class));
+    Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, MetadataRecord.class));
   }
 }

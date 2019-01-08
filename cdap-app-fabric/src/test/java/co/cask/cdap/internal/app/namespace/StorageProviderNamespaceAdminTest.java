@@ -18,8 +18,8 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -49,7 +49,7 @@ public class StorageProviderNamespaceAdminTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
   private static StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
   private static NamespaceStore namespaceStore;
   private static TransactionManager transactionManager;
@@ -64,13 +64,13 @@ public class StorageProviderNamespaceAdminTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          // use the DefaultNamespacedLocationFactory here to test proper namespace creation in storage handler and
+          // use the DefaultNamespacePathLocator here to test proper namespace creation in storage handler and
           // not the NamespacedLocationFactoryTestClient
-          bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
+          bind(NamespacePathLocator.class).to(DefaultNamespacePathLocator.class);
         }
       }
     ));
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     storageProviderNamespaceAdmin = injector.getInstance(StorageProviderNamespaceAdmin.class);
     // start the dataset service for namespace store to work
     transactionManager = injector.getInstance(TransactionManager.class);
@@ -90,7 +90,7 @@ public class StorageProviderNamespaceAdminTest {
     // the create/delete will look up meta so store that too
     namespaceStore.create(myspaceMeta);
     storageProviderNamespaceAdmin.create(myspaceMeta);
-    Location namespaceLocation = namespacedLocationFactory.get(myspace);
+    Location namespaceLocation = namespacePathLocator.get(myspace);
     Assert.assertTrue(namespaceLocation.exists());
     storageProviderNamespaceAdmin.delete(myspace);
     Assert.assertFalse(namespaceLocation.exists());

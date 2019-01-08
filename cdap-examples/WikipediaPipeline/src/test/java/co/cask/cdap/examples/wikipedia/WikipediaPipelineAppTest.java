@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -94,10 +94,10 @@ public class WikipediaPipelineAppTest extends TestBaseWithSpark2 {
 
     // verify the clusteringAlgorithm metadata written to the dataset
     Tasks.waitFor(true, () -> {
-      Set<MetadataRecordV2> metadataRecordV2s =
+      Set<MetadataRecord> metadataRecords =
         getMetadataAdmin().getMetadata(MetadataEntity.ofDataset(APP_ID.getNamespace(),
                                                                 WikipediaPipelineApp.SPARK_CLUSTERING_OUTPUT_DATASET));
-      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+      for (MetadataRecord actualRecord : metadataRecords) {
         if (actualRecord.getScope() == MetadataScope.USER) {
           if (actualRecord.getProperties().containsKey(SparkWikipediaClustering.CLUSTERING_ALGORITHM)) {
             Assert.assertTrue(actualRecord.getProperties().get(SparkWikipediaClustering.CLUSTERING_ALGORITHM)

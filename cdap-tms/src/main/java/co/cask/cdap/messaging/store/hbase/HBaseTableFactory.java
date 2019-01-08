@@ -35,6 +35,7 @@ import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix.OneByteSimpleHash;
 import co.cask.cdap.messaging.MessagingUtils;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
@@ -93,6 +94,9 @@ public final class HBaseTableFactory implements TableFactory {
   private final Map<TableId, HTableDescriptor> tableDescriptors;
   private final CoprocessorManager coprocessorManager;
   private final HBaseDDLExecutorFactory ddlExecutorFactory;
+  private final String metadataTableName;
+  private final String messageTableName;
+  private final String payloadTableName;
 
   @Inject
   HBaseTableFactory(CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil,
@@ -102,6 +106,11 @@ public final class HBaseTableFactory implements TableFactory {
     this.tableUtil = tableUtil;
     this.tableDescriptors = new ConcurrentHashMap<>();
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
+    // Currently we don't support customizable table name yet, hence always get it from cConf.
+    // Later on it can be done by topic properties, with impersonation setting as well.
+    this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
+    this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
+    this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
 
     RejectedExecutionHandler callerRunsPolicy = new RejectedExecutionHandler() {
 
@@ -129,8 +138,8 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   @Override
-  public MetadataTable createMetadataTable(String tableName) throws IOException {
-    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
+  public MetadataTable createMetadataTable() throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, metadataTableName);
     HTable hTable = null;
 
     // If the table descriptor is in the cache, we assume the table exists.
@@ -161,8 +170,8 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   @Override
-  public MessageTable createMessageTable(String tableName) throws IOException {
-    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
+  public MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, messageTableName);
     Class<? extends Coprocessor> tableCoprocessor = tableUtil.getMessageTableRegionObserverClassForVersion();
     HTableWithRowKeyDistributor tableWithRowKeyDistributor = createTable(
       tableId, cConf.getInt(Constants.MessagingSystem.MESSAGE_TABLE_HBASE_SPLITS), tableCoprocessor
@@ -176,8 +185,8 @@ public final class HBaseTableFactory implements TableFactory {
   }
 
   @Override
-  public PayloadTable createPayloadTable(String tableName) throws IOException {
-    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, tableName);
+  public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
+    TableId tableId = tableUtil.createHTableId(NamespaceId.SYSTEM, payloadTableName);
     Class<? extends Coprocessor> tableCoprocessor = tableUtil.getPayloadTableRegionObserverClassForVersion();
     HTableWithRowKeyDistributor tableWithRowKeyDistributor = createTable(
       tableId, cConf.getInt(Constants.MessagingSystem.PAYLOAD_TABLE_HBASE_SPLITS), tableCoprocessor

@@ -132,7 +132,7 @@ public abstract class NotificationTest {
       new InMemoryDiscoveryModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),

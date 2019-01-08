@@ -26,7 +26,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -39,13 +41,13 @@ public abstract class DataCleanupTest {
 
   @Test
   public void testPayloadTTLCleanup() throws Exception {
+    TopicId topicId = NamespaceId.DEFAULT.topic("t2");
+    TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
+            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
-         PayloadTable payloadTable = getPayloadTable();
-         MessageTable messageTable = getMessageTable()) {
+         PayloadTable payloadTable = getPayloadTable(topic);
+         MessageTable messageTable = getMessageTable(topic)) {
       Assert.assertNotNull(messageTable);
-      TopicId topicId = NamespaceId.DEFAULT.topic("t2");
-      TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
-                                              TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
       metadataTable.createTopic(topic);
       List<PayloadTable.Entry> entries = new ArrayList<>();
       entries.add(new TestPayloadEntry(topicId, GENERATION, "payloaddata", 101, (short) 0));
@@ -85,13 +87,13 @@ public abstract class DataCleanupTest {
 
   @Test
   public void testMessageTTLCleanup() throws Exception {
+    TopicId topicId = NamespaceId.DEFAULT.topic("t1");
+    TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
+            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
-         MessageTable messageTable = getMessageTable();
-         PayloadTable payloadTable = getPayloadTable()) {
+         MessageTable messageTable = getMessageTable(topic);
+         PayloadTable payloadTable = getPayloadTable(topic)) {
       Assert.assertNotNull(payloadTable);
-      TopicId topicId = NamespaceId.DEFAULT.topic("t1");
-      TopicMetadata topic = new TopicMetadata(topicId, "ttl", "3",
-                                              TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
       metadataTable.createTopic(topic);
       List<MessageTable.Entry> entries = new ArrayList<>();
       entries.add(new TestMessageEntry(topicId, GENERATION, "data", 100, (short) 0));
@@ -127,13 +129,11 @@ public abstract class DataCleanupTest {
 
   @Test
   public void testOldGenCleanup() throws Exception {
-    try (MetadataTable metadataTable = getMetadataTable();
-         MessageTable messageTable = getMessageTable();
-         PayloadTable payloadTable = getPayloadTable()) {
+    TopicId topicId = NamespaceId.DEFAULT.topic("oldGenCleanup");
+    TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "100000",
+                                            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
+    try (MetadataTable metadataTable = getMetadataTable()) {
       int txWritePtr = 100;
-      TopicId topicId = NamespaceId.DEFAULT.topic("oldGenCleanup");
-      TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "100000",
-                                              TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
       metadataTable.createTopic(topic);
       List<MessageTable.Entry> entries = new ArrayList<>();
       List<PayloadTable.Entry> pentries = new ArrayList<>();
@@ -142,15 +142,21 @@ public abstract class DataCleanupTest {
 
       entries.add(new TestMessageEntry(topicId, GENERATION, "data", txWritePtr, (short) 0));
       pentries.add(new TestPayloadEntry(topicId, GENERATION, "data", txWritePtr, (short) 0));
-      messageTable.store(entries.iterator());
-      payloadTable.store(pentries.iterator());
+
+      try (MessageTable messageTable = getMessageTable(topic);
+           PayloadTable payloadTable = getPayloadTable(topic)) {
+        messageTable.store(entries.iterator());
+        payloadTable.store(pentries.iterator());
+      }
 
       // Fetch the entries and make sure we are able to read it
-      try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
+      try (MessageTable messageTable = getMessageTable(topic);
+           CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
         checkMessageEntry(iterator, txWritePtr);
       }
 
-      try (CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, txWritePtr,
+      try (PayloadTable payloadTable = getPayloadTable(topic);
+           CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, txWritePtr,
                                                                                new MessageId(messageId), true, 100)) {
         checkPayloadEntry(iterator, txWritePtr);
       }
@@ -160,26 +166,38 @@ public abstract class DataCleanupTest {
       forceFlushAndCompact(Table.PAYLOAD);
 
       // Fetch the entries and make sure we are able to read it
-      try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
+      try (MessageTable messageTable = getMessageTable(topic);
+           CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
         checkMessageEntry(iterator, txWritePtr);
       }
 
-      try (CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, txWritePtr,
+      try (PayloadTable payloadTable = getPayloadTable(topic);
+           CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, txWritePtr,
                                                                                new MessageId(messageId), true, 100)) {
         checkPayloadEntry(iterator, txWritePtr);
       }
 
+      // delete the topic and recreate it with an incremented generation
       metadataTable.deleteTopic(topicId);
+
+      Map<String, String> newProperties = new HashMap<>(topic.getProperties());
+      newProperties.put(TopicMetadata.GENERATION_KEY, Integer.toString(topic.getGeneration() + 1));
+      topic = new TopicMetadata(topicId, newProperties);
+      metadataTable.createTopic(topic);
+
       // Sleep so that the metadata cache in coprocessor expires
       TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.MESSAGE);
       forceFlushAndCompact(Table.PAYLOAD);
 
-      try (CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
+      topic = metadataTable.getMetadata(topicId);
+      try (MessageTable messageTable = getMessageTable(topic);
+           CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null)) {
         Assert.assertFalse(iterator.hasNext());
       }
 
-      try (CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, txWritePtr,
+      try (PayloadTable payloadTable = getPayloadTable(topic);
+           CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(topic, txWritePtr,
                                                                                new MessageId(messageId), true, 100)) {
         Assert.assertFalse(iterator.hasNext());
       }
@@ -202,7 +220,7 @@ public abstract class DataCleanupTest {
     iterator.close();
   }
 
-  protected static enum Table {
+  protected enum Table {
     MESSAGE,
     PAYLOAD
   }
@@ -211,9 +229,9 @@ public abstract class DataCleanupTest {
 
   protected abstract MetadataTable getMetadataTable() throws Exception;
 
-  protected abstract PayloadTable getPayloadTable() throws Exception;
+  protected abstract PayloadTable getPayloadTable(TopicMetadata topicMetadata) throws Exception;
 
-  protected abstract MessageTable getMessageTable() throws Exception;
+  protected abstract MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception;
 
   protected static class TestPayloadEntry implements PayloadTable.Entry {
     private final TopicId topicId;

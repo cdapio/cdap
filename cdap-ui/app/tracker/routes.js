@@ -75,7 +75,7 @@ angular.module(PKG.name + '.feature.tracker')
           controller: 'TrackerResultsController',
           controllerAs: 'ResultsController',
           onEnter: function() {
-            document.title = `${productName} | Search Results`;
+            document.title = `${productName} | Search | Results`;
           },
           data: {
             authorizedRoles: MYAUTH_ROLE.all,

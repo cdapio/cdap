@@ -19,8 +19,8 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
@@ -80,10 +80,10 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   @Inject
   DatasetUpgrader(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                  NamespacedLocationFactory namespacedLocationFactory,
+                  NamespacePathLocator namespacePathLocator,
                   HBaseTableUtil hBaseTableUtil, DatasetFramework dsFramework,
                   NamespaceQueryAdmin namespaceQueryAdmin, Impersonator impersonator) {
-    super(locationFactory, namespacedLocationFactory);
+    super(locationFactory, namespacePathLocator);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;

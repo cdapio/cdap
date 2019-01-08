@@ -88,8 +88,8 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
   }
 
   @Override
-  protected MessageTable getMessageTable() throws Exception {
-    MessageTable messageTable = super.getMessageTable();
+  protected MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception {
+    MessageTable messageTable = super.getMessageTable(topicMetadata);
     return new CachingMessageTable(cConf, messageTable, cacheProvider);
   }
 
@@ -99,9 +99,14 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.setLong(CachingMessageTable.PRUNE_GRACE_PERIOD, txGracePeriod);
 
+    // Insert 10 entries, with different publish time
+    TopicMetadata metadata = new TopicMetadata(NamespaceId.DEFAULT.topic("test"),
+                                               TopicMetadata.GENERATION_KEY, 1,
+                                               TopicMetadata.TTL_KEY, 86400);
+
     // Creates a CachingMessageTable with a controlled time provider
     final AtomicLong currentTimeMillis = new AtomicLong(0);
-    MessageTable messageTable = new CachingMessageTable(cConf, super.getMessageTable(),
+    MessageTable messageTable = new CachingMessageTable(cConf, super.getMessageTable(metadata),
                                                         cacheProvider, new TimeProvider() {
       @Override
       public long currentTimeMillis() {
@@ -109,10 +114,6 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
       }
     });
 
-    // Insert 10 entries, with different publish time
-    TopicMetadata metadata = new TopicMetadata(NamespaceId.DEFAULT.topic("test"),
-                                               TopicMetadata.GENERATION_KEY, 1,
-                                               TopicMetadata.TTL_KEY, 86400);
     for (int i = 0; i < 10; i++) {
       // Key is (topic, generation, publish time, sequence id)
       byte[] key = Bytes.concat(MessagingUtils.toDataKeyPrefix(metadata.getTopicId(), metadata.getGeneration()),

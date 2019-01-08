@@ -21,8 +21,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -81,7 +81,7 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
     addCConfProperties(cConf);
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new DataFabricLevelDBModule(),
@@ -113,7 +113,7 @@ public class LevelDBFileStreamAdminTest extends StreamAdminTest {
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
     streamCoordinatorClient.startAndWait();
-    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacePathLocator.class));
     txManager.startAndWait();
   }
 

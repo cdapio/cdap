@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
@@ -2919,12 +2919,12 @@ public class DataPipelineTest extends HydratorTestBase {
     waitForMetadataProcessing(metadataAdmin, 2);
 
     // verify metadata written by the pipeline
-    Set<MetadataRecordV2> actual =
+    Set<MetadataRecord> actual =
       metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
 
     Assert.assertNotNull(actual);
     Assert.assertTrue(!actual.isEmpty());
-    for (MetadataRecordV2 actualRecord : actual) {
+    for (MetadataRecord actualRecord : actual) {
       if (actualRecord.getScope() == MetadataScope.USER) {
         // verify the user properties
         Assert.assertTrue(!actualRecord.getProperties().isEmpty());
@@ -2947,7 +2947,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
     Assert.assertNotNull(actual);
     Assert.assertTrue(!actual.isEmpty());
-    for (MetadataRecordV2 actualRecord : actual) {
+    for (MetadataRecord actualRecord : actual) {
       if (actualRecord.getScope() == MetadataScope.USER) {
         // verify the user properties
         Assert.assertEquals(Collections.singletonMap("kTwo", "vTwo"), actualRecord.getProperties());
@@ -2959,9 +2959,9 @@ public class DataPipelineTest extends HydratorTestBase {
   private void waitForMetadataProcessing(MetadataAdmin metadataAdmin, int expectedTagSize)
     throws TimeoutException, InterruptedException, java.util.concurrent.ExecutionException {
     Tasks.waitFor(true, () -> {
-      Set<MetadataRecordV2> metadataRecordV2s =
+      Set<MetadataRecord> metadataRecords =
         metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
-      for (MetadataRecordV2 actualRecord : metadataRecordV2s) {
+      for (MetadataRecord actualRecord : metadataRecords) {
         if (actualRecord.getScope() == MetadataScope.USER) {
           return actualRecord.getTags().size() == expectedTagSize;
         }

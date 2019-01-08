@@ -18,6 +18,7 @@ declare global {
   /* tslint:disable:interface-name */
   interface Window {
     getHydratorUrl: ({}) => string;
+    angular;
   }
 }
 

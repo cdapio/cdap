@@ -168,7 +168,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     DatasetInstanceManager instanceManager = new DatasetInstanceManager(txSystemClientService, txExecutorFactory,
                                                                         mdsFramework);
     DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(typeManager, namespaceQueryAdmin,
-                                                                         namespacedLocationFactory, cConf, impersonator,
+                                                                         namespacePathLocator, cConf, impersonator,
                                                                          txSystemClientService, mdsFramework,
                                                                          DEFAULT_MODULES);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authorizationEnforcer,

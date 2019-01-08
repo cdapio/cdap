@@ -28,7 +28,7 @@ import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -112,13 +112,13 @@ public class ExploreDisabledTest {
     datasetFramework = injector.getInstance(DatasetFramework.class);
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
 
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId).build();
     namespaceAdmin.create(namespaceMeta);
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
-    namespacedLocationFactory.get(namespaceId).mkdirs();
+    namespacePathLocator.get(namespaceId).mkdirs();
     exploreClient.addNamespace(namespaceMeta);
   }
 
@@ -227,7 +227,7 @@ public class ExploreDisabledTest {
         new ConfigModule(configuration, hConf),
         new IOModule(),
         new InMemoryDiscoveryModule(),
-        new NonCustomLocationUnitTestModule().getModule(),
+        new NonCustomLocationUnitTestModule(),
         new DataFabricModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
         new DataSetServiceModules().getInMemoryModules(),

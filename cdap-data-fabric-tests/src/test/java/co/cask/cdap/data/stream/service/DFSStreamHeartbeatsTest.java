@@ -25,8 +25,8 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -110,7 +110,7 @@ public class DFSStreamHeartbeatsTest {
   private static InMemoryZKServer zkServer;
   private static ZKClientService zkClient;
   private static StreamAdmin streamAdmin;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -131,7 +131,7 @@ public class DFSStreamHeartbeatsTest {
         new DataFabricModules().getInMemoryModules(),
         new ConfigModule(cConf, new Configuration()),
         new InMemoryDiscoveryModule(),
-        new NonCustomLocationUnitTestModule().getModule(),
+        new NonCustomLocationUnitTestModule(),
         new ExploreClientModule(),
         new DataSetServiceModules().getInMemoryModules(),
         new DataSetsModules().getStandaloneModules(),
@@ -173,7 +173,7 @@ public class DFSStreamHeartbeatsTest {
     streamHttpService = injector.getInstance(StreamHttpService.class);
     streamService = injector.getInstance(StreamService.class);
     heartbeatPublisher = (MockHeartbeatPublisher) injector.getInstance(HeartbeatPublisher.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
 
     zkClient.startAndWait();
@@ -186,12 +186,12 @@ public class DFSStreamHeartbeatsTest {
     hostname = streamHttpService.getBindAddress().getHostName();
     port = streamHttpService.getBindAddress().getPort();
 
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT));
+    Locations.mkdirsIfNotExists(namespacePathLocator.get(NamespaceId.DEFAULT));
   }
 
   @AfterClass
   public static void afterClass() throws IOException {
-    Locations.deleteQuietly(namespacedLocationFactory.get(NamespaceId.DEFAULT), true);
+    Locations.deleteQuietly(namespacePathLocator.get(NamespaceId.DEFAULT), true);
 
     notificationService.startAndWait();
     datasetService.startAndWait();

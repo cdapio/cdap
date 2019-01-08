@@ -78,7 +78,7 @@ public class KafkaOffsetResolverTest {
   public static final KafkaTester KAFKA_TESTER =
     new KafkaTester(ImmutableMap.<String, String>of(),
                     ImmutableList.of(
-                      new NonCustomLocationUnitTestModule().getModule(),
+                      new NonCustomLocationUnitTestModule(),
                       new DataSetsModules().getInMemoryModules(),
                       new TransactionModules().getInMemoryModules(),
                       new SystemDatasetRuntimeModule().getInMemoryModules(),

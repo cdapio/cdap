@@ -37,8 +37,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.data.ProgramContext;
 import co.cask.cdap.data2.audit.AuditModule;
@@ -139,7 +139,7 @@ public abstract class AbstractDatasetFrameworkTest {
   protected static InMemoryAuditPublisher inMemoryAuditPublisher;
 
   protected static LocationFactory locationFactory;
-  protected static NamespacedLocationFactory namespacedLocationFactory;
+  protected static NamespacePathLocator namespacePathLocator;
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -152,7 +152,7 @@ public abstract class AbstractDatasetFrameworkTest {
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new TransactionInMemoryModule(),
       new NamespaceAdminTestModule(),
       new AuditModule().getInMemoryModules(),
@@ -166,7 +166,7 @@ public abstract class AbstractDatasetFrameworkTest {
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
 
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     registryFactory = new DatasetDefinitionRegistryFactory() {
@@ -198,14 +198,14 @@ public abstract class AbstractDatasetFrameworkTest {
 
   private void createNamespace(NamespaceId namespaceId) throws Exception {
     // since the namespace admin here is an in memory one we need to create the location explicitly
-    namespacedLocationFactory.get(namespaceId).mkdirs();
+    namespacePathLocator.get(namespaceId).mkdirs();
     // the framework.delete looks up namespace config through namespaceadmin add the meta there too.
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId).build());
   }
 
   private void deleteNamespace(NamespaceId namespaceId) throws Exception {
     // since the namespace admin here is an in memory one we need to delete the location explicitly
-    namespacedLocationFactory.get(namespaceId).delete(true);
+    namespacePathLocator.get(namespaceId).delete(true);
     namespaceAdmin.delete(namespaceId);
   }
 
@@ -487,8 +487,8 @@ public abstract class AbstractDatasetFrameworkTest {
     NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1).mkdirs();
-    namespacedLocationFactory.get(namespace2).mkdirs();
+    namespacePathLocator.get(namespace1).mkdirs();
+    namespacePathLocator.get(namespace2).mkdirs();
 
     // create 2 tables, one in each namespace. both tables have the same name.
     DatasetId table1ID = namespace1.dataset("table");
@@ -538,7 +538,7 @@ public abstract class AbstractDatasetFrameworkTest {
     Assert.assertTrue(framework.hasInstance(table2ID));
 
     // delete one namespace and make sure the other still exists
-    namespacedLocationFactory.get(namespace1).delete(true);
+    namespacePathLocator.get(namespace1).delete(true);
     Assert.assertTrue(framework.hasInstance(table2ID));
   }
 
@@ -551,8 +551,8 @@ public abstract class AbstractDatasetFrameworkTest {
     NamespaceId namespace2 = new NamespaceId("ns2");
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace1).build());
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace2).build());
-    namespacedLocationFactory.get(namespace1).mkdirs();
-    namespacedLocationFactory.get(namespace2).mkdirs();
+    namespacePathLocator.get(namespace1).mkdirs();
+    namespacePathLocator.get(namespace2).mkdirs();
 
     // add modules in each namespace, with one module that shares the same name
     DatasetModuleId simpleModuleNs1 = namespace1.datasetModule(SimpleKVTable.class.getName());

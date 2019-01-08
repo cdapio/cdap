@@ -94,7 +94,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
     install(new ServiceStoreModules().getInMemoryModules());
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
-    install(new NonCustomLocationUnitTestModule().getModule());
+    install(new NonCustomLocationUnitTestModule());
     install(new LocalLogAppenderModule());
     install(new LogReaderRuntimeModules().getInMemoryModules());
     install(new MetricsHandlerModule());

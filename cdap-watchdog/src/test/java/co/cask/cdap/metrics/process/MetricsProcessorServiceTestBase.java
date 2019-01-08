@@ -135,7 +135,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
     list.add(new DataSetsModules().getStandaloneModules());
     list.add(new IOModule());
     list.add(Modules.override(
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule(),

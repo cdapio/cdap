@@ -25,7 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
@@ -263,8 +263,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, createNamespace(OTHER_NAME));
     assertResponseCode(200, getNamespace(OTHER_NAME));
 
-    NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location nsLocation = namespacedLocationFactory.get(new NamespaceId(NAME));
+    NamespacePathLocator namespacePathLocator = getInjector().getInstance(NamespacePathLocator.class);
+    Location nsLocation = namespacePathLocator.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
@@ -315,8 +315,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, createNamespace(NAME));
     assertResponseCode(200, getNamespace(NAME));
 
-    NamespacedLocationFactory namespacedLocationFactory = getInjector().getInstance(NamespacedLocationFactory.class);
-    Location nsLocation = namespacedLocationFactory.get(new NamespaceId(NAME));
+    NamespacePathLocator namespacePathLocator = getInjector().getInstance(NamespacePathLocator.class);
+    Location nsLocation = namespacePathLocator.get(new NamespaceId(NAME));
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);

@@ -167,7 +167,18 @@
     font-size: $font-size-base;
   }
 
-  .btn-secondary { border-color: $grey-05; }
+  .btn-secondary,
+  .btn-secondary[disabled],
+  .btn-secondary:hover,
+  .btn-secondary:active {
+    border-color: $grey-05;
+    background-color: white;
+  }
+  .form-control {
+    &:focus {
+      box-shadow: none;
+    }
+  }
 }
 
 // This is here just for specificity. We add bootstrap patch styles before bootstrap styles

@@ -57,7 +57,7 @@ public class LevelDBTableServiceTest {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = Guice.createInjector(
       new ConfigModule(conf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),

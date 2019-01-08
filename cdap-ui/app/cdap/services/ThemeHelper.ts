@@ -195,7 +195,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       productName: 'CDAP',
       productDescription: `CDAP is an open source framework that simplifies
       data application development, data integration, and data management.`,
-      productLogoNavbar: '/cdap_assets/img/company_logo.png',
+      productLogoNavbar: '/cdap_assets/img/company_logo-20-all.png',
       productLogoAbout: '/cdap_assets/img/CDAP_darkgray.png',
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',

@@ -29,9 +29,9 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 
 /**
- * Default implementation of {@link NamespacedLocationFactory}
+ * Default implementation of {@link NamespacePathLocator}
  */
-public class DefaultNamespacedLocationFactory implements NamespacedLocationFactory {
+public class DefaultNamespacePathLocator implements NamespacePathLocator {
 
   private final LocationFactory locationFactory;
   private final String namespaceDir;
@@ -39,9 +39,9 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  public DefaultNamespacedLocationFactory(CConfiguration cConf,
-                                          LocationFactory locationFactory,
-                                          NamespaceQueryAdmin namespaceQueryAdmin) {
+  public DefaultNamespacePathLocator(CConfiguration cConf,
+                                     LocationFactory locationFactory,
+                                     NamespaceQueryAdmin namespaceQueryAdmin) {
     this.namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
     this.locationFactory = locationFactory;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -49,12 +49,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
 
   @Override
   public Location get(NamespaceId namespaceId) throws IOException {
-    if (NamespaceId.DEFAULT.equals(namespaceId)
-      || NamespaceId.SYSTEM.equals(namespaceId)
-      || NamespaceId.CDAP.equals(namespaceId)) {
-
-      // since these are cdap reserved namespace we know there cannot be a custom mapping for this.
-      // for optimization don't query for namespace meta
+    if (isReservedNamespace(namespaceId)) {
       return getNonCustomMappedLocation(namespaceId);
     }
     // since this is not a cdap reserved namespace we look up meta if there is a custom mapping
@@ -70,7 +65,7 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
   @Override
   public Location get(NamespaceMeta namespaceMeta) throws IOException {
     String rootDirectory = namespaceMeta.getConfig().getRootDirectory();
-    if (Strings.isNullOrEmpty(rootDirectory)) {
+    if (isReservedNamespace(namespaceMeta.getNamespaceId()) || Strings.isNullOrEmpty(rootDirectory)) {
       // if no custom mapping was specified, then use the default namespaces location
       return getNonCustomMappedLocation(namespaceMeta.getNamespaceId());
     }
@@ -87,4 +82,13 @@ public class DefaultNamespacedLocationFactory implements NamespacedLocationFacto
     return locationFactory.create(namespaceDir).append(namespaceId.getNamespace());
   }
 
+  /**
+   * Returns {@code true} if the given namespace is one of the CDAP reserved namespaces.
+   */
+  private boolean isReservedNamespace(NamespaceId namespaceId) {
+    // We don't support custom location for CDAP reserved namespaces.
+    return NamespaceId.DEFAULT.equals(namespaceId)
+      || NamespaceId.SYSTEM.equals(namespaceId)
+      || NamespaceId.CDAP.equals(namespaceId);
+  }
 }

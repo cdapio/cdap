@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -272,7 +272,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     // Try to read, should have nothing
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    MetadataRecordV2 meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+    MetadataRecord meta = metadataStore.getMetadata(MetadataScope.USER, entity);
     Assert.assertTrue(meta.getProperties().isEmpty());
     Assert.assertTrue(meta.getTags().isEmpty());
 
@@ -578,7 +578,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   private void waitForMetadata(MetadataEntity entity, MetadataStore metadataStore, int propertiesSize,
                                int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
     Tasks.waitFor(true, () -> {
-      MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.USER, entity);
+      MetadataRecord record = metadataStore.getMetadata(MetadataScope.USER, entity);
       return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
@@ -586,7 +586,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   private void waitForSystemMetadata(MetadataEntity entity, MetadataStore metadataStore, int propertiesSize,
                                      int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
     Tasks.waitFor(true, () -> {
-      MetadataRecordV2 record = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+      MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
       return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }

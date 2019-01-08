@@ -18,7 +18,7 @@ package co.cask.cdap.messaging.store.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -76,13 +76,13 @@ public class HBaseMetadataTableTestRun extends MetadataTableTest {
 
   @Override
   protected MetadataTable createMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable("metadata");
+    return tableFactory.createMetadataTable();
   }
 
-  public static Injector getInjector() {
+  private static Injector getInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NamespaceAdminTestModule(),
-      new LocationRuntimeModule().getDistributedModules());
+      new DFSLocationModule());
   }
 }

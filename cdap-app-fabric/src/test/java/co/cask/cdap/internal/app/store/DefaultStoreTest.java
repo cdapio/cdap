@@ -41,7 +41,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -108,9 +108,9 @@ public class DefaultStoreTest {
   @Before
   public void before() throws Exception {
     store.clear();
-    NamespacedLocationFactory namespacedLocationFactory =
-      AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
-    namespacedLocationFactory.get(NamespaceId.DEFAULT).delete(true);
+    NamespacePathLocator namespacePathLocator =
+      AppFabricTestHelper.getInjector().getInstance(NamespacePathLocator.class);
+    namespacePathLocator.get(NamespaceId.DEFAULT).delete(true);
     NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
     admin.create(NamespaceMeta.DEFAULT);
   }

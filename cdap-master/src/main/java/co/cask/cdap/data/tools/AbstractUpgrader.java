@@ -17,7 +17,7 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -33,11 +33,11 @@ public abstract class AbstractUpgrader {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractUpgrader.class);
   protected final LocationFactory locationFactory;
-  protected final NamespacedLocationFactory namespacedLocationFactory;
+  protected final NamespacePathLocator namespacePathLocator;
 
-  public AbstractUpgrader(LocationFactory locationFactory, NamespacedLocationFactory namespacedLocationFactory) {
+  public AbstractUpgrader(LocationFactory locationFactory, NamespacePathLocator namespacePathLocator) {
     this.locationFactory = locationFactory;
-    this.namespacedLocationFactory = namespacedLocationFactory;
+    this.namespacePathLocator = namespacePathLocator;
   }
 
   /**

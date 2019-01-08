@@ -63,7 +63,7 @@ public class LevelDBTableTest extends BufferingTableTest<LevelDBTable> {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataFabricLevelDBModule(),

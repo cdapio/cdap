@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -61,7 +61,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -132,33 +131,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
-  }
-
-  /**
-   * Sets the {@link DatasetId} for the {@link LineageDataset}. This method is only for testing.
-   */
-  @VisibleForTesting
-  MetadataSubscriberService setLineageDatasetId(DatasetId lineageDatasetId) {
-    this.lineageDatasetId = lineageDatasetId;
-    return this;
-  }
-
-  /**
-   * Sets the {@link DatasetId} for the {@link FieldLineageDataset}. This method is only for testing.
-   */
-  @VisibleForTesting
-  MetadataSubscriberService setFieldLineageDatasetId(DatasetId fieldLineageDatasetId) {
-    this.fieldLineageDatasetId = fieldLineageDatasetId;
-    return this;
-  }
-
-  /**
-   * Sets the {@link DatasetId} for the {@link UsageDataset}. This method is only for testing.
-   */
-  @VisibleForTesting
-  MetadataSubscriberService setUsageDatasetId(DatasetId usageDatasetId) {
-    this.usageDatasetId = usageDatasetId;
-    return this;
   }
 
   @Override
@@ -394,7 +366,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           boolean hasTags = create.getTags() != null && !create.getTags().isEmpty();
           // TODO (CDAP-14584): All the following operations should be one method
           // find the existing metadata
-          MetadataRecordV2 existing = metadataStore.getMetadata(MetadataScope.SYSTEM, create.getEntity());
+          MetadataRecord existing = metadataStore.getMetadata(MetadataScope.SYSTEM, create.getEntity());
           // figure out what properties to set
           Map<String, String> propertiesToSet =
             hasProperties ? new HashMap<>(create.getProperties()) : new HashMap<>();

@@ -20,7 +20,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98.MessageTableRegionObserver;
@@ -134,7 +134,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
       // this will set visibility upper bound to V[6]
       Maps.newTreeMap(ImmutableSortedMap.of(V[6], new TransactionManager.InProgressTx(
         V[6] - 1, Long.MAX_VALUE, TransactionManager.InProgressType.SHORT))),
-      new HashMap<Long, TransactionManager.ChangeSet>(), new TreeMap<Long, TransactionManager.ChangeSet>());
+      new HashMap<>(), new TreeMap<>());
     HDFSTransactionStateStorage tmpStorage =
       new HDFSTransactionStateStorage(hConf, new SnapshotCodecProvider(hConf), new TxMetricsCollector());
     tmpStorage.startAndWait();
@@ -144,11 +144,11 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
 
   @Test
   public void testInvalidTx() throws Exception {
+    TopicId topicId = NamespaceId.DEFAULT.topic("invalidTx");
+    TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "1000000",
+            TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
     try (MetadataTable metadataTable = getMetadataTable();
-         MessageTable messageTable = getMessageTable()) {
-      TopicId topicId = NamespaceId.DEFAULT.topic("invalidTx");
-      TopicMetadata topic = new TopicMetadata(topicId, TopicMetadata.TTL_KEY, "1000000",
-                                              TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
+         MessageTable messageTable = getMessageTable(topic)) {
       metadataTable.createTopic(topic);
       List<MessageTable.Entry> entries = new ArrayList<>();
       long invalidTxWritePtr = invalidList.toRawList().get(0);
@@ -223,23 +223,23 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
 
   @Override
   protected MetadataTable getMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
+    return tableFactory.createMetadataTable();
   }
 
   @Override
-  protected PayloadTable getPayloadTable() throws Exception {
-    return tableFactory.createPayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+  protected PayloadTable getPayloadTable(TopicMetadata topicMetadata) throws Exception {
+    return tableFactory.createPayloadTable(topicMetadata);
   }
 
   @Override
-  protected MessageTable getMessageTable() throws Exception {
-    return tableFactory.createMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+  protected MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception {
+    return tableFactory.createMessageTable(topicMetadata);
   }
 
   public static Injector getInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NamespaceAdminTestModule(),
-      new LocationRuntimeModule().getDistributedModules());
+      new DFSLocationModule());
   }
 }

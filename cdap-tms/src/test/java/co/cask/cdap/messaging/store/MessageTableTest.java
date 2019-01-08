@@ -68,7 +68,7 @@ public abstract class MessageTableTest {
   private static final TopicMetadata M1 = new TopicMetadata(T1, DEFAULT_PROPERTY);
   private static final TopicMetadata M2 = new TopicMetadata(T2, DEFAULT_PROPERTY);
 
-  protected abstract MessageTable getMessageTable() throws Exception;
+  protected abstract MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception;
 
   protected abstract MetadataTable getMetadataTable() throws Exception;
 
@@ -78,7 +78,7 @@ public abstract class MessageTableTest {
     TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
     String payload = "data";
     long txWritePtr = 123L;
-    try (MessageTable table = getMessageTable();
+    try (MessageTable table = getMessageTable(metadata);
          MetadataTable metadataTable = getMetadataTable()) {
       metadataTable.createTopic(metadata);
       List<MessageTable.Entry> entryList = new ArrayList<>();
@@ -131,73 +131,78 @@ public abstract class MessageTableTest {
 
   @Test
   public void testNonTxAndTxConsumption() throws Exception {
-    try (MessageTable table = getMessageTable();
+    try (MessageTable table1 = getMessageTable(M1);
+         MessageTable table2 = getMessageTable(M2);
          MetadataTable metadataTable = getMetadataTable()) {
       metadataTable.createTopic(M1);
       metadataTable.createTopic(M2);
-      List<MessageTable.Entry> entryList = new ArrayList<>();
+      List<MessageTable.Entry> entryList1 = new ArrayList<>();
+      List<MessageTable.Entry> entryList2 = new ArrayList<>();
       Map<Long, Short> startSequenceIds = new HashMap<>();
       Map<Long, Short> endSequenceIds = new HashMap<>();
-      long publishTimestamp = populateList(entryList, Arrays.asList(100L, 101L, 102L),
-                                           startSequenceIds, endSequenceIds);
-      table.store(entryList.iterator());
+      long publishTimestamp1 = populateList(entryList1, T1, 123, Arrays.asList(100L, 101L, 102L),
+                                            startSequenceIds, endSequenceIds);
+      long publishTimestamp2 = populateList(entryList2, T2, 321, Arrays.asList(100L, 101L, 102L),
+                                            startSequenceIds, endSequenceIds);
+      table1.store(entryList1.iterator());
+      table2.store(entryList2.iterator());
 
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, Integer.MAX_VALUE, null)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, Integer.MAX_VALUE, null)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 150);
       }
 
       // Read with 85 items limit
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, 85, null)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, 85, null)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 85);
       }
 
       // Read with all messages visible
       Transaction tx = new Transaction(200, 200, new long[0], new long[0], -1);
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 150);
       }
 
       // Read with 101 as invalid transaction
       tx = new Transaction(200, 200, new long[] { 101 }, new long[0], -1);
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L, 102L), 100);
       }
 
       // Mark 101 as in progress transaction, then we shouldn't read past committed transaction which is 100.
       tx = new Transaction(100, 100, new long[] {}, new long[] { 101 }, -1);
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L), 50);
       }
 
       // Same read as above but with limit of 10 elements
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, 10, tx)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, 10, tx)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L), 10);
       }
 
       // Reading non-tx from t2 should provide 150 items
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M2, 0, Integer.MAX_VALUE, null)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table2.fetch(M2, 0, Integer.MAX_VALUE, null)) {
         checkPointerCount(iterator, 321, ImmutableSet.of(100L, 101L, 102L), 150);
       }
 
       // Delete txPtr entries for 101, and then try fetching again for that
-      RollbackDetail rollbackDetail = new TestRollbackDetail(101L, publishTimestamp, startSequenceIds.get(101L),
-                                                             publishTimestamp, endSequenceIds.get(101L));
-      table.rollback(M1, rollbackDetail);
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, Integer.MAX_VALUE, null)) {
+      RollbackDetail rollbackDetail = new TestRollbackDetail(101L, publishTimestamp1, startSequenceIds.get(101L),
+                                                             publishTimestamp1, endSequenceIds.get(101L));
+      table1.rollback(M1, rollbackDetail);
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, Integer.MAX_VALUE, null)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(100L, 101L, 102L), 150);
       }
 
       // Delete txPtr entries for 100, and then try fetching transactionally all data
-      rollbackDetail = new TestRollbackDetail(100L, publishTimestamp, startSequenceIds.get(100L),
-                                              publishTimestamp, endSequenceIds.get(100L));
-      table.rollback(M1, rollbackDetail);
+      rollbackDetail = new TestRollbackDetail(100L, publishTimestamp1, startSequenceIds.get(100L),
+                                              publishTimestamp1, endSequenceIds.get(100L));
+      table1.rollback(M1, rollbackDetail);
       tx = new Transaction(200, 200, new long[0], new long[0], -1);
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table1.fetch(M1, 0, Integer.MAX_VALUE, tx)) {
         checkPointerCount(iterator, 123, ImmutableSet.of(102L), 50);
       }
 
       // Use the above tx and read from t2 and it should give all entries
-      try (CloseableIterator<MessageTable.Entry> iterator = table.fetch(M2, 0, Integer.MAX_VALUE, tx)) {
+      try (CloseableIterator<MessageTable.Entry> iterator = table2.fetch(M2, 0, Integer.MAX_VALUE, tx)) {
         checkPointerCount(iterator, 321, ImmutableSet.of(100L, 101L, 102L), 150);
       }
     }
@@ -210,7 +215,7 @@ public abstract class MessageTableTest {
 
     // This test the message table supports for empty payload. This is for the case where message table
     // stores only a reference to the payload table
-    try (MessageTable table = getMessageTable();
+    try (MessageTable table = getMessageTable(metadata);
          MetadataTable metadataTable = getMetadataTable()) {
       metadataTable.createTopic(metadata);
       try {
@@ -262,7 +267,7 @@ public abstract class MessageTableTest {
       executor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          try (MessageTable messageTable = getMessageTable()) {
+          try (MessageTable messageTable = getMessageTable(metadata)) {
             messageTable.store(new AbstractIterator<MessageTable.Entry>() {
               int messageCount = 0;
 
@@ -298,7 +303,7 @@ public abstract class MessageTableTest {
       TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
       TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
       try (
-        MessageTable messageTable = getMessageTable();
+        MessageTable messageTable = getMessageTable(metadata);
         CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(metadata, 0, 10, null)
       ) {
         List<MessageTable.Entry> entries = Lists.newArrayList(iterator);
@@ -327,18 +332,15 @@ public abstract class MessageTableTest {
     Assert.assertEquals(expectedCount, count);
   }
 
-  private long populateList(List<MessageTable.Entry> messageTable, List<Long> writePointers,
-                            Map<Long, Short> startSequences, Map<Long, Short> endSequences) {
-    int data1 = 123;
-    int data2 = 321;
-
+  private long populateList(List<MessageTable.Entry> messageTable, TopicId topicId, int payload,
+                            List<Long> writePointers, Map<Long, Short> startSequences, Map<Long, Short> endSequences) {
     long timestamp = System.currentTimeMillis();
     short seqId = 0;
     for (Long writePtr : writePointers) {
       startSequences.put(writePtr, seqId);
       for (int i = 0; i < 50; i++) {
-        messageTable.add(new TestMessageEntry(T1, GENERATION, timestamp, seqId++, writePtr, Bytes.toBytes(data1)));
-        messageTable.add(new TestMessageEntry(T2, GENERATION, timestamp, seqId++, writePtr, Bytes.toBytes(data2)));
+        messageTable.add(new TestMessageEntry(topicId, GENERATION, timestamp, seqId++, writePtr,
+                                              Bytes.toBytes(payload)));
       }
       // Need to subtract the seqId with 1 since it is already incremented and we want the seqId being used
       // for the last written entry of this tx write ptr

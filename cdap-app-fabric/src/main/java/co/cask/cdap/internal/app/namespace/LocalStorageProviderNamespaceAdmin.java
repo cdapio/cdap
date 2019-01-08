@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.explore.client.ExploreFacade;
 import com.google.inject.Inject;
 
@@ -28,8 +28,8 @@ import com.google.inject.Inject;
 public final class LocalStorageProviderNamespaceAdmin extends AbstractStorageProviderNamespaceAdmin {
 
   @Inject
-  LocalStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacedLocationFactory namespacedLocationFactory,
+  LocalStorageProviderNamespaceAdmin(CConfiguration cConf, NamespacePathLocator namespacePathLocator,
                                      ExploreFacade exploreFacade, NamespaceQueryAdmin namespaceQueryAdmin) {
-    super(cConf, namespacedLocationFactory, exploreFacade, namespaceQueryAdmin);
+    super(cConf, namespacePathLocator, exploreFacade, namespaceQueryAdmin);
   }
 }

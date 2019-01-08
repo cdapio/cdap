@@ -21,8 +21,6 @@ import classnames from 'classnames';
 import AppDrawer from 'components/AppHeader/AppDrawer/AppDrawer';
 import AppToolbar from 'components/AppHeader/AppToolBar/AppToolbar';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
-import createMuiTheme, { ThemeOptions } from '@material-ui/core/styles/createMuiTheme';
 import { MyNamespaceApi } from 'api/namespace';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
@@ -34,6 +32,7 @@ import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import { SYSTEM_NAMESPACE } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
 import { NamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
+import ThemeWrapper from 'components/ThemeWrapper';
 
 require('styles/bootstrap_4_patch.scss');
 
@@ -133,58 +132,27 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
   }
 }
 const AppHeaderWithStyles = withStyles(styles)(MyAppHeader);
-const baseTheme = createMuiTheme({
-  palette: {
-    primary: {
-      main: '#1a73e8',
-    },
-    blue: {
-      50: '#045599',
-      100: '#0076dc',
-      200: '#0099ff',
-      300: '#58b7f6',
-      400: '#7cd2eb',
-      500: '#cae7ef',
-    },
-  },
-  navbarBgColor: 'var(--navbar-color)',
-  buttonLink: {
-    '&:hover': {
-      color: 'inherit',
-      backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    },
-    fontSize: '1rem',
-    color: 'white',
-  },
-  iconButtonFocus: {
-    '&:focus': {
-      outline: 'none',
-      backgroundColor: 'rgba(255, 255, 255, 0.10)',
-    },
-  },
-  grow: {
-    flexGrow: 1,
-  },
-  typography: {
-    fontSize: 13,
-    fontFamily: 'var(--font-family)',
-    useNextVariants: true,
-  },
-} as ThemeOptions);
 /**
- *  We are adding the themeing only to the header. Two reasons,
+ * Detecting environment is angular. If angular then add the theme wrapper
+ * as MuiThemeProvider is not available at the root in angular apps
  *
- * 1. Right now only the header is slowly transitioning to material design
- * 2. Header needs to be shared across react and angular and if I add MuiThemeProvider
- *   to main.js angular side won't get the theme. Trying to avoid duplicating theme between angular
- *   and react since we are anways moving away from angular.
+ * In react app we add MuiThemeProvider at main.js which passes on the theme
+ * via context to children down.
+ *
+ * Doing this here to enable us to transition to material design which supports
+ * proper themeing and css modules for any old or new components we write.
+ * As we move slowly everything to react we will remmove this check and
+ * let the root pass on the theme to the children.
  */
 export default function CustomHeader({ nativeLink }) {
-  return (
-    <MuiThemeProvider theme={baseTheme}>
-      <AppHeaderWithStyles nativeLink={nativeLink} />
-    </MuiThemeProvider>
-  );
+  if (typeof window.angular !== 'undefined' && window.angular.version) {
+    return (
+      <ThemeWrapper>
+        <AppHeaderWithStyles nativeLink={nativeLink} />
+      </ThemeWrapper>
+    );
+  }
+  return <AppHeaderWithStyles nativeLink={nativeLink} />;
 }
 // Apparently this is needed for ngReact
 (CustomHeader as any).propTypes = {

@@ -19,9 +19,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.NoLookupNamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -77,7 +77,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
     dfsCluster.waitClusterUp();
     final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
-    final NamespacedLocationFactory nlf = new NoLookupNamespacedLocationFactory(cConf, lf);
+    final NamespacePathLocator nlf = new NoLookupNamespacePathLocator(cConf, lf);
 
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
@@ -101,7 +101,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
         @Override
         protected void configure() {
           bind(LocationFactory.class).toInstance(lf);
-          bind(NamespacedLocationFactory.class).toInstance(nlf);
+          bind(NamespacePathLocator.class).toInstance(nlf);
           bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
@@ -123,7 +123,7 @@ public class DistributedStreamCoordinatorClientTest extends StreamCoordinatorTes
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
 
-    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacePathLocator.class));
     streamAdmin = injector.getInstance(StreamAdmin.class);
     coordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     coordinatorClient.startAndWait();

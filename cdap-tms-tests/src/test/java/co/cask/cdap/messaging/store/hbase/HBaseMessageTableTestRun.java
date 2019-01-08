@@ -19,7 +19,7 @@ package co.cask.cdap.messaging.store.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.util.hbase.ConfigurationReader;
@@ -27,6 +27,7 @@ import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MessageTableTest;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -88,19 +89,19 @@ public class HBaseMessageTableTestRun extends MessageTableTest {
   }
 
   @Override
-  protected MessageTable getMessageTable() throws Exception {
-    return tableFactory.createMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+  protected MessageTable getMessageTable(TopicMetadata topicMetadata) throws Exception {
+    return tableFactory.createMessageTable(topicMetadata);
   }
 
   @Override
   protected MetadataTable getMetadataTable() throws Exception {
-    return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
+    return tableFactory.createMetadataTable();
   }
 
   public static Injector getInjector() {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new NamespaceAdminTestModule(),
-      new LocationRuntimeModule().getDistributedModules());
+      new DFSLocationModule());
   }
 }

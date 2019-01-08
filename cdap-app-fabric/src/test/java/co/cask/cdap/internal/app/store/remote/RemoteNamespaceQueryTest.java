@@ -21,7 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.RemoteNamespaceQueryClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -55,7 +55,7 @@ public class RemoteNamespaceQueryTest {
 
   private static NamespaceAdmin namespaceAdmin;
   private static RemoteNamespaceQueryClient queryClient;
-  private static NamespacedLocationFactory namespacedLocationFactory;
+  private static NamespacePathLocator namespacePathLocator;
   private static AppFabricServer appFabricServer;
 
   @BeforeClass
@@ -74,7 +74,7 @@ public class RemoteNamespaceQueryTest {
     waitForService(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     queryClient = injector.getInstance(RemoteNamespaceQueryClient.class);
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
   }
 
   @AfterClass
@@ -110,7 +110,7 @@ public class RemoteNamespaceQueryTest {
       .setHiveDatabase(hiveDb)
       .build();
     // create the ns location since admin expect it to exists
-    Location nsLocation = namespacedLocationFactory.get(meta);
+    Location nsLocation = namespacePathLocator.get(meta);
     nsLocation.mkdirs();
     namespaceAdmin.create(meta);
     NamespaceId namespaceId = new NamespaceId(cdapNamespace);

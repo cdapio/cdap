@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Cask Data, Inc.
+ * Copyright 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,9 @@ package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collections;
@@ -48,18 +48,18 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity) {
-    return ImmutableSet.of(new MetadataRecordV2(metadataEntity, MetadataScope.USER),
-                           new MetadataRecordV2(metadataEntity, MetadataScope.SYSTEM));
+  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) {
+    return ImmutableSet.of(new MetadataRecord(metadataEntity, MetadataScope.USER),
+                           new MetadataRecord(metadataEntity, MetadataScope.SYSTEM));
   }
 
   @Override
-  public MetadataRecordV2 getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
-    return new MetadataRecordV2(metadataEntity, scope);
+  public MetadataRecord getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
+    return new MetadataRecord(metadataEntity, scope);
   }
 
   @Override
-  public Set<MetadataRecordV2> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntities) {
+  public Set<MetadataRecord> getMetadata(MetadataScope scope, Set<MetadataEntity> metadataEntities) {
     return Collections.emptySet();
   }
 
@@ -114,18 +114,18 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public MetadataSearchResponseV2 search(SearchRequest request) {
-    return new MetadataSearchResponseV2(request.getSortInfo().toString(), request.getOffset(), request.getLimit(),
-                                        request.getNumCursors(), 0, Collections.emptySet(), Collections.emptyList(),
-                                        request.shouldShowHidden(), request.getEntityScopes());
+  public MetadataSearchResponse search(SearchRequest request) {
+    return new MetadataSearchResponse(request.getSortInfo().toString(), request.getOffset(), request.getLimit(),
+                                      request.getNumCursors(), 0, Collections.emptySet(), Collections.emptyList(),
+                                      request.shouldShowHidden(), request.getEntityScopes());
   }
 
   @Override
-  public Set<MetadataRecordV2> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntities,
-                                                     long timeMillis) {
-    ImmutableSet.Builder<MetadataRecordV2> builder = ImmutableSet.builder();
+  public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntities,
+                                                   long timeMillis) {
+    ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
     for (MetadataEntity metadataEntity : metadataEntities) {
-      builder.add(new MetadataRecordV2(metadataEntity, scope));
+      builder.add(new MetadataRecord(metadataEntity, scope));
     }
     return builder.build();
   }

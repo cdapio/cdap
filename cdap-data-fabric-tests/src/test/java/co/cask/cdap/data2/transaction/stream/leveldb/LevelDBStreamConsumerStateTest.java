@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -78,7 +78,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new DataFabricLevelDBModule(),
@@ -107,7 +107,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
 
-    setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
+    setupNamespaces(injector.getInstance(NamespacePathLocator.class));
   }
 
   @AfterClass

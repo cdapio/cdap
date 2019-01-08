@@ -29,8 +29,8 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -155,7 +155,7 @@ public abstract class DatasetServiceTestBase {
     injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
-      new NonCustomLocationUnitTestModule().getModule(),
+      new NonCustomLocationUnitTestModule(),
       new NamespaceAdminTestModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
@@ -189,7 +189,7 @@ public abstract class DatasetServiceTestBase {
     TransactionSystemClientService txSystemClientService =
       new DelegatingTransactionSystemClientService(txSystemClient);
 
-    NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
@@ -230,7 +230,7 @@ public abstract class DatasetServiceTestBase {
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
 
     DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(
-      typeManager, namespaceAdmin, namespacedLocationFactory,
+      typeManager, namespaceAdmin, namespacePathLocator,
       cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, defaultModules);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
                                                                          authenticationContext);
@@ -248,7 +248,7 @@ public abstract class DatasetServiceTestBase {
     waitForService(Constants.Service.DATASET_EXECUTOR);
     waitForService(Constants.Service.DATASET_MANAGER);
     // this usually happens while creating a namespace, however not doing that in data fabric tests
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NamespaceId.DEFAULT));
+    Locations.mkdirsIfNotExists(namespacePathLocator.get(NamespaceId.DEFAULT));
   }
 
   private static void waitForService(String service) {

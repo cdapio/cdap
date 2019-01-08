@@ -21,7 +21,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -69,7 +69,7 @@ public class LocalRouteStoreTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
-      new LocationRuntimeModule().getInMemoryModules(),
+      new LocalLocationModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
