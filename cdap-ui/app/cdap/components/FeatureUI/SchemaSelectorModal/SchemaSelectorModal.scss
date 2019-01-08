@@ -19,6 +19,10 @@
     height: 100%;
     overflow: hidden;
   }
+  .column-checklist-container {
+    display: flex;
+    height: calc(100% - 100px);
+  }
   .column-list {
     overflow-y: auto;
   }
@@ -39,7 +43,8 @@
     font-weight: 500;
     color: #333333;
     font-size: 14px;
-    background-color: #e2e2e2;
+    border: 1px solid #dddddd;
+    background-image: linear-gradient(#bdbdbd, white);
     padding: 1px 10px;
     min-height: 26px;
     margin-bottom: 3px;

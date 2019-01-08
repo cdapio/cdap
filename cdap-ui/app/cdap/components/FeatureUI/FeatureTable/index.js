@@ -1,6 +1,6 @@
 /* eslint react/prop-types: 0 */
 import React from 'react';
-import { COMPLETED, FAILED, DEPLOYED } from '../config';
+import { FAILED, DEPLOYED, SUCCEEDED, RUNNING } from '../config';
 require('./FeatureTable.scss');
 
 class FeatureTable extends React.Component {
@@ -20,17 +20,17 @@ class FeatureTable extends React.Component {
         </thead>
         <tbody>
           {data.map(item => {
-            return <tr key = {item.pipelineName}>
+            return <tr key={item.pipelineName}>
               <td>{item.pipelineName}</td>
               <td>
                 <div>
-                  <span className = {this.getStatusClass(item)}></span>
+                  <span className={this.getStatusClass(item)}></span>
                   {item.status}
                 </div>
               </td>
               <td>{this.getEpochDateString(item.lastStartEpochTime)}</td>
               <td >
-                <div className = {(this.isViewable(item))? "view-link": "disable-link"}
+                <div className={(this.isViewable(item)) ? "view-link" : "disable-link"}
                   onClick={this.onView.bind(this, item)}>
                   VIEW PIPELINE
                 </div>
@@ -38,16 +38,16 @@ class FeatureTable extends React.Component {
               <td className="center-align">
                 {
                   this.isViewable(item) &&
-                    <button onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
+                  <button onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
                 }
 
               </td>
               <td className="center-align">
-                <span className = "fa fa-edit right-padding clickable"
-                    onClick={this.onEdit.bind(this, item)}></span>
-                <span className = "fa fa-clone right-padding clickable"
-                    onClick={this.onClone.bind(this, item)}></span>
-                <span className = "fa fa-trash text-danger"
+                <span className="fa fa-edit right-padding clickable"
+                  onClick={this.onEdit.bind(this, item)}></span>
+                <span className="fa fa-clone right-padding clickable"
+                  onClick={this.onClone.bind(this, item)}></span>
+                <span className="fa fa-trash text-danger"
                   onClick={this.onDelete.bind(this, item)}></span>
               </td>
             </tr>;
@@ -57,7 +57,7 @@ class FeatureTable extends React.Component {
     );
   }
   getEpochDateString(epoch) {
-    if(isNaN(epoch)) {
+    if (isNaN(epoch)) {
       return "—";
     } else {
       let date = new Date(epoch * 1000);
@@ -96,13 +96,13 @@ class FeatureTable extends React.Component {
   }
 
   isViewable(item) {
-    return item && item.status == COMPLETED;
+    return item && item.status == SUCCEEDED;
   }
 
   getStatusClass(item) {
     let className = "fa fa-circle right-padding";
-    switch(item.status) {
-      case COMPLETED:
+    switch (item.status) {
+      case SUCCEEDED:
         className += " status-success";
         break;
       case FAILED:
@@ -110,6 +110,9 @@ class FeatureTable extends React.Component {
         break;
       case DEPLOYED:
         className += " status-deployed";
+        break;
+      case RUNNING:
+        className += " status-running";
         break;
     }
     return className;

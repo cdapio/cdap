@@ -33,7 +33,7 @@ export const IS_OFFLINE = false;
 export const PIPELINE_RUN_NAME = "pipelineRunName";
 export const PIPELINE_SCHEMAS = "dataSchemaNames";
 
-export const COMPLETED = "COMPLETED";
+export const SUCCEEDED = "Succeeded";
 export const DEPLOYED = "Deployed";
 export const FAILED = "Failed";
-
+export const RUNNING = "Running";
