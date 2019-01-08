@@ -21,6 +21,8 @@ import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Range;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -29,28 +31,30 @@ import java.util.Optional;
  * The schema of the table is fixed, and has to be specified in the
  * {@link StructuredTableSpecification} during the table creation.
  */
-// TODO: CDAP-14676 - Add IOException for table operations if needed when implementing SQL tables.
-public interface StructuredTable {
+public interface StructuredTable extends Closeable {
   /**
-   * Write the collection of fields to the table.
+   * Insert or replace the collection of fields to the table.
    * The fields contain both the primary key and the rest of the columns to write.
+   * Note that if the row does not exist in the table, it will get created. Otherwise it will get replaced.
    *
    * @param fields the fields to write
    * @throws InvalidFieldException if any of the fields are not part of the table schema, or the types of the value
    *                               do not match
+   * @throws IOException if there is an error writing to the table
    */
-  void write(Collection<Field<?>> fields) throws InvalidFieldException;
+  void upsert(Collection<Field<?>> fields) throws InvalidFieldException, IOException;
 
   /**
    * Read a single row with all the columns from the table.
    *
    * @param keys the primary key of the row to read
    * @return if the optional is not empty, the row addressed by the primary key.
-   *         If the optional is empty then the row is missing in the table
+   *         If the optional is empty then the row is missing in the table.
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match.
+   * @throws IOException if there is an error reading from the table
    */
-  Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException;
+  Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
 
   /**
    * Read a single row with the specified columns from the table.
@@ -59,9 +63,11 @@ public interface StructuredTable {
    * @param columns the columns to read. Empty collection returns all the columns
    * @return the row addressed by the primary key
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match.
+   *                               do not match
+   * @throws IOException if there is an error reading from the table
    */
-  Optional<StructuredRow> read(Collection<Field<?>> keys, Collection<String> columns) throws InvalidFieldException;
+  Optional<StructuredRow> read(Collection<Field<?>> keys,
+                               Collection<String> columns) throws InvalidFieldException, IOException;
 
   /**
    * Read a set of rows from the table matching the key range.
@@ -71,16 +77,18 @@ public interface StructuredTable {
    * @param limit maximum number of rows to return
    * @return a {@link CloseableIterator} of rows
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match.
+   *                               do not match
+   * @throws IOException if there is an error scanning the table
    */
-  CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException;
+  CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
 
   /**
    * Delete a single row from the table.
    *
    * @param keys the primary key of the row to delete
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
-   *                               do not match.
+   *                               do not match
+   * @throws IOException if there is an error deleting from the table
    */
-  void delete(Collection<Field<?>> keys) throws InvalidFieldException;
+  void delete(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
 }

@@ -23,14 +23,14 @@ import javax.annotation.Nullable;
  */
 public interface StructuredRow {
   /**
-   * @return the value of the field named fieldName as integer, or null if the field value is not defined.
-   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type.
+   * @return the value of the field named fieldName as integer, or null if the field value is not defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type
    */
   @Nullable
   Integer getInteger(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as long, or null if the field value is not defined.
+   * @return the value of the field named fieldName as long, or null if the field value is not defined
    * @throws InvalidFieldException if the fieldName is not part of the table schema,
    * or is of incompatible type. Integer field will be automatically widened to Long.
    */
@@ -38,7 +38,7 @@ public interface StructuredRow {
   Long getLong(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as string, or null if the field value is not defined.
+   * @return the value of the field named fieldName as string, or null if the field value is not defined
    * @throws InvalidFieldException if the fieldName is not part of the table schema,
    * or is of incompatible type. Numeric to string conversion will not be done.
    */
@@ -46,14 +46,14 @@ public interface StructuredRow {
   String getString(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as float, or null if the field value is not defined.
-   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type.
+   * @return the value of the field named fieldName as float, or null if the field value is not defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema, or is of incompatible type
    */
   @Nullable
   Float getFloat(String fieldName) throws InvalidFieldException;
 
   /**
-   * @return the value of the field named fieldName as double, or null if the field value is not defined.
+   * @return the value of the field named fieldName as double, or null if the field value is not defined
    * @throws InvalidFieldException if the fieldName is not part of the table schema,
    * or is of incompatible type. Float field will be automatically widened to Double.
    */
