@@ -31,14 +31,15 @@
 </head>
 
 <body ng-class="bodyClass" class="cdap-body-container" ng-controller="BodyCtrl" ng-keyup="onSearch($event)">
-  <div ng-show="$state.params.namespace">
-    <my-global-navbar ng-if="!$state.params.iframe"></my-global-navbar>
-  </div>
+  
+    <div ng-show="$state.params.namespace">
+      <my-global-navbar ng-if="!$state.params.iframe"></my-global-navbar>
+    </div>
 
-  <main class="container" id="app-container" ng-class="{'iframe': $state.params.iframe}">
-    <div ui-view></div>
-  </main>
-
+    <main class="container" id="app-container" ng-class="{'iframe': $state.params.iframe}">
+      <div ui-view></div>
+    </main>
+  
   <div class="alerts" id="alerts"></div>
   <div ng-if="!$state.params.iframe">
     <loading-icon></loading-icon>

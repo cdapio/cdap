@@ -52,6 +52,7 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
+import ThemeWrapper from 'components/ThemeWrapper';
 
 import './globals';
 const SampleTSXComponent = Loadable({
@@ -208,4 +209,4 @@ CDAP.propTypes = {
   children: PropTypes.node,
 };
 
-ReactDOM.render(<CDAP />, document.getElementById('app-container'));
+ReactDOM.render(<ThemeWrapper render={() => <CDAP />} />, document.getElementById('app-container'));
