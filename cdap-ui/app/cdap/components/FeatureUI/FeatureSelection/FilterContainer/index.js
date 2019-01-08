@@ -14,7 +14,6 @@ class FilterContainer extends Component {
   constructor(props) {
     super(props);
     this.filterColumnList = this.props.filterColumns;
-    //   this.updateIntialState();
     this.state = {
       orderbyOpen: false,
       selectedOrderbyColumn: { id: -1, name: 'Select' },
@@ -117,7 +116,6 @@ class FilterContainer extends Component {
 
     return (
       <div className="filter-container">
-        <h3>Filters</h3>
         <div className="orderby-box">
           <label className="orderby-label">Orderby: </label>
           <Dropdown isOpen={this.state.orderbyOpen} toggle={this.toggleOrderbyDropDown}>
@@ -144,8 +142,6 @@ class FilterContainer extends Component {
             <i className="fa fa-plus-circle action-icon" aria-hidden="true" onClick={this.addFilterItem}></i>
           </div>
         </div>
-
-
 
         <div className="limit-box">
           <label className="limit-label">Limit Within:   </label>
