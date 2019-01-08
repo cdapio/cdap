@@ -5,6 +5,8 @@ import SchemaSelectorModal from '../SchemaSelectorModal';
 import AlertModal from '../AlertModal';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
+import find from 'lodash/find';
+
 
 require('./SchemaSelector.scss');
 
@@ -12,7 +14,6 @@ class SchemaSelector extends React.Component {
   schemas = [];
   constructor(props) {
     super(props);
-    this.onDeleteSchema = this.onDeleteSchema.bind(this);
     this.onAlertClose = this.onAlertClose.bind(this);
     this.onAddSchemaClose = this.onAddSchemaClose.bind(this);
     this.state = {
@@ -20,6 +21,8 @@ class SchemaSelector extends React.Component {
       openAlertModal: false,
       schemaSelected: null,
       alertMessage: '',
+      showSchemaSelector: true,
+      operationType: 'ADD',
       schemaDP: []
     };
   }
@@ -34,27 +37,55 @@ class SchemaSelector extends React.Component {
             selected: false
           };
         }),
-      openSchemaModal: true
+      openSchemaModal: true,
+      showSchemaSelector: true,
+      schemaSelected: null,
+      operationType: 'ADD'
     });
   }
 
-  onDeleteSchema(action, data) {
+  performAction(action, data) {
     if (action == 'REMOVE') {
       this.setState({
         schemaSelected: data,
         alertMessage: 'Are you sure you want to delete: ' + data.schemaName,
         openAlertModal: true
       });
+    } else if(action == 'EDIT')  {
+      let selectedSchema = find(this.props.availableSchemas, {schemaName: data.schemaName});
+      selectedSchema.schemaColumns.map(column => {
+        if(find(data.schemaColumns, {columnName: column.columnName})) {
+          column.checked = true;
+        }
+        return column;
+      });
+      this.setState({
+        schemaSelected: selectedSchema,
+        openSchemaModal: true,
+        showSchemaSelector: false,
+        operationType: 'EDIT'
+      });
     }
   }
 
-  onAddSchemaClose(action, data) {
+  onAddSchemaClose(action, data, type) {
     if (action == 'OK') {
-      if (this.isSchemaAlreadyAdded(data.schemaName)) {
-        alert("Schema already added");
-        return;
+      switch(type){
+        case 'ADD':
+          {
+            if (this.isSchemaAlreadyAdded(data.schemaName)) {
+              alert("Schema already added");
+              return;
+            }
+            this.props.addSelectedSchema(data);
+          }
+          break;
+        case 'EDIT': {
+          this.props.updateSelectedSchema(data);
+        }
+        break;
       }
-      this.props.addSelectedSchema(data);
+
     }
     this.setState({
       openSchemaModal: false,
@@ -82,11 +113,11 @@ class SchemaSelector extends React.Component {
         {
           this.props.selectedSchemas.map((schemaItem) => {
             return (<AddSchema title={schemaItem.schemaName} data={schemaItem} key={schemaItem.schemaName} type='ADDED'
-              operation={this.onDeleteSchema} />);
+              operation={this.performAction.bind(this)} />);
           })
         }
-        <SchemaSelectorModal open={this.state.openSchemaModal} onClose={this.onAddSchemaClose}
-          dataProvider={this.state.schemaDP} />
+        <SchemaSelectorModal open={this.state.openSchemaModal} onClose={this.onAddSchemaClose} showSchemaSelector = {this.state.showSchemaSelector}
+          dataProvider={this.state.schemaDP} selectedSchema = {this.state.schemaSelected} operationType = {this.state.operationType}/>
         <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
           onClose={this.onAlertClose} />
       </div>

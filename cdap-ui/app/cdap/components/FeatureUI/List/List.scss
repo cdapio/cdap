@@ -1,0 +1,15 @@
+.schema-list-item {
+  display: flex;
+  border: 1px solid grey;
+  margin: 4px 0px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  background-color: #d4e2ff;
+  .parent-item {
+    font-weight: 600;
+    color: #333333;
+  }
+  .child-item {
+    padding-left: 5px;
+  }
+}
