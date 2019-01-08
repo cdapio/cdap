@@ -136,7 +136,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         try {
           runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE,
                              sec, new HashMap<String, Integer>(), pluginContext,
-                             new HashMap<String, StageStatisticsCollector>());
+                             new HashMap<String, StageStatisticsCollector>(), jssc.sparkContext());
         } catch (Exception e) {
           throw new RuntimeException(e);
         }

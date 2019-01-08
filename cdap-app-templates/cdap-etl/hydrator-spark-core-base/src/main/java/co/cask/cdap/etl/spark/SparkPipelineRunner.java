@@ -51,6 +51,8 @@ import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputPassFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spec.StageSpec;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
@@ -91,13 +93,16 @@ public abstract class SparkPipelineRunner {
                           JavaSparkExecutionContext sec,
                           Map<String, Integer> stagePartitions,
                           PluginContext pluginContext,
-                          Map<String, StageStatisticsCollector> collectors) throws Exception {
+                          Map<String, StageStatisticsCollector> collectors,
+                          JavaSparkContext jsc) throws Exception {
 
     MacroEvaluator macroEvaluator =
       new DefaultMacroEvaluator(new BasicArguments(sec),
                                 sec.getLogicalStartTime(), sec,
                                 sec.getNamespace());
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
+
+    boolean autoCache = jsc.getConf().getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true);
 
     // should never happen, but removes warning
     if (pipelinePhase.getDag() == null) {
@@ -183,7 +188,7 @@ public abstract class SparkPipelineRunner {
         if (sourcePluginType.equals(pluginType) || isConnectorSource) {
           SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput);
+                                      combinedData, hasErrorOutput, hasAlertOutput, autoCache);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
@@ -197,13 +202,13 @@ public abstract class SparkPipelineRunner {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache);
 
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache);
 
       } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -225,7 +230,7 @@ public abstract class SparkPipelineRunner {
           SparkCollection<RecordInfo<Object>> combinedData =
             inputErrors.flatMap(stageSpec, Compat.convert(new ErrorTransformFunction<>(pluginFunctionContext)));
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput);
+                                      combinedData, hasErrorOutput, hasAlertOutput, autoCache);
         }
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
@@ -243,7 +248,7 @@ public abstract class SparkPipelineRunner {
         Integer partitions = stagePartitions.get(stageName);
         SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+                                    combinedData, hasErrorOutput, hasAlertOutput, autoCache);
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -308,7 +313,11 @@ public abstract class SparkPipelineRunner {
           throw new IllegalStateException("There are no inputs into join stage " + stageName);
         }
 
-        emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector).cache());
+        if (autoCache) {
+            emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector).cache());
+        } else {
+            emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector));
+        }
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -394,14 +403,19 @@ public abstract class SparkPipelineRunner {
 
   private EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
                                             StageSpec stageSpec, SparkCollection<RecordInfo<Object>> stageData,
-                                            boolean hasErrors, boolean hasAlerts) {
+                                            boolean hasErrors, boolean hasAlerts, boolean autoCache) {
 
-    if (hasErrors || hasAlerts || stageSpec.getOutputPorts().size() > 1) {
-      // need to cache, otherwise the stage can be computed once per type of emitted record
-      stageData = stageData.cache();
+    if (autoCache) {
+        if (hasErrors || hasAlerts || stageSpec.getOutputPorts().size() > 1) {
+            // need to cache, otherwise the stage can be computed once per type of emitted record
+            stageData = stageData.cache();
+        }
     }
 
-    boolean shouldCache = shouldCache(pipelinePhase, stageSpec);
+    boolean shouldCache = false;
+    if (autoCache) {
+        shouldCache = shouldCache(pipelinePhase, stageSpec);
+    }
 
     if (hasErrors) {
       SparkCollection<ErrorRecord<Object>> errors =

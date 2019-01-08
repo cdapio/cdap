@@ -148,7 +148,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     try {
       PipelinePluginInstantiator pluginInstantiator =
         new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
-      runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors);
+      runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions,
+          pluginInstantiator, collectors, jsc);
     } finally {
       updateWorkflowToken(sec.getWorkflowToken(), collectors);
     }

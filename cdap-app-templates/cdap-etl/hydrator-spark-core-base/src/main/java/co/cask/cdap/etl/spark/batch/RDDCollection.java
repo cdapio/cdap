@@ -151,7 +151,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
     SparkConf sparkconf = jsc.getConf();
     JavaRDD<T> countedInput = null;
-    if (sparkconf.getBoolean("spark.cdap.pipeline.autocache.enable", true)) {
+    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
     } else {
         countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
@@ -186,7 +186,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
         SparkConf sparkconf = jsc.getConf();
         JavaRDD<T> countedRDD = null;
-        if (sparkconf.getBoolean("spark.cdap.pipeline.autocache.enable", true)) {
+        if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
             countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
         } else {
             countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
