@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015-2017 Cask Data, Inc.
+# Copyright © 2015-2019 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -77,22 +77,10 @@ Icon=cdap
 Categories=GNOME;GTK;Development;
 EOF
 
-# CDAP Examples Menu Entry
-cat > /usr/share/applications/cdap-examples.desktop << EOF
-[Desktop Entry]
-Encoding=UTF-8
-Name=CDAP Examples
-Comment=CDAP Examples directory
-Exec=xdg-open /opt/cdap/sandbox/examples
-Type=Application
-Icon=cdap
-Categories=GNOME;GTK;Development;
-EOF
-
 # Copy welcome.txt and some icons to the desktop
 mkdir -p ~cdap/Desktop
 cp /etc/welcome.txt ~cdap/Desktop
-for i in cdap-ui cdap-sandbox cdap-examples cdap-docs eclipse idea lxterminal ; do
+for i in cdap-ui cdap-sandbox cdap-docs eclipse idea lxterminal ; do
   cp /usr/share/applications/${i}.desktop ~cdap/Desktop
 done
 

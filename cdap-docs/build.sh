@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2016-2018 Cask Data, Inc.
+# Copyright © 2016-2019 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -251,7 +251,7 @@ function build_javadocs() {
     rm -rf ${temp_repo}/co/cask/cdap
   fi
   display_start_title "Building and installing CDAP to ${temp_repo}"
-  mvn clean package ${javadoc_run} -P examples,templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
+  mvn clean package ${javadoc_run} -P templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
   errors=${?}
   if [[ ${errors} -eq 0 ]]; then
     echo

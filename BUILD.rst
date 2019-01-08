@@ -48,21 +48,17 @@ CDAP Sandbox and Distributed CDAP
 
   See `Surefire doc <http://maven.apache.org/surefire/maven-surefire-plugin/examples/single-test.html>`__ for details
 
-- Build all examples::
-
-    MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
-
 - Build CDAP Sandbox distribution ZIP::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report,cdap-examples \
-    -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -am -amd -DskipTests -P templates,dist,release,unit-tests
 
 - Build CDAP Sandbox distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package \
-    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report,cdap-examples \
-    -am -amd -DskipTests -P examples,templates,dist,release,unit-tests \
+    -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-program-report \
+    -am -amd -DskipTests -P templates,dist,release,unit-tests \
     -Dadditional.artifacts.dir=</path/to/additional/artifacts>
 
   This will copy any .jar and .json files in any 'target' directories under the specified path to the artifacts directory.
@@ -73,18 +69,18 @@ CDAP Sandbox and Distributed CDAP
 
 - Build the limited set of Javadocs, including the ETL Application Templates, included in the CDAP documentation::
 
-    MAVEN_OPTS="-Xmx2048m" mvn clean install -P examples,templates,release -DskipTests \
+    MAVEN_OPTS="-Xmx2048m" mvn clean install -P templates,release -DskipTests \
     -Dgpg.skip=true && mvn clean site -DskipTests -P templates -DisOffline=false
 
-- Build the complete set of Javadocs, for all modules and examples::
+- Build the complete set of Javadocs, for all modules::
 
-    MAVEN_OPTS="-Xmx2048m" mvn clean install -P examples,templates,release -DskipTests \
-    -Dgpg.skip=true && mvn clean javadoc:aggregate -DskipTests -P examples,templates -DisOffline=false
+    MAVEN_OPTS="-Xmx2048m" mvn clean install -P templates,release -DskipTests \
+    -Dgpg.skip=true && mvn clean javadoc:aggregate -DskipTests -P templates -DisOffline=false
 
 - Build distributions (rpm, deb, tgz)::
 
     MAVEN_OPTS="-Xmx2048m" mvn clean package -DskipTests \
-    -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
+    -P templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
@@ -105,7 +101,7 @@ CDAP Sandbox and Distributed CDAP
 
 - Generates findbugs report::
 
-    mvn process-test-classes -P findbugs,examples
+    mvn process-test-classes -P findbugs
 
 - Offline mode::
 
@@ -113,7 +109,7 @@ CDAP Sandbox and Distributed CDAP
 
 - Change version::
 
-    mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P examples
+    mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P templates
 
 - Running from IDE (Intellij and Eclipse)::
 
@@ -125,7 +121,7 @@ CDAP Sandbox and Distributed CDAP
 
 - If your IDE build has Spark errors, try generating the sources for the Spark1 and Spark2 modules::
 
-    mvn clean generate-test-sources -P examples,templates,spark1-dev,spark2-dev
+    mvn clean generate-test-sources -P templates,spark1-dev,spark2-dev
 
   After this, the IDE build should pass.
 
