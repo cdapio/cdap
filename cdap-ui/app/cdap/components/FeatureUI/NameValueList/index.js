@@ -10,7 +10,8 @@ class NameValueList extends React.Component {
     super(props);
     this.state = {
       newName: '',
-      newValue: ''
+      newValue: '',
+      showAdvance: false
     };
   }
   onNewNameChange(event) {
@@ -25,8 +26,8 @@ class NameValueList extends React.Component {
     });
   }
 
-  onValueUpdated(index, item, event) {
-    this.props.updateNameValue(index, {
+  onValueUpdated(item, event) {
+    this.props.updateNameValue(item.itemIndex, {
       ...item,
       value: event.target.value
     });
@@ -48,34 +49,69 @@ class NameValueList extends React.Component {
   }
 
   render() {
-    let listData = isEmpty(this.props.dataProvider) ? [] : this.props.dataProvider;
+    let listData = (isEmpty(this.props.dataProvider) ? [] : this.props.dataProvider).map((item,index) => {
+      item.itemIndex = index;
+      return item;
+    });
+    let basicData = this.props.dataProvider.filter(item => item.isMandatory);
+    let advanceData = this.props.dataProvider.filter(item => !item.isMandatory);
     console.log("Rendering list ", listData);
     return (
-      <div>
+      <div className="engine-config-container">
         {
-          listData.map((item, index) => {
-            return (
-              <div className='list-row' key = {item.name}>
-                <div className='name'>{item.name + (item.isMandatory ? "*" : "")}</div>
-                <div className='colon'>:</div>
-                <Input className='value' type="text" name="value" placeholder='value'
-                  defaultValue={item.value} onChange={this.onValueUpdated.bind(this, index, item)} />
+          !isEmpty(basicData) &&
+          <div className="config-container">
+            <div className="config-header-label">Basic</div>
+            <div className="config-item-container">
+              {
+                basicData.map((item) => {
+                  return (
+                    <div className='list-row' key={item.name}>
+                      <div className='name'>{item.name + (item.isMandatory ? "*" : "")}</div>
+                      <div className='colon'>:</div>
+                      <Input className='value' type="text" name="value" placeholder='value'
+                        defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />
+                      {
+                        item.toolTip &&
+                        <i className="fa fa-info-circle field-info" title={item.toolTip}></i>
+                      }
+                    </div>);
+                })
+              }
+            </div>
+          </div>
+        }
+        {
+          !isEmpty(advanceData) &&
+          <div className="config-container">
+            <div className="advance-control" onClick={() => { this.setState(prevState => ({ showAdvance: !prevState.showAdvance })); }}>
+              <div className="config-header-label">Advance</div>
+              <i className={this.state.showAdvance ? "fa fa-caret-up" : "fa fa-caret-down"}></i>
+            </div>
+            {
+              this.state.showAdvance &&
+              <div className="config-item-container">
                 {
-                  item.toolTip &&
-                  <i className="fa fa-info-circle field-info" title={item.toolTip}></i>
+                  advanceData.map((item) => {
+                    return (
+                      <div className='list-row' key={item.name}>
+                        <div className='name'>{item.name + (item.isMandatory ? "*" : "")}</div>
+                        <div className='colon'>:</div>
+                        <Input className='value' type="text" name="value" placeholder='value'
+                          defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />
+                        {
+                          item.toolTip &&
+                          <i className="fa fa-info-circle field-info" title={item.toolTip}></i>
+                        }
+                      </div>);
+                  })
                 }
               </div>
-            );
-          })
+            }
+
+
+          </div>
         }
-        <div className='list-row'>
-          <Input className='value' type="text" name="value" placeholder='Custom Key'
-            value={this.state.newName} onChange={this.onNewNameChange.bind(this)} />
-          <div className='colon'>:</div>
-          <Input className='value' type="text" name="value" placeholder='value'
-            value={this.state.newValue} onChange={this.onNewValueChange.bind(this)} />
-        </div>
-        <button onClick={this.onAdd.bind(this)}  >Add</button>
       </div>
     );
   }

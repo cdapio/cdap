@@ -19,6 +19,8 @@ import AddFeatureActions from 'services/WizardStores/AddFeature/AddFeatureAction
 import isEmpty from 'lodash/isEmpty';
 import remove from 'lodash/remove';
 import find from 'lodash/find';
+import findIndex from 'lodash/findIndex';
+
 
 const defaultAction = {
   type: '',
@@ -149,6 +151,19 @@ const featureState = (state = defaultState, action = defaultAction) => {
         ...state,
         selectedSchemas: [...state.selectedSchemas, action.payload]
       };
+      break;
+    case AddFeatureActions.updateSelectedSchema:
+      {
+        let selectedSchemas = state.selectedSchemas;
+        let index = findIndex(selectedSchemas, { schemaName: action.payload.schemaName });
+        if (index >= 0) {
+          selectedSchemas[index] = action.payload;
+          state = {
+            ...state,
+            selectedSchemas: selectedSchemas
+          };
+        }
+      }
       break;
     case AddFeatureActions.deleteSelectedSchema: {
       let selectedSchemas = state.selectedSchemas;

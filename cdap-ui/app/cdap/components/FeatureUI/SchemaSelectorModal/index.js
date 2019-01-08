@@ -17,9 +17,11 @@ class SchemaSelectorModal extends React.Component {
     super(props);
     this.state = {
       open: this.props.open,
+      showSchemaSelector: true,
       selectedSchema: undefined,
       allSelected: false,
-      columns: []
+      columns: [],
+      operationType: 'ADD'
     };
 
     this.onCancel = this.onCancel.bind(this);
@@ -27,9 +29,17 @@ class SchemaSelectorModal extends React.Component {
     this.onSchemaClick = this.onSchemaClick.bind(this);
   }
 
-  componentDidMount() {
+  componentWillReceiveProps(props)  {
+    let columns = isEmpty(props.selectedSchema) ? [] : props.selectedSchema.schemaColumns.map(column => {
+      return { name: column.columnName, description: toCamelCase(column.columnType), checked: column.checked };
+    });
+
     this.setState({
-      selectedSchema: undefined
+      selectedSchema: props.selectedSchema,
+      showSchemaSelector: props.showSchemaSelector,
+      columns: columns,
+      operationType: props.operationType,
+      allSelected: columns.length && this.getCheckedCount(columns) == columns.length
     });
   }
 
@@ -40,7 +50,7 @@ class SchemaSelectorModal extends React.Component {
   onDone() {
     let finalSchema = cloneDeep(this.state.selectedSchema);
     finalSchema.schemaColumns = finalSchema.schemaColumns.filter((item, index) => this.changedColumnList.get(index));
-    this.props.onClose('OK', finalSchema);
+    this.props.onClose('OK', finalSchema, this.state.operationType);
   }
 
   onSchemaClick(schema) {
@@ -55,7 +65,8 @@ class SchemaSelectorModal extends React.Component {
     this.changedColumnList = new Map();
     this.setState({
       selectedSchema: schema,
-      columns: columns
+      columns: columns,
+      allSelected: false
     });
   }
 
@@ -75,8 +86,8 @@ class SchemaSelectorModal extends React.Component {
 
   getCheckedCount(columns) {
     let checkedCount = 0;
-    if(!isEmpty(columns)) {
-      for(let index = 0; index < columns.length; index++) {
+    if (!isEmpty(columns)) {
+      for (let index = 0; index < columns.length; index++) {
         columns[index].checked && checkedCount++;
       }
     }
@@ -85,10 +96,12 @@ class SchemaSelectorModal extends React.Component {
 
   onSelectAll(event) {
     const isChecked = event.target.checked;
+    this.changedColumnList  = new Map();
     this.setState(prevState => ({
       allSelected: isChecked,
-      columns: prevState.columns.map(column => {
+      columns: prevState.columns.map((column, index) => {
         column.checked = isChecked;
+        column.checked && this.changedColumnList.set(index, column.checked);
         return column;
       }),
     }));
@@ -102,17 +115,20 @@ class SchemaSelectorModal extends React.Component {
           <ModalHeader>Select Columns</ModalHeader>
           <ModalBody>
             <div className='body-container'>
-              <div className='schema-container'>
-                <div className='schema-header'>Schema</div>
-                <ListGroup>
-                  {
-                    this.props.dataProvider.map((item) => {
-                      return (<ListGroupItem active={item.selected} key={item.schemaName}
-                        onClick={() => this.onSchemaClick(item)}>{item.schemaName}</ListGroupItem>);
-                    })
-                  }
-                </ListGroup>
-              </div>
+              {
+                this.state.showSchemaSelector &&
+                <div className='schema-container'>
+                  <div className='schema-header'>Schema</div>
+                  <ListGroup>
+                    {
+                      this.props.dataProvider.map((item) => {
+                        return (<ListGroupItem active={item.selected} key={item.schemaName}
+                          onClick={() => this.onSchemaClick(item)}>{item.schemaName}</ListGroupItem>);
+                      })
+                    }
+                  </ListGroup>
+                </div>
+              }
               <div className='column-container'>
                 <div className='schema-header'>{"Select Columns: " + (this.state.selectedSchema ? this.state.selectedSchema.schemaName : "")}</div>
                 {

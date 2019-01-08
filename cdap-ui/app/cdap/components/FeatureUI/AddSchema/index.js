@@ -6,16 +6,15 @@ require('./AddSchema.scss');
 class AddSchema extends React.Component {
   constructor(props) {
     super(props);
-    this.onClick = this.onClick.bind(this);
     this.state = {
       title: props.title ? props.title : 'Schema',
       type: props.type ? props.type : 'NEW',
     };
   }
 
-  onClick() {
+  onOperation(type) {
     if (this.props.operation) {
-      this.props.operation(this.state.type == 'NEW' ? 'ADD' : 'REMOVE', this.props.data);
+      this.props.operation(type, this.props.data);
     }
   }
 
@@ -24,10 +23,10 @@ class AddSchema extends React.Component {
       <div className= { this.state.type == 'NEW' ? "add-container" : "scheme-container"}>
         <div className="tilte">{this.state.title}</div>
         {
-          (this.state.type == 'NEW') ? <i className="fa fa-plus-circle add-operation" onClick={this.onClick}></i>:
+          (this.state.type == 'NEW') ? <i className="fa fa-plus-circle add-operation" onClick={this.onOperation.bind(this,'ADD')}></i>:
           <div>
-            <i className="fa fa-pencil edit-operation" onClick={this.onClick}></i>
-            <i className="fa fa-trash delete-operation" onClick={this.onClick}></i>
+            <i className="fa fa-pencil edit-operation" onClick={this.onOperation.bind(this,'EDIT')}></i>
+            <i className="fa fa-trash delete-operation" onClick={this.onOperation.bind(this,'REMOVE')}></i>
           </div>
 
         }
