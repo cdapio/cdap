@@ -11,39 +11,31 @@
   box-shadow: -3px 2px 3px 0px #bbbbbb;
   z-index: 100;
   border-bottom: 1px solid gray;
-
-  .orderby-box{
+  .orderby-box {
     display: flex;
     border-top: 1px groove;
     padding-top: 15px;
     padding-bottom: 10px;
-
-    .orderby-label{
+    .orderby-label {
       padding-right: 15px;
-      padding-top: 5px
+      padding-top: 5px;
     }
   }
-
-  .filter-item-box{
+  .filter-item-box {
     height: calc(100% - 125px);
     overflow-y: auto;
     padding-right: 5px;
-    .add-filter-box{
+    .add-filter-box {
       display: flex;
       flex-direction: row-reverse;
       padding-right: 10px;
-      .action-icon{
+      .action-icon {
         padding-left: 10px;
         font-size: 20px;
       }
     }
   }
 }
-
-// .control-box {
-//   display: flex;
-//   flex-direction: row-reverse;
-// }
 
 .limit-box {
   display: inline-flex;
@@ -60,11 +52,7 @@
     padding-left: 5px;
     padding-right: 5px;
   }
-  .apply-btn{
+  .apply-btn {
     margin-left: 105px;
   }
 }
-
-
-
-

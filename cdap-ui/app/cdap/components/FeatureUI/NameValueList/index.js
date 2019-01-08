@@ -95,7 +95,11 @@ class NameValueList extends React.Component {
                   advanceData.map((item) => {
                     return (
                       <div className='list-row' key={item.name}>
-                        <div className='name'>{item.name + (item.isMandatory ? "*" : "")}</div>
+                        <div className='name'>{item.name}
+                          {
+                            item.isMandatory && <i className = "fa fa-asterisk text-danger"></i>
+                          }
+                        </div>
                         <div className='colon'>:</div>
                         <Input className='value' type="text" name="value" placeholder='value'
                           defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />
