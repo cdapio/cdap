@@ -269,7 +269,7 @@ export default class Calculate extends Component {
   }
 
   setOperationInput(e) {
-    let value = parseInt(e.target.value, 10);
+    let value = parseFloat(e.target.value, 10);
     if (typeof value !== 'number' || isNaN(value)) {
       return;
     }
@@ -556,6 +556,7 @@ export default class Calculate extends Component {
             value={this.state.operationInput}
             onChange={this.setOperationInput}
             type="number"
+            step="any"
             min={inputMin}
             autoFocus
           />
