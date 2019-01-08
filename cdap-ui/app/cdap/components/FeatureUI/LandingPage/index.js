@@ -35,6 +35,7 @@ import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
 import FeatureSelection from '../FeatureSelection';
 import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject } from '../util';
+import NamespaceStore from 'services/NamespaceStore';
 
 
 require('./LandingPage.scss');
@@ -63,7 +64,8 @@ class LandingPage extends React.Component {
       selectedPipelineType: 'All',
       displayFeatureSelection: false,
       pipeLineData: this.sampleData,
-      selectedPipeline: {}
+      selectedPipeline: {},
+      currentNamespace: NamespaceStore.getState().selectedNamespace
     };
   }
 
@@ -154,7 +156,8 @@ class LandingPage extends React.Component {
   }
 
   viewPipeline(pipeline) {
-    console("Direct t0 -> ", pipeline.pipelineName);
+    let navigatePath = `${window.location.origin}/pipelines/ns/${this.state.currentNamespace}/view/${pipeline.pipelineName}`;
+    window.location.href = navigatePath;
   }
 
   editPipeline(type, pipeline) {
@@ -185,7 +188,7 @@ class LandingPage extends React.Component {
       for (let property in pipelineData) {
         switch (property) {
           case PIPELINE_RUN_NAME: {
-            if(type == CLONE_PIPELINE) {
+            if (type == CLONE_PIPELINE) {
               this.props.updateFeatureName("Copy_of_" + pipelineData.pipelineRunName);
             } else {
               this.props.updateFeatureName(pipelineData.pipelineRunName);
@@ -289,7 +292,7 @@ class LandingPage extends React.Component {
       let configObj = find(configList, { name: config.paramName });
       return {
         name: config.paramName,
-        value: isEmpty(configObj) ? (isEmpty(config.defaultValue) ? "" :config.defaultValue ) : configObj.value,
+        value: isEmpty(configObj) ? (isEmpty(config.defaultValue) ? "" : config.defaultValue) : configObj.value,
         dataType: config.dataType,
         isCollection: config.isCollection,
         isMandatory: config.isMandatory,
@@ -556,8 +559,8 @@ class LandingPage extends React.Component {
           </div>
           : <div className="feature-generation">
             <div className='top-control'>
-              <div className = 'type-selector'>
-                <div className = "type-label">Pipeline Type:</div>
+              <div className='type-selector'>
+                <div className="type-label">Pipeline Type:</div>
                 <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
                   <DropdownToggle caret>
                     {this.state.selectedPipelineType}
