@@ -289,7 +289,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
 
-    return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
+    return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class, PreviewHttpHandler.class),
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule().getDistributedModule(),
                            new EntityVerifierModule(),
