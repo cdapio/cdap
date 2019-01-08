@@ -5,7 +5,9 @@ import SchemaSelectorModal from '../SchemaSelectorModal';
 import AlertModal from '../AlertModal';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
+import cloneDeep from 'lodash/cloneDeep';
 import find from 'lodash/find';
+import { removeSchemaFromPropertyMap } from '../util';
 
 
 require('./SchemaSelector.scss');
@@ -53,9 +55,11 @@ class SchemaSelector extends React.Component {
       });
     } else if(action == 'EDIT')  {
       let selectedSchema = find(this.props.availableSchemas, {schemaName: data.schemaName});
-      selectedSchema.schemaColumns.map(column => {
+      selectedSchema.schemaColumns = selectedSchema.schemaColumns.map(column => {
         if(find(data.schemaColumns, {columnName: column.columnName})) {
           column.checked = true;
+        } else {
+          column.checked = false;
         }
         return column;
       });
@@ -100,6 +104,9 @@ class SchemaSelector extends React.Component {
     console.log(this.state.schemaSelected);
     if (action === 'OK' && this.state.schemaSelected) {
       this.props.deleteSelectedSchema(this.state.schemaSelected);
+      let propertyMap =  cloneDeep(this.props.propertyMap);
+      removeSchemaFromPropertyMap(propertyMap, this.state.schemaSelected.schemaName);
+      this.props.updatePropertyMap(propertyMap);
     }
     this.setState({
       openAlertModal: false

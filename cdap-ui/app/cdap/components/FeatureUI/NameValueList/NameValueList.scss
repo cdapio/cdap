@@ -5,6 +5,7 @@
   .list-row {
     display: flex;
     padding-bottom: 10px;
+    align-items: center;
     .name {
       width: 250px;
       border: 1px solid rgba(0, 0, 0, 0.15);
@@ -13,6 +14,7 @@
       padding-left: 10px;
       height: 32px;
       display: inline;
+      font-weight: 500;
     }
     .colon {
       height: 32px;

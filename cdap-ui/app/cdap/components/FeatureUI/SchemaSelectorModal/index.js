@@ -30,7 +30,9 @@ class SchemaSelectorModal extends React.Component {
   }
 
   componentWillReceiveProps(props)  {
-    let columns = isEmpty(props.selectedSchema) ? [] : props.selectedSchema.schemaColumns.map(column => {
+    this.changedColumnList = new Map();
+    let columns = isEmpty(props.selectedSchema) ? [] : props.selectedSchema.schemaColumns.map((column, index) => {
+      this.changedColumnList.set(index,column.checked);
       return { name: column.columnName, description: toCamelCase(column.columnType), checked: column.checked };
     });
 
@@ -50,6 +52,10 @@ class SchemaSelectorModal extends React.Component {
   onDone() {
     let finalSchema = cloneDeep(this.state.selectedSchema);
     finalSchema.schemaColumns = finalSchema.schemaColumns.filter((item, index) => this.changedColumnList.get(index));
+    finalSchema.schemaColumns.map(item => {
+      delete(item.checked);
+      return item;
+    });
     this.props.onClose('OK', finalSchema, this.state.operationType);
   }
 

@@ -24,7 +24,8 @@ import AddFeatureStore from '../../../../services/WizardStores/AddFeature/AddFea
 const mapStateToSelectSchemaProps = (state) => {
   return {
     availableSchemas: state.featureState.availableSchemas,
-    selectedSchemas: state.featureState.selectedSchemas
+    selectedSchemas: state.featureState.selectedSchemas,
+    propertyMap: state.featureState.propertyMap
   };
 };
 
@@ -45,6 +46,12 @@ const mapDispatchToSelectSchemaProps = (dispatch) => {
     updateSelectedSchema: (schema) => {
       dispatch({
         type: AddFeatureActions.updateSelectedSchema,
+        payload: schema
+      });
+    },
+    updatePropertyMap: (schema) => {
+      dispatch({
+        type: AddFeatureActions.updatePropertyMap,
         payload: schema
       });
     },

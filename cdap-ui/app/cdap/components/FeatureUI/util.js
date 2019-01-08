@@ -4,7 +4,7 @@ import isEmpty from 'lodash/isEmpty';
 
 export function toCamelCase(value) {
   return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
-      return result ? (group1.toUpperCase() + (group2 ? group2.toLowerCase():'')): result;
+      return result ? (group1.toUpperCase() + (group2 ? group2:'')): result;
   });
 }
 
@@ -57,6 +57,18 @@ export function updatePropertyMapWithObj(propertyMap, updateObj) {
       isCollection: !updateObj.isSingleSelect,
       value: new Map([[updateObj.schemaName, updateObj.schemaColumns]])
     }]);
+  }
+}
+
+export function removeSchemaFromPropertyMap(propertyMap, schema) {
+  if (!isEmpty(propertyMap)) {
+    propertyMap.forEach((value) => {
+      if (value) {
+        value.forEach(subParam => {
+          subParam.value.delete(schema);
+        });
+      }
+    });
   }
 }
 
