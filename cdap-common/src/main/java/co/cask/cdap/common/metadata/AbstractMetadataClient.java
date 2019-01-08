@@ -29,6 +29,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -84,6 +85,38 @@ public abstract class AbstractMetadataClient {
    * Resolved the specified URL
    */
   protected abstract URL resolve(String resource) throws IOException;
+
+  /**
+   * Searches entities in the specified namespace whose metadata matches the specified query.
+   *
+   * @param namespace the namespace to search in
+   * @param query the query string with which to search
+   * @param target the target type. If null, all possible types will be searched
+   * @return the {@link MetadataSearchResponse} for the given query.
+   */
+  public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
+                                               @Nullable EntityTypeSimpleName target)
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    Set<EntityTypeSimpleName> targets = ImmutableSet.of();
+    if (target != null) {
+      targets = ImmutableSet.of(target);
+    }
+    return searchMetadata(namespace, query, targets);
+  }
+
+  /**
+   * Searches entities in the specified namespace whose metadata matches the specified query.
+   *
+   * @param namespace the namespace to search in
+   * @param query the query string with which to search
+   * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
+   * @return the {@link MetadataSearchResponse} for the given query.
+   */
+  public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
+                                               Set<EntityTypeSimpleName> targets)
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
+  }
 
   /**
    * Searches entities in the specified namespace whose metadata matches the specified query.

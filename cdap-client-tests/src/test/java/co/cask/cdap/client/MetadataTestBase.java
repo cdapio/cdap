@@ -164,8 +164,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                            Set<EntityTypeSimpleName> targets) throws Exception {
     // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
     // methods, to strip out metadata from search results for easier assertions.
-    return metadataClient.searchMetadata(namespaceId, query, targets,
-                                         null, 0, Integer.MAX_VALUE, 0, null, false).getResults();
+    return metadataClient.searchMetadata(namespaceId, query, targets).getResults();
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
