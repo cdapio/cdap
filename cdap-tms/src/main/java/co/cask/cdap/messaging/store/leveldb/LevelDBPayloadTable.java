@@ -26,6 +26,7 @@ import co.cask.cdap.messaging.store.ImmutablePayloadTableEntry;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.RawPayloadTableEntry;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.base.Preconditions;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
 import org.iq80.leveldb.WriteBatch;
@@ -43,9 +44,19 @@ import java.util.concurrent.TimeUnit;
 public class LevelDBPayloadTable extends AbstractPayloadTable {
   private static final WriteOptions WRITE_OPTIONS = new WriteOptions().sync(true);
   private final DB levelDB;
+  private final TopicMetadata topicMetadata;
 
-  public LevelDBPayloadTable(DB levelDB) {
+  public LevelDBPayloadTable(DB levelDB, TopicMetadata topicMetadata) {
     this.levelDB = levelDB;
+    this.topicMetadata = topicMetadata;
+  }
+
+  private void checkTopic(TopicId topicId, int generation) {
+    Preconditions.checkArgument(this.topicMetadata.getTopicId().equals(topicId), "Not allowed to use table with a " +
+      "different topic id. Table's topic Id: {}. Specified topic id: {}", this.topicMetadata.getTopicId(), topicId);
+    Preconditions.checkArgument(this.topicMetadata.getGeneration() == generation, "Not allowed to use table with " +
+                                  "a different generation id. Table's generation: {}. Specified generation: {}",
+                                this.topicMetadata.getGeneration(), generation);
   }
 
   @Override
@@ -117,6 +128,7 @@ public class LevelDBPayloadTable extends AbstractPayloadTable {
 
         int dataGeneration = payloadTableEntry.getGeneration();
         int currGeneration = topicMetadata.getGeneration();
+        checkTopic(topicMetadata.getTopicId(), topicMetadata.getGeneration());
         if (MessagingUtils.isOlderGeneration(dataGeneration, currGeneration)) {
           writeBatch.delete(entry.getKey());
           continue;

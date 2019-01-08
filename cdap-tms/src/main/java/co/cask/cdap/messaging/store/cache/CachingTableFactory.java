@@ -17,6 +17,7 @@
 package co.cask.cdap.messaging.store.cache;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.store.ForwardingTableFactory;
 import co.cask.cdap.messaging.store.MessageTable;
 import co.cask.cdap.messaging.store.MetadataTable;
@@ -53,18 +54,18 @@ public class CachingTableFactory extends ForwardingTableFactory {
   }
 
   @Override
-  public MetadataTable createMetadataTable(String tableName) throws IOException {
-    return delegateTableFactory.createMetadataTable(tableName);
+  public MetadataTable createMetadataTable() throws IOException {
+    return delegateTableFactory.createMetadataTable();
   }
 
   @Override
-  public MessageTable createMessageTable(String tableName) throws IOException {
-    MessageTable messageTable = delegateTableFactory.createMessageTable(tableName);
+  public MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException {
+    MessageTable messageTable = delegateTableFactory.createMessageTable(topicMetadata);
     return new CachingMessageTable(cConf, messageTable, cacheProvider);
   }
 
   @Override
-  public PayloadTable createPayloadTable(String tableName) throws IOException {
-    return delegateTableFactory.createPayloadTable(tableName);
+  public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
+    return delegateTableFactory.createPayloadTable(topicMetadata);
   }
 }

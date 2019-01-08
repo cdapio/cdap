@@ -16,6 +16,8 @@
 
 package co.cask.cdap.messaging.store;
 
+import co.cask.cdap.messaging.TopicMetadata;
+
 import java.io.IOException;
 
 /**
@@ -29,17 +31,17 @@ public abstract class ForwardingTableFactory implements TableFactory {
   public abstract TableFactory getDelegate();
 
   @Override
-  public MetadataTable createMetadataTable(String tableName) throws IOException {
-    return getDelegate().createMetadataTable(tableName);
+  public MetadataTable createMetadataTable() throws IOException {
+    return getDelegate().createMetadataTable();
   }
 
   @Override
-  public MessageTable createMessageTable(String tableName) throws IOException {
-    return getDelegate().createMessageTable(tableName);
+  public MessageTable createMessageTable(TopicMetadata topicMetadata) throws IOException {
+    return getDelegate().createMessageTable(topicMetadata);
   }
 
   @Override
-  public PayloadTable createPayloadTable(String tableName) throws IOException {
-    return getDelegate().createPayloadTable(tableName);
+  public PayloadTable createPayloadTable(TopicMetadata topicMetadata) throws IOException {
+    return getDelegate().createPayloadTable(topicMetadata);
   }
 }

@@ -166,17 +166,9 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   @Override
   public MessageFetcher prepareFetch(final TopicId topicId) throws TopicNotFoundException, IOException {
     final TopicMetadata metadata = getTopic(topicId);
-    return new CoreMessageFetcher(metadata, new TableProvider<MessageTable>() {
-      @Override
-      public MessageTable get() throws IOException {
-        return createMessageTable(metadata);
-      }
-    }, new TableProvider<PayloadTable>() {
-      @Override
-      public PayloadTable get() throws IOException {
-        return createPayloadTable(metadata);
-      }
-    });
+    return new CoreMessageFetcher(metadata,
+                                  () -> createMessageTable(metadata),
+                                  () -> createPayloadTable(metadata));
   }
 
   @Nullable
@@ -382,19 +374,15 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
    * Creates a new instance of {@link MetadataTable}.
    */
   private MetadataTable createMetadataTable() throws IOException {
-    return tableFactory.createMetadataTable(cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
+    return tableFactory.createMetadataTable();
   }
 
   private MessageTable createMessageTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
-    // Currently we don't support customizable table name yet, hence always get it from cConf.
-    // Later on it can be done by topic properties, with impersonation setting as well.
-    return tableFactory.createMessageTable(cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME));
+    return tableFactory.createMessageTable(topicMetadata);
   }
 
   private PayloadTable createPayloadTable(@SuppressWarnings("unused") TopicMetadata topicMetadata) throws IOException {
-    // Currently we don't support customizable table name yet, hence always get it from cConf.
-    // Later on it can be done by topic properties, with impersonation setting as well.
-    return tableFactory.createPayloadTable(cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME));
+    return tableFactory.createPayloadTable(topicMetadata);
   }
 
   /**
