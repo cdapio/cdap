@@ -44,6 +44,10 @@ $border-color: $grey-05;
     &:after {
       @include border-element();
     }
+
+    .popper {
+      padding: 0;
+    }
   }
   .run-container {
     display: flex;
