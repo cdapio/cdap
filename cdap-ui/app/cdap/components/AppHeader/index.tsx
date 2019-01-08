@@ -132,7 +132,6 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
   }
 }
 const AppHeaderWithStyles = withStyles(styles)(MyAppHeader);
-
 /**
  * Detecting environment is angular. If angular then add the theme wrapper
  * as MuiThemeProvider is not available at the root in angular apps

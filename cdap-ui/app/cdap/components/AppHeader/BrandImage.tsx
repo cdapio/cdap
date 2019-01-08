@@ -26,7 +26,7 @@ interface IBrandImageProps extends WithStyles<typeof imageStyle> {
 }
 
 const BrandImage: React.SFC<IBrandImageProps> = ({ classes, context }) => {
-  const brandLogoSrc = Theme.productLogoNavbar || '/cdap_assets/img/company_logo.png';
+  const brandLogoSrc = Theme.productLogoNavbar || '/cdap_assets/img/company_logo-20-all.png';
   const { isNativeLink } = context;
   const namespace = getCurrentNamespace();
   const LinkEl = isNativeLink ? 'a' : Link;
@@ -40,7 +40,7 @@ const BrandImage: React.SFC<IBrandImageProps> = ({ classes, context }) => {
 const imageStyle = {
   img: {
     width: '108px',
-    height: '50px',
+    height: '45px',
   },
 };
 const StyledBrandImage = withStyles(imageStyle)(withContext(BrandImage));
