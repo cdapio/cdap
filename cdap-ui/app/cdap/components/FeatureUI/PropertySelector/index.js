@@ -20,7 +20,6 @@ import {
 import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
 import { getPropertyUpdateObj, updatePropertyMapWithObj } from '../util';
-
 require('./PropertySelector.scss');
 
 class PropertySelector extends React.Component {
@@ -28,6 +27,7 @@ class PropertySelector extends React.Component {
   currentProperty = undefined;
   currentSubProperty = "none";
   propertyMap;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -190,7 +190,7 @@ class PropertySelector extends React.Component {
           isCollection: true,
           isSelected: false,
           isMandatory: property.isMandatory,
-          values: this.getSchemaColumns(this.props.propertyMap, property.paramName, "none").map(obj => obj.schema + ': ' + obj.column)
+          values: this.getSchemaColumns(this.props.propertyMap, property.paramName, "none").map(obj => ({parent: obj.schema, child: obj.column}))
         }]);
       } else {
         let subParamValues = [];
@@ -200,7 +200,7 @@ class PropertySelector extends React.Component {
             isCollection: subParam.isCollection,
             isMandatory: property.isMandatory,
             isSelected: this.currentProperty.paramName == property.paramName && this.currentSubProperty == subParam.paramName,
-            values: this.getSchemaColumns(this.props.propertyMap, property.paramName, subParam.paramName).map(obj => obj.schema + ': ' + obj.column)
+            values: this.getSchemaColumns(this.props.propertyMap, property.paramName, subParam.paramName).map(obj => ({parent: obj.schema, child: obj.column}))
           });
         });
         updatedPropMap.set(property.paramName, subParamValues);

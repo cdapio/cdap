@@ -19,6 +19,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      height: 60px;
       padding-bottom: 10px;
       margin-bottom: 10px;
       border-bottom: solid 1px lightgray;
@@ -30,6 +31,7 @@
       display: flex;
       flex-direction: row;
       overflow: auto;
+      height: 95%;
       .schema {
         margin-right: 10px;
         min-width: 210px;
@@ -54,21 +56,26 @@
 }
 
 .accordion__body {
-  padding: 10px;
+  padding: 5px 10px;
 }
 
 .list-header {
-  font-size: 14px;
-  background-color: lightgray;
+  font-size: 12px;
+  font-weight: 500;
+  background-color: #97b3fa;
+  margin: 0px -10px;
+  padding: 4px 10px;
 }
 
 .list-header:hover {
-  font-size: 14px;
-  background-color: darkgrey;
+  background-color: #6a91f5;
 }
 
 .list-header-selected {
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 500;
   color: white;
-  background-color: gray;
+  margin: 0px -10px;
+  padding: 4px 10px;
+  background-color: #5781e7;
 }
