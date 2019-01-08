@@ -22,6 +22,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
+import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.MasterUtils;
 import co.cask.cdap.common.app.MainClassLoader;
@@ -578,6 +579,7 @@ public class MasterServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
       new OperationalStatsModule(),
+      new PreviewHttpModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
