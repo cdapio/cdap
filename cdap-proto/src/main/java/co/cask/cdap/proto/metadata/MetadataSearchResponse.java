@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,7 @@ import java.util.Set;
 
 /**
  * Denotes the response of the metadata search API.
- *
- * @deprecated As of release 5.0, replaced by {@link MetadataSearchResponseV2}
  */
-@Deprecated
 public class MetadataSearchResponse {
   private final String sort;
   private final int offset;

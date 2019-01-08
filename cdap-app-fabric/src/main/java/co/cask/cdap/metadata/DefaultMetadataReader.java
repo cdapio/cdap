@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import com.google.inject.Inject;
 
@@ -47,7 +47,7 @@ public class DefaultMetadataReader implements MetadataReader {
   @Override
   public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
     Map<MetadataScope, Metadata> scopeMetadata = new HashMap<>();
-    Set<MetadataRecordV2> metadata = metadataAdmin.getMetadata(metadataEntity);
+    Set<MetadataRecord> metadata = metadataAdmin.getMetadata(metadataEntity);
     metadata.forEach(record -> scopeMetadata.put(record.getScope(),
                                                  new Metadata(record.getProperties(), record.getTags())));
     return scopeMetadata;

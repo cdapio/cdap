@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,10 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.proto.metadata.MetadataSearchResponseV2;
+import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
 import java.util.Map;
 import java.util.Set;
@@ -56,17 +54,17 @@ public interface MetadataAdmin {
   void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException;
 
   /**
-   * Returns a set of {@link MetadataRecordV2} representing all metadata (including properties and tags) for the
+   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the
    * specified {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecordV2> getMetadata(MetadataEntity metadataEntity);
+  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
 
   /**
-   * Returns a set of {@link MetadataRecordV2} representing all metadata (including properties and tags) for the
+   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the
    * specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    */
   // TODO: Should this return a single metadata record instead or is a set of one record ok?
-  Set<MetadataRecordV2> getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in both
@@ -140,7 +138,7 @@ public interface MetadataAdmin {
    * an optional set of {@link EntityTypeSimpleName entity types} in the specified {@link MetadataScope}.
    *
    * @param request the search request
-   * @return the {@link MetadataSearchResponseV2} containing search results for the specified search query and filters
+   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
    */
-  MetadataSearchResponseV2 search(SearchRequest request) throws Exception;
+  MetadataSearchResponse search(SearchRequest request) throws Exception;
 }

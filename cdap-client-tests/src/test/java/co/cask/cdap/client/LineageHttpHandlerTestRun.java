@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -130,7 +130,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                          flowRunId,
                          ImmutableSet.of(flow.flowlet(AllProgramsApp.A.NAME)))
           )),
-          Collections.<CollapseType>emptySet());
+          Collections.emptySet());
       Assert.assertEquals(expected, lineage);
 
       // Fetch dataset lineage with time strings
@@ -155,7 +155,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, dataProperties, dataTags),
                                 new MetadataRecord(stream, MetadataScope.USER, streamProperties,
                                                    streamTags)),
-                          getMetadata(flow.run(flowRunId.getId())));
+                          getMetadataForRun(flow.run(flowRunId.getId()).toMetadataEntity()));
 
       // Assert with a time range after the flow run should return no results
       long laterStartTime = stopTime + 1000;
@@ -164,8 +164,8 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
       lineage = fetchLineage(stream, laterStartTime, laterEndTime, 10);
 
       Assert.assertEquals(
-        LineageSerializer.toLineageRecord(laterStartTime, laterEndTime, new Lineage(ImmutableSet.<Relation>of()),
-                                          Collections.<CollapseType>emptySet()),
+        LineageSerializer.toLineageRecord(laterStartTime, laterEndTime, new Lineage(ImmutableSet.of()),
+                                          Collections.emptySet()),
         lineage);
 
       // Assert with a time range before the flow run should return no results
@@ -175,8 +175,8 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
       lineage = fetchLineage(stream, earlierStartTime, earlierEndTime, 10);
 
       Assert.assertEquals(
-        LineageSerializer.toLineageRecord(earlierStartTime, earlierEndTime, new Lineage(ImmutableSet.<Relation>of()),
-                                          Collections.<CollapseType>emptySet()),
+        LineageSerializer.toLineageRecord(earlierStartTime, earlierEndTime, new Lineage(ImmutableSet.of()),
+                                          Collections.emptySet()),
         lineage);
 
       // Test bad time ranges
@@ -296,7 +296,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
                                                    emptySet()),
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          getMetadata(flow.run(flowRunId.getId())));
+                          getMetadataForRun(flow.run(flowRunId.getId()).toMetadataEntity()));
 
       // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
       ProgramId programForWorker = new ProgramId(worker.getNamespace(), worker.getApplication(), worker.getType(),
@@ -307,7 +307,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
                                                    emptySet()),
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          getMetadata(worker.run(workerRunId.getId())));
+                          getMetadataForRun(worker.run(workerRunId.getId()).toMetadataEntity()));
 
       // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
       ProgramId programForSpark = new ProgramId(spark.getNamespace(), spark.getApplication(), spark.getType(),
@@ -320,7 +320,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset2, MetadataScope.USER, emptyMap(), emptySet()),
                                 new MetadataRecord(dataset3, MetadataScope.USER, emptyMap(), emptySet()),
                                 new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
-                          getMetadata(spark.run(sparkRunId.getId())));
+                          getMetadataForRun(spark.run(sparkRunId.getId()).toMetadataEntity()));
     } finally {
       namespaceClient.delete(namespace);
     }

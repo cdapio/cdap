@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Cask Data, Inc.
+ * Copyright 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.metadata.MetadataRecordV2;
+import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
@@ -330,7 +330,7 @@ public class MetadataDataset extends AbstractDataset {
    * Retrieves the metadata for the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the specified {@link MetadataEntity}
-   * @return {@link MetadataRecordV2} representing the metadata for the specified {@link MetadataEntity}
+   * @return {@link MetadataRecord} representing the metadata for the specified {@link MetadataEntity}
    */
   public Metadata getMetadata(MetadataEntity metadataEntity) {
     MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, null);
