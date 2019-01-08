@@ -43,7 +43,6 @@
     <module>cdap-etl-tools</module>
     <module>hydrator-spark-core</module>
     <module>hydrator-spark-core2_2.11</module>
-    <module>hydrator-test</module>
   </modules>
 
   <properties>

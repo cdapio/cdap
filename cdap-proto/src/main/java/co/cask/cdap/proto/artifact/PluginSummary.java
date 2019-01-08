@@ -143,6 +143,6 @@ public class PluginSummary {
         return "PluginSummary{" + "name='" + name + '\'' + ", type='" + type + '\'' + ", description='" + description
                 + '\'' + ", pluginFunction='" + getPluginFunctionToString() + '\'' + ", pluginInput='"
                 + getPluginInputToString() + '\'' + ", pluginOutput='" + getPluginOutputToString() + '\''
-                + ", className='" + className + '\'' + ", artifact=" + artifact + '}';
-    }
+        + ", className='" + className + '\'' + ", artifact=" + artifact + '}';
+  }
 }

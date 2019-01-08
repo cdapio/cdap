@@ -78,20 +78,50 @@ public class PluginClass {
     this.pluginFunction = pluginFunction;
   }
 
-  public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
+  public PluginClass(String type, String name, String description, String[] pluginInput, String[] pluginOutput, 
+                     String[] pluginFunction, String className, @Nullable String configfieldName,
                      Map<String, PluginPropertyField> properties) {
-    this(type, name, description, null, null, null, className, configfieldName, properties, Collections.emptySet(),
-         Requirements.EMPTY);
+    this(type, name, description, pluginInput, pluginInput, pluginFunction, className, configfieldName, properties, 
+        Collections.emptySet(), Requirements.EMPTY);
   }
 
   public PluginClass(String type, String name, String description, String[] pluginInput,
                      String[] pluginOutput, String[] pluginFunction, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
                      Set<String> endpoints) {
-    this(type, name, description, pluginInput, pluginOutput, pluginFunction, className, configfieldName, properties, endpoints,
-         Requirements.EMPTY);
+    this(type, name, description, pluginInput, pluginOutput, pluginFunction, className, configfieldName, properties, 
+        endpoints, Requirements.EMPTY);
   }
 
+  public PluginClass(String type, String name, String description, String className,
+                    @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
+                    Set<String> endpoints, Requirements requirements) {
+    this.type = type;
+    this.name = name;
+    this.description = description;
+    this.className = className;
+    this.configFieldName = configfieldName;
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.endpoints = Collections.unmodifiableSet(new HashSet<>(endpoints));
+    this.requirements = requirements;
+    this.pluginInput = null;
+    this.pluginOutput = null;
+    this.pluginFunction = null;
+  }
+
+  public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
+                     Map<String, PluginPropertyField> properties) {
+    this(type, name, description, null, null, null, className, configfieldName, properties, 
+        Collections.emptySet(), Requirements.EMPTY);
+  }
+
+  public PluginClass(String type, String name, String description, String className,
+                   @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
+                   Set<String> endpoints) {
+    this(type, name, description, null, null, null,  className, configfieldName, properties, 
+        endpoints, Requirements.EMPTY);
+  }
+  
   /**
    * Validates the {@link PluginClass}
    *
@@ -255,7 +285,8 @@ public class PluginClass {
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, description, getPluginInputToString(), getPluginOutputToString(), getPluginFunctionToString(), className, configFieldName, properties, endpoints, requirements);
+    return Objects.hash(type, name, description, getPluginInputToString(), getPluginOutputToString(), 
+        getPluginFunctionToString(), className, configFieldName, properties, endpoints, requirements);
   }
 
   @Override
