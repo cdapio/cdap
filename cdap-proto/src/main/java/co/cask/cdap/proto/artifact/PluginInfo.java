@@ -24,6 +24,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 import javax.annotation.Nullable;
 
 /**
@@ -33,74 +34,65 @@ import javax.annotation.Nullable;
 @Beta
 public class PluginInfo extends PluginSummary {
 
-  private final String configFieldName;
-  private final Map<String, PluginPropertyField> properties;
-  private final Set<String> endpoints;
+    private final String configFieldName;
+    private final Map<String, PluginPropertyField> properties;
+    private final Set<String> endpoints;
 
-  public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
-    this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(), pluginClass.getClassName(),
-         pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints());
-  }
-
-  public PluginInfo(String name, String type, String description, String className, @Nullable String configFieldName,
-                    ArtifactSummary artifact, Map<String, PluginPropertyField> properties, Set<String> endpoints) {
-    super(name, type, description, className, artifact);
-    this.configFieldName = configFieldName;
-    this.properties = properties;
-    this.endpoints = endpoints;
-  }
-
-  @Nullable
-  public String getConfigFieldName() {
-    return configFieldName;
-  }
-
-  public Map<String, PluginPropertyField> getProperties() {
-    return properties;
-  }
-
-  public Set<String> getEndpoints() {
-    return endpoints;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
+    public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
+        this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
+                pluginClass.getPluginFunction(), pluginClass.getPluginInput(), pluginClass.getPluginOutput(),
+                pluginClass.getClassName(), pluginClass.getConfigFieldName(), artifactSummary,
+                pluginClass.getProperties(), pluginClass.getEndpoints());
     }
 
-    PluginInfo that = (PluginInfo) o;
+    public PluginInfo(String name, String type, String description, String[] pluginInput, String[] pluginOutput,
+            String[] pluginFunction, String className, @Nullable String configFieldName, ArtifactSummary artifact,
+            Map<String, PluginPropertyField> properties, Set<String> endpoints) {
+        super(name, type, description, pluginInput, pluginOutput, pluginFunction, className, artifact);
+        this.configFieldName = configFieldName;
+        this.properties = properties;
+        this.endpoints = endpoints;
+    }
 
-    return super.equals(that) &&
-      Objects.equals(configFieldName, that.configFieldName) &&
-      Objects.equals(properties, that.properties) &&
-      Objects.equals(endpoints, that.endpoints);
-  }
+    @Nullable
+    public String getConfigFieldName() {
+        return configFieldName;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(super.hashCode(), configFieldName, properties, endpoints);
-  }
+    public Map<String, PluginPropertyField> getProperties() {
+        return properties;
+    }
 
-  @Override
-  public String toString() {
-    return "PluginInfo{" +
-      "configFieldName='" + configFieldName + '\'' +
-      ", properties=" + properties +
-      ", endpoints=" + endpoints +
-      ", name='" + name + '\'' +
-      ", type='" + type + '\'' +
-      ", description='" + description + '\'' +
-      ", className='" + className + '\'' +
-      ", artifact=" + artifact +
-      ", name='" + getName() + '\'' +
-      ", type='" + getType() + '\'' +
-      ", description='" + getDescription() + '\'' +
-      ", className='" + getClassName() + '\'' +
-      ", artifact=" + getArtifact() +
-      '}';
-  }
+    public Set<String> getEndpoints() {
+        return endpoints;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PluginInfo that = (PluginInfo) o;
+
+        return super.equals(that) && Objects.equals(configFieldName, that.configFieldName)
+                && Objects.equals(properties, that.properties) && Objects.equals(endpoints, that.endpoints);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), configFieldName, properties, endpoints);
+    }
+
+    @Override
+    public String toString() {
+        return "PluginInfo{" + "configFieldName='" + configFieldName + '\'' + ", properties=" + properties
+                + ", endpoints=" + endpoints + ", name='" + name + '\'' + ", type='" + type + '\'' + ", description='"
+                + description + '\'' + ", className='" + className + '\'' + ", artifact=" + artifact + ", name='"
+                + getName() + '\'' + ", type='" + getType() + '\'' + ", description='" + getDescription() + '\''
+                + ", className='" + getClassName() + '\'' + ", artifact=" + getArtifact() + '}';
+    }
 }

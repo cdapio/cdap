@@ -499,6 +499,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         for (PluginClass pluginClass : pluginsEntry.getValue()) {
           pluginSummaries.add(new PluginSummary(
             pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
+            pluginClass.getPluginInput(), pluginClass.getPluginOutput(), pluginClass.getPluginFunction(),
             pluginClass.getClassName(), pluginArtifactSummary));
         }
       }
