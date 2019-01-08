@@ -1,0 +1,33 @@
+.correlation-container {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: #eeeeee;
+  text-align: left;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  box-shadow: 1px 3px 3px 0px #bbbbbb;
+  z-index: 100;
+  border-bottom: 1px solid gray;
+
+  .algo-box{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    box-shadow: 3px 3px 5px #888888;
+    background-color: #e3e2e4;
+    .algo-label{
+      padding-right: 15px;
+    }
+  }
+
+  .control-box{
+    display: flex;
+    flex-direction: row-reverse;
+  }
+}
