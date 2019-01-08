@@ -1,6 +1,6 @@
 /* eslint react/prop-types: 0 */
 import React from 'react';
-import { Button, Modal, ModalHeader,  ModalBody, ModalFooter } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -18,6 +18,8 @@ class SchemaSelectorModal extends React.Component {
     this.state = {
       open: this.props.open,
       selectedSchema: undefined,
+      allSelected: false,
+      columns: []
     };
 
     this.onCancel = this.onCancel.bind(this);
@@ -47,20 +49,52 @@ class SchemaSelectorModal extends React.Component {
     }
     schema.selected = true;
     this.lastSelectedSchema = schema;
+    let columns = isEmpty(schema) ? [] : schema.schemaColumns.map(column => {
+      return { name: column.columnName, description: toCamelCase(column.columnType), checked: false };
+    });
+    this.changedColumnList = new Map();
     this.setState({
-      selectedSchema: schema
+      selectedSchema: schema,
+      columns: columns
     });
   }
 
   handleColumnChange(changeList) {
     this.changedColumnList = changeList;
+    let checkedCount = 0;
+    let columns = this.state.columns.map((column, index) => {
+      column.checked = changeList.get(index);
+      column.checked && checkedCount++;
+      return column;
+    });
+    this.setState({
+      allSelected: checkedCount == columns.length,
+      columns: columns
+    });
+  }
+
+  getCheckedCount(columns) {
+    let checkedCount = 0;
+    if(!isEmpty(columns)) {
+      for(let index = 0; index < columns.length; index++) {
+        columns[index].checked && checkedCount++;
+      }
+    }
+    return checkedCount;
+  }
+
+  onSelectAll(event) {
+    const isChecked = event.target.checked;
+    this.setState(prevState => ({
+      allSelected: isChecked,
+      columns: prevState.columns.map(column => {
+        column.checked = isChecked;
+        return column;
+      }),
+    }));
   }
 
   render() {
-    let columns = isEmpty(this.state.selectedSchema) ? [] : this.state.selectedSchema.schemaColumns.map(column => {
-      return { name: column.columnName, description: toCamelCase(column.columnType), checked: false };
-    });
-    this.changedColumnList = new Map();
     return (
       <div>
         <Modal isOpen={this.props.open}
@@ -73,34 +107,37 @@ class SchemaSelectorModal extends React.Component {
                 <ListGroup>
                   {
                     this.props.dataProvider.map((item) => {
-                      return (<ListGroupItem active={item.selected} key = {item.schemaName}
+                      return (<ListGroupItem active={item.selected} key={item.schemaName}
                         onClick={() => this.onSchemaClick(item)}>{item.schemaName}</ListGroupItem>);
                     })
                   }
                 </ListGroup>
               </div>
               <div className='column-container'>
-                 <div className='schema-header'>{"Select Columns: " + (this.state.selectedSchema? this.state.selectedSchema.schemaName : "")}</div>
-                 {
-                   !isEmpty(columns) &&
-                   <div className='column-control'>
+                <div className='schema-header'>{"Select Columns: " + (this.state.selectedSchema ? this.state.selectedSchema.schemaName : "")}</div>
+                {
+                  !isEmpty(this.state.columns) &&
+                  <div className='column-control'>
                     <label className='select-all-container'>
-                        <input type="checkbox"/>
-                        Select All
+                      <input type="checkbox" checked={this.state.allSelected} onClick={this.onSelectAll.bind(this)} />
+                      Select All
                     </label>
                     <div className='column-header'>
-                        <div className='column-name'>Column Name</div>
-                        <div className='column-type'>Type</div>
+                      <div className='column-name'>Column Name</div>
+                      <div className='column-type'>Type</div>
                     </div>
-                   </div>
-                 }
-                 <CheckList className = "column-list" dataProvider={columns} handleChange={this.handleColumnChange.bind(this)} />
+                  </div>
+                }
+                <div className='column-checklist-container'>
+                  <CheckList className="column-list" dataProvider={this.state.columns} handleChange={this.handleColumnChange.bind(this)} />
+                </div>
               </div>
             </div>
           </ModalBody>
           <ModalFooter>
             <Button className="btn-margin" color="secondary" onClick={this.onCancel}>Cancel</Button>
-            <Button className="btn-margin" color="primary" onClick={this.onDone}>Done</Button>{' '}
+            <Button className="btn-margin" color="primary" onClick={this.onDone}
+              disabled={this.getCheckedCount(this.state.columns) < 1} >Done</Button>{' '}
           </ModalFooter>
         </Modal>
       </div>
