@@ -64,7 +64,7 @@ class HubButton extends React.PureComponent<IHubButtonProps, IHubButtonState> {
     this.eventEmitter.off(globalEvents.CLOSEMARKET, this.closeHubModal);
   }
 
-  private onClickHandler() {
+  private onClickHandler = () => {
     const newState = !this.state.showMarketPlace;
 
     if (newState === false) {
@@ -74,26 +74,26 @@ class HubButton extends React.PureComponent<IHubButtonProps, IHubButtonState> {
     this.setState({
       showMarketPlace: newState,
     });
-  }
+  };
 
-  private openHubModal() {
+  private openHubModal = () => {
     this.setState({
       showMarketPlace: true,
     });
-  }
+  };
 
-  private closeHubModal() {
+  private closeHubModal = () => {
     this.eventEmitter.emit(globalEvents.MARKETCLOSING);
     this.setState({
       showMarketPlace: false,
     });
-  }
+  };
 
   public render() {
     const { classes } = this.props;
     return (
       <React.Fragment>
-        <Button className={classnames(classes.buttonLink)} onClick={this.onClickHandler.bind(this)}>
+        <Button className={classnames(classes.buttonLink)} onClick={this.onClickHandler}>
           <div>
             <span
               className={classnames('cask-market-button', this.props.className, {
@@ -104,10 +104,7 @@ class HubButton extends React.PureComponent<IHubButtonProps, IHubButtonState> {
             </span>
           </div>
         </Button>
-        <PlusButtonModal
-          isOpen={this.state.showMarketPlace}
-          onCloseHandler={this.onClickHandler.bind(this)}
-        />
+        <PlusButtonModal isOpen={this.state.showMarketPlace} onCloseHandler={this.onClickHandler} />
       </React.Fragment>
     );
   }
