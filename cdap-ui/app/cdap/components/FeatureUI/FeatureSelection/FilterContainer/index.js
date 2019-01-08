@@ -100,7 +100,7 @@ class FilterContainer extends Component {
 
   render() {
     let filterItems = (
-      <div className="filter-item-Container">
+      <div>
         {
           this.state.filterItemList.map((item, index) => {
             return (<FilterItem
@@ -138,12 +138,15 @@ class FilterContainer extends Component {
           </Dropdown>
 
         </div>
-        {filterItems}
-        <div className="control-box">
-          <button onClick={this.addFilterItem}>+Add</button>
-          <button onClick={this.applyFilter}>Apply</button>
-
+        <div className="filter-item-box">
+          {filterItems}
+          <div className="add-filter-box">
+            <i className="fa fa-plus-circle action-icon" aria-hidden="true" onClick={this.addFilterItem}></i>
+          </div>
         </div>
+
+
+
         <div className="limit-box">
           <label className="limit-label">Limit Within:   </label>
           <input className="limit-input" type="number" min="0" value={this.state.minLimitValue}
@@ -151,18 +154,13 @@ class FilterContainer extends Component {
           <label className="value-seperator">-</label>
           <input className="limit-input" type="number" min="0" value={this.state.maxLimitValue}
             onChange={this.maxLimitChanged}></input>
+
+            <button className="feature-button apply-btn" onClick={this.applyFilter}>Apply</button>
         </div>
+
       </div>
     );
 
-  }
-
-  removeFilterItem = (index) => {
-    const itemList = [...this.state.filterItemList];
-    if (itemList.length > 1) {
-      itemList.splice(index, 1);
-    }
-    this.setState({ filterItemList: itemList });
   }
 }
 

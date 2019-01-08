@@ -126,7 +126,7 @@ class FeatureSelection extends Component {
   render() {
     return (
       <div className="feature-selection-box">
-        <div className="grid-box">
+         <div className="grid-box">
           <GridHeader selectedPipeline={this.props.selectedPipeline} backnavigation={this.navigateToParentWindow}></GridHeader>
           <GridContainer gridColums={this.state.gridColumnDefs} rowData={this.state.gridRowData}></GridContainer>
         </div>

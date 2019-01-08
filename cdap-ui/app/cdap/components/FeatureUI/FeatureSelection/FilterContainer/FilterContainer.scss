@@ -4,17 +4,51 @@
   overflow: auto;
   background-color: #eeeeee;
   text-align: left;
-  padding-left: 15px;
+  padding-left: 10px;
+  padding-right: 10px;
   padding-top: 20px;
+  padding-bottom: 15px;
+  box-shadow: -3px 2px 3px 0px #bbbbbb;
+  z-index: 100;
+  border-bottom: 1px solid gray;
+
+  .orderby-box{
+    display: flex;
+    border-top: 1px groove;
+    padding-top: 15px;
+    padding-bottom: 10px;
+
+    .orderby-label{
+      padding-right: 15px;
+      padding-top: 5px
+    }
+  }
+
+  .filter-item-box{
+    height: calc(100% - 125px);
+    overflow-y: auto;
+    padding-right: 5px;
+    .add-filter-box{
+      display: flex;
+      flex-direction: row-reverse;
+      padding-right: 10px;
+      .action-icon{
+        padding-left: 10px;
+        font-size: 20px;
+      }
+    }
+  }
 }
 
-.control-box {
-  display: inline-flex;
-}
+// .control-box {
+//   display: flex;
+//   flex-direction: row-reverse;
+// }
 
 .limit-box {
   display: inline-flex;
   width: 100%;
+  padding-top: 10px;
   .limit-label {
     padding-right: 10px;
   }
@@ -26,8 +60,11 @@
     padding-left: 5px;
     padding-right: 5px;
   }
+  .apply-btn{
+    margin-left: 105px;
+  }
 }
 
-.filter-item-Container {
-  padding-bottom: 30px;
-}
+
+
+
