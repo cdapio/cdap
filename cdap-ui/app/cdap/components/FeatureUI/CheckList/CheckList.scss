@@ -6,6 +6,12 @@
   overflow-y: auto;
   .title {
     font-size: 14px;
+    font-weight: 500;
+    color: #333333;
+    padding-left: 5px;
+    background: #e1e1e1;
+    border: 1px solid #dddddd;
+    background-image: linear-gradient(#bdbdbd, white);
   }
   .list {
     display: flex;

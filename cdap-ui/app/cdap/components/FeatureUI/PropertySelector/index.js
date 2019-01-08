@@ -6,7 +6,7 @@ import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import find from 'lodash/find';
 import CheckList from '../CheckList';
-import { Input } from 'reactstrap';
+import { InputGroup,Input } from 'reactstrap';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 import {
@@ -19,7 +19,8 @@ import {
 // Demo styles, see 'Styles' section below for some notes on use.
 import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
-import { getPropertyUpdateObj, updatePropertyMapWithObj } from '../util';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase } from '../util';
+import InfoTip from '../InfoTip';
 require('./PropertySelector.scss');
 
 class PropertySelector extends React.Component {
@@ -40,17 +41,7 @@ class PropertySelector extends React.Component {
   }
 
   componentDidMount() {
-    if (!isEmpty(this.props.selectedSchemas)) {
-      let schemas = isEmpty(this.props.selectedSchemas) ? [] : cloneDeep(this.props.selectedSchemas);
-      schemas.map(schema => {
-        schema.schemaColumns.map(column => {
-          this.state.columnTypes.add(column.columnType);
-        });
-      });
-      this.setState({
-        schemas: schemas
-      });
-    }
+    this.onAccordionChange(0);
   }
 
   handleColumnChange(schema, checkList) {
@@ -190,6 +181,7 @@ class PropertySelector extends React.Component {
           isCollection: true,
           isSelected: false,
           isMandatory: property.isMandatory,
+          description: property.description,
           values: this.getSchemaColumns(this.props.propertyMap, property.paramName, "none").map(obj => ({parent: obj.schema, child: obj.column}))
         }]);
       } else {
@@ -199,6 +191,7 @@ class PropertySelector extends React.Component {
             header: subParam.paramName,
             isCollection: subParam.isCollection,
             isMandatory: property.isMandatory,
+            description: property.description,
             isSelected: this.currentProperty.paramName == property.paramName && this.currentSubProperty == subParam.paramName,
             values: this.getSchemaColumns(this.props.propertyMap, property.paramName, subParam.paramName).map(obj => ({parent: obj.schema, child: obj.column}))
           });
@@ -215,20 +208,30 @@ class PropertySelector extends React.Component {
               Array.from(updatedPropMap.keys()).map(property => {
                 let isMandatory = false;
                 let subParams = updatedPropMap.get(property);
+                let description;
                 if (!isEmpty(subParams)) {
                   isMandatory = subParams[0].isMandatory;
+                  description = subParams[0].description;
                 }
                 return (
                   <AccordionItem key={property}>
                     <AccordionItemTitle>
-                      {property + (isMandatory ? "*" : "")}
+                      {toCamelCase(property)}
+                      {
+                        isMandatory && <i className = "fa fa-asterisk mandatory"></i>
+                      }
+                      {
+                      description &&
+                      <InfoTip id = {property+ '_InfoTip'} description = {description}/>
+                      }
                     </AccordionItemTitle>
+
                     <AccordionItemBody>
                       {
                         updatedPropMap.get(property).map(propValue => {
                           return (<List dataProvider={propValue.values}
                             key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
-                            header={(propValue.header == "none") ? undefined : (propValue.header + "*")}
+                            header={(propValue.header == "none") ? undefined : propValue.header}
                             headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
                             onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
                         })
@@ -243,8 +246,10 @@ class PropertySelector extends React.Component {
           </Accordion>
         </div>
         <div className="schema-container">
+          <div className = "column-selector-header">{"Select columns for : " + toCamelCase(this.currentProperty.paramName)
+              + (isEmpty(this.currentProperty.subParams)?"": (" (" + toCamelCase(this.currentSubProperty) + ")"))}</div>
           <div className="schema-filter-container">
-            <label>Column Selection</label>
+            <label>Column Type</label>
             <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
               <DropdownToggle caret>
                 {this.state.filterType}
@@ -259,7 +264,10 @@ class PropertySelector extends React.Component {
                 }
               </DropdownMenu>
             </Dropdown>
-            <Input placeholder="search" onChange={this.onFilterKeyChange.bind(this)} />
+            <InputGroup>
+              <Input placeholder="search" onChange={this.onFilterKeyChange.bind(this)} />
+              <i className = "search-icon fa fa-search"></i>
+            </InputGroup>
           </div>
           <div className="schemas">
             {

@@ -2,6 +2,7 @@
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
 import { Input } from 'reactstrap';
+import InfoTip from '../InfoTip';
 
 require('./NameValueList.scss');
 
@@ -67,13 +68,17 @@ class NameValueList extends React.Component {
                 basicData.map((item) => {
                   return (
                     <div className='list-row' key={item.name}>
-                      <div className='name'>{item.name + (item.isMandatory ? "*" : "")}</div>
+                      <div className='name'>{item.name}
+                          {
+                            item.isMandatory && <i className = "fa fa-asterisk mandatory"></i>
+                          }
+                       </div>
                       <div className='colon'>:</div>
                       <Input className='value' type="text" name="value" placeholder='value'
                         defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />
                       {
-                        item.toolTip &&
-                        <i className="fa fa-info-circle field-info" title={item.toolTip}></i>
+                        item.description &&
+                        <InfoTip id = {item.name + "_InfoTip"} description = {item.description}></InfoTip>
                       }
                     </div>);
                 })
@@ -95,11 +100,7 @@ class NameValueList extends React.Component {
                   advanceData.map((item) => {
                     return (
                       <div className='list-row' key={item.name}>
-                        <div className='name'>{item.name}
-                          {
-                            item.isMandatory && <i className = "fa fa-asterisk text-danger"></i>
-                          }
-                        </div>
+                        <div className='name'>{item.name}</div>
                         <div className='colon'>:</div>
                         <Input className='value' type="text" name="value" placeholder='value'
                           defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />

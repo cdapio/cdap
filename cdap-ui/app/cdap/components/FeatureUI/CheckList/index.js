@@ -7,22 +7,26 @@ class CheckList extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checkedItems: new Map(),
+      checkedItems: this.getCheckedItemsFromProps(props)
     };
   }
 
   componentWillReceiveProps(props) {
+    this.setState({
+      checkedItems: this.getCheckedItemsFromProps(props)
+    });
+  }
+
+  getCheckedItemsFromProps(props) {
+    let checkedItems = new Map();
     if (!isEmpty(props.dataProvider)) {
-      let checkedItems = new Map();
       props.dataProvider.map((item, index) => {
         if (item.checked) {
           checkedItems.set(index, item.checked);
         }
       });
-      this.setState({
-        checkedItems: checkedItems,
-      });
     }
+    return checkedItems;
   }
 
   onItemClick(index, event) {
@@ -44,16 +48,18 @@ class CheckList extends React.Component {
     return (
       <div className="checklist-container">
         {
-          title &&  <div className="title">{title}</div>
+          title && <div className="title">{title}</div>
         }
         <div className='list'>
           {
             isEmpty(listData) ? 'No Data' : (
               listData.map((item, index) => {
                 return (
-                  <div className='list-item' key = {item.name}>
+                  <div className='list-item' key={item.name}>
                     <label className='check-box-container'>
-                      <input type="checkbox" checked={this.state.checkedItems.get(index)} onClick={this.onItemClick.bind(this, index)} />
+                      <input type="checkbox"
+                      checked = {this.state.checkedItems.get(index) || false}
+                      onChange={this.onItemClick.bind(this, index)} />
                       {item.name}
                     </label>
                     {

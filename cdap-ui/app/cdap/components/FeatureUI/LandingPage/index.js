@@ -289,11 +289,11 @@ class LandingPage extends React.Component {
       let configObj = find(configList, { name: config.paramName });
       return {
         name: config.paramName,
-        value: isEmpty(configObj) ? "" : configObj.value,
+        value: isEmpty(configObj) ? (isEmpty(config.defaultValue) ? "" :config.defaultValue ) : configObj.value,
         dataType: config.dataType,
         isCollection: config.isCollection,
         isMandatory: config.isMandatory,
-        toolTip: "Type: " + (config.isCollection ? ("Collection of " + config.dataType) : config.dataType)
+        description: config.description,
       };
     });
     this.props.updateConfigurationList(configurationList);
@@ -514,7 +514,10 @@ class LandingPage extends React.Component {
           if (isNil(result) || isNil(result["configParamList"])) {
             this.handleError(result, GET_PROPERTY);
           } else {
-            this.props.setAvailableProperties(result["configParamList"]);
+            let configParamList = result["configParamList"];
+            let mandatoryParamList = configParamList.filter(item => item.isMandatory);
+            let nonMandatoryParamList = configParamList.filter(item => !item.isMandatory);
+            this.props.setAvailableProperties(mandatoryParamList.concat(nonMandatoryParamList));
           }
         },
         (error) => {
