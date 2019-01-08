@@ -27,6 +27,7 @@ import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.common.cli.Arguments;
+
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -38,57 +39,60 @@ import java.util.List;
  * Lists all plugins of a specific type available to an artifact.
  */
 public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
-  private static final Gson GSON = new Gson();
+    private static final Gson GSON = new Gson();
 
-  private final ArtifactClient artifactClient;
+    private final ArtifactClient artifactClient;
 
-  @Inject
-  public DescribeArtifactPluginCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
-    super(cliConfig);
-    this.artifactClient = artifactClient;
-  }
-
-  @Override
-  public void perform(Arguments arguments, PrintStream output) throws Exception {
-
-    String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
-    String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
-    ArtifactId artifactId = cliConfig.getCurrentNamespace().artifact(artifactName, artifactVersion);
-    String pluginType = arguments.get(ArgumentName.PLUGIN_TYPE.toString());
-    String pluginName = arguments.get(ArgumentName.PLUGIN_NAME.toString());
-
-    List<PluginInfo> pluginInfos;
-    String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
-    if (scopeStr == null) {
-      pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName);
-    } else {
-      pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName,
-        ArtifactScope.valueOf(scopeStr.toUpperCase()));
+    @Inject
+    public DescribeArtifactPluginCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+        super(cliConfig);
+        this.artifactClient = artifactClient;
     }
-    Table table = Table.builder()
-      .setHeader("type", "name", "classname", "description", "properties", "artifact")
-      .setRows(pluginInfos, new RowMaker<PluginInfo>() {
-        @Override
-        public List<?> makeRow(PluginInfo object) {
-          return Lists.newArrayList(
-            object.getType(), object.getName(), object.getClassName(), object.getDescription(),
-            GSON.toJson(object.getProperties()), object.getArtifact().toString());
+
+    @Override
+    public void perform(Arguments arguments, PrintStream output) throws Exception {
+
+        String artifactName = arguments.get(ArgumentName.ARTIFACT_NAME.toString());
+        String artifactVersion = arguments.get(ArgumentName.ARTIFACT_VERSION.toString());
+        ArtifactId artifactId = cliConfig.getCurrentNamespace().artifact(artifactName, artifactVersion);
+        String pluginType = arguments.get(ArgumentName.PLUGIN_TYPE.toString());
+        String pluginName = arguments.get(ArgumentName.PLUGIN_NAME.toString());
+
+        List<PluginInfo> pluginInfos;
+        String scopeStr = arguments.getOptional(ArgumentName.SCOPE.toString());
+        if (scopeStr == null) {
+            pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName);
+        } else {
+            pluginInfos = artifactClient.getPluginInfo(artifactId, pluginType, pluginName,
+                    ArtifactScope.valueOf(scopeStr.toUpperCase()));
         }
-      }).build();
-    cliConfig.getTableRenderer().render(cliConfig, output, table);
-  }
+        Table table = Table
+                .builder().setHeader("type", "name", "classname", "description", "pluginInputTypes",
+                        "pluginOutputTypes", "pluginFunctions", "properties", "artifact")
+                .setRows(pluginInfos, new RowMaker<PluginInfo>() {
+                    @Override
+                    public List<?> makeRow(PluginInfo object) {
+                        return Lists.newArrayList(object.getType(), object.getName(), object.getClassName(),
+                                object.getDescription(), object.getPluginInputToString(),
+                                object.getPluginOutputToString(), object.getPluginFunctionToString(),
+                                GSON.toJson(object.getProperties()), object.getArtifact().toString());
+                    }
+                }).build();
+        cliConfig.getTableRenderer().render(cliConfig, output, table);
+    }
 
-  @Override
-  public String getPattern() {
-    return String.format("describe artifact-plugin <%s> <%s> <%s> <%s> [<%s>]", ArgumentName.ARTIFACT_NAME,
-      ArgumentName.ARTIFACT_VERSION, ArgumentName.PLUGIN_TYPE, ArgumentName.PLUGIN_NAME, ArgumentName.SCOPE);
-  }
+    @Override
+    public String getPattern() {
+        return String.format("describe artifact-plugin <%s> <%s> <%s> <%s> [<%s>]", ArgumentName.ARTIFACT_NAME,
+                ArgumentName.ARTIFACT_VERSION, ArgumentName.PLUGIN_TYPE, ArgumentName.PLUGIN_NAME, ArgumentName.SCOPE);
+    }
 
-  @Override
-  public String getDescription() {
-    return String.format("Describes a plugin of a specific type and name available to a specific %s. " +
-                         "Can return multiple details if there are multiple versions of the plugin. If no scope is " +
-                         "provided, plugins are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
-                         ElementType.ARTIFACT.getName());
-  }
+    @Override
+    public String getDescription() {
+        return String.format(
+                "Describes a plugin of a specific type and name available to a specific %s. "
+                        + "Can return multiple details if there are multiple versions of the plugin. If no scope is "
+                        + "provided, plugins are looked for first in the 'SYSTEM' and then in the 'USER' scope.",
+                ElementType.ARTIFACT.getName());
+    }
 }

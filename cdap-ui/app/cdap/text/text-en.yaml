@@ -1050,6 +1050,7 @@ features:
         modalHeader: Upgrade Data Preparation
       upload: Local File Upload
       viewSchemaBtnLabel: View Schema
+      persistViewSchemaBtnLabel: Persist Data Schema
     Upgrade:
       errorCommunicating: Error while communicating with {featureName} service
       errorTitle: Enabling {featureName} failed

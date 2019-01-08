@@ -41,6 +41,10 @@ const AddToPipelineModal = Loadable({
   loader: () => import(/* webpackChunkName: "AddToPipelineModal" */ 'components/DataPrep/TopPanel/AddToPipelineModal'),
   loading: LoadingSVGCentered
 });
+const PersistViewSchemaModal = Loadable({
+  loader: () => import(/* webpackChunkName: "PersistViewSchemaModal" */ 'components/DataPrep/TopPanel/PersistViewSchemaModal'),
+  loading: LoadingSVGCentered
+});
 const UpgradeModal = Loadable({
   loader: () => import(/* webpackChunkName: "UpgradeModal" */ 'components/DataPrep/TopPanel/UpgradeModal'),
   loading: LoadingSVGCentered
@@ -62,6 +66,7 @@ export default class DataPrepTopPanel extends Component {
       workspaceModal: false,
       schemaModal: false,
       addToPipelineModal: false,
+      persistViewSchemaModal: false,
       upgradeModal: false,
       higherVersion: initialState.higherVersion,
       onSubmitError: null,
@@ -70,6 +75,8 @@ export default class DataPrepTopPanel extends Component {
     };
 
     this.toggleSchemaModal = this.toggleSchemaModal.bind(this);
+    this.togglePersistViewSchemaModal = this.togglePersistViewSchemaModal.bind(this);
+
     this.toggleAddToPipelineModal = this.toggleAddToPipelineModal.bind(this);
     this.toggleUpgradeModal = this.toggleUpgradeModal.bind(this);
 
@@ -90,6 +97,10 @@ export default class DataPrepTopPanel extends Component {
     this.setState({schemaModal: !this.state.schemaModal});
   }
 
+  togglePersistViewSchemaModal = () => {
+    this.setState({persistViewSchemaModal: !this.state.persistViewSchemaModal});
+  }
+
   toggleAddToPipelineModal = () => {
     this.setState({addToPipelineModal: !this.state.addToPipelineModal});
   }
@@ -103,6 +114,13 @@ export default class DataPrepTopPanel extends Component {
 
     return (
       <SchemaModal toggle={this.toggleSchemaModal} />
+    );
+  }
+
+  renderPersistViewSchemaModal() {
+    if (!this.state.persistViewSchemaModal) { return null; }
+    return (
+      <PersistViewSchemaModal toggle={this.togglePersistViewSchemaModal} />
     );
   }
 
@@ -185,6 +203,11 @@ export default class DataPrepTopPanel extends Component {
       label: T.translate(`${PREFIX}.viewSchemaBtnLabel`),
       iconName: 'icon-info-circle',
       onClick: this.toggleSchemaModal
+    },
+    {
+      label: T.translate(`${PREFIX}.persistViewSchemaBtnLabel`),
+      iconName: 'icon-upload',
+      onClick: this.togglePersistViewSchemaModal
     }
   ];
 
@@ -420,6 +443,7 @@ export default class DataPrepTopPanel extends Component {
           {this.renderMenu()}
           {!this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null }
           {this.renderAddToPipelineModal()}
+          {this.renderPersistViewSchemaModal()}
           {this.renderSchemaModal()}
         </div>
       </div>

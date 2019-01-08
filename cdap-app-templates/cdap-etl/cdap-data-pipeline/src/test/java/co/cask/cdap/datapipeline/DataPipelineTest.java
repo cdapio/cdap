@@ -168,7 +168,7 @@ public class DataPipelineTest extends HydratorTestBase {
     // external spark programs must be explicitly specified
     Map<String, PluginPropertyField> emptyMap = ImmutableMap.of();
     Set<PluginClass> extraPlugins = ImmutableSet.of(
-      new PluginClass(SPARK_TYPE, WORDCOUNT_PLUGIN, "", WordCount.class.getName(), null, emptyMap));
+      new PluginClass(SPARK_TYPE, WORDCOUNT_PLUGIN, "", null, null, null, WordCount.class.getName(), null, emptyMap));
     // add some test plugins
     addPluginArtifact(NamespaceId.DEFAULT.artifact("spark-plugins", "1.0.0"), APP_ARTIFACT_ID, extraPlugins,
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class, WordCount.class, LineFilterProgram.class);

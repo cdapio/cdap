@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
 import javax.annotation.Nullable;
 
 /**
@@ -32,9 +33,13 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class PluginClass {
+  
   private final String type;
   private final String name;
   private final String description;
+  private final String[] pluginInput;
+  private final String[] pluginOutput;
+  private final String[] pluginFunction;
   private final String className;
   private final String configFieldName;
   private final Map<String, PluginPropertyField> properties;
@@ -51,9 +56,13 @@ public class PluginClass {
     this.properties = Collections.emptyMap();
     this.endpoints = Collections.emptySet();
     this.requirements = Requirements.EMPTY;
+    this.pluginInput = null;
+    this.pluginOutput = null;
+    this.pluginFunction = null;
   }
 
-  public PluginClass(String type, String name, String description, String className,
+  public PluginClass(String type, String name, String description, String[] pluginInput, 
+                     String[] pluginOutput, String[] pluginFunction, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
                      Set<String> endpoints, Requirements requirements) {
     this.type = type;
@@ -64,18 +73,22 @@ public class PluginClass {
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.endpoints = Collections.unmodifiableSet(new HashSet<>(endpoints));
     this.requirements = requirements;
+    this.pluginInput = pluginInput;
+    this.pluginOutput = pluginOutput;
+    this.pluginFunction = pluginFunction;
   }
 
   public PluginClass(String type, String name, String description, String className, @Nullable String configfieldName,
                      Map<String, PluginPropertyField> properties) {
-    this(type, name, description, className, configfieldName, properties, Collections.emptySet(),
+    this(type, name, description, null, null, null, className, configfieldName, properties, Collections.emptySet(),
          Requirements.EMPTY);
   }
 
-  public PluginClass(String type, String name, String description, String className,
+  public PluginClass(String type, String name, String description, String[] pluginInput,
+                     String[] pluginOutput, String[] pluginFunction, String className,
                      @Nullable String configfieldName, Map<String, PluginPropertyField> properties,
                      Set<String> endpoints) {
-    this(type, name, description, className, configfieldName, properties, endpoints,
+    this(type, name, description, pluginInput, pluginOutput, pluginFunction, className, configfieldName, properties, endpoints,
          Requirements.EMPTY);
   }
 
@@ -130,6 +143,54 @@ public class PluginClass {
     return description;
   }
 
+      public String[] getPluginInput() {
+        return pluginInput;
+    }
+
+    public String[] getPluginOutput() {
+        return pluginOutput;
+    }
+
+    public String[] getPluginFunction() {
+        return pluginFunction;
+    }
+
+    public String getPluginInputToString() {
+        if (pluginInput == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String info : pluginInput) {
+            sb.append(info);
+            sb.append(",");
+        }
+        return sb.toString();
+    }
+
+    public String getPluginOutputToString() {
+        if (pluginOutput == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String info : pluginOutput) {
+            sb.append(info);
+            sb.append(",");
+        }
+        return sb.toString();
+    }
+
+    public String getPluginFunctionToString() {
+        if (pluginFunction == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String info : pluginFunction) {
+            sb.append(info);
+            sb.append(",");
+        }
+        return sb.toString();
+    }
+
   /**
    * Returns the fully qualified class name of the plugin.
    */
@@ -182,6 +243,9 @@ public class PluginClass {
     return Objects.equals(type, that.type)
       && Objects.equals(name, that.name)
       && Objects.equals(description, that.description)
+      && Objects.equals(getPluginInputToString(), that.getPluginInputToString())
+      && Objects.equals(getPluginOutputToString(), that.getPluginOutputToString())
+      && Objects.equals(getPluginFunctionToString(), that.getPluginFunctionToString())
       && Objects.equals(className, that.className)
       && Objects.equals(configFieldName, that.configFieldName)
       && Objects.equals(properties, that.properties)
@@ -191,7 +255,7 @@ public class PluginClass {
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, name, description, className, configFieldName, properties, endpoints, requirements);
+    return Objects.hash(type, name, description, getPluginInputToString(), getPluginOutputToString(), getPluginFunctionToString(), className, configFieldName, properties, endpoints, requirements);
   }
 
   @Override
@@ -200,6 +264,9 @@ public class PluginClass {
       "type='" + type + '\'' +
       ", name='" + name + '\'' +
       ", description='" + description + '\'' +
+      ", pluginFunction='" + getPluginFunctionToString() + '\'' +
+      ", pluginInput='" + getPluginInputToString() + '\'' +
+      ", pluginOutput='" + getPluginOutputToString() + '\'' +
       ", className='" + className + '\'' +
       ", configFieldName='" + configFieldName + '\'' +
       ", properties=" + properties +
