@@ -1,0 +1,36 @@
+.checklist-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  .title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333333;
+    padding-left: 5px;
+    background: #e1e1e1;
+    border: 1px solid #dddddd;
+    background-image: linear-gradient(#bdbdbd, white);
+  }
+  .list {
+    display: flex;
+    flex-direction: column;
+    .list-item {
+      display: flex;
+      margin: 3px 20px;
+      min-height: 25px;
+      border-bottom: solid 1px lightgrey;
+      .check-box-container {
+        width: 60%;
+        input {
+          margin-right: 10px;
+        }
+      }
+      .property {
+        padding-left: 20px;
+        width: 40%;
+      }
+    }
+  }
+}
