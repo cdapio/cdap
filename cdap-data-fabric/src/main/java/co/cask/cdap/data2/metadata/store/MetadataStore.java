@@ -47,6 +47,14 @@ public interface MetadataStore {
   void setProperties(MetadataScope scope, MetadataEntity metadataEntity, Map<String, String> properties);
 
   /**
+   * Adds/updates properties for each specified {@link MetadataEntity} in the specified {@link MetadataScope}.
+   *
+   * @param scope the {@link MetadataScope} to add/update the properties in
+   * @param toUpdate the properties to add/update, for each entity in the map
+   */
+  void setProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate);
+
+  /**
    * Sets the specified property for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to set/update the property in
@@ -138,6 +146,14 @@ public interface MetadataStore {
    * @param keys the keys to remove
    */
   void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, Set<String> keys);
+
+  /**
+   * Removes the specified properties for each {@link MetadataEntity} in the specified {@link MetadataScope}.
+   *
+   * @param scope the {@link MetadataScope}
+   * @param toRemove a map specifying the set of keys to remove for each metadata entity.
+   */
+  void removeProperties(MetadataScope scope, Map<MetadataEntity, Set<String>> toRemove);
 
   /**
    * Removes tags of the {@link MetadataEntity} in the specified {@link MetadataScope}.

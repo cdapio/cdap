@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
@@ -73,7 +74,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of {@link MetadataStore}.
@@ -141,6 +141,11 @@ public class DefaultMetadataStore implements MetadataStore {
   public void setProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                             final Map<String, String> properties) {
     MetadataChange metadataChange = execute(mds -> mds.setProperties(metadataEntity, properties), scope);
+    publishAudit(scope, metadataEntity, properties, metadataChange);
+  }
+
+  private void publishAudit(MetadataScope scope, MetadataEntity metadataEntity,
+                            Map<String, String> properties, MetadataChange metadataChange) {
     MetadataRecord previous = new MetadataRecord(metadataEntity, scope,
                                                  metadataChange.getExisting().getProperties(),
                                                  metadataChange.getExisting().getTags());
@@ -161,8 +166,26 @@ public class DefaultMetadataStore implements MetadataStore {
       // In both update or new cases, mark a single addition.
       propAdditions.put(entry.getKey(), entry.getValue());
     }
+    LOG.trace("Publishing Audit Message for {}", metadataEntity);
     publishAudit(previous, new MetadataRecord(metadataEntity, scope, propAdditions.build(), EMPTY_TAGS),
                  new MetadataRecord(metadataEntity, scope, propDeletions.build(), EMPTY_TAGS));
+  }
+
+  @Override
+  public void setProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate) {
+    Map<MetadataEntity, ImmutablePair<Map<String, String>, MetadataChange>> changeLog = execute(mds -> {
+      Map<MetadataEntity, ImmutablePair<Map<String, String>, MetadataChange>> changes = new HashMap<>();
+      for (Map.Entry<MetadataEntity, Map<String, String>> entry : toUpdate.entrySet()) {
+        MetadataEntity metadataEntity = entry.getKey();
+        Map<String, String> properties = entry.getValue();
+        MetadataChange metadataChange = mds.setProperties(metadataEntity, properties);
+        changes.put(metadataEntity, ImmutablePair.of(properties, metadataChange));
+      }
+      return changes;
+    }, scope);
+    for (Map.Entry<MetadataEntity, ImmutablePair<Map<String, String>, MetadataChange>> entry : changeLog.entrySet()) {
+      publishAudit(scope, entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
+    }
   }
 
   @Override
@@ -289,16 +312,31 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void removeProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                                final Set<String> keys) {
-    final AtomicReference<Map<String, String>> deletes = new AtomicReference<>();
-    MetadataChange metadataChange = execute(mds -> {
-      MetadataChange change = mds.removeProperties(metadataEntity, keys);
-      deletes.set(change.getDeletedProperties());
-      return change;
-    }, scope);
+    MetadataChange metadataChange = execute(mds -> mds.removeProperties(metadataEntity, keys), scope);
     publishAudit(new MetadataRecord(metadataEntity, scope, metadataChange.getExisting().getProperties(),
                                     metadataChange.getExisting().getTags()),
                  new MetadataRecord(metadataEntity, scope),
-                 new MetadataRecord(metadataEntity, scope, deletes.get(), EMPTY_TAGS));
+                 new MetadataRecord(metadataEntity, scope, metadataChange.getDeletedProperties(), EMPTY_TAGS));
+  }
+
+  @Override
+  public void removeProperties(MetadataScope scope, Map<MetadataEntity, Set<String>> toRemove) {
+    Map<MetadataEntity, MetadataChange> changes = execute(mds -> {
+      Map<MetadataEntity, MetadataChange> map = new HashMap<>();
+      for (Map.Entry<MetadataEntity, Set<String>> entry : toRemove.entrySet()) {
+        MetadataChange change = mds.removeProperties(entry.getKey(), entry.getValue());
+        map.put(entry.getKey(), change);
+      }
+      return map;
+    }, scope);
+    for (Map.Entry<MetadataEntity, MetadataChange> entry : changes.entrySet()) {
+      MetadataEntity metadataEntity = entry.getKey();
+      MetadataChange metadataChange = entry.getValue();
+      publishAudit(new MetadataRecord(metadataEntity, scope, metadataChange.getExisting().getProperties(),
+                                      metadataChange.getExisting().getTags()),
+                   new MetadataRecord(metadataEntity, scope),
+                   new MetadataRecord(metadataEntity, scope, metadataChange.getDeletedProperties(), EMPTY_TAGS));
+    }
   }
 
   /**

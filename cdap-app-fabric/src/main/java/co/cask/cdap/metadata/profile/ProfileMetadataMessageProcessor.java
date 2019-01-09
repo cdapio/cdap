@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,13 @@ package co.cask.cdap.metadata.profile;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.config.PreferencesDataset;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -55,11 +55,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Class to process the profile metadata request
@@ -67,6 +69,7 @@ import java.util.stream.Collectors;
 public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileMetadataMessageProcessor.class);
   private static final String PROFILE_METADATA_KEY = "profile";
+  private static final Set<String> PROFILE_METADATA_KEY_SET = Collections.singleton(PROFILE_METADATA_KEY);
   private static final Set<ProgramType> PROFILE_ALLOWED_PROGRAM_TYPES =
     Arrays.stream(ProgramType.values())
       .filter(SystemArguments::isProfileAllowed)
@@ -75,19 +78,19 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
+  private final MetadataStore metadataStore;
   private final NamespaceMDS namespaceMDS;
   private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesDataset preferencesDataset;
-  private final MetadataDataset metadataDataset;
 
   public ProfileMetadataMessageProcessor(CConfiguration cConf, DatasetContext datasetContext,
-                                         DatasetFramework datasetFramework) {
+                                         DatasetFramework datasetFramework, MetadataStore metadataStore) {
     namespaceMDS = NamespaceMDS.getNamespaceMDS(datasetContext, datasetFramework);
     appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
     scheduleDataset = Schedulers.getScheduleStore(datasetContext, datasetFramework);
     preferencesDataset = PreferencesDataset.get(datasetContext, datasetFramework);
-    metadataDataset = DefaultMetadataStore.getMetadataDataset(datasetContext, datasetFramework, MetadataScope.SYSTEM);
+    this.metadataStore = metadataStore;
   }
 
   @Override
@@ -113,10 +116,17 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) {
+    Map<MetadataEntity, Map<String, String>> toUpdate = new HashMap<>();
+    collectProfileMetadata(entityId, message, toUpdate);
+    metadataStore.setProperties(MetadataScope.SYSTEM, toUpdate);
+  }
+
+  private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
+                                      Map<MetadataEntity, Map<String, String>> updates) {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         for (NamespaceMeta meta : namespaceMDS.list()) {
-          updateProfileMetadata(meta.getNamespaceId(), message);
+          collectProfileMetadata(meta.getNamespaceId(), message, updates);
         }
         break;
       case NAMESPACE:
@@ -128,8 +138,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           return;
         }
         LOG.trace("Updating profile metadata for {}", entityId);
+        ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
         for (ApplicationMeta meta : appMetadataStore.getAllApplications(namespaceId.getNamespace())) {
-          updateAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec());
+          collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
         }
         break;
       case APPLICATION:
@@ -141,7 +152,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                       "updated. Ignoring the message {}", appId, message);
           return;
         }
-        updateAppProfileMetadata(appId, meta.getSpec());
+        collectAppProfileMetadata(appId, meta.getSpec(), null, updates);
         break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
@@ -152,9 +163,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                       "Ignoring the message {}", programId.getParent(), programId, message);
           return;
         }
-
         if (SystemArguments.isProfileAllowed(programId.getType())) {
-          updateProgramProfileMetadata(programId);
+          collectProgramProfileMetadata(programId, null, updates);
         }
         break;
       case SCHEDULE:
@@ -162,13 +172,12 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         // make sure the schedule exists before updating
         try {
           ProgramSchedule schedule = scheduleDataset.getSchedule(scheduleId);
-          updateScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()));
+          collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()), updates);
         } catch (NotFoundException e) {
           LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
                       "Ignoring the message {}", scheduleId, message);
           return;
         }
-
         break;
       default:
         // this should not happen
@@ -182,56 +191,68 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    */
   private void removeProfileMetadata(MetadataMessage message) {
     EntityId entity = message.getEntityId();
+    Map<MetadataEntity, Set<String>> toRemove = new HashMap<>();
 
     // We only care about application and schedules.
     if (entity.getEntityType().equals(EntityType.APPLICATION)) {
       ApplicationId appId = (ApplicationId) message.getEntityId();
       ApplicationSpecification appSpec = message.getPayload(GSON, ApplicationSpecification.class);
       for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, appId)) {
-        metadataDataset.removeProperties(programId.toMetadataEntity(), Collections.singleton(PROFILE_METADATA_KEY));
+        toRemove.put(programId.toMetadataEntity(), PROFILE_METADATA_KEY_SET);
       }
       for (ScheduleId scheduleId : getSchedulesInApp(appId, appSpec.getProgramSchedules())) {
-        metadataDataset.removeProperties(scheduleId.toMetadataEntity(), Collections.singleton(PROFILE_METADATA_KEY));
+        toRemove.put(scheduleId.toMetadataEntity(), PROFILE_METADATA_KEY_SET);
       }
+    } else if (entity.getEntityType().equals(EntityType.SCHEDULE)) {
+      toRemove.put(entity.toMetadataEntity(), PROFILE_METADATA_KEY_SET);
     }
 
-    if (entity.getEntityType().equals(EntityType.SCHEDULE)) {
-      metadataDataset.removeProperties(message.getEntityId().toMetadataEntity(),
-                                       Collections.singleton(PROFILE_METADATA_KEY));
+    if (!toRemove.isEmpty()) {
+      metadataStore.removeProperties(MetadataScope.SYSTEM, toRemove);
     }
   }
 
-  private void updateAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec) {
+  private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
+                                         @Nullable ProfileId namespaceProfile,
+                                         Map<MetadataEntity, Map<String, String>> updates) {
     LOG.trace("Updating profile metadata for {}", applicationId);
+    ProfileId appProfile = namespaceProfile == null
+      ? getResolvedProfileId(applicationId)
+      : getProfileId(applicationId).orElse(namespaceProfile);
     for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, applicationId)) {
-      updateProgramProfileMetadata(programId);
+      collectProgramProfileMetadata(programId, appProfile, updates);
     }
   }
 
-  private void updateProgramProfileMetadata(ProgramId programId) {
+  private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
+                                             Map<MetadataEntity, Map<String, String>> updates) {
     LOG.trace("Updating profile metadata for {}", programId);
-    ProfileId profileId = getResolvedProfileId(programId);
-    setProfileMetadata(programId, profileId);
+    ProfileId programProfile = appProfile == null
+      ? getResolvedProfileId(programId)
+      : getProfileId(programId).orElse(appProfile);
+    addProfileMetadataUpdate(programId, programProfile, updates);
 
     for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
-      updateScheduleProfileMetadata(schedule, profileId);
+      collectScheduleProfileMetadata(schedule, programProfile, updates);
     }
   }
 
-  private void updateScheduleProfileMetadata(ProgramSchedule schedule, ProfileId profileId) {
+  private void collectScheduleProfileMetadata(ProgramSchedule schedule, ProfileId programProfile,
+                                              Map<MetadataEntity, Map<String, String>> updates) {
     ScheduleId scheduleId = schedule.getScheduleId();
     LOG.trace("Updating profile metadata for {}", scheduleId);
     // if we are able to get profile from preferences or schedule properties, use it
     // otherwise default profile will be used
     Optional<ProfileId> scheduleProfileId =
       SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(), schedule.getProperties());
-    profileId = scheduleProfileId.orElse(profileId);
-    setProfileMetadata(scheduleId, profileId);
+    programProfile = scheduleProfileId.orElse(programProfile);
+    addProfileMetadataUpdate(scheduleId, programProfile, updates);
   }
 
-  private void setProfileMetadata(NamespacedEntityId entityId, ProfileId profileId) {
+  private void addProfileMetadataUpdate(NamespacedEntityId entityId, ProfileId profileId,
+                                        Map<MetadataEntity, Map<String, String>> updates) {
     LOG.trace("Setting profile metadata for {} to {}", entityId, profileId);
-    metadataDataset.setProperty(entityId.toMetadataEntity(), PROFILE_METADATA_KEY, profileId.getScopedName());
+    updates.put(entityId.toMetadataEntity(), Collections.singletonMap(PROFILE_METADATA_KEY, profileId.getScopedName()));
   }
 
   /**
@@ -245,8 +266,21 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private ProfileId getResolvedProfileId(EntityId entityId) {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    return SystemArguments.getProfileIdFromArgs(
-      namespaceId, preferencesDataset.getResolvedPreferences(entityId)).orElse(ProfileId.NATIVE);
+    String profileName = preferencesDataset.getResolvedPreference(entityId, SystemArguments.PROFILE_NAME);
+    return profileName == null ? ProfileId.NATIVE : ProfileId.fromScopedName(namespaceId, profileName);
+  }
+
+  /**
+   * Get the profile id for the provided entity id from its own preferences from preference dataset.
+   *
+   * @param entityId entity id to lookup the profile id
+   * @return the profile id configured for this entity id, if any
+   */
+  private Optional<ProfileId> getProfileId(EntityId entityId) {
+    NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
+      NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
+    String profileName = preferencesDataset.getPreferences(entityId).get(SystemArguments.PROFILE_NAME);
+    return profileName == null ? Optional.empty() : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
   }
 
   /**

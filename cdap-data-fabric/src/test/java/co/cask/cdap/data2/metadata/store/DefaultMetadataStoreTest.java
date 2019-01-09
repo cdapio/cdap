@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -237,8 +236,7 @@ public class DefaultMetadataStoreTest {
     for (AuditMessage auditMessage : auditPublisher.popMessages()) {
       // Ignore system audit messages
       if (auditMessage.getType() == AuditType.METADATA_CHANGE) {
-        if (!auditMessage.getEntity().containsKey(MetadataEntity.NAMESPACE) || !auditMessage.getEntity().getValue
-          (MetadataEntity.NAMESPACE).equalsIgnoreCase(systemNs)) {
+        if (!systemNs.equalsIgnoreCase(auditMessage.getEntity().getValue(MetadataEntity.NAMESPACE))) {
           actualAuditMessages.add(auditMessage);
         }
       }
@@ -264,7 +262,7 @@ public class DefaultMetadataStoreTest {
   }
 
   @Test
-  public void testSearchWeight() throws Exception {
+  public void testSearchWeight() {
     ProgramId flow1 = new ProgramId("ns1", "app1", ProgramType.FLOW, "flow1");
     StreamId stream1 = new StreamId("ns1", "s1");
     DatasetId dataset1 = new DatasetId("ns1", "ds1");
@@ -364,14 +362,14 @@ public class DefaultMetadataStoreTest {
     MetadataSearchResultRecord ns1app3Record =
       new MetadataSearchResultRecord(ns1app3, Collections.singletonMap(MetadataScope.USER, meta));
 
-    store.setProperty(MetadataScope.USER, ns2app1, "k1", "v1");
-    store.setProperty(MetadataScope.USER, ns2app1, "k2", "v2");
+    store.setProperties(MetadataScope.USER, ImmutableMap.of(
+      ns2app1, ImmutableMap.of("k1", "v1", "k2", "v2"),
+      ns2app2, ImmutableMap.of("k1", "v1")));
+    store.addTags(MetadataScope.USER, ns2app2, ImmutableSet.of("v2", "v3"));
+
     meta = new Metadata(ImmutableMap.of("k1", "v1", "k2", "v2"), Collections.emptySet());
     MetadataSearchResultRecord ns2app1Record =
       new MetadataSearchResultRecord(ns2app1, Collections.singletonMap(MetadataScope.USER, meta));
-
-    store.setProperty(MetadataScope.USER, ns2app2, "k1", "v1");
-    store.addTags(MetadataScope.USER, ns2app2, ImmutableSet.of("v2", "v3"));
     meta = new Metadata(ImmutableMap.of("k1", "v1"), ImmutableSet.of("v2", "v3"));
     MetadataSearchResultRecord ns2app2Record =
       new MetadataSearchResultRecord(ns2app2, Collections.singletonMap(MetadataScope.USER, meta));
@@ -418,8 +416,6 @@ public class DefaultMetadataStoreTest {
     MetadataEntity ns1app3 = ns1.app("a3").toMetadataEntity();
     MetadataEntity ns2app1 = ns2.app("a1").toMetadataEntity();
     MetadataEntity ns2app2 = ns2.app("a2").toMetadataEntity();
-
-    Metadata meta = new Metadata(Collections.emptyMap(), Collections.singleton("v1"));
 
     store.addTags(MetadataScope.USER, ns1app1, Collections.singleton("v1"));
     store.addTags(MetadataScope.USER, ns1app2, Collections.singleton("v1"));
@@ -571,7 +567,7 @@ public class DefaultMetadataStoreTest {
     txManager.stopAndWait();
   }
 
-  private MetadataSearchResponse search(String ns, String searchQuery) throws BadRequestException {
+  private MetadataSearchResponse search(String ns, String searchQuery) {
     return search(ns, searchQuery, 0, Integer.MAX_VALUE, 0);
   }
 

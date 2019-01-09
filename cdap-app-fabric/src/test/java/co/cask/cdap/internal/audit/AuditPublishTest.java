@@ -35,6 +35,7 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.codec.AuditMessageTypeAdapter;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
@@ -102,6 +103,7 @@ public class AuditPublishTest {
   @Test
   public void testPublish() throws Exception {
     String appName = AllProgramsApp.NAME;
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
 
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
@@ -110,13 +112,13 @@ public class AuditPublishTest {
 
     // Metadata change on the artifact and app
     expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1"));
-    expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.app(appName));
+    expectedMetadataChangeEntities.add(appId);
 
     // All programs would have metadata change
     for (ProgramType programType : ProgramType.values()) {
       for (String programName : spec.getProgramsByType(programType)) {
         co.cask.cdap.proto.ProgramType internalProgramType = co.cask.cdap.proto.ProgramType.valueOf(programType.name());
-        expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.app(appName).program(internalProgramType, programName));
+        expectedMetadataChangeEntities.add(appId.program(internalProgramType, programName));
       }
     }
 
@@ -126,6 +128,11 @@ public class AuditPublishTest {
       expectedCreateEntities.add(NamespaceId.DEFAULT.dataset(dataset));
     }
     expectedMetadataChangeEntities.addAll(expectedCreateEntities);
+
+    // TODO (CDAP-14733): Scheduler doesn't publish CREATE audit events. Once it does, we must expect them here, too.
+    for (String schedule: spec.getProgramSchedules().keySet()) {
+      expectedMetadataChangeEntities.add(appId.schedule(schedule));
+    }
 
     // Stream only has creation (eventually will be removed)
     for (String stream : spec.getStreams().keySet()) {

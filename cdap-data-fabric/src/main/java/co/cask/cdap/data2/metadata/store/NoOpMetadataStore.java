@@ -38,6 +38,11 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
+  public void setProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate) {
+    // NO-OP
+  }
+
+  @Override
   public void setProperty(MetadataScope scope, MetadataEntity metadataEntity, String key, String value) {
     // NO-OP
   }
@@ -100,6 +105,11 @@ public class NoOpMetadataStore implements MetadataStore {
 
   @Override
   public void removeProperties(MetadataScope scope, MetadataEntity metadataEntity, Set<String> keys) {
+    // NO-OP
+  }
+
+  @Override
+  public void removeProperties(MetadataScope scope, Map<MetadataEntity, Set<String>> toRemove) {
     // NO-OP
   }
 
