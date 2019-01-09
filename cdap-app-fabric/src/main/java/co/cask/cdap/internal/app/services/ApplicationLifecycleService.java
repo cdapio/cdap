@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.plugin.Plugin;
@@ -47,15 +46,12 @@ import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.messaging.MessagingService;
@@ -81,7 +77,6 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -122,8 +117,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private final Store store;
   private final Scheduler scheduler;
-  private final QueueAdmin queueAdmin;
-  private final StreamConsumerFactory streamConsumerFactory;
   private final UsageRegistry usageRegistry;
   private final PreferencesService preferencesService;
   private final MetricStore metricStore;
@@ -133,29 +126,23 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetadataPublisher metadataPublisher;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final Impersonator impersonator;
   private final RouteStore routeStore;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
-                              Store store,
-                              Scheduler scheduler, QueueAdmin queueAdmin,
-                              StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
+                              Store store, Scheduler scheduler, UsageRegistry usageRegistry,
                               PreferencesService preferencesService, MetricStore metricStore, OwnerAdmin ownerAdmin,
                               ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataPublisher metadataPublisher,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              Impersonator impersonator, RouteStore routeStore,
-                              MessagingService messagingService) {
+                              RouteStore routeStore, MessagingService messagingService) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.store = store;
     this.scheduler = scheduler;
-    this.queueAdmin = queueAdmin;
-    this.streamConsumerFactory = streamConsumerFactory;
     this.usageRegistry = usageRegistry;
     this.preferencesService = preferencesService;
     this.metricStore = metricStore;
@@ -165,7 +152,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-    this.impersonator = impersonator;
     this.routeStore = routeStore;
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
@@ -604,8 +590,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   private Iterable<ProgramSpecification> getProgramSpecs(ApplicationId appId) {
     ApplicationSpecification appSpec = store.getApplication(appId);
-    return Iterables.concat(appSpec.getFlows().values(),
-                            appSpec.getMapReduce().values(),
+    return Iterables.concat(appSpec.getMapReduce().values(),
                             appSpec.getServices().values(),
                             appSpec.getSpark().values(),
                             appSpec.getWorkers().values(),
@@ -717,12 +702,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     //Delete all preferences of the application and of all its programs
     deletePreferences(appId);
 
-    // Delete all streams and queues state of each flow
-    for (final FlowSpecification flowSpecification : spec.getFlows().values()) {
-      FlowUtils.clearDeletedFlow(impersonator, queueAdmin, streamConsumerFactory,
-                                 appId.flow(flowSpecification.getName()), flowSpecification);
-    }
-
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
     deleteRouteConfig(appId, appSpec);
@@ -800,7 +779,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   private Set<ProgramId> getAllPrograms(ApplicationId appId, ApplicationSpecification appSpec) {
     Set<ProgramId> result = new HashSet<>();
-    result.addAll(getProgramsWithType(appId, ProgramType.FLOW, appSpec.getFlows()));
     result.addAll(getProgramsWithType(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce()));
     result.addAll(getProgramsWithType(appId, ProgramType.WORKFLOW, appSpec.getWorkflows()));
     result.addAll(getProgramsWithType(appId, ProgramType.SERVICE, appSpec.getServices()));

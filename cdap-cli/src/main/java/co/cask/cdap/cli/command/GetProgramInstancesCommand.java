@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,6 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
 
@@ -52,15 +51,6 @@ public class GetProgramInstancesCommand extends AbstractAuthCommand {
 
     int instances;
     switch (elementType) {
-      case FLOWLET:
-        if (programIdParts.length < 3) {
-          throw new CommandInputError(this);
-        }
-        String flowId = programIdParts[1];
-        String flowletName = programIdParts[2];
-        FlowletId flowlet = appId.flow(flowId).flowlet(flowletName);
-        instances = programClient.getFlowletInstances(flowlet);
-        break;
       case WORKER:
         if (programIdParts.length < 2)  {
           throw new CommandInputError(this);

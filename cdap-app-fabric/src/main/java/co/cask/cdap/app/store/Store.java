@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -341,24 +340,6 @@ public interface Store {
    * @return collection of versionIds of the application's versions
    */
   Collection<ApplicationId> getAllAppVersionsAppIds(ApplicationId id);
-
-  /**
-   * Sets number of instances of specific flowlet.
-   *
-   * @param id flow id
-   * @param flowletId flowlet id
-   * @param count new number of instances
-   * @return The {@link FlowSpecification} before the instance change
-   */
-  FlowSpecification setFlowletInstances(ProgramId id, String flowletId, int count);
-
-  /**
-   * Gets number of instances of specific flowlet.
-   *
-   * @param id flow id
-   * @param flowletId flowlet id
-   */
-  int getFlowletInstances(ProgramId id, String flowletId);
 
   /**
    * Sets the number of instances of a service.

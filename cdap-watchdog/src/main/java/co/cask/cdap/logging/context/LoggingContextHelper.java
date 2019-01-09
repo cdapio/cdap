@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,8 +49,6 @@ public final class LoggingContextHelper {
 
   private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
     ImmutableMap.<String, String>builder()
-      .put(FlowletLoggingContext.TAG_FLOWLET_ID, Constants.Metrics.Tag.FLOWLET)
-      .put(FlowletLoggingContext.TAG_FLOW_ID, Constants.Metrics.Tag.FLOW)
       .put(WorkflowLoggingContext.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
       .put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
       .put(SparkLoggingContext.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)
@@ -97,15 +95,7 @@ public final class LoggingContextHelper {
       throw new IllegalArgumentException("No namespace/application or system/component id present");
     }
 
-    if (tags.containsKey(FlowletLoggingContext.TAG_FLOW_ID)) {
-      if (!tags.containsKey(FlowletLoggingContext.TAG_FLOWLET_ID)) {
-        return null;
-      }
-      return new FlowletLoggingContext(namespaceId, applicationId, tags.get(FlowletLoggingContext.TAG_FLOW_ID),
-                                       tags.get(FlowletLoggingContext.TAG_FLOWLET_ID),
-                                       tags.get(ApplicationLoggingContext.TAG_RUN_ID),
-                                       tags.get(ApplicationLoggingContext.TAG_INSTANCE_ID));
-    } else if (tags.containsKey(WorkflowLoggingContext.TAG_WORKFLOW_ID)) {
+    if (tags.containsKey(WorkflowLoggingContext.TAG_WORKFLOW_ID)) {
       if (tags.containsKey(WorkflowProgramLoggingContext.TAG_WORKFLOW_MAP_REDUCE_ID)) {
         return new WorkflowProgramLoggingContext(namespaceId, applicationId,
                                                  tags.get(WorkflowLoggingContext.TAG_WORKFLOW_ID),
@@ -193,8 +183,6 @@ public final class LoggingContextHelper {
                                                  ProgramType programType, @Nullable String runId,
                                                  @Nullable Map<String, String> systemArgs) {
     switch (programType) {
-      case FLOW:
-        return new FlowletLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
       case WORKFLOW:
         return new WorkflowLoggingContext(namespaceId, applicationId, entityId, runId);
       case MAPREDUCE:
@@ -292,9 +280,8 @@ public final class LoggingContextHelper {
 
   public static LoggingContext.SystemTag getEntityId(LoggingContext loggingContext) {
     final String tagName;
-    if (loggingContext instanceof FlowletLoggingContext) {
-      tagName = FlowletLoggingContext.TAG_FLOW_ID;
-    } else if (loggingContext instanceof WorkflowLoggingContext) {
+
+    if (loggingContext instanceof WorkflowLoggingContext) {
       tagName = WorkflowLoggingContext.TAG_WORKFLOW_ID;
     } else if (loggingContext instanceof MapReduceLoggingContext) {
       tagName = MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID;

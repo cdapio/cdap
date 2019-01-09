@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
@@ -44,16 +43,6 @@ import org.junit.Test;
  * Tests for guice modules used in various {@link AbstractProgramTwillRunnable}.
  */
 public class ProgramTwillRunnableModuleTest {
-
-  @Test
-  public void testFlowlet() {
-    ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").flow("flow").run(RunIds.generate());
-    Module module = new FlowletTwillRunnable("flowlet").createModule(CConfiguration.create(), new Configuration(),
-                                                                     createProgramOptions(programRunId,
-                                                                                          ClusterMode.ON_PREMISE),
-                                                                     programRunId);
-    Guice.createInjector(module).getInstance(FlowletProgramRunner.class);
-  }
 
   @Test
   public void testService() {

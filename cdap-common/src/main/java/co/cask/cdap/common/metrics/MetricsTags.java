@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.common.metrics;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ServiceId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -40,14 +39,6 @@ public final class MetricsTags {
       tagMap.put(tags[i], tags[i + 1]);
     }
     return tagMap;
-  }
-
-  public static Map<String, String> flowlet(FlowletId flowletId) {
-    return ImmutableMap.of(
-      Constants.Metrics.Tag.NAMESPACE, flowletId.getNamespace(),
-      Constants.Metrics.Tag.APP, flowletId.getApplication(),
-      Constants.Metrics.Tag.FLOW, flowletId.getFlow(),
-      Constants.Metrics.Tag.FLOWLET, flowletId.getFlowlet());
   }
 
   public static Map<String, String> service(ServiceId serviceId) {

@@ -25,7 +25,6 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -56,7 +55,7 @@ public class ProgramGenerationStageTest {
     LocationFactory jarLf = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location appArchive = AppJarHelper.createDeploymentJar(jarLf, AllProgramsApp.class);
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ProgramGenerationStage pgmStage = new ProgramGenerationStage();
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.

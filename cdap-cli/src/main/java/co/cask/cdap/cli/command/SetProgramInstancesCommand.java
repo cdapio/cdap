@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.common.cli.Arguments;
@@ -53,17 +52,6 @@ public class SetProgramInstancesCommand extends AbstractAuthCommand {
     int numInstances = arguments.getInt(ArgumentName.NUM_INSTANCES.toString());
 
     switch (elementType) {
-      case FLOWLET:
-        if (programIdParts.length < 3) {
-          throw new CommandInputError(this);
-        }
-        String flowId = programIdParts[1];
-        String flowletName = programIdParts[2];
-        FlowletId flowletId = appId.flow(flowId).flowlet(flowletName);
-        programClient.setFlowletInstances(flowletId, numInstances);
-        output.printf("Successfully set flowlet '%s' of flow '%s' of app '%s' to %d instances\n",
-                      flowId, flowletId, appId.getEntityName(), numInstances);
-        break;
       case WORKER:
         if (programIdParts.length < 2) {
           throw new CommandInputError(this);

@@ -115,7 +115,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
 
     // no auto grant now, the list will be empty for all program types
     for (ProgramType type : ProgramType.values()) {
-      if (!type.equals(ProgramType.CUSTOM_ACTION)) {
+      if (!ProgramType.CUSTOM_ACTION.equals(type)) {
         Assert.assertTrue(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());
       }
     }
@@ -143,7 +143,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
     for (ProgramType type : ProgramType.values()) {
       // Skip custom action.
       // Skip flow (until flow is completely removed from ProgramType)
-      if (!EnumSet.of(ProgramType.CUSTOM_ACTION, ProgramType.FLOW).contains(type)) {
+      if (!ProgramType.CUSTOM_ACTION.equals(type)) {
         Assert.assertFalse(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());
         SecurityRequestContext.setUserId("bob");
         Assert.assertTrue(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());

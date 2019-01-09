@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,20 +22,8 @@ import co.cask.cdap.proto.id.NamespaceId;
  */
 public final class QueueConstants {
 
-  /**
-   * Configuration keys for queues in HBase.
-   */
-  public static final class ConfigKeys {
-    public static final String QUEUE_TABLE_PRESPLITS = "data.queue.table.presplits";
-    public static final String DEQUEUE_TX_PERCENT = "data.queue.dequeue.tx.percent";
-  }
-
   // This is a hardcoded value for the row key distributor bucket size before CDAP-1946
   public static final int DEFAULT_ROW_KEY_BUCKETS = 16;
-
-  // How frequently (in seconds) to update the ConsumerConfigCache data for the HBaseQueueRegionObserver
-  public static final String QUEUE_CONFIG_UPDATE_FREQUENCY = "data.queue.config.update.interval";
-  public static final Long DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY = 5L; // default to 5 seconds
 
   // Key for HBase table meta that records the value of number of queue table buckets
   public static final String DISTRIBUTOR_BUCKETS = "cdap.distributor.buckets";

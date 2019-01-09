@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -105,9 +104,6 @@ public final class Programs {
     Set<String> nameSet;
 
     switch (programId.getType()) {
-      case FLOW:
-        nameSet = appSpec.getFlows().keySet();
-        break;
       case MAPREDUCE:
         nameSet = appSpec.getMapReduce().keySet();
         break;

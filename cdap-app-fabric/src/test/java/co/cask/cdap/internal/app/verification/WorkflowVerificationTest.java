@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +47,7 @@ public class WorkflowVerificationTest {
     verifyGoodWorkflowSpecifications(appSpec);
     verifyAnotherGoodWorkflowSpecification(appSpec);
     verifyWorkflowWithLocalDatasetSpecification(appSpec);
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     verifyGoodWorkflowSpecifications(newSpec);
     verifyAnotherGoodWorkflowSpecification(newSpec);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,7 +58,6 @@ import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -126,7 +125,6 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final DatasetFramework dsFramework;
   private final DatasetUpgrader dsUpgrade;
-  private final QueueAdmin queueAdmin;
   private final HBaseTableFactory tmsTableFactory;
   private final CoprocessorManager coprocessorManager;
 
@@ -170,7 +168,6 @@ public class UpgradeTool {
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
-    this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     HBaseTableUtil tableUtil = injector.getInstance(HBaseTableUtil.class);
@@ -458,9 +455,6 @@ public class UpgradeTool {
 
     LOG.info("Upgrading User and System HBase Tables ...");
     dsUpgrade.upgrade();
-
-    LOG.info("Upgrading QueueAdmin ...");
-    queueAdmin.upgrade();
   }
 
   public static void main(String[] args) {

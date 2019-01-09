@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,9 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
+import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
+import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -62,6 +64,7 @@ import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
@@ -103,8 +106,12 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(AuthorizationEnforcer.class);
     bind(PrivilegesManager.class).toInstance(privilegesManager);
     expose(PrivilegesManager.class);
-    bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Scopes.SINGLETON);
+
+    bind(StreamConsumerStateStoreFactory.class)
+      .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+    bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
     expose(StreamConsumerFactory.class);
+
     bind(StreamCoordinatorClient.class).toInstance(streamCoordinatorClient);
     expose(StreamCoordinatorClient.class);
     bind(PreferencesService.class).toInstance(preferencesService);

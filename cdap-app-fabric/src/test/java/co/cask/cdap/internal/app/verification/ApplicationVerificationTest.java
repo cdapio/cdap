@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +36,7 @@ public class ApplicationVerificationTest {
   @Test
   public void testGoodApplication() {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
     ApplicationVerification app = new ApplicationVerification();
     VerifyResult result = app.verify(new ApplicationId("test", newSpec.getName()), newSpec);

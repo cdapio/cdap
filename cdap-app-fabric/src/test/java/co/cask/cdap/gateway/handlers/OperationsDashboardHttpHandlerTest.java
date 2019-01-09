@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -301,7 +301,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                 Collections.emptyMap());
     ApplicationSpecification dummyAppSpec1 =
       new DefaultApplicationSpecification(APP1_ID.getApplication(), "dummy app", null,
-                                          ARTIFACT_ID1.toApiArtifactId(), Collections.emptyMap(),
+                                          ARTIFACT_ID1.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
@@ -315,7 +315,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                 Collections.emptyMap());
     ApplicationSpecification dummyAppSpec2 =
       new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
-                                          ARTIFACT_ID2.toApiArtifactId(), Collections.emptyMap(),
+                                          ARTIFACT_ID2.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),

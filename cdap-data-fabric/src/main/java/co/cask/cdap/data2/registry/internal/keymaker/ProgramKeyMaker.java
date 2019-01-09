@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ public class ProgramKeyMaker implements KeyMaker<ProgramId> {
    */
   public static ProgramId getProgramId(ApplicationId applicationId) {
     // Use empty programId to denote applicationId
-    return applicationId.flow("");
+    return new ProgramId(applicationId, ProgramType.WORKER, "");
   }
 
   @Override

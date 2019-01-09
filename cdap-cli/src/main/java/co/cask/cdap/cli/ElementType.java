@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,18 +57,10 @@ public enum ElementType {
 
   SCHEDULE("schedule", new Noun("schedule"), new Noun("Schedule"), null, null, ArgumentName.SCHEDULE),
 
-  FLOW("flow", new Noun("flow"), new Noun("Flow"), ProgramType.FLOW, null, ArgumentName.FLOW,
-       Capability.RUNS, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS, Capability.START, Capability.STOP,
-       Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
-
   WORKFLOW("workflow", new Noun("workflow"), new Noun("Workflow"), ProgramType.WORKFLOW, null,
            ArgumentName.WORKFLOW,
            Capability.RUNS, Capability.LOGS, Capability.STATUS, Capability.START, Capability.STOP,
            Capability.LIST, Capability.RUNTIME_ARGS, Capability.PREFERENCES),
-
-  FLOWLET("flowlet", new Noun("flowlet"), new Noun("Flowlet"), null, ProgramType.FLOW,
-          ArgumentName.FLOWLET,
-          Capability.SCALE),
 
   WORKER("worker", new Noun("worker"), new Noun("Worker"), ProgramType.WORKER, null, ArgumentName.WORKER,
          Capability.RUNS, Capability.SCALE, Capability.LOGS, Capability.LIVE_INFO, Capability.STATUS,

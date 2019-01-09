@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -53,21 +52,19 @@ public class LineageDatasetTest {
 
     final RunId runId = RunIds.generate(10000);
     final DatasetId datasetInstance = new DatasetId("default", "dataset1");
-    final ProgramId program = new ProgramId("default", "app1", ProgramType.FLOW, "flow1");
-    final FlowletId flowlet = program.flowlet("flowlet1");
+    final ProgramId program = new ProgramId("default", "app1", ProgramType.SERVICE, "service1");
     final ProgramRunId run = program.run(runId.getId());
 
     final long accessTimeMillis = System.currentTimeMillis();
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        lineageDataset.addAccess(run, datasetInstance, AccessType.READ, accessTimeMillis, flowlet);
+        lineageDataset.addAccess(run, datasetInstance, AccessType.READ, accessTimeMillis);
       }
     });
 
     txnl.execute(() -> {
-      Relation expected = new Relation(datasetInstance, program, AccessType.READ,
-                                       runId, ImmutableSet.of(flowlet));
+      Relation expected = new Relation(datasetInstance, program, AccessType.READ, runId);
       Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000, x -> true);
       Assert.assertEquals(1, relations.size());
       Assert.assertEquals(expected, relations.iterator().next());
@@ -93,8 +90,7 @@ public class LineageDatasetTest {
     final StreamId stream1 = NamespaceId.DEFAULT.stream("stream1");
     final StreamId stream2 = NamespaceId.DEFAULT.stream("stream2");
 
-    final ProgramId program1 = NamespaceId.DEFAULT.app("app1").flow("flow1");
-    final FlowletId flowlet1 = program1.flowlet("flowlet1");
+    final ProgramId program1 = NamespaceId.DEFAULT.app("app1").spark("spark1");
     final ProgramId program2 = NamespaceId.DEFAULT.app("app2").worker("worker2");
     final ProgramId program3 = NamespaceId.DEFAULT.app("app3").service("service3");
 
@@ -111,7 +107,7 @@ public class LineageDatasetTest {
     final long run23Data2AccessTime = now + 3;
     //noinspection UnnecessaryLocalVariable
     txnl.execute(() -> {
-      lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime, flowlet1);
+      lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime);
       lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
       lineageDataset.addAccess(run22, stream1, AccessType.READ, run22Stream1AccessTime);
       lineageDataset.addAccess(run23, stream2, AccessType.READ, run23Stream2AccessTime);
@@ -122,7 +118,7 @@ public class LineageDatasetTest {
 
     txnl.execute(() -> {
       Assert.assertEquals(
-        ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1, ImmutableSet.of(flowlet1))),
+        ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1)),
         lineageDataset.getRelations(datasetInstance1, 0, 100000, x -> true)
       );
 

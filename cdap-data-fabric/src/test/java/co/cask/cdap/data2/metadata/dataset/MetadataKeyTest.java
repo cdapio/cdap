@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Cask Data, Inc.
+ * Copyright 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,8 +78,8 @@ public class MetadataKeyTest {
     Assert.assertEquals(applicationId1.toMetadataEntity(), actual);
 
     // program
-    ProgramId programId1 = new ApplicationId("ns", "app").program(ProgramType.FLOW, "f"); // default version
-    ProgramId programId2 = new ApplicationId("ns", "app", "2").program(ProgramType.FLOW, "f"); // custom version
+    ProgramId programId1 = new ApplicationId("ns", "app").program(ProgramType.SERVICE, "s"); // default version
+    ProgramId programId2 = new ApplicationId("ns", "app", "2").program(ProgramType.SERVICE, "s"); // custom version
 
     mdsValueKey = MetadataKey.createValueRowKey(programId1.toMetadataEntity(), "key1");
     actual = MetadataKey.extractMetadataEntityFromKey(mdsValueKey.getKey());

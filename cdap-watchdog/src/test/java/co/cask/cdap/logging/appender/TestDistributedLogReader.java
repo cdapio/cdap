@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.meta.Checkpoint;
@@ -58,15 +58,15 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(SlowTests.class)
 public class TestDistributedLogReader extends KafkaTestBase {
-  private static final FlowletLoggingContext LOGGING_CONTEXT_BOTH =
-    new FlowletLoggingContext("TDL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1", "RUN1", "INSTANCE1");
+  private static final WorkerLoggingContext LOGGING_CONTEXT_BOTH =
+    new WorkerLoggingContext("TDL_NS_1", "APP_1", "FLOW_1", "RUN1", "INSTANCE1");
 
   // Note: LOGGING_CONTEXT_FILE should be the only logging context in partition 0
-  private static final FlowletLoggingContext LOGGING_CONTEXT_FILE =
-    new FlowletLoggingContext("TDL_NS_2", "APP_2", "FLOW_2", "FLOWLET_2", "RUN2", "INSTANCE2");
+  private static final WorkerLoggingContext LOGGING_CONTEXT_FILE =
+    new WorkerLoggingContext("TDL_NS_2", "APP_2", "FLOW_2", "RUN2", "INSTANCE2");
 
-  private static final FlowletLoggingContext LOGGING_CONTEXT_KAFKA =
-    new FlowletLoggingContext("TDL_NS_3", "APP_3", "FLOW_3", "FLOWLET_3", "RUN3", "INSTANCE3");
+  private static final WorkerLoggingContext LOGGING_CONTEXT_KAFKA =
+    new WorkerLoggingContext("TDL_NS_3", "APP_3", "FLOW_3", "RUN3", "INSTANCE3");
 
   private static StringPartitioner stringPartitioner;
   private static Injector injector;

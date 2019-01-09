@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,11 @@
 package co.cask.cdap.docgen.client;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.client.DatasetTypeClient;
-import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.client.ProgramClient;
@@ -125,20 +123,6 @@ public class GenerateClientUsageExample {
 
     // Stop a service in the HelloWorld example
     programClient.stop(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
-
-    // Start, scale, and stop a flow in the WordCount example
-    programClient.start(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));
-
-    // Fetch the last 10 flow runs in the WordCount example
-    programClient.getAllProgramRuns(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"), 0, Long.MAX_VALUE, 10);
-
-    // Scale a flowlet in the WordCount example
-    programClient.setFlowletInstances(
-      NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow").flowlet("Tokenizer"),
-      3);
-
-    // Stop a flow in the WordCount example
-    programClient.stop(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));
   }
 
   public void streamClient() throws Exception {
@@ -271,15 +255,6 @@ public class GenerateClientUsageExample {
     // Fetch service information using the service in the PurchaseApp example
     ServiceSpecification serviceSpec = serviceClient.get(
       NamespaceId.DEFAULT.app("PurchaseApp").service("CatalogLookup"));
-  }
-
-  public void metricsClient() throws Exception {
-    // Construct the client used to interact with CDAP
-    MetricsClient metricsClient = new MetricsClient(clientConfig);
-
-    // Fetch the total number of events that have been processed by a flowlet
-    RuntimeMetrics metric = metricsClient.getFlowletMetrics(
-      new NamespaceId("user").app("HelloWorld").flow("someFlow").flowlet("process.events.processed"));
   }
 
   public void monitorClient() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,14 +69,7 @@ public class SetPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    switch (type) {
-      case FLOW:
-        return String.format("Sets the preferences of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'. " +
-                "Flows are deprecated as of release 5.0, use SparkStreaming as a replacement technology.",
-            Fragment.of(Article.A, type.getName()), ArgumentName.PREFERENCES);
-      default:
-        return String.format("Sets the preferences of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
-            Fragment.of(Article.A, type.getName()), ArgumentName.PREFERENCES);
-    }
+    return String.format("Sets the preferences of %s. '<%s>' is specified in the format 'key1=v1 key2=v2'.",
+                         Fragment.of(Article.A, type.getName()), ArgumentName.PREFERENCES);
   }
 }

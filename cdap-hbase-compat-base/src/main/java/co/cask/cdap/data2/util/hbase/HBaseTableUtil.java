@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -602,8 +602,6 @@ public abstract class HBaseTableUtil {
   public abstract boolean isGlobalAdmin(Configuration hConf) throws IOException;
 
   public abstract Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion();
-  public abstract Class<? extends Coprocessor> getQueueRegionObserverClassForVersion();
-  public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
   public abstract Class<? extends Coprocessor> getMessageTableRegionObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getPayloadTableRegionObserverClassForVersion();

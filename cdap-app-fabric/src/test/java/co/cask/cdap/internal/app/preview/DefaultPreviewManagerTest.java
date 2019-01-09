@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
@@ -60,18 +61,29 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
 
 /**
  * Tests for {@link DefaultPreviewManager}.
  */
 public class DefaultPreviewManagerTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static Injector injector;
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
     injector = Guice.createInjector(
-      new ConfigModule(CConfiguration.create(), new Configuration()),
+      new ConfigModule(cConf, new Configuration()),
       new IOModule(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),

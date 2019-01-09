@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
@@ -36,7 +35,6 @@ import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
-import co.cask.cdap.internal.app.verification.FlowVerification;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
 import co.cask.cdap.internal.app.verification.StreamVerification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
@@ -192,12 +190,12 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   }
 
   protected void verifyPrograms(ApplicationId appId, ApplicationSpecification specification) {
-    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getFlows().values(),
-                                                                   specification.getMapReduce().values(),
+    Iterable<ProgramSpecification> programSpecs = Iterables.concat(specification.getMapReduce().values(),
                                                                    specification.getWorkflows().values());
     VerifyResult result;
     for (ProgramSpecification programSpec : programSpecs) {
-      result = getVerifier(programSpec.getClass()).verify(appId, programSpec);
+      Verifier<ProgramSpecification> verifier = getVerifier(programSpec.getClass());
+      result = verifier.verify(appId, programSpec);
       if (!result.isSuccess()) {
         throw new RuntimeException(result.getMessage());
       }
@@ -312,8 +310,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       verifiers.put(clz, new ApplicationVerification());
     } else if (StreamSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new StreamVerification());
-    } else if (FlowSpecification.class.isAssignableFrom(clz)) {
-      verifiers.put(clz, new FlowVerification());
     } else if (ProgramSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, createProgramVerifier((Class<ProgramSpecification>) clz));
     } else if (DatasetCreationSpec.class.isAssignableFrom(clz)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.api.app;
 
 import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
@@ -46,15 +45,6 @@ public interface ApplicationConfigurer extends PluginConfigurer, DatasetConfigur
    * @param description description
    */
   void setDescription(String description);
-
-  /**
-   * Adds a {@link Flow} to the Application.
-   *
-   * @param flow The {@link Flow} to include in the Application
-   * @deprecated As of release 5.0.0, replaced by {@link @ProgramType.SPARK} for realtime processing.
-   */
-  @Deprecated
-  void addFlow(Flow flow);
 
   /**
    * Adds a {@link MapReduce MapReduce job} to the Application. Use it when you need to re-use existing MapReduce jobs

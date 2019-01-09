@@ -34,7 +34,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 
 /**
- * Flow stream integration tests.
+ * Batch stream integration tests.
  */
 public class TestBatchStreamIntegrationApp extends AbstractApplication {
 

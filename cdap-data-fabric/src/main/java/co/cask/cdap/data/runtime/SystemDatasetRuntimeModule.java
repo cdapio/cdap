@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,6 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDatasetModule;
 import co.cask.cdap.data2.metadata.lineage.LineageDatasetModule;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDatasetModule;
 import co.cask.cdap.data2.registry.UsageDatasetModule;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -128,7 +127,6 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class).in(Singleton.class);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
-        mapBinder.addBinding("queueDataset").toInstance(new HBaseQueueDatasetModule());
       }
     };
   }

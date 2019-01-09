@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LoggingTester;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
@@ -113,8 +113,7 @@ public class TestFileLogging {
 
     Logger logger = LoggerFactory.getLogger("TestFileLogging");
     LoggingTester loggingTester = new LoggingTester();
-    loggingTester.generateLogs(logger, new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
-                                                                 "RUN1", "INSTANCE1"));
+    loggingTester.generateLogs(logger, new WorkerLoggingContext("TFL_NS_1", "APP_1", "WORKER_1", "RUN1", "INSTANCE1"));
     appender.stop();
   }
 
@@ -125,7 +124,7 @@ public class TestFileLogging {
 
   @Test
   public void testGetLogNext() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    LoggingContext loggingContext = new WorkerLoggingContext("TFL_NS_1", "APP_1", "WORKER_1", "RUN1", "INSTANCE1");
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetNext(logReader, loggingContext);
@@ -133,7 +132,7 @@ public class TestFileLogging {
 
   @Test
   public void testGetLogPrev() throws Exception {
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    LoggingContext loggingContext = new WorkerLoggingContext("TFL_NS_1", "APP_1", "WORKER_1", "RUN1", "INSTANCE1");
     FileLogReader logReader = injector.getInstance(FileLogReader.class);
     LoggingTester tester = new LoggingTester();
     tester.testGetPrev(logReader, loggingContext);
@@ -142,7 +141,7 @@ public class TestFileLogging {
   @Test
   public void testGetLog() throws Exception {
     // LogReader.getLog is tested in LogSaverTest for distributed mode
-    LoggingContext loggingContext = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", "RUN1", "INSTANCE1");
+    LoggingContext loggingContext = new WorkerLoggingContext("TFL_NS_1", "APP_1", "WORKER_1", "RUN1", "INSTANCE1");
     FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, ReadRange.LATEST, 60, Filter.EMPTY_FILTER,
@@ -197,8 +196,8 @@ public class TestFileLogging {
     Assert.assertEquals(allEvents.get(58).getLoggingEvent().getFormattedMessage(),
                         events.get(17).getLoggingEvent().getFormattedMessage());
 
-    // Try with null run id, should get all logs for FLOW_1
-    LoggingContext loggingContext1 = new FlowletLoggingContext("TFL_NS_1", "APP_1", "FLOW_1", "", null, "INSTANCE1");
+    // Try with null run id, should get all logs for WORKER_1
+    LoggingContext loggingContext1 = new WorkerLoggingContext("TFL_NS_1", "APP_1", "WORKER_1", null, "INSTANCE1");
     events =
       Lists.newArrayList(logTail.getLog(loggingContext1, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
     Assert.assertEquals(100, events.size());

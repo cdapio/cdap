@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -384,7 +384,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap(), Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(anotherWorkflowRun.getParent(), appSpec);
     BasicArguments systemArgs =
       new BasicArguments(ImmutableMap.of(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString()));

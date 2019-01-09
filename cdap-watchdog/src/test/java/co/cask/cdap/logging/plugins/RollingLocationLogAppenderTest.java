@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,8 +34,8 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -268,8 +268,7 @@ public class RollingLocationLogAppenderTest {
   private void addTagsToMdc(String namespace, String applicationName) {
     MDC.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, namespace);
     MDC.put(ApplicationLoggingContext.TAG_APPLICATION_ID, applicationName);
-    MDC.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
-    MDC.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowet");
+    MDC.put(WorkerLoggingContext.TAG_WORKER_ID, "testWorker");
     MDC.put(MapReduceLoggingContext.TAG_MAP_REDUCE_JOB_ID, "testMapRed1");
     MDC.put(MapReduceLoggingContext.TAG_INSTANCE_ID, "testMapRedInst1");
     MDC.put(MapReduceLoggingContext.TAG_RUN_ID, "testMapRedRunId1");

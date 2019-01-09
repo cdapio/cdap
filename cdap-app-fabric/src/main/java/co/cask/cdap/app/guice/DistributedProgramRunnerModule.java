@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
@@ -64,7 +63,6 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
-    defaultProgramRunnerBinder.addBinding(ProgramType.FLOW).to(DistributedFlowProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.MAPREDUCE).to(DistributedMapReduceProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.SERVICE).to(DistributedServiceProgramRunner.class);

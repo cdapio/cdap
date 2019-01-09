@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data.runtime.InMemoryStreamFileWriterFactory;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
@@ -31,8 +30,6 @@ import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.hbase.HBaseStreamFileConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.google.inject.AbstractModule;
@@ -61,10 +58,10 @@ public class StreamAdminModules extends RuntimeModule {
           .in(Singleton.class);
         bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
-        bind(StreamConsumerFactory.class).to(InMemoryStreamConsumerFactory.class).in(Singleton.class);
+        bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class)
-          .to(InMemoryStreamConsumerStateStoreFactory.class).in(Singleton.class);
-        bind(StreamFileWriterFactory.class).to(InMemoryStreamFileWriterFactory.class).in(Singleton.class);
+          .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
+        bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
       }
     };
   }
@@ -76,14 +73,14 @@ public class StreamAdminModules extends RuntimeModule {
       protected void configure() {
         bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Singleton.class);
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
-        bind(StreamConsumerStateStoreFactory.class)
-          .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
         bind(StreamAdmin.class).to(AuthorizationStreamAdmin.class).in(Singleton.class);
         bind(StreamAdmin.class)
           .annotatedWith(Names.named(NOAUTH_STREAM_ADMIN))
           .to(FileStreamAdmin.class)
           .in(Singleton.class);
         bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
+        bind(StreamConsumerStateStoreFactory.class)
+          .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
         bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
       }
     };

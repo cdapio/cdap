@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -35,7 +34,6 @@ public class ProgramTypes {
   private static final Map<Class<? extends ProgramSpecification>, ProgramType> specClassToProgramType =
     new IdentityHashMap<>();
   static {
-    specClassToProgramType.put(FlowSpecification.class, ProgramType.FLOW);
     specClassToProgramType.put(MapReduceSpecification.class, ProgramType.MAPREDUCE);
     specClassToProgramType.put(SparkSpecification.class, ProgramType.SPARK);
     specClassToProgramType.put(WorkflowSpecification.class, ProgramType.WORKFLOW);

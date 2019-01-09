@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
@@ -67,11 +66,6 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
 
   @Override
   public void setDescription(String description) {
-
-  }
-
-  @Override
-  public void addFlow(Flow flow) {
 
   }
 

@@ -34,7 +34,6 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -113,7 +112,7 @@ public class ConfiguratorTest {
       Assert.assertNotNull(response);
 
       // Deserialize the JSON spec back into Application object.
-      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
       ApplicationSpecification specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
       Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
@@ -152,7 +151,7 @@ public class ConfiguratorTest {
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);
 
-      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
       ApplicationSpecification specification = adapter.fromJson(response.getResponse());
       Assert.assertNotNull(specification);
       Assert.assertEquals(1, specification.getDatasets().size());

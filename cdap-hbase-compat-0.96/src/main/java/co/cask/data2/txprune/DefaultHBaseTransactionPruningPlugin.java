@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.data2.txprune;
 
 import co.cask.cdap.data2.transaction.coprocessor.hbase96.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase96.MessageTableRegionObserver;
-import co.cask.cdap.data2.transaction.queue.coprocessor.hbase96.HBaseQueueRegionObserver;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.tephra.hbase.txprune.HBaseTransactionPruningPlugin;
 import org.apache.tephra.txprune.TransactionPruningPlugin;
@@ -31,7 +30,6 @@ public class DefaultHBaseTransactionPruningPlugin extends HBaseTransactionPrunin
   @Override
   protected boolean isTransactionalTable(HTableDescriptor tableDescriptor) {
     return tableDescriptor.hasCoprocessor(DefaultTransactionProcessor.class.getName()) ||
-      tableDescriptor.hasCoprocessor(MessageTableRegionObserver.class.getName()) ||
-      tableDescriptor.hasCoprocessor(HBaseQueueRegionObserver.class.getName());
+      tableDescriptor.hasCoprocessor(MessageTableRegionObserver.class.getName());
   }
 }

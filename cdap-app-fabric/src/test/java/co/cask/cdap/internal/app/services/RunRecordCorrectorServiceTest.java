@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -237,7 +237,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   @Test
   public void testLocalDatasetDeleteion() throws Exception {
-    // Create App with Flow and the deploy
+    // Deploy an app
     deploy(WorkflowAppWithLocalDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     final ProgramId workflow = new NamespaceId(TEST_NAMESPACE1)

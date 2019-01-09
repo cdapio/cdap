@@ -897,7 +897,7 @@ public class DefaultStoreTest {
   @Test
   public void testRunningInRangeSimple() {
     NamespaceId ns = new NamespaceId("d");
-    ProgramRunId run1 = ns.app("a1").program(ProgramType.FLOW, "f1").run(RunIds.generate(20000).getId());
+    ProgramRunId run1 = ns.app("a1").program(ProgramType.SERVICE, "f1").run(RunIds.generate(20000).getId());
     ProgramRunId run2 = ns.app("a2").program(ProgramType.MAPREDUCE, "f2").run(RunIds.generate(10000).getId());
     ProgramRunId run3 = ns.app("a3").program(ProgramType.WORKER, "f3").run(RunIds.generate(40000).getId());
     ProgramRunId run4 = ns.app("a4").program(ProgramType.SERVICE, "f4").run(RunIds.generate(70000).getId());

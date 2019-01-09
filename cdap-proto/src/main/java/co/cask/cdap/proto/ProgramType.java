@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,14 +29,6 @@ import javax.annotation.Nullable;
 public enum ProgramType {
 
   // @SerializedName to maintain backwards-compatibility
-
-  @SerializedName("Flow")
-  FLOW(1, Parameters.builder()
-    .setCategoryName("flows")
-    .setPrettyName("Flow")
-    .setListable(true)
-    .setApiProgramType(co.cask.cdap.api.app.ProgramType.FLOW)
-    .build()),
 
   @SerializedName("Mapreduce")
   MAPREDUCE(3, Parameters.builder()

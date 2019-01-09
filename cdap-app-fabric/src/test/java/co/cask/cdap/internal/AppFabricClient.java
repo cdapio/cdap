@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -276,33 +276,6 @@ public class AppFabricClient {
     programLifecycleHttpHandler.getServiceInstances(request, responder, namespaceId, applicationId, serviceName);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get service instances failed");
     return responder.decodeResponseContent(ServiceInstances.class);
-  }
-
-  public void setFlowletInstances(String namespaceId, String applicationId, String flowId, String flowletName,
-                                  int instances) throws Exception {
-    MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances/%s",
-                               getNamespacePath(namespaceId), applicationId, flowId, flowletName, instances);
-    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
-    JsonObject json = new JsonObject();
-    json.addProperty("instances", instances);
-    request.content().writeCharSequence(json.toString(), StandardCharsets.UTF_8);
-    HttpUtil.setContentLength(request, request.content().readableBytes());
-    programLifecycleHttpHandler.setFlowletInstances(request, responder, namespaceId,
-                                                    applicationId, flowId, flowletName);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
-  }
-
-  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName,
-                                       String flowletName) throws Exception {
-    MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances",
-                               getNamespacePath(namespaceId), applicationId, flowName, flowletName);
-    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.getFlowletInstances(request, responder, namespaceId, applicationId, flowName,
-                                                    flowletName);
-    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Get flowlet instances failed");
-    return responder.decodeResponseContent(Instances.class);
   }
 
   public List<ScheduleDetail> getProgramSchedules(String namespace, String app, String workflow)

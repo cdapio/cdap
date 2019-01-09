@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,15 +18,13 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import com.google.common.base.Objects;
 
 /**
  * Holds application metadata
  */
 public class ApplicationMeta {
-  private static final ApplicationSpecificationAdapter ADAPTER =
-    ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+  private static final ApplicationSpecificationAdapter ADAPTER = ApplicationSpecificationAdapter.create();
 
   private final String id;
   private final ApplicationSpecification spec;

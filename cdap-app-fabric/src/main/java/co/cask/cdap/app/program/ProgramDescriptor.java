@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,8 +66,6 @@ public class ProgramDescriptor {
   public <T extends ProgramSpecification> T getSpecification() {
     ProgramId id = getProgramId();
     switch (id.getType()) {
-      case FLOW:
-        return (T) getApplicationSpecification().getFlows().get(id.getProgram());
       case MAPREDUCE:
         return (T) getApplicationSpecification().getMapReduce().get(id.getProgram());
       case WORKFLOW:

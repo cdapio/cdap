@@ -28,13 +28,16 @@ import java.lang.annotation.Target;
  * Example:
  *
  * <pre><code>
- *   public class PurchaseStore extends AbstractFlowlet {
+ *   public class PurchaseStore extends AbstractHttpServiceHandler {
  *     {@literal @}UseDataSet("myTable")
  *     private ObjectStore{@literal <}Purchase> store;
  *     ...
- *     {@literal @}ProcessInput
- *     public void process(Purchase purchase) {
- *       store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+ *     {@literal @}GET
+ *     {@literal @}Path("/get/{key}")
+ *     public void get(HttpServiceRequest request, HttpServiceResponder responder,
+ *                     {@literal @}PathParam("key") String key) {
+ *       Purchase purchase = store.get(key);
+ *       responder.sendString(purchase.toString());
  *     }
  *     ...
  *   }
@@ -45,8 +48,6 @@ import java.lang.annotation.Target;
  * <i><a href="http://docs.cask.co/cdap/current/en/developers-manual/index.html">CDAP Developers' Manual</a></i>
  * for more information.
  * </p>
- *
- * @see co.cask.cdap.api.flow.flowlet.Flowlet Flowlet
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.DistributedTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.inject.AbstractModule;
@@ -67,9 +65,6 @@ public class DataFabricDistributedModule extends AbstractModule {
       }
     }));
     install(new TransactionExecutorModule());
-
-    // Bind the QueueAdmin, which is used in cdap master. This will be removed when Flow support is removed.
-    bind(QueueAdmin.class).to(HBaseQueueAdmin.class).in(Singleton.class);
   }
 
   /**

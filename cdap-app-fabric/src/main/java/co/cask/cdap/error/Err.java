@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,42 +63,9 @@ public final class Err {
     }
 
     public static final Errors ATLEAST_ONE_PROCESSOR = new Errors(
-      "Application %s has no Flow, Worker, MapReduce job, or Service defined; " +
-        "should have at least one of them defined"
+      "Application %s has no program defined; " +
+        "should have at least one program defined"
     );
-  }
-
-  /**
-   * Defines Flow specific error messages.
-   */
-  public static class Flow {
-    /**
-     * Preventing construction.
-     */
-    private Flow() {
-    }
-
-    public static final Errors ATLEAST_ONE_FLOWLET = new Errors(
-      "Flow %s has no Flowlets defined; " +
-        "should at least have a Flowlet"
-    );
-    public static final Errors ATLEAST_ONE_CONNECTION = new Errors(
-      "Flow %s has no connections defined; " +
-        "should at least have one connection"
-    );
-
-    public static final Errors OUTPUT_NOT_CONNECTED = new Errors(
-      "In Flow '%s', Flowlet '%s' has outputs but no consumer"
-    );
-
-    public static final Errors NO_INPUT_FOR_OUTPUT = new Errors(
-      "In Flow '%s', input of Flowlet '%s' does not define a compatible " +
-        "type method for processing output of '%s' '%s'"
-    );
-    public static final Errors MORE_OUTPUT_NOT_ALLOWED = new Errors(
-      "In Flow '%s', the %s '%s' has no consumer for outputs '%s'"
-    );
-    // Output being emitted
   }
 
   /**

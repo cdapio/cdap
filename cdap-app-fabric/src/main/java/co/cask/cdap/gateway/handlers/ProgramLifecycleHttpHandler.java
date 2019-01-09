@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -40,10 +37,8 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -69,7 +64,6 @@ import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramLiveInfo;
-import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -79,7 +73,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ServiceInstances;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -178,8 +171,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramScheduleService programScheduleService;
   private final ProgramLifecycleService lifecycleService;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final QueueAdmin queueAdmin;
-  private final MetricStore metricStore;
   private final MRJobInfoFetcher mrJobInfoFetcher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
@@ -197,17 +188,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   ProgramLifecycleHttpHandler(Store store, ProgramRuntimeService runtimeService,
                               DiscoveryServiceClient discoveryServiceClient,
                               ProgramLifecycleService lifecycleService,
-                              QueueAdmin queueAdmin,
                               MRJobInfoFetcher mrJobInfoFetcher,
-                              MetricStore metricStore,
                               NamespaceQueryAdmin namespaceQueryAdmin,
                               ProgramScheduleService programScheduleService) {
     this.store = store;
     this.runtimeService = runtimeService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.lifecycleService = lifecycleService;
-    this.metricStore = metricStore;
-    this.queueAdmin = queueAdmin;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.programScheduleService = programScheduleService;
@@ -910,7 +897,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   /**
    * Update the log level for a running program according to the request body. Currently supported program types are
-   * {@link ProgramType#FLOW}, {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    * The request body is expected to contain a map of log levels, where key is loggername, value is one of the
    * valid {@link org.apache.twill.api.logging.LogEntry.Level} or null.
    */
@@ -923,7 +910,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName,
                                      @PathParam("run-id") String runId) throws Exception {
-    updateLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName, null,
+    updateLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName,
                     runId);
   }
 
@@ -940,12 +927,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("program-type") String type,
                                      @PathParam("program-name") String programName,
                                      @PathParam("run-id") String runId) throws Exception {
-    updateLogLevels(request, responder, namespace, appName, appVersion, type, programName, null, runId);
+    updateLogLevels(request, responder, namespace, appName, appVersion, type, programName, runId);
   }
 
   /**
    * Reset the log level for a running program back to where it starts. Currently supported program types are
-   * {@link ProgramType#FLOW}, {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
+   * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    * The request body can either be empty, which will reset all loggers for the program, or contain a list of
    * logger names, which will reset for these particular logger names for the program.
    */
@@ -958,7 +945,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName,
                                     @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName, null,
+    resetLogLevels(request, responder, namespace, appName, ApplicationId.DEFAULT_VERSION, type, programName,
                    runId);
   }
 
@@ -975,7 +962,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("program-type") String type,
                                     @PathParam("program-name") String programName,
                                     @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespace, appName, appVersion, type, programName, null, runId);
+    resetLogLevels(request, responder, namespace, appName, appVersion, type, programName, runId);
   }
 
   /**
@@ -986,8 +973,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Example input:
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2"},
-   * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2"}]
    * </code></pre>
    * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
@@ -1002,8 +988,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * </p>
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200, "status": "RUNNING"},
-   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "status": "STOPPED"},
-   * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "status": "STOPPED"}]
    * </code></pre>
    */
   @POST
@@ -1038,8 +1023,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Example input:
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2"},
-   * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2"}]
    * </code></pre>
    * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
@@ -1053,8 +1037,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * </p>
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
-   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200},
-   * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200}]
    * </code></pre>
    */
   @POST
@@ -1112,8 +1095,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Example input:
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
-   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2", "runtimeargs":{"arg1":"val1"}},
-   * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2", "runtimeargs":{"arg1":"val1"}}]
    * </code></pre>
    * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
@@ -1127,8 +1109,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * </p>
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
-   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200},
-   * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * {"appId": "App2", "programType": "Mapreduce", "programId": "Mapreduce2",
+   *  "statusCode":404, "error": "App: App2 not found"}]
    * </code></pre>
    */
   @POST
@@ -1167,8 +1149,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Example input:
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1"},
-   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"},
-   *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1"}]
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2"}]
    * </code></pre>
    * </p><p>
    * The response will be an array of JsonObjects each of which will contain the three input parameters
@@ -1189,9 +1170,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1",
    *   "statusCode": 200, "provisioned": 2, "requested": 2},
    *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 400,
-   *   "error": "Program type 'Mapreduce' is not a valid program type to get instances"},
-   *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
-   *   "error": "Program": Flowlet1 not found"}]
+   *   "error": "Program type 'Mapreduce' is not a valid program type to get instances"}]
    * </code></pre>
    */
   @POST
@@ -1402,17 +1381,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
 
   /**
-   * Returns a list of flows associated with a namespace.
-   */
-  @GET
-  @Path("/flows")
-  public void getAllFlows(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW)));
-  }
-
-  /**
    * Returns a list of map/reduces associated with a namespace.
    */
   @GET
@@ -1514,126 +1482,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  /* ********************* Flow/Flowlet APIs ***********************************************************/
-  /**
-   * Returns number of instances for a flowlet within a flow.
-   */
-  @GET
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
-  public void getFlowletInstances(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
-                                  @PathParam("flowlet-id") String flowletId) throws Exception {
-    try {
-      ProgramId flow = validateAndGetNamespace(namespaceId).app(appId).flow(flowId);
-      if (!lifecycleService.programExists(flow)) {
-       throw new NotFoundException(flow);
-      }
-      int count = store.getFlowletInstances(flow, flowletId);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new Instances(count)));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      if (respondIfElementNotFound(e, responder)) {
-        return;
-      }
-      throw e;
-    }
-  }
-
-  /**
-   * Increases number of instance for a flowlet within a flow.
-   */
-  @PUT
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/instances")
-  @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public synchronized void setFlowletInstances(FullHttpRequest request, HttpResponder responder,
-                                               @PathParam("namespace-id") String namespaceId,
-                                               @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
-                                               @PathParam("flowlet-id") String flowletId) throws Exception {
-    int instances = getInstances(request);
-    try {
-      lifecycleService.setInstances(new ProgramId(namespaceId, appId, ProgramType.FLOW, flowId), instances, flowletId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      if (respondIfElementNotFound(e, responder)) {
-        return;
-      }
-      throw e;
-    }
-  }
-
-  /**
-   * Update the log level for a flowlet according to the request body. The request body is expected to contain a map
-   * of log levels, where key is loggername, value is one of the valid
-   * {@link org.apache.twill.api.logging.LogEntry.Level} or null.
-   */
-  @PUT
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
-  @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("flow-id") String flowId,
-                                     @PathParam("flowlet-id") String flowletId,
-                                     @PathParam("run-id") String runId) throws Exception {
-      updateLogLevels(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION,
-                      ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
-  }
-
-  /**
-   * Update log level for a flowlet belongs to a specific app version.
-   */
-  @PUT
-  @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/loglevels")
-  @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void updateFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") String namespaceId,
-                                     @PathParam("app-id") String appId,
-                                     @PathParam("app-version") String appVersion,
-                                     @PathParam("flow-id") String flowId,
-                                     @PathParam("flowlet-id") String flowletId,
-                                     @PathParam("run-id") String runId) throws Exception {
-    updateLogLevels(request, responder, namespaceId, appId, appVersion,
-                    ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
-  }
-
-  /**
-   * Reset the log levels for a flowlet back to where it starts. The request body is expected to contain a list of
-   * logger names, or null if reset for all loggers.
-   */
-  @POST
-  @Path("/apps/{app-id}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
-  @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void resetFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
-                                    @PathParam("flow-id") String flowId,
-                                    @PathParam("flowlet-id") String flowletId,
-                                    @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION,
-                   ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
-  }
-
-  /**
-   * Reset log level for a flowlet belongs to a specific app version.
-   */
-  @POST
-  @Path("/apps/{app-id}/versions/{app-version}/flows/{flow-id}/flowlets/{flowlet-id}/runs/{run-id}/resetloglevels")
-  @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void resetFlowletLogLevels(FullHttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
-                                    @PathParam("app-version") String appVersion,
-                                    @PathParam("flow-id") String flowId,
-                                    @PathParam("flowlet-id") String flowletId,
-                                    @PathParam("run-id") String runId) throws Exception {
-    resetLogLevels(request, responder, namespaceId, appId, appVersion,
-                   ProgramType.FLOW.getCategoryName(), flowId, flowletId, runId);
-  }
-
   @GET
   @Path("/apps/{app-id}/{program-category}/{program-id}/live-info")
   @SuppressWarnings("unused")
@@ -1650,30 +1498,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              ProgramRuntimeService runtimeService) {
     try {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runtimeService.getLiveInfo(programId)));
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
-  }
-
-  /**
-   * Deletes queues.
-   */
-  @DELETE
-  @Path("/apps/{app-id}/flows/{flow-id}/queues")
-  public void deleteFlowQueues(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId,
-                               @PathParam("flow-id") String flowId) throws Exception {
-    FlowId flow = new FlowId(namespaceId, appId, flowId);
-    try {
-      ProgramStatus status = lifecycleService.getProgramStatus(flow);
-      if (ProgramStatus.STOPPED != status) {
-        responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
-      } else {
-        queueAdmin.dropAllForFlow(flow);
-        FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, appId, flowId);
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
@@ -1785,44 +1609,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  @DELETE
-  @Path("/queues")
-  public synchronized void deleteQueues(HttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespaceId)
-    throws NamespaceNotFoundException {
-    // synchronized to avoid a potential race condition here:
-    // 1. the check for state returns that all flows are STOPPED
-    // 2. The API deletes queues because
-    // Between 1. and 2., a flow is started using the /namespaces/{namespace-id}/apps/{app-id}/flows/{flow-id}/start API
-    // Averting this race condition by synchronizing this method. The resource that needs to be locked here is
-    // runtimeService. This should work because the method that is used to start a flow - startStopProgram - is also
-    // synchronized on this.
-    // This synchronization works in HA mode because even in HA mode there is only one leader at a time.
-    NamespaceId namespace = validateAndGetNamespace(namespaceId);
-    try {
-      List<ProgramRecord> flows = lifecycleService.list(validateAndGetNamespace(namespaceId), ProgramType.FLOW);
-      for (ProgramRecord flow : flows) {
-        String appId = flow.getApp();
-        String flowId = flow.getName();
-        ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.FLOW, flowId);
-        ProgramStatus status = lifecycleService.getProgramStatus(programId);
-        if (ProgramStatus.STOPPED != status) {
-          responder.sendString(HttpResponseStatus.FORBIDDEN,
-                               String.format("Flow '%s' from application '%s' in namespace '%s' is running, " +
-                                               "please stop it first.", flowId, appId, namespaceId));
-          return;
-        }
-      }
-      queueAdmin.dropAllInNamespace(namespace);
-      // delete process metrics that are used to calculate the queue size (system.queue.pending metric)
-      FlowUtils.deleteFlowPendingMetrics(metricStore, namespaceId, null, null);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (Exception e) {
-      LOG.error("Error while deleting queues in namespace " + namespace, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
-  }
-
   /**
    * Get requested and provisioned instances for a program type.
    * The program type passed here should be one that can have instances (flows, services, ...)
@@ -1847,25 +1633,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                           "Service: " + programName + " not found");
       }
       requested = spec.getServices().get(programName).getInstances();
-
-    } else if (programType == ProgramType.FLOW) {
-      // flows must have runnable id
-      runnableId = runnable.getRunnableId();
-      if (runnableId == null) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
-                                          "Must provide the flowlet id as the runnableId for flows");
-      }
-      FlowSpecification flowSpec = spec.getFlows().get(programName);
-      if (flowSpec == null) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
-                                          "Flow: " + programName + " not found");
-      }
-      FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
-      if (flowletDefinition == null) {
-        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.code(),
-                                          "Flowlet: " + runnableId + " not found");
-      }
-      requested = flowletDefinition.getInstances();
 
     } else {
       return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.code(),
@@ -1911,11 +1678,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isDebugAllowed(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   private boolean canHaveInstances(ProgramType programType) {
-    return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
+    return EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
   }
 
   private <T extends BatchProgram> List<T> validateAndGetBatchInput(FullHttpRequest request, Type type)
@@ -1947,14 +1714,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void updateLogLevels(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
                                String appVersion, String type, String programName,
-                               @Nullable String component, String runId) throws Exception {
+                               String runId) throws Exception {
     ProgramType programType = getProgramType(type);
     try {
       // we are decoding the body to Map<String, String> instead of Map<String, LogEntry.Level> here since Gson will
       // serialize invalid enum values to null, which is allowed for log level, instead of throw an Exception.
       lifecycleService.updateProgramLogLevels(
         new ApplicationId(namespace, appName, appVersion).program(programType, programName),
-        transformLogLevelsMap(decodeArguments(request)), component, runId);
+        transformLogLevelsMap(decodeArguments(request)), runId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid JSON in body");
@@ -1967,13 +1734,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void resetLogLevels(FullHttpRequest request, HttpResponder responder, String namespace, String appName,
                               String appVersion, String type, String programName,
-                              @Nullable String component, String runId) throws Exception {
+                              String runId) throws Exception {
     ProgramType programType = getProgramType(type);
     try {
       Set<String> loggerNames = parseBody(request, SET_STRING_TYPE);
       lifecycleService.resetProgramLogLevels(
         new ApplicationId(namespace, appName, appVersion).program(programType, programName),
-        loggerNames == null ? Collections.emptySet() : loggerNames, component, runId);
+        loggerNames == null ? Collections.emptySet() : loggerNames, runId);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Invalid JSON in body");

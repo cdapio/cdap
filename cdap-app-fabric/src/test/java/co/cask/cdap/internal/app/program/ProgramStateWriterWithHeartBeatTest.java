@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -80,7 +80,7 @@ public class ProgramStateWriterWithHeartBeatTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap(), Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // start the program and ensure heart beat is 0 before we call running

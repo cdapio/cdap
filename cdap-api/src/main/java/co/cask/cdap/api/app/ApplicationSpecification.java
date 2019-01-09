@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,6 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
@@ -88,13 +86,6 @@ public interface ApplicationSpecification {
    *         configured for the Application.
    */
   Map<String, DatasetCreationSpec> getDatasets();
-
-  /**
-   * @return An immutable {@link Map} from {@link Flow} name to {@link FlowSpecification}
-   *         for {@link Flow}s configured for the Application.
-   */
-  @Deprecated
-  Map<String, FlowSpecification> getFlows();
 
   /**
    * @return An immutable {@link Map} from {@link MapReduce} name to {@link MapReduceSpecification}

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,17 +64,17 @@ public class AuditMessageTest {
 
   @Test
   public void testAccessMessage() throws Exception {
-    String flowAccessJson =
-      "{\"version\":2,\"time\":2000,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"stream\":\"stream1\"}," +
-        "\"type\":\"stream\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"WRITE\"," +
-        "\"accessor\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"version\":\"v1\",\"type\":\"Flow\"," +
-        "\"program\":\"flow1\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}}}";
-    AuditMessage flowAccess =
-      new AuditMessage(2000L, new NamespaceId("ns1").stream("stream1"), "user1", AuditType.ACCESS,
-                       new AccessPayload(AccessType.WRITE, new NamespaceId("ns1").app("app1", "v1").flow("flow1")
+    String workerAccessJson =
+      "{\"version\":2,\"time\":2000,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\"}," +
+        "\"type\":\"dataset\"},\"user\":\"user1\",\"type\":\"ACCESS\",\"payload\":{\"accessType\":\"WRITE\"," +
+        "\"accessor\":{\"namespace\":\"ns1\",\"application\":\"app1\",\"version\":\"v1\",\"type\":\"Worker\"," +
+        "\"program\":\"worker1\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}}}";
+    AuditMessage workerAccess =
+      new AuditMessage(2000L, new NamespaceId("ns1").dataset("ds1"), "user1", AuditType.ACCESS,
+                       new AccessPayload(AccessType.WRITE, new NamespaceId("ns1").app("app1", "v1").worker("worker1")
                          .run("run1")));
-    Assert.assertEquals(jsonToMap(flowAccessJson), jsonToMap(GSON.toJson(flowAccess)));
-    Assert.assertEquals(flowAccess, GSON.fromJson(flowAccessJson, AuditMessage.class));
+    Assert.assertEquals(jsonToMap(workerAccessJson), jsonToMap(GSON.toJson(workerAccess)));
+    Assert.assertEquals(workerAccess, GSON.fromJson(workerAccessJson, AuditMessage.class));
 
     String exploreAccessJson =
       "{\"version\":2,\"time\":2500,\"metadataEntity\":{\"details\":{\"namespace\":\"ns1\",\"dataset\":\"ds1\"}," +

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -34,22 +30,17 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
-import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.codec.BasicThrowableCodec;
 import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.cdap.proto.codec.FlowSpecificationCodec;
-import co.cask.cdap.proto.codec.FlowletSpecificationCodec;
 import co.cask.cdap.proto.codec.MapReduceSpecificationCodec;
 import co.cask.cdap.proto.codec.SparkSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkerSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowNodeCodec;
 import co.cask.cdap.proto.codec.WorkflowSpecificationCodec;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -75,19 +66,16 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public final class ApplicationSpecificationAdapter {
 
-  private final SchemaGenerator schemaGenerator;
   private final Gson gson;
 
-  public static ApplicationSpecificationAdapter create(SchemaGenerator generator) {
-    return new ApplicationSpecificationAdapter(generator, addTypeAdapters(new GsonBuilder()).create());
+  public static ApplicationSpecificationAdapter create() {
+    return new ApplicationSpecificationAdapter(addTypeAdapters(new GsonBuilder()).create());
   }
 
   public static GsonBuilder addTypeAdapters(GsonBuilder builder) {
     return builder
       .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
       .registerTypeAdapter(ApplicationSpecification.class, new ApplicationSpecificationCodec())
-      .registerTypeAdapter(FlowSpecification.class, new FlowSpecificationCodec())
-      .registerTypeAdapter(FlowletSpecification.class, new FlowletSpecificationCodec())
       .registerTypeAdapter(MapReduceSpecification.class, new MapReduceSpecificationCodec())
       .registerTypeAdapter(SparkSpecification.class, new SparkSpecificationCodec())
       .registerTypeAdapter(WorkflowSpecification.class, new WorkflowSpecificationCodec())
@@ -103,33 +91,14 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
   }
 
-  public static ApplicationSpecificationAdapter create() {
-    return create(null);
-  }
-
   public String toJson(ApplicationSpecification appSpec) {
-    try {
-      StringBuilder builder = new StringBuilder();
-      toJson(appSpec, builder);
-      return builder.toString();
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    StringBuilder builder = new StringBuilder();
+    toJson(appSpec, builder);
+    return builder.toString();
   }
 
-  public void toJson(ApplicationSpecification appSpec, Appendable appendable) throws IOException {
-    Preconditions.checkState(schemaGenerator != null, "No schema generator is configured. Fail to serialize to json");
-    try {
-      for (FlowSpecification flowSpec : appSpec.getFlows().values()) {
-        for (FlowletDefinition flowletDef : flowSpec.getFlowlets().values()) {
-          flowletDef.generateSchema(schemaGenerator);
-        }
-      }
-      gson.toJson(appSpec, ApplicationSpecification.class, appendable);
-
-    } catch (UnsupportedTypeException e) {
-      throw new IOException(e);
-    }
+  public void toJson(ApplicationSpecification appSpec, Appendable appendable) {
+    gson.toJson(appSpec, ApplicationSpecification.class, appendable);
   }
 
   public ApplicationSpecification fromJson(String json) {
@@ -144,8 +113,7 @@ public final class ApplicationSpecificationAdapter {
     }
   }
 
-  private ApplicationSpecificationAdapter(SchemaGenerator schemaGenerator, Gson gson) {
-    this.schemaGenerator = schemaGenerator;
+  private ApplicationSpecificationAdapter(Gson gson) {
     this.gson = gson;
   }
 

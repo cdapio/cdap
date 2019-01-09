@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -49,7 +48,6 @@ public final class EntityIdKeyHelper {
       .put(ApplicationId.class, EntityTypeSimpleName.APP.getSerializedForm())
       .put(ProgramId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(WorkflowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
-      .put(FlowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(ServiceId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
       // TODO (CDAP-14584) remove stream and view
@@ -112,45 +110,6 @@ public final class EntityIdKeyHelper {
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
-  }
-
-  public static NamespacedEntityId getTargetIdIdFromKey(MDSKey.Splitter keySplitter, String type) {
-    type = type.toLowerCase();
-    if (type.equals(TYPE_MAP.get(NamespaceId.class))) {
-      String namespaceId = keySplitter.getString();
-      return new NamespaceId(namespaceId);
-    } else if (type.equals(TYPE_MAP.get(ProgramId.class))) {
-      String namespaceId = keySplitter.getString();
-      String appId = keySplitter.getString();
-      String programType = keySplitter.getString();
-      String programId = keySplitter.getString();
-      return new ProgramId(namespaceId, appId, programType, programId);
-    } else if (type.equals(TYPE_MAP.get(ApplicationId.class))) {
-      String namespaceId = keySplitter.getString();
-      String appId = keySplitter.getString();
-      return new ApplicationId(namespaceId, appId);
-    } else if (type.equals(TYPE_MAP.get(ArtifactId.class))) {
-      String namespaceId = keySplitter.getString();
-      String name = keySplitter.getString();
-      String version = keySplitter.getString();
-      return new ArtifactId(namespaceId, name, version);
-    } else if (type.equals(TYPE_MAP.get(DatasetId.class)) || type.equals("datasetinstance")) {
-      String namespaceId = keySplitter.getString();
-      String instanceId  = keySplitter.getString();
-      return new DatasetId(namespaceId, instanceId);
-      // TODO (CDAP-14584) remove stream and view
-    } else if (type.equals(TYPE_MAP.get(StreamId.class))) {
-      String namespaceId = keySplitter.getString();
-      String instanceId  = keySplitter.getString();
-      return new StreamId(namespaceId, instanceId);
-    } else if (type.equals(TYPE_MAP.get(ScheduleId.class))) {
-      String namespaceId = keySplitter.getString();
-      String appId = keySplitter.getString();
-      String version = keySplitter.getString();
-      String scheduleName = keySplitter.getString();
-      return new ScheduleId(namespaceId, appId, version, scheduleName);
-    }
-    throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
 
   private static String getTargetType(NamespacedEntityId namespacedEntityId) {

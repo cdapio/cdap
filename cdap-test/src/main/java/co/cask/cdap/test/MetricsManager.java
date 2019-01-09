@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ServiceId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -77,23 +76,6 @@ public class MetricsManager {
    */
   public Collection<TagValue> searchTags(MetricSearchQuery query) {
     return metricStore.findNextAvailableTags(query);
-  }
-
-  /**
-   * returns flowlet related metrics
-   * @param namespace
-   * @param appName
-   * @param flowName
-   * @param flowletName
-   * @return {@link co.cask.cdap.api.metrics.RuntimeMetrics}
-   */
-  public RuntimeMetrics getFlowletMetrics(String namespace, String appName,
-                                          String flowName, String flowletName) {
-    FlowletId flowletId = new FlowletId(namespace, appName, flowName, flowletName);
-    return getMetrics(MetricsTags.flowlet(flowletId),
-                      Constants.Metrics.Name.Flow.FLOWLET_INPUT,
-                      Constants.Metrics.Name.Flow.FLOWLET_PROCESSED,
-                      Constants.Metrics.Name.Flow.FLOWLET_EXCEPTIONS);
   }
 
   /**

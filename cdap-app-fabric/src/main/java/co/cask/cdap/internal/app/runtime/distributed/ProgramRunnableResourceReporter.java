@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.api.TwillContext;
 
@@ -57,9 +56,6 @@ final class ProgramRunnableResourceReporter extends AbstractResourceReporter {
     tags.put(Constants.Metrics.Tag.APP, programId.getApplication());
 
     tags.put(ProgramTypeMetricTag.getTagName(programId.getType()), programId.getProgram());
-    if (programId.getType() == ProgramType.FLOW) {
-      tags.put(Constants.Metrics.Tag.FLOWLET, context.getSpecification().getName());
-    }
 
     return tags;
   }

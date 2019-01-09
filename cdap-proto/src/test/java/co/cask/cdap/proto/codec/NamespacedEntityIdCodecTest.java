@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.FlowId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -43,9 +41,7 @@ public class NamespacedEntityIdCodecTest {
 
   private final NamespaceId ns = new NamespaceId("ns2");
   private final ApplicationId applicationId = new ApplicationId("ns2", "app2");
-  private final ProgramId flowId1 = new ProgramId("ns3", "app4", ProgramType.FLOW, "flow5");
-  private final FlowId flowId2 = new FlowId("ns3", "app4", "flow5");
-  private final FlowletId flowletId = new FlowletId("ns3", "app4", "flow5", "flowlet2");
+  private final ProgramId program1 = new ProgramId("ns3", "app4", ProgramType.WORKER, "worker5");
   private final ServiceId serviceId = new ServiceId(applicationId, "service");
   private final ScheduleId scheduleId = new ScheduleId("ns", "app", "schedule");
   private final WorkerId workerId = new WorkerId(applicationId, "worker");
@@ -62,14 +58,8 @@ public class NamespacedEntityIdCodecTest {
     String appJson2 = GSON.toJson(applicationId);
     Assert.assertEquals(applicationId, GSON.fromJson(appJson2, NamespacedEntityId.class));
 
-    String flowJson2 = GSON.toJson(flowId2);
-    Assert.assertEquals(flowId2, GSON.fromJson(flowJson2, NamespacedEntityId.class));
-
-    String programFlow = GSON.toJson(flowId1);
-    Assert.assertEquals(flowId1, GSON.fromJson(programFlow, NamespacedEntityId.class));
-
-    String flowlet = GSON.toJson(flowletId);
-    Assert.assertEquals(flowletId, GSON.fromJson(flowlet, NamespacedEntityId.class));
+    String programFlow = GSON.toJson(program1);
+    Assert.assertEquals(program1, GSON.fromJson(programFlow, NamespacedEntityId.class));
 
     String service = GSON.toJson(serviceId);
     Assert.assertEquals(serviceId, GSON.fromJson(service, NamespacedEntityId.class));

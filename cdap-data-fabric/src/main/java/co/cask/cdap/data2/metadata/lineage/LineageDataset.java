@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -91,7 +90,6 @@ public class LineageDataset extends AbstractDataset {
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
-  private static final char FLOWLET_MARKER = 'f';
   private static final char STREAM_MARKER = 's';
   private static final char TOPIC_MARKER = 't';
   private static final char NONE_MARKER = '0';
@@ -495,12 +493,7 @@ public class LineageDataset extends AbstractDataset {
   }
 
   private void addComponent(MDSKey.Builder keyBuilder, EntityId component) {
-    if (component instanceof FlowletId) {
-      keyBuilder.add(FLOWLET_MARKER)
-        .add(component.getEntityName());
-    } else {
-      keyBuilder.add(NONE_MARKER);
-    }
+    keyBuilder.add(NONE_MARKER);
   }
 
   private NamespacedEntityId toEntityId(MDSKey.Splitter splitter, char marker) {
@@ -526,10 +519,6 @@ public class LineageDataset extends AbstractDataset {
     switch (marker) {
       case NONE_MARKER:
         return null;
-
-      case FLOWLET_MARKER :
-        return program.flowlet(splitter.getString());
-
       default:
         throw new IllegalStateException("Invalid row with component marker " + marker);
     }

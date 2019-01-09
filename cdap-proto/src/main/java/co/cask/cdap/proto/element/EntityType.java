@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.FlowletId;
-import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -60,8 +58,6 @@ public enum EntityType {
 
   DATASET_TYPE(DatasetTypeId.class),
   DATASET_MODULE(DatasetModuleId.class),
-  FLOWLET(FlowletId.class),
-  FLOWLET_QUEUE(FlowletQueueId.class),
   SCHEDULE(ScheduleId.class),
   NOTIFICATION_FEED(NotificationFeedId.class),
   ARTIFACT(ArtifactId.class),

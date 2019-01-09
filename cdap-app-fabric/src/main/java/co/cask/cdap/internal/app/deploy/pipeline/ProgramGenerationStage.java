@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,7 +46,6 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     // Now, we iterate through all ProgramSpecification and generate programs
     Iterable<ProgramSpecification> specifications = Iterables.concat(
       appSpec.getMapReduce().values(),
-      appSpec.getFlows().values(),
       appSpec.getWorkflows().values(),
       appSpec.getServices().values(),
       appSpec.getSpark().values(),

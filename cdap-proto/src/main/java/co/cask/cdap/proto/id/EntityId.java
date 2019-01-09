@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -185,8 +185,7 @@ public abstract class EntityId {
       // application so append it
       extractedParts.add(new MetadataEntity.KeyValue(MetadataEntity.VERSION, version));
     }
-    if (entityType == EntityType.PROGRAM || entityType == EntityType.SCHEDULE || entityType == EntityType.PROGRAM_RUN
-      || entityType == EntityType.FLOWLET) {
+    if (entityType == EntityType.PROGRAM || entityType == EntityType.SCHEDULE || entityType == EntityType.PROGRAM_RUN) {
       // if the entity is program or schedule then add the version information at its correct position i.e. 2
       // (namespace, application, version) if the version information is not present
       if (!metadataEntity.containsKey(MetadataEntity.VERSION)) {

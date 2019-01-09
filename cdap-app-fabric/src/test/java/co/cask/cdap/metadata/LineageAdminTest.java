@@ -38,7 +38,6 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -73,12 +72,10 @@ public class LineageAdminTest extends AppFabricTestBase {
   private final DatasetId dataset7 = new DatasetId("default", "dataset7");
 
   // Define programs and runs
-  private final ProgramId program1 = new ProgramId("default", "app1", ProgramType.FLOW, "flow1");
-  private final FlowletId flowlet1 = program1.flowlet("flowlet1");
+  private final ProgramId program1 = new ProgramId("default", "app1", ProgramType.MAPREDUCE, "mr1");
   private final ProgramRunId run1 = program1.run(RunIds.generate(10000).getId());
 
-  private final ProgramId program2 = new ProgramId("default", "app2", ProgramType.FLOW, "flow2");
-  private final FlowletId flowlet2 = program2.flowlet("flowlet2");
+  private final ProgramId program2 = new ProgramId("default", "app2", ProgramType.SPARK, "spark2");
   private final ProgramRunId run2 = program2.run(RunIds.generate(900).getId());
 
   private final ProgramId program3 = new ProgramId("default", "app3", ProgramType.WORKER, "worker3");
@@ -150,12 +147,12 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     addRuns(store, run1, run2, run3);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, dataset1, AccessType.UNKNOWN, flowlet1);
-    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
-    lineageWriter.addAccess(run1, dataset2, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.UNKNOWN);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE);
+    lineageWriter.addAccess(run1, dataset2, AccessType.READ);
 
-    lineageWriter.addAccess(run2, dataset2, AccessType.WRITE, flowlet2);
-    lineageWriter.addAccess(run2, dataset3, AccessType.READ, flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.WRITE);
+    lineageWriter.addAccess(run2, dataset3, AccessType.READ);
 
     lineageWriter.addAccess(run3, dataset1, AccessType.UNKNOWN, null);
 
@@ -163,10 +160,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     // only access type
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2)),
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       )
     );
@@ -184,8 +181,8 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1)),
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       ),
       oneLevelLineage.getRelations());
@@ -233,23 +230,23 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add access
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
-    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
 
-    lineageWriter.addAccess(run2, dataset2, AccessType.READ, flowlet2);
-    lineageWriter.addAccess(run2, dataset1, AccessType.WRITE, flowlet2);
-    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.READ);
+    lineageWriter.addAccess(run2, dataset1, AccessType.WRITE);
+    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE);
 
     lineageWriter.addAccess(run3, dataset3, AccessType.READ, null);
     lineageWriter.addAccess(run3, dataset4, AccessType.WRITE, null);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
         new Relation(dataset4, program3, AccessType.WRITE, twillRunId(run3), emptySet()),
         new Relation(dataset3, program3, AccessType.READ, twillRunId(run3), emptySet())
       )
@@ -270,11 +267,11 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2))
+        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2))
       ),
       oneLevelLineage.getRelations());
   }
@@ -303,13 +300,13 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
-    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1))
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1))
         )
     );
 
@@ -342,16 +339,15 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
     // Write is in a different run
     lineageWriter.addAccess(new ProgramRunId(run1.getNamespace(), run1.getApplication(), run1.getParent().getType(),
-                                            run1.getProgram(), run2.getEntityName()), dataset1, AccessType.WRITE,
-                            flowlet1);
+                                            run1.getProgram(), run2.getEntityName()), dataset1, AccessType.WRITE);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run2), toSet(flowlet1))
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run2))
       )
     );
 
@@ -388,14 +384,14 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, stream1, AccessType.READ, flowlet1);
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
-    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE, flowlet1);
-    lineageWriter.addAccess(run1, dataset4, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, stream1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
+    lineageWriter.addAccess(run1, dataset4, AccessType.WRITE);
 
-    lineageWriter.addAccess(run2, dataset2, AccessType.READ, flowlet2);
-    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE, flowlet2);
-    lineageWriter.addAccess(run2, dataset5, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.READ);
+    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE);
+    lineageWriter.addAccess(run2, dataset5, AccessType.WRITE);
 
     lineageWriter.addAccess(run3, dataset5, AccessType.READ, null);
     lineageWriter.addAccess(run3, dataset6, AccessType.WRITE, null);
@@ -406,14 +402,14 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(stream1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
+        new Relation(stream1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1)),
 
-        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2)),
 
         new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
         new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet()),
@@ -465,14 +461,14 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, stream1, AccessType.READ, flowlet1);
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ, flowlet1);
-    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE, flowlet1);
-    lineageWriter.addAccess(run1, dataset4, AccessType.WRITE, flowlet1);
+    lineageWriter.addAccess(run1, stream1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
+    lineageWriter.addAccess(run1, dataset4, AccessType.WRITE);
 
-    lineageWriter.addAccess(run2, dataset2, AccessType.READ, flowlet2);
-    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE, flowlet2);
-    lineageWriter.addAccess(run2, dataset5, AccessType.WRITE, flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.READ);
+    lineageWriter.addAccess(run2, dataset3, AccessType.WRITE);
+    lineageWriter.addAccess(run2, dataset5, AccessType.WRITE);
 
     lineageWriter.addAccess(run3, dataset5, AccessType.READ, null);
     lineageWriter.addAccess(run3, dataset6, AccessType.WRITE, null);
@@ -487,14 +483,14 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(stream1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
+        new Relation(stream1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1)),
 
-        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2)),
 
         new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
         new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet()),
@@ -527,9 +523,9 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset2, program2, AccessType.READ, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset5, program2, AccessType.WRITE, twillRunId(run2)),
 
         new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
         new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet())
@@ -550,10 +546,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     oneLevelLineage = lineageAdmin.computeLineage(stream1, 500, 20000, 1);
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(stream1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1))
+        new Relation(stream1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1))
       ),
       oneLevelLineage.getRelations()
     );
@@ -619,12 +615,12 @@ public class LineageAdminTest extends AppFabricTestBase {
     addRuns(store, run5);
 
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
-    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE, flowlet1);
-    lineageWriter.addAccess(run1, dataset2, AccessType.READ, flowlet1);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE);
+    lineageWriter.addAccess(run1, dataset1, AccessType.WRITE);
+    lineageWriter.addAccess(run1, dataset2, AccessType.READ);
 
-    lineageWriter.addAccess(run2, dataset2, AccessType.WRITE, flowlet2);
-    lineageWriter.addAccess(run2, dataset3, AccessType.READ, flowlet2);
+    lineageWriter.addAccess(run2, dataset2, AccessType.WRITE);
+    lineageWriter.addAccess(run2, dataset3, AccessType.READ);
 
     lineageWriter.addAccess(run3, dataset1, AccessType.UNKNOWN, null);
 
@@ -672,10 +668,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Run tests without workflow parameter
     expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2), toSet(flowlet2)),
-        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2), toSet(flowlet2)),
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1)),
+        new Relation(dataset2, program2, AccessType.WRITE, twillRunId(run2)),
+        new Relation(dataset3, program2, AccessType.READ, twillRunId(run2)),
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3)),
         new Relation(dataset1, program5, AccessType.READ, twillRunId(run5))
       )
@@ -699,8 +695,8 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Assert.assertEquals(
       ImmutableSet.of(
-        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1), toSet(flowlet1)),
-        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
+        new Relation(dataset1, program1, AccessType.WRITE, twillRunId(run1)),
+        new Relation(dataset2, program1, AccessType.READ, twillRunId(run1)),
         new Relation(dataset1, program5, AccessType.READ, twillRunId(run5)),
         new Relation(dataset1, program3, AccessType.UNKNOWN, twillRunId(run3))
       ),
