@@ -5,6 +5,7 @@
   },
   "video": false,
   "pluginsFile": "cypress/plugins/index.js",
-  "supportFile": false,
-  "fixturesFolder": false
+  "supportFile": "cypress/support/index.js",
+  "fixturesFolder": "cypress/fixtures",
+  "chromeWebSecurity": false
 }

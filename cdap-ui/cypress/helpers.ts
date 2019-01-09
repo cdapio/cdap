@@ -65,4 +65,21 @@ function getAuthHeaders() {
   return headers;
 }
 
-export { loginIfRequired, getAuthHeaders };
+function getArtifactsPoll(headers, retries = 0) {
+  if (retries === 3) {
+    return;
+  }
+  cy.request({
+    method: 'GET',
+    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
+    failOnStatusCode: false,
+    headers,
+  }).then((response) => {
+    if (response.status >= 400) {
+      return getArtifactsPoll(headers, retries + 1);
+    }
+    return;
+  });
+}
+
+export { loginIfRequired, getAuthHeaders, getArtifactsPoll };

@@ -109,7 +109,7 @@ export default function ResourceCenterPipelineEntity({ onError }) {
         </div>
       </div>
       <div className="buttons-container">
-        <a href={hydratorCreateLink}>
+        <a href={hydratorCreateLink} id="create-pipeline-link">
           <button
             id={(primaryActionLabel + '-' + title).toLowerCase()}
             className="btn btn-primary"
