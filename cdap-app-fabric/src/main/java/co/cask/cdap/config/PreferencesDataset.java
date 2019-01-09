@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /**
  * This class is responsible for Perferences operations. It uses {@link ConfigDataset} as the underlying storage.
@@ -107,6 +108,26 @@ public class PreferencesDataset {
     // put the current level property
     properties.putAll(getPreferences(entityId));
     return properties;
+  }
+
+  /**
+   * Get a single resolved preference for the entity id, the preferences are resolved from instance -> namespace -> app
+   * -> program level
+   *
+   * @param entityId the entity id to get the preferences from
+   * @param name the name of the preference to resolve
+   * @return the resolved value of the preference, or null of the named preference is not there
+   */
+  @Nullable
+  public String getResolvedPreference(EntityId entityId, String name) {
+    // get the preference for the entity itself
+    String value = getPreferences(entityId).get(name);
+    // if the value is null and the entity has a parent, defer to the parent
+    if (value == null && entityId instanceof ParentedId) {
+      value = getResolvedPreference(((ParentedId) entityId).getParent(), name);
+    }
+    // return whatever we have
+    return value;
   }
 
   /**

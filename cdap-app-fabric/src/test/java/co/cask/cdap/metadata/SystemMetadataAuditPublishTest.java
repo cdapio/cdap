@@ -35,8 +35,6 @@ import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.scheduler.Scheduler;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -92,13 +90,13 @@ public class SystemMetadataAuditPublishTest {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
     Set<String> addedMetadata = new HashSet<>();
     // TODO (CDAP-14670): this test is brittle, find a better condition to wait on
-    Tasks.waitFor(25, () -> addAllSystemMetadata(addedMetadata), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(26, () -> addAllSystemMetadata(addedMetadata), 10, TimeUnit.SECONDS);
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     Set<String> removedMetadata = new HashSet<>();
-    // TODO (CDAP-14666): deletions have one additional key: "profile". This is because of named bug.
-    Tasks.waitFor(addedMetadata.size() + 1, () -> addAllSystemMetadata(removedMetadata), 5, TimeUnit.SECONDS);
+    // expect the same number of changes when namespace is deleted
+    Tasks.waitFor(addedMetadata.size(), () -> addAllSystemMetadata(removedMetadata), 5, TimeUnit.SECONDS);
     // Assert that the exact same system properties and tags got added upon app deployment and removed upon deletion
-    Assert.assertEquals(ImmutableSet.of("profile"), Sets.difference(removedMetadata, addedMetadata).immutableCopy());
+    Assert.assertEquals(addedMetadata, removedMetadata);
   }
 
   private int addAllSystemMetadata(Set<String> allMetadata) {
