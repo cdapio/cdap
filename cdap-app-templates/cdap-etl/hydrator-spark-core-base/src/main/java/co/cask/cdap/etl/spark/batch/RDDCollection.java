@@ -175,19 +175,30 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
-    String stageName = stageSpec.getName();
-    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
-    SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
-    SparkConf sparkconf = jsc.getConf();
-    JavaRDD<T> countedRDD = null;
-    if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-        countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
-    } else {
-        countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
-    }
-    sink.run(sparkPluginContext, countedRDD);
+  public Runnable createStoreTask(final StageSpec stageSpec, final SparkSink<T> sink) throws Exception {
+    return new Runnable() {
+      @Override
+      public void run() {
+        String stageName = stageSpec.getName();
+        PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+        SparkExecutionPluginContext sparkPluginContext =
+          new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
+
+        SparkConf sparkconf = jsc.getConf();
+        JavaRDD<T> countedRDD = null;
+        if (sparkconf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
+            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
+        } else {
+            countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
+        }
+    
+        try {
+          sink.run(sparkPluginContext, countedRDD);
+        } catch (Exception e) {
+          Throwables.propagate(e);
+        }
+      }
+    };
   }
 
   @Override
@@ -216,3 +227,4 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
 }
+
