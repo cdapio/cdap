@@ -162,17 +162,21 @@ export default class S3Connection extends Component {
     );
   }
 
+  constructProperties() {
+    return {
+      accessKeyId: this.state.accessKeyId.trim(),
+      accessSecretKey: this.state.accessSecretKey.trim(),
+      region: this.state.region.trim(),
+    };
+  }
+
   addConnection() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestBody = {
       name: this.state.name,
       type: ConnectionType.S3,
-      properties: {
-        accessKeyId: this.state.accessKeyId,
-        accessSecretKey: this.state.accessSecretKey,
-        region: this.state.region,
-      },
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
@@ -202,11 +206,7 @@ export default class S3Connection extends Component {
       name: this.state.name,
       id: this.props.connectionId,
       type: ConnectionType.S3,
-      properties: {
-        accessKeyId: this.state.accessKeyId,
-        accessSecretKey: this.state.accessSecretKey,
-        region: this.state.region,
-      },
+      properties: this.constructProperties(),
     };
 
     MyDataPrepApi.updateConnection(params, requestBody).subscribe(
