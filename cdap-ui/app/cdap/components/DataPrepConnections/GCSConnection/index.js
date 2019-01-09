@@ -101,11 +101,11 @@ export default class GCSConnection extends Component {
     const properties = {};
 
     if (this.state.projectId && this.state.projectId.length > 0) {
-      properties.projectId = this.state.projectId;
+      properties.projectId = this.state.projectId.trim();
     }
 
     if (this.state.serviceAccountKeyfile && this.state.serviceAccountKeyfile.length > 0) {
-      properties['service-account-keyfile'] = this.state.serviceAccountKeyfile;
+      properties['service-account-keyfile'] = this.state.serviceAccountKeyfile.trim();
     }
 
     return properties;

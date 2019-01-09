@@ -138,7 +138,10 @@ export default class KafkaConnection extends Component {
   convertBrokersList() {
     return this.state.brokersList
       .map((broker) => {
-        return `${broker.host}:${broker.port}`;
+        const host = broker.host.trim();
+        const port = broker.port.trim();
+
+        return `${host}:${port}`;
       })
       .join(',');
   }

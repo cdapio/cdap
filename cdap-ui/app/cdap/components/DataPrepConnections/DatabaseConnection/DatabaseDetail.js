@@ -175,16 +175,16 @@ export default class DatabaseDetail extends Component {
           : this.state.selectedDatabase;
 
       properties = {
-        hostname: this.state.hostname,
-        port: this.state.port,
-        username: this.state.username,
+        hostname: this.state.hostname.trim(),
+        port: this.state.port.trim(),
+        username: this.state.username.trim(),
         password: this.state.password,
         database: selectedDatabase,
       };
     } else {
       properties = {
-        connectionString: this.state.connectionString,
-        username: this.state.username,
+        connectionString: this.state.connectionString.trim(),
+        username: this.state.username.trim(),
         password: this.state.password,
       };
     }
