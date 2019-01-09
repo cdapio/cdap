@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.WordCountApp;
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.data.schema.Schema;
@@ -89,12 +89,12 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   }
 
   /**
-   * Adds {@link WordCountApp} as system artifact which can be used as parent artifact for testing purpose
+   * Adds {@link AllProgramsApp} as system artifact which can be used as parent artifact for testing purpose
    * @throws Exception
    */
-  void addWordCountAppAsSystemArtifacts() throws Exception {
-    File destination = new File(systemArtifactsDir + "/wordcount-1.0.0.jar");
-    buildAppArtifact(WordCountApp.class, new Manifest(), destination);
+  void addAppAsSystemArtifacts() throws Exception {
+    File destination = new File(systemArtifactsDir + "/app-1.0.0.jar");
+    buildAppArtifact(AllProgramsApp.class, new Manifest(), destination);
     artifactRepository.addSystemArtifacts();
   }
 

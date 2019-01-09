@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -92,7 +92,7 @@ public class SystemMetadataAuditPublishTest {
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
     Set<String> addedMetadata = new HashSet<>();
     // TODO (CDAP-14670): this test is brittle, find a better condition to wait on
-    Tasks.waitFor(27, () -> addAllSystemMetadata(addedMetadata), 10, TimeUnit.SECONDS);
+    Tasks.waitFor(25, () -> addAllSystemMetadata(addedMetadata), 10, TimeUnit.SECONDS);
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     Set<String> removedMetadata = new HashSet<>();
     // TODO (CDAP-14666): deletions have one additional key: "profile". This is because of named bug.

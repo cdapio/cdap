@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -121,9 +121,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
     }
 
     // no auto grant now, need to have privileges on the program to be able to see the programs
-    authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.FLOW,
-                                                                     AllProgramsApp.NoOpFlow.NAME)), ALICE,
-                     Collections.singleton(Action.EXECUTE));
     authorizer.grant(Authorizable.fromEntityId(applicationId.program(ProgramType.SERVICE,
                                                                      AllProgramsApp.NoOpService.NAME)), ALICE,
                      Collections.singleton(Action.EXECUTE));
@@ -144,7 +141,9 @@ public class ProgramLifecycleServiceAuthorizationTest {
                      Collections.singleton(Action.EXECUTE));
 
     for (ProgramType type : ProgramType.values()) {
-      if (!type.equals(ProgramType.CUSTOM_ACTION)) {
+      // Skip custom action.
+      // Skip flow (until flow is completely removed from ProgramType)
+      if (!EnumSet.of(ProgramType.CUSTOM_ACTION, ProgramType.FLOW).contains(type)) {
         Assert.assertFalse(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());
         SecurityRequestContext.setUserId("bob");
         Assert.assertTrue(programLifecycleService.list(NamespaceId.DEFAULT, type).isEmpty());

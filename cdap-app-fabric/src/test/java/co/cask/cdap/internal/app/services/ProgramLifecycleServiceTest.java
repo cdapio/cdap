@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -175,7 +175,6 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
       Map<String, String> systemArgs = new HashMap<>();
 
       Set<ProgramId> programIds = ImmutableSet.of(
-        NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME),
         NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME),
         NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME),
         NamespaceId.DEFAULT.app(AllProgramsApp.NAME).program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME),

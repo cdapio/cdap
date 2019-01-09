@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,6 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
@@ -204,28 +203,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testFlowRuntimeArguments() throws Exception {
-    ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
-    Map<String, String> args = Maps.newHashMap();
-    args.put("threshold", "10");
-    FlowManager flowManager = applicationManager.getFlowManager("FilterFlow").start(args);
-
-    StreamManager input = getStreamManager("input");
-    input.send("2");
-    input.send("21");
-
-    DataSetManager<KeyValueTable> countTable = getDataset("count");
-    Tasks.waitFor(1L, () -> {
-      countTable.flush();
-      byte[] value = countTable.get().read(FilterAppWithNewFlowAPI.HIGH_PASS);
-      return value == null ? 0L : Bytes.toLong(value);
-    }, 30, TimeUnit.SECONDS);
-
-    flowManager.stop();
-    flowManager.waitForStopped(10, TimeUnit.SECONDS);
-  }
-
-  @Test
   public void testWorkerThrowingException() throws Exception {
     ApplicationManager appManager = deployApplication(AppWithExceptionThrowingWorker.class);
     final WorkerManager workerManager = appManager.getWorkerManager(AppWithExceptionThrowingWorker.WORKER_NAME);
@@ -322,7 +299,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testAppConfig() throws Exception {
-    ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testStream", "testDataset");
+    ConfigTestApp.ConfigClass conf = new ConfigTestApp.ConfigClass("testDataset");
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class, conf), conf);
   }
 
@@ -420,7 +397,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationId appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version1");
     AppRequest<ConfigTestApp.ConfigClass> createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-      new ConfigTestApp.ConfigClass("tS1", "tD1", "tV1"));
+      new ConfigTestApp.ConfigClass("tD1", "tV1"));
     ApplicationManager appManager = deployApplication(appId, createRequest);
     ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
@@ -435,7 +412,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version2");
     createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
-      new ConfigTestApp.ConfigClass("tS2", "tD2", "tV2"));
+      new ConfigTestApp.ConfigClass("tD2", "tV2"));
     appManager = deployApplication(appId, createRequest);
     serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
@@ -448,17 +425,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   private void testAppConfig(String appName, ApplicationManager appManager,
                              ConfigTestApp.ConfigClass conf) throws Exception {
-    String streamName = conf == null ? ConfigTestApp.DEFAULT_STREAM : conf.getStreamName();
     String datasetName = conf == null ? ConfigTestApp.DEFAULT_TABLE : conf.getTableName();
 
-    FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME).start();
-    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 1, 10, TimeUnit.SECONDS);
-    StreamManager streamManager = getStreamManager(streamName);
-    streamManager.send("abcd");
-    streamManager.send("xyz");
-    RuntimeMetrics metrics = flowManager.getFlowletMetrics(ConfigTestApp.FLOWLET_NAME);
-    metrics.waitForProcessed(2, 1, TimeUnit.MINUTES);
-    flowManager.stop();
+    ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME).start();
+    URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+
+    // Write data to the table using the service
+    URL url = new URL(serviceURL, "write/abcd");
+    Assert.assertEquals(200, HttpRequests.execute(HttpRequest.put(url).build()).getResponseCode());
+    url = new URL(serviceURL, "write/xyz");
+    Assert.assertEquals(200, HttpRequests.execute(HttpRequest.put(url).build()).getResponseCode());
+
     DataSetManager<KeyValueTable> dsManager = getDataset(datasetName);
     KeyValueTable table = dsManager.get();
     Assert.assertEquals("abcd", Bytes.toString(table.read(appName + ".abcd")));
@@ -1063,12 +1040,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         return ProgramScheduleStatus.valueOf(wfmanager.getSchedule(scheduleId).status(200));
       }
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
-  }
-
-  @Category(XSlowTests.class)
-  @Test(timeout = 360000)
-  public void testApp() throws Exception {
-    testApp(WordCountApp.class, "text");
   }
 
   @Category(SlowTests.class)
@@ -1718,68 +1689,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(AppWithServices.VALUE, value);
   }
 
-  // todo: passing stream name as a workaround for not cleaning up streams during reset()
-  private void testApp(Class<? extends Application> app, String streamName) throws Exception {
-
-    ApplicationManager applicationManager = deployApplication(app);
-    FlowManager flowManager = applicationManager.getFlowManager("WordCountFlow").start();
-
-    // Send some inputs to streams
-    StreamManager streamManager = getStreamManager(streamName);
-    for (int i = 0; i < 100; i++) {
-      streamManager.send(ImmutableMap.of("title", "title " + i), "testing message " + i);
-    }
-
-    // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("CountByField");
-
-    flowletMetrics.waitForProcessed(500, 10, TimeUnit.SECONDS);
-    Assert.assertEquals(0L, flowletMetrics.getException());
-
-    // Query the result
-    ServiceManager serviceManager = applicationManager.getServiceManager("WordFrequency").start();
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
-
-    // Verify the query result
-    Type resultType = new TypeToken<Map<String, Long>>() { }.getType();
-    Map<String, Long> result = new Gson().fromJson(
-      callServiceGet(serviceManager.getServiceURL(), "wordfreq/" + streamName + ":testing"), resultType);
-    Assert.assertNotNull(result);
-    Assert.assertEquals(100L, result.get(streamName + ":testing").longValue());
-
-    // check the metrics
-    RuntimeMetrics serviceMetrics = serviceManager.getMetrics();
-    serviceMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
-    Assert.assertEquals(0L, serviceMetrics.getException());
-
-    Map<String, String> argsForMR =
-      ImmutableMap.of("task.*." + SystemArguments.METRICS_CONTEXT_TASK_INCLUDED, "true");
-    // Run mapreduce job
-    MapReduceManager mrManager = applicationManager.getMapReduceManager("countTotal").start(argsForMR);
-    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 1800L, TimeUnit.SECONDS);
-
-    testTaskTagLevelExists(WordCountApp.class.getSimpleName(), "countTotal", mrManager.getHistory().get(0).getPid(),
-                           "mydataset", true);
-    long totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "total"));
-    // every event has 5 tokens
-    Assert.assertEquals(5 * 100L, totalCount);
-
-    // Run mapreduce from stream
-    mrManager = applicationManager.getMapReduceManager("countFromStream").start();
-    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 120L, TimeUnit.SECONDS);
-
-    totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "stream_total"));
-    // The stream MR only consume the body, not the header.
-    Assert.assertEquals(3 * 100L, totalCount);
-
-    DataSetManager<MyKeyValueTableDefinition.KeyValueTable> mydatasetManager = getDataset("mydataset");
-    Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
-
-    // also test the deprecated version of getDataset(). This can be removed when we remove the method
-    mydatasetManager = getDataset("mydataset");
-    Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
-  }
-
   @Test
   public void testAppRedeployKeepsData() throws Exception {
     deployApplication(testSpace, AppWithTable.class);
@@ -1801,60 +1710,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     myTableManager.flush();
 
     Assert.assertEquals("value1", myTableManager3.get().get(new Get("key1", "column1")).getString("column1"));
-  }
-
-  @Test(timeout = 60000L)
-  public void testFlowletMetricsReset() throws Exception {
-    ApplicationManager appManager = deployApplication(DataSetInitApp.class);
-    FlowManager flowManager = appManager.getFlowManager("DataSetFlow").start();
-    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("Consumer");
-    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
-    flowManager.stop();
-    Assert.assertEquals(1, flowletMetrics.getProcessed());
-    getMetricsManager().resetAll();
-    // check the metrics were deleted after reset
-    Assert.assertEquals(0, flowletMetrics.getProcessed());
-  }
-
-  @Test(timeout = 60000L)
-  public void testFlowletInitAndSetInstances() throws Exception {
-    ApplicationManager appManager = deployApplication(testSpace, DataSetInitApp.class);
-    FlowManager flowManager = appManager.getFlowManager("DataSetFlow").start();
-
-    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("Consumer");
-
-    flowletMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
-
-    String generator = "Generator";
-    Assert.assertEquals(1, flowManager.getFlowletInstances(generator));
-    // Now change generator to 3 instances
-    flowManager.setFlowletInstances(generator, 3);
-    Assert.assertEquals(3, flowManager.getFlowletInstances(generator));
-
-    // Now should have 3 processed from the consumer flowlet
-    flowletMetrics.waitForProcessed(3, 10, TimeUnit.SECONDS);
-
-    // Now reset to 1 instances
-    flowManager.setFlowletInstances(generator, 1);
-    Assert.assertEquals(1, flowManager.getFlowletInstances(generator));
-
-    // Shouldn't have new item
-    TimeUnit.SECONDS.sleep(3);
-    Assert.assertEquals(3, flowletMetrics.getProcessed());
-
-    // Now set to 2 instances again. Since there is a new instance, expect one new item emitted
-    flowManager.setFlowletInstances(generator, 2);
-    Assert.assertEquals(2, flowManager.getFlowletInstances(generator));
-    flowletMetrics.waitForProcessed(4, 10, TimeUnit.SECONDS);
-
-    flowManager.stop();
-
-    DataSetManager<Table> dataSetManager = getDataset(testSpace.dataset("conf"));
-    Table confTable = dataSetManager.get();
-
-    Assert.assertEquals("generator", confTable.get(new Get("key0", "column")).getString("column"));
-
-    dataSetManager.flush();
   }
 
   @Test(timeout = 60000L)
@@ -1948,13 +1803,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // The worker will stop by itself. No need to call stop
     workerManager.waitForRun(ProgramRunStatus.COMPLETED, 10, TimeUnit.SECONDS);
 
-    // Flow
-    FlowManager flowManager = appManager.getFlowManager(
-      ClusterNameTestApp.ClusterNameFlow.class.getSimpleName()).start();
-    key.set("flow.cluster.name");
-    Tasks.waitFor(clusterName, readClusterName, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    flowManager.stop();
-
     // MapReduce
     // Setup the input file used by MR
     Location location = this.<FileSet>getDataset(ClusterNameTestApp.INPUT_FILE_SET).get().getLocation("input");
@@ -2032,19 +1880,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // This test verify bytecode generated classes ClassLoading
 
     ApplicationManager appManager = deployApplication(testSpace, ClassLoaderTestApp.class);
-    FlowManager flowManager = appManager.getFlowManager("BasicFlow").start();
 
-    // Wait for at least 10 records being generated
-    RuntimeMetrics flowMetrics = flowManager.getFlowletMetrics("Sink");
-    flowMetrics.waitForProcessed(10, 5000, TimeUnit.MILLISECONDS);
-    flowManager.stop();
-
-    ServiceManager serviceManager = appManager.getServiceManager("RecordQuery").start();
+    ServiceManager serviceManager = appManager.getServiceManager("RecordHandler").start();
     URL serviceURL = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(serviceURL);
 
+    // Increment record
+    URL url = new URL(serviceURL, "increment/public");
+    for (int i = 0; i < 10; i++) {
+      HttpResponse response = HttpRequests.execute(HttpRequest.post(url).build());
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+
     // Query record
-    URL url = new URL(serviceURL, "query?type=public");
+    url = new URL(serviceURL, "query?type=public");
     HttpRequest request = HttpRequest.get(url).build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(200, response.getResponseCode());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -65,40 +65,6 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
   private ProgramClient getProgramClient() {
     return new ProgramClient(getClientConfig());
-  }
-
-  @Test
-  public void testFlowUsage() throws Exception {
-    final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
-    final ProgramId program = app.flow(AllProgramsApp.NoOpFlow.NAME);
-    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
-    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-    Assert.assertEquals(0, getProgramDatasetUsage(program).size());
-    Assert.assertEquals(0, getAppDatasetUsage(app).size());
-    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
-
-    deployApp(AllProgramsApp.class);
-
-    try {
-      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
-      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
-      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
-
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
-      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
-      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
-    } finally {
-      deleteApp(app);
-
-      Assert.assertEquals(0, getAppStreamUsage(app).size());
-      Assert.assertEquals(0, getProgramStreamUsage(program).size());
-      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-    }
   }
 
   @Test

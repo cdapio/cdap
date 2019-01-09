@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,9 @@
 
 package co.cask.cdap.internal.audit;
 
-import co.cask.cdap.WordCountApp;
+import co.cask.cdap.AllProgramsApp;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -25,6 +27,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.audit.AuditMessage;
@@ -39,7 +42,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -54,6 +56,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -98,27 +101,44 @@ public class AuditPublishTest {
 
   @Test
   public void testPublish() throws Exception {
-    String defaultNs = NamespaceId.DEFAULT.getNamespace();
-    String appName = WordCountApp.class.getSimpleName();
+    String appName = AllProgramsApp.NAME;
+
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
     // Define expected values
-    Set<? extends EntityId> expectedMetadataChangeEntities =
-      ImmutableSet.<EntityId>of(
-        Ids.namespace(defaultNs).artifact(WordCountApp.class.getSimpleName(), "1"),
-                      Ids.namespace(defaultNs).app(appName),
-                      Ids.namespace(defaultNs).app(appName).flow(WordCountApp.WordCountFlow.class.getSimpleName()),
-                      Ids.namespace(defaultNs).app(appName).mr(WordCountApp.VoidMapReduceJob.class.getSimpleName()),
-                      Ids.namespace(defaultNs).app(appName)
-                        .service(WordCountApp.WordFrequencyService.class.getSimpleName()),
-                      Ids.namespace(defaultNs).dataset("mydataset"));
+    Set<EntityId> expectedMetadataChangeEntities = new HashSet<>();
+
+    // Metadata change on the artifact and app
+    expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1"));
+    expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.app(appName));
+
+    // All programs would have metadata change
+    for (ProgramType programType : ProgramType.values()) {
+      for (String programName : spec.getProgramsByType(programType)) {
+        co.cask.cdap.proto.ProgramType internalProgramType = co.cask.cdap.proto.ProgramType.valueOf(programType.name());
+        expectedMetadataChangeEntities.add(NamespaceId.DEFAULT.app(appName).program(internalProgramType, programName));
+      }
+    }
+
+    // All dataset would have metadata change as well as creation
+    Set<EntityId> expectedCreateEntities = new HashSet<>();
+    for (String dataset : spec.getDatasets().keySet()) {
+      expectedCreateEntities.add(NamespaceId.DEFAULT.dataset(dataset));
+    }
+    expectedMetadataChangeEntities.addAll(expectedCreateEntities);
+
+    // Stream only has creation (eventually will be removed)
+    for (String stream : spec.getStreams().keySet()) {
+      expectedCreateEntities.add(NamespaceId.DEFAULT.stream(stream));
+    }
 
     Multimap<AuditType, EntityId> expectedAuditEntities = HashMultimap.create();
     expectedAuditEntities.putAll(AuditType.METADATA_CHANGE, expectedMetadataChangeEntities);
-    expectedAuditEntities.putAll(AuditType.CREATE, ImmutableSet.of(Ids.namespace(defaultNs).dataset("mydataset"),
-                                                                   Ids.namespace(defaultNs).stream("text")));
+
+    expectedAuditEntities.putAll(AuditType.CREATE, expectedCreateEntities);
 
     // Deploy application
-    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, WordCountApp.class, null, cConf);
+    AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, null, cConf);
 
     // Verify audit messages
     Tasks.waitFor(expectedAuditEntities, () -> {

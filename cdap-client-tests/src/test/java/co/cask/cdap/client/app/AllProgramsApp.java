@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
@@ -40,9 +39,6 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -135,7 +131,6 @@ public class AllProgramsApp extends AbstractApplication {
                     .add("partitioning.fields.", "field1")
                     .add("partitioning.field.field1", "STRING")
                     .build());
-    addFlow(new NoOpFlow());
     addMapReduce(new NoOpMR());
     addMapReduce(new NoOpMR2());
     addWorkflow(new NoOpWorkflow());
@@ -164,44 +159,6 @@ public class AllProgramsApp extends AbstractApplication {
   public static class DsSchema {
     String field1;
     int field2;
-  }
-
-  /**
-   *
-   */
-  public static class NoOpFlow extends AbstractFlow {
-
-    public static final String NAME = "NoOpFlow";
-    public static final String DESCRIPTION = "NoOpflow";
-
-    @Override
-    protected void configure() {
-      setName(NAME);
-      setDescription(DESCRIPTION);
-      addFlowlet(A.NAME, new A());
-      connectStream(STREAM_NAME, A.NAME);
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class A extends AbstractFlowlet {
-
-    @UseDataSet(DATASET_NAME)
-    private KeyValueTable store;
-
-    public static final String NAME = "A";
-
-    @ProcessInput
-    public void process(StreamEvent event) {
-      // NO-OP
-    }
-
-    @Override
-    protected void configure() {
-      setName(NAME);
-    }
   }
 
   /**

@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -118,8 +118,8 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testPluginRequirements() throws Exception {
     // add a system artifact
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    addWordCountAppAsSystemArtifacts();
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
+    addAppAsSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),
@@ -146,8 +146,8 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                                                                            "cnfg", Collections.emptyMap(),
                                                                            Collections.emptySet(), Requirements.EMPTY));
     // add a system artifact
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    addWordCountAppAsSystemArtifacts();
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
+    addAppAsSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),
@@ -169,19 +169,19 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
   @Test
   public void testAddAndGet() throws Exception {
-    File wordCountArtifact = buildAppArtifact(WordCountApp.class, "wordcount.jar");
+    File appArtifact = buildAppArtifact(AllProgramsApp.class, "app.jar");
     File configTestArtifact = buildAppArtifact(ConfigTestApp.class, "cfgtest.jar");
 
     // add 2 versions of the same app that doesn't use config
-    ArtifactId wordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
-    ArtifactId wordcountId2 = NamespaceId.DEFAULT.artifact("wordcount", "2.0.0");
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("app", "1.0.0");
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("app", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addArtifact(Id.Artifact.fromEntityId(wordcountId1),
-                                    Files.newInputStreamSupplier(wordCountArtifact), Collections.emptySet())
+                        addArtifact(Id.Artifact.fromEntityId(artifactId1),
+                                    Files.newInputStreamSupplier(appArtifact), Collections.emptySet())
                           .getResponseCode());
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addArtifact(Id.Artifact.fromEntityId(wordcountId2),
-                                    Files.newInputStreamSupplier(wordCountArtifact), Collections.emptySet())
+                        addArtifact(Id.Artifact.fromEntityId(artifactId2),
+                                    Files.newInputStreamSupplier(appArtifact), Collections.emptySet())
                           .getResponseCode());
     // and 1 version of another app that uses a config
     ArtifactId configTestAppId = NamespaceId.DEFAULT.artifact("cfgtest", "1.0.0");
@@ -192,8 +192,8 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // test get /artifacts endpoint
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0"),
-      new ArtifactSummary("wordcount", "2.0.0"),
+      new ArtifactSummary("app", "1.0.0"),
+      new ArtifactSummary("app", "2.0.0"),
       new ArtifactSummary("cfgtest", "1.0.0")
     );
     Set<ArtifactSummary> actualArtifacts = getArtifacts(NamespaceId.DEFAULT);
@@ -201,10 +201,10 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // test get /artifacts/wordcount endpoint
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0"),
-      new ArtifactSummary("wordcount", "2.0.0")
+      new ArtifactSummary("app", "1.0.0"),
+      new ArtifactSummary("app", "2.0.0")
     );
-    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "wordcount");
+    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "app");
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/cfgtest/versions/1.0.0 endpoint
@@ -220,30 +220,30 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
   @Test
   public void testBatchProperties() throws Exception {
-    ArtifactId wordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("app", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordcountId1),
-                                       WordCountApp.class).getResponseCode());
-    addArtifactProperties(Id.Artifact.fromEntityId(wordcountId1), ImmutableMap.of("k1", "v1", "k2", "v2"));
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId1),
+                                       AllProgramsApp.class).getResponseCode());
+    addArtifactProperties(Id.Artifact.fromEntityId(artifactId1), ImmutableMap.of("k1", "v1", "k2", "v2"));
 
-    ArtifactId wordcountId2 = NamespaceId.DEFAULT.artifact("wc", "2.0.0");
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("allApp", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordcountId2),
-                                       WordCountApp.class).getResponseCode());
-    addArtifactProperties(Id.Artifact.fromEntityId(wordcountId2), ImmutableMap.of("k2", "v20", "k3", "v30"));
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId2),
+                                       AllProgramsApp.class).getResponseCode());
+    addArtifactProperties(Id.Artifact.fromEntityId(artifactId2), ImmutableMap.of("k2", "v20", "k3", "v30"));
 
-    // this is wordcount artifact with a newer version
-    ArtifactId newWordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "3.0.0");
+    // this is app artifact with a newer version
+    ArtifactId newArtifactId1 = NamespaceId.DEFAULT.artifact("app", "3.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(newWordcountId1),
-                                       WordCountApp.class).getResponseCode());
-    addArtifactProperties(Id.Artifact.fromEntityId(newWordcountId1),
+                        addAppArtifact(Id.Artifact.fromEntityId(newArtifactId1),
+                                       AllProgramsApp.class).getResponseCode());
+    addArtifactProperties(Id.Artifact.fromEntityId(newArtifactId1),
                           ImmutableMap.of("k1", "new_v1", "k2", "new_v2"));
 
     List<String> props = ImmutableList.of("k1", "k2", "k3");
     List<ArtifactPropertiesRequest> requestList = ImmutableList.of(
-      new ArtifactPropertiesRequest(wordcountId1.getArtifact(), wordcountId1.getVersion(), ArtifactScope.USER, props),
-      new ArtifactPropertiesRequest(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER, props));
+      new ArtifactPropertiesRequest(artifactId1.getArtifact(), artifactId1.getVersion(), ArtifactScope.USER, props),
+      new ArtifactPropertiesRequest(artifactId2.getArtifact(), artifactId2.getVersion(), ArtifactScope.USER, props));
     URL url = getEndPoint(String.format("%s/namespaces/%s/artifactproperties",
                                         Constants.Gateway.API_VERSION_3, NamespaceId.DEFAULT.getNamespace())).toURL();
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(requestList)).build();
@@ -254,18 +254,18 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     List<ArtifactSummaryProperties> actual =
       GSON.fromJson(response.getResponseBodyAsString(), new TypeToken<List<ArtifactSummaryProperties>>() { }.getType());
     List<ArtifactSummaryProperties> expected = ImmutableList.of(
-      new ArtifactSummaryProperties(wordcountId1.getArtifact(), wordcountId1.getVersion(), ArtifactScope.USER,
+      new ArtifactSummaryProperties(artifactId1.getArtifact(), artifactId1.getVersion(), ArtifactScope.USER,
                                     ImmutableMap.of("k1", "v1", "k2", "v2")),
-      new ArtifactSummaryProperties(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER,
+      new ArtifactSummaryProperties(artifactId2.getArtifact(), artifactId2.getVersion(), ArtifactScope.USER,
                                     ImmutableMap.of("k2", "v20", "k3", "v30")));
     Assert.assertEquals(expected, actual);
 
     // try to get the property using a version range
     ArtifactVersionRange wordCount1Range = ArtifactVersionRange.parse("[1.0.0, 4.0.0)");
     requestList = ImmutableList.of(
-      new ArtifactPropertiesRequest(wordcountId1.getArtifact(), wordCount1Range.getVersionString(),
+      new ArtifactPropertiesRequest(artifactId1.getArtifact(), wordCount1Range.getVersionString(),
                                     ArtifactScope.USER, props),
-      new ArtifactPropertiesRequest(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER, props)
+      new ArtifactPropertiesRequest(artifactId2.getArtifact(), artifactId2.getVersion(), ArtifactScope.USER, props)
     );
     request = HttpRequest.post(url).withBody(GSON.toJson(requestList)).build();
     response = HttpRequests.execute(request);
@@ -274,9 +274,9 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // the returned list should contain the newest version
     expected = ImmutableList.of(
-      new ArtifactSummaryProperties(newWordcountId1.getArtifact(), newWordcountId1.getVersion(),
+      new ArtifactSummaryProperties(newArtifactId1.getArtifact(), newArtifactId1.getVersion(),
                                     ArtifactScope.USER, ImmutableMap.of("k1", "new_v1", "k2", "new_v2")),
-      new ArtifactSummaryProperties(wordcountId2.getArtifact(), wordcountId2.getVersion(), ArtifactScope.USER,
+      new ArtifactSummaryProperties(artifactId2.getArtifact(), artifactId2.getVersion(), ArtifactScope.USER,
                                     ImmutableMap.of("k2", "v20", "k3", "v30")));
     Assert.assertEquals(expected, actual);
   }
@@ -284,38 +284,38 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testDeletePropertiesAndArtifacts() throws Exception {
     // add 2 versions of the same app that doesn't use config
-    ArtifactId wordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("app", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordcountId1),
-                                       WordCountApp.class).getResponseCode());
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId1),
+                                       AllProgramsApp.class).getResponseCode());
 
     // test get /artifacts endpoint
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0")
+      new ArtifactSummary("app", "1.0.0")
     );
     Set<ArtifactSummary> actualArtifacts = getArtifacts(NamespaceId.DEFAULT);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
-    addArtifactProperties(Id.Artifact.fromEntityId(wordcountId1),
+    addArtifactProperties(Id.Artifact.fromEntityId(artifactId1),
                           ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value3"));
     Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value3"),
-                        getArtifactProperties(wordcountId1));
+                        getArtifactProperties(artifactId1));
 
     // delete a single property
-    deleteArtifact(wordcountId1, false, "key1");
-    Assert.assertEquals(ImmutableMap.of("key2", "value2", "key3", "value3"), getArtifactProperties(wordcountId1));
+    deleteArtifact(artifactId1, false, "key1");
+    Assert.assertEquals(ImmutableMap.of("key2", "value2", "key3", "value3"), getArtifactProperties(artifactId1));
 
     // delete all properties
-    deleteArtifact(wordcountId1, false, null);
-    Assert.assertEquals(ImmutableMap.of(), getArtifactProperties(wordcountId1));
+    deleteArtifact(artifactId1, false, null);
+    Assert.assertEquals(ImmutableMap.of(), getArtifactProperties(artifactId1));
 
-    Set<MetadataRecord> metadataRecords =
-      metadataClient.getMetadata(wordcountId1.toMetadataEntity(), MetadataScope.USER);
+    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(artifactId1.toMetadataEntity(),
+                                                                     MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
-    Assert.assertEquals(new MetadataRecord(wordcountId1, MetadataScope.USER),
+    Assert.assertEquals(new MetadataRecord(artifactId1, MetadataScope.USER),
                         metadataRecords.iterator().next());
     // delete artifact
-    deleteArtifact(wordcountId1, true, null);
-    Set<MetadataRecord> metadata = metadataClient.getMetadata(wordcountId1.toMetadataEntity(), MetadataScope.USER);
+    deleteArtifact(artifactId1, true, null);
+    Set<MetadataRecord> metadata = metadataClient.getMetadata(artifactId1.toMetadataEntity(), MetadataScope.USER);
     // the properties and tags should be empty since there is no metadata anymore
     Assert.assertEquals(1, metadata.size());
     MetadataRecord record = metadata.iterator().next();
@@ -338,64 +338,64 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testSystemArtifacts() throws Exception {
     // add the app in the default namespace
-    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
+    File systemArtifact = buildAppArtifact(AllProgramsApp.class, "app-1.0.0.jar");
 
-    ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId defaultId = NamespaceId.DEFAULT.artifact("app", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addArtifact(Id.Artifact.fromEntityId(defaultId),
                                     Files.newInputStreamSupplier(systemArtifact), Collections.emptySet())
                           .getResponseCode());
 
     // add system artifact
-    addWordCountAppAsSystemArtifacts();
+    addAppAsSystemArtifacts();
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.USER),
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.USER),
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.SYSTEM)
     );
     Set<ArtifactSummary> actualArtifacts = getArtifacts(NamespaceId.DEFAULT);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts?scope=system
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.SYSTEM)
     );
     actualArtifacts = getArtifacts(NamespaceId.DEFAULT, ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts?scope=user
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.USER)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.USER)
     );
     actualArtifacts = getArtifacts(NamespaceId.DEFAULT, ArtifactScope.USER);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount?scope=user
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.USER)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.USER)
     );
-    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "wordcount", ArtifactScope.USER);
+    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "app", ArtifactScope.USER);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount?scope=system
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.SYSTEM)
     );
-    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "wordcount", ArtifactScope.SYSTEM);
+    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "app", ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=user
     ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
-    Assert.assertEquals("wordcount", actualInfo.getName());
+    Assert.assertEquals("app", actualInfo.getName());
     Assert.assertEquals("1.0.0", actualInfo.getVersion());
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=system
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
-    Assert.assertEquals("wordcount", actualInfo.getName());
+    Assert.assertEquals("app", actualInfo.getName());
     Assert.assertEquals("1.0.0", actualInfo.getVersion());
     try {
-      ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
+      ArtifactId systemId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
       artifactRepository.addArtifact(Id.Artifact.fromEntityId(systemId),
                                      systemArtifact, new HashSet<>(), null);
       Assert.fail();
@@ -411,21 +411,21 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testSystemArtifactIsolation() throws Exception {
     // add the app in the default namespace
-    ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId defaultId = NamespaceId.DEFAULT.artifact("app", "1.0.0");
 
     // add system artifact wordcount
-    addWordCountAppAsSystemArtifacts();
+    addAppAsSystemArtifacts();
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.SYSTEM)
     );
     Set<ArtifactSummary> actualArtifacts = getArtifacts(NamespaceId.DEFAULT);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts?scope=system
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.SYSTEM)
     );
     actualArtifacts = getArtifacts(NamespaceId.DEFAULT, ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
@@ -436,14 +436,14 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount?scope=user
-    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "wordcount", ArtifactScope.USER);
+    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "app", ArtifactScope.USER);
     Assert.assertNull(actualArtifacts);
 
     // test get /artifacts/wordcount?scope=system
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+      new ArtifactSummary("app", "1.0.0", ArtifactScope.SYSTEM)
     );
-    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "wordcount", ArtifactScope.SYSTEM);
+    actualArtifacts = getArtifacts(NamespaceId.DEFAULT, "app", ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=user
@@ -452,7 +452,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=system
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
-    Assert.assertEquals("wordcount", actualInfo.getName());
+    Assert.assertEquals("app", actualInfo.getName());
     Assert.assertEquals("1.0.0", actualInfo.getVersion());
 
     // test delete /default/artifacts/wordcount/versions/1.0.0
@@ -463,8 +463,8 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testPluginNamespaceIsolation() throws Exception {
     // add a system artifact
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    addWordCountAppAsSystemArtifacts();
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
+    addAppAsSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),
@@ -573,22 +573,22 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testPluginWithEndpoints() throws Exception {
     // add an app for plugins to extend
-    ArtifactId wordCount1Id = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("app", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordCount1Id),
-                                       WordCountApp.class).getResponseCode());
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId1),
+                                       AllProgramsApp.class).getResponseCode());
 
-    ArtifactId wordCount2Id = NamespaceId.DEFAULT.artifact("testartifact", "1.0.0");
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("testartifact", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordCount2Id),
-                                       WordCountApp.class).getResponseCode());
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId2),
+                                       AllProgramsApp.class).getResponseCode());
     // add some plugins.
     // plugins-3.0.0 extends wordcount[1.0.0,2.0.0)
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, CallablePlugin.class.getPackage().getName());
     ArtifactId plugins3Id = NamespaceId.DEFAULT.artifact("plugins3", "1.0.0");
     Set<ArtifactRange> plugins3Parents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(plugins3Id), CallablePlugin.class, manifest,
                                           plugins3Parents).getResponseCode());
@@ -598,7 +598,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                      CallablePlugin.class.getName(), null, new ArtifactSummary("plugins3", "1.0.0"),
                      ImmutableMap.of(), ImmutableSet.of("ping")));
 
-    Assert.assertEquals(expectedInfos, getPluginInfos(wordCount1Id, "interactive", "CallablePlugin"));
+    Assert.assertEquals(expectedInfos, getPluginInfos(artifactId1, "interactive", "CallablePlugin"));
     // test plugin with endpoint
     Assert.assertEquals("hello", GSON.fromJson(callPluginMethod(plugins3Id, "interactive", "CallablePlugin",
                                                                 "ping", "user", ArtifactScope.USER,
@@ -612,7 +612,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     // it will try with "testArtifact" parent - wouldn't be able to load
     // then it will load using "wordcount" parent  and succeed
     Set<ArtifactRange> plugins4Parents =
-      Sets.newHashSet(new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "wordcount",
+      Sets.newHashSet(new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "app",
                                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")),
                       new ArtifactRange(NamespaceId.DEFAULT.getNamespace(), "testartifact",
                                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
@@ -630,7 +630,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, PluginWithPojo.class.getPackage().getName());
     ArtifactId plugins5Id = NamespaceId.DEFAULT.artifact("aggregator", "1.0.0");
     Set<ArtifactRange> plugins5Parents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(plugins5Id), PluginWithPojo.class, manifest,
                                           plugins5Parents).getResponseCode());
@@ -657,7 +657,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InvalidPlugin.class.getPackage().getName());
     ArtifactId invalidPluginId = NamespaceId.DEFAULT.artifact("invalid", "1.0.0");
     Set<ArtifactRange> invalidPluginParents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(invalidPluginId), InvalidPlugin.class, manifest,
                                           invalidPluginParents).getResponseCode());
@@ -668,7 +668,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                                      InvalidPluginMethodParams.class.getPackage().getName());
     invalidPluginId = NamespaceId.DEFAULT.artifact("invalidParams", "1.0.0");
     invalidPluginParents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(invalidPluginId),
                                           InvalidPluginMethodParams.class, manifest,
@@ -681,7 +681,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                                      InvalidPluginMethodParamType.class.getPackage().getName());
     invalidPluginId = NamespaceId.DEFAULT.artifact("invalidParamType", "1.0.0");
     invalidPluginParents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(invalidPluginId),
                                           InvalidPluginMethodParamType.class, manifest,
@@ -695,7 +695,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                                      PluginEndpointContextTestPlugin.class.getPackage().getName());
     ArtifactId validPluginId = NamespaceId.DEFAULT.artifact("extender", "1.0.0");
     Set<ArtifactRange> validPluginParents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(validPluginId),
                                           PluginEndpointContextTestPlugin.class, manifest,
@@ -705,10 +705,10 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void invalidInputsToPluginEndpoint() throws Exception {
     // add an app for plugins to extend
-    ArtifactId wordCount1Id = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("app", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordCount1Id),
-                                       WordCountApp.class).getResponseCode());
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId1),
+                                       AllProgramsApp.class).getResponseCode());
 
     // test plugin with endpoint that throws IllegalArgumentException
     Manifest manifest = new Manifest();
@@ -716,7 +716,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     ArtifactId pluginsId = NamespaceId.DEFAULT.artifact("aggregator", "1.0.0");
 
     Set<ArtifactRange> plugins5Parents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(pluginsId), PluginWithPojo.class, manifest,
                                           plugins5Parents).getResponseCode());
@@ -730,14 +730,14 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testGetPlugins() throws Exception {
     // add an app for plugins to extend
-    ArtifactId wordCount1Id = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId artifactId1 = NamespaceId.DEFAULT.artifact("app", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordCount1Id),
-                                       WordCountApp.class).getResponseCode());
-    ArtifactId wordCount2Id = NamespaceId.DEFAULT.artifact("wordcount", "2.0.0");
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId1),
+                                       AllProgramsApp.class).getResponseCode());
+    ArtifactId artifactId2 = NamespaceId.DEFAULT.artifact("app", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.code(),
-                        addAppArtifact(Id.Artifact.fromEntityId(wordCount2Id),
-                                       WordCountApp.class).getResponseCode());
+                        addAppArtifact(Id.Artifact.fromEntityId(artifactId2),
+                                       AllProgramsApp.class).getResponseCode());
 
     // add some plugins.
     // plugins-1.0.0 extends wordcount[1.0.0,2.0.0)
@@ -745,7 +745,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
     ArtifactId pluginsId1 = NamespaceId.DEFAULT.artifact("plugins", "1.0.0");
     Set<ArtifactRange> plugins1Parents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(pluginsId1), Plugin1.class, manifest,
                                           plugins1Parents).getResponseCode());
@@ -753,7 +753,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     // plugin-2.0.0 extends wordcount[1.0.0,3.0.0)
     ArtifactId pluginsId2 = NamespaceId.DEFAULT.artifact("plugins", "2.0.0");
     Set<ArtifactRange> plugins2Parents = Sets.newHashSet(new ArtifactRange(
-      NamespaceId.DEFAULT.getNamespace(), "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
+      NamespaceId.DEFAULT.getNamespace(), "app", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(pluginsId2), Plugin1.class, manifest,
                                           plugins2Parents).getResponseCode());
@@ -763,9 +763,9 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
 
     // get plugin types, should be the same for both
     Set<String> expectedTypes = Sets.newHashSet("dummy", "callable");
-    Set<String> actualTypes = getPluginTypes(wordCount1Id);
+    Set<String> actualTypes = getPluginTypes(artifactId1);
     Assert.assertEquals(expectedTypes, actualTypes);
-    actualTypes = getPluginTypes(wordCount2Id);
+    actualTypes = getPluginTypes(artifactId2);
     Assert.assertEquals(expectedTypes, actualTypes);
 
     // get plugin summaries. wordcount1 should see plugins from both plugin artifacts
@@ -773,7 +773,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
       new PluginSummary("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), plugins1Artifact),
       new PluginSummary("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), plugins2Artifact)
     );
-    Set<PluginSummary> actualSummaries = getPluginSummaries(wordCount1Id, "dummy");
+    Set<PluginSummary> actualSummaries = getPluginSummaries(artifactId1, "dummy");
     Assert.assertEquals(expectedSummaries, actualSummaries);
 
     expectedSummaries = Sets.newHashSet(
@@ -782,21 +782,21 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
       new PluginSummary(
         "Plugin2", "callable", "Just returns the configured integer", Plugin2.class.getName(), plugins2Artifact)
     );
-    actualSummaries = getPluginSummaries(wordCount1Id, "callable");
+    actualSummaries = getPluginSummaries(artifactId1, "callable");
     Assert.assertEquals(expectedSummaries, actualSummaries);
 
     // wordcount2 should only see plugins from plugins2 artifact
     expectedSummaries = Sets.newHashSet(
       new PluginSummary("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), plugins2Artifact)
     );
-    actualSummaries = getPluginSummaries(wordCount2Id, "dummy");
+    actualSummaries = getPluginSummaries(artifactId2, "dummy");
     Assert.assertEquals(expectedSummaries, actualSummaries);
 
     expectedSummaries = Sets.newHashSet(
       new PluginSummary(
         "Plugin2", "callable", "Just returns the configured integer", Plugin2.class.getName(), plugins2Artifact)
     );
-    actualSummaries = getPluginSummaries(wordCount2Id, "callable");
+    actualSummaries = getPluginSummaries(artifactId2, "callable");
     Assert.assertEquals(expectedSummaries, actualSummaries);
 
     // get plugin info. Again, wordcount1 should see plugins from both artifacts
@@ -814,7 +814,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
       new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), "config",
                      plugins2Artifact, p1Properties, new HashSet<>())
     );
-    Assert.assertEquals(expectedInfos, getPluginInfos(wordCount1Id, "dummy", "Plugin1"));
+    Assert.assertEquals(expectedInfos, getPluginInfos(artifactId1, "dummy", "Plugin1"));
 
     expectedInfos = Sets.newHashSet(
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
@@ -822,20 +822,20 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
                      Plugin2.class.getName(), "config", plugins2Artifact, p2Properties, new HashSet<>())
     );
-    Assert.assertEquals(expectedInfos, getPluginInfos(wordCount1Id, "callable", "Plugin2"));
+    Assert.assertEquals(expectedInfos, getPluginInfos(artifactId1, "callable", "Plugin2"));
 
     // while wordcount2 should only see plugins from plugins2 artifact
     expectedInfos = Sets.newHashSet(
       new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), "config",
                      plugins2Artifact, p1Properties, new HashSet<>())
     );
-    Assert.assertEquals(expectedInfos, getPluginInfos(wordCount2Id, "dummy", "Plugin1"));
+    Assert.assertEquals(expectedInfos, getPluginInfos(artifactId2, "dummy", "Plugin1"));
 
     expectedInfos = Sets.newHashSet(
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
                      Plugin2.class.getName(), "config", plugins2Artifact, p2Properties, new HashSet<>())
     );
-    Assert.assertEquals(expectedInfos, getPluginInfos(wordCount2Id, "callable", "Plugin2"));
+    Assert.assertEquals(expectedInfos, getPluginInfos(artifactId2, "callable", "Plugin2"));
   }
 
   private Set<ArtifactSummary> getArtifacts(NamespaceId namespace) throws URISyntaxException, IOException {

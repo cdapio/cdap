@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,11 @@
 
 package co.cask.cdap.gateway.router;
 
+import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.gateway.apps.AppWritingtoStream;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
 import com.ning.http.client.AsyncCompletionHandler;
@@ -210,7 +211,7 @@ public class NettyRouterPipelineTest {
     String path = String.format("http://%s:%d/v1/deploy", address.getHostName(), address.getPort());
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
-    Location programJar = AppJarHelper.createDeploymentJar(lf, AppWritingtoStream.class);
+    Location programJar = AppJarHelper.createDeploymentJar(lf, DummyApp.class);
     GATEWAY_SERVER.setExpectedJarBytes(ByteStreams.toByteArray(Locations.newInputSupplier(programJar)));
 
     for (int i = 0; i < num; i++) {
@@ -254,4 +255,25 @@ public class NettyRouterPipelineTest {
     return bytes;
   }
 
+  /**
+   * A dummy app for testing deployment pipeline.
+   */
+  public static final class DummyApp extends AbstractApplication {
+
+    @Override
+    public void configure() {
+      addWorker(new DummyWorker());
+    }
+  }
+
+  /**
+   * A dummy worker for testing deployment pipeline.
+   */
+  public static final class DummyWorker extends AbstractWorker {
+
+    @Override
+    public void run() {
+      // no-op
+    }
+  }
 }

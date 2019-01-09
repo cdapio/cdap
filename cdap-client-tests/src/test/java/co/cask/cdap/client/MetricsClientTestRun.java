@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.client.app.FakeApp;
-import co.cask.cdap.client.app.FakeFlow;
+import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
@@ -27,18 +27,20 @@ import co.cask.cdap.proto.MetricTagValue;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.test.XSlowTests;
-import com.google.common.collect.ImmutableList;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.net.URL;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -51,14 +53,14 @@ public class MetricsClientTestRun extends ClientTestBase {
   private MetricsClient metricsClient;
   private ApplicationClient appClient;
   private ProgramClient programClient;
-  private StreamClient streamClient;
+  private ServiceClient serviceClient;
 
   @Before
   public void setUp() throws Throwable {
     super.setUp();
     appClient = new ApplicationClient(clientConfig);
     programClient = new ProgramClient(clientConfig);
-    streamClient = new StreamClient(clientConfig);
+    serviceClient = new ServiceClient(clientConfig);
     metricsClient = new MetricsClient(clientConfig);
   }
 
@@ -67,44 +69,45 @@ public class MetricsClientTestRun extends ClientTestBase {
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(FakeApp.class));
 
     ApplicationId app = NamespaceId.DEFAULT.app(FakeApp.NAME);
-    ProgramId flow = app.flow(FakeFlow.NAME);
-    StreamId stream = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
+    ServiceId service = app.service(PingService.NAME);
 
     try {
-      programClient.start(flow);
-      programClient.waitForStatus(flow, ProgramStatus.RUNNING, 15, TimeUnit.SECONDS);
-      streamClient.sendEvent(stream, "hello world");
+      programClient.start(service);
+      programClient.waitForStatus(service, ProgramStatus.RUNNING, 15, TimeUnit.SECONDS);
 
-      FlowletId flowletId = flow.flowlet(FakeFlow.FLOWLET_NAME);
+      URL serviceURL = serviceClient.getServiceURL(service);
+      URL pingURL = new URL(serviceURL, "ping");
+
+      HttpResponse response = HttpRequests.execute(HttpRequest.get(pingURL).build());
+      Assert.assertEquals(200, response.getResponseCode());
 
       Tasks.waitFor(true, () ->
-        metricsClient.query(MetricsTags.flowlet(flowletId), Constants.Metrics.Name.Flow.FLOWLET_INPUT)
-          .getSeries().length > 0,
-                    10, TimeUnit.SECONDS);
+        metricsClient.query(MetricsTags.service(service), Constants.Metrics.Name.Service.SERVICE_INPUT)
+          .getSeries().length > 0, 10, TimeUnit.SECONDS);
 
-      MetricQueryResult result = metricsClient.query(MetricsTags.flowlet(flowletId),
-                                  Constants.Metrics.Name.Flow.FLOWLET_INPUT);
+      MetricQueryResult result = metricsClient.query(MetricsTags.service(service),
+                                                     Constants.Metrics.Name.Service.SERVICE_INPUT);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      result = metricsClient.query(MetricsTags.flowlet(flowletId),
-                                   ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
-                                   ImmutableList.of(), ImmutableMap.of("aggregate", "true"));
+      result = metricsClient.query(MetricsTags.service(service),
+                                   Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
+                                   Collections.emptyList(), Collections.singletonMap("aggregate", "true"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      result = metricsClient.query(MetricsTags.flowlet(flowletId),
-                                   ImmutableList.of(Constants.Metrics.Name.Flow.FLOWLET_INPUT),
-                                   ImmutableList.of(), ImmutableMap.of("start", "now-20s", "end", "now"));
+      result = metricsClient.query(MetricsTags.service(service),
+                                   Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
+                                   Collections.emptyList(), ImmutableMap.of("start", "now-20s", "end", "now"));
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
-      List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.flowlet(flowletId));
+      List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.service(service));
       Assert.assertEquals(1, tags.size());
       Assert.assertEquals("run", tags.get(0).getName());
 
-      List<String> metrics = metricsClient.searchMetrics(MetricsTags.flowlet(flowletId));
-      Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Flow.FLOWLET_INPUT));
+      List<String> metrics = metricsClient.searchMetrics(MetricsTags.service(service));
+      Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Service.SERVICE_INPUT));
     } finally {
-      programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1, 10);
+      programClient.stop(service);
+      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1, 10);
       appClient.delete(app);
     }
   }

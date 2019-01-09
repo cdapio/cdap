@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.ProcessInput;
-import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
@@ -29,9 +27,6 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -70,7 +65,6 @@ public class ClusterNameTestApp extends AbstractApplication {
   public void configure() {
     addService(ClusterNameServiceHandler.class.getSimpleName(), new ClusterNameServiceHandler());
     addWorker(new ClusterNameWorker());
-    addFlow(new ClusterNameFlow());
     addMapReduce(new ClusterNameMapReduce());
     addSpark(new ClusterNameSpark());
     addWorkflow(new ClusterNameWorkflow());
@@ -107,46 +101,6 @@ public class ClusterNameTestApp extends AbstractApplication {
         });
       } catch (TransactionFailureException e) {
         throw Throwables.propagate(e);
-      }
-    }
-  }
-
-  /**
-   * Flow for testing cluster name.
-   */
-  public static final class ClusterNameFlow extends AbstractFlow {
-
-    @Override
-    protected void configure() {
-      addFlowlet(new ClusterNameFlowlet());
-      addFlowlet(new WriterFlowlet());
-      connect("ClusterNameFlowlet", "WriterFlowlet");
-    }
-
-    /**
-     * Flowlet for testing cluster name.
-     */
-    public static final class ClusterNameFlowlet extends AbstractFlowlet {
-
-      private OutputEmitter<String> emitter;
-
-      @Tick(delay = 1)
-      public void generate() {
-        emitter.emit(getContext().getClusterName());
-      }
-    }
-
-    /**
-     * Writer flowlet to write cluster name.
-     */
-    public static final class WriterFlowlet extends AbstractFlowlet {
-
-      @UseDataSet(CLUSTER_NAME_TABLE)
-      private KeyValueTable clusterNameTable;
-
-      @ProcessInput
-      public void process(String clusterName) {
-        clusterNameTable.write("flow.cluster.name", clusterName);
       }
     }
   }

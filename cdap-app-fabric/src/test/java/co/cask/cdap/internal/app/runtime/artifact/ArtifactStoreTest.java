@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.WordCountApp;
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactRange;
@@ -583,7 +583,7 @@ public class ArtifactStoreTest {
     // create another artifact with a different app class
     Id.Artifact app3v1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "appC", "1.0.0");
     ApplicationClass wordCountClass1 = new ApplicationClass(
-      WordCountApp.class.getName(), "v1",
+      AllProgramsApp.class.getName(), "v1",
       new ReflectionSchemaGenerator().generate(InspectionApp.AConfig.class));
     artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addApp(wordCountClass1).build());
     writeArtifact(app3v1Id, artifactMeta, "wc contents");
@@ -611,7 +611,7 @@ public class ArtifactStoreTest {
     );
     Assert.assertEquals(expectedAppArtifacts, appArtifacts);
 
-    appArtifacts = artifactStore.getApplicationClasses(NamespaceId.DEFAULT, WordCountApp.class.getName());
+    appArtifacts = artifactStore.getApplicationClasses(NamespaceId.DEFAULT, AllProgramsApp.class.getName());
     expectedAppArtifacts = ImmutableMap.of(app3v1Detail.getDescriptor(), wordCountClass1);
     Assert.assertEquals(expectedAppArtifacts, appArtifacts);
 

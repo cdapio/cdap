@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,6 @@ public class CDAPOperationalStatsTest {
 
   private static Injector injector;
   private static NamespaceAdmin namespaceAdmin;
-  private static Scheduler scheduler;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -85,7 +84,7 @@ public class CDAPOperationalStatsTest {
     Assert.assertEquals(1, entities.getNamespaces());
     Assert.assertEquals(1, entities.getArtifacts());
     Assert.assertEquals(1, entities.getApplications());
-    Assert.assertEquals(7, entities.getPrograms());
+    Assert.assertEquals(6, entities.getPrograms());
     Assert.assertEquals(4, entities.getDatasets());
     Assert.assertEquals(1, entities.getStreams());
     final CDAPTransactions transactions = new CDAPTransactions();

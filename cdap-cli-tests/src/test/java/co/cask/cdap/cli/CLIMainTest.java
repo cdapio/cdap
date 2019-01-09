@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli;
 
+import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.metadata.MetadataEntity;
@@ -27,10 +28,8 @@ import co.cask.cdap.client.DatasetTypeClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.QueryClient;
-import co.cask.cdap.client.app.ConfigTestApp;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeDataset;
-import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakePlugin;
 import co.cask.cdap.client.app.FakeSpark;
 import co.cask.cdap.client.app.FakeWorkflow;
@@ -58,7 +57,6 @@ import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
@@ -127,12 +125,9 @@ public class CLIMainTest extends CLITestBase {
   private static final ApplicationId FAKE_APP_ID_V_1 = NamespaceId.DEFAULT.app(FakeApp.NAME, V1_SNAPSHOT);
   private static final ArtifactId FAKE_PLUGIN_ID = NamespaceId.DEFAULT.artifact(FakePlugin.NAME, V1);
   private static final ProgramId FAKE_WORKFLOW_ID = FAKE_APP_ID.workflow(FakeWorkflow.NAME);
-  private static final ProgramId FAKE_FLOW_ID = FAKE_APP_ID.flow(FakeFlow.NAME);
   private static final ProgramId FAKE_SPARK_ID = FAKE_APP_ID.spark(FakeSpark.NAME);
-  private static final ServiceId PING_SERVICE_ID = FAKE_APP_ID.service(PingService.NAME);
   private static final ServiceId PREFIXED_ECHO_HANDLER_ID = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
   private static final DatasetId FAKE_DS_ID = NamespaceId.DEFAULT.dataset(FakeApp.DS_NAME);
-  private static final StreamId FAKE_STREAM_ID = NamespaceId.DEFAULT.stream(FakeApp.STREAM_NAME);
 
   private static ProgramClient programClient;
   private static QueryClient queryClient;
@@ -191,7 +186,6 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "list app versions " + FakeApp.NAME, ApplicationId.DEFAULT_VERSION);
     testCommandOutputContains(cli, "list dataset instances", FakeApp.DS_NAME);
     testCommandOutputContains(cli, "list streams", FakeApp.STREAM_NAME);
-    testCommandOutputContains(cli, "list flows", FakeApp.FLOWS.get(0));
   }
 
   @Test
@@ -214,37 +208,35 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testProgram() throws Exception {
-    String flowId = FakeApp.FLOWS.get(0);
-    final ProgramId flow = FAKE_APP_ID.flow(flowId);
+    final ProgramId serviceId = FAKE_APP_ID.service(FakeApp.SERVICES.get(0));
 
-    String qualifiedFlowId = FakeApp.NAME + "." + flowId;
-    testCommandOutputContains(cli, "start flow " + qualifiedFlowId, "Successfully started flow");
-    assertProgramStatus(programClient, flow, "RUNNING");
-    testCommandOutputContains(cli, "stop flow " + qualifiedFlowId, "Successfully stopped flow");
-    assertProgramStatus(programClient, flow, "STOPPED");
-    testCommandOutputContains(cli, "get flow status " + qualifiedFlowId, "STOPPED");
+    String qualifiedServiceId = FakeApp.NAME + "." + serviceId.getProgram();
+    testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
+    assertProgramStatus(programClient, serviceId, "RUNNING");
+    testCommandOutputContains(cli, "stop service " + qualifiedServiceId, "Successfully stopped service");
+    assertProgramStatus(programClient, serviceId, "STOPPED");
+    testCommandOutputContains(cli, "get service status " + qualifiedServiceId, "STOPPED");
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        List<RunRecord> output = programClient.getProgramRuns(flow, "KILLED", 0L, Long.MAX_VALUE, Integer.MAX_VALUE);
+        List<RunRecord> output = programClient.getProgramRuns(serviceId, "KILLED", 0L,
+                                                              Long.MAX_VALUE, Integer.MAX_VALUE);
         return output != null && output.size() != 0;
       }
     }, 5, TimeUnit.SECONDS);
-    testCommandOutputContains(cli, "get flow runs " + qualifiedFlowId, "KILLED");
-    testCommandOutputContains(cli, "get flow live " + qualifiedFlowId, flowId);
+    testCommandOutputContains(cli, "get service runs " + qualifiedServiceId, "KILLED");
+    testCommandOutputContains(cli, "get service live " + qualifiedServiceId, serviceId.getProgram());
   }
 
   @Test
   public void testAppDeploy() throws Exception {
     testDeploy(null);
-    testDeploy(new ConfigTestApp.ConfigClass("testStream", "testTable"));
+    testDeploy(new ConfigTestApp.ConfigClass("testTable"));
   }
 
   private void testDeploy(ConfigTestApp.ConfigClass config) throws Exception {
-    String streamId = ConfigTestApp.DEFAULT_STREAM;
     String datasetId = ConfigTestApp.DEFAULT_TABLE;
     if (config != null) {
-      streamId = config.getStreamName();
       datasetId = config.getTableName();
     }
 
@@ -260,11 +252,9 @@ public class CLIMainTest extends CLITestBase {
     if (!appJarFile.delete()) {
       LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
     }
-    testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputContains(cli, "list dataset instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
     testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
-    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
   }
 
   @Test
@@ -275,30 +265,25 @@ public class CLIMainTest extends CLITestBase {
 
   @Test
   public void testDeployAppWithConfigFile() throws Exception {
-    String streamId = "testStream";
     String datasetId = "testTable";
 
     File appJarFile = createAppJarFile(ConfigTestApp.class);
     File configFile = new File(TMP_FOLDER.newFolder(), "testConfigFile.txt");
     try (BufferedWriter writer = Files.newWriter(configFile, Charsets.UTF_8)) {
-      writer.write(String.format("{\n\"streamName\":\"%s\",\n\"tableName\":\"%s\"\n}", streamId, datasetId));
-      writer.close();
+      new Gson().toJson(new ConfigTestApp.ConfigClass(datasetId), writer);
     }
 
     testCommandOutputContains(cli, String.format("deploy app %s with config %s", appJarFile.getAbsolutePath(),
                                                  configFile.getAbsolutePath()), "Successfully deployed application");
-    testCommandOutputContains(cli, "list streams", streamId);
     testCommandOutputContains(cli, "list dataset instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
     testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
-    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
   }
 
   @Test
   public void testAppOwner() throws Exception {
     // load an artifact
     File appJarFile = createAppJarFile(ConfigTestApp.class);
-    String streamId = ConfigTestApp.DEFAULT_STREAM;
     String datasetId = ConfigTestApp.DEFAULT_TABLE;
     testCommandOutputContains(cli, String.format("load artifact %s name %s version %s", appJarFile.getAbsolutePath(),
                                                  "OwnedConfigTestAppArtifact", V1),
@@ -326,7 +311,6 @@ public class CLIMainTest extends CLITestBase {
     }
     testCommandOutputContains(cli, "delete app " + "OwnedApp", "Successfully");
     testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
-    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
   }
 
   @Test
@@ -621,13 +605,6 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "delete instance preferences", "successfully");
     propMap.clear();
     testPreferencesOutput(cli, "get instance preferences", propMap);
-    propMap.put("key", "flow");
-    testCommandOutputContains(cli, String.format("set flow preferences %s.%s 'key=flow'",
-                                                 FakeApp.NAME, FakeFlow.NAME), "successfully");
-    testPreferencesOutput(cli, String.format("get flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME), propMap);
-    testCommandOutputContains(cli, String.format("delete flow preferences %s.%s", FakeApp.NAME, FakeFlow.NAME),
-                              "successfully");
-    propMap.clear();
     testPreferencesOutput(cli, String.format("get app preferences %s", FakeApp.NAME), propMap);
     testCommandOutputContains(cli, "delete namespace preferences", "successfully");
     testPreferencesOutput(cli, "get namespace preferences", propMap);
@@ -853,8 +830,7 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type app", FAKE_APP_ID.toString());
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
-    List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_SPARK_ID.toString(),
-                                             FAKE_FLOW_ID.toString());
+    List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_SPARK_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", FAKE_DS_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.TIME_SCHEDULE_NAME),
@@ -870,11 +846,6 @@ public class CLIMainTest extends CLITestBase {
     output = getCommandOutput(cli, "search metadata batch filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_WORKFLOW_ID.toString());
-    Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    output = getCommandOutput(cli, "search metadata realtime filtered by target-type program");
-    lines = Arrays.asList(output.split("\\r?\\n"));
-    expected = ImmutableList.of("Entity", FAKE_FLOW_ID.toString(), PING_SERVICE_ID.toString(),
-                                PREFIXED_ECHO_HANDLER_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
     lines = Arrays.asList(output.split("\\r?\\n"));

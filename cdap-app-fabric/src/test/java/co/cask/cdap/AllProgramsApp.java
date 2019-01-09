@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
@@ -36,9 +35,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -76,6 +72,8 @@ public class AllProgramsApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(AllProgramsApp.class);
 
   public static final String NAME = "App";
+  public static final String DESC = "Application which has everything";
+
   public static final String STREAM_NAME = "stream";
   public static final String DATASET_NAME = "kvt";
   public static final String DATASET_NAME2 = "kvt2";
@@ -90,13 +88,12 @@ public class AllProgramsApp extends AbstractApplication {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Application which has everything");
+    setDescription(DESC);
     addStream(new Stream(STREAM_NAME, "test stream"));
     createDataset(DATASET_NAME, KeyValueTable.class,
                   DatasetProperties.builder().setDescription("test dataset").build());
     createDataset(DATASET_NAME2, KeyValueTable.class);
     createDataset(DATASET_NAME3, KeyValueTable.class);
-    addFlow(new NoOpFlow());
     addMapReduce(new NoOpMR());
     addMapReduce(new NoOpMR2());
     addWorkflow(new NoOpWorkflow());
@@ -122,43 +119,6 @@ public class AllProgramsApp extends AbstractApplication {
   public static class DsSchema {
     String field1;
     int field2;
-  }
-
-  /**
-   *
-   */
-  public static class NoOpFlow extends AbstractFlow {
-
-    public static final String NAME = "NoOpFlow";
-
-    @Override
-    protected void configure() {
-      setName(NAME);
-      setDescription("NoOpflow");
-      addFlowlet(A.NAME, new A());
-      connectStream(STREAM_NAME, A.NAME);
-    }
-  }
-
-  /**
-   *
-   */
-  public static final class A extends AbstractFlowlet {
-
-    @UseDataSet(DATASET_NAME)
-    private KeyValueTable store;
-
-    public static final String NAME = "A";
-
-    @ProcessInput
-    public void process(StreamEvent event) {
-      // NO-OP
-    }
-
-    @Override
-    protected void configure() {
-      setName(NAME);
-    }
   }
 
   /**

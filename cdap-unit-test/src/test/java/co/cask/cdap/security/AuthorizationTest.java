@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,14 +69,12 @@ import co.cask.cdap.spark.stream.TestSparkCrossNSDatasetApp;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ArtifactManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ProgramManager;
 import co.cask.cdap.test.ScheduleManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
@@ -358,7 +356,6 @@ public class AuthorizationTest extends TestBase {
       .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME2), EnumSet.of(Action.ADMIN))
       .build();
     Map<EntityId, Set<Action>> bobProgramPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(appId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), EnumSet.of(Action.EXECUTE))
       .put(appId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME), EnumSet.of(Action.EXECUTE))
       .put(appId.program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), EnumSet.of(Action.EXECUTE))
       .build();
@@ -571,45 +568,34 @@ public class AuthorizationTest extends TestBase {
   }
 
   @Test
-  public void testCrossNSFlowlet() throws Exception {
+  public void testCrossNSService() throws Exception {
     createAuthNamespace();
     ApplicationId appId = AUTH_NAMESPACE.app(CrossNsDatasetAccessApp.APP_NAME);
-    StreamId streamId = AUTH_NAMESPACE.stream(CrossNsDatasetAccessApp.STREAM_NAME);
     Map<EntityId, Set<Action>> neededPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
       .put(appId, EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.artifact(CrossNsDatasetAccessApp.class.getSimpleName(), "1.0-SNAPSHOT"),
            EnumSet.of(Action.ADMIN))
-      .put(streamId, EnumSet.of(Action.ADMIN))
       .build();
+
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    ProgramId programId = appId.flow(CrossNsDatasetAccessApp.FLOW_NAME);
+    ProgramId programId = appId.service(CrossNsDatasetAccessApp.SERVICE_NAME);
     cleanUpEntities.add(programId);
     // grant bob execute on program and READ/WRITE on stream
     grantAndAssertSuccess(programId, BOB, EnumSet.of(Action.EXECUTE));
-    grantAndAssertSuccess(streamId, BOB, EnumSet.of(Action.WRITE, Action.READ));
 
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, CrossNsDatasetAccessApp.class);
 
-    // switch to BOB
-    SecurityRequestContext.setUserId(BOB.getName());
-
-    // Send data to stream as BOB this ensures that BOB can write to a stream in auth namespace
-    StreamManager streamManager = getStreamManager(AUTH_NAMESPACE.stream(CrossNsDatasetAccessApp.STREAM_NAME));
-    for (int i = 0; i < 10; i++) {
-      streamManager.send(String.valueOf(i).getBytes());
-    }
-
-    // switch to back to ALICE
+    // switch to to ALICE
     SecurityRequestContext.setUserId(ALICE.getName());
 
-    final FlowManager flowManager = appManager.getFlowManager(CrossNsDatasetAccessApp.FLOW_NAME);
+    ServiceManager serviceManager = appManager.getServiceManager(CrossNsDatasetAccessApp.SERVICE_NAME);
 
-    testSystemDatasetAccessFromFlowlet(flowManager);
-    testCrossNSDatasetAccessFromFlowlet(flowManager);
+    testSystemDatasetAccessFromService(serviceManager);
+    testCrossNSDatasetAccessFromService(serviceManager);
   }
 
-  private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
+  private void testSystemDatasetAccessFromService(ServiceManager serviceManager) throws Exception {
     addDatasetInstance(NamespaceId.SYSTEM.dataset("store"), "keyValueTable");
 
     // give bob write permission on the dataset
@@ -623,18 +609,17 @@ public class AuthorizationTest extends TestBase {
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
-    // But trying to run a flow as BOB will fail since this flow writes to a dataset in system namespace
-    flowManager.start(args);
-    // wait for flow to be running
-    flowManager.waitForRun(ProgramRunStatus.RUNNING, 12, TimeUnit.SECONDS);
+    // Start the Service as BOB
+    serviceManager.start(args);
 
-    // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
-    // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
-    // processing or not. So stop the flow and check that the output dataset is empty
-    flowManager.stop();
-    flowManager.waitForStopped(10, TimeUnit.SECONDS);
+    // Try to write data, it should fail as BOB don't have the permission to get system dataset
+    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
+    HttpResponse response = HttpRequests.execute(HttpRequest.put(url).build());
+    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Cannot access dataset store in system namespace"));
 
-    assertDatasetIsEmpty(NamespaceId.SYSTEM, "store");
+    serviceManager.stop();
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
 
     // switch to back to ALICE
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -643,7 +628,7 @@ public class AuthorizationTest extends TestBase {
     deleteDatasetInstance(NamespaceId.SYSTEM.dataset("store"));
   }
 
-  private void testCrossNSDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
+  private void testCrossNSDatasetAccessFromService(ServiceManager serviceManager) throws Exception {
     NamespaceMeta outputDatasetNS = new NamespaceMeta.Builder().setName("outputNS").build();
     NamespaceId outputDatasetNSId = outputDatasetNS.getNamespaceId();
     DatasetId datasetId = outputDatasetNSId.dataset("store");
@@ -665,17 +650,17 @@ public class AuthorizationTest extends TestBase {
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
-    // But trying to run a flow as BOB will fail since this flow writes to a dataset in another namespace in which
-    // is not accessible to BOB.
-    flowManager.start(args);
-    // wait for flow to be running
-    flowManager.waitForRun(ProgramRunStatus.RUNNING, 12, TimeUnit.SECONDS);
+    // Start the service as BOB
+    serviceManager.start(args);
 
-    // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
-    // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
-    // processing or not. So stop the flow and check that the output dataset is empty
-    flowManager.stop();
-    flowManager.waitForStatus(false);
+    // Call to the service would result in failure due to BOB doesn't have permission on the namespace as set in args
+    URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
+    HttpResponse response = HttpRequests.execute(HttpRequest.put(url).build());
+    Assert.assertEquals(500, response.getResponseCode());
+    Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' is not authorized"));
+
+    serviceManager.stop();
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -683,18 +668,21 @@ public class AuthorizationTest extends TestBase {
     // Give BOB permission to write to the dataset in another namespace
     grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.WRITE));
 
-    // switch back to BOB to run flow again
+    // switch back to BOB to run service again
     SecurityRequestContext.setUserId(BOB.getName());
 
-    // running the flow now should pass and write data in another namespace successfully
-    flowManager.start(args);
-    flowManager.waitForRun(ProgramRunStatus.RUNNING, 12, TimeUnit.SECONDS);
-    flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
-    flowManager.stop();
+    // Write data in another namespace should be successful now
+    serviceManager.start(args);
+    for (int i = 0; i < 10; i++) {
+      url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/" + i);
+      response = HttpRequests.execute(HttpRequest.put(url).build());
+      Assert.assertEquals(200, response.getResponseCode());
+    }
 
-    waitForStoppedPrograms(flowManager);
-    // switch back to alice and verify the data its fine now to verify the run record here because if the flow failed
-    // to write we will not see any data
+    serviceManager.stop();
+    serviceManager.waitForStopped(10, TimeUnit.SECONDS);
+
+    // switch back to alice and verify the data its fine now to verify.
     SecurityRequestContext.setUserId(ALICE.getName());
 
     DataSetManager<KeyValueTable> dataSetManager = getDataset(outputDatasetNS.getNamespaceId().dataset("store"));

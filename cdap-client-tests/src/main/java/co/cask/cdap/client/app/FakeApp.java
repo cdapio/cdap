@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,13 +38,12 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
   public static final String TIME_SCHEDULE_NAME = "someSchedule";
   public static final String SCHEDULE_CRON = "0 0 1 1 *";
 
-  public static final List<String> FLOWS = Lists.newArrayList(FakeFlow.NAME);
   public static final List<String> MAPREDUCES = Lists.newArrayList();
   public static final List<String> SPARK = Lists.newArrayList(FakeSpark.NAME);
   public static final List<String> WORKFLOWS = Lists.newArrayList(FakeWorkflow.NAME);
-  public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME, PrefixedEchoHandler.NAME);
+  public static final List<String> SERVICES = Lists.newArrayList(PingService.NAME, PrefixedEchoHandler.NAME,
+                                                                 DatasetWriterService.NAME);
   public static final List<String> ALL_PROGRAMS = ImmutableList.<String>builder()
-    .addAll(FLOWS)
     .addAll(MAPREDUCES)
     .addAll(WORKFLOWS)
     .addAll(SPARK)
@@ -79,7 +78,6 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
     addStream(new Stream(STREAM_NAME));
     addDatasetModule(FakeDatasetModule.NAME, FakeDatasetModule.class);
     createDataset(DS_NAME, FakeDataset.class.getName());
-    addFlow(new FakeFlow());
     addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());
     AppConfig config = getConfig();
@@ -89,5 +87,6 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
     }
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
+    addService(DatasetWriterService.NAME, new DatasetWriterService());
   }
 }

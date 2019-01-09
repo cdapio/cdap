@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,16 +23,18 @@ import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
+import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Application with workflow scheduling.
@@ -57,7 +59,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       AppConfig config = getConfig();
       // if add workflow is false, we want to add a flow, so the app will have at least one program, for testing deploy
       if (!config.addWorkflow) {
-        addFlow(new AllProgramsApp.NoOpFlow());
+        addWorker(new DummyWorker());
       }
 
       if (config.addWorkflow) {
@@ -142,6 +144,24 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
       Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
       LOG.info("Ran dummy action");
+    }
+  }
+
+  /**
+   * A dummy worker that does nothing, but only wait for being stopped.
+   */
+  public static final class DummyWorker extends AbstractWorker {
+
+    private final CountDownLatch stopLatch = new CountDownLatch(1);
+
+    @Override
+    public void run() {
+      Uninterruptibles.awaitUninterruptibly(stopLatch);
+    }
+
+    @Override
+    public void stop() {
+      stopLatch.countDown();
     }
   }
 

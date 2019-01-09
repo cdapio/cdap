@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,13 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
 import co.cask.cdap.test.TestConfiguration;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -56,20 +57,19 @@ public class TestBundleJarApp extends TestBase {
   public void testBundleJar() throws Exception {
     File helloWorldJar = new File(TestBundleJarApp.class.getClassLoader().getResource("helloworld.jar").toURI());
     ApplicationManager applicationManager = deployApplication(BundleJarApp.class, helloWorldJar);
-    FlowManager flowManager = applicationManager.getFlowManager("SimpleFlow").start();
-    StreamManager streamManager = getStreamManager("simpleInputStream");
-    for (int i = 0; i < 5; i++) {
-      streamManager.send("test" + i + ":" + i);
-    }
 
-    // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("simpleFlowlet");
-    flowletMetrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
-    Assert.assertEquals(0L, flowletMetrics.getException());
-    flowManager.stop();
+    ServiceManager serviceManager = applicationManager.getServiceManager("SimpleWrite").start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
+    for (int i = 0; i < 5; i++) {
+      URL url = new URL(serviceURL, "put/test" + i);
+      HttpResponse response = HttpRequests.execute(HttpRequest.put(url).withBody(Integer.toString(i)).build());
+      Assert.assertEquals(200, response.getResponseCode());
+    }
+    serviceManager.stop();
 
     // Query the result
-    ServiceManager serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
+    serviceManager = applicationManager.getServiceManager("SimpleGetInput").start();
     serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // Verify the query result

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,22 +18,17 @@ package co.cask.cdap.runtime;
 
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.TrackingTable;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.stream.StreamEventCodec;
-import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.queue.QueueEntry;
-import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
@@ -44,9 +39,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.apache.tephra.Transaction;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
@@ -61,13 +53,13 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests that flowlets and batch jobs close their data sets.
+ * Tests that service and batch jobs close their data sets.
  */
 @Category(XSlowTests.class)
 public class OpenCloseDataSetTest {
@@ -108,47 +100,13 @@ public class OpenCloseDataSetTest {
       if (programDescriptor.getProgramId().getType().equals(ProgramType.MAPREDUCE)) {
         continue;
       }
+
+      // Start service with 1 thread
+      Map<String, String> args = Collections.singletonMap(SystemArguments.SERVICE_THREADS, "1");
       controllers.add(AppFabricTestHelper.submit(app, programDescriptor.getSpecification().getClassName(),
-                                                 new BasicArguments(), TEMP_FOLDER_SUPPLIER)
-      );
+                                                 new BasicArguments(args), TEMP_FOLDER_SUPPLIER));
     }
 
-    // write some data to queue
-    TransactionSystemClient txSystemClient = AppFabricTestHelper.getInjector().
-      getInstance(TransactionSystemClient.class);
-
-    QueueName queueName = QueueName.fromStream(app.getApplicationId().getNamespace(), "xx");
-    QueueClientFactory queueClientFactory = AppFabricTestHelper.getInjector().getInstance(QueueClientFactory.class);
-    QueueProducer producer = queueClientFactory.createProducer(queueName);
-
-    // start tx to write in queue in tx
-    Transaction tx = txSystemClient.startShort();
-    ((TransactionAware) producer).startTx(tx);
-
-    StreamEventCodec codec = new StreamEventCodec();
-    for (int i = 0; i < 4; i++) {
-      String msg = "x" + i;
-      StreamEvent event = new StreamEvent(Collections.emptyMap(), StandardCharsets.UTF_8.encode(msg));
-      producer.enqueue(new QueueEntry(codec.encodePayload(event)));
-    }
-
-    // commit tx
-    ((TransactionAware) producer).commitTx();
-    txSystemClient.commitOrThrow(tx);
-
-    while (TrackingTable.getTracker(tableName, "write") < 4) {
-      TimeUnit.MILLISECONDS.sleep(50);
-    }
-
-    // get the number of writes to the foo table
-    Assert.assertEquals(4, TrackingTable.getTracker(tableName, "write"));
-    // only 2 "open" calls should be tracked:
-    // 1. the flow has started with single flowlet (service is loaded lazily on 1st request)
-    // 2. DatasetSystemMetadataWriter also instantiates the dataset because it needs to add some system tags
-    // for the dataset
-    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
-
-    // now send a request to the service
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
 
@@ -157,6 +115,27 @@ public class OpenCloseDataSetTest {
       .pick(5, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
 
+    // write some data to the tracking table through the service
+    for (int i = 0; i < 4; i++) {
+      String msg = "x" + i;
+      URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
+                                      discoverable.getSocketAddress().getHostName(),
+                                      discoverable.getSocketAddress().getPort(),
+                                      "dummy",
+                                      "DummyService",
+                                      msg));
+      HttpRequests.execute(HttpRequest.put(url).build());
+    }
+
+    // get the number of writes to the foo table
+    Assert.assertEquals(4, TrackingTable.getTracker(tableName, "write"));
+    // only 2 "open" calls should be tracked:
+    // 1. the service has started with one instance (service is loaded lazily on 1st request)
+    // 2. DatasetSystemMetadataWriter also instantiates the dataset because it needs to add some system tags
+    // for the dataset
+    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
+
+    // now query data from the service
     URL url = new URL(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",
                                     discoverable.getSocketAddress().getHostName(),
                                     discoverable.getSocketAddress().getPort(),
@@ -171,7 +150,8 @@ public class OpenCloseDataSetTest {
 
     // now the dataset must have a read and another open operation
     Assert.assertEquals(1, TrackingTable.getTracker(tableName, "read"));
-    Assert.assertEquals(3, TrackingTable.getTracker(tableName, "open"));
+    // since the same service instance is used, there shouldn't be any new open
+    Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
     // The dataset that was instantiated by the DatasetSystemMetadataWriter should have been closed
     Assert.assertEquals(1, TrackingTable.getTracker(tableName, "close"));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,8 +66,8 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
   @Test
   public void testPluginRequirements() throws Exception {
     // add a system artifact
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
-    addWordCountAppAsSystemArtifacts();
+    ArtifactId systemId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
+    addAppAsSystemArtifacts();
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),

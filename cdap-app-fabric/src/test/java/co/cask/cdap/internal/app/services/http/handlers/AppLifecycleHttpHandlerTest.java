@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,20 +16,21 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithDatasetDuplicate;
 import co.cask.cdap.AppWithNoServices;
 import co.cask.cdap.AppWithSchedule;
-import co.cask.cdap.BloatedWordCountApp;
 import co.cask.cdap.ConfigTestApp;
-import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
+import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
@@ -51,10 +52,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 /**
  * Tests for {@link AppLifecycleHttpHandler}
@@ -66,7 +67,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployNonExistingNamespace() throws Exception {
-    HttpResponse response = deploy(WordCountApp.class, 404, Constants.Gateway.API_VERSION_3_TOKEN, "random");
+    HttpResponse response = deploy(AllProgramsApp.class, 404, Constants.Gateway.API_VERSION_3_TOKEN, "random");
     NotFoundException nfe = new NamespaceNotFoundException(new NamespaceId("random"));
     Assert.assertEquals(nfe.getMessage(), response.getResponseBodyAsString());
   }
@@ -76,7 +77,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testDeployValid() throws Exception {
-    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     HttpResponse response = doDelete(getVersionedAPIPath("apps/",
                                                          Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
@@ -140,9 +141,9 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testOwnerUsingArtifact() throws Exception {
-    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "wordCountArtifact", "1.0.0");
-    addAppArtifact(Id.Artifact.fromEntityId(artifactId), WordCountApp.class);
-    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
+    ArtifactId artifactId = new ArtifactId(NamespaceId.DEFAULT.getNamespace(), "artifact", "1.0.0");
+    addAppArtifact(Id.Artifact.fromEntityId(artifactId), AllProgramsApp.class);
+    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
     // deploy an app with a owner
     String ownerPrincipal = "alice/somehost.net@somekdc.net";
     AppRequest<ConfigTestApp.ConfigClass> appRequest = new AppRequest<>(
@@ -153,13 +154,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
     Assert.assertEquals(ownerPrincipal, appDetails.get(Constants.Security.PRINCIPAL).getAsString());
 
-    // the stream created by the app should have the app owner too
-    Assert.assertEquals(ownerPrincipal,
-                        getStreamConfig(applicationId.getNamespaceId().stream("text")).getOwnerPrincipal());
-
     // the dataset created by the app should have the app owner too
     Assert.assertEquals(ownerPrincipal,
-                        getDatasetMeta(applicationId.getNamespaceId().dataset("mydataset")).getOwnerPrincipal());
+                        getDatasetMeta(applicationId.getNamespaceId().dataset(AllProgramsApp.DATASET_NAME))
+                          .getOwnerPrincipal());
 
     // trying to deploy the same app with another owner should fail
     String bobPrincipal = "bob/somehost.net@somekdc.net";
@@ -193,11 +191,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                         doDelete(getVersionedAPIPath("apps/" + applicationId.getApplication(),
                                                      applicationId.getNamespace())).getResponseCode());
 
-    // deletion of app should delete the stream/dataset owner information as they themselves are not deleted
+    // deletion of app should delete the dataset owner information as they themselves are not deleted
     Assert.assertEquals(ownerPrincipal,
-                        getStreamConfig(applicationId.getNamespaceId().stream("text")).getOwnerPrincipal());
-    Assert.assertEquals(ownerPrincipal,
-                        getDatasetMeta(applicationId.getNamespaceId().dataset("mydataset")).getOwnerPrincipal());
+                        getDatasetMeta(applicationId.getNamespaceId().dataset(AllProgramsApp.DATASET_NAME))
+                          .getOwnerPrincipal());
 
     // cleanup
     deleteNamespace(NamespaceId.DEFAULT.getNamespace());
@@ -206,10 +203,10 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testOwnerInHeaders() throws Exception {
     String ownerPrincipal = "bob/somehost.net@somekdc.net";
-    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN,
            NamespaceId.DEFAULT.getNamespace(), ownerPrincipal);
 
-    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "WordCountApp");
+    ApplicationId applicationId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), AllProgramsApp.NAME);
 
     // should be able to retrieve the owner information of the app
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
@@ -328,23 +325,22 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testListAndGet() throws Exception {
-    final String appName = "AppWithDatasetName";
-    Id.Namespace ns2 = Id.Namespace.from(TEST_NAMESPACE2);
-
-    Id.Artifact ns2ArtifactId = Id.Artifact.from(ns2, "bloatedListAndGet", "1.0.0-SNAPSHOT");
-
     //deploy without name to testnamespace1
-    deploy(BloatedWordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
 
     //deploy with name to testnamespace2
-    HttpResponse response = addAppArtifact(ns2ArtifactId, BloatedWordCountApp.class);
+    String ns2AppName = AllProgramsApp.NAME + "2";
+    Id.Namespace ns2 = Id.Namespace.from(TEST_NAMESPACE2);
+    Id.Artifact ns2ArtifactId = Id.Artifact.from(ns2, AllProgramsApp.class.getSimpleName(), "1.0.0-SNAPSHOT");
+
+    HttpResponse response = addAppArtifact(ns2ArtifactId, AllProgramsApp.class);
     Assert.assertEquals(200, response.getResponseCode());
-    Id.Application appId = Id.Application.from(ns2, appName);
+    Id.Application appId = Id.Application.from(ns2, ns2AppName);
     response = deploy(appId, new AppRequest<>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getResponseCode());
 
     // deploy with name and version to testnamespace2
-    ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, appName, VERSION1);
+    ApplicationId app1 = new ApplicationId(TEST_NAMESPACE2, ns2AppName, VERSION1);
     response = deploy(app1, new AppRequest<>(ArtifactSummary.from(ns2ArtifactId.toArtifactId())));
     Assert.assertEquals(200, response.getResponseCode());
 
@@ -357,60 +353,46 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, apps.size());
 
     //get and verify app details in testnamespace1
-    JsonObject result = getAppDetails(TEST_NAMESPACE1, "WordCountApp");
-    Assert.assertEquals("WordCountApp", result.get("name").getAsString());
-    Assert.assertEquals("Application for counting words", result.get("description").getAsString());
+    JsonObject result = getAppDetails(TEST_NAMESPACE1, AllProgramsApp.NAME);
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
 
-    JsonArray streams = result.get("streams").getAsJsonArray();
-    Assert.assertEquals(1, streams.size());
-    JsonObject stream = streams.get(0).getAsJsonObject();
-    Assert.assertEquals("text", stream.get("name").getAsString());
+    Assert.assertEquals(AllProgramsApp.NAME, result.get("name").getAsString());
+    Assert.assertEquals(AllProgramsApp.DESC, result.get("description").getAsString());
 
+    // Validate the datasets
     JsonArray datasets = result.get("datasets").getAsJsonArray();
-    Assert.assertEquals(1, datasets.size());
-    JsonObject dataset = datasets.get(0).getAsJsonObject();
-    Assert.assertEquals("mydataset", dataset.get("name").getAsString());
+    Assert.assertEquals(spec.getDatasets().size(), datasets.size());
+    Assert.assertTrue(
+      StreamSupport.stream(datasets.spliterator(), false)
+        .map(JsonObject.class::cast)
+        .map(obj -> obj.get("name").getAsString())
+        .allMatch(dataset -> spec.getDatasets().containsKey(dataset))
+    );
 
+    // Validate the programs
     JsonArray programs = result.get("programs").getAsJsonArray();
-    Assert.assertEquals(6, programs.size());
-    JsonObject[] progs = new JsonObject[programs.size()];
-    for (int i = 0; i < programs.size(); i++) {
-      progs[i] = programs.get(i).getAsJsonObject();
-    }
-    // sort the programs by name to make this test deterministic
-    Arrays.sort(progs, Comparator.comparing(o -> o.get("name").getAsString()));
-    int i = 0;
-    Assert.assertEquals("Worker", progs[i].get("type").getAsString());
-    Assert.assertEquals("LazyGuy", progs[i].get("name").getAsString());
-    Assert.assertEquals("nothing to describe", progs[i].get("description").getAsString());
-    i++;
-    Assert.assertEquals("Workflow", progs[i].get("type").getAsString());
-    Assert.assertEquals("SingleStep", progs[i].get("name").getAsString());
-    Assert.assertEquals("", progs[i].get("description").getAsString());
-    i++;
-    Assert.assertEquals("Spark", progs[i].get("type").getAsString());
-    Assert.assertEquals("SparklingNothing", progs[i].get("name").getAsString());
-    Assert.assertEquals("Spark program that does nothing", progs[i].get("description").getAsString());
-    i++;
-    Assert.assertEquals("Mapreduce", progs[i].get("type").getAsString());
-    Assert.assertEquals("VoidMapReduceJob", progs[i].get("name").getAsString());
-    Assert.assertTrue(progs[i].get("description").getAsString().startsWith("Mapreduce that does nothing"));
-    i++;
-    Assert.assertEquals("Flow", progs[i].get("type").getAsString());
-    Assert.assertEquals("WordCountFlow", progs[i].get("name").getAsString());
-    Assert.assertEquals("Flow for counting words", progs[i].get("description").getAsString());
-    i++;
-    Assert.assertEquals("Service", progs[i].get("type").getAsString());
-    Assert.assertEquals("WordFrequencyService", progs[i].get("name").getAsString());
-    Assert.assertEquals("", progs[i].get("description").getAsString());
+    int totalPrograms = Arrays.stream(co.cask.cdap.api.app.ProgramType.values())
+      .mapToInt(type -> spec.getProgramsByType(type).size())
+      .reduce(0, (l, r) -> l + r);
+    Assert.assertEquals(totalPrograms, programs.size());
+
+    Assert.assertTrue(
+      StreamSupport.stream(programs.spliterator(), false)
+        .map(JsonObject.class::cast)
+        .allMatch(obj -> {
+          String type = obj.get("type").getAsString().toUpperCase();
+          co.cask.cdap.api.app.ProgramType programType = co.cask.cdap.api.app.ProgramType.valueOf(type);
+          return spec.getProgramsByType(programType).contains(obj.get("name").getAsString());
+        })
+    );
 
     //get and verify app details in testnamespace2
-    result = getAppDetails(TEST_NAMESPACE2, appName);
-    Assert.assertEquals(appName, result.get("name").getAsString());
+    result = getAppDetails(TEST_NAMESPACE2, ns2AppName);
+    Assert.assertEquals(ns2AppName, result.get("name").getAsString());
 
     //get and verify app details in testnamespace2
-    result = getAppDetails(TEST_NAMESPACE2, appName, VERSION1);
-    Assert.assertEquals(appName, result.get("name").getAsString());
+    result = getAppDetails(TEST_NAMESPACE2, ns2AppName, VERSION1);
+    Assert.assertEquals(ns2AppName, result.get("name").getAsString());
 
     //delete app in testnamespace1
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -436,13 +418,14 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                          TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
-    // Start a fow for the App
-    deploy(WordCountApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+    // Start a service from the App
+    deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program program = Id.Program.from(TEST_NAMESPACE1, AllProgramsApp.NAME,
+                                         ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     startProgram(program);
     waitState(program, "RUNNING");
-    // Try to delete an App while its flow is running
-    response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+    // Try to delete an App while its service is running
+    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
     Assert.assertEquals("'" + program.getApplication() +
@@ -454,7 +437,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     startProgram(program);
     waitState(program, "RUNNING");
-    // Try to delete all Apps while flow is running
+    // Try to delete all Apps while service is running
     response = doDelete(getVersionedAPIPath("apps", Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(409, response.getResponseCode());
@@ -467,7 +450,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     waitState(program, "STOPPED");
 
     // Delete the app in the wrong namespace
-    response = doDelete(getVersionedAPIPath("apps/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
@@ -477,21 +460,21 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(404, response.getResponseCode());
 
     // Deploy an app with version
-    Id.Artifact wordCountArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcountapp", VERSION1);
-    addAppArtifact(wordCountArtifactId, WordCountApp.class);
-    AppRequest<? extends Config> wordCountRequest = new AppRequest<>(
-      new ArtifactSummary(wordCountArtifactId.getName(), wordCountArtifactId.getVersion().getVersion()));
-    ApplicationId wordCountApp1 = NamespaceId.DEFAULT.app("WordCountApp", VERSION1);
-    Assert.assertEquals(200, deploy(wordCountApp1, wordCountRequest).getResponseCode());
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, AllProgramsApp.class.getSimpleName(), VERSION1);
+    addAppArtifact(artifactId, AllProgramsApp.class);
+    AppRequest<? extends Config> appRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
+    ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME, VERSION1);
+    Assert.assertEquals(200, deploy(appId, appRequest).getResponseCode());
 
-    // Start a flow for the App
-    ProgramId program1 = wordCountApp1.program(ProgramType.FLOW, "WordCountFlow");
+    // Start a service for the App
+    ProgramId program1 = appId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     startProgram(program1, 200);
     waitState(program1, "RUNNING");
-    // Try to delete an App while its flow is running
+    // Try to delete an App while its service is running
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
-      Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(409, response.getResponseCode());
     Assert.assertEquals("'" + program1.getParent() + "' could not be deleted. Reason: The following programs" +
                           " are still running: " + program1.getProgram(), response.getResponseBodyAsString());
@@ -501,30 +484,30 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // Delete the app with version in the wrong namespace
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
       Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(404, response.getResponseCode());
 
-    //Delete the app with version after stopping the flow
+    //Delete the app with version after stopping the service
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
-      Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(200, response.getResponseCode());
     response = doDelete(getVersionedAPIPath(
-      String.format("apps/%s/versions/%s", wordCountApp1.getApplication(), wordCountApp1.getVersion()),
-      Constants.Gateway.API_VERSION_3_TOKEN, wordCountApp1.getNamespace()));
+      String.format("apps/%s/versions/%s", appId.getApplication(), appId.getVersion()),
+      Constants.Gateway.API_VERSION_3_TOKEN, appId.getNamespace()));
     Assert.assertEquals(404, response.getResponseCode());
 
-    //Delete the App after stopping the flow
-    response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+    //Delete the App after stopping the service
+    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
-    response = doDelete(getVersionedAPIPath("apps/WordCountApp/", Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doDelete(getVersionedAPIPath("apps/" + AllProgramsApp.NAME, Constants.Gateway.API_VERSION_3_TOKEN,
                                             TEST_NAMESPACE1));
     Assert.assertEquals(404, response.getResponseCode());
 
     // deleting the app should not delete the artifact
-    response = doGet(getVersionedAPIPath("artifacts/WordCountApp", Constants.Gateway.API_VERSION_3_TOKEN,
+    response = doGet(getVersionedAPIPath("artifacts/" + artifactId.getName(), Constants.Gateway.API_VERSION_3_TOKEN,
                                          TEST_NAMESPACE1));
     Assert.assertEquals(200, response.getResponseCode());
 

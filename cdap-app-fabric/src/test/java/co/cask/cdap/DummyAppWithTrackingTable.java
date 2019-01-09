@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,12 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.AbstractFlow;
-import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.service.BasicService;
@@ -40,6 +36,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
@@ -61,38 +58,8 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
     addStream(new Stream("xx"));
     createDataset("foo", TrackingTable.class);
     createDataset("bar", TrackingTable.class);
-    addFlow(new DummyFlow());
     addMapReduce(new DummyBatch());
     addService(new BasicService("DummyService", new DummyHandler()));
-  }
-
-  /**
-   * A flow.
-   */
-  public static class DummyFlow extends AbstractFlow {
-
-    @Override
-    protected void configure() {
-      setName("dummy-flow");
-      setDescription("a dummy flow that does not much");
-      addFlowlet("fwlt", new DummyFlowlet());
-      connectStream("xx", "fwlt");
-    }
-  }
-
-  /**
-   * A flowlet.
-   */
-  public static class DummyFlowlet extends AbstractFlowlet {
-
-    @UseDataSet("foo")
-    TrackingTable table;
-
-    @ProcessInput
-    public void process(StreamEvent event) {
-      byte[] keyAndValue = Bytes.toBytes(event.getBody());
-      table.write(keyAndValue, keyAndValue);
-    }
   }
 
   /**
@@ -105,10 +72,16 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
 
     @GET
     @Path("{key}")
-    public void handle(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("key") String key) throws IOException {
+    public void handle(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("key") String key) {
       byte[] value = table.read(Bytes.toBytes(key));
       responder.sendJson(Bytes.toString(value));
+    }
+
+    @PUT
+    @Path("{key}")
+    public void put(HttpServiceRequest request, HttpServiceResponder responder, @PathParam("key") String key) {
+      table.write(Bytes.toBytes(key), Bytes.toBytes(key));
+      responder.sendStatus(200);
     }
   }
 
