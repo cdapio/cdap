@@ -20,6 +20,7 @@ let getInitialState = () => {
     isPreviewModeEnabled: false,
     startTime: null,
     previewId: null,
+    previewData: false,
     macros: {},
     userRuntimeArguments: {},
     // `runtimeArgsForDisplay` combines `macros` map and `userRuntimeArguments` map
@@ -52,6 +53,10 @@ var preview = (state = getInitialState(), action = {}) => {
     case previewActions.SET_TIMEOUT_IN_MINUTES:
       let timeoutInMinutes = action.payload.timeoutInMinutes;
       return Object.assign({}, state, {timeoutInMinutes});
+    case previewActions.SET_PREVIEW_DATA:
+      return Object.assign({}, state, {previewData: true});
+    case previewActions.RESET_PREVIEW_DATA:
+      return Object.assign({}, state, {previewData: false});
     case previewActions.PREVIEW_RESET:
       return getInitialState();
     default:
@@ -86,6 +91,8 @@ angular.module(`${PKG.name}.feature.hydrator`)
     'SET_MACROS': 'SET_MACROS',
     'SET_USER_RUNTIME_ARGUMENTS': 'SET_USER_RUNTIME_ARGUMENTS',
     'SET_RUNTIME_ARGS_FOR_DISPLAY': 'SET_RUNTIME_ARGS_FOR_DISPLAY',
-    'SET_TIMEOUT_IN_MINUTES': 'SET_TIMEOUT_IN_MINUTES'
+    'SET_TIMEOUT_IN_MINUTES': 'SET_TIMEOUT_IN_MINUTES',
+    'SET_PREVIEW_DATA': 'SET_PREVIEW_DATA',
+    'RESET_PREVIEW_DATA': 'RESET_PREVIEW_DATA'
   })
   .factory('HydratorPlusPlusPreviewStore', PreviewStore);

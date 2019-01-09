@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService, HydratorPlusPlusPreviewActions) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -34,6 +34,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.myPipelineApi = myPipelineApi;
     this.previewStore = HydratorPlusPlusPreviewStore;
+    this.HydratorPlusPlusPreviewActions = HydratorPlusPlusPreviewActions;
     this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.avsc = avsc;
@@ -89,6 +90,7 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.isStudioMode = rIsStudioMode;
     this.isPreviewMode = this.previewStore.getState().preview.isPreviewModeEnabled;
+    this.isPreviewData = this.previewStore.getState().preview.previewData;
 
     if (rIsStudioMode && this.isPreviewMode) {
       this.previewLoading = false;
@@ -98,7 +100,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
 
     this.activeTab = 1;
-    if (this.isPreviewMode && !rPlugin.isAction) {
+    if (this.isPreviewMode && this.isPreviewData && !rPlugin.isAction) {
       this.activeTab = 2;
     } else if (this.PipelineMetricsStore.getState().metricsTabActive) {
       this.activeTab = 4;
@@ -108,6 +110,9 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.$scope.$on('modal.closing', () => {
       this.updateNodeStateIfDirty();
+      this.previewStore.dispatch(
+        this.HydratorPlusPlusPreviewActions.resetPreviewData()
+      );
     });
 
     // Timeouts

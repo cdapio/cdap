@@ -195,6 +195,9 @@
                 </button>
               </div>
             </div>
+            <div class="node-preview-data-btn" ng-if="previewMode">
+              <a href ng-click="DAGPlusPlusCtrl.onPreviewData($event, node)">Preview Data</a>
+            </div>
             <div class="node-metrics"
                   ng-if="DAGPlusPlusCtrl.isDisabled && ['action', 'sparkprogram', 'condition'].indexOf(node.type) === -1">
               <my-node-metrics

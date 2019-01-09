@@ -37,6 +37,21 @@ class HydratorPlusPlusPreviewActions {
       });
     };
   }
+  setPreviewData() {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_PREVIEW_DATA
+      });
+    };
+  }
+
+  resetPreviewData() {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.RESET_PREVIEW_DATA
+      });
+    };
+  }
 
   setPreviewId (previewId) {
     return (dispatch) => {
