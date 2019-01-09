@@ -6,6 +6,7 @@ node_modules/
 bower_components/
 dist/
 cdap_dist/
+cypress/screenshots/
 login_dist/
 wrangler_dist/
 plusbutton_dist

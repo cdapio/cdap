@@ -114,7 +114,9 @@ class HydratorPlusPlusStudioCtrl {
       // For Chrome, Safari, IE8+ and Opera 12+
       return message;
     };
-    $window.onbeforeunload = confirmOnPageExit;
+    if (!window.Cypress) {
+      $window.onbeforeunload = confirmOnPageExit;
+    }
 
     $scope.$on('$stateChangeStart', function (event) {
       if (HydratorPlusPlusConfigStore.getIsStateDirty()) {

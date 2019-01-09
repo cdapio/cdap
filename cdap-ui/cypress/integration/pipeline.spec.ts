@@ -19,41 +19,6 @@ import * as Helpers from '../helpers';
 const TEST_PIPELINE_NAME = '__UI_test_pipeline';
 const TEST_PATH = '__UI_test_path';
 
-function getArtifactsPoll(headers, retries = 0) {
-  if (retries === 3) {
-    return;
-  }
-  cy.request({
-    method: 'GET',
-    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts?scope=SYSTEM`,
-    failOnStatusCode: false,
-    headers,
-  }).then((response) => {
-    if (response.status >= 400) {
-      return getArtifactsPoll(headers, retries + 1);
-    }
-    return;
-  });
-}
-
-function cleanUpPipeline(headers) {
-  cy.request({
-    method: 'GET',
-    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
-    failOnStatusCode: false,
-    headers,
-  }).then((response) => {
-    if (response.status === 200) {
-      cy.request({
-        method: 'DELETE',
-        url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/apps/${TEST_PIPELINE_NAME}`,
-        failOnStatusCode: false,
-        headers,
-      });
-    }
-  });
-}
-
 describe('Creating a pipeline', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
@@ -62,22 +27,20 @@ describe('Creating a pipeline', () => {
 
   beforeEach(() => {
     const headers = Helpers.getAuthHeaders();
-    // Delete TEST_PIPELINE_NAME pipeline in case it's already there
-    cleanUpPipeline(headers);
-    getArtifactsPoll(headers);
+    Helpers.getArtifactsPoll(headers);
   });
 
   afterEach(() => {
     // Delete the pipeline to clean up
     const headers = Helpers.getAuthHeaders();
-    cleanUpPipeline(headers);
+    cy.cleanup_pipelines(headers, TEST_PIPELINE_NAME);
   });
 
   it('is configured correctly', () => {
     // Go to Pipelines studio
     cy.visit('/');
     cy.get('#resource-center-btn').click();
-    cy.contains('Create').click();
+    cy.get('#create-pipeline-link').click();
     cy.url().should('include', '/studio');
 
     // Add an action node, to create minimal working pipeline

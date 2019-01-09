@@ -8,10 +8,13 @@
     ],
     "module": "commonjs",
     "types": [
-      "cypress"
+      "cypress",
+      "node",
+      "./typings"
     ],
   },
   "include": [
-    "**/*.ts"
+    "../node_modules/cypress/*/*.ts",
+    "./*/*.ts"
   ]
 }

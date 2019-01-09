@@ -17,6 +17,7 @@
 const wp = require('@cypress/webpack-preprocessor');
 const wpconfig = require('../../webpack.config.cdap');
 module.exports = (on) => {
+  wpconfig.module.rules = wpconfig.module.rules.filter((rule) => rule.loader !== 'eslint-loader');
   const options = {
     webpackOptions: {
       resolve: wpconfig.resolve,
