@@ -24,7 +24,6 @@ const AddFeatureActions = {
   setAvailableConfigurations: 'SET-AVAILABLE-CONFIGURATIONS',
   setSelectedSchemas: 'SET-SELECTED-SCHEMAS',
   addSelectedSchema: 'ADD-SELECTED-SCHEMA',
-  updateSelectedSchema: 'UPDATE-SELECTED-SCHEMA',
   deleteSelectedSchema: 'DELETE-SELECTED-SCHEMA',
   updateSelectedSchema: 'UPDATE-SELECTED-SCHEMA',
   updatePropertyMap: 'UPDATE-PROPERTY-MAP',

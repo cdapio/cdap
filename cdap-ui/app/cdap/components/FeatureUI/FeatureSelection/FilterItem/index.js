@@ -31,7 +31,7 @@ class FilterItem extends Component {
       this.setState({ 'doubleView': true });
     } else {
       this.setState({ 'doubleView': false });
-      //remove the max value
+      // remove the max value
       this.maxValueChange(null);
     }
     const result = { selectedFilterType: item };

@@ -11,8 +11,7 @@
   box-shadow: 1px 3px 3px 0px #bbbbbb;
   z-index: 100;
   border-bottom: 1px solid gray;
-
-  .algo-box{
+  .algo-box {
     display: flex;
     align-items: center;
     width: 100%;
@@ -21,12 +20,11 @@
     border-radius: 10px;
     box-shadow: 3px 3px 5px #888888;
     background-color: #e3e2e4;
-    .algo-label{
+    .algo-label {
       padding-right: 15px;
     }
   }
-
-  .control-box{
+  .control-box {
     display: flex;
     flex-direction: row-reverse;
   }

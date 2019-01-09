@@ -53,10 +53,10 @@ class SchemaSelector extends React.Component {
         alertMessage: 'Are you sure you want to delete: ' + data.schemaName,
         openAlertModal: true
       });
-    } else if(action == 'EDIT')  {
-      let selectedSchema = find(this.props.availableSchemas, {schemaName: data.schemaName});
+    } else if (action == 'EDIT') {
+      let selectedSchema = find(this.props.availableSchemas, { schemaName: data.schemaName });
       selectedSchema.schemaColumns = selectedSchema.schemaColumns.map(column => {
-        if(find(data.schemaColumns, {columnName: column.columnName})) {
+        if (find(data.schemaColumns, { columnName: column.columnName })) {
           column.checked = true;
         } else {
           column.checked = false;
@@ -74,7 +74,7 @@ class SchemaSelector extends React.Component {
 
   onAddSchemaClose(action, data, type) {
     if (action == 'OK') {
-      switch(type){
+      switch (type) {
         case 'ADD':
           {
             if (this.isSchemaAlreadyAdded(data.schemaName)) {
@@ -87,7 +87,7 @@ class SchemaSelector extends React.Component {
         case 'EDIT': {
           this.props.updateSelectedSchema(data);
         }
-        break;
+          break;
       }
 
     }
@@ -104,7 +104,7 @@ class SchemaSelector extends React.Component {
     console.log(this.state.schemaSelected);
     if (action === 'OK' && this.state.schemaSelected) {
       this.props.deleteSelectedSchema(this.state.schemaSelected);
-      let propertyMap =  cloneDeep(this.props.propertyMap);
+      let propertyMap = cloneDeep(this.props.propertyMap);
       removeSchemaFromPropertyMap(propertyMap, this.state.schemaSelected.schemaName);
       this.props.updatePropertyMap(propertyMap);
     }
@@ -123,8 +123,8 @@ class SchemaSelector extends React.Component {
               operation={this.performAction.bind(this)} />);
           })
         }
-        <SchemaSelectorModal open={this.state.openSchemaModal} onClose={this.onAddSchemaClose} showSchemaSelector = {this.state.showSchemaSelector}
-          dataProvider={this.state.schemaDP} selectedSchema = {this.state.schemaSelected} operationType = {this.state.operationType}/>
+        <SchemaSelectorModal open={this.state.openSchemaModal} onClose={this.onAddSchemaClose} showSchemaSelector={this.state.showSchemaSelector}
+          dataProvider={this.state.schemaDP} selectedSchema={this.state.schemaSelected} operationType={this.state.operationType} />
         <AlertModal open={this.state.openAlertModal} message={this.state.alertMessage}
           onClose={this.onAlertClose} />
       </div>

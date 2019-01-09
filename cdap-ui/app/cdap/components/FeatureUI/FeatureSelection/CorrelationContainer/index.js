@@ -7,12 +7,12 @@ class CorrelationContainer extends Component {
   algolist = [{ id: 1, name: "pearson" }, { id: 2, name: "spearman" }];
 
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       algolist: this.algolist,
       openAlgoDropdown: false,
       selectedAlog: { id: -1, name: 'Select' },
-    }
+    };
   }
 
 
