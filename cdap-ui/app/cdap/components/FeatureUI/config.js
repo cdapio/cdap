@@ -1,6 +1,6 @@
 const REMOTE_IP = "http://192.168.156.36:11015";
 const SERVICE_PORT = "11015";
-export const SERVER_IP = (window.location.hostname == "localhost") ? REMOTE_IP : (window.location.protocol + "//" + window.location.protocol.hostname + ":" + SERVICE_PORT);
+export const SERVER_IP = (window.location.hostname == "localhost") ? REMOTE_IP : (window.location.protocol + "//" + window.location.hostname + ":" + SERVICE_PORT);
 
 export const PIPELINES_REQUEST = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/FeatureEngineeringPipelineService/methods/featureengineering/pipeline/getall";
 export const PIPELINES_REQUEST_PARAMS = "?pipelineType=";
