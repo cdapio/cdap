@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2018 Cask Data, Inc.
+  Copyright © 2014-2019 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -582,33 +582,6 @@
                       <exclude>bin/node</exclude>
                      </excludes>
                    </resource>
-                    <!-- Copy examples code -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-examples</directory>
-                      <targetPath>examples</targetPath>
-                      <includes>
-                        <include>README*</include>
-                      </includes>
-                      <filtering>true</filtering>
-                    </resource>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-examples</directory>
-                      <targetPath>examples</targetPath>
-                      <includes>
-                        <include>resources/**</include>
-                        <include>**/src/**</include>
-                        <include>**/bin/**</include>
-                        <include>**/resources/**</include>
-                        <include>**/pom.xml</include>
-                      </includes>
-                      <excludes>
-                        <exclude>pom.xml</exclude>
-                        <exclude>build.gradle</exclude>
-                        <exclude>**/target/original*.jar</exclude>
-                        <exclude>**/target/apidocs/**</exclude>
-                        <exclude>**/target/stage-packaging*/**</exclude>
-                      </excludes>
-                    </resource>
                     <!-- Copy runtime extensions. Currently only has Spark -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-spark-core/target/libexec</directory>
@@ -764,30 +737,6 @@
                   </resources>
                 </configuration>
               </execution>
-              <!-- Copy example deploy pom -->
-              <execution>
-                <id>copy-examples-pom</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${project.build.directory}/examples</outputDirectory>
-                  <delimiters>
-                    <delimiter>@</delimiter>
-                  </delimiters>
-                  <useDefaultDelimiters>false</useDefaultDelimiters>
-                  <resources>
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-examples</directory>
-                      <includes>
-                        <include>deploy_pom.xml</include>
-                      </includes>
-                      <filtering>true</filtering>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
           <plugin>
@@ -840,38 +789,6 @@
                 <goals>
                   <goal>run</goal>
                 </goals>
-              </execution>
-              <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
-              <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
-              <execution>
-                <id>bin-permission</id>
-                <phase>prepare-package</phase>
-                <configuration>
-                  <target>
-                    <chmod file="${stage.opt.dir}/bin/**" perm="755"/>
-                    <chmod perm="755">
-                      <fileset dir="${stage.opt.dir}/examples">
-                        <include name="**/bin/**"/>
-                      </fileset>
-                    </chmod>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
-              <!-- Rename examples deploy_pom.xml to pom.xml -->
-              <execution>
-                <id>rename-pom</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <copy file="${project.build.directory}/examples/deploy_pom.xml" tofile="${stage.opt.dir}/examples/pom.xml" />
-                  </target>
-                </configuration>
               </execution>
               <!--
                 Rename cdap-data-pipeline2_2.11 to cdap-data-pipeline and cdap-data-streams2_2.11 to cdap-data-streams

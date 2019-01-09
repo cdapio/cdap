@@ -246,7 +246,6 @@
         "scripts/motd.sh",
         "scripts/xorg.sh",
         "scripts/slim.sh",
-        "scripts/fill-maven-cache.sh",
         "scripts/lxde.sh"
       ],
       "only": ["cdap-sdk-vm"]

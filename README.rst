@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2017 Cask Data, Inc.
+    :copyright: Copyright © 2015-2019 Cask Data, Inc.
 
 .. image:: https://cdap-users.herokuapp.com/badge.svg?t=1
     :target: https://cdap-users.herokuapp.com
@@ -56,7 +56,7 @@ Getting Started
 Prerequisites
 -------------
 
-To install and use CDAP and its included examples, there are a few simple prerequisites:
+To install and use CDAP, there are a few simple prerequisites:
 
 1. JDK 8+ (required to run CDAP; note that $JAVA_HOME should be set)
 #. `Node.js <https://nodejs.org/>`__ (required to run the CDAP UI; we recommend any version greater than v4.5.0)
@@ -89,9 +89,6 @@ Where to Go Next
 
 Now that you've had a look at the CDAP Sandbox, take a look at:
 
-- Examples, located in the ``cdap-examples`` directory of the CDAP Sandbox;
-- `Selected Examples <http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html>`__
-  (demonstrating basic features of the CDAP) are located on-line; and
 - Developers' Manual, located in the source distribution in ``cdap-docs/developers-manual/source``
   or `online <http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
 - `CDAP Releases and timeline <http://docs.cask.co/cdap/index.html>`__
