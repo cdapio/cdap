@@ -1,0 +1,58 @@
+/*
+ * Copyright © 2018 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+.add-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 110px;
+  height: 100px;
+  color: white;
+  border-radius: 15px;
+  background-color: #789ce8;
+  box-shadow: 3px 3px 5px #4366b1;
+  border: solid 1px #789ce8;
+  font-size: 14px;
+  .add-operation {
+    font-size: 24px !important;
+    padding: 10px 5px;
+    cursor: pointer;
+  }
+}
+
+.scheme-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 110px;
+  height: 100px;
+  border-radius: 15px;
+  box-shadow: 3px 3px 5px #888888;
+  background-color: #e8e8e8;
+  font-size: 14px;
+  .edit-operation {
+    font-size: 16px !important;
+    padding: 10px 5px;
+    cursor: pointer;
+  }
+  .delete-operation {
+    font-size: 16px !important;
+    padding: 10px 5px;
+    color: #bf0606;
+    cursor: pointer;
+  }
+}

@@ -35,6 +35,9 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   public static final String PLUGIN_NAME = "pluginA";
   public static final String PLUGIN_TYPE = "A";
   public static final String MULTIPLE_REQUIREMENTS_PLUGIN = "MultipleRequirementsPlugin";
+  public static final String[] PLUGIN_INPUT = {"pluginA"};
+  public static final String[] PLUGIN_OUTPUT = {"A"};
+  public static final String[] PLUGIN_FUNCTION = {"F"};
 
   public static class AConfig extends Config {
     private int x;

@@ -103,8 +103,10 @@ public class RemotePluginFinder implements PluginFinder {
           co.cask.cdap.api.artifact.ArtifactId pluginArtifactId = new co.cask.cdap.api.artifact.ArtifactId(
             artifactSummary.getName(), new ArtifactVersion(artifactSummary.getVersion()), artifactSummary.getScope());
           PluginClass pluginClass = new PluginClass(info.getType(), info.getName(), info.getDescription(),
-                                                    info.getClassName(), info.getConfigFieldName(),
-                                                    info.getProperties(), info.getEndpoints());
+                                                    info.getPluginInput(), info.getPluginOutput(), 
+                                                    info.getPluginFunction(), info.getClassName(), 
+                                                    info.getConfigFieldName(), info.getProperties(), 
+                                                    info.getEndpoints());
           plugins.put(pluginArtifactId, pluginClass);
         }
 
