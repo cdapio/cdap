@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ProtoTriggerCodec;
@@ -104,10 +103,10 @@ public class TriggerCodecTest {
     testSerDeserYieldsTrigger(protoTime, timeTrigger);
 
     ProtoTrigger.ProgramStatusTrigger protoProgramStatus =
-      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
+      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.SERVICE, "myprog"),
                                             ImmutableSet.of(ProgramStatus.COMPLETED));
     ProgramStatusTrigger programStatusTrigger =
-      new ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
+      new ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.SERVICE, "myprog"),
                              ImmutableSet.of(ProgramStatus.COMPLETED));
     testSerDeserYieldsTrigger(protoProgramStatus, programStatusTrigger);
 
@@ -158,10 +157,10 @@ public class TriggerCodecTest {
                           new TimeTrigger("* * * 1 1"));
 
     testContainingTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
-                                                                              ProgramType.FLOW, "myprog"),
+                                                                              ProgramType.SERVICE, "myprog"),
                                                                 ImmutableSet.of(ProgramStatus.FAILED)),
                           new ProgramStatusTrigger(new ProgramId("test", "myapp",
-                                                   ProgramType.FLOW, "myprog"),
+                                                   ProgramType.SERVICE, "myprog"),
                                                    ImmutableSet.of(ProgramStatus.FAILED)));
 
   }
@@ -170,12 +169,12 @@ public class TriggerCodecTest {
     ProgramSchedule proto1 = new ProgramSchedule("sched1", "one partition schedule",
                                                  new NamespaceId("test").app("a").worker("ww"),
                                                  ImmutableMap.of("prop3", "abc"), proto,
-                                                 ImmutableList.<Constraint>of());
+                                                 ImmutableList.of());
 
     ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule",
                                                  new NamespaceId("test").app("a").worker("ww"),
                                                  ImmutableMap.of("prop3", "abc"), trigger,
-                                                 ImmutableList.<Constraint>of());
+                                                 ImmutableList.of());
 
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(proto1), ProgramSchedule.class));
   }

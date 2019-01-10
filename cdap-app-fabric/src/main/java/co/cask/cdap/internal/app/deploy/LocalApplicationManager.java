@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
@@ -70,8 +68,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final CConfiguration configuration;
   private final Store store;
   private final OwnerAdmin ownerAdmin;
-  private final StreamConsumerFactory streamConsumerFactory;
-  private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
@@ -87,8 +83,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                          Store store, OwnerAdmin ownerAdmin, StreamConsumerFactory streamConsumerFactory,
-                          QueueAdmin queueAdmin, DatasetFramework datasetFramework,
+                          Store store, OwnerAdmin ownerAdmin,
+                          DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                           StreamAdmin streamAdmin,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
@@ -101,8 +97,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.pipelineFactory = pipelineFactory;
     this.store = store;
     this.ownerAdmin = ownerAdmin;
-    this.streamConsumerFactory = streamConsumerFactory;
-    this.queueAdmin = queueAdmin;
     this.programTerminator = programTerminator;
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
@@ -128,8 +122,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
                                                      authenticationContext));
     pipeline.addLast(new CreateStreamsStage(streamAdmin, ownerAdmin, authenticationContext));
-    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
-                                                    metricStore, metadataPublisher, impersonator, programScheduler));
+    pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
+                                                    metricStore, metadataPublisher, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));

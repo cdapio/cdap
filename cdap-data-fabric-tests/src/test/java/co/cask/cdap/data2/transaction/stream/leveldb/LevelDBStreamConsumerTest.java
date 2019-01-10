@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
@@ -68,7 +67,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
   private static TransactionManager txManager;
-  private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
 
@@ -105,7 +103,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
     streamAdmin = injector.getInstance(StreamAdmin.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = injector.getInstance(TransactionManager.class);
-    queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
@@ -118,11 +115,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
   public static void finish() throws Exception {
     streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
-  }
-
-  @Override
-  protected QueueClientFactory getQueueClientFactory() {
-    return queueClientFactory;
   }
 
   @Override

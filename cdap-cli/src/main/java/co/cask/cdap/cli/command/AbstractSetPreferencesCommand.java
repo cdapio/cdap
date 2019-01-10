@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,7 +71,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         printSuccessMessage(printStream, type);
         break;
 
-      case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
@@ -103,7 +102,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         return String.format("set %s preferences <%s>",
                              type.getShortName(), ArgumentName.PREFERENCES);
       case APP:
-      case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
@@ -122,7 +120,6 @@ public abstract class AbstractSetPreferencesCommand extends AbstractCommand {
         return String.format("load %s preferences <%s> <%s>", type.getShortName(),
                              ArgumentName.LOCAL_FILE_PATH, ArgumentName.CONTENT_TYPE);
       case APP:
-      case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:

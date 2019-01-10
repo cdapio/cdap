@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,13 +34,6 @@ import java.util.Map;
  * Instance of this class is for managing deployed application.
  */
 public interface ApplicationManager {
-
-  /**
-   * Returns a ProgramManager, without starting the program
-   * @param flowName Name of the flow
-   * @return A {@link FlowManager} for controlling the flow
-   */
-  FlowManager getFlowManager(String flowName);
 
   /**
    * Returns a ProgramManager, without starting the program

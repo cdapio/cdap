@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,8 +22,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
@@ -43,7 +41,6 @@ import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
@@ -73,7 +70,6 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final PluginInstantiator pluginInstantiator;
   private final Id.Artifact artifactId;
   private final String configuration;
-  private final Map<String, FlowSpecification> flows = new HashMap<>();
   private final Map<String, MapReduceSpecification> mapReduces = new HashMap<>();
   private final Map<String, SparkSpecification> sparks = new HashMap<>();
   private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
@@ -111,16 +107,6 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public void setDescription(String description) {
     this.description = description;
-  }
-
-  @Override
-  public void addFlow(Flow flow) {
-    Preconditions.checkArgument(flow != null, "Flow cannot be null.");
-    DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
-    flow.configure(configurer);
-    FlowSpecification spec = configurer.createSpecification();
-    addDatasets(configurer);
-    flows.put(spec.getName(), spec);
   }
 
   @Override
@@ -271,7 +257,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     return new DefaultApplicationSpecification(appName, appVersion, description,
                                                configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
-                                               flows, mapReduces, sparks, workflows, services,
+                                               mapReduces, sparks, workflows, services,
                                                builtScheduleSpecs, workers, getPlugins());
   }
 

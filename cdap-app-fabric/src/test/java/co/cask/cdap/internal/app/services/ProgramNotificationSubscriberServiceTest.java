@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -139,7 +139,7 @@ public class ProgramNotificationSubscriberServiceTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap(), Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     programStateWriter.start(runId, programOptions, null, programDescriptor);
@@ -214,7 +214,7 @@ public class ProgramNotificationSubscriberServiceTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap(), Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
     heartBeatTxnl.execute(() -> {
       programStateWriter.start(runId, programOptions, null, programDescriptor);

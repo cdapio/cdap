@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -741,14 +741,6 @@ public final class Constants {
      * Metric names
      */
     public static final class Name {
-      /**
-       * Flow metrics
-       */
-      public static final class Flow {
-        public static final String FLOWLET_INPUT = "system.process.tuples.read";
-        public static final String FLOWLET_PROCESSED = "system.process.events.processed";
-        public static final String FLOWLET_EXCEPTIONS = "system.process.errors";
-      }
 
       /**
        * Service metrics
@@ -912,8 +904,6 @@ public final class Constants {
     public static final String TAG_RUN_ID = ".runId";
     public static final String TAG_INSTANCE_ID = ".instanceId";
 
-    public static final String TAG_FLOW_ID = ".flowId";
-    public static final String TAG_FLOWLET_ID = ".flowletId";
     public static final String TAG_SERVICE_ID = ".serviceId";
     public static final String TAG_MAP_REDUCE_JOB_ID = ".mapReduceId";
     public static final String TAG_SPARK_JOB_ID = ".sparkId";

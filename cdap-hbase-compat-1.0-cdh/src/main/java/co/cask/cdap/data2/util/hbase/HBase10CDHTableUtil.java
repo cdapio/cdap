@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import co.cask.cdap.data2.increment.hbase10cdh.IncrementHandler;
 import co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10cdh.MessageTableRegionObserver;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase10cdh.PayloadTableRegionObserver;
-import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh.DequeueScanObserver;
-import co.cask.cdap.data2.transaction.queue.coprocessor.hbase10cdh.HBaseQueueRegionObserver;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.spi.hbase.TableDescriptor;
@@ -234,16 +232,6 @@ public class HBase10CDHTableUtil extends HBaseTableUtil {
   @Override
   public Class<? extends Coprocessor> getTransactionDataJanitorClassForVersion() {
     return DefaultTransactionProcessor.class;
-  }
-
-  @Override
-  public Class<? extends Coprocessor> getQueueRegionObserverClassForVersion() {
-    return HBaseQueueRegionObserver.class;
-  }
-
-  @Override
-  public Class<? extends Coprocessor> getDequeueScanObserverClassForVersion() {
-    return DequeueScanObserver.class;
   }
 
   @Override

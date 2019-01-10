@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,13 +90,6 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   @Override
   public ApplicationId getParent() {
     return new ApplicationId(namespace, application, version);
-  }
-
-  public FlowletId flowlet(String flowlet) {
-    if (type != ProgramType.FLOW) {
-      throw new IllegalArgumentException("Expected program type for flowlet to be " + ProgramType.FLOW);
-    }
-    return new FlowletId(new ApplicationId(getNamespace(), getApplication(), getVersion()), program, flowlet);
   }
 
   /**

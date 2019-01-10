@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,8 +38,6 @@ public class MetricsLogAppender extends AppenderBase<ILoggingEvent> {
   private static final String APP_METRIC_PREFIX = "app.log";
   private static final Map<String, String> LOG_TAG_TO_METRICS_TAG_MAP =
     ImmutableMap.<String, String>builder()
-      .put(Constants.Logging.TAG_FLOWLET_ID, Constants.Metrics.Tag.FLOWLET)
-      .put(Constants.Logging.TAG_FLOW_ID, Constants.Metrics.Tag.FLOW)
       .put(Constants.Logging.TAG_WORKFLOW_ID, Constants.Metrics.Tag.WORKFLOW)
       .put(Constants.Logging.TAG_MAP_REDUCE_JOB_ID, Constants.Metrics.Tag.MAPREDUCE)
       .put(Constants.Logging.TAG_SPARK_JOB_ID, Constants.Metrics.Tag.SPARK)

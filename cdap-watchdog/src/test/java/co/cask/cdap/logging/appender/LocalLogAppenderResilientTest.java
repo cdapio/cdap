@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,7 @@ import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
@@ -138,8 +138,8 @@ public class LocalLogAppenderResilientTest {
     opExecutorService.startAndWait();
 
     // Start the logging before starting the service.
-    LoggingContextAccessor.setLoggingContext(new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "FLOWLET_1",
-                                                                       "RUN", "INSTANCE"));
+    LoggingContextAccessor.setLoggingContext(new WorkerLoggingContext("TRL_ACCT_1", "APP_1", "WORKER_1",
+                                                                      "RUN", "INSTANCE"));
     String logBaseDir = "trl-log/log_files_" + new Random(System.currentTimeMillis()).nextLong();
 
     cConf.set(LoggingConfiguration.LOG_BASE_DIR, logBaseDir);
@@ -207,7 +207,7 @@ public class LocalLogAppenderResilientTest {
     appender.stop();
 
     // Verify - we should have at least 5 events.
-    LoggingContext loggingContext = new FlowletLoggingContext("TRL_ACCT_1", "APP_1", "FLOW_1", "", "RUN", "INSTANCE");
+    LoggingContext loggingContext = new WorkerLoggingContext("TRL_ACCT_1", "APP_1", "WORKER_1", "RUN", "INSTANCE");
     FileLogReader logTail = injector.getInstance(FileLogReader.class);
     LoggingTester.LogCallback logCallback1 = new LoggingTester.LogCallback();
     logTail.getLogPrev(loggingContext, ReadRange.LATEST, 10, Filter.EMPTY_FILTER,

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,9 +25,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseConsumerStateStore;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -69,25 +66,6 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   @BeforeClass
   public static void setup() throws Exception {
     DatasetServiceTestBase.initialize();
-  }
-
-  @Test
-  public void testSystemDatasetNotInList() throws Exception {
-    try {
-      deployModule("default-table", InMemoryTableModule.class);
-      deployModule(HBaseConsumerStateStore.class.getSimpleName(), HBaseQueueDatasetModule.class);
-      // yes it's weird, you can create one a system dataset, but don't expect to see it in the get all request
-      Assert.assertEquals(HttpStatus.SC_OK,
-                          createInstance(QueueConstants.STATE_STORE_NAME, HBaseConsumerStateStore.class.getSimpleName())
-                            .getResponseCode());
-
-      // nothing has been created, modules and types list is empty
-      Assert.assertTrue(getInstances().getResponseObject().isEmpty());
-    } finally {
-      // cleanup
-      deleteInstance(QueueConstants.STATE_STORE_NAME);
-      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
-    }
   }
 
   @Test

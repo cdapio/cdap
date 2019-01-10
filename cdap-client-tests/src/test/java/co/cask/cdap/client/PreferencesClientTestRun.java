@@ -295,6 +295,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
   @Test(expected = ProgramNotFoundException.class)
   public void testInvalidProgram() throws Exception {
     ApplicationId someapp = new NamespaceId("somespace").app("someapp");
-    client.deleteProgramPreferences(someapp.flow("myflow"));
+    client.deleteProgramPreferences(someapp.worker("myworker"));
   }
 }

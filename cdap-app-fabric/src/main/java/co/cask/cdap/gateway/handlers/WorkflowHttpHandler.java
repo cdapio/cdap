@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.InstanceNotFoundException;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.NodeValue;
@@ -38,7 +37,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
@@ -113,13 +111,12 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
 
   @Inject
   WorkflowHttpHandler(Store store, ProgramRuntimeService runtimeService,
-                      QueueAdmin queueAdmin, TimeSchedulerService timeScheduler,
-                      MRJobInfoFetcher mrJobInfoFetcher, ProgramLifecycleService lifecycleService,
-                      MetricStore metricStore, NamespaceQueryAdmin namespaceQueryAdmin,
+                      TimeSchedulerService timeScheduler, MRJobInfoFetcher mrJobInfoFetcher,
+                      ProgramLifecycleService lifecycleService, NamespaceQueryAdmin namespaceQueryAdmin,
                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                       ProgramScheduleService programScheduleService) {
-    super(store, runtimeService, discoveryServiceClient, lifecycleService, queueAdmin,
-          mrJobInfoFetcher, metricStore, namespaceQueryAdmin, programScheduleService);
+    super(store, runtimeService, discoveryServiceClient, lifecycleService,
+          mrJobInfoFetcher, namespaceQueryAdmin, programScheduleService);
     this.datasetFramework = datasetFramework;
     this.timeScheduler = timeScheduler;
   }

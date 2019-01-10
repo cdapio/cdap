@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,14 +50,12 @@ public class SystemArgumentsTest {
     ApplicationId appId = NamespaceId.DEFAULT.app("a");
     ProgramId mrId = appId.mr("mr");
     ProgramId serviceId = appId.service("serv");
-    ProgramId flowId = appId.flow("flow");
     ProgramId sparkId = appId.spark("spark");
     ProgramId workerId = appId.worker("worker");
     ProgramId workflowID = appId.workflow("wf");
 
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(mrId, args));
     Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(serviceId, args));
-    Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(flowId, args));
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(sparkId, args));
     Assert.assertEquals(ProfileId.NATIVE, SystemArguments.getProfileIdForProgram(workerId, args));
     Assert.assertEquals(profileId, SystemArguments.getProfileIdForProgram(workflowID, args));

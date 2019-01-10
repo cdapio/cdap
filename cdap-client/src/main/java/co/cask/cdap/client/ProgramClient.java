@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,6 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
@@ -358,57 +357,6 @@ public class ProgramClient {
     }
 
     return ObjectResponse.fromJsonBody(response, DistributedProgramLiveInfo.class).getResponseObject();
-  }
-
-  /**
-   * Gets the number of instances that a flowlet is currently running on.
-   *
-   * @param flowlet the flowlet
-   * @return number of instances that the flowlet is currently running on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, flow, or flowlet could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   */
-  public int getFlowletInstances(FlowletId flowlet)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    URL url = config.resolveNamespacedURLV3(flowlet.getParent().getNamespaceId(),
-                                            String.format("apps/%s/flows/%s/flowlets/%s/instances",
-                                                          flowlet.getApplication(),
-                                                          flowlet.getFlow(),
-                                                          flowlet.getFlowlet()));
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(flowlet);
-    }
-
-    return ObjectResponse.fromJsonBody(response, Instances.class).getResponseObject().getInstances();
-  }
-
-  /**
-   * Sets the number of instances that a flowlet will run on.
-   *
-   * @param flowlet the flowlet
-   * @param instances number of instances for the flowlet to run on
-   * @throws IOException if a network error occurred
-   * @throws NotFoundException if the application, flow, or flowlet could not be found
-   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
-   */
-  public void setFlowletInstances(FlowletId flowlet, int instances)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    URL url = config.resolveNamespacedURLV3(flowlet.getParent().getNamespaceId(),
-                                            String.format("apps/%s/flows/%s/flowlets/%s/instances",
-                                                          flowlet.getApplication(),
-                                                          flowlet.getFlow(),
-                                                          flowlet.getFlowlet()));
-    HttpRequest request = HttpRequest.put(url).withBody(GSON.toJson(new Instances(instances))).build();
-
-    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(flowlet);
-    }
   }
 
   /**

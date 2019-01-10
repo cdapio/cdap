@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@
  * An Application is a logical grouping of
  * {@link co.cask.cdap.api.data.stream.Stream Streams},
  * {@link co.cask.cdap.api.dataset.Dataset Datasets},
- * {@link co.cask.cdap.api.flow.Flow Flows},
- * and other deployable elements.
+
+ * and programs.
  *
  * <h1>Application</h1>
  *

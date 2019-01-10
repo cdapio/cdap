@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,6 @@ import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.MetricsManager;
 import co.cask.cdap.test.ServiceManager;
@@ -69,12 +68,6 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     this.discoveryServiceClient = discoveryServiceClient;
     this.appFabricClient = appFabricClient;
     this.metricsManager = metricsManager;
-  }
-
-  @Override
-  public FlowManager getFlowManager(String flowName) {
-    Id.Program programId = Id.Program.from(Id.Application.fromEntityId(application), ProgramType.FLOW, flowName);
-    return new DefaultFlowManager(programId, appFabricClient, this, metricsManager);
   }
 
   @Override

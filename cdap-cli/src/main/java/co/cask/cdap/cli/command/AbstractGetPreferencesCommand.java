@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,7 +62,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
       case NAMESPACE:
         return String.format("%s %s preferences", action, type.getShortName());
       case APP:
-      case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:
@@ -89,7 +88,6 @@ public abstract class AbstractGetPreferencesCommand extends AbstractCommand {
         return client.getNamespacePreferences(cliConfig.getCurrentNamespace(), resolved);
       case APP:
         return client.getApplicationPreferences(parseApplicationId(arguments), resolved);
-      case FLOW:
       case MAPREDUCE:
       case WORKFLOW:
       case SERVICE:

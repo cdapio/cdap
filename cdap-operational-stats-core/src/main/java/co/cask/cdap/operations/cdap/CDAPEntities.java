@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -108,7 +108,7 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
       List<ApplicationRecord> appRecords =
         appLifecycleService.getApps(meta.getNamespaceId(), Predicates.<ApplicationRecord>alwaysTrue());
       apps += appRecords.size();
-      Set<ProgramType> programTypes = EnumSet.of(ProgramType.FLOW, ProgramType.MAPREDUCE, ProgramType.SERVICE,
+      Set<ProgramType> programTypes = EnumSet.of(ProgramType.MAPREDUCE, ProgramType.SERVICE,
                                                  ProgramType.SPARK, ProgramType.WORKER, ProgramType.WORKFLOW);
       for (ProgramType programType : programTypes) {
         programs += programLifecycleService.list(meta.getNamespaceId(), programType).size();

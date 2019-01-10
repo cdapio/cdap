@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.stream.StreamSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -50,7 +49,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
   private final Map<String, DatasetCreationSpec> datasetInstances;
-  private final Map<String, FlowSpecification> flows;
   private final Map<String, MapReduceSpecification> mapReduces;
   private final Map<String, SparkSpecification> sparks;
   private final Map<String, WorkflowSpecification> workflows;
@@ -64,7 +62,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
-                                         Map<String, FlowSpecification> flows,
                                          Map<String, MapReduceSpecification> mapReduces,
                                          Map<String, SparkSpecification> sparks,
                                          Map<String, WorkflowSpecification> workflows,
@@ -73,7 +70,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
     this(name, ApplicationId.DEFAULT_VERSION, description, configuration, artifactId, streams, datasetModules,
-         datasetInstances, flows, mapReduces, sparks, workflows, services, programSchedules, workers,
+         datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
          plugins);
   }
 
@@ -82,7 +79,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
-                                         Map<String, FlowSpecification> flows,
                                          Map<String, MapReduceSpecification> mapReduces,
                                          Map<String, SparkSpecification> sparks,
                                          Map<String, WorkflowSpecification> workflows,
@@ -98,7 +94,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.streams = ImmutableMap.copyOf(streams);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
     this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
-    this.flows = ImmutableMap.copyOf(flows);
     this.mapReduces = ImmutableMap.copyOf(mapReduces);
     this.sparks = ImmutableMap.copyOf(sparks);
     this.workflows = ImmutableMap.copyOf(workflows);
@@ -150,11 +145,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   }
 
   @Override
-  public Map<String, FlowSpecification> getFlows() {
-    return flows;
-  }
-
-  @Override
   public Map<String, MapReduceSpecification> getMapReduce() {
     return mapReduces;
   }
@@ -196,8 +186,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
         return sparks.keySet();
       case MAPREDUCE:
         return mapReduces.keySet();
-      case FLOW:
-        return flows.keySet();
       case WORKER:
         return workers.keySet();
       case SERVICE:

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,13 @@
 package co.cask.cdap.internal.app.verification;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.app.verification.AbstractVerifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.error.Err;
 import co.cask.cdap.proto.id.ApplicationId;
+
+import java.util.Arrays;
 
 /**
  * This class is responsible for verifying the Application details of
@@ -30,7 +33,7 @@ import co.cask.cdap.proto.id.ApplicationId;
  * Following are the checks done for Application
  * <ul>
  * <li>Application name is an ID</li>
- * <li>Application contains at one of the following: Flow, Batch/MR</li>
+ * <li>Application contains at least one program</li>
  * </ul>
  * </p>
  */
@@ -50,14 +53,13 @@ public class ApplicationVerification extends AbstractVerifier<ApplicationSpecifi
       return verifyResult;
     }
 
-    // Check if there is at least one of the following : Flow or MapReduce or Workflow for now.
-    // TODO (terence): Logic here is really not good. Need to refactor.
-    if (input.getFlows().isEmpty()
-        && input.getMapReduce().isEmpty()
-        && input.getSpark().isEmpty()
-        && input.getWorkflows().isEmpty()
-        && input.getServices().isEmpty()
-        && input.getWorkers().isEmpty()) {
+    // Check if there is at least one program
+    // Loop through all program types. For each program type, get the number of programs of that type.
+    // Then sum up total number of programs.
+    int numberOfPrograms = Arrays.stream(ProgramType.values())
+      .mapToInt(t -> input.getProgramsByType(t).size())
+      .reduce(0, (l, r) -> l + r);
+    if (numberOfPrograms <= 0) {
       return VerifyResult.failure(Err.Application.ATLEAST_ONE_PROCESSOR, input.getName());
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -150,15 +150,15 @@ public class FileMetadataCleanerTest {
 
     FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
     FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    LoggingContext flowContext =
-      LoggingContextHelper.getLoggingContext("testNs", "testApp", "testFlow", ProgramType.FLOW);
+    LoggingContext loggingContext =
+      LoggingContextHelper.getLoggingContext("testNs", "testApp", "testService", ProgramType.SERVICE);
     long eventTimestamp = System.currentTimeMillis();
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location testLocation = locationFactory.create("testFile");
     try {
       // write 50 entries in old format
       for (int i = 0; i < 50; i++) {
-        fileMetaDataManager.writeMetaData(flowContext, eventTimestamp + i, testLocation);
+        fileMetaDataManager.writeMetaData(loggingContext, eventTimestamp + i, testLocation);
       }
 
       LoggingContext wflowContext =
@@ -183,7 +183,7 @@ public class FileMetadataCleanerTest {
       }
 
       FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
-      Assert.assertEquals(50, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(flowContext),
+      Assert.assertEquals(50, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext),
                                                           eventTimestamp - 1, eventTimestamp + 100).size());
       Assert.assertEquals(1, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(wflowContext),
                                                            eventTimestamp - 1, eventTimestamp + 100).size());

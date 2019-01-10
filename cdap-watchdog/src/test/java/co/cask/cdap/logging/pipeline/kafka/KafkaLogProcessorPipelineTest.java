@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,9 +43,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.appender.ForwardingAppender;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.meta.Checkpoint;
@@ -299,8 +299,8 @@ public class KafkaLogProcessorPipelineTest {
 
     // Publish some log messages to Kafka
     long now = System.currentTimeMillis();
-    FlowletLoggingContext flowletLoggingContext =
-      new FlowletLoggingContext("default", "app1", "flow1", "flowlet1", "run1", "instance1");
+    WorkerLoggingContext loggingContext =
+      new WorkerLoggingContext("default", "app1", "worker1", "run1", "instance1");
     publishLog(topic,
                ImmutableList.of(
                  createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
@@ -309,7 +309,7 @@ public class KafkaLogProcessorPipelineTest {
                  createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
                  createLoggingEvent("test.logger", Level.DEBUG, "hidden", now - 600),
                  createLoggingEvent("test.logger", Level.INFO, "4", now - 100)),
-               flowletLoggingContext
+               loggingContext
     );
 
     WorkflowProgramLoggingContext workflowProgramLoggingContext =
@@ -341,14 +341,14 @@ public class KafkaLogProcessorPipelineTest {
                              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
                                                  "system.app.log.info",
                                                  AggregationFunction.SUM,
-                                                 LoggingContextHelper.getMetricsTags(flowletLoggingContext),
+                                                 LoggingContextHelper.getMetricsTags(loggingContext),
                                                  new ArrayList<String>()), 5L);
 
       verifyMetricsWithRetry(metricStore,
                              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
                                                  "system.app.log.debug",
                                                  AggregationFunction.SUM,
-                                                 LoggingContextHelper.getMetricsTags(flowletLoggingContext),
+                                                 LoggingContextHelper.getMetricsTags(loggingContext),
                                                  new ArrayList<String>()), 1L);
 
       verifyMetricsWithRetry(metricStore,

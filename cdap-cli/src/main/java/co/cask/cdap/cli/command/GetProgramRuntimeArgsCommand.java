@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,13 +61,6 @@ public class GetProgramRuntimeArgsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    switch(elementType) {
-      case FLOW:
-        return String.format("Gets the runtime arguments of %s. Flows are deprecated as of release 5.0," +
-                             " use SparkStreaming as a replacement technology.",
-                             Fragment.of(Article.A, elementType.getName()));
-      default:
-        return String.format("Gets the runtime arguments of %s", Fragment.of(Article.A, elementType.getName()));
-    }
+    return String.format("Gets the runtime arguments of %s", Fragment.of(Article.A, elementType.getName()));
   }
 }

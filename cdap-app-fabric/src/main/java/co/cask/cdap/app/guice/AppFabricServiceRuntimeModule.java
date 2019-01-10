@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -85,13 +85,11 @@ import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeSchedule
 import co.cask.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
-import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.RunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
-import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.bootstrap.guice.BootstrapModules;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -217,7 +215,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
-                               bind(AppFabricServer.class).to(StandaloneAppFabricServer.class).in(Scopes.SINGLETON);
                                bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
                                  .in(Scopes.SINGLETON);
                                bind(TimeSchedulerService.class).to(LocalTimeSchedulerService.class)

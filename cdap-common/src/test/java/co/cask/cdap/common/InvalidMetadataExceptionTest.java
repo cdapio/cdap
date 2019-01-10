@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,18 +38,10 @@ public class InvalidMetadataExceptionTest {
 
     // test program
     invalidMetadataException =
-      new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.FLOW, "myflow")
+      new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.WORKER, "wk")
                                      .toMetadataEntity(), "error");
-    expectedMessage = "Unable to set metadata for flow: myflow in application: app of version: -SNAPSHOT deployed in " +
+    expectedMessage = "Unable to set metadata for worker: wk in application: app of version: -SNAPSHOT deployed in " +
       "namespace: default. error";
-    Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
-
-    // test flowlet
-    invalidMetadataException =
-      new InvalidMetadataException(NamespaceId.DEFAULT.app("app").program(ProgramType.FLOW, "flow1")
-                                     .flowlet("flowlet1").toMetadataEntity(), "error");
-    expectedMessage = "Unable to set metadata for flowlet: flowlet1 of flow: flow1 in application: app of " +
-      "version: -SNAPSHOT deployed in namespace: default. error";
     Assert.assertEquals(expectedMessage, invalidMetadataException.getMessage());
 
     // test custom entity

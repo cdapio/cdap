@@ -457,7 +457,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
    */
   @Test
   public void testNonExistentNamespace() throws Exception {
-    String[] endpoints = {"flows", "spark", "services", "workers", "mapreduce", "workflows"};
+    String[] endpoints = {"spark", "services", "workers", "mapreduce", "workflows"};
 
     for (String endpoint : endpoints) {
       HttpResponse response = doGet("/v3/namespaces/default/" + endpoint);
@@ -845,7 +845,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testProgramList() throws Exception {
     // test initial state
-    testListInitialState(TEST_NAMESPACE1, ProgramType.FLOW);
     testListInitialState(TEST_NAMESPACE2, ProgramType.MAPREDUCE);
     testListInitialState(TEST_NAMESPACE1, ProgramType.WORKFLOW);
     testListInitialState(TEST_NAMESPACE2, ProgramType.SPARK);

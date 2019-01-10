@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,11 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueAdmin;
-import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBQueueClientFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.runtime.TransactionModules;
@@ -38,9 +33,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
   @Override
   public void configure() {
     bind(LevelDBTableService.class).in(Scopes.SINGLETON);
-
-    bind(QueueClientFactory.class).to(LevelDBQueueClientFactory.class).in(Singleton.class);
-    bind(QueueAdmin.class).to(LevelDBQueueAdmin.class).in(Singleton.class);
 
     // bind transactions
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);

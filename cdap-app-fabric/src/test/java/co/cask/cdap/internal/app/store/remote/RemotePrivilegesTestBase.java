@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,7 +75,7 @@ public abstract class RemotePrivilegesTestBase {
   protected static final Principal CAROL = new Principal("carol", Principal.PrincipalType.USER);
   protected static final NamespaceId NS = new NamespaceId("ns");
   protected static final ApplicationId APP = NS.app("app");
-  protected static final ProgramId PROGRAM = APP.program(ProgramType.FLOW, "flo");
+  protected static final ProgramId PROGRAM = APP.program(ProgramType.SERVICE, "ser");
   private static final int CACHE_TIMEOUT = 3;
 
   protected static AuthorizationEnforcer authorizationEnforcer;

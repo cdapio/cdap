@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,8 +49,7 @@ import javax.annotation.Nullable;
 public interface TestManager {
 
   /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application
+   * Deploys an {@link Application}. Programs defined in the application
    * must be in the same or children package as the application.
    *
    * @param namespace The namespace to deploy to

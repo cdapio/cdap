@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -538,8 +538,8 @@ public class TestBase {
   }
 
   /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application}.
+   * Programs defined in the application must be in the same or children package as the application.
    *
    * @param namespace the namespace to deploy the application to
    * @param applicationClz the application class
@@ -554,8 +554,8 @@ public class TestBase {
 
 
   /**
-   * Deploys an {@link Application} with a config. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application} with a config.
+   * Programs defined in the application must be in the same or children package as the application.
    *
    * @param namespace the namespace to deploy the application to
    * @param applicationClz the application class
@@ -573,8 +573,8 @@ public class TestBase {
   }
 
   /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application}.
+   * Programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz the application class
    * @param bundleEmbeddedJars any extra jars to bundle in the application jar
@@ -586,8 +586,8 @@ public class TestBase {
   }
 
   /**
-   * Deploys an {@link Application}. The {@link co.cask.cdap.api.flow.Flow Flows} and
-   * other programs defined in the application must be in the same or children package as the application.
+   * Deploys an {@link Application}.
+   * Programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz the application class
    * @param appConfig the application config

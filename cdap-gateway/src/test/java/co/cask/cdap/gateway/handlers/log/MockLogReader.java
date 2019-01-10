@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,10 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
@@ -111,10 +111,10 @@ public class MockLogReader implements LogReader {
   }
 
   public void generateLogs() throws InterruptedException {
-    // Add logs for app testApp2, flow testFlow1
-    generateLogs(new FlowletLoggingContext(NamespaceId.DEFAULT.getEntityName(),
-                                           "testApp2", "testFlow1", "testFlowlet1", "", ""),
-                 NamespaceId.DEFAULT.app("testApp2").flow("testFlow1"),
+    // Add logs for app testApp2, worker testWorker1
+    generateLogs(new WorkerLoggingContext(NamespaceId.DEFAULT.getEntityName(),
+                                          "testApp2", "testWorker1", "", ""),
+                 NamespaceId.DEFAULT.app("testApp2").worker("testWorker1"),
                  ProgramRunStatus.RUNNING);
 
     // Add logs for app testApp3, mapreduce testMapReduce1
@@ -135,10 +135,10 @@ public class MockLogReader implements LogReader {
                  TEST_NAMESPACE_ID.app("testTemplate1").mr("testMapReduce1"),
                  ProgramRunStatus.COMPLETED);
 
-    // Add logs for app testApp1, flow testFlow1 in testNamespace
-    generateLogs(new FlowletLoggingContext(TEST_NAMESPACE_ID.getNamespace(),
-                                           "testApp1", "testFlow1", "testFlowlet1", "", ""),
-                 TEST_NAMESPACE_ID.app("testApp1").flow("testFlow1"),
+    // Add logs for app testApp1, worker testWorker1 in testNamespace
+    generateLogs(new WorkerLoggingContext(TEST_NAMESPACE_ID.getNamespace(),
+                                           "testApp1", "testWorker1", "", ""),
+                 TEST_NAMESPACE_ID.app("testApp1").worker("testWorker1"),
                  ProgramRunStatus.COMPLETED);
 
     // Add logs for app testApp1, service testService1 in testNamespace

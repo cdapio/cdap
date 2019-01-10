@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,16 +68,16 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testFlowNext() throws Exception {
-    testNext("testApp1", "flows", "testFlow1", true, MockLogReader.TEST_NAMESPACE);
-    testNextNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testNextFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testNextNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testNext("testApp1", "flows", "testFlow1", false, MockLogReader.TEST_NAMESPACE);
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.of());
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+  public void testWorkerNext() throws Exception {
+    testNext("testApp1", "workers", "testWorker1", true, MockLogReader.TEST_NAMESPACE);
+    testNextNoMax("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testNextFilter("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testNextNoFrom("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testNext("testApp1", "workers", "testWorker1", false, MockLogReader.TEST_NAMESPACE);
+    testNextRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.of());
+    testNextRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of());
-    testNextRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+    testNextRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
 
@@ -117,15 +117,15 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testFlowPrev() throws Exception {
-    testPrev("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testPrevNoMax("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testPrevFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testPrevNoFrom("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.of());
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+  public void testWorkerPrev() throws Exception {
+    testPrev("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoMax("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testPrevFilter("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testPrevNoFrom("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testPrevRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "text", ImmutableList.of());
+    testPrevRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of());
-    testPrevRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+    testPrevRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
   }
 
@@ -165,17 +165,17 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   @Test
-  public void testFlowLogs() throws Exception {
-    testLogs("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testLogsFilter("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE);
-    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "text",
+  public void testWorkerLogs() throws Exception {
+    testLogs("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testLogsFilter("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE);
+    testLogsRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "text",
                   ImmutableList.of());
-    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+    testLogsRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of());
-    testLogsRunId("testApp1", "flows", "testFlow1", MockLogReader.TEST_NAMESPACE, "json",
+    testLogsRunId("testApp1", "workers", "testWorker1", MockLogReader.TEST_NAMESPACE, "json",
                   ImmutableList.of("logLevel", "lineNumber"));
     try {
-      testLogs("testApp1", "flows", "testFlow1", NamespaceId.DEFAULT.getEntityName());
+      testLogs("testApp1", "workers", "testWorker1", NamespaceId.DEFAULT.getEntityName());
     } catch (AssertionError e) {
       // should fail
       return;

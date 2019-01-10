@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -636,7 +636,7 @@ public abstract class AbstractDatasetFrameworkTest {
     expectedMessages.add(new AuditMessage(0, MY_TABLE, "", AuditType.UPDATE, AuditPayload.EMPTY_PAYLOAD));
 
     // Access instance
-    ProgramRunId runId = new ProgramId("ns", "app", ProgramType.FLOW, "flow").run(RunIds.generate().getId());
+    ProgramRunId runId = new ProgramId("ns", "app", ProgramType.WORKER, "worker").run(RunIds.generate().getId());
     LineageWriterDatasetFramework lineageFramework =
       new LineageWriterDatasetFramework(framework, new NoOpLineageWriter(), new NoOpUsageRegistry(),
                                         new AuthenticationTestContext(), new NoOpAuthorizer());

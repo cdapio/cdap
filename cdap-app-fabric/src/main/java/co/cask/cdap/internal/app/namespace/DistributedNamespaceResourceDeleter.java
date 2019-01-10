@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
@@ -41,13 +40,13 @@ public class DistributedNamespaceResourceDeleter extends AbstractNamespaceResour
   @Inject
   DistributedNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
                                       DashboardStore dashboardStore, DatasetFramework dsFramework,
-                                      QueueAdmin queueAdmin, MetricStore metricStore,
+                                      MetricStore metricStore,
                                       ApplicationLifecycleService applicationLifecycleService,
                                       ArtifactRepository artifactRepository,
                                       StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
                                       MessagingService messagingService, StreamAdmin streamAdmin,
                                       ProfileService profileService) {
-    super(impersonator, store, preferencesService, dashboardStore, dsFramework, queueAdmin, metricStore,
+    super(impersonator, store, preferencesService, dashboardStore, dsFramework, metricStore,
           applicationLifecycleService, artifactRepository, storageProviderNamespaceAdmin, messagingService,
           profileService);
     this.streamAdmin = streamAdmin;

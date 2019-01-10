@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
-import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
@@ -113,12 +113,12 @@ public class CDAPLogAppenderTest {
   }
 
   @AfterClass
-  public static void cleanUp() throws Exception {
+  public static void cleanUp() {
     txManager.stopAndWait();
   }
 
   @Test
-  public void testCDAPLogAppender() throws Exception {
+  public void testCDAPLogAppender() {
     int syncInterval = 1024 * 1024;
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
 
@@ -146,8 +146,7 @@ public class CDAPLogAppenderTest {
     Map<String, String> properties = new HashMap<>();
     properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "default");
     properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
-    properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
-    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowlet");
+    properties.put(UserServiceLoggingContext.TAG_USER_SERVICE_ID, "testService");
 
     event.setMDCPropertyMap(properties);
 
@@ -208,8 +207,7 @@ public class CDAPLogAppenderTest {
     Map<String, String> properties = new HashMap<>();
     properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "testTimeRotation");
     properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
-    properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
-    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowlet");
+    properties.put(UserServiceLoggingContext.TAG_USER_SERVICE_ID, "testService");
 
     long currentTimeMillisEvent1 = System.currentTimeMillis();
 
@@ -281,8 +279,7 @@ public class CDAPLogAppenderTest {
     Map<String, String> properties = new HashMap<>();
     properties.put(NamespaceLoggingContext.TAG_NAMESPACE_ID, "testSizeRotation");
     properties.put(ApplicationLoggingContext.TAG_APPLICATION_ID, "testApp");
-    properties.put(FlowletLoggingContext.TAG_FLOW_ID, "testFlow");
-    properties.put(FlowletLoggingContext.TAG_FLOWLET_ID, "testFlowlet");
+    properties.put(UserServiceLoggingContext.TAG_USER_SERVICE_ID, "testService");
 
     long currentTimeMillisEvent1 = System.currentTimeMillis();
 

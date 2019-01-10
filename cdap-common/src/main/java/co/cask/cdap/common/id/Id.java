@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,9 +24,6 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.FlowId;
-import co.cask.cdap.proto.id.FlowletId;
-import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -146,34 +143,6 @@ public abstract class Id implements EntityIdCompatible {
     @Override
     public QueryId toEntityId() {
       return new QueryId(id);
-    }
-  }
-
-  /**
-   * Uniquely identifies a System Service.
-   */
-  public static final class SystemService extends Id {
-    private final String id;
-
-    private SystemService(String id) {
-      if (id == null) {
-        throw new NullPointerException("id cannot be null.");
-      }
-      this.id = id;
-    }
-
-    public static SystemService from(String id) {
-      return new SystemService(id);
-    }
-
-    @Override
-    public String getId() {
-      return id;
-    }
-
-    @Override
-    public SystemServiceId toEntityId() {
-      return new SystemServiceId(id);
     }
   }
 
@@ -457,122 +426,6 @@ public abstract class Id implements EntityIdCompatible {
   }
 
   /**
-   * Uniquely identifies a Flow.
-   */
-  public static class Flow extends Program {
-
-    private Flow(Application application, String id) {
-      super(application, ProgramType.FLOW, id);
-    }
-
-    public static Flow from(Application application, String flowId) {
-      return new Flow(application, flowId);
-    }
-
-    public static Flow from(String appId, String flowId) {
-      return new Flow(Id.Application.from(Namespace.DEFAULT, appId), flowId);
-    }
-
-    public static Flow from(String namespaceId, String appId, String flowId) {
-      return new Flow(Id.Application.from(namespaceId, appId), flowId);
-    }
-
-    public static Flow from(Id.Namespace namespaceId, String appId, String flowId) {
-      return new Flow(Id.Application.from(namespaceId, appId), flowId);
-    }
-
-    public static Flow fromEntityId(FlowId flowId) {
-      return new Flow(Id.Application.fromEntityId(flowId.getParent()), flowId.getProgram());
-    }
-
-    /**
-     * Uniquely identifies a Flowlet.
-     */
-    public static class Flowlet extends NamespacedId {
-
-      private final Flow flow;
-      private final String id;
-
-      private Flowlet(Flow flow, String id) {
-        if (flow == null) {
-          throw new IllegalArgumentException("flow cannot be null");
-        }
-        if (id == null) {
-          throw new IllegalArgumentException("id cannot be null");
-        }
-        this.flow = flow;
-        this.id = id;
-      }
-
-      public static Flowlet from(Flow flow, String id) {
-        return new Flowlet(flow, id);
-      }
-
-      public static Flowlet from(Application app, String flowId, String id) {
-        return new Flowlet(new Flow(app, flowId), id);
-      }
-
-      public static Flowlet fromEntityId(FlowletId flowletId) {
-        return from(Id.Application.fromEntityId(flowletId.getParent().getParent()),
-                    flowletId.getFlow(), flowletId.getFlowlet());
-      }
-
-      @Override
-      public Namespace getNamespace() {
-        return flow.getNamespace();
-      }
-
-      @Override
-      public String getId() {
-        return id;
-      }
-
-      public Flow getFlow() {
-        return flow;
-      }
-
-      @Override
-      public FlowletId toEntityId() {
-        return new FlowletId(flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), id);
-      }
-
-      /**
-       * Uniquely identifies a Flowlet Queue.
-       */
-      public static final class Queue extends NamespacedId {
-
-        private final Flowlet producer;
-        private final String id;
-
-        public Queue(Flowlet producer, String id) {
-          this.producer = producer;
-          this.id = id;
-        }
-
-        public Flowlet getProducer() {
-          return producer;
-        }
-
-        @Override
-        public String getId() {
-          return id;
-        }
-
-        @Override
-        public Namespace getNamespace() {
-          return producer.getNamespace();
-        }
-
-        @Override
-        public FlowletQueueId toEntityId() {
-          return new FlowletQueueId(producer.getNamespace().getId(), producer.getFlow().getApplicationId(),
-                                    producer.getFlow().getId(), producer.getId(), id);
-        }
-      }
-    }
-  }
-
-  /**
    * Represents ID of a Schedule.
    */
   public static class Schedule extends NamespacedId {
@@ -826,60 +679,6 @@ public abstract class Id implements EntityIdCompatible {
   }
 
   /**
-   * Dataset Type Id identifies a given dataset module.
-   */
-  public static final class DatasetType extends NamespacedId {
-    private final Namespace namespace;
-    private final String typeName;
-
-    private DatasetType(Namespace namespace, String typeName) {
-      if (namespace == null) {
-        throw new NullPointerException("Namespace cannot be null.");
-      }
-      if (typeName == null) {
-        throw new NullPointerException("Dataset type name cannot be null.");
-      }
-      if (!isValidDatasetId(typeName)) {
-        throw new IllegalArgumentException("Invalid characters found in dataset type name '" + typeName +
-                                             "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
-      }
-      this.namespace = namespace;
-      this.typeName = typeName;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    public String getTypeName() {
-      return typeName;
-    }
-
-    public static DatasetType from(Namespace id, String typeId) {
-      return new DatasetType(id, typeId);
-    }
-
-    public static DatasetType from(String namespaceId, String typeId) {
-      return new DatasetType(Namespace.from(namespaceId), typeId);
-    }
-
-    @Override
-    public String getId() {
-      return typeName;
-    }
-
-    @Override
-    public DatasetTypeId toEntityId() {
-      return new DatasetTypeId(namespace.getId(), typeName);
-    }
-  }
-
-  /**
    * Dataset Module Id identifies a given dataset module.
    */
   public static final class DatasetModule extends NamespacedId {
@@ -930,60 +729,6 @@ public abstract class Id implements EntityIdCompatible {
 
     public static DatasetModule fromEntityId(DatasetModuleId moduleId) {
       return from(Id.Namespace.fromEntityId(moduleId.getNamespaceId()), moduleId.getModule());
-    }
-  }
-
-  /**
-   * Dataset Instance Id identifies a given dataset instance.
-   */
-  public static final class DatasetInstance extends NamespacedId {
-    private final Namespace namespace;
-    private final String instanceId;
-
-    private DatasetInstance(Namespace namespace, String instanceId) {
-      if (namespace == null) {
-        throw new NullPointerException("Namespace cannot be null.");
-      }
-      if (instanceId == null) {
-        throw new NullPointerException("Dataset instance id cannot be null.");
-      }
-      if (!isValidDatasetId(instanceId)) {
-        throw new IllegalArgumentException("Invalid characters found in dataset instance Id '" + instanceId +
-                                             "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
-      }
-      this.namespace = namespace;
-      this.instanceId = instanceId;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return instanceId;
-    }
-
-    public static DatasetInstance from(Namespace id, String instanceId) {
-      return new DatasetInstance(id, instanceId);
-    }
-
-    public static DatasetInstance from(String namespaceId, String instanceId) {
-      return new DatasetInstance(Namespace.from(namespaceId), instanceId);
-    }
-
-    @Override
-    public DatasetId toEntityId() {
-      return new DatasetId(namespace.getId(), instanceId);
-    }
-
-    public static DatasetInstance fromEntityId(DatasetId instanceId) {
-      return from(Id.Namespace.fromEntityId(instanceId.getNamespaceId()), instanceId.getDataset());
     }
   }
 

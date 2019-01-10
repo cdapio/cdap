@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.data.runtime.preview;
 
-import co.cask.cdap.data.runtime.DataFabricLocalModule;
+import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -53,7 +53,7 @@ public class PreviewDataModules {
   public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
 
   public Module getDataFabricModule(final TransactionManager transactionManager) {
-    return Modules.override(new DataFabricLocalModule()).with(new AbstractModule() {
+    return Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
       @Override
       protected void configure() {
         // InMemorySystemTxClient uses TransactionManager directly, so we need to share TransactionManager.

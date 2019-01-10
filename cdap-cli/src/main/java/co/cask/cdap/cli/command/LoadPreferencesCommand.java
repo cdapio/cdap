@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,14 +86,7 @@ public class LoadPreferencesCommand extends AbstractSetPreferencesCommand {
 
   @Override
   public String getDescription() {
-    switch (type) {
-      case FLOW:
-        return String.format("Sets the preferences of %s from a local JSON config file. " +
-                             "Flows are deprecated as of release 5.0, use SparkStreaming as a replacement technology.",
-                             Fragment.of(Article.A, type.getName()));
-      default:
-        return String.format("Sets the preferences of %s from a local JSON config file",
-            Fragment.of(Article.A, type.getName()));
-    }
+    return String.format("Sets the preferences of %s from a local JSON config file",
+                         Fragment.of(Article.A, type.getName()));
   }
 }

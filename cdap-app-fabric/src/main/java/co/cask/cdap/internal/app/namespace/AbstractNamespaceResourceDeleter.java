@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.profile.ProfileService;
@@ -52,7 +51,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
   private final PreferencesService preferencesService;
   private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
-  private final QueueAdmin queueAdmin;
   private final MetricStore metricStore;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
@@ -62,7 +60,7 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
 
 
   AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
-                                   DashboardStore dashboardStore, DatasetFramework dsFramework, QueueAdmin queueAdmin,
+                                   DashboardStore dashboardStore, DatasetFramework dsFramework,
                                    MetricStore metricStore,
                                    ApplicationLifecycleService applicationLifecycleService,
                                    ArtifactRepository artifactRepository,
@@ -73,7 +71,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     this.preferencesService = preferencesService;
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
-    this.queueAdmin = queueAdmin;
     this.metricStore = metricStore;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
@@ -97,8 +94,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     // Delete datasets and modules
     dsFramework.deleteAllInstances(namespaceId);
     dsFramework.deleteAllModules(namespaceId);
-    // Delete queues and streams data
-    queueAdmin.dropAllInNamespace(namespaceId);
 
     // Delete all the streams in namespace
     deleteStreams(namespaceId);

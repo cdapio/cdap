@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -319,7 +319,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   @Override
   public void addExtraTransactionAware(TransactionAware txAware) {
     // Use LIFO ordering. This method is only used for internal TransactionAware
-    // like Flow Queue publisher/consumer and TMS publisher/fetcher
+    // like TMS publisher/fetcher
     // Using LIFO ordering is to allow TMS tx aware always be the last.
     if (!extraTxAwares.contains(txAware)) {
       extraTxAwares.addFirst(txAware);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,13 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
-import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
@@ -35,7 +31,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
-import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -56,26 +51,19 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   private final Store store;
   private final ProgramTerminator programTerminator;
-  private final StreamConsumerFactory streamConsumerFactory;
-  private final QueueAdmin queueAdmin;
   private final MetricStore metricStore;
   private final MetadataPublisher metadataPublisher;
-  private final Impersonator impersonator;
   private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
-                                    StreamConsumerFactory streamConsumerFactory,
-                                    QueueAdmin queueAdmin, MetricStore metricStore,
-                                    MetadataPublisher metadataPublisher, Impersonator impersonator,
+                                    MetricStore metricStore,
+                                    MetadataPublisher metadataPublisher,
                                     Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
-    this.streamConsumerFactory = streamConsumerFactory;
-    this.queueAdmin = queueAdmin;
     this.metricStore = metricStore;
     this.metadataPublisher = metadataPublisher;
-    this.impersonator = impersonator;
     this.programScheduler = programScheduler;
   }
 
@@ -94,13 +82,6 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       programTerminator.stop(programId);
       programScheduler.deleteSchedules(programId);
       programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
-
-      // drop all queues and stream states of a deleted flow
-      if (ProgramType.FLOW.equals(type)) {
-        FlowUtils.clearDeletedFlow(impersonator, queueAdmin, streamConsumerFactory, programId,
-                                   (FlowSpecification) spec);
-        deletedFlows.add(programId.getEntityName());
-      }
 
       // Remove metadata for the deleted program
       metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(programId.toMetadataEntity()));

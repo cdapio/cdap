@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,10 @@ public class TwillAppNamesTest {
 
   @Test
   public void test() {
-    ProgramId flowId = new NamespaceId("test_ns").app("my_app").flow("my_flow");
-    String flowTwillAppName = TwillAppNames.toTwillAppName(flowId);
-    Assert.assertEquals("flow.test_ns.my_app.my_flow", flowTwillAppName);
-    Assert.assertEquals(flowId, TwillAppNames.fromTwillAppName(flowTwillAppName));
+    ProgramId serviceId = new NamespaceId("test_ns").app("my_app").service("myservice");
+    String twillAppName = TwillAppNames.toTwillAppName(serviceId);
+    Assert.assertEquals("service.test_ns.my_app.myservice", twillAppName);
+    Assert.assertEquals(serviceId, TwillAppNames.fromTwillAppName(twillAppName));
 
     // parsing from twill app name can be optional (return null)
     Assert.assertNull(TwillAppNames.fromTwillAppName(Constants.Service.MASTER_SERVICES, false));

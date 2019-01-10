@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -378,7 +378,7 @@ public class AppMetadataStoreTest {
     final Set<ProgramRunId> programRunIdSetHalf = new HashSet<>();
     for (int i = 0; i < 100; ++i) {
       ApplicationId application = NamespaceId.DEFAULT.app("app");
-      final ProgramId program = application.program(ProgramType.FLOW, "program");
+      final ProgramId program = application.program(ProgramType.SERVICE, "program");
       final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
       expected.add(runId.toString());
       final int index = i;

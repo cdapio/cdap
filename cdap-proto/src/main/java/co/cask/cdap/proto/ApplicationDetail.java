@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -138,10 +138,6 @@ public class ApplicationDetail {
   public static ApplicationDetail fromSpec(ApplicationSpecification spec,
                                            @Nullable String ownerPrincipal) {
     List<ProgramRecord> programs = new ArrayList<>();
-    for (ProgramSpecification programSpec : spec.getFlows().values()) {
-      programs.add(new ProgramRecord(ProgramType.FLOW, spec.getName(),
-                                     programSpec.getName(), programSpec.getDescription()));
-    }
     for (ProgramSpecification programSpec : spec.getMapReduce().values()) {
       programs.add(new ProgramRecord(ProgramType.MAPREDUCE, spec.getName(),
                                      programSpec.getName(), programSpec.getDescription()));

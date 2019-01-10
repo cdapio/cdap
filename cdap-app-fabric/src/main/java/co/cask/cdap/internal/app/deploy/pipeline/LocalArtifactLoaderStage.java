@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.InMemoryConfigurator;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
@@ -71,7 +70,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
-    this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
+    this.adapter = ApplicationSpecificationAdapter.create();
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
     this.authorizationEnforcer = authorizationEnforcer;

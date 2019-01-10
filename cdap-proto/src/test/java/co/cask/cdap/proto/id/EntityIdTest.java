@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,11 +51,6 @@ public class EntityIdTest {
     ids.add(Ids.namespace("foo").datasetType("typ"));
     ids.add(Ids.namespace("foo").stream("t"));
     ids.add(Ids.namespace("foo").app("app"));
-    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"));
-    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"));
-    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"));
-    ids.add(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"));
-    ids.add(Ids.namespace("foo").app("app").flow("flo"));
     ids.add(Ids.namespace("foo").app("app").workflow("flo"));
     ids.add(Ids.namespace("foo").app("app").mr("flo"));
     ids.add(Ids.namespace("foo").app("app").spark("flo"));
@@ -69,11 +64,6 @@ public class EntityIdTest {
     ids.add(Ids.namespace("zzz").datasetType("zzz"));
     ids.add(Ids.namespace("zzz").stream("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz"));
-    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz"));
-    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").run("zzz"));
-    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").flowlet("zzz"));
-    ids.add(Ids.namespace("zzz").app("zzz").program(ProgramType.FLOW, "zzz").flowlet("zzz").queue("zzz"));
-    ids.add(Ids.namespace("zzz").app("zzz").flow("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz").workflow("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz").mr("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz").spark("zzz"));
@@ -94,28 +84,6 @@ public class EntityIdTest {
     idsToString.put(Ids.namespace("foo").stream("sdf"), "stream:foo.sdf");
     idsToString.put(Ids.namespace("foo").app("app"), "application:foo.app.-SNAPSHOT");
     idsToString.put(Ids.namespace("foo").app("app", "v1"), "application:foo.app.v1");
-    idsToString.put(Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"),
-                    "program:foo.app.-SNAPSHOT.flow.flo");
-    idsToString.put(Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo"),
-                    "program:foo.app.v1.flow.flo");
-    idsToString.put(
-        Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
-        "program_run:foo.app.-SNAPSHOT.flow.flo.run1");
-    idsToString.put(Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").run("run1"),
-                    "program_run:foo.app.v1.flow.flo.run1");
-    idsToString.put(
-        Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
-        "flowlet:foo.app.-SNAPSHOT.flo.flol");
-    idsToString.put(
-      Ids.namespace("foo").app("app", "v2").program(ProgramType.FLOW, "flo").flowlet("flol"),
-      "flowlet:foo.app.v2.flo.flol");
-    idsToString.put(
-        Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
-        "flowlet_queue:foo.app.flo.flol.q");
-    // Even though app has version, queue id won't contain the version id
-    idsToString.put(
-      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
-      "flowlet_queue:foo.app.flo.flol.q");
   }
 
   /**
@@ -145,38 +113,6 @@ public class EntityIdTest {
     idsToJson.put(
       Ids.namespace("foo").app("app", "v1"),
       "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"entity\":\"APPLICATION\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"type\":\"Flow\"," +
-        "\"program\":\"flo\",\"entity\":\"PROGRAM\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"type\":\"Flow\"," +
-        "\"program\":\"flo\",\"entity\":\"PROGRAM\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").run("run1"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"type\":\"Flow\"," +
-        "\"program\":\"flo\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").run("run1"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"type\":\"Flow\"," +
-        "\"program\":\"flo\",\"run\":\"run1\",\"entity\":\"PROGRAM_RUN\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"flow\":\"flo\"," +
-        "\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").flowlet("flol"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"v1\",\"flow\":\"flo\"," +
-        "\"flowlet\":\"flol\",\"entity\":\"FLOWLET\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\"," +
-        "\"flowlet\":\"flol\",\"queue\":\"q\",\"entity\":\"FLOWLET_QUEUE\"}");
-    idsToJson.put(
-      Ids.namespace("foo").app("app", "v1").program(ProgramType.FLOW, "flo").flowlet("flol").queue("q"),
-      "{\"namespace\":\"foo\",\"application\":\"app\",\"flow\":\"flo\"," +
-        "\"flowlet\":\"flol\",\"queue\":\"q\",\"entity\":\"FLOWLET_QUEUE\"}");
   }
 
   @Test
@@ -360,7 +296,7 @@ public class EntityIdTest {
   public void testHierarchy() {
     NamespaceId namespace = Ids.namespace("foo");
     ApplicationId app = namespace.app("bar");
-    ProgramId program = app.flow("foo");
+    ProgramId program = app.service("foo");
 
     List<EntityId> expectedHierarchy = new ArrayList<>();
     expectedHierarchy.add(namespace);

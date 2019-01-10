@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
@@ -341,9 +340,7 @@ public class ProgramLifecycleService {
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
     ProgramSpecification programSpec;
-    if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
-      programSpec = appSpec.getFlows().get(programName);
-    } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
+    if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
       programSpec = appSpec.getMapReduce().get(programName);
     } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
       programSpec = appSpec.getSpark().get(programName);
@@ -753,13 +750,12 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Update log levels for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
+   * Update log levels for the given program. Only supported program types for this action are
    * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    *
    * @param programId the {@link ProgramId} of the program for which log levels are to be updated
    * @param logLevels the {@link Map} of the log levels to be updated.
-   * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
-   * @param runId the run id of the program. {@code null} if update log levels for flowlet
+   * @param runId the run id of the program.
    * @throws InterruptedException if there is an error while asynchronously updating log levels.
    * @throws ExecutionException if there is an error while asynchronously updating log levels.
    * @throws BadRequestException if the log level is not valid or the program type is not supported.
@@ -767,37 +763,36 @@ public class ProgramLifecycleService {
    *                               To update log levels for a program, a user needs {@link Action#ADMIN} on the program.
    */
   public void updateProgramLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
-                                     @Nullable String component, @Nullable String runId) throws Exception {
+                                     @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
-    if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
+    if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
       throw new BadRequestException(String.format("Updating log levels for program type %s is not supported",
                                                   programId.getType().getPrettyName()));
     }
-    updateLogLevels(programId, logLevels, component, runId);
+    updateLogLevels(programId, logLevels, runId);
   }
 
   /**
-   * Reset log levels for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
+   * Reset log levels for the given program. Only supported program types for this action are
    * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    *
    * @param programId the {@link ProgramId} of the program for which log levels are to be reset.
    * @param loggerNames the {@link String} set of the logger names to be updated, empty means reset for all
    *                    loggers.
-   * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
-   * @param runId the run id of the program. {@code null} if set log levels for flowlet
+   * @param runId the run id of the program.
    * @throws InterruptedException if there is an error while asynchronously resetting log levels.
    * @throws ExecutionException if there is an error while asynchronously resetting log levels.
    * @throws UnauthorizedException if the user does not have privileges to reset log levels for the specified program.
    *                               To reset log levels for a program, a user needs {@link Action#ADMIN} on the program.
    */
   public void resetProgramLogLevels(ProgramId programId, Set<String> loggerNames,
-                                    @Nullable String component, @Nullable String runId) throws Exception {
+                                    @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
-    if (!EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
+    if (!EnumSet.of(ProgramType.SERVICE, ProgramType.WORKER).contains(programId.getType())) {
       throw new BadRequestException(String.format("Resetting log levels for program type %s is not supported",
                                                   programId.getType().getPrettyName()));
     }
-    resetLogLevels(programId, loggerNames, component, runId);
+    resetLogLevels(programId, loggerNames, runId);
   }
 
   public boolean programExists(ProgramId programId) throws Exception {
@@ -832,8 +827,8 @@ public class ProgramLifecycleService {
   }
 
   private boolean isConcurrentRunsInSameAppForbidden(ProgramType type) {
-    // Concurrent runs in different (or same) versions of an application are forbidden for worker and flow
-    return EnumSet.of(ProgramType.WORKER, ProgramType.FLOW).contains(type);
+    // Concurrent runs in different (or same) versions of an application are forbidden for worker
+    return EnumSet.of(ProgramType.WORKER).contains(type);
   }
 
   private boolean isConcurrentRunsAllowed(ProgramType type) {
@@ -863,26 +858,18 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * @see #setInstances(ProgramId, int, String)
-   */
-  public void setInstances(ProgramId programId, int instances) throws Exception {
-    setInstances(programId, instances, null);
-  }
-
-  /**
-   * Set instances for the given program. Only supported program types for this action are {@link ProgramType#FLOW},
+   * Set instances for the given program. Only supported program types for this action are
    * {@link ProgramType#SERVICE} and {@link ProgramType#WORKER}.
    *
    * @param programId the {@link ProgramId} of the program for which instances are to be updated
    * @param instances the number of instances to be updated.
-   * @param component the flowlet name. Only used when the program is a {@link ProgramType#FLOW flow}.
    * @throws InterruptedException if there is an error while asynchronously updating instances
    * @throws ExecutionException if there is an error while asynchronously updating instances
    * @throws BadRequestException if the number of instances specified is less than 0
    * @throws UnauthorizedException if the user does not have privileges to set instances for the specified program.
    *                               To set instances for a program, a user needs {@link Action#ADMIN} on the program.
    */
-  public void setInstances(ProgramId programId, int instances, @Nullable String component) throws Exception {
+  public void setInstances(ProgramId programId, int instances) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.ADMIN);
     if (instances < 1) {
       throw new BadRequestException(String.format("Instance count should be greater than 0. Got %s.", instances));
@@ -893,9 +880,6 @@ public class ProgramLifecycleService {
         break;
       case WORKER:
         setWorkerInstances(programId, instances);
-        break;
-      case FLOW:
-        setFlowletInstances(programId, component, instances);
         break;
       default:
         throw new BadRequestException(String.format("Setting instances for program type %s is not supported",
@@ -915,9 +899,6 @@ public class ProgramLifecycleService {
     List<ProgramRecord> programRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : appSpecs) {
       switch (type) {
-        case FLOW:
-          createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getFlows().values(), programRecords);
-          break;
         case MAPREDUCE:
           createProgramRecords(namespaceId, appSpec.getName(), type, appSpec.getMapReduce().values(), programRecords);
           break;
@@ -970,22 +951,6 @@ public class ProgramLifecycleService {
     }
   }
 
-  private void setFlowletInstances(ProgramId programId, String flowletId,
-                                   int instances) throws ExecutionException, InterruptedException, BadRequestException {
-    int oldInstances = store.getFlowletInstances(programId, flowletId);
-    if (oldInstances != instances) {
-      FlowSpecification flowSpec = store.setFlowletInstances(programId, flowletId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
-      if (runtimeInfo != null) {
-        runtimeInfo.getController()
-          .command(ProgramOptionConstants.INSTANCES,
-                   ImmutableMap.of("flowlet", flowletId,
-                                   "newInstances", String.valueOf(instances),
-                                   "oldFlowSpec", GSON.toJson(flowSpec, FlowSpecification.class))).get();
-      }
-    }
-  }
-
   private void setServiceInstances(ProgramId programId, int instances)
     throws ExecutionException, InterruptedException, BadRequestException {
     int oldInstances = store.getServiceInstances(programId);
@@ -1002,28 +967,27 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Helper method to update log levels for Worker, Flow, or Service.
+   * Helper method to update log levels for Worker or Service.
    */
   private void updateLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
-                               @Nullable String component, @Nullable String runId) throws Exception {
+                               @Nullable String runId) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
                                                                                      .findFirst().orElse(null);
     if (runtimeInfo != null) {
       LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
-      logLevelUpdater.updateLogLevels(logLevels, component);
+      logLevelUpdater.updateLogLevels(logLevels, null);
     }
   }
 
   /**
-   * Helper method to reset log levels for Worker, Flow or Service.
+   * Helper method to reset log levels for Worker or Service.
    */
-  private void resetLogLevels(ProgramId programId, Set<String> loggerNames,
-                              @Nullable String component, @Nullable String runId) throws Exception {
+  private void resetLogLevels(ProgramId programId, Set<String> loggerNames, @Nullable String runId) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
                                                                                      .findFirst().orElse(null);
     if (runtimeInfo != null) {
       LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
-      logLevelUpdater.resetLogLevels(loggerNames, component);
+      logLevelUpdater.resetLogLevels(loggerNames, null);
     }
   }
 

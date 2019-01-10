@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -29,7 +28,6 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.cache.CacheBuilder;
@@ -120,19 +118,6 @@ public abstract class AbstractClientTest {
 
   protected void verifyProgramRecords(List<String> expected, Map<ProgramType, List<ProgramRecord>> map) {
     verifyProgramNames(expected, Lists.newArrayList(Iterables.concat(map.values())));
-  }
-
-  protected void assertFlowletInstances(ProgramClient programClient, FlowletId flowlet, int numInstances)
-    throws IOException, NotFoundException, UnauthenticatedException, UnauthorizedException {
-
-    int actualInstances;
-    int numTries = 0;
-    int maxTries = 5;
-    do {
-      actualInstances = programClient.getFlowletInstances(flowlet);
-      numTries++;
-    } while (actualInstances != numInstances && numTries <= maxTries);
-    Assert.assertEquals(numInstances, actualInstances);
   }
 
   protected void assertProgramRunning(ProgramClient programClient, ProgramId program)

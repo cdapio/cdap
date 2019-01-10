@@ -21,7 +21,7 @@ import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 
 /**
- * App with Flow and MapReduce. used for testing MDS.
+ * App with programs. used for testing MDS.
  */
 public class DefaultStoreTestApp extends AbstractApplication {
 

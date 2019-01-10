@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,14 +25,11 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.artifact.LocalArtifactManager;
 import co.cask.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
-import co.cask.cdap.internal.app.runtime.flow.InMemoryFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
@@ -75,9 +72,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind ServiceAnnouncer for service.
     bind(ServiceAnnouncer.class).to(DiscoveryServiceAnnouncer.class);
 
-    // For Binding queue stuff
-    bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
-
     // Bind the ArtifactManager implementation and expose it.
     // It could used by ProgramRunner loaded through runtime extension.
     install(new FactoryModuleBuilder()
@@ -93,7 +87,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
     // Programs with multiple instances have an InMemoryProgramRunner that starts threads to manage all of their
     // instances.
-    runnerFactoryBinder.addBinding(ProgramType.FLOW).to(InMemoryFlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKER).to(InMemoryWorkerRunner.class);
@@ -101,7 +94,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // Bind program runners in private scope
     // They should only be used by the ProgramRunners in the runnerFactoryBinder
-    bind(FlowletProgramRunner.class);
     bind(ServiceProgramRunner.class);
     bind(WorkerProgramRunner.class);
 
@@ -114,9 +106,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
-
-    // For binding DataSet transaction stuff
-    install(new DataFabricFacadeModule());
 
     // Create StreamWriter factory.
     install(new FactoryModuleBuilder().implement(StreamWriter.class, streamWriterClass)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.proto.Containers.ContainerInfo;
-import static co.cask.cdap.proto.Containers.ContainerType.FLOWLET;
 
 /**
  *
@@ -88,9 +87,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRuntimeService.class);
 
   private final TwillRunner twillRunner;
-
-  // TODO (terence): Injection of Store and QueueAdmin is a hack for queue reconfiguration.
-  // Need to remove it when FlowProgramRunner can runs inside Twill AM.
   private final Store store;
   private final ProgramResourceReporter resourceReporter;
   private final Impersonator impersonator;
@@ -265,9 +261,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
       if (report != null) {
         DistributedProgramLiveInfo liveInfo = new DistributedProgramLiveInfo(program, report.getApplicationId());
 
-        // if program type is flow then the container type is flowlet.
-        Containers.ContainerType containerType = ProgramType.FLOW.equals(program.getType()) ? FLOWLET :
-                                                 Containers.ContainerType.valueOf(program.getType().name());
+        Containers.ContainerType containerType = Containers.ContainerType.valueOf(program.getType().name());
 
         for (Map.Entry<String, Collection<TwillRunResources>> entry : report.getResources().entrySet()) {
           for (TwillRunResources resources : entry.getValue()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,6 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
-import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -93,20 +90,6 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     ApplicationSpecification appSpec = input.getSpecification();
     ApplicationId appId = input.getApplicationId();
     NamespaceId namespaceId = appId.getParent();
-
-    for (FlowSpecification flow : appSpec.getFlows().values()) {
-      ProgramId programId = appId.flow(flow.getName());
-      for (FlowletConnection connection : flow.getConnections()) {
-        if (connection.getSourceType().equals(FlowletConnection.Type.STREAM)) {
-          usageRegistry.register(programId, namespaceId.stream(connection.getSourceName()));
-        }
-      }
-      for (FlowletDefinition flowlet : flow.getFlowlets().values()) {
-        for (String dataset : flowlet.getDatasets()) {
-          usageRegistry.register(programId, namespaceId.dataset(dataset));
-        }
-      }
-    }
 
     for (MapReduceSpecification program : appSpec.getMapReduce().values()) {
       ProgramId programId = appId.mr(program.getName());

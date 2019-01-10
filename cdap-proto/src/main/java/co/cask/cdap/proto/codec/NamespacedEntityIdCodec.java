@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.FlowId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -57,10 +55,6 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
         return deserializeApplicationId(jsonObj);
       case "program":
         return deserializeProgramId(jsonObj);
-      case "flow":
-        return deserializeFlowId(jsonObj);
-      case "flowlet":
-        return deserializeFlowletId(jsonObj);
       case "service":
         return deserializeServiceId(jsonObj);
       case "schedule":
@@ -78,12 +72,10 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
       default:
         throw new UnsupportedOperationException(
           String.format("Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s, %s, %s, %s is supported.",
+                          "%s, %s, %s is supported.",
                         entity,
                         ApplicationId.class.getSimpleName(),
                         ProgramId.class.getSimpleName(),
-                        FlowId.class.getSimpleName(),
-                        FlowletId.class.getSimpleName(),
                         ServiceId.class.getSimpleName(),
                         ScheduleId.class.getSimpleName(),
                         WorkerId.class.getSimpleName(),
@@ -113,17 +105,6 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
     ProgramType programType = ProgramType.valueOf(id.get("type").getAsString().toUpperCase());
     String programId = id.get("program").getAsString();
     return new ProgramId(app.getNamespace(), app.getApplication(), programType, programId);
-  }
-
-  private FlowId deserializeFlowId(JsonObject id) {
-    ApplicationId applicationId = deserializeApplicationId(id);
-    return new FlowId(applicationId, id.get("flow").getAsString());
-  }
-
-  private FlowletId deserializeFlowletId(JsonObject id) {
-    FlowId flow = deserializeFlowId(id);
-    String flowletId = id.get("flowlet").getAsString();
-    return new FlowletId(flow.getParent(), flow.getProgram(), flowletId);
   }
 
   private ServiceId deserializeServiceId(JsonObject id) {

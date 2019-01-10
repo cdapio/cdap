@@ -52,7 +52,6 @@ import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
-import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -62,7 +61,6 @@ import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.messaging.MessagingService;
@@ -72,7 +70,6 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -113,8 +110,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   private final DatasetId dataset2 = NamespaceId.DEFAULT.dataset("dataset2");
   private final DatasetId dataset3 = NamespaceId.DEFAULT.dataset("dataset3");
 
-  private final ProgramId flow1 = NamespaceId.DEFAULT.app("app1").program(ProgramType.FLOW, "flow1");
-  private final FlowletId flowlet1 = flow1.flowlet("flowlet1");
+  private final ProgramId service1 = NamespaceId.DEFAULT.app("app1").program(ProgramType.SERVICE, "service1");
 
   private final ProgramId spark1 = NamespaceId.DEFAULT.app("app2").program(ProgramType.SPARK, "spark1");
   private final WorkflowId workflow1 = NamespaceId.DEFAULT.app("app3").workflow("workflow1");
@@ -124,7 +120,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     // Write out some lineage information
     LineageWriter lineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
-    ProgramRunId run1 = flow1.run(RunIds.generate());
+    ProgramRunId run1 = service1.run(RunIds.generate());
     lineageWriter.addAccess(run1, dataset1, AccessType.READ);
     lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
 
@@ -182,12 +178,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    // Emit one more lineage
-    lineageWriter.addAccess(run1, stream1, AccessType.UNKNOWN, flowlet1);
-    expectedLineage.add(stream1);
-    Tasks.waitFor(true, () -> expectedLineage.equals(lineageReader.getEntitiesForRun(run1)),
-                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
     // There shouldn't be any lineage for the "spark1" program, as only usage has been emitted.
     Assert.assertTrue(lineageReader.getRelations(spark1, 0L, Long.MAX_VALUE, x -> true).isEmpty());
 
@@ -217,10 +207,10 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Emit one more usage
-    usageWriter.register(flow1, stream1);
+    usageWriter.register(service1, stream1);
     expectedUsage.clear();
     expectedUsage.add(stream1);
-    Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getStreams(flow1)),
+    Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getStreams(service1)),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
@@ -608,17 +598,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // use an app with all program types to get all specification tested
     ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     ProgramId workflowId = appId.workflow(AllProgramsApp.NoOpWorkflow.NAME);
-    // generate an app spec from the application, this app spec will have the transient inputTypes and outputTypes
-    // in FlowletDefinition, we need to generate the schema from these two fields.
+    // generate an app spec from the application
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
-
-    // We need to use the adapter to generate a true app spec which has the inputs and outputs field generated for
-    // FlowletDefinition, otherwise gson will ignore the transient inputTypes and outputTypes fields and
-    // make inputs and outputs field become null, which loses the intent of this test,
-    // because we want to test if the subsciber is able to deserialize the Schema in FlowletDefinition
-    ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
-    String jsonString = adapter.toJson(appSpec);
-    ApplicationSpecification trueSpec = adapter.fromJson(jsonString);
 
     // need to put metadata on workflow since we currently only set or delete workflow metadata
     mds.setProperties(MetadataScope.SYSTEM, workflowId.toMetadataEntity(),
@@ -627,7 +608,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                         mds.getProperties(workflowId.toMetadataEntity()).get("profile"));
 
     // publish app deletion message
-    publisher.publishAppDeletion(appId, trueSpec);
+    publisher.publishAppDeletion(appId, appSpec);
 
     // Verify the workflow profile metadata is removed because of the publish app deletion message
     Tasks.waitFor(Collections.emptyMap(), () -> mds.getProperties(workflowId.toMetadataEntity()),

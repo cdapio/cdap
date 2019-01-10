@@ -2747,7 +2747,6 @@
         <module>cdap-cli</module>
         <module>cdap-standalone</module>
         <module>cdap-distributions</module>
-        <module>cdap-archetypes</module>
         <module>cdap-test</module>
         <module>cdap-integration-test</module>
         <module>cdap-ui</module>

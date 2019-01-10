@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,14 +30,12 @@ import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.AbstractApplicationManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
-import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
@@ -63,12 +61,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     this.programClient = new ProgramClient(clientConfig, restClient);
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
     this.restClient = restClient;
-  }
-
-  @Override
-  public FlowManager getFlowManager(String flowName) {
-    FlowId flowId = application.flow(flowName);
-    return new RemoteFlowManager(flowId, clientConfig, restClient, this);
   }
 
   @Override

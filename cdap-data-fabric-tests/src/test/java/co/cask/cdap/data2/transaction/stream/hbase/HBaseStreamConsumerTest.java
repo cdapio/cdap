@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,8 +34,6 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data2.queue.QueueClientFactory;
-import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
@@ -91,7 +89,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
   private static TransactionManager txManager;
-  private static QueueClientFactory queueClientFactory;
   private static StreamFileWriterFactory fileWriterFactory;
   private static HBaseTableUtil tableUtil;
 
@@ -134,7 +131,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
             bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-            bind(QueueClientFactory.class).to(HBaseQueueClientFactory.class).in(Singleton.class);
           }
         })
     );
@@ -145,7 +141,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     consumerFactory = injector.getInstance(StreamConsumerFactory.class);
     txClient = injector.getInstance(TransactionSystemClient.class);
     txManager = TxInMemory.getTransactionManager(txClient);
-    queueClientFactory = injector.getInstance(QueueClientFactory.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
 
     txManager.startAndWait();
@@ -171,11 +166,6 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   private static void deleteNamespace(NamespaceId namespace) throws IOException {
     tableUtil.deleteAllInNamespace(ddlExecutor, tableUtil.getHBaseNamespace(namespace), TEST_HBASE.getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(tableUtil.getHBaseNamespace(namespace));
-  }
-
-  @Override
-  protected QueueClientFactory getQueueClientFactory() {
-    return queueClientFactory;
   }
 
   @Override

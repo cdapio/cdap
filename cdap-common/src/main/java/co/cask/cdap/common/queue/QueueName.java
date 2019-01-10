@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.queue;
 
-import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -73,31 +72,9 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(FlowId flow, String flowlet, String output) {
-    return fromFlowlet(flow.getNamespace(), flow.getApplication(), flow.getEntityName(), flowlet, output);
-  }
-
   public static QueueName fromFlowlet(String namespace, String app, String flow, String flowlet, String output) {
     URI uri = URI.create(String.format("queue:///%s/%s/%s/%s/%s", namespace, app, flow, flowlet, output));
     return new QueueName(uri);
-  }
-
-  public static String prefixForFlow(FlowId flowId) {
-    // queue:///namespace/app/flow/
-    // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
-    return String.format("queue:///%s/%s/%s/", flowId.getNamespace(), flowId.getApplication(), flowId.getEntityName());
-  }
-
-  // Note that like above the trailing '/' in the prefix for namespace is crucial,
-  // otherwise this could match namespaces of ns, ns1, nsx, etc.
-  public static String prefixForNamespacedQueue(String namespace) {
-    // queue:///namespace/
-    return String.format("queue:///%s/", namespace);
-  }
-
-  public static String prefixForNamedspacedStream(String namespace) {
-    // stream:///namespace/
-    return String.format("stream:///%s/", namespace);
   }
 
   /**

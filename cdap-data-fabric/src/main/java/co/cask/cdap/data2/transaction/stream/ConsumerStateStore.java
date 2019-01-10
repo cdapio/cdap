@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import java.util.Collection;
  * @param <S> Type of state object this store can operate on.
  * @param <T> Type of state information that the {@link ConsumerState} contains
  */
-// TODO: Unify with HBaseConsumerStateStore
 public interface ConsumerStateStore<S extends ConsumerState<T>, T> extends Closeable {
 
   void getAll(Collection<? super S> result) throws IOException;

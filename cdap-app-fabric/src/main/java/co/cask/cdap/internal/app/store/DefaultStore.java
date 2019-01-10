@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,6 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -48,7 +46,6 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
-import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -422,7 +419,6 @@ public class DefaultStore implements Store {
         .putAll(existingAppSpec.getMapReduce())
         .putAll(existingAppSpec.getSpark())
         .putAll(existingAppSpec.getWorkflows())
-        .putAll(existingAppSpec.getFlows())
         .putAll(existingAppSpec.getServices())
         .putAll(existingAppSpec.getWorkers())
         .build();
@@ -431,7 +427,6 @@ public class DefaultStore implements Store {
         .putAll(appSpec.getMapReduce())
         .putAll(appSpec.getSpark())
         .putAll(appSpec.getWorkflows())
-        .putAll(appSpec.getFlows())
         .putAll(appSpec.getServices())
         .putAll(appSpec.getWorkers())
         .build();
@@ -461,36 +456,6 @@ public class DefaultStore implements Store {
   public Collection<StreamSpecification> getAllStreams(NamespaceId id) {
     return Transactionals.execute(transactional, context -> {
       return getAppMetadataStore(context).getAllStreams(id.getNamespace());
-    });
-  }
-
-  @Override
-  public FlowSpecification setFlowletInstances(ProgramId id, String flowletId, int count) {
-    Preconditions.checkArgument(count > 0, "Cannot change number of flowlet instances to %s", count);
-
-    LOG.trace("Setting flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, " +
-                "new instances count: {}", id.getNamespace(), id.getApplication(), id.getProgram(), flowletId, count);
-
-    FlowSpecification flowSpec = Transactionals.execute(transactional, context -> {
-      AppMetadataStore metaStore = getAppMetadataStore(context);
-      ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, id);
-      ApplicationSpecification newAppSpec = updateFlowletInstancesInAppSpec(appSpec, id, flowletId, count);
-      metaStore.updateAppSpec(id.getNamespace(), id.getApplication(), id.getVersion(), newAppSpec);
-      return appSpec.getFlows().get(id.getProgram());
-    });
-
-    LOG.trace("Set flowlet instances: namespace: {}, application: {}, flow: {}, flowlet: {}, instances now: {}",
-              id.getNamespaceId(), id.getApplication(), id.getProgram(), flowletId, count);
-    return flowSpec;
-  }
-
-  @Override
-  public int getFlowletInstances(ProgramId id, String flowletId) {
-    return Transactionals.execute(transactional, context -> {
-      ApplicationSpecification appSpec = getAppSpecOrFail(getAppMetadataStore(context), id);
-      FlowSpecification flowSpec = getFlowSpecOrFail(id, appSpec);
-      FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, id);
-      return flowletDef.getInstances();
     });
   }
 
@@ -651,7 +616,6 @@ public class DefaultStore implements Store {
 
   private boolean programExists(ProgramId id, ApplicationSpecification appSpec) {
     switch (id.getType()) {
-      case FLOW:      return appSpec.getFlows().containsKey(id.getProgram());
       case MAPREDUCE: return appSpec.getMapReduce().containsKey(id.getProgram());
       case SERVICE:   return appSpec.getServices().containsKey(id.getProgram());
       case SPARK:     return appSpec.getSpark().containsKey(id.getProgram());
@@ -717,28 +681,6 @@ public class DefaultStore implements Store {
     }
   }
 
-  private static FlowletDefinition getFlowletDefinitionOrFail(FlowSpecification flowSpec,
-                                                              String flowletId, ProgramId id) {
-    FlowletDefinition flowletDef = flowSpec.getFlowlets().get(flowletId);
-    if (flowletDef == null) {
-      throw new NoSuchElementException("no such flowlet @ namespace id: " + id.getNamespace() +
-                                           ", app id: " + id.getApplication() +
-                                           ", flow id: " + id.getProgram() +
-                                           ", flowlet id: " + flowletId);
-    }
-    return flowletDef;
-  }
-
-  private static FlowSpecification getFlowSpecOrFail(ProgramId id, ApplicationSpecification appSpec) {
-    FlowSpecification flowSpec = appSpec.getFlows().get(id.getProgram());
-    if (flowSpec == null) {
-      throw new NoSuchElementException("no such flow @ namespace id: " + id.getNamespace() +
-                                           ", app id: " + id.getApplication() +
-                                           ", flow id: " + id.getProgram());
-    }
-    return flowSpec;
-  }
-
   private static ServiceSpecification getServiceSpecOrFail(ProgramId id, ApplicationSpecification appSpec) {
     ServiceSpecification spec = appSpec.getServices().get(id.getProgram());
     if (spec == null) {
@@ -759,16 +701,6 @@ public class DefaultStore implements Store {
     return workerSpecification;
   }
 
-  private static ApplicationSpecification updateFlowletInstancesInAppSpec(ApplicationSpecification appSpec,
-                                                                          ProgramId id, String flowletId, int count) {
-
-    FlowSpecification flowSpec = getFlowSpecOrFail(id, appSpec);
-    FlowletDefinition flowletDef = getFlowletDefinitionOrFail(flowSpec, flowletId, id);
-
-    FlowletDefinition adjustedFlowletDef = new FlowletDefinition(flowletDef, count);
-    return replaceFlowletInAppSpec(appSpec, id, flowSpec, adjustedFlowletDef);
-  }
-
   private ApplicationSpecification getAppSpecOrFail(AppMetadataStore mds, ProgramId id) {
     return getAppSpecOrFail(mds, id.getParent());
   }
@@ -780,57 +712,6 @@ public class DefaultStore implements Store {
                                          ", app id: " + id.getApplication());
     }
     return appSpec;
-  }
-
-  private static class FlowSpecificationWithChangedFlowlets extends ForwardingFlowSpecification {
-    private FlowletDefinition adjustedFlowletDef;
-
-    private FlowSpecificationWithChangedFlowlets(FlowSpecification delegate,
-                                                 FlowletDefinition adjustedFlowletDef) {
-      super(delegate);
-      this.adjustedFlowletDef = adjustedFlowletDef;
-    }
-
-    @Override
-    public Map<String, FlowletDefinition> getFlowlets() {
-      Map<String, FlowletDefinition> flowlets = Maps.newHashMap(super.getFlowlets());
-      flowlets.put(adjustedFlowletDef.getFlowletSpec().getName(), adjustedFlowletDef);
-      return flowlets;
-    }
-  }
-
-  private static ApplicationSpecification replaceFlowletInAppSpec(ApplicationSpecification appSpec,
-                                                                  ProgramId id,
-                                                                  FlowSpecification flowSpec,
-                                                                  FlowletDefinition adjustedFlowletDef) {
-    // as app spec is immutable we have to do this trick
-    return replaceFlowInAppSpec(appSpec, id, new FlowSpecificationWithChangedFlowlets(flowSpec, adjustedFlowletDef));
-  }
-
-  private static ApplicationSpecification replaceFlowInAppSpec(ApplicationSpecification appSpec,
-                                                               ProgramId id,
-                                                               FlowSpecification newFlowSpec) {
-    // as app spec is immutable we have to do this trick
-    return new ApplicationSpecificationWithChangedFlows(appSpec, id.getProgram(), newFlowSpec);
-  }
-
-  private static class ApplicationSpecificationWithChangedFlows extends ForwardingApplicationSpecification {
-    private FlowSpecification newFlowSpec;
-    private String flowId;
-
-    private ApplicationSpecificationWithChangedFlows(ApplicationSpecification delegate,
-                                                     String flowId, FlowSpecification newFlowSpec) {
-      super(delegate);
-      this.newFlowSpec = newFlowSpec;
-      this.flowId = flowId;
-    }
-
-    @Override
-    public Map<String, FlowSpecification> getFlows() {
-      Map<String, FlowSpecification> flows = Maps.newHashMap(super.getFlows());
-      flows.put(flowId, newFlowSpec);
-      return flows;
-    }
   }
 
   private static ApplicationSpecification replaceWorkerInAppSpec(ApplicationSpecification appSpec,
@@ -1029,8 +910,6 @@ public class DefaultStore implements Store {
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
     switch (type) {
-      case FLOW:
-        return appSpec.getFlows().get(programName);
       case MAPREDUCE:
         return appSpec.getMapReduce().get(programName);
       case SPARK:
