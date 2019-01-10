@@ -175,7 +175,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <spark1.artifacts.dir>spark1_2.10</spark1.artifacts.dir>
     <spark2.artifacts.dir>spark2_2.11</spark2.artifacts.dir>
-    <spark1.version>1.6.3</spark1.version>
+    <spark1.version>1.6.1</spark1.version>
     <spark2.version>2.1.3</spark2.version>
     <sshd.version>1.7.0</sshd.version>
     <tephra.version>0.15.0-incubating</tephra.version>
@@ -1771,37 +1771,6 @@
             </execution>
           </executions>
         </plugin>
-
-
-<plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-eclipse-plugin</artifactId>
-          <version>2.10</version>
-          <configuration>
-            <additionalBuildcommands>
-              <buildcommand>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</buildcommand>
-            </additionalBuildcommands>
-            <additionalProjectnatures>
-              <projectnature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</projectnature>
-            </additionalProjectnatures>
-            <additionalConfig>
-              <file>
-                <name>.checkstyle</name>
-                <content>
-                  <![CDATA[<?xml version="1.0" encoding="UTF-8"?>
-<fileset-config file-format-version="1.2.0" simple-config="true">
-    <fileset name="all" enabled="true" check-config-name="checkstyle.xml" local="false">
-        <file-match-pattern match-pattern="." include-pattern="true"/>
-    </fileset>
-    <filter name="NonSrcDirs" enabled="true"/>
-</fileset-config>
-]]>
-                </content>
-              </file>
-            </additionalConfig>
-          </configuration>
-        </plugin>
-
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>

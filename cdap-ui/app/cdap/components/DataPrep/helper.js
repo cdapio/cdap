@@ -41,13 +41,6 @@ export function directiveRequestBodyCreator(directivesArray, wsId) {
   };
 }
 
-export function viewSchemaPersistRequestBodyCreator(dataSchema, pluginConfig) {
-  return {
-    schema: dataSchema,
-    pluginConfig: pluginConfig
-  };
-}
-
 export function isCustomOption(selectedOption) {
   return selectedOption.substr(0, 6) === 'CUSTOM';
 }

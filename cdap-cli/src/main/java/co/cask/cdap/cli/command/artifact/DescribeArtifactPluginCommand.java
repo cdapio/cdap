@@ -72,7 +72,6 @@ public class DescribeArtifactPluginCommand extends AbstractAuthCommand {
         public List<?> makeRow(PluginInfo object) {
           return Lists.newArrayList(
             object.getType(), object.getName(), object.getClassName(), object.getDescription(),
-            object.getPluginInputToString(), object.getPluginOutputToString(), object.getPluginFunctionToString(),
             GSON.toJson(object.getProperties()), object.getArtifact().toString());
         }
       }).build();
