@@ -5,15 +5,23 @@ import './FeatureSelection.scss';
 import GridHeader from './GridHeader';
 import GridContainer from './GridContainer';
 import { isNil } from 'lodash';
-import { SERVER_IP, GET_PIPE_LINE_FILTERED_DATA, GET_PIPE_LINE_FILTERED } from '../config';
+import {
+  SERVER_IP,
+  GET_PIPE_LINE_FILTERED_DATA,
+  GET_PIPE_LINE_FILTERED,
+  GET_PIPE_LINE_CORRELATED_DATA,
+  GET_PIPELINE
+} from '../config';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import CorrelationContainer from './CorrelationContainer';
 
 class FeatureSelection extends Component {
+
+
   constructor(props) {
     super(props);
-    this.state = this.dataParser(this.props.pipeLineData);
+    this.state = Object.assign({activeTab: "1"}, this.dataParser(this.props.pipeLineData));
   }
 
   dataParser = (data) => {
@@ -34,7 +42,7 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "featureName", field: "featureName", width: 250, checkboxSelection: true });
+          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 250, checkboxSelection: true });
         }
         columns.forEach(element => {
           columDefs.push({ headerName: element.name, field: element.name });
@@ -54,8 +62,7 @@ class FeatureSelection extends Component {
     return {
       gridColumnDefs: columDefs,
       gridRowData: rowData,
-      filterColumns: columns,
-      activeTab: "1"
+      filterColumns: columns
     };
   }
 
@@ -100,9 +107,7 @@ class FeatureSelection extends Component {
   }
 
   getFilteredRecords(requestObj) {
-
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
-
     let URL = SERVER_IP + GET_PIPE_LINE_FILTERED_DATA + featureGenerationPipelineName + '/features/filter';
 
     fetch(URL, {
@@ -115,10 +120,9 @@ class FeatureSelection extends Component {
     }).then(res => res.json())
       .then(
         (result) => {
-          if (isNil(result) || isNil(result["featureStatsList"])) {
-            alert("Pipeline filter Data Error");
-          } else {
-            // to do
+          if (!isNil(result) && !isNil(result["featureStatsList"])) {
+            const parsedResult = this.dataParser(result["featureStatsList"]);
+            this.setState({gridRowData:parsedResult.gridRowData});
           }
         },
         (error) => {
@@ -134,6 +138,32 @@ class FeatureSelection extends Component {
       });
     }
   }
+
+  applyCorrelation = (value) => {
+    const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
+    const URL = SERVER_IP + GET_PIPE_LINE_CORRELATED_DATA + featureGenerationPipelineName + '&correlationCoefficient=' + value.name;
+
+    fetch(URL)
+      .then(res => res.json())
+      .then(
+        (result) => {
+          if (isNil(result) || isNil(result["featureStatsList"])) {
+            alert("Pipeline Data Error");
+          } else {
+            this.setState({
+              pipeLineData: result["featureStatsList"],
+              data: result["featureStatsList"],
+              selectedPipeline: this.currentPipeline,
+              displayFeatureSelection: true
+            });
+          }
+        },
+        (error) => {
+          this.handleError(error, GET_PIPELINE);
+        }
+      );
+  }
+
 
   render() {
     return (
@@ -165,7 +195,7 @@ class FeatureSelection extends Component {
                 applyFilter={this.applyFilter}></FilterContainer>
             </TabPane>
             <TabPane tabId="2" className="tab-pane">
-              <CorrelationContainer></CorrelationContainer>
+              <CorrelationContainer applyCorrelation={this.applyCorrelation}></CorrelationContainer>
             </TabPane>
           </TabContent>
         </div>
