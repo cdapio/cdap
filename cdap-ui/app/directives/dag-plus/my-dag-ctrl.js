@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -417,7 +417,13 @@ angular.module(PKG.name + '.commons')
 
         if (connObj.source && connObj.target) {
           let newConn = vm.instance.connect(connObj);
-          if (targetNode.type === 'condition' || sourceNode.type === 'action' || targetNode.type === 'action') {
+          if (
+            targetNode.type === 'condition' ||
+            sourceNode.type === 'action' ||
+            targetNode.type === 'action' ||
+            sourceNode.type === 'sparkprogram' ||
+            targetNode.type === 'sparkprogram'
+          ) {
             newConn.setType('dashed');
           }
         }
@@ -739,7 +745,12 @@ angular.module(PKG.name + '.commons')
       }
 
       // If valid, then modifies the look of the connection before showing it
-      if (sourceNode.type === 'action' || targetNode.type === 'action') {
+      if (
+        sourceNode.type === 'action' ||
+        targetNode.type === 'action' ||
+        sourceNode.type === 'sparkprogram' ||
+        targetNode.type === 'sparkprogram'
+      ) {
         connObj.connection.setType('dashed');
       } else if (sourceNode.type !== 'condition' && targetNode.type !== 'condition') {
         connObj.connection.setType('basic solid');
