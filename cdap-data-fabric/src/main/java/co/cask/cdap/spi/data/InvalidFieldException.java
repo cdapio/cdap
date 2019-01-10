@@ -20,16 +20,19 @@ import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
 /**
- * Exception thrown when a field is not part of the table schema.
+ * Exception thrown when a field is invalid. The field is invalid on the following conditions: 1. it is not part of
+ * the table schema, 2. the field is not a primary key or an index, but it is used as one, 3. the field is part of
+ * schema but its value is incompatible with what is in the schema.
  */
-public class InvalidFieldException extends IllegalArgumentException {
+public class InvalidFieldException extends Exception {
   private final String fieldName;
   private final StructuredTableId tableId;
 
   /**
-   * Create an exception when a field is not part of a table schema
+   * Create an exception when a field is not part of a table schema.
+   *
    * @param tableId table
-   * @param fieldName missing field name
+   * @param fieldName the field name that is not part of the schema
    */
   public InvalidFieldException(StructuredTableId tableId, String fieldName) {
     super(String.format("Field %s is not part of the schema of table %s",
@@ -39,20 +42,21 @@ public class InvalidFieldException extends IllegalArgumentException {
   }
 
   /**
-   * Create an exception when a field is not defined as a primary key or an index, but is used as one
+   * Create an exception when a field is not defined as a primary key or an index, but is used as one.
+   *
    * @param tableId table
    * @param fieldName wrongly used field name
-   * @param definition the message which specifies the wrong usage
+   * @param message the message which specifies the wrong usage
    */
-  public InvalidFieldException(StructuredTableId tableId, String fieldName, String definition) {
-    super(String.format("Field %s is not defined as %s of table %s",
-                        fieldName, definition, tableId.getName()));
+  public InvalidFieldException(StructuredTableId tableId, String fieldName, String message) {
+    super(String.format("Field %s of table %s %s", fieldName, tableId.getName(), message));
     this.tableId = tableId;
     this.fieldName = fieldName;
   }
 
   /**
    * Create an exception when a field is needs conversion to an incompatible type than what is defined.
+   *
    * @param tableId table
    * @param fieldName field name
    * @param expected expected type of the field

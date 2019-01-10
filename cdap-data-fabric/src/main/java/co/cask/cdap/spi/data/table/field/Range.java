@@ -16,7 +16,10 @@
 
 package co.cask.cdap.spi.data.table.field;
 
+import co.cask.cdap.spi.data.InvalidFieldException;
+
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Represents a range of fields.
@@ -38,12 +41,17 @@ public final class Range {
 
   /**
    * Create a range with begin and end.
-   * @param begin the fields forming the beginning of the range
+   *
+   * @param begin the fields forming the beginning of the range. The fields must be a prefix or complete primary keys,
+   *              empty to read from the start. If not, {@link InvalidFieldException} will be thrown
+   *              when scanning the table.
    * @param beginBound the match type for the begin fields
-   * @param end the fields forming the end of the range
+   * @param end the fields forming the end of the range. The fields must be a prefix or complete primary keys,
+   *            empty to read to the end. If not, {@link InvalidFieldException} will be thrown
+   *            when scanning the table.
    * @param endBound the match type for the end fields
    */
-  public Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
+  private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
     this.begin = begin;
     this.beginBound = beginBound;
     this.end = end;
@@ -51,7 +59,54 @@ public final class Range {
   }
 
   /**
-   * @return the beginning of the range
+   * Create a range with a begin and an end.
+   *
+   * @param begin the fields forming the beginning of the range
+   * @param beginBound the match type for the begin fields
+   * @param end the fields forming the end of the range
+   * @param endBound the match type for the end fields
+   * @return a range object
+   */
+  public static Range create(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
+    return new Range(begin, beginBound, end, endBound);
+  }
+
+  /**
+   * Create a range that starts from a begin point, but does not have an end. It will include all values that are
+   * greater than (or equal to) the begin point.
+   *
+   * @param begin the fields forming the beginning of the range
+   * @param beginBound the match type for the begin fields
+   * @return a range object
+   */
+  public static Range from(Collection<Field<?>> begin, Bound beginBound) {
+    return new Range(begin, beginBound, Collections.emptySet(), Bound.INCLUSIVE);
+  }
+
+  /**
+   * Create a range that only has an end point. It will include all values less than (or equal to) the end point.
+   *
+   * @param end the fields forming the end of the range
+   * @param endBound the match type for the end fields
+   * @return a range object
+   */
+  public static Range to(Collection<Field<?>> end, Bound endBound) {
+    return new Range(Collections.emptySet(), Bound.INCLUSIVE, end, endBound);
+  }
+
+  /**
+   * Creates a range that only matches one element. This range will read all elements which is equal to the
+   * given keys.
+   *
+   * @param singleton the fields forming the singleton range
+   * @return a range object
+   */
+  public static Range singleton(Collection<Field<?>> singleton) {
+    return new Range(singleton, Bound.INCLUSIVE, singleton, Bound.INCLUSIVE);
+  }
+
+  /**
+   * @return the beginning of the range, if empty, it will be reading from the start
    */
   public Collection<Field<?>> getBegin() {
     return begin;
@@ -65,7 +120,7 @@ public final class Range {
   }
 
   /**
-   * @return the end of the range
+   * @return the end of the range, if empty, it will be reading till the end
    */
   public Collection<Field<?>> getEnd() {
     return end;
@@ -76,5 +131,15 @@ public final class Range {
    */
   public Bound getEndBound() {
     return endBound;
+  }
+
+  @Override
+  public String toString() {
+    return "Range{" +
+      "begin=" + begin +
+      ", beginBound=" + beginBound +
+      ", end=" + end +
+      ", endBound=" + endBound +
+      '}';
   }
 }

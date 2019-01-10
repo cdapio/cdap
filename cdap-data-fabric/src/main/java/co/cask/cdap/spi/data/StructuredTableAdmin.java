@@ -16,16 +16,41 @@
 
 package co.cask.cdap.spi.data;
 
+import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 
+import java.io.IOException;
+import javax.annotation.Nullable;
+
 /**
- * Defines admin operations on a {@link StructuredTable}
+ * Defines admin operations on a {@link StructuredTable}.
  */
 public interface StructuredTableAdmin {
   /**
    * Create a StructuredTable using the {@link StructuredTableSpecification}.
    *
    * @param spec table specification
+   * @throws IOException if there is an error creating the table
+   * @throws AlreadyExistsException if the table already exists
    */
-  void create(StructuredTableSpecification spec);
+  void create(StructuredTableSpecification spec) throws IOException, AlreadyExistsException;
+
+  /**
+   * Get the {@link StructuredTableSpecification} corresponding to the given table id.
+   *
+   * @param tableId the table id
+   * @return the specification for the table
+   */
+  @Nullable
+  StructuredTableSpecification getSpecification(StructuredTableId tableId);
+
+  /**
+   * Drop the StructuredTable synchronously. After this method is called, the existing table will get deleted. If the
+   * table does not exist, no operation will be done.
+   *
+   * @param tableId the table id
+   * @throws IOException if there is an error dropping the table
+   */
+  void drop(StructuredTableId tableId) throws IOException;
 }

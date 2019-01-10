@@ -42,7 +42,8 @@ public final class FieldType {
   private final Type type;
 
   /**
-   * Construct a field type with the given field name and type
+   * Construct a field type with the given field name and type.
+   *
    * @param name field name
    * @param type field type
    */

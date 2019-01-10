@@ -175,13 +175,13 @@ public final class StructuredTableSpecification {
      * Build the table specification
      * @return the table specification
      */
-    public StructuredTableSpecification build() {
+    public StructuredTableSpecification build() throws InvalidFieldException {
       validate();
       return new StructuredTableSpecification(tableId, Arrays.asList(fieldTypes), Arrays.asList(primaryKeys),
                                               Arrays.asList(indexes));
     }
 
-    private void validate() {
+    private void validate() throws InvalidFieldException {
       if (tableId == null) {
         throw new IllegalArgumentException("StructuredTableId cannot be empty");
       }
@@ -221,7 +221,7 @@ public final class StructuredTableSpecification {
           throw new InvalidFieldException(tableId, primaryKey);
         }
         if (!Fields.isPrimaryKeyType(type)) {
-          throw new InvalidFieldException(tableId, primaryKey, "primary key");
+          throw new InvalidFieldException(tableId, primaryKey, "is not defined as primary key column");
         }
       }
 
@@ -229,7 +229,7 @@ public final class StructuredTableSpecification {
       for (String index : indexes) {
         FieldType.Type type = typeMap.get(index);
         if (type == null) {
-          throw new InvalidFieldException(tableId, index, "index");
+          throw new InvalidFieldException(tableId, index, "is not defined as an index column");
         }
       }
     }
