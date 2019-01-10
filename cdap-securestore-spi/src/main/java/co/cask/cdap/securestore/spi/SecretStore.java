@@ -38,7 +38,7 @@ public interface SecretStore {
    * @throws SecretNotFoundException if secret is not found in provided namespace
    * @throws IOException if unable to retrieve the secret
    */
-  <T> T get(String namespace, String name, Decoder<T> decoder) throws Exception;
+  <T> T get(String namespace, String name, Decoder<T> decoder) throws SecretNotFoundException, IOException;
 
   /**
    * Provides list of all the secrets for which data is stored.
@@ -47,7 +47,7 @@ public interface SecretStore {
    * @return list of all the secrets stored in provided namespace
    * @throws IOException if not able to get data for the secrets in the provided namespace
    */
-  <T> Collection<T> list(String namespace, Decoder<T> decoder) throws Exception;
+  <T> Collection<T> list(String namespace, Decoder<T> decoder) throws IOException;
 
   /**
    * Persists provided data in the store for a given secret. If the secret already exists, it will be replaced.
@@ -57,7 +57,7 @@ public interface SecretStore {
    * @param data the data to be stored
    * @throws IOException if unable to store the data of the secret
    */
-  <T> void store(String namespace, String name, Encoder<T> encoder, T data) throws Exception;
+  <T> void store(String namespace, String name, Encoder<T> encoder, T data) throws IOException;
 
   /**
    * Deletes the data for the provided secret.
@@ -67,5 +67,5 @@ public interface SecretStore {
    * @throws SecretNotFoundException if secret is not found in provided namespace
    * @throws IOException if unable to delete the data of the secret
    */
-  void delete(String namespace, String name) throws Exception;
+  void delete(String namespace, String name) throws SecretNotFoundException, IOException;
 }

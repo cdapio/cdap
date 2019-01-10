@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2019 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -261,7 +261,7 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
-        <!-- Add dependencies on cdap-operational-stats and runtime provider extensions to make sure
+        <!-- Add dependencies on cdap-operational-stats, runtime provider and cloud kms extensions to make sure
              they are built before standalone -->
         <dependency>
           <groupId>co.cask.cdap</groupId>
@@ -284,6 +284,12 @@
         <dependency>
           <groupId>co.cask.cdap</groupId>
           <artifactId>cdap-runtime-ext-remote-hadoop</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-securestore-ext-cloudkms</artifactId>
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
@@ -615,6 +621,28 @@
                       </directory>
                       <includes>
                         <include>remote-hadoop.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
+              <!-- Copy secure store extensions-->
+              <execution>
+                <id>copy-securestore-ext-cloudkms</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.securestores.ext.dir}/cloudkms</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec/
+                      </directory>
+                      <includes>
+                        <include>*.jar</include>
                       </includes>
                     </resource>
                   </resources>

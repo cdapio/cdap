@@ -16,15 +16,18 @@
 
 package co.cask.cdap.securestore.spi.secret;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * Represents sensitive data to be stored securely.
  */
-public class Secret {
+public class Secret implements Serializable {
   private final byte[] data;
   private final SecretMetadata metadata;
+
+  private static final long serialVersionUID = 7807523102811956359L;
 
   /**
    * Constructs a secret with the given sensitive data and metadata.

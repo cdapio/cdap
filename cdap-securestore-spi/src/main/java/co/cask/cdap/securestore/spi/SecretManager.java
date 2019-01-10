@@ -42,7 +42,7 @@ public interface SecretManager {
    *
    * @param context the context that can be used to initialize the secrets manager
    */
-  void initialize(SecretManagerContext context) throws Exception;
+  void initialize(SecretManagerContext context) throws IOException;
 
   /**
    * Securely stores secret for a given namespace. If the store already has provided secret, it will be replaced.
@@ -51,7 +51,7 @@ public interface SecretManager {
    * @param secret the sensitive data that has to be securely stored
    * @throws IOException if unable to store the secret securely
    */
-  void store(String namespace, Secret secret) throws Exception;
+  void store(String namespace, Secret secret) throws IOException;
 
   /**
    * Returns securely stored secret along with its metadata as a {@link Secret}.
@@ -62,7 +62,7 @@ public interface SecretManager {
    * @throws SecretNotFoundException if the secret is not present in the namespace
    * @throws IOException if unable to retrieve the secret
    */
-  Secret get(String namespace, String name) throws Exception;
+  Secret get(String namespace, String name) throws SecretNotFoundException, IOException;
 
   /**
    * Returns {@link Collection} of metadata of all the secrets in the provided namespace.
@@ -71,7 +71,7 @@ public interface SecretManager {
    * @return a {@code Collection} of metadata of all the secrets in the provided namespace
    * @throws IOException if unable to list secrets
    */
-  Collection<SecretMetadata> list(String namespace) throws Exception;
+  Collection<SecretMetadata> list(String namespace) throws SecretNotFoundException, IOException;
 
   /**
    * Deletes the secret with the provided name.
@@ -81,7 +81,7 @@ public interface SecretManager {
    * @throws SecretNotFoundException if the secret is not present in the namespace
    * @throws IOException if unable to delete the secret or associated metadata
    */
-  void delete(String namespace, String name) throws Exception;
+  void delete(String namespace, String name) throws SecretNotFoundException, IOException;
 
   /**
    * Cleans up initialized resources. It will only be called once for the lifetime of the secrets manager.

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.securestore.spi.secret;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,11 +25,13 @@ import java.util.Objects;
 /**
  * Represents metadata for the sensitive data to be stored.
  */
-public class SecretMetadata {
+public class SecretMetadata implements Serializable {
   private final String name;
   private final String description;
   private final long creationTimeMs;
   private final Map<String, String> properties;
+
+  private static final long serialVersionUID = -3828981488837592093L;
 
   /**
    * Constructs metadata with provided secret name, description, creation time and properties.
