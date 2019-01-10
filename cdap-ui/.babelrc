@@ -12,6 +12,12 @@
         "modules": false
       }
     ],
+    [
+      "@babel/preset-stage-2",
+      {
+        "decoratorsLegacy": true
+      }
+    ],
     "@babel/preset-react",
     "@babel/preset-typescript"
   ],

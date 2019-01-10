@@ -35,7 +35,6 @@ import PipelinesLink from 'components/Header/PipelinesLink';
 import AnalyticsLink from 'components/Header/AnalyticsLink';
 import RulesEngineLink from 'components/Header/RulesEngineLink';
 import MetadataLink from 'components/Header/MetadataLink';
-import FELink from 'components/Header/FELink';
 import HubButton from 'components/Header/HubButton';
 import {NamespaceLinkContext} from 'components/Header/NamespaceLinkContext';
 
@@ -124,7 +123,6 @@ export default class Header extends Component {
             />
             <PipelinesLink />
             <DataPrepLink />
-            <FELink />
             <AnalyticsLink />
             <RulesEngineLink />
             <MetadataLink />
