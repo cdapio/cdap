@@ -9,10 +9,10 @@ class GridContainer extends Component {
     constructor(props) {
         super(props);
 
-        this.state = {
-          columnDefs:this.props.gridColums,
-          rowData:this.props.rowData
-        };
+        // this.state = {
+        //   columnDefs:this.props.gridColums,
+        //   rowData:this.props.rowData
+        // };
     }
 
     refreshGridColumns = (data) => {
@@ -29,9 +29,9 @@ class GridContainer extends Component {
                 <div
                   className="ag-theme-balham grid-container"    >
                     <AgGridReact
-                        columnDefs={this.state.columnDefs}
+                        columnDefs={this.props.gridColums}
                         rowSelection="multiple"
-                        rowData={this.state.rowData}
+                        rowData={this.props.rowData}
                         onSelectionChanged={this.onSelectionChanged.bind(this)}>
                     </AgGridReact>
                 </div>
