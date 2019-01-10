@@ -800,6 +800,18 @@ public class CLIMainTest extends CLITestBase {
   @Test
   public void testMetadata() throws Exception {
     testCommandOutputContains(cli, "cli render as csv", "Now rendering as CSV");
+
+    // Since metadata indexing is asynchronous, and the FakeApp has just been deployed, we need to
+    // wait for all entities to be indexed. Knowing that the workflow is the last program to be processed
+    // by the metadata message subscriber, we can wait until its tag "Batch" is returned in queries.
+    // This is not elegant because it depends on implementation, but seems better than adding a waitFor()
+    // for each of the following lines.
+    Tasks.waitFor(true, () -> {
+                    String output = getCommandOutput(cli, String.format("get metadata-tags %s scope system",
+                                                                        FAKE_WORKFLOW_ID));
+                    return Arrays.asList(output.split("\\r?\\n")).contains("Batch");
+                  }, 10, TimeUnit.SECONDS);
+
     // verify system metadata
     testCommandOutputContains(cli, String.format("get metadata %s scope system", FAKE_APP_ID),
                               FakeApp.class.getSimpleName());

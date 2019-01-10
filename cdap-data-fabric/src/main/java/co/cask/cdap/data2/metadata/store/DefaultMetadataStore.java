@@ -54,6 +54,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
@@ -74,6 +75,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Implementation of {@link MetadataStore}.
@@ -135,6 +137,72 @@ public class DefaultMetadataStore implements MetadataStore {
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
+  }
+
+  @Override
+  public void replaceMetadata(MetadataScope scope, Metadata metadata,
+                              Set<String> propertiesToKeep, Set<String> propertiesToPreserve) {
+
+    MetadataEntity entity = metadata.getMetadataEntity();
+    Set<String> newTags = metadata.getTags();
+    Map<String, String> newProperties = metadata.getProperties();
+    AtomicReference<Set<String>> addedTags = new AtomicReference<>();
+    AtomicReference<Set<String>> deletedTags = new AtomicReference<>();
+    AtomicReference<Metadata> previous = new AtomicReference<>();
+
+    Metadata latest = execute((mds) -> {
+      Metadata existing = mds.getMetadata(entity);
+      Set<String> oldTags = existing.getTags();
+      Map<String, String> oldProperties = existing.getProperties();
+      // compute differences
+      Set<String> tagsToDelete = Sets.difference(oldTags, newTags);
+      Set<String> tagsToAdd = Sets.difference(newTags, oldTags);
+      Set<String> propertiesToDelete = Sets.difference(Sets.difference(oldProperties.keySet(), newProperties.keySet()),
+                                                       Sets.union(propertiesToKeep, propertiesToPreserve));
+      Map<String, String> propertiesToSet = newProperties;
+      Set<String> oldPropertiesToPreserve = Sets.intersection(oldProperties.keySet(), propertiesToPreserve);
+      if (!oldPropertiesToPreserve.isEmpty()) {
+        propertiesToSet = Maps.filterKeys(propertiesToSet, key -> !oldPropertiesToPreserve.contains(key));
+      }
+      // perform updates
+      MetadataChange changed = null;
+      if (!tagsToDelete.isEmpty()) {
+        changed = mds.removeTags(entity, tagsToDelete);
+      }
+      if (!tagsToAdd.isEmpty()) {
+        changed = mds.addTags(entity, tagsToAdd);
+      }
+      if (!propertiesToDelete.isEmpty()) {
+        changed = mds.removeProperties(entity, propertiesToDelete);
+      }
+      if (!propertiesToSet.isEmpty()) {
+        changed = mds.setProperties(entity, propertiesToSet);
+      }
+      previous.set(existing);
+      addedTags.set(tagsToAdd);
+      deletedTags.set(tagsToDelete);
+      return changed == null ? null : changed.getLatest();
+    }, MetadataScope.SYSTEM);
+
+    Set<String> previousTags = previous.get().getTags();
+    Map<String, String> previousProperties = previous.get().getProperties();
+    Map<String, String> addedProperties, deletedProperties;
+    if (latest == null) {
+      addedProperties = Collections.emptyMap();
+      deletedProperties = Collections.emptyMap();
+    } else {
+      // compute additions and deletions again as we publish audit outside of tx
+      Map<String, String> currentProperties = latest.getProperties();
+      //noinspection ConstantConditions
+      addedProperties = Maps.filterEntries(currentProperties,
+                                           entry -> !entry.getValue().equals(previousProperties.get(entry.getKey())));
+      //noinspection ConstantConditions
+      deletedProperties = Maps.filterEntries(previousProperties,
+                                             entry -> !entry.getValue().equals(currentProperties.get(entry.getKey())));
+    }
+    publishAudit(new MetadataRecord(entity, MetadataScope.SYSTEM, previousProperties, previousTags),
+                 new MetadataRecord(entity, MetadataScope.SYSTEM, addedProperties, addedTags.get()),
+                 new MetadataRecord(entity, MetadataScope.SYSTEM, deletedProperties, deletedTags.get()));
   }
 
   @Override
@@ -522,9 +590,8 @@ public class DefaultMetadataStore implements MetadataStore {
     });
   }
 
-  // TODO (CDAP-14587): there should be no public accessor for the dataset
-  public static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
-                                                   MetadataScope scope) {
+  private static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
+                                                    MetadataScope scope) {
     try {
       return DatasetsUtil.getOrCreateDataset(context,
         dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),

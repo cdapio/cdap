@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
@@ -36,6 +37,22 @@ import java.util.Set;
  * </ul>
  */
 public interface MetadataStore {
+
+  /**
+   * Replaces the metadata for the given entity: All existing properties and tags are
+   * replaced with the given Metadata, with these exceptions: some existing properties
+   * are kept even if the new properties do not contain them, and some properties are
+   * left unchanged even if the new properties contain a new value.
+   *
+   * @param scope the {@link MetadataScope} to add/update the properties in
+   * @param metadata the new metadata, including the entity, properties and tags
+   * @param propertiesToKeep the names of properties that should be kept even if the
+   *                         new metadata does not contain them
+   * @param propertiesToPreserve the names of properties to leave unchanged even if
+   *                             the new metadata contains no or new values for them
+   */
+  void replaceMetadata(MetadataScope scope, Metadata metadata,
+                       Set<String> propertiesToKeep, Set<String> propertiesToPreserve);
 
   /**
    * Adds/updates properties for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
