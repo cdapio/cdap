@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -174,7 +174,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     if (secureExplore) {
       // Renewal interval for YARN
       renewalTimes.add(hConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                        YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
+                                     YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
 
       // Renewal interval for Hive. Also see: https://issues.apache.org/jira/browse/HIVE-9214
       Configuration hiveConf = getHiveConf();

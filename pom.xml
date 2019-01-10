@@ -2739,6 +2739,7 @@
         <module>cdap-runtime-ext-emr</module>
         <module>cdap-runtime-ext-remote-hadoop</module>
         <module>cdap-runtime-spi</module>
+        <module>cdap-securestore-ext-cloudkms</module>
         <module>cdap-securestore-spi</module>
         <module>cdap-notifications</module>
         <module>cdap-notifications-api</module>
