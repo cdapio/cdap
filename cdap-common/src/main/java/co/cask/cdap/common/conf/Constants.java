@@ -705,10 +705,6 @@ public final class Constants {
 
       public static final String WORKER = "wrk";
 
-      public static final String FLOW = "fl";
-      public static final String FLOWLET = "flt";
-      public static final String FLOWLET_QUEUE = "flq";
-
       public static final String MAPREDUCE = "mr";
       public static final String MR_TASK_TYPE = "mrt";
 
@@ -1428,8 +1424,6 @@ public final class Constants {
     public static final String CUSTOM_ACTION_PREFIX = "custom.action.";
     public static final String WORKER_PREFIX = "worker.";
     public static final String SERVICE_PREFIX = "service.";
-    public static final String FLOW_PREFIX = "flow.";
-    public static final int RUN_RECORD_UPDATE_RETRY_DELAY_SECS = 5;
     public static final int LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS = 5;
   }
 

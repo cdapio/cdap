@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private static final Gson GSON = new Gson();
 
-  private static final List<String> FLOW_TAGS_HUMAN = ImmutableList.of("namespace", "app", "flow", "flowlet");
+  private static final List<String> TAGS_HUMAN = ImmutableList.of("namespace", "app", "service", "handler");
 
   private static long emitTs;
 
@@ -65,13 +65,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private static void setupMetrics() throws Exception {
     // Adding metrics for app "WordCount1" in namespace "myspace", "WCount1" in "yourspace"
     MetricsContext collector =
-      collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter", "run1", "splitter"));
+      collectionService.getContext(getServiceContext("myspace", "WordCount1", "WordCounter", "run1", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
-    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WordCounter",
+    collector = collectionService.getContext(getServiceContext("yourspace", "WCount1", "WordCounter",
                                                                "run1", "splitter"));
     collector.increment("reads", 1);
-    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WCounter",
+    collector = collectionService.getContext(getServiceContext("yourspace", "WCount1", "WCounter",
                                                                "run1", "splitter"));
     emitTs = System.currentTimeMillis();
     // we want to emit in two different seconds
@@ -81,7 +81,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     TimeUnit.MILLISECONDS.sleep(2000);
     collector.increment("reads", 2);
 
-    collector = collectionService.getContext(getFlowletContext("yourspace", "WCount1", "WCounter",
+    collector = collectionService.getContext(getServiceContext("yourspace", "WCount1", "WCounter",
                                                                "run1", "counter"));
     collector.increment("reads", 1);
     collector = collectionService.getContext(getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
@@ -92,12 +92,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
       getMapReduceTaskContext("yourspace", "WCount1", "ClassicWordCount",
                               MapReduceMetrics.TaskType.Reducer, "run1", "task2"));
     collector.increment("reads", 1);
-    collector = collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+    collector = collectionService.getContext(getServiceContext("myspace", "WordCount1", "WordCounter",
                                                                "run1", "splitter"));
     collector.increment("reads", 1);
     collector.increment("writes", 1);
 
-    collector = collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+    collector = collectionService.getContext(getServiceContext("myspace", "WordCount1", "WordCounter",
                                                                "run1", "collector"));
     collector.increment("aa", 1);
     collector.increment("zz", 1);
@@ -117,7 +117,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // also: user metrics
     Metrics userMetrics = new ProgramUserMetrics(
-      collectionService.getContext(getFlowletContext("myspace", "WordCount1", "WordCounter",
+      collectionService.getContext(getServiceContext("myspace", "WordCount1", "WordCounter",
                                                      "run1", "splitter")));
     userMetrics.count("reads", 1);
     userMetrics.count("writes", 2);
@@ -156,15 +156,15 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // WordCount should be found in myspace, not in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace&tag=app:WordCount1",
-                       getSearchResultExpected("flow", "WordCounter"));
+                       getSearchResultExpected("service", "WordCounter"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WordCount1",
                                getSearchResultExpected());
 
     // WCount should be found in yourspace, not in myspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:yourspace&tag=app:WCount1",
-                       getSearchResultExpected("flow", "WCounter",
-                                               "flow", "WordCounter",
+                       getSearchResultExpected("service", "WCounter",
+                                               "service", "WordCounter",
                                                "mapreduce", "ClassicWordCount",
                                                "worker", "WorkerWordCount"
                        ));
@@ -217,12 +217,12 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                  "component", "metrics.processor"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*",
-                               getSearchResultExpected("flow", "WCounter",
-                                                       "flow", "WordCounter",
+                               getSearchResultExpected("service", "WCounter",
+                                                       "service", "WordCounter",
                                                        "mapreduce", "ClassicWordCount",
                                                        "worker", "WorkerWordCount"));
 
-    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=flow:*",
+    verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=service:*",
                                getSearchResultExpected("run", "run1"));
   }
 
@@ -230,27 +230,27 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testAggregateQueryBatch() throws Exception {
 
     QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
-                                                                  "flow", "WCounter", "flowlet", "splitter"),
+                                                                  "service", "WCounter", "handler", "splitter"),
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
                                            ImmutableMap.<String, String>of());
 
     // empty time range should default to aggregate=true
     QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
-                                                                  "flow", "WCounter", "flowlet", "counter"),
+                                                                  "service", "WCounter", "handler", "counter"),
                                            ImmutableList.of("system.reads"),
                                            ImmutableList.<String>of(),
                                            ImmutableMap.of("aggregate", "true"));
 
 
     QueryRequestFormat query3 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
-                                                                  "flow", "WCounter", "flowlet", "*"),
+                                                                  "service", "WCounter", "handler", "*"),
                                            ImmutableList.of("system.reads"),
                                            ImmutableList.<String>of(),
                                            ImmutableMap.of("aggregate", "true"));
 
 
     QueryRequestFormat query4 = new QueryRequestFormat(ImmutableMap.of("namespace", "myspace", "app", "WordCount1",
-                                                                       "flow", "WordCounter", "flowlet", "splitter"),
+                                                                       "service", "WordCounter", "handler", "splitter"),
                                            ImmutableList.of("system.reads", "system.writes"),
                                            ImmutableList.<String>of(),
                                            ImmutableMap.of("aggregate", "true"));
@@ -293,7 +293,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // batch query with empty metrics list
     QueryRequestFormat invalidQuery = new QueryRequestFormat(
-      ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "flow", "WordCounter", "flowlet", "splitter"),
+      ImmutableMap.of("namespace", "myspace", "app", "WordCount1", "service", "WordCounter", "handler", "splitter"),
       ImmutableList.<String>of(), ImmutableList.<String>of(), ImmutableMap.of("aggregate", "true"));
 
     response = doPost("/v3/metrics/query", GSON.toJson(ImmutableMap.of("invalid", invalidQuery)));
@@ -360,14 +360,14 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     int count = 120;
 
     QueryRequestFormat query1 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
-                                                      "flow", "WCounter", "flowlet", "splitter"),
+                                                      "service", "WCounter", "handler", "splitter"),
                                            ImmutableList.of("system.reads"), ImmutableList.<String>of(),
                                            ImmutableMap.of("start", String.valueOf(start),
                                                            "end", String.valueOf(end)));
 
     QueryRequestFormat query2 = new QueryRequestFormat(getTagsMap("namespace", "yourspace", "app", "WCount1",
-                                                      "flow", "WCounter"), ImmutableList.of("system.reads"),
-                                           ImmutableList.of("flowlet"),
+                                                      "service", "WCounter"), ImmutableList.of("system.reads"),
+                                           ImmutableList.of("handler"),
                                            ImmutableMap.of("start", String.valueOf(start),
                                                            "count", String.valueOf(count)));
 
@@ -377,8 +377,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                         String>of(), "system.reads", 2, 3)), "1s"),
                       "timeRangeQuery2",
                       new QueryResult(ImmutableList.of(
-                        new TimeSeriesSummary(ImmutableMap.of("flowlet", "counter"), "system.reads", 1, 1),
-                        new TimeSeriesSummary(ImmutableMap.of("flowlet", "splitter"), "system.reads", 2, 3)), "1s"));
+                        new TimeSeriesSummary(ImmutableMap.of("handler", "counter"), "system.reads", 1, 1),
+                        new TimeSeriesSummary(ImmutableMap.of("handler", "splitter"), "system.reads", 2, 3)), "1s"));
 
     Map<String, QueryRequestFormat> batchQueries = ImmutableMap.of("timeRangeQuery1", query1,
                                                                    "timeRangeQuery2", query2);
@@ -388,13 +388,13 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testMultipleMetricsSingleContext() throws Exception {
     verifyAggregateQueryResult(
-      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:splitter" +
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:splitter" +
         "&metric=system.reads&metric=system.writes&aggregate=true", ImmutableList.of(2L, 2L));
 
     long start = (emitTs - 60 * 1000) / 1000;
     long end = (emitTs + 300 * 1000) / 1000;
     verifyRangeQueryResult(
-      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=flow:WordCounter&tag=flowlet:collector" +
+      "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:collector" +
         "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
         + end, ImmutableList.of(1L, 1L, 1L), ImmutableList.of(1L, 1L, 1L));
   }
@@ -442,29 +442,29 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
         + end);
 
     List<TimeSeriesResult> groupByResult =
-      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("flowlet", "counter"), 1),
-                       new TimeSeriesResult(ImmutableMap.of("flowlet", "splitter"), 3));
+      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("handler", "counter"), 1),
+                       new TimeSeriesResult(ImmutableMap.of("handler", "splitter"), 3));
 
     verifyGroupByResult(
       "/v3/metrics/query?" + getTags("yourspace", "WCount1", "WCounter") +
-        "&metric=system.reads&groupBy=flowlet&start=" + start + "&end="
+        "&metric=system.reads&groupBy=handler&start=" + start + "&end="
         + end, groupByResult);
 
-    groupByResult =
-      ImmutableList.of(new TimeSeriesResult(ImmutableMap.of("namespace", "myspace", "flowlet", "splitter"), 2),
-                       new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "flowlet", "counter"), 1),
-                       new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "flowlet", "splitter"), 4));
+    groupByResult = ImmutableList.of(
+        new TimeSeriesResult(ImmutableMap.of("namespace", "myspace", "handler", "splitter", "app", "WordCount1"), 2),
+        new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "handler", "counter", "app", "WCount1"), 1),
+        new TimeSeriesResult(ImmutableMap.of("namespace", "yourspace", "handler", "splitter", "app", "WCount1"), 4));
 
     verifyGroupByResult(
       "/v3/metrics/query?metric=system.reads" +
-        "&groupBy=namespace&groupBy=flowlet&start=" + start + "&end=" + end, groupByResult);
+        "&groupBy=namespace&groupBy=handler&groupBy=app&start=" + start + "&end=" + end, groupByResult);
   }
 
   @Test
   public void testInterpolate() throws Exception {
     long start = System.currentTimeMillis() / 1000;
     long end = start + 3;
-    Map<String, String> sliceBy = getFlowletContext("interspace", "WordCount1", "WordCounter", "run1", "splitter");
+    Map<String, String> sliceBy = getServiceContext("interspace", "WordCount1", "WordCounter", "run1", "splitter");
     MetricValues value =
       new MetricValues(sliceBy, "reads", start, 100, MetricType.COUNTER);
     metricStore.add(value);
@@ -486,7 +486,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Map<String, String> deleteTags = new LinkedHashMap<>();
     deleteTags.put(Constants.Metrics.Tag.NAMESPACE, "interspace");
     deleteTags.put(Constants.Metrics.Tag.APP, "WordCount1");
-    deleteTags.put(Constants.Metrics.Tag.FLOW, "WordCounter");
+    deleteTags.put(Constants.Metrics.Tag.SERVICE, "WordCounter");
     // delete the added metrics for testing interpolator
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, end, Collections.emptySet(),
                                                           deleteTags, new ArrayList<>(deleteTags.keySet()));
@@ -521,7 +521,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testAutoResolutions() throws Exception {
     long start = 1;
-    Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
+    Map<String, String> sliceBy = getServiceContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
 
     // 1 second
     metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));
@@ -563,7 +563,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     Map<String, String> deleteTags = new LinkedHashMap<>();
     deleteTags.put(Constants.Metrics.Tag.NAMESPACE, "resolutions");
     deleteTags.put(Constants.Metrics.Tag.APP, "WordCount1");
-    deleteTags.put(Constants.Metrics.Tag.FLOW, "WordCounter");
+    deleteTags.put(Constants.Metrics.Tag.SERVICE, "WordCounter");
     // delete the added metrics for testing auto resolutions
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(start, (start + 36000), Collections.emptySet(), deleteTags,
                                                           new ArrayList<>(deleteTags.keySet()));
@@ -576,7 +576,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
     for (MetricQueryResult.TimeSeries timeSeries : result.getSeries()) {
       boolean timeSeriesMatchFound = false;
       for (TimeSeriesResult expectedTs : groupByResult) {
-        if (expectedTs.getTagValues().equals(ImmutableMap.copyOf(timeSeries.getGrouping()))) {
+        if (expectedTs.getTagValues().equals(timeSeries.getGrouping())) {
           assertTimeValues(expectedTs, timeSeries);
           timeSeriesMatchFound = true;
         }
@@ -601,7 +601,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   private String getTags(String... tags) {
     String result = "";
     for (int i = 0; i < tags.length; i++) {
-      result += "&tag=" + FLOW_TAGS_HUMAN.get(i) + ":" + tags[i];
+      result += "&tag=" + TAGS_HUMAN.get(i) + ":" + tags[i];
     }
     return result;
   }
@@ -610,27 +610,27 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchMetricsWithTags() throws Exception {
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
                              ImmutableList.of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:collector",
+                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:collector",
                              ImmutableList.of("system.aa", "system.ab", "system.zz"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1",
+                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1",
                              ImmutableList.of("system.aa", "system.ab", "system.reads",
                                               "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
                              ImmutableList.<String>of());
 
 
     // metrics in yourspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WCount1" +
-                               "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=service:WCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
                              ImmutableList.of("system.reads"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace",
@@ -638,16 +638,16 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1" +
-                               "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=service:WCounter&tag=dataset:*&tag=run:run1&tag=handler:splitter",
                              ImmutableList.<String>of());
 
     // verify "*"
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:*",
+                               "&tag=service:WordCounter&tag=dataset:*&tag=run:run1&tag=handler:*",
                              ImmutableList.of("system.aa", "system.ab", "system.reads",
                                               "system.writes", "system.zz", "user.reads", "user.writes"));
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:*&tag=dataset:*&tag=run:run1",
+                               "&tag=service:*&tag=dataset:*&tag=run:run1",
                              ImmutableList.of("system.aa", "system.ab", "system.reads",
                                               "system.writes", "system.zz", "user.reads", "user.writes"));
   }
@@ -748,7 +748,7 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   @Test
   public void testResultLimit() throws Exception {
     long start = 1;
-    Map<String, String> sliceBy = getFlowletContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
+    Map<String, String> sliceBy = getServiceContext("resolutions", "WordCount1", "WordCounter", "run1", "splitter");
 
     // 1 second
     metricStore.add(new MetricValues(sliceBy, "reads", start, 1, MetricType.COUNTER));

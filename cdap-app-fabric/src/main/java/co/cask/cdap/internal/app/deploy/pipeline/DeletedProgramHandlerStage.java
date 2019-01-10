@@ -27,20 +27,21 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Deleted program handler stage. Figures out which programs are deleted and handles callback.
@@ -74,36 +75,61 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
     // TODO: this should also delete logs and run records (or not?), and do it for all program types [CDAP-2187]
 
-    List<String> deletedFlows = Lists.newArrayList();
+    Set<ProgramId> deletedPrograms = new HashSet<>();
     for (ProgramSpecification spec : deletedSpecs) {
       //call the deleted spec
       ProgramType type = ProgramTypes.fromSpecification(spec);
-      final ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
+      ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
       programTerminator.stop(programId);
       programScheduler.deleteSchedules(programId);
       programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
 
       // Remove metadata for the deleted program
       metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Drop(programId.toMetadataEntity()));
+
+      deletedPrograms.add(programId);
     }
-    if (!deletedFlows.isEmpty()) {
-      deleteMetrics(appSpec.getApplicationId(), deletedFlows);
-    }
+
+    deleteMetrics(deletedPrograms);
 
     emit(appSpec);
   }
 
-  private void deleteMetrics(ApplicationId applicationId, Iterable<String> flows) {
-    LOG.debug("Deleting metrics for application {}", applicationId);
-    for (String flow : flows) {
-      long endTs = System.currentTimeMillis() / 1000;
-      Map<String, String> tags = new LinkedHashMap<>();
-      tags.put(Constants.Metrics.Tag.NAMESPACE, applicationId.getNamespace());
-      tags.put(Constants.Metrics.Tag.APP, applicationId.getApplication());
-      tags.put(Constants.Metrics.Tag.FLOW, flow);
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
-                                                            new ArrayList<>(tags.keySet()));
-      metricStore.delete(deleteQuery);
+  private void deleteMetrics(Set<ProgramId> programs) {
+    for (ProgramId programId : programs) {
+      LOG.debug("Deleting metrics for program {}", programId);
+
+      String typeTag = getMetricsTag(programId.getType());
+
+      if (typeTag != null) {
+        Map<String, String> tags = new LinkedHashMap<>();
+        tags.put(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace());
+        tags.put(Constants.Metrics.Tag.APP, programId.getApplication());
+        tags.put(typeTag, programId.getProgram());
+
+        long endTs = System.currentTimeMillis() / 1000;
+        MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
+                                                              new ArrayList<>(tags.keySet()));
+        metricStore.delete(deleteQuery);
+      }
+    }
+  }
+
+  @Nullable
+  private String getMetricsTag(ProgramType type) {
+    switch (type) {
+      case MAPREDUCE:
+        return Constants.Metrics.Tag.MAPREDUCE;
+      case WORKFLOW:
+        return Constants.Metrics.Tag.WORKFLOW;
+      case SERVICE:
+        return Constants.Metrics.Tag.SERVICE;
+      case SPARK:
+        return Constants.Metrics.Tag.SPARK;
+      case WORKER:
+        return Constants.Metrics.Tag.WORKER;
+      default:
+        return null;
     }
   }
 }

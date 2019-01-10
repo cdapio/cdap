@@ -91,7 +91,7 @@ public class DefaultMetadataStoreTest {
   private final Set<String> appTags = ImmutableSet.of("aTag");
   private final Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
   private final Map<String, String> updatedStreamProperties = ImmutableMap.of("stKey", "stV");
-  private final Set<String> flowTags = ImmutableSet.of("fTag");
+  private final Set<String> tags = ImmutableSet.of("fTag");
 
   private final AuditMessage auditMessage1 = new AuditMessage(
     0, dataset, "", AuditType.METADATA_CHANGE,
@@ -142,16 +142,16 @@ public class DefaultMetadataStoreTest {
     0, service, "", AuditType.METADATA_CHANGE,
     new MetadataPayload(
       EMPTY_USER_METADATA,
-      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, flowTags)),
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, tags)),
       EMPTY_USER_METADATA
     )
   );
   private final AuditMessage auditMessage8 = new AuditMessage(
     0, service, "", AuditType.METADATA_CHANGE,
     new MetadataPayload(
-      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, flowTags)),
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, tags)),
       EMPTY_USER_METADATA,
-      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, flowTags))
+      ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, tags))
     )
   );
   private final AuditMessage auditMessage9 = new AuditMessage(
@@ -269,20 +269,20 @@ public class DefaultMetadataStoreTest {
 
     // Add metadata
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
-    Map<String, String> flowUserProps = ImmutableMap.of("key1", "value1",
+    Map<String, String> userProps = ImmutableMap.of("key1", "value1",
                                                         "key2", "value2",
                                                         "multiword", multiWordValue);
-    Map<String, String> flowSysProps = ImmutableMap.of("sysKey1", "sysValue1");
-    Set<String> flowUserTags = ImmutableSet.of("tag1", "tag2");
+    Map<String, String> systemProps = ImmutableMap.of("sysKey1", "sysValue1");
+    Set<String> userTags = ImmutableSet.of("tag1", "tag2");
     Set<String> streamUserTags = ImmutableSet.of("tag3", "tag4");
-    Set<String> flowSysTags = ImmutableSet.of("sysTag1");
-    store.setProperties(MetadataScope.USER, service1.toMetadataEntity(), flowUserProps);
-    store.setProperties(MetadataScope.SYSTEM, service1.toMetadataEntity(), flowSysProps);
-    store.addTags(MetadataScope.USER, service1.toMetadataEntity(), flowUserTags);
-    store.addTags(MetadataScope.SYSTEM, service1.toMetadataEntity(), flowSysTags);
+    Set<String> sysTags = ImmutableSet.of("sysTag1");
+    store.setProperties(MetadataScope.USER, service1.toMetadataEntity(), userProps);
+    store.setProperties(MetadataScope.SYSTEM, service1.toMetadataEntity(), systemProps);
+    store.addTags(MetadataScope.USER, service1.toMetadataEntity(), userTags);
+    store.addTags(MetadataScope.SYSTEM, service1.toMetadataEntity(), sysTags);
     store.addTags(MetadataScope.USER, stream1.toMetadataEntity(), streamUserTags);
     store.removeTags(MetadataScope.USER, stream1.toMetadataEntity(), streamUserTags);
-    store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), flowUserProps);
+    store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), userProps);
     store.removeProperties(MetadataScope.USER, stream1.toMetadataEntity(),
                            ImmutableSet.of("key1", "key2", "multiword"));
 
@@ -298,9 +298,9 @@ public class DefaultMetadataStoreTest {
     Assert.assertEquals(2, response.getTotal());
     List<MetadataSearchResultRecord> actual = Lists.newArrayList(response.getResults());
 
-    Map<MetadataScope, Metadata> expectedFlowMetadata =
-      ImmutableMap.of(MetadataScope.USER, new Metadata(flowUserProps, flowUserTags),
-                      MetadataScope.SYSTEM, new Metadata(flowSysProps, flowSysTags));
+    Map<MetadataScope, Metadata> expectedMetadata =
+      ImmutableMap.of(MetadataScope.USER, new Metadata(userProps, userTags),
+                      MetadataScope.SYSTEM, new Metadata(systemProps, sysTags));
     Map<MetadataScope, Metadata> expectedStreamMetadata =
       ImmutableMap.of(MetadataScope.USER, new Metadata(streamUserProps, Collections.emptySet()));
     Map<MetadataScope, Metadata> expectedDatasetMetadata =
@@ -308,7 +308,7 @@ public class DefaultMetadataStoreTest {
     List<MetadataSearchResultRecord> expected =
       Lists.newArrayList(
         new MetadataSearchResultRecord(service1,
-                                       expectedFlowMetadata),
+                                       expectedMetadata),
         new MetadataSearchResultRecord(stream1,
                                        expectedStreamMetadata)
       );
@@ -323,7 +323,7 @@ public class DefaultMetadataStoreTest {
       new MetadataSearchResultRecord(dataset1,
                                      expectedDatasetMetadata),
       new MetadataSearchResultRecord(service1,
-                                     expectedFlowMetadata)
+                                     expectedMetadata)
     );
     Assert.assertEquals(expected, actual);
 
@@ -493,18 +493,18 @@ public class DefaultMetadataStoreTest {
     // add bunch of tags to ensure higher weight to this entity in search result
     store.addTags(MetadataScope.USER, trackerDataset, ImmutableSet.of("tag9", "tag10", "tag11", "tag12", "tag13"));
 
-    MetadataSearchResultRecord flowSearchResult = new MetadataSearchResultRecord(service);
+    MetadataSearchResultRecord searchResult = new MetadataSearchResultRecord(service);
     MetadataSearchResultRecord streamSearchResult = new MetadataSearchResultRecord(worker);
     MetadataSearchResultRecord datasetSearchResult = new MetadataSearchResultRecord(dataset);
     MetadataSearchResultRecord trackerDatasetSearchResult = new MetadataSearchResultRecord(trackerDataset);
 
-    // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, flow
+    // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, program
     // (this depends on how many tags got matched with the search query)
     // trackerDataset entity should not be part
     MetadataSearchResponse response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
+      ImmutableList.of(datasetSearchResult, streamSearchResult, searchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
@@ -512,7 +512,7 @@ public class DefaultMetadataStoreTest {
     response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1, true);
     Assert.assertEquals(4, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.of(trackerDatasetSearchResult, datasetSearchResult, streamSearchResult, flowSearchResult),
+      ImmutableList.of(trackerDatasetSearchResult, datasetSearchResult, streamSearchResult, searchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
@@ -527,7 +527,7 @@ public class DefaultMetadataStoreTest {
     response = search(nsId.getNamespace(), "tag*", 1, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.of(streamSearchResult, flowSearchResult),
+      ImmutableList.of(streamSearchResult, searchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
@@ -535,14 +535,14 @@ public class DefaultMetadataStoreTest {
     response = search(nsId.getNamespace(), "tag*", 1, 3, 1, true);
     Assert.assertEquals(4, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.of(datasetSearchResult, streamSearchResult, flowSearchResult),
+      ImmutableList.of(datasetSearchResult, streamSearchResult, searchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
     response = search(nsId.getNamespace(), "tag*", 2, 2, 1);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.of(flowSearchResult),
+      ImmutableList.of(searchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
 
@@ -557,7 +557,7 @@ public class DefaultMetadataStoreTest {
     response = search(nsId.getNamespace(), "tag*", 1, Integer.MAX_VALUE, 0);
     Assert.assertEquals(3, response.getTotal());
     Assert.assertEquals(
-      ImmutableList.of(streamSearchResult, flowSearchResult),
+      ImmutableList.of(streamSearchResult, searchResult),
       ImmutableList.copyOf(stripMetadata(response.getResults()))
     );
   }
@@ -597,7 +597,7 @@ public class DefaultMetadataStoreTest {
     store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
     store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
     store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), updatedStreamProperties);
-    store.addTags(MetadataScope.USER, service.toMetadataEntity(), flowTags);
+    store.addTags(MetadataScope.USER, service.toMetadataEntity(), tags);
     store.removeTags(MetadataScope.USER, service.toMetadataEntity());
     store.removeTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags);
     store.removeProperties(MetadataScope.USER, stream.toMetadataEntity());

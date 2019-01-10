@@ -107,24 +107,24 @@ public class RouterPathLookupTest {
   @Test
   public void testMetricsPath() {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v3///metrics/system/apps/InvalidApp//";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    RouteDestination result = pathLookup.getRoutingService(flowPath, httpRequest);
+    String path = "/v3///metrics/system/apps/InvalidApp//";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.METRICS, result);
 
-    flowPath = "/v3/metrics";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), flowPath);
-    result = pathLookup.getRoutingService(flowPath, httpRequest);
+    path = "/v3/metrics";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), path);
+    result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.METRICS, result);
 
-    flowPath = "/v3/metrics//";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    result = pathLookup.getRoutingService(flowPath, httpRequest);
+    path = "/v3/metrics//";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
+    result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.METRICS, result);
 
     testMetricsPath("/v3/metrics/search?target=tag&tag=namespace:user");
-    testMetricsPath("/v3/metrics/search?target=tag&tag=app:PurchaeHistory&tag=flow:PurchaseFlow");
-    testMetricsPath("/v3/metrics/search?target=metric&tag=app:PurchaeHistory&tag=flow:PurchaseFlow");
+    testMetricsPath("/v3/metrics/search?target=tag&tag=app:PurchaeHistory&tag=service:PurchaseService");
+    testMetricsPath("/v3/metrics/search?target=metric&tag=app:PurchaeHistory&tag=service:PurchaseService");
   }
 
   private void testMetricsPath(String path) {
@@ -155,19 +155,19 @@ public class RouterPathLookupTest {
   @Test
   public void testLogPath() {
     //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String flowPath = "/v3/namespaces/default/apps//InvalidApp///flows/FlowName/logs/";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    RouteDestination result = pathLookup.getRoutingService(flowPath, httpRequest);
+    String path = "/v3/namespaces/default/apps//InvalidApp///services/ServiceName/logs/";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.METRICS, result);
 
-    flowPath = "///v3/namespaces/default///apps/InvalidApp/flows/FlowName/////logs";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
-    result = pathLookup.getRoutingService(flowPath, httpRequest);
+    path = "///v3/namespaces/default///apps/InvalidApp/services/ServiceName/////logs";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), path);
+    result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.METRICS, result);
 
-    flowPath = "/v3/namespaces/default/apps/InvalidApp/service/ServiceName/runs/7e6adc79-0f5d-4252-70817ea47698/logs/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    result = pathLookup.getRoutingService(flowPath, httpRequest);
+    path = "/v3/namespaces/default/apps/InvalidApp/service/ServiceName/runs/7e6adc79-0f5d-4252-70817ea47698/logs/";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.METRICS, result);
   }
 
@@ -287,10 +287,10 @@ public class RouterPathLookupTest {
   }
 
   @Test
-  public void testRouterFlowPathLookUp() {
-    String flowPath = "/v3/namespaces/default//apps/ResponseCodeAnalytics/flows/LogAnalyticsFlow/status";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), flowPath);
-    RouteDestination result = pathLookup.getRoutingService(flowPath, httpRequest);
+  public void testRouterServicePathLookUp() {
+    String path = "/v3/namespaces/default//apps/ResponseCodeAnalytics/services/LogAnalyticsService/status";
+    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
+    RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
   }
 
@@ -311,8 +311,8 @@ public class RouterPathLookupTest {
   }
 
   @Test
-  public void testRouterFlowletInstancesLookUp() {
-    String path = "/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/flowlets/StreamSource/instances";
+  public void testRouterServiceInstancesLookUp() {
+    String path = "/v3/namespaces/default//apps/WordCount/services/WordCountService/instances";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), path);
     RouteDestination result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP,  result);
@@ -358,7 +358,7 @@ public class RouterPathLookupTest {
     assertRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata",
                   RouterPathLookup.METADATA_SERVICE);
     // all program metadata
-    assertRouting("/v3/namespaces/default//apps/WordCount//flows//WordCountFlow//metadata",
+    assertRouting("/v3/namespaces/default//apps/WordCount//services//ServiceName//metadata",
                   RouterPathLookup.METADATA_SERVICE);
     // all dataset metadata
     assertRouting("/v3/namespaces/default//datasets/ds1//////metadata", RouterPathLookup.METADATA_SERVICE);
@@ -373,7 +373,7 @@ public class RouterPathLookupTest {
     assertRouting("/v3/namespaces/default//artifacts/WordCount///versions/v1//metadata/properties",
                   RouterPathLookup.METADATA_SERVICE);
     // program metadata properties
-    assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/properties"
+    assertRouting("/v3/namespaces/default//apps/WordCount/services/ServiceName/metadata/properties"
       , RouterPathLookup.METADATA_SERVICE);
     // dataset metadata properties
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
@@ -388,7 +388,7 @@ public class RouterPathLookupTest {
     assertRouting("/v3/namespaces/default//artifacts/WordCount//versions//1.0/metadata/tags",
                   RouterPathLookup.METADATA_SERVICE);
     // program metadata tags
-    assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/tags",
+    assertRouting("/v3/namespaces/default//apps/WordCount/services/ServiceName/metadata/tags",
                   RouterPathLookup.METADATA_SERVICE);
     // dataset metadata tags
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/tags", RouterPathLookup.METADATA_SERVICE);
@@ -404,7 +404,7 @@ public class RouterPathLookupTest {
     assertRouting("/v3/namespaces/default/////datasets/ds1/lineage", RouterPathLookup.METADATA_SERVICE);
     assertRouting("/v3/namespaces/default/streams/st1/lineage", RouterPathLookup.METADATA_SERVICE);
     // get metadata for accesses
-    assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/runs/runid/metadata",
+    assertRouting("/v3/namespaces/default//apps/WordCount/services/ServiceName/runs/runid/metadata",
                   RouterPathLookup.METADATA_SERVICE);
 
     // test field lineage path

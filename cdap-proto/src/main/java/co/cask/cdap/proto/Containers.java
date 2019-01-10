@@ -39,7 +39,7 @@ public interface Containers {
   /**
    * ContainerTypes - System Service, and for various program types
    */
-  enum ContainerType { SYSTEM_SERVICE, FLOWLET, SERVICE, MAPREDUCE, WORKFLOW, SPARK, WORKER }
+  enum ContainerType { SYSTEM_SERVICE, SERVICE, MAPREDUCE, WORKFLOW, SPARK, WORKER }
 
   /**
    * POJO holding information about container running in YARN.

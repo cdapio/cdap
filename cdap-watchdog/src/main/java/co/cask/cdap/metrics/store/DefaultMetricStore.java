@@ -56,7 +56,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -67,7 +66,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -80,8 +78,6 @@ public class DefaultMetricStore implements MetricStore {
   private static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
   private static final String BY_NAMESPACE = "namespace";
   private static final String BY_APP = "app";
-  private static final String BY_FLOW = "flow";
-  private static final String BY_FLOWLET_QUEUE = "flow.queue";
   private static final String BY_MAPREDUCE = "mapreduce";
   private static final String BY_SERVICE = "service";
   private static final String BY_WORKER = "worker";
@@ -128,23 +124,6 @@ public class DefaultMetricStore implements MetricStore {
     // up the latter significantly, otherwise (if dataset tag is after runId and such) queries like
     // "writes into dataset A per program" would be potentially scannig thru whole program history.
 
-    // flow
-    aggs.put(BY_FLOW, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.FLOWLET,
-                       Constants.Metrics.Tag.INSTANCE_ID, Constants.Metrics.Tag.FLOWLET_QUEUE),
-      // i.e. for flows only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.FLOW)));
-    // queue
-    aggs.put(BY_FLOWLET_QUEUE, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
-                       Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE),
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
-                       Constants.Metrics.Tag.FLOW, Constants.Metrics.Tag.CONSUMER,
-                       Constants.Metrics.Tag.PRODUCER, Constants.Metrics.Tag.FLOWLET_QUEUE)));
     // mapreduce
     aggs.put(BY_MAPREDUCE, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
@@ -308,27 +287,9 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   private CubeQuery buildCubeQuery(MetricDataQuery query) {
-    String aggregation = getAggregation(query);
-    return new CubeQuery(aggregation, query.getStartTs(), query.getEndTs(),
+    return new CubeQuery(null, query.getStartTs(), query.getEndTs(),
                          query.getResolution(), query.getLimit(), query.getMetrics(),
                          query.getSliceByTags(), query.getGroupByTags(), query.getInterpolator());
-  }
-
-  @Nullable
-  private String getAggregation(MetricDataQuery query) {
-    // We mostly rely on auto-selection of aggregation during query (in which case null is returned from
-    // this method). In some specific cases we need to help resolve the aggregation though.
-    Set<String> tagNames = ImmutableSet.<String>builder()
-      .addAll(query.getSliceByTags().keySet()).addAll(query.getGroupByTags()).build();
-    if (tagNames.contains(Constants.Metrics.Tag.FLOW)) {
-      // NOTE: BY_FLOWLET_QUEUE agg has only producer and consumer metrics
-      if (tagNames.contains(Constants.Metrics.Tag.PRODUCER) || tagNames.contains(Constants.Metrics.Tag.CONSUMER)) {
-        return BY_FLOWLET_QUEUE;
-      } else {
-        return BY_FLOW;
-      }
-    }
-    return null;
   }
 
   @Override

@@ -29,8 +29,6 @@ public enum ArgumentName {
   STREAM("stream-id"),
   WORKER("app-id.worker-id"),
   METHOD("app-id.method-id"),
-  FLOW("app-id.flow-id"),
-  FLOWLET("app-id.flow-id.flowlet-id"),
   WORKFLOW("app-id.workflow-id"),
   SERVICE("app-id.service-id"),
   MAPREDUCE("app-id.mapreduce-id"),
@@ -168,7 +166,7 @@ public enum ArgumentName {
     "For programs, <entity-id> includes the " +
     "application name and the program type: " +
     "<namespace-name>.<app-name>.<program-type>.<program-name>. <program-type> is one of " +
-    "flow, mapreduce, service, spark, worker, or workflow.\n" +
+    "mapreduce, service, spark, worker, or workflow.\n" +
     "\n" +
     "For datasets and streams, " +
     "<entity-id> is the namespace and entity names, such as <namespace-name>.<dataset-name> " +

@@ -258,14 +258,14 @@ public abstract class MetricsSuiteTestBase {
     return String.format("/%s/namespaces/%s/%s", version, namespace, nonVersionedApiPath);
   }
 
-  protected static Map<String, String> getFlowletContext(String namespaceId, String appName, String flowName,
-                                                         String runId, String flowletName) {
+  protected static Map<String, String> getServiceContext(String namespaceId, String appName, String serviceName,
+                                                         String runId, String handlerName) {
     return ImmutableMap.<String, String>builder()
       .put(Constants.Metrics.Tag.NAMESPACE, namespaceId)
       .put(Constants.Metrics.Tag.APP, appName)
-      .put(Constants.Metrics.Tag.FLOW, flowName)
+      .put(Constants.Metrics.Tag.SERVICE, serviceName)
       .put(Constants.Metrics.Tag.RUN_ID, runId)
-      .put(Constants.Metrics.Tag.FLOWLET, flowletName).build();
+      .put(Constants.Metrics.Tag.HANDLER, handlerName).build();
   }
 
   protected static Map<String, String> getMapReduceTaskContext(String namespaceId, String appName, String jobName,
