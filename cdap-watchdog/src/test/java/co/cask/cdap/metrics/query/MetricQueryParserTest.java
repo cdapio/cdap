@@ -23,7 +23,6 @@ import co.cask.cdap.common.id.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -148,106 +147,10 @@ public class MetricQueryParserTest {
     assertMetricName("system.reads", query);
   }
 
-  @Test
-  public void testFlow() throws MetricsPathException  {
-    MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/process.bytes?count=60&start=1&end=61"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.process.bytes", query);
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/some.metric?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1");
-    assertMetricName("system.some.metric", query);
-
-    //flow with runId
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/runs/1234/some.metric?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1");
-    assertMetricName("system.some.metric", query);
-    Assert.assertEquals("1234", query.getSliceByTags().get(Tag.RUN_ID));
-
-    //flowlet with runId
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/runs/1234/flowlets/flowlet1/some.metric?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.some.metric", query);
-    Assert.assertEquals("1234", query.getSliceByTags().get(Tag.RUN_ID));
-  }
-
   @Test(expected = MetricsPathException.class)
   public void testMultipleRunIdInvalidPath() throws MetricsPathException  {
     MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/1234/runs/1235/flowlets/flowlet1/some.metric?summary=true"));
-  }
-
-  @Test
-  public void testQueues() throws MetricsPathException  {
-    MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?aggregate=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.process.bytes.in", query);
-    Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.out?aggregate=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.process.bytes.out", query);
-    Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.in?aggregate=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.process.events.in", query);
-    Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.out?aggregate=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.process.events.out", query);
-    Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
-
-    query = MetricQueryParser.parse(
-      URI.create("/system/apps/app1/flows/flow1/runs/run123/flowlets/flowlet1/queues/queue1/" +
-                   "process.events.out?aggregate=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId(),
-               Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
-    assertMetricName("system.process.events.out", query);
-    Assert.assertEquals("queue1", query.getSliceByTags().get(Tag.FLOWLET_QUEUE));
-    Assert.assertEquals("run123", query.getSliceByTags().get(Tag.RUN_ID));
   }
 
   @Test
@@ -356,38 +259,38 @@ public class MetricQueryParserTest {
 
   @Test(expected = MetricsPathException.class)
   public void testInvalidUserServicesTooManyPath() throws MetricsPathException  {
-    MetricQueryParser.parse(URI.create("/system/apps/app1/services/serve1/runnables/run1/random/reads?summary=true"));
+    MetricQueryParser.parse(URI.create("/system/apps/app1/services/service1/runnables/run1/random/reads?summary=true"));
   }
 
   @Test
   public void testDataset() throws MetricsPathException  {
     MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/run1/" +
-                   "flowlets/flowlet1/store.reads?summary=true"));
+      URI.create("/system/datasets/dataset1/apps/app1/services/service1/runs/run1/" +
+                   "handlers/handler1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
-               Tag.FLOW, "flow1",
-               Tag.FLOWLET, "flowlet1");
+               Tag.SERVICE, "service1",
+               Tag.HANDLER, "handler1");
     assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
     Assert.assertEquals("run1", query.getSliceByTags().get(Tag.RUN_ID));
 
     query = MetricQueryParser.parse(
-      URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/store.reads?summary=true"));
+      URI.create("/system/datasets/dataset1/apps/app1/services/service1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
-               Tag.FLOW, "flow1");
+               Tag.SERVICE, "service1");
     assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
 
     query = MetricQueryParser.parse(
-      URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/123/store.reads?summary=true"));
+      URI.create("/system/datasets/dataset1/apps/app1/services/service1/runs/123/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
                Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
-               Tag.FLOW, "flow1");
+               Tag.SERVICE, "service1");
     assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
     Assert.assertEquals("123", query.getSliceByTags().get(Tag.RUN_ID));
@@ -483,12 +386,12 @@ public class MetricQueryParserTest {
   }
 
   @Test
-  public void testMetricURIDecoding() throws UnsupportedEncodingException, MetricsPathException {
+  public void testMetricURIDecoding() throws MetricsPathException {
     String weirdMetric = "/weird?me+tr ic#$name////";
     // encoded version or weirdMetric
     String encodedWeirdMetric = "%2Fweird%3Fme%2Btr%20ic%23%24name%2F%2F%2F%2F";
     MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/user/apps/app1/flows/" + encodedWeirdMetric + "?aggregate=true"));
+      URI.create("/user/apps/app1/services/" + encodedWeirdMetric + "?aggregate=true"));
     verifyTags(query.getSliceByTags(),
                Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1");
@@ -515,33 +418,33 @@ public class MetricQueryParserTest {
     String[] validPaths = {
       "/system/metric?aggregate=true",
       "/system/apps/appX/metric?aggregate=true",
-      "/system/apps/appX/flows/metric?aggregate=true",
-      "/system/apps/appX/flows/flowY/metric?aggregate=true",
-      "/system/apps/appX/flows/flowY/flowlets/flowletZ/metric?aggregate=true",
+      "/system/apps/appX/services/metric?aggregate=true",
+      "/system/apps/appX/services/serviceY/metric?aggregate=true",
+      "/system/apps/appX/services/serviceY/handlers/handlerZ/metric?aggregate=true",
       "/system/apps/appX/mapreduce/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mappers/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/reducers/metric?aggregate=true",
       "/system/datasets/datasetA/metric?aggregate=true",
       "/system/datasets/datasetA/apps/appX/metric?aggregate=true",
-      "/system/datasets/datasetA/apps/appX/flows/flowY/metric?aggregate=true",
-      "/system/datasets/datasetA/apps/appX/flows/flowY/flowlets/flowletZ/metric?aggregate=true",
+      "/system/datasets/datasetA/apps/appX/services/serviceY/metric?aggregate=true",
+      "/system/datasets/datasetA/apps/appX/services/serviceY/handlers/handlerZ/metric?aggregate=true",
       "/system/streams/streamA/metric?aggregate=true"
     };
     // check that miss-spelled paths and the like throw an exception.
     String[] invalidPaths = {
       "/syste/metric?aggregate=true",
       "/system/app/appX/metric?aggregate=true",
-      "/system/apps/appX/flow/metric?aggregate=true",
-      "/system/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",
+      "/system/apps/appX/service/metric?aggregate=true",
+      "/system/apps/appX/services/serviceY/handler/handlerZ/metric?aggregate=true",
       "/system/apps/appX/mapreduces/metric?aggregate=true",
       "/system/apps/appX/mapreduces/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mapper/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/reducer/metric?aggregate=true",
       "/system/dataset/datasetA/metric?aggregate=true",
       "/system/datasets/datasetA/app/appX/metric?aggregate=true",
-      "/system/datasets/datasetA/apps/appX/flow/flowY/metric?aggregate=true",
-      "/system/datasets/datasetA/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",
+      "/system/datasets/datasetA/apps/appX/service/flowY/metric?aggregate=true",
+      "/system/datasets/datasetA/apps/appX/services/serviceY/handler/handlerZ/metric?aggregate=true",
       "/system/stream/streamA/metric?aggregate=true"
     };
     for (String path : validPaths) {

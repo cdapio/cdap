@@ -69,9 +69,9 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
   static final Map<String, String> METRICS_CONTEXT = ImmutableMap.<String, String>builder()
     .put(Constants.Metrics.Tag.NAMESPACE, "NS_1")
     .put(Constants.Metrics.Tag.APP, "APP_1")
-    .put(Constants.Metrics.Tag.FLOW, "FLOW_1")
+    .put(Constants.Metrics.Tag.SERVICE, "SERVICE_1")
     .put(Constants.Metrics.Tag.RUN_ID, "RUN_1")
-    .put(Constants.Metrics.Tag.FLOWLET, "FLOWLET_1").build();
+    .put(Constants.Metrics.Tag.HANDLER, "HANDLER_1").build();
 
   private final ByteArrayOutputStream encoderOutputStream = new ByteArrayOutputStream(1024);
   // Map containing expected metrics' names and values

@@ -45,9 +45,9 @@ public class AggregatedMetricsCollectionServiceTest {
   private static final HashMap<String, String> EMPTY_TAGS = new HashMap<>();
   private static final String NAMESPACE = "testnamespace";
   private static final String APP = "testapp";
-  private static final String FLOW = "testprogram";
+  private static final String SERVICE = "testservice";
   private static final String RUNID = "testrun";
-  private static final String FLOWLET = "testflowlet";
+  private static final String HANDLER = "testhandler";
   private static final String INSTANCE = "testInstance";
   private static final String METRIC = "metric";
   private static final String GAUGE_METRIC = "gaugeMetric";
@@ -88,7 +88,7 @@ public class AggregatedMetricsCollectionServiceTest {
     // non-empty tags.
     final Map<String, String> baseTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NAMESPACE,
                                                          Constants.Metrics.Tag.APP, APP,
-                                                         Constants.Metrics.Tag.FLOW, FLOW,
+                                                         Constants.Metrics.Tag.SERVICE, SERVICE,
                                                          Constants.Metrics.Tag.RUN_ID, RUNID);
 
     try {
@@ -114,18 +114,18 @@ public class AggregatedMetricsCollectionServiceTest {
 
       // define collectors for non-empty tags
       MetricsContext baseCollector = service.getContext(baseTags);
-      MetricsContext flowletInstanceCollector = baseCollector.childContext(Constants.Metrics.Tag.FLOWLET, FLOWLET)
+      MetricsContext metricsContext = baseCollector.childContext(Constants.Metrics.Tag.HANDLER, HANDLER)
         .childContext(Constants.Metrics.Tag.INSTANCE_ID, INSTANCE);
 
       // increment metrics for various collectors
       baseCollector.increment(METRIC, Integer.MAX_VALUE);
-      flowletInstanceCollector.increment(METRIC, 5);
+      metricsContext.increment(METRIC, 5);
       baseCollector.increment(METRIC, 10);
       baseCollector.increment(METRIC, 3);
-      flowletInstanceCollector.increment(METRIC, 2);
-      flowletInstanceCollector.increment(METRIC, 4);
-      flowletInstanceCollector.increment(METRIC, 3);
-      flowletInstanceCollector.increment(METRIC, 1);
+      metricsContext.increment(METRIC, 2);
+      metricsContext.increment(METRIC, 4);
+      metricsContext.increment(METRIC, 3);
+      metricsContext.increment(METRIC, 1);
 
       // there are two collectors, verify their metrics values
       verifyCounterMetricsValue(published, ImmutableMap.of(4, ImmutableMap.of(METRIC, 13L + Integer.MAX_VALUE),
@@ -137,15 +137,15 @@ public class AggregatedMetricsCollectionServiceTest {
       // gauge metrics for various collectors
       baseCollector.gauge(GAUGE_METRIC, Integer.MAX_VALUE);
       baseCollector.gauge(GAUGE_METRIC, 3);
-      flowletInstanceCollector.gauge(GAUGE_METRIC, 6);
-      flowletInstanceCollector.gauge(GAUGE_METRIC, 2);
+      metricsContext.gauge(GAUGE_METRIC, 6);
+      metricsContext.gauge(GAUGE_METRIC, 2);
       baseCollector.gauge(GAUGE_METRIC, 1);
-      flowletInstanceCollector.gauge(GAUGE_METRIC, Integer.MAX_VALUE);
+      metricsContext.gauge(GAUGE_METRIC, Integer.MAX_VALUE);
 
       // gauge just updates the value, so polling should return the most recent value written
       verifyGaugeMetricsValue(published, ImmutableMap.of(4, 1L, 6, (long) Integer.MAX_VALUE));
 
-      flowletInstanceCollector.gauge(GAUGE_METRIC, 0);
+      metricsContext.gauge(GAUGE_METRIC, 0);
       verifyCounterMetricsValue(published, ImmutableMap.of(6, ImmutableMap.of(GAUGE_METRIC, 0L)));
     } finally {
       service.stopAndWait();

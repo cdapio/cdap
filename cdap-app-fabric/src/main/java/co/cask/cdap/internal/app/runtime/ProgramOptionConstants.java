@@ -37,8 +37,6 @@ public final class ProgramOptionConstants {
 
   public static final String TWILL_RUN_ID = "twillRunId";
 
-  public static final String FLOWLET_NAME = "flowletName";
-
   public static final String CLUSTER_STATUS = "clusterStatus";
 
   public static final String CLUSTER = "cluster";

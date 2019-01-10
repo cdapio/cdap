@@ -199,20 +199,6 @@ public class MetadataEntityTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
-
-    // test flowlet
-    MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").appendAsType(MetadataEntity.APPLICATION, "myApp")
-      .append(MetadataEntity.FLOW, "flow").appendAsType(MetadataEntity.FLOWLET, "ft").build();
-    MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns").appendAsType(MetadataEntity.APPLICATION, "myApp")
-      .append(MetadataEntity.VERSION, "1").append(MetadataEntity.FLOW, "flow")
-      .appendAsType(MetadataEntity.FLOWLET, "ft").build();
-    try {
-      MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns")
-        .append(MetadataEntity.FLOW, "flow").appendAsType(MetadataEntity.FLOWLET, "ft").build();
-      Assert.fail();
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
   }
 
   @Test

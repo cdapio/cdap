@@ -65,7 +65,6 @@ final class MetricQueryParser {
 
   // we need to duplicate that as we don't have dependency on app-fabric
   public enum ProgramType {
-    FLOWS("f", Constants.Metrics.Tag.FLOW),
     MAPREDUCE("b", Constants.Metrics.Tag.MAPREDUCE),
     HANDLERS("h", Constants.Metrics.Tag.HANDLER),
     SERVICES("u", Constants.Metrics.Tag.SERVICE),
@@ -301,7 +300,7 @@ final class MetricQueryParser {
       return;
     }
 
-    // request-type: flows, mapreduce or handlers or services(user)
+    // request-type: mapreduce or handlers or services(user)
     String pathProgramTypeStr = pathParts.next();
     ProgramType programType;
     try {
@@ -340,9 +339,6 @@ final class MetricQueryParser {
                                            + ".  must be 'mappers' or 'reducers'.");
         }
         tagValues.put(Constants.Metrics.Tag.MR_TASK_TYPE, mrType.getId());
-        break;
-      case FLOWS:
-        buildFlowletContext(pathParts, tagValues);
         break;
       case HANDLERS:
         buildComponentTypeContext(pathParts, tagValues, "methods", "handler", Constants.Metrics.Tag.METHOD);
@@ -395,24 +391,6 @@ final class MetricQueryParser {
       throw new MetricsPathException("expecting " + RUN_ID + " value after the identifier runs in path");
     }
     tagValues.put(Constants.Metrics.Tag.RUN_ID, pathParts.next());
-  }
-
-  /**
-   * At this point, pathParts should look like flowlets/{flowlet-id}/queues/{queue-id}, with queues being optional.
-   */
-  private static void buildFlowletContext(Iterator<String> pathParts, Map<String, String> tagValues)
-    throws MetricsPathException {
-
-    buildComponentTypeContext(pathParts, tagValues, "flowlets", "flows", Constants.Metrics.Tag.FLOWLET);
-    if (pathParts.hasNext()) {
-      if (!pathParts.next().equals("queues")) {
-        throw new MetricsPathException("expecting 'queues' after the flowlet name");
-      }
-      if (!pathParts.hasNext()) {
-        throw new MetricsPathException("'queues' must be followed by a queue name");
-      }
-      tagValues.put(Constants.Metrics.Tag.FLOWLET_QUEUE, urlDecode(pathParts.next()));
-    }
   }
 
   /**

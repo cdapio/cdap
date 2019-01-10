@@ -77,8 +77,6 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   public static final String VERSION = "version";
   public static final String DATASET = "dataset";
   public static final String TYPE = "type";
-  public static final String FLOW = "flow";
-  public static final String FLOWLET = "flowlet";
   public static final String PROGRAM = "program";
   public static final String SCHEDULE = "schedule";
   public static final String PROGRAM_RUN = "program_run";
@@ -98,8 +96,6 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
       {NAMESPACE, APPLICATION, TYPE, PROGRAM}});
     typesToKeys.put(SCHEDULE, new String[][]{{NAMESPACE, APPLICATION, VERSION, SCHEDULE},
       {NAMESPACE, APPLICATION, SCHEDULE}});
-    typesToKeys.put(FLOWLET, new String[][]{{NAMESPACE, APPLICATION, VERSION, FLOW, FLOWLET},
-      {NAMESPACE, APPLICATION, FLOW, FLOWLET}});
     typesToKeys.put(PROGRAM_RUN, new String[][]{{NAMESPACE, APPLICATION, VERSION, TYPE, PROGRAM, PROGRAM_RUN},
       {NAMESPACE, APPLICATION, TYPE, PROGRAM, PROGRAM_RUN}});
     TYPES_TO_KEY_SEQUENCES = Collections.unmodifiableMap(typesToKeys);
@@ -324,10 +320,6 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
         builder.append(String.format("%s: %s of ", MetadataEntity.PROGRAM_RUN,
                                      getValue(MetadataEntity.PROGRAM_RUN)));
         return getDescription(builder, MetadataEntity.PROGRAM);
-      case MetadataEntity.FLOWLET:
-        builder.append(String.format("%s: %s of flow: %s in ", MetadataEntity.FLOWLET,
-                                     getValue(MetadataEntity.FLOWLET), getValue(MetadataEntity.FLOW)));
-        return getDescription(builder, MetadataEntity.APPLICATION);
       default:
         for (MetadataEntity.KeyValue keyValue : this) {
           builder.append(keyValue.getKey());

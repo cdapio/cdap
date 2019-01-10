@@ -97,10 +97,6 @@ public class MetricsQueryHelper {
 
       .put(Constants.Metrics.Tag.WORKER, "worker")
 
-      .put(Constants.Metrics.Tag.FLOW, "flow")
-      .put(Constants.Metrics.Tag.FLOWLET, "flowlet")
-      .put(Constants.Metrics.Tag.FLOWLET_QUEUE, "queue")
-
       .put(Constants.Metrics.Tag.PRODUCER, "producer")
       .put(Constants.Metrics.Tag.CONSUMER, "consumer")
 

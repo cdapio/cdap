@@ -72,11 +72,6 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(String namespace, String app, String flow, String flowlet, String output) {
-    URI uri = URI.create(String.format("queue:///%s/%s/%s/%s/%s", namespace, app, flow, flowlet, output));
-    return new QueueName(uri);
-  }
-
   /**
    * Generates an QueueName for the stream.
    *

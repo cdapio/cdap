@@ -23,9 +23,4 @@ public final class UserErrors {
 
   public static final String PROGRAM_NOT_FOUND = "program-not-found";
   public static final String RUNTIME_INFO_NOT_FOUND = "runtime-info-not-found";
-  public static final String INVALID_INSTANCES = "invalid-instances";
-  public static final String INVALID_FLOWLET_EXISTS = "invalid-flowlet-exists";
-  public static final String INVALID_FLOWLET_NULL = "invalid-flowlet-null";
-  public static final String INVALID_FLOWLET_NAME = "invalid-flowlet-name";
-  public static final String INVALID_STREAM_NULL = "invalid-stream-null";
 }
