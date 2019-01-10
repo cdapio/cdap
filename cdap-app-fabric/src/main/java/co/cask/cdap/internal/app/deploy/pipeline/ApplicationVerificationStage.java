@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -36,7 +35,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.ProgramVerification;
-import co.cask.cdap.internal.app.verification.StreamVerification;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.pipeline.AbstractStage;
@@ -114,9 +112,9 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     }
 
     verifySpec(appId, specification);
-    // We are verifying owner of dataset/stream at this stage itself even though the creation will fail in later
-    // stage if the owner is different because we don't want to end up in scenario where we created few dataset/streams
-    // and the failed because some dataset/stream already exists and have different owner
+    // We are verifying owner of dataset at this stage itself even though the creation will fail in later
+    // stage if the owner is different because we don't want to end up in scenario where we created few dataset
+    // and the failed because some dataset already exists and have different owner
     verifyData(appId, specification, input.getOwnerPrincipal());
     verifyPrograms(appId, specification);
 
@@ -163,17 +161,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       // if the dataset existed verify its owner is same.
       if (existingSpec != null) {
         verifyOwner(datasetInstanceId, ownerPrincipal);
-      }
-    }
-
-    for (StreamSpecification spec : specification.getStreams().values()) {
-      result = getVerifier(StreamSpecification.class).verify(appId, spec);
-      if (!result.isSuccess()) {
-        throw new RuntimeException(result.getMessage());
-      }
-      // if the stream existed verify the owner to be the same
-      if (store.getStream(appId.getNamespaceId(), spec.getName()) != null) {
-        verifyOwner(appId.getParent().stream(spec.getName()), ownerPrincipal);
       }
     }
   }
@@ -308,8 +295,6 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
     if (ApplicationSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, new ApplicationVerification());
-    } else if (StreamSpecification.class.isAssignableFrom(clz)) {
-      verifiers.put(clz, new StreamVerification());
     } else if (ProgramSpecification.class.isAssignableFrom(clz)) {
       verifiers.put(clz, createProgramVerifier((Class<ProgramSpecification>) clz));
     } else if (DatasetCreationSpec.class.isAssignableFrom(clz)) {

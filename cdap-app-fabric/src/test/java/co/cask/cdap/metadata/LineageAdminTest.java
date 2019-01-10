@@ -43,7 +43,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
@@ -62,7 +61,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class LineageAdminTest extends AppFabricTestBase {
   // Define data
-  private final StreamId stream1 = new StreamId("default", "stream1");
   private final DatasetId dataset1 = new DatasetId("default", "dataset1");
   private final DatasetId dataset2 = new DatasetId("default", "dataset2");
   private final DatasetId dataset3 = new DatasetId("default", "dataset3");
@@ -384,7 +382,6 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, stream1, AccessType.READ);
     lineageWriter.addAccess(run1, dataset1, AccessType.READ);
     lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
     lineageWriter.addAccess(run1, dataset4, AccessType.WRITE);
@@ -402,7 +399,6 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(stream1, program1, AccessType.READ, twillRunId(run1)),
         new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
         new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
         new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1)),
@@ -461,7 +457,6 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
     // It is okay to use current time here since access time is ignore during assertions
-    lineageWriter.addAccess(run1, stream1, AccessType.READ);
     lineageWriter.addAccess(run1, dataset1, AccessType.READ);
     lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
     lineageWriter.addAccess(run1, dataset4, AccessType.WRITE);
@@ -483,7 +478,6 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
-        new Relation(stream1, program1, AccessType.READ, twillRunId(run1)),
         new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
         new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
         new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1)),
@@ -511,8 +505,6 @@ public class LineageAdminTest extends AppFabricTestBase {
     Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset5, 500, 20000, 100));
     // Lineage for D7
     Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset7, 500, 20000, 100));
-    // Lineage for S1
-    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(stream1, 500, 20000, 100));
 
     // Lineage for D5 for one level
     //                   -> D5 -> P3 -> D6
@@ -529,27 +521,6 @@ public class LineageAdminTest extends AppFabricTestBase {
 
         new Relation(dataset5, program3, AccessType.READ, twillRunId(run3), emptySet()),
         new Relation(dataset6, program3, AccessType.WRITE, twillRunId(run3), emptySet())
-      ),
-      oneLevelLineage.getRelations()
-    );
-
-    // Lineage for S1 for one level
-    //
-    //       -> D4
-    //       |
-    //       |
-    // D1 -> P1 -> D2
-    //       |
-    //       |
-    // S1 -->|
-
-    oneLevelLineage = lineageAdmin.computeLineage(stream1, 500, 20000, 1);
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new Relation(stream1, program1, AccessType.READ, twillRunId(run1)),
-        new Relation(dataset1, program1, AccessType.READ, twillRunId(run1)),
-        new Relation(dataset2, program1, AccessType.WRITE, twillRunId(run1)),
-        new Relation(dataset4, program1, AccessType.WRITE, twillRunId(run1))
       ),
       oneLevelLineage.getRelations()
     );

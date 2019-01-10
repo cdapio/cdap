@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -87,18 +87,6 @@ public class RouterPathLookupTest {
     Assert.assertEquals(RouterPathLookup.METRICS, result);
 
     path = "/v3/system/services/foo/live-info";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
-    result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
-
-    // this clashes with a rule for stream handler and fails if the rules are evaluated in wrong order [CDAP-2159]
-    path = "/v3/system/services/streams/logs";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
-    result = pathLookup.getRoutingService(path, httpRequest);
-    Assert.assertEquals(RouterPathLookup.METRICS, result);
-
-    // this clashes with a rule for stream handler and fails if the rules are evaluated in wrong order [CDAP-2159]
-    path = "/v3/system/services/streams/live-info";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
     result = pathLookup.getRoutingService(path, httpRequest);
     Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
@@ -228,65 +216,6 @@ public class RouterPathLookupTest {
   }
 
   @Test
-  public void testStreamPath() {
-    //Following URIs might not give actual results but we want to test resilience of Router Path Lookup
-    String streamPath = "/v3/namespaces/default/streams";
-    HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
-    RouteDestination result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "///v3/namespaces/default/streams///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "v3/namespaces/default///streams///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("PUT"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
-
-    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "//v3/namespaces/default///streams/HelloStream//programs///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "v3/namespaces/default//streams//flows///";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
-
-    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.APP_FABRIC_HTTP, result);
-
-    streamPath = "v3/namespaces/default//streams/InvalidStreamName/programs/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("DELETE"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-
-    streamPath = "v3/namespaces/default//streams/InvalidStreamName/info/";
-    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), streamPath);
-    result = pathLookup.getRoutingService(streamPath, httpRequest);
-    Assert.assertEquals(RouterPathLookup.STREAMS_SERVICE, result);
-  }
-
-  @Test
   public void testRouterServicePathLookUp() {
     String path = "/v3/namespaces/default//apps/ResponseCodeAnalytics/services/LogAnalyticsService/status";
     HttpRequest httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), path);
@@ -362,10 +291,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.METADATA_SERVICE);
     // all dataset metadata
     assertRouting("/v3/namespaces/default//datasets/ds1//////metadata", RouterPathLookup.METADATA_SERVICE);
-    // all stream metadata
-    assertRouting("/v3/namespaces/default//streams/s1//////metadata", RouterPathLookup.METADATA_SERVICE);
-    // all stream view metadata
-    assertRouting("/v3/namespaces/default//streams/s1//views/v1///metadata", RouterPathLookup.METADATA_SERVICE);
     // app metadata properties
     assertRouting("/v3/namespaces/default//apps/WordCount//////metadata///////properties",
                   RouterPathLookup.METADATA_SERVICE);
@@ -377,11 +302,6 @@ public class RouterPathLookupTest {
       , RouterPathLookup.METADATA_SERVICE);
     // dataset metadata properties
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
-    // stream metadata properties
-    assertRouting("/v3/namespaces////default////streams//s1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
-    // stream view metadata properties
-    assertRouting("/v3/namespaces////default////streams//s1/views/v1/metadata/properties",
-                  RouterPathLookup.METADATA_SERVICE);
     // app metadata tags
     assertRouting("/v3/namespaces/default//apps/WordCount/////metadata/tags", RouterPathLookup.METADATA_SERVICE);
     // artifact metadata tags
@@ -392,17 +312,11 @@ public class RouterPathLookupTest {
                   RouterPathLookup.METADATA_SERVICE);
     // dataset metadata tags
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/tags", RouterPathLookup.METADATA_SERVICE);
-    // stream metadata tags
-    assertRouting("/v3/namespaces////default////streams//s1/metadata/tags", RouterPathLookup.METADATA_SERVICE);
-    // stream views metadata tags
-    assertRouting("/v3/namespaces////default////streams//s1//////views/////v1//metadata/tags",
-                  RouterPathLookup.METADATA_SERVICE);
     // search metadata
     assertRouting("/v3/namespaces/default/metadata/search", RouterPathLookup.METADATA_SERVICE);
     assertRouting("/v3/metadata/search", RouterPathLookup.METADATA_SERVICE);
     // lineage
     assertRouting("/v3/namespaces/default/////datasets/ds1/lineage", RouterPathLookup.METADATA_SERVICE);
-    assertRouting("/v3/namespaces/default/streams/st1/lineage", RouterPathLookup.METADATA_SERVICE);
     // get metadata for accesses
     assertRouting("/v3/namespaces/default//apps/WordCount/services/ServiceName/runs/runid/metadata",
                   RouterPathLookup.METADATA_SERVICE);
@@ -473,8 +387,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.METRICS);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.APP_FABRIC_HTTP),
                   RouterPathLookup.APP_FABRIC_HTTP);
-    assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.STREAMS),
-                  RouterPathLookup.STREAMS_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.DATASET_EXECUTOR),
                   RouterPathLookup.DATASET_EXECUTOR);
     assertRouting(String.format("/v3/system/services/%s/status", Constants.Service.METADATA_SERVICE),
@@ -498,8 +410,6 @@ public class RouterPathLookupTest {
                   RouterPathLookup.METRICS);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.APP_FABRIC_HTTP),
                   RouterPathLookup.APP_FABRIC_HTTP);
-    assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.STREAMS),
-                  RouterPathLookup.STREAMS_SERVICE);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.DATASET_EXECUTOR),
                   RouterPathLookup.DATASET_EXECUTOR);
     assertRouting(String.format("/v3/system/services/%s/stacks", Constants.Service.METADATA_SERVICE),

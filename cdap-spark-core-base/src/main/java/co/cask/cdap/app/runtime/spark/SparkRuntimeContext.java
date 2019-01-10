@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -68,7 +67,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final String hostname;
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
-  private final StreamAdmin streamAdmin;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final LoggingContext loggingContext;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -87,7 +85,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       DatasetFramework datasetFramework,
                       DiscoveryServiceClient discoveryServiceClient,
                       MetricsCollectionService metricsCollectionService,
-                      StreamAdmin streamAdmin,
                       @Nullable WorkflowProgramInfo workflowProgramInfo,
                       @Nullable PluginInstantiator pluginInstantiator,
                       SecureStore secureStore,
@@ -107,7 +104,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.hostname = hostname;
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
-    this.streamAdmin = streamAdmin;
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.authorizationEnforcer = authorizationEnforcer;
@@ -204,13 +200,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public DatasetFramework getDatasetFramework() {
     return datasetFramework;
-  }
-
-  /**
-   * Returns the {@link StreamAdmin} used for this execution.
-   */
-  public StreamAdmin getStreamAdmin() {
-    return streamAdmin;
   }
 
   /**

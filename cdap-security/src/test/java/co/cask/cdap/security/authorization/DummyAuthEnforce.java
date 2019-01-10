@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,10 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.security.AuthEnforceRewriter;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.name.Named;
@@ -75,17 +75,18 @@ public class DummyAuthEnforce {
     }
 
     // test AuthEnforce annotation which has multiple string parts in entities
-    @AuthEnforce(entities = {"namespace", "stream"}, enforceOn = StreamId.class, actions = Action.ADMIN)
-    public void testMultipleParts(@Name("namespace") String namespace, @Name("stream") String stream) throws Exception {
+    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, actions = Action.ADMIN)
+    public void testMultipleParts(@Name("namespace") String namespace,
+                                  @Name("dataset") String dataset) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
       throw new EnforceNotCalledException();
     }
 
     // test AuthEnforce where method parameters are marked with QueryParam and PathParam
-    @AuthEnforce(entities = {"namespace", "stream"}, enforceOn = StreamId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, actions = Action.ADMIN)
     public void testQueryPathParamAnnotations(@QueryParam("namespace") String namespace,
-                                              @PathParam("stream") String stream) throws Exception {
+                                              @PathParam("dataset") String dataset) throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
       throw new EnforceNotCalledException();
@@ -103,7 +104,7 @@ public class DummyAuthEnforce {
     // test the preference of Name annotation when two different parameters are marked with same name but one with Name
     @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
     public void testNameAnnotationPref(@Name("namespaceId") NamespaceId namespaceId,
-                                       @PathParam("namespaceId") String stream)
+                                       @PathParam("namespaceId") String ns)
             throws Exception {
       // the above annotation will call enforce after class rewrite which should throw an exception.
       // If the line below is reached it means that enforce was not called as it supposed to be
@@ -205,7 +206,7 @@ public class DummyAuthEnforce {
    */
   public class DuplicateAnnotationName {
 
-    @AuthEnforce(entities = "wrongType", enforceOn = StreamId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "wrongType", enforceOn = DatasetId.class, actions = {Action.ADMIN, Action.READ})
     public void testDuplicationAnnotationWithSameName(@Name("name") String s1, @Name("name") String s2)
             throws Exception {
       // no-op
@@ -217,7 +218,7 @@ public class DummyAuthEnforce {
    */
   public class EntityWithString {
 
-    @AuthEnforce(entities = {"entity", "string"}, enforceOn = StreamId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = {"entity", "string"}, enforceOn = DatasetId.class, actions = {Action.ADMIN, Action.READ})
     public void testEntityAndString(@Name("entity") NamespaceId p1, @Name("string") String p2)
             throws Exception {
       // no-op
@@ -229,7 +230,7 @@ public class DummyAuthEnforce {
    */
   public class SameQueryAndPathParam {
 
-    @AuthEnforce(entities = "wrongType", enforceOn = StreamId.class, actions = {Action.ADMIN, Action.READ})
+    @AuthEnforce(entities = "wrongType", enforceOn = DatasetId.class, actions = {Action.ADMIN, Action.READ})
     public void testDuplicationAnnotationWithSameName(@QueryParam("name") String s1, @PathParam("name") String s2)
             throws Exception {
       // no-op
@@ -241,7 +242,7 @@ public class DummyAuthEnforce {
    */
   public class LessMultipleParts {
 
-    @AuthEnforce(entities = {"namespace"}, enforceOn = StreamId.class, actions = Action.ADMIN)
+    @AuthEnforce(entities = {"namespace"}, enforceOn = DatasetId.class, actions = Action.ADMIN)
     public void testLessMultipleParts(@Name("namespace") String namespace) throws Exception {
       // no-op
     }
@@ -252,7 +253,7 @@ public class DummyAuthEnforce {
    */
   public class MoreMultipleParts {
 
-    @AuthEnforce(entities = {"namespace", "artifact", "version"}, enforceOn = StreamId.class, actions = Action.READ)
+    @AuthEnforce(entities = {"namespace", "artifact", "version"}, enforceOn = DatasetId.class, actions = Action.READ)
     public void testMoreMultipleParts(@Name("namespace") String namespace, @Name("artifact") String artifact,
                                       @Name("version") String version) throws Exception {
       // no-op
@@ -264,8 +265,8 @@ public class DummyAuthEnforce {
    */
   public class MultipleEntityIds {
 
-    @AuthEnforce(entities = {"namespace", "stream"}, enforceOn = StreamId.class, actions = Action.READ)
-    public void testMultipleEntityIds(@Name("namespace") NamespaceId namespace, @Name("artifact") StreamId stream)
+    @AuthEnforce(entities = {"namespace", "dataset"}, enforceOn = DatasetId.class, actions = Action.READ)
+    public void testMultipleEntityIds(@Name("namespace") NamespaceId namespace, @Name("artifact") DatasetId dataset)
             throws Exception {
       // no-op
     }

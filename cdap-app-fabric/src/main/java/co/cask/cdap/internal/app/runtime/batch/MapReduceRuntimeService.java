@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,12 +23,10 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.app.guice.ClusterMode;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
@@ -40,11 +38,9 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -56,24 +52,17 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
-import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
-import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -111,7 +100,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -163,9 +151,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final Location programJarLocation;
   private final BasicMapReduceContext context;
   private final NamespacePathLocator locationFactory;
-  private final StreamAdmin streamAdmin;
-  private final AuthorizationEnforcer authorizationEnforcer;
-  private final AuthenticationContext authenticationContext;
   private final ProgramLifecycle<MapReduceContext> programLifecycle;
   private final FieldLineageWriter fieldLineageWriter;
   private final ProgramRunId mapReduceRunId;
@@ -179,8 +164,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           final MapReduce mapReduce, MapReduceSpecification specification,
                           final BasicMapReduceContext context, Location programJarLocation,
-                          NamespacePathLocator locationFactory, StreamAdmin streamAdmin,
-                          AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+                          NamespacePathLocator locationFactory,
                           FieldLineageWriter fieldLineageWriter, ClusterMode clusterMode) {
     this.injector = injector;
     this.cConf = cConf;
@@ -189,10 +173,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.specification = specification;
     this.programJarLocation = programJarLocation;
     this.locationFactory = locationFactory;
-    this.streamAdmin = streamAdmin;
     this.context = context;
-    this.authorizationEnforcer = authorizationEnforcer;
-    this.authenticationContext = authenticationContext;
     this.programLifecycle = new ProgramLifecycle<MapReduceContext>() {
       @Override
       public void initialize(MapReduceContext context) throws Exception {
@@ -688,22 +669,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         assertConsistentTypes(firstMapperClass, firstMapperOutputTypes, mapperClass);
       }
 
-      // A bit hacky for stream.
-      if (provider instanceof StreamInputFormatProvider) {
-        // pass in mapperInput.getMapper() instead of mapperClass, because mapperClass defaults to the Identity Mapper
-        StreamInputFormatProvider inputFormatProvider = (StreamInputFormatProvider) provider;
-        setDecoderForStream(inputFormatProvider, job, inputFormatConfiguration, mapperInput.getMapper());
-        // Check if the MR job has read access to the stream, if not fail right away. Note that this is being done
-        // after lineage/usage registry since we want to track the intent of reading from there.
-        try {
-          authorizationEnforcer.enforce(inputFormatProvider.getStreamId(),
-                                        authenticationContext.getPrincipal(), Action.READ);
-        } catch (Exception e) {
-          Throwables.propagateIfPossible(e, IOException.class);
-          throw new IOException(e);
-        }
-      }
-
       MultipleInputs.addInput(job, mapperInputEntry.getKey(),
                               mapperInput.getInputFormatClassName(), inputFormatConfiguration, mapperClass);
     }
@@ -715,25 +680,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       return resolveClass(job.getConfiguration(), MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
     }
     return resolveClass(firstMapperClass, Mapper.class);
-  }
-
-  private void setDecoderForStream(StreamInputFormatProvider streamProvider, Job job,
-                                   Map<String, String> inputFormatConfiguration, Class<? extends Mapper> mapperClass) {
-    // For stream, we need to do two extra steps.
-    // 1. stream usage registration since it only happens on client side.
-    // 2. Infer the stream event decoder from Mapper/Reducer
-    TypeToken<?> mapperTypeToken = mapperClass == null ? null : resolveClass(mapperClass, Mapper.class);
-    Type inputValueType = getInputValueType(job.getConfiguration(), StreamEvent.class, mapperTypeToken);
-    streamProvider.setDecoderType(inputFormatConfiguration, inputValueType);
-
-    StreamId streamId = streamProvider.getStreamId();
-    try {
-      streamAdmin.register(ImmutableList.of(context.getProgram().getId()), streamId);
-      streamAdmin.addAccess(context.getProgram().getId().run(context.getRunId().getId()),
-                            streamId, AccessType.READ);
-    } catch (Exception e) {
-      LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
-    }
   }
 
   /**
@@ -800,49 +746,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
-  /**
-   * Returns the input value type of the MR job based on the job Mapper/Reducer type.
-   * It does so by inspecting the Mapper/Reducer type parameters to figure out what the input type is.
-   * If the job has Mapper, then it's the Mapper IN_VALUE type, otherwise it would be the Reducer IN_VALUE type.
-   * If the cannot determine the input value type, then return the given default type.
-   *
-   * @param hConf the Configuration to use to resolve the class TypeToken
-   * @param defaultType the defaultType to return
-   * @param mapperTypeToken the mapper type token for the configured input (not resolved by the job's mapper class)
-   */
-  @VisibleForTesting
-  static Type getInputValueType(Configuration hConf, Type defaultType, @Nullable TypeToken<?> mapperTypeToken) {
-    TypeToken<?> type;
-    if (mapperTypeToken == null) {
-      // if the input's mapper is null, first try resolving a from the job
-      mapperTypeToken = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
-    }
-
-    if (mapperTypeToken == null) {
-      // If there is no Mapper, it's a Reducer only job, hence get the value type from Reducer class
-      type = resolveClass(hConf, MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
-    } else {
-      type = mapperTypeToken;
-    }
-    Preconditions.checkArgument(type != null, "Neither a Mapper nor a Reducer is configured for the MapReduce job.");
-
-    if (!(type.getType() instanceof ParameterizedType)) {
-      return defaultType;
-    }
-
-    // The super type Mapper/Reducer must be a parametrized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
-    Type inputValueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
-
-    // If the concrete Mapper/Reducer class is not parameterized (meaning not extends with parameters),
-    // then assume use the default type.
-    // We need to check if the TypeVariable is the same as the one in the parent type.
-    // This avoid the case where a subclass that has "class InvalidMapper<I, O> extends Mapper<I, O>"
-    if (inputValueType instanceof TypeVariable && inputValueType.equals(type.getRawType().getTypeParameters()[1])) {
-      inputValueType = defaultType;
-    }
-    return inputValueType;
-  }
-
   private String getJobName(BasicMapReduceContext context) {
     ProgramId programId = context.getProgram().getId();
     // MRJobClient expects the following format (for RunId to be the first component)
@@ -893,15 +796,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         Class<? extends InputFormat<?, ?>> inputFormatClass = job.getInputFormatClass();
         classes.add(inputFormatClass);
-
-        // If it is StreamInputFormat, also add the StreamEventCodec class as well.
-        if (MapReduceStreamInputFormat.class.isAssignableFrom(inputFormatClass)) {
-          Class<? extends StreamEventDecoder> decoderType =
-            MapReduceStreamInputFormat.getDecoderClass(job.getConfiguration());
-          if (decoderType != null) {
-            classes.add(decoderType);
-          }
-        }
       } catch (Throwable t) {
         LOG.debug("InputFormat class not found: {}", t.getMessage(), t);
         // Ignore

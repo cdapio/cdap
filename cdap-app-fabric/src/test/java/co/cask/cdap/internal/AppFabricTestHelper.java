@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
@@ -59,7 +58,6 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.metadata.MetadataSubscriberService;
-import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -137,8 +135,6 @@ public class AppFabricTestHelper {
       injector.getInstance(TransactionManager.class).startAndWait();
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
-      injector.getInstance(StreamCoordinatorClient.class).startAndWait();
-      injector.getInstance(NotificationService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
       injector.getInstance(MetadataSubscriberService.class).startAndWait();
       injector.getInstance(ProgramNotificationSubscriberService.class).startAndWait();

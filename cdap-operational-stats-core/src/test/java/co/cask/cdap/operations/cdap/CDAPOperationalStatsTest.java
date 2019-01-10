@@ -86,7 +86,6 @@ public class CDAPOperationalStatsTest {
     Assert.assertEquals(1, entities.getApplications());
     Assert.assertEquals(6, entities.getPrograms());
     Assert.assertEquals(4, entities.getDatasets());
-    Assert.assertEquals(1, entities.getStreams());
     final CDAPTransactions transactions = new CDAPTransactions();
     transactions.initialize(injector);
     Assert.assertEquals(AbstractCDAPStats.SERVICE_NAME, transactions.getServiceName());

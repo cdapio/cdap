@@ -30,12 +30,10 @@ import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceNotEnabledException;
-import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -49,7 +47,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
@@ -74,7 +71,6 @@ import co.cask.cdap.proto.ProtoConstraintCodec;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -82,7 +78,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.scheduler.CoreSchedulerService;
@@ -196,12 +191,10 @@ public abstract class AppFabricTestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
-  private static StreamService streamService;
   private static ServiceStore serviceStore;
   private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static LocationFactory locationFactory;
-  private static StreamClient streamClient;
   private static DatasetClient datasetClient;
   private static MetadataClient metadataClient;
   private static MetricStore metricStore;
@@ -257,8 +250,6 @@ public abstract class AppFabricTestBase {
     metricsCollectionService.startAndWait();
     metricsService = injector.getInstance(MetricsQueryService.class);
     metricsService.startAndWait();
-    streamService = injector.getInstance(StreamService.class);
-    streamService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     metadataService = injector.getInstance(MetadataService.class);
@@ -266,7 +257,6 @@ public abstract class AppFabricTestBase {
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     metadataSubscriberService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
-    streamClient = new StreamClient(getClientConfig(discoveryClient, Constants.Service.STREAMS));
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metricStore = injector.getInstance(MetricStore.class);
@@ -286,7 +276,6 @@ public abstract class AppFabricTestBase {
   @AfterClass
   public static void afterClass() throws Exception {
     deleteNamespaces();
-    streamService.stopAndWait();
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     metricsService.stopAndWait();
@@ -1195,11 +1184,6 @@ public abstract class AppFabricTestBase {
     return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
   }
 
-  protected HttpResponse deleteStream(StreamId id) throws Exception {
-    return doDelete(String.format("%s/namespaces/%s/streams/%s", Constants.Gateway.API_VERSION_3,
-                                  id.getNamespace(), id.getStream()));
-  }
-
   protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
     return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
                  GSON.toJson(meta));
@@ -1265,11 +1249,6 @@ public abstract class AppFabricTestBase {
   protected DatasetMeta getDatasetMeta(DatasetId datasetId)
     throws UnauthorizedException, UnauthenticatedException, NotFoundException, IOException {
     return datasetClient.get(datasetId);
-  }
-
-  protected StreamProperties getStreamConfig(StreamId streamId)
-    throws StreamNotFoundException, UnauthenticatedException, UnauthorizedException, IOException {
-    return streamClient.getConfig(streamId);
   }
 
   protected long getProfileTotalMetric(String metricName) {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,8 +46,6 @@ public class RouterAuditLookUpTest {
     // endpoints from DatasetTypeHandler
     assertContent("/v3/namespaces/default/data/modules/myModule",
                   new AuditLogConfig(HttpMethod.PUT, false, false, ImmutableList.of("X-Class-Name")));
-    // endpoints from StreamHandler
-    assertContent("/v3/namespaces/default/streams/myStream", DEFAULT_AUDIT);
   }
 
   @Test
@@ -80,8 +78,6 @@ public class RouterAuditLookUpTest {
     assertContent("/v3/system/services/appfabric/instances", DEFAULT_AUDIT);
     // endpoints from NamespaceHttpHandler
     assertContent("/v3/namespaces/default", DEFAULT_AUDIT);
-    // endpoints from NotificationFeedHttpHandler
-    assertContent("/v3/namespaces/default/feeds/categories/feed1/names/myFeed", DEFAULT_AUDIT);
     // endpoints from PreferencesHttpHandler
     assertContent("/v3/preferences", DEFAULT_AUDIT);
     // endpoints from ProgramLifecycleHttpHandler

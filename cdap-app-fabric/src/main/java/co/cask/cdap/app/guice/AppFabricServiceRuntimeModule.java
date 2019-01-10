@@ -29,9 +29,6 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
-import co.cask.cdap.data.stream.StreamServiceManager;
-import co.cask.cdap.data.stream.service.StreamFetchHandler;
-import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
@@ -46,7 +43,6 @@ import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.ImpersonationHandler;
 import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
-import co.cask.cdap.gateway.handlers.NotificationFeedHttpHandler;
 import co.cask.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import co.cask.cdap.gateway.handlers.OperationsDashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
@@ -103,7 +99,6 @@ import co.cask.cdap.logging.run.InMemoryMessagingServiceManager;
 import co.cask.cdap.logging.run.InMemoryMetadataServiceManager;
 import co.cask.cdap.logging.run.InMemoryMetricsProcessorServiceManager;
 import co.cask.cdap.logging.run.InMemoryMetricsServiceManager;
-import co.cask.cdap.logging.run.InMemoryStreamServiceManager;
 import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.messaging.distributed.MessagingServiceManager;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -161,7 +156,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class),
+    return Modules.combine(new AppFabricServiceModule(),
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule().getInMemoryModule(),
                            new EntityVerifierModule(),
@@ -184,7 +179,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // servicesNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -193,7 +187,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
@@ -204,8 +197,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getStandaloneModules() {
 
-    return Modules.combine(new AppFabricServiceModule(StreamHandler.class, StreamFetchHandler.class,
-                                                      PreviewHttpHandler.class),
+    return Modules.combine(new AppFabricServiceModule(PreviewHttpHandler.class),
                            new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule().getStandaloneModule(),
                            new EntityVerifierModule(),
@@ -229,7 +221,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
-                               servicesNamesBinder.addBinding().toInstance(Constants.Service.STREAMS);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
 
                                // for PingHandler
@@ -244,7 +235,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
-                               handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
 
                                // for PingHandler
@@ -271,8 +261,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       .to(InMemoryMetricsServiceManager.class);
     mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
       .to(InMemoryAppFabricServiceManager.class);
-    mapBinder.addBinding(Constants.Service.STREAMS)
-      .to(InMemoryStreamServiceManager.class);
     mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
       .to(InMemoryDatasetExecutorServiceManager.class);
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
@@ -318,8 +306,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  .to(MetricsServiceManager.class);
                                mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
                                  .to(AppFabricServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.STREAMS)
-                                 .to(StreamServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
                                  .to(DatasetExecutorServiceManager.class);
                                mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
@@ -399,7 +385,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(UsageHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
-      handlerBinder.addBinding().to(NotificationFeedHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(DashboardHttpHandler.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);

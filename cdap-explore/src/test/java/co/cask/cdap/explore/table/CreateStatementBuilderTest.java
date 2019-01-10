@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,49 +18,15 @@ package co.cask.cdap.explore.table;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.Partitioning;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.hive.stream.StreamStorageHandler;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Map;
 
 /**
  *
  */
 public class CreateStatementBuilderTest {
-
-  @Test
-  public void testStorageHandlerCreate() throws Exception {
-    String expected = "CREATE EXTERNAL TABLE IF NOT EXISTS stream_purchases " +
-      "(f1 string, f2 int, f3 double, f4 boolean, f5 float, f6 binary) COMMENT 'CDAP Stream' " +
-      "STORED BY 'co.cask.cdap.hive.stream.StreamStorageHandler' " +
-      "WITH SERDEPROPERTIES ('explore.stream.name'='purchases', 'explore.stream.namespace'='default') " +
-      "LOCATION 'hdfs://namenode/my/path' " +
-      "TBLPROPERTIES ('somekey'='someval', 'cdap.name'='purchases', " +
-                      "'cdap.version'='" + ProjectInfo.getVersion().toString() + "')";
-    Schema schema = Schema.recordOf(
-      "stuff",
-      Schema.Field.of("f1", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("f2", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("f3", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("f4", Schema.of(Schema.Type.BOOLEAN)),
-      Schema.Field.of("f5", Schema.of(Schema.Type.FLOAT)),
-      Schema.Field.of("f6", Schema.of(Schema.Type.BYTES)));
-    Map<String, String> serdeProperties = ImmutableMap.of(
-      Constants.Explore.STREAM_NAME, "purchases",
-      Constants.Explore.STREAM_NAMESPACE, "default");
-
-    String actual = new CreateStatementBuilder("purchases", null, "stream_purchases", false)
-      .setSchema(schema)
-      .setLocation("hdfs://namenode/my/path")
-      .setTableProperties(ImmutableMap.of("somekey", "someval"))
-      .setTableComment("CDAP Stream")
-      .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
-    Assert.assertEquals(expected, actual);
-  }
 
   @Test
   public void testRowDelimitedCreate() throws Exception {

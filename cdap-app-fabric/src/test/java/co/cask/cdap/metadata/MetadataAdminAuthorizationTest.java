@@ -110,8 +110,6 @@ public class MetadataAdminAuthorizationTest {
                      Collections.singleton(Action.ADMIN));
     authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME)), ALICE,
                      Collections.singleton(Action.ADMIN));
-    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME)), ALICE,
-                     Collections.singleton(Action.ADMIN));
     authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())), ALICE,
                      Collections.singleton(Action.ADMIN));
     authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName())), ALICE,

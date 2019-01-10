@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -144,7 +144,7 @@ public class Authorizable {
 
   /**
    * @return a map which represents the parts of the entity in ordered according to CDAP entity hierarchy. For
-   * example: Stream comes after Namespace, Program comes after an Application etc. according to CDAP entity hierarchy.
+   * example: Dataset comes after Namespace, Program comes after an Application etc. according to CDAP entity hierarchy.
    */
   public Map<EntityType, String> getEntityParts() {
     return Collections.unmodifiableMap(entityParts);
@@ -217,7 +217,6 @@ public class Authorizable {
       case DATASET:
       case DATASET_MODULE:
       case DATASET_TYPE:
-      case STREAM:
       case SECUREKEY:
         if (parts.size() != 2 && index == (parts.size() - 1)) {
           throw new IllegalArgumentException("Entity value is missing some parts or containing more parts. " +

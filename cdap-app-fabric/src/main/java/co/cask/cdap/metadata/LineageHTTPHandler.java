@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.Field;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
@@ -154,29 +153,6 @@ public class LineageHTTPHandler extends AbstractHttpHandler {
     FieldLineageDetails details = fieldLineageAdmin.getOperationDetails(direction, endPointField, range.getStart(),
                                                                         range.getEnd());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/streams/{stream-id}/lineage")
-  public void streamLineage(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("stream-id") String stream,
-                            @QueryParam("start") String startStr,
-                            @QueryParam("end") String endStr,
-                            @QueryParam("levels") @DefaultValue("10") int levels,
-                            @QueryParam("collapse") List<String> collapse,
-                            @QueryParam("rollup") String rollup) throws Exception {
-
-    checkLevels(levels);
-    TimeRange range = parseRange(startStr, endStr);
-
-    StreamId streamId = new StreamId(namespaceId, stream);
-    Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels, rollup);
-    responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(LineageSerializer.toLineageRecord(
-                         TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
-                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                         lineage, getCollapseTypes(collapse)), LineageRecord.class));
   }
 
   private void checkLevels(int levels) throws BadRequestException {

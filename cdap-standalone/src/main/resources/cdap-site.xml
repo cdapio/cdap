@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2014-2018 Cask Data, Inc.
+  Copyright © 2014-2019 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -227,18 +227,6 @@
     <value>${router.address}</value>
     <description>
       CDAP Router service address to which CDAP UI connects
-    </description>
-  </property>
-
-
-  <!-- Stream Configuration -->
-
-  <property>
-    <name>stream.container.instances</name>
-    <value>1</value>
-    <description>
-      Number of YARN container instances for the stream handler; in CDAP Local Sandbox, it
-      is always one
     </description>
   </property>
 

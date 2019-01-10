@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -35,8 +34,6 @@ import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
@@ -104,7 +101,6 @@ public class InMemoryExploreServiceTest {
         new MetricsClientRuntimeModule().getInMemoryModules(),
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
-        new StreamAdminModules().getInMemoryModules(),
         new NamespaceAdminTestModule(),
         new NamespaceStoreModule().getStandaloneModules(),
         new AuthorizationTestModule(),
@@ -113,7 +109,6 @@ public class InMemoryExploreServiceTest {
         new AbstractModule() {
           @Override
           protected void configure() {
-            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
             bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);

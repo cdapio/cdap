@@ -1040,21 +1040,6 @@
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>io.thekraken</groupId>
-        <artifactId>grok</artifactId>
-        <version>${grok.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
         <version>${shiro.version}</version>
@@ -2699,7 +2684,6 @@
       <modules>
         <module>cdap-common-unit-test</module>
         <module>cdap-api-common</module>
-        <module>cdap-spi</module>
         <module>cdap-api</module>
         <module>cdap-api-spark</module>
         <module>cdap-api-spark2_2.11</module>

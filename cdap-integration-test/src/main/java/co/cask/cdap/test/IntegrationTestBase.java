@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.MonitorClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -40,7 +39,6 @@ import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -360,10 +358,6 @@ public abstract class IntegrationTestBase {
     return new ProgramClient(getClientConfig(), getRestClient());
   }
 
-  protected StreamClient getStreamClient() {
-    return new StreamClient(getClientConfig(), getRestClient());
-  }
-
   protected DatasetClient getDatasetClient() {
     return new DatasetClient(getClientConfig(), getRestClient());
   }
@@ -404,10 +398,6 @@ public abstract class IntegrationTestBase {
     for (ApplicationRecord app : getApplicationClient().list(namespace)) {
       getApplicationClient().delete(namespace.app(app.getName(), app.getAppVersion()));
     }
-    // delete all streams
-    for (StreamDetail streamDetail : getStreamClient().list(namespace)) {
-      getStreamClient().delete(namespace.stream(streamDetail.getName()));
-    }
     // delete all dataset instances
     for (DatasetSpecificationSummary datasetSpecSummary : getDatasetClient().list(namespace)) {
       getDatasetClient().delete(namespace.dataset(datasetSpecSummary.getName()));
@@ -423,7 +413,6 @@ public abstract class IntegrationTestBase {
   private void assertIsClear(NamespaceId namespaceId) throws Exception {
     assertNoApps(namespaceId);
     assertNoUserDatasets(namespaceId);
-    assertNoStreams(namespaceId);
   }
 
   private boolean isUserDataset(DatasetSpecificationSummary specification) {
@@ -465,15 +454,5 @@ public abstract class IntegrationTestBase {
 
     Assert.assertTrue("Must have no deployed apps, but found the following apps: "
                         + Joiner.on(", ").join(applicationIds), applicationRecords.isEmpty());
-  }
-
-  private void assertNoStreams(NamespaceId namespace) throws Exception {
-    List<StreamDetail> streams = getStreamClient().list(namespace);
-    List<String> streamNames = Lists.newArrayList();
-    for (StreamDetail stream : streams) {
-      streamNames.add(stream.getName());
-    }
-    Assert.assertTrue("Must have no streams, but found the following streams: "
-                        + Joiner.on(", ").join(streamNames), streamNames.isEmpty());
   }
 }

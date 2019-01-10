@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.api.app.{AbstractApplication, ProgramType}
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.customaction.AbstractCustomAction
 import co.cask.cdap.api.data.schema.Schema
-import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.AbstractWorkflow
@@ -37,8 +36,6 @@ import scala.collection.JavaConversions._
 class TestSparkApp extends AbstractApplication[Config] {
 
   override def configure() = {
-    addStream(new Stream("SparkStream"))
-    addStream(new Stream("PeopleStream"))
     createDataset("ResultTable", classOf[KeyValueTable])
     createDataset("KeyValueTable", classOf[KeyValueTable])
     createDataset("SparkResult", classOf[KeyValueTable])
@@ -58,12 +55,9 @@ class TestSparkApp extends AbstractApplication[Config] {
 
     addSpark(new DatasetSQLSpark)
 
-    addSpark(new StreamSQLSpark)
     addSpark(new ClassicSpark)
     addSpark(new ScalaClassicSpark)
     addSpark(new TransactionSpark)
-    addSpark(new StreamFormatSpecSpark)
-    addSpark(new ScalaStreamFormatSpecSpark)
     addSpark(new PythonSpark)
 
     addSpark(new KafkaSparkStreaming)

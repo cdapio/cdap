@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,9 @@
 package co.cask.cdap.store;
 
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import org.junit.Assert;
 import org.junit.Test;
@@ -34,27 +34,27 @@ public abstract class OwnerStoreTest {
   @Test
   public void test() throws Exception {
     OwnerStore ownerStore = getOwnerStore();
-    StreamId streamId = NamespaceId.DEFAULT.stream("fooStream");
+    DatasetId datasetId = NamespaceId.DEFAULT.dataset("fooData");
 
     // No owner info should exist for above stream
-    Assert.assertNull(ownerStore.getOwner(streamId));
+    Assert.assertNull(ownerStore.getOwner(datasetId));
 
     // delete behavior is idempotent, so won't throw NotFoundException
-    ownerStore.delete(streamId);
+    ownerStore.delete(datasetId);
 
     // Storing an owner for the first time should work
     KerberosPrincipalId kerberosPrincipalId = new KerberosPrincipalId("alice/somehost@SOMEKDC.NET");
-    ownerStore.add(streamId, kerberosPrincipalId);
+    ownerStore.add(datasetId, kerberosPrincipalId);
 
     // owner principal should exists
-    Assert.assertTrue(ownerStore.exists(streamId));
+    Assert.assertTrue(ownerStore.exists(datasetId));
 
     // Should be able to get the principal back
-    Assert.assertEquals(kerberosPrincipalId, ownerStore.getOwner(streamId));
+    Assert.assertEquals(kerberosPrincipalId, ownerStore.getOwner(datasetId));
 
     // Should not be able to update the owner principal
     try {
-      ownerStore.add(streamId, new KerberosPrincipalId("bob@SOMEKDC.NET"));
+      ownerStore.add(datasetId, new KerberosPrincipalId("bob@SOMEKDC.NET"));
       Assert.fail();
     } catch (AlreadyExistsException e) {
       // expected
@@ -62,7 +62,7 @@ public abstract class OwnerStoreTest {
 
     // Should not be able to update the owner principal
     try {
-      ownerStore.add(streamId, new KerberosPrincipalId("somePrincipal"));
+      ownerStore.add(datasetId, new KerberosPrincipalId("somePrincipal"));
       Assert.fail();
     } catch (AlreadyExistsException e) {
       // expected
@@ -70,7 +70,7 @@ public abstract class OwnerStoreTest {
 
     // trying to update with invalid principal should fail early on with IllegalArgumentException
     try {
-      ownerStore.add(streamId, new KerberosPrincipalId("b@ob@SOMEKDC.NET"));
+      ownerStore.add(datasetId, new KerberosPrincipalId("b@ob@SOMEKDC.NET"));
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
@@ -85,8 +85,8 @@ public abstract class OwnerStoreTest {
     }
 
     // delete the owner information
-    ownerStore.delete(streamId);
-    Assert.assertFalse(ownerStore.exists(streamId));
-    Assert.assertNull(ownerStore.getOwner(streamId));
+    ownerStore.delete(datasetId);
+    Assert.assertFalse(ownerStore.exists(datasetId));
+    Assert.assertNull(ownerStore.getOwner(datasetId));
   }
 }

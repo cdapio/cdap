@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -312,17 +312,6 @@ public class MetricQueryParserTest {
   }
 
   @Test
-  public void testStream() throws MetricsPathException  {
-    MetricDataQuery query = MetricQueryParser.parse(
-      URI.create("/system/streams/stream1/collect.events?summary=true"));
-    verifyTags(query.getSliceByTags(),
-               Id.Namespace.DEFAULT.getId());
-    assertMetricName("system.collect.events", query);
-    Assert.assertEquals("stream1", query.getSliceByTags().get(Tag.STREAM));
-  }
-
-
-  @Test
   public void testService() throws MetricsPathException  {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/services/appfabric/query.received?aggregate=true"));
@@ -428,8 +417,7 @@ public class MetricQueryParserTest {
       "/system/datasets/datasetA/metric?aggregate=true",
       "/system/datasets/datasetA/apps/appX/metric?aggregate=true",
       "/system/datasets/datasetA/apps/appX/services/serviceY/metric?aggregate=true",
-      "/system/datasets/datasetA/apps/appX/services/serviceY/handlers/handlerZ/metric?aggregate=true",
-      "/system/streams/streamA/metric?aggregate=true"
+      "/system/datasets/datasetA/apps/appX/services/serviceY/handlers/handlerZ/metric?aggregate=true"
     };
     // check that miss-spelled paths and the like throw an exception.
     String[] invalidPaths = {
@@ -444,8 +432,7 @@ public class MetricQueryParserTest {
       "/system/dataset/datasetA/metric?aggregate=true",
       "/system/datasets/datasetA/app/appX/metric?aggregate=true",
       "/system/datasets/datasetA/apps/appX/service/flowY/metric?aggregate=true",
-      "/system/datasets/datasetA/apps/appX/services/serviceY/handler/handlerZ/metric?aggregate=true",
-      "/system/stream/streamA/metric?aggregate=true"
+      "/system/datasets/datasetA/apps/appX/services/serviceY/handler/handlerZ/metric?aggregate=true"
     };
     for (String path : validPaths) {
       try {

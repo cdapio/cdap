@@ -17,8 +17,6 @@
 package co.cask.cdap.api.app;
 
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -67,13 +65,6 @@ public interface ApplicationSpecification {
    * @return ID of the artifact used to create the application.
    */
   ArtifactId getArtifactId();
-
-  /**
-   * @return An immutable {@link Map} from {@link Stream} name to {@link StreamSpecification}
-   *         for {@link Stream}s configured for the Application.
-   */
-  @Deprecated
-  Map<String, StreamSpecification> getStreams();
 
   /**
    * @return An immutable {@link Map} from {@link DatasetModule} name to {@link DatasetModule} class name for

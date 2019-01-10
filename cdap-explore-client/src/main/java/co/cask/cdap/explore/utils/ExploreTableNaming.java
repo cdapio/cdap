@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.explore.utils;
 
 import co.cask.cdap.api.dataset.ExploreProperties;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Map;
 
@@ -26,10 +25,6 @@ import java.util.Map;
  * Specifies how to name tables for Explore.
  */
 public final class ExploreTableNaming {
-
-  public String getTableName(StreamId streamId) {
-    return String.format("stream_%s", cleanTableName(streamId.getStream()));
-  }
 
   public String getTableName(DatasetId datasetID) {
     return getTableName(datasetID, null);

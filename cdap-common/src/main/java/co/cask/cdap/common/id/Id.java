@@ -21,22 +21,16 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.QueryId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.StreamId;
-import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
 
-import java.nio.charset.Charset;
 import java.util.regex.Pattern;
 
 /**
@@ -474,208 +468,6 @@ public abstract class Id implements EntityIdCompatible {
     public static Schedule fromEntityId(ScheduleId scheduleId) {
       return from(Id.Application.fromEntityId(scheduleId.getParent()), scheduleId.getSchedule());
     }
-  }
-
-  /**
-   * Represents ID of a Notification feed.
-   */
-  public static class NotificationFeed extends NamespacedId {
-
-    private final Namespace namespace;
-    private final String category;
-    private final String name;
-
-    private final String description;
-
-    /**
-     * {@link NotificationFeed} object from an id in the form of "namespace.category.name".
-     *
-     * @param id id of the notification feed to build
-     * @return a {@link NotificationFeed} object which id is the same as {@code id}
-     * @throws IllegalArgumentException when the id doesn't match a valid feed id
-     */
-    public static NotificationFeed fromId(String id) {
-      String[] idParts = id.split("\\.");
-      if (idParts.length != 3) {
-        throw new IllegalArgumentException(String.format("Id %s is not a valid feed id.", id));
-      }
-      return new NotificationFeed(idParts[0], idParts[1], idParts[2], "");
-    }
-
-    public static NotificationFeed from(String namespace, String category, String name) {
-      return new NotificationFeed(namespace, category, name, "");
-    }
-
-    private NotificationFeed(String namespace, String category, String name, String description) {
-      if (namespace == null || namespace.isEmpty()) {
-        throw new IllegalArgumentException("Namespace value cannot be null or empty.");
-      }
-      if (category == null || category.isEmpty()) {
-        throw new IllegalArgumentException("Category value cannot be null or empty.");
-      }
-      if (name == null || name.isEmpty()) {
-        throw new IllegalArgumentException("Name value cannot be null or empty.");
-      }
-      if (!isValidId(namespace) || !isValidId(category) || !isValidId(name)) {
-        throw new IllegalArgumentException("Namespace, category or name has a wrong format.");
-      }
-
-      this.namespace = Namespace.from(namespace);
-      this.category = category;
-      this.name = name;
-      this.description = description;
-    }
-
-    public String getCategory() {
-      return category;
-    }
-
-    @Override
-    public String getId() {
-      return name;
-    }
-
-    public String getFeedId() {
-      return String.format("%s.%s.%s", namespace.getId(), category, name);
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getDescription() {
-      return description;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    @Override
-    public NotificationFeedId toEntityId() {
-      return new NotificationFeedId(namespace.getId(), category, name);
-    }
-
-    /**
-     * Builder used to build {@link NotificationFeed}.
-     */
-    public static final class Builder {
-      private String category;
-      private String name;
-      private String namespaceId;
-      private String description;
-
-      public Builder() {
-        // No-op
-      }
-
-      public Builder(NotificationFeed feed) {
-        this.namespaceId = feed.getNamespaceId();
-        this.category = feed.getCategory();
-        this.name = feed.getName();
-        this.description = feed.getDescription();
-      }
-
-      public Builder setName(final String name) {
-        this.name = name;
-        return this;
-      }
-
-      public Builder setNamespaceId(final String namespace) {
-        this.namespaceId = namespace;
-        return this;
-      }
-
-      public Builder setDescription(final String description) {
-        this.description = description;
-        return this;
-      }
-
-      public Builder setCategory(final String category) {
-        this.category = category;
-        return this;
-      }
-
-      /**
-       * @return a {@link NotificationFeed} object containing all the fields set in the builder.
-       * @throws IllegalArgumentException if the namespaceId, category or name is invalid.
-       */
-      public NotificationFeed build() {
-        return new NotificationFeed(namespaceId, category, name, description);
-      }
-    }
-  }
-
-  /**
-   * Id.Stream uniquely identifies a stream.
-   */
-  public static final class Stream extends NamespacedId {
-    private final Namespace namespace;
-    private final String streamName;
-    private transient int hashCode;
-
-    private transient String id;
-    private transient byte[] idBytes;
-
-    private Stream(final Namespace namespace, final String streamName) {
-      if (namespace == null) {
-        throw new NullPointerException("Namespace cannot be null.");
-      }
-      if (streamName == null) {
-        throw new IllegalArgumentException("Stream name cannot be null.");
-      }
-      if (!isValidId(streamName)) {
-        throw new IllegalArgumentException(String.format("Stream name can only contain alphanumeric, " +
-                                                           "'-' and '_' characters: %s", streamName));
-      }
-
-      this.namespace = namespace;
-      this.streamName = streamName;
-    }
-
-    @Override
-    public Namespace getNamespace() {
-      return namespace;
-    }
-
-    public String getNamespaceId() {
-      return namespace.getId();
-    }
-
-    @Override
-    public String getId() {
-      return streamName;
-    }
-
-    public byte[] toBytes() {
-      if (idBytes == null) {
-        idBytes = toString().getBytes(Charset.forName("US-ASCII"));
-      }
-      return idBytes;
-    }
-
-    public static Stream from(Namespace id, String streamName) {
-      return new Stream(id, streamName);
-    }
-
-    public static Stream from(String namespaceId, String streamName) {
-      return from(Id.Namespace.from(namespaceId), streamName);
-    }
-
-    @Override
-    public StreamId toEntityId() {
-      return new StreamId(namespace.getId(), streamName);
-    }
-
-    public static Stream fromEntityId(StreamId streamId) {
-      return from(Id.Namespace.fromEntityId(streamId.getNamespaceId()), streamId.getStream());
-    }
-
   }
 
   /**

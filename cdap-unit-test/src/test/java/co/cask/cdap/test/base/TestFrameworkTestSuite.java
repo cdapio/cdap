@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,8 @@
 package co.cask.cdap.test.base;
 
 import co.cask.cdap.admin.AdminAppTestRun;
-import co.cask.cdap.batch.stream.BatchStreamIntegrationTestRun;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.TestSuite;
-import co.cask.cdap.mapreduce.MapReduceStreamInputTestRun;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
 import co.cask.cdap.service.FileUploadServiceTestRun;
 import co.cask.cdap.service.ServiceArtifactTestRun;
@@ -29,7 +27,6 @@ import co.cask.cdap.spark.SparkFileSetTestRun;
 import co.cask.cdap.spark.SparkStreamingTestRun;
 import co.cask.cdap.spark.metrics.SparkMetricsIntegrationTestRun;
 import co.cask.cdap.spark.service.SparkServiceIntegrationTestRun;
-import co.cask.cdap.spark.stream.SparkStreamIntegrationTestRun;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
@@ -47,9 +44,7 @@ import org.junit.runners.Suite;
 @RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   AdminAppTestRun.class,
-  BatchStreamIntegrationTestRun.class,
   FileUploadServiceTestRun.class,
-  MapReduceStreamInputTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
   MessagingAppTestRun.class,
   ServiceArtifactTestRun.class,
@@ -57,7 +52,6 @@ import org.junit.runners.Suite;
   SparkFileSetTestRun.class,
   SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
-  SparkStreamIntegrationTestRun.class,
   TestFrameworkTestRun.class,
   SparkStreamingTestRun.class,
 })

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -179,7 +179,6 @@ public final class DatasetsUtil {
     return spec.setOriginalProperties(props);
   }
 
-  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
   public static boolean isUserDataset(DatasetId datasetInstanceId) {
     return !NamespaceId.SYSTEM.equals(datasetInstanceId.getParent()) &&
       !isSystemDatasetInUserNamespace(datasetInstanceId);

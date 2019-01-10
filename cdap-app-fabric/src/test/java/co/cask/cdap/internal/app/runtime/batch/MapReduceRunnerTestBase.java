@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,16 +29,12 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
-import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
-import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.messaging.MessagingService;
@@ -51,14 +47,7 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
-import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpVersion;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
@@ -89,7 +78,6 @@ public class MapReduceRunnerTestBase {
 
   private static Injector injector;
   private static TransactionManager txService;
-  private static StreamHandler streamHandler;
 
   protected static TransactionExecutorFactory txExecutorFactory;
   protected static DatasetFramework dsFramework;
@@ -123,12 +111,7 @@ public class MapReduceRunnerTestBase {
     if (txCleanupInterval != null) {
       conf.setInt(TxConstants.Manager.CFG_TX_CLEANUP_INTERVAL, txCleanupInterval);
     }
-    injector = AppFabricTestHelper.getInjector(conf, new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class);
-      }
-    });
+    injector = AppFabricTestHelper.getInjector(conf);
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
@@ -139,7 +122,6 @@ public class MapReduceRunnerTestBase {
 
     metricStore = injector.getInstance(MetricStore.class);
     txService.startAndWait();
-    streamHandler = injector.getInstance(StreamHandler.class);
 
     // Always create the default namespace
     injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
@@ -155,29 +137,6 @@ public class MapReduceRunnerTestBase {
     // cleanup user data (only user datasets)
     for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(DefaultId.NAMESPACE.dataset(spec.getName()));
-    }
-  }
-
-  protected void writeToStream(String streamName, String body) throws IOException {
-    writeToStream(Id.Stream.from(Id.Namespace.DEFAULT, streamName), body);
-  }
-
-  protected void writeToStream(Id.Stream streamId, String body) throws IOException {
-    String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
-    FullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
-
-    request.content().writeCharSequence(body, StandardCharsets.UTF_8);
-    HttpUtil.setContentLength(request, request.content().readableBytes());
-
-    MockResponder responder = new MockResponder();
-    try {
-      streamHandler.enqueue(request, responder, streamId.getNamespaceId(), streamId.getId());
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      throw Throwables.propagate(e);
-    }
-    if (responder.getStatus() != HttpResponseStatus.OK) {
-      throw new IOException("Failed to write to stream. Status = " + responder.getStatus());
     }
   }
 

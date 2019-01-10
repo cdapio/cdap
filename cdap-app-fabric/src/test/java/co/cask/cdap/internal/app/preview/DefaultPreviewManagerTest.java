@@ -34,8 +34,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
@@ -45,8 +43,6 @@ import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -99,11 +95,7 @@ public class DefaultPreviewManagerTest {
       new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
-      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new ConfigStoreModule().getInMemoryModule(),
-      new StreamAdminModules().getInMemoryModules(),
-      new StreamServiceRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getInMemoryModules(),

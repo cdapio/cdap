@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -56,16 +55,6 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
     this.stageConfigurer = new DefaultStageConfigurer();
     this.engine = engine;
     this.properties = new HashMap<>();
-  }
-
-  @Override
-  public void addStream(Stream stream) {
-    configurer.addStream(stream);
-  }
-
-  @Override
-  public void addStream(String streamName) {
-    configurer.addStream(streamName);
   }
 
   @Override

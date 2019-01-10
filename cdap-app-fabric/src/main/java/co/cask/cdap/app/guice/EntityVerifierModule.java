@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.common.entity.DefaultEntityExistenceVerifier;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.entity.InstanceExistenceVerifier;
-import co.cask.cdap.data.stream.StreamExistenceVerifier;
 import co.cask.cdap.data2.dataset2.DatasetExistenceVerifier;
 import co.cask.cdap.internal.app.namespace.NamespaceExistenceVerifier;
 import co.cask.cdap.internal.app.runtime.ApplicationExistenceVerifier;
@@ -34,7 +33,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
@@ -56,7 +54,6 @@ public class EntityVerifierModule extends PrivateModule {
     existenceVerifiers.addBinding(ApplicationId.class).to(ApplicationExistenceVerifier.class);
     existenceVerifiers.addBinding(ProgramId.class).to(ProgramExistenceVerifier.class);
     existenceVerifiers.addBinding(ProgramRunId.class).to(ProgramRunExistenceVerifier.class);
-    existenceVerifiers.addBinding(StreamId.class).to(StreamExistenceVerifier.class);
     existenceVerifiers.addBinding(DatasetId.class).to(DatasetExistenceVerifier.class);
 
     TypeLiteral<EntityExistenceVerifier<EntityId>> verifierType =

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
@@ -43,12 +45,13 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.PairFunction;
 import org.junit.Assert;
 import scala.Tuple2;
 
@@ -67,7 +70,7 @@ public class AppWithPlugin extends AbstractApplication {
   public static final String MAPREDUCE = "testMapReduce";
   public static final String SERVICE = "testService";
   public static final String SPARK = "testSpark";
-  public static final String SPARK_STREAM = "sparkStream";
+  public static final String SPARK_INPUT = "sparkInput";
   public static final String SPARK_TABLE = "sparkTable";
   public static final String WORKFLOW = "testWorkflow";
   public static final String WORKFLOW_TABLE = "workflowTable";
@@ -141,8 +144,8 @@ public class AppWithPlugin extends AbstractApplication {
     @Override
     protected void configure() {
       setName(MAPREDUCE);
+      createDataset("input", KeyValueTable.class);
       createDataset("output", KeyValueTable.class);
-      addStream("input");
     }
 
     @Override
@@ -151,7 +154,7 @@ public class AppWithPlugin extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(SimpleMapper.class);
       job.setNumReduceTasks(0);
-      context.addInput(Input.ofStream("input"));
+      context.addInput(Input.ofDataset("input"));
       context.addOutput(Output.ofDataset("output"));
     }
   }
@@ -187,11 +190,8 @@ public class AppWithPlugin extends AbstractApplication {
         Object object = getContext().newPluginInstance("plug");
         Assert.assertEquals(TEST, object.toString());
         Assert.assertTrue(getContext().getPluginProperties("plug").getProperties().containsKey(KEY));
-        getContext().write("input", "data");
       } catch (InstantiationException e) {
         Assert.fail();
-      } catch (IOException e) {
-        // writing to stream failed. but doesn't affect test.
       }
     }
 
@@ -208,28 +208,25 @@ public class AppWithPlugin extends AbstractApplication {
     protected void configure() {
       setName(SPARK);
       setMainClass(getClass());
-      addStream(SPARK_STREAM);
+
+      createDataset(SPARK_INPUT, FileSet.class, FileSetProperties.builder()
+        .setInputFormat(TextInputFormat.class)
+        .setOutputFormat(TextOutputFormat.class)
+        .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
       createDataset(SPARK_TABLE, Table.class);
+
       usePlugin("t1", "n1", "plugin", PluginProperties.builder().add(KEY, TEST).build());
     }
 
     @Override
     public void run(JavaSparkExecutionContext sec) throws Exception {
       JavaSparkContext jsc = new JavaSparkContext();
-      JavaPairRDD<Long, String> rdd = sec.fromStream(SPARK_STREAM, String.class);
+      JavaPairRDD<LongWritable, Text> rdd = sec.fromDataset(SPARK_INPUT);
 
       final Object plugin = sec.getPluginContext().newPluginInstance("plugin");
-      JavaPairRDD<byte[], Put> resultRDD = rdd.values().map(new Function<String, String>() {
-        @Override
-        public String call(String text) throws Exception {
-          return text + " " + plugin.toString();
-        }
-      }).mapToPair(new PairFunction<String, byte[], Put>() {
-        @Override
-        public Tuple2<byte[], Put> call(String str) throws Exception {
-          return new Tuple2<>(str.getBytes(Charsets.UTF_8), new Put(str, str, str));
-        }
-      });
+      JavaPairRDD<byte[], Put> resultRDD = rdd.values()
+        .map(text -> text + " " + plugin.toString())
+        .mapToPair(str -> new Tuple2<>(str.getBytes(Charsets.UTF_8), new Put(str, str, str)));
 
       sec.saveAsDataset(resultRDD, SPARK_TABLE);
     }

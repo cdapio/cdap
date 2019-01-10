@@ -34,7 +34,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.test.SlowTests;
@@ -76,7 +75,6 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
     DatasetId dataset = namespace.dataset(AllProgramsApp.DATASET_NAME);
     DatasetId dataset2 = namespace.dataset(AllProgramsApp.DATASET_NAME2);
     DatasetId dataset3 = namespace.dataset(AllProgramsApp.DATASET_NAME3);
-    StreamId stream = namespace.stream(AllProgramsApp.STREAM_NAME);
 
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace.getNamespace()).build());
     try {
@@ -128,6 +126,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
           new Lineage(ImmutableSet.of(
             // Dataset access
             new Relation(dataset, mapreduce, AccessType.WRITE, mrRunId),
+            new Relation(dataset3, mapreduce, AccessType.READ, mrRunId),
             new Relation(dataset, mapreduce2, AccessType.WRITE, mrRunId2),
             new Relation(dataset2, mapreduce2, AccessType.READ, mrRunId2),
             new Relation(dataset, spark, AccessType.READ, sparkRunId),
@@ -135,22 +134,11 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
             new Relation(dataset3, spark, AccessType.READ, sparkRunId),
             new Relation(dataset3, spark, AccessType.WRITE, sparkRunId),
             new Relation(dataset, mapreduce, AccessType.WRITE, workflowMrRunId),
+            new Relation(dataset3, mapreduce, AccessType.READ, workflowMrRunId),
             new Relation(dataset, service, AccessType.WRITE, serviceRunId),
-            new Relation(dataset, worker, AccessType.WRITE, workerRunId),
-
-            // Stream access
-            new Relation(stream, mapreduce, AccessType.READ, mrRunId),
-            new Relation(stream, spark, AccessType.READ, sparkRunId),
-            new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),
-            new Relation(stream, worker, AccessType.WRITE, workerRunId)
+            new Relation(dataset, worker, AccessType.WRITE, workerRunId)
           )),
           toSet(CollapseType.ACCESS));
-      Assert.assertEquals(expected, lineage);
-
-      // Fetch stream lineage
-      lineage = fetchLineage(stream, now - oneHour, now + oneHour, toSet(CollapseType.ACCESS), 10);
-
-      // stream too is accessed by all programs
       Assert.assertEquals(expected, lineage);
 
       // Assert metadata
@@ -161,8 +149,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                                 new MetadataRecord(programForWorker, MetadataScope.USER, emptyMap(),
                                                    workerTags),
                                 new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
-                                                   emptySet()),
-                                new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
+                                                   emptySet())),
                           getMetadataForRun(worker.run(workerRunId.getId()).toMetadataEntity()));
 
       // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
@@ -174,8 +161,7 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
                                 new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
                                                    emptySet()),
                                 new MetadataRecord(dataset2, MetadataScope.USER, emptyMap(), emptySet()),
-                                new MetadataRecord(dataset3, MetadataScope.USER, emptyMap(), emptySet()),
-                                new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
+                                new MetadataRecord(dataset3, MetadataScope.USER, emptyMap(), emptySet())),
                           getMetadataForRun(spark.run(sparkRunId.getId()).toMetadataEntity()));
     } finally {
       namespaceClient.delete(namespace);

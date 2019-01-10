@@ -16,9 +16,7 @@
 
 /**
  * An Application is a logical grouping of
- * {@link co.cask.cdap.api.data.stream.Stream Streams},
- * {@link co.cask.cdap.api.dataset.Dataset Datasets},
-
+ * {@link co.cask.cdap.api.dataset.Dataset Datasets}
  * and programs.
  *
  * <h1>Application</h1>

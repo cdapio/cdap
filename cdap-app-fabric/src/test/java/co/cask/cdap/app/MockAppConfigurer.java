@@ -19,7 +19,6 @@ package co.cask.cdap.app;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -124,16 +123,6 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
     throw new UnsupportedOperationException(ERROR_MSG);
-  }
-
-  @Override
-  public void addStream(Stream stream) {
-
-  }
-
-  @Override
-  public void addStream(String streamName) {
-
   }
 
   @Override

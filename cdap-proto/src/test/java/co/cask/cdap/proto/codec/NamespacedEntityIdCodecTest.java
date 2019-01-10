@@ -26,7 +26,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.gson.Gson;
@@ -48,7 +47,6 @@ public class NamespacedEntityIdCodecTest {
   private final WorkflowId workflowId = new WorkflowId(applicationId, "wflow");
   private final ArtifactId artifactId = new ArtifactId("ns", "artifact", "1.0-SNAPSHOT");
   private final DatasetId datasetId = new DatasetId("ns", "ds2");
-  private final StreamId streamId = new StreamId("ns", "stream1");
 
   @Test
   public void testNamespacedIdCodec() {
@@ -78,9 +76,6 @@ public class NamespacedEntityIdCodecTest {
 
     String dataset = GSON.toJson(datasetId);
     Assert.assertEquals(datasetId, GSON.fromJson(dataset, NamespacedEntityId.class));
-
-    String stream = GSON.toJson(streamId);
-    Assert.assertEquals(streamId, GSON.fromJson(stream, NamespacedEntityId.class));
   }
 
   @Test(expected = UnsupportedOperationException.class)

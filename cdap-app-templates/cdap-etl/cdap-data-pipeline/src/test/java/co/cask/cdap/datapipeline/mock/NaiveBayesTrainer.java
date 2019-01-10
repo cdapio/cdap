@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,8 @@ import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -61,6 +63,7 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
   public static final String PLUGIN_NAME = "NaiveBayesTrainer";
   public static final String TEXTS_TO_CLASSIFY = "textsToClassify";
   public static final String CLASSIFIED_TEXTS = "classifiedTexts";
+  public static final String TEXTS_TO_CLASSIFY_SOURCE = "textsToClassifySource";
 
   private final Config config;
   private Schema inputSchema;
@@ -96,7 +99,10 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    pipelineConfigurer.addStream(TEXTS_TO_CLASSIFY);
+    pipelineConfigurer.createDataset(TEXTS_TO_CLASSIFY, FileSet.class, FileSetProperties.builder()
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .setOutputProperty(TextOutputFormat.SEPERATOR, ":").build());
     pipelineConfigurer.createDataset(CLASSIFIED_TEXTS, KeyValueTable.class);
     pipelineConfigurer.createDataset(config.fileSetName, FileSet.class, FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
@@ -137,20 +143,15 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
     model.save(JavaSparkContext.toSparkContext(javaSparkContext),
                outputFS.getBaseLocation().append(config.path).toURI().getPath());
 
-    JavaPairRDD<Long, String> textsToClassify = sparkContext.fromStream(TEXTS_TO_CLASSIFY, String.class);
-    JavaRDD<Vector> featuresToClassify = textsToClassify.map(new Function<Tuple2<Long, String>, Vector>() {
-      @Override
-      public Vector call(Tuple2<Long, String> longWritableTextTuple2) throws Exception {
-        String text = longWritableTextTuple2._2();
-        return tf.transform(Lists.newArrayList(text.split(" ")));
-      }
-    });
+    JavaRDD<String> textsToClassify = sparkContext.<LongWritable, Text>fromDataset(TEXTS_TO_CLASSIFY)
+      .values().map(Text::toString);
+    JavaRDD<Vector> featuresToClassify = textsToClassify.map(text -> tf.transform(Lists.newArrayList(text.split(" "))));
 
     JavaRDD<Double> predict = model.predict(featuresToClassify);
     LOG.info("Predictions: {}", predict.collect());
 
     // key the predictions with the message
-    JavaPairRDD<String, Double> keyedPredictions = textsToClassify.values().zip(predict);
+    JavaPairRDD<String, Double> keyedPredictions = textsToClassify.zip(predict);
 
     // convert to byte[],byte[] to write to data
     JavaPairRDD<byte[], byte[]> bytesRDD =

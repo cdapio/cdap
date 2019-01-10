@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -290,7 +290,7 @@ public class DatasetInstanceService {
 
     // need to enforce on the principal id if impersonation is involved
     KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, namespace, ownerPrincipal);
-    if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
+    if (DatasetsUtil.isUserDataset(datasetId)) {
       LOG.trace("Authorizing impersonation for dataset {}", name);
       if (effectiveOwner != null) {
         authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
@@ -311,8 +311,7 @@ public class DatasetInstanceService {
     LOG.trace("Retrieved instance metadata from MDS for dataset {}", name);
 
     // for creation, we need enforcement for dataset type for user dataset, but bypass for system datasets
-    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(),
-                                           DatasetsUtil.isSystemDatasetInUserNamespace(datasetId));
+    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(), !DatasetsUtil.isUserDataset(datasetId));
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
@@ -463,7 +462,7 @@ public class DatasetInstanceService {
     Map<DatasetId, DatasetSpecification> datasets = new HashMap<>();
     for (DatasetSpecification spec : instanceManager.getAll(namespaceId)) {
       DatasetId datasetId = namespaceId.dataset(spec.getName());
-      if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
+      if (DatasetsUtil.isUserDataset(datasetId)) {
         authorizationEnforcer.enforce(datasetId, requestingUser, Action.ADMIN);
       }
       datasets.put(datasetId, spec);

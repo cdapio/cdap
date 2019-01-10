@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -293,38 +293,6 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // After granting admin on the modules, deleting all modules should succeed
     grantAndAssertSuccess(module1, BOB, EnumSet.of(Action.ADMIN));
     dsFramework.deleteAllModules(NamespaceId.DEFAULT);
-  }
-
-  @Test
-  public void testSystemDatasetsInUserNamespace() throws Exception {
-    DatasetId queueConfigDS = NamespaceId.DEFAULT.dataset("system.queue.config");
-    DatasetId shardedQueueDS = NamespaceId.DEFAULT.dataset("system.sharded.queue");
-    DatasetId systemQueueDS = NamespaceId.DEFAULT.dataset("system.queue");
-    DatasetId systemStreamDS = NamespaceId.DEFAULT.dataset("system.stream");
-
-    // should be able to add instance without authorization
-    dsFramework.addInstance(Table.class.getName(), queueConfigDS, DatasetProperties.EMPTY);
-    dsFramework.addInstance(Table.class.getName(), shardedQueueDS, DatasetProperties.EMPTY);
-    dsFramework.addInstance(Table.class.getName(), systemQueueDS, DatasetProperties.EMPTY);
-    dsFramework.addInstance(Table.class.getName(), systemStreamDS, DatasetProperties.EMPTY);
-
-    // User should not be able to see any of them since no privilege is granted
-    Assert.assertTrue(summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)).isEmpty());
-
-    // should be able to get without authorization
-    Assert.assertNotNull(dsFramework.getDataset(queueConfigDS, ImmutableMap.of(), null));
-    Assert.assertNotNull(dsFramework.getDataset(shardedQueueDS, ImmutableMap.of(), null));
-    Assert.assertNotNull(dsFramework.getDataset(systemQueueDS, ImmutableMap.of(), null));
-    Assert.assertNotNull(dsFramework.getDataset(systemStreamDS, ImmutableMap.of(), null));
-
-    // should be able to update without authorization
-    dsFramework.updateInstance(queueConfigDS, DatasetProperties.EMPTY);
-
-    // should be able to delete without authorization
-    dsFramework.deleteInstance(queueConfigDS);
-    dsFramework.deleteInstance(shardedQueueDS);
-    dsFramework.deleteInstance(systemQueueDS);
-    dsFramework.deleteInstance(systemStreamDS);
   }
 
   @After

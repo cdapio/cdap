@@ -17,12 +17,10 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.artifact.ArtifactManager;
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
@@ -56,12 +54,6 @@ import java.net.InetSocketAddress;
  * Guice more for binding {@link ProgramRunner} that runs program in the same process.
  */
 final class InMemoryProgramRunnerModule extends PrivateModule {
-
-  private final Class<? extends StreamWriter> streamWriterClass;
-
-  InMemoryProgramRunnerModule(Class<? extends StreamWriter> streamWriterClass) {
-    this.streamWriterClass = streamWriterClass;
-  }
 
   /**
    * Configures a {@link com.google.inject.Binder} via the exposed methods.
@@ -106,10 +98,6 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind and expose runtime service
     bind(ProgramRuntimeService.class).to(InMemoryProgramRuntimeService.class).in(Scopes.SINGLETON);
     expose(ProgramRuntimeService.class);
-
-    // Create StreamWriter factory.
-    install(new FactoryModuleBuilder().implement(StreamWriter.class, streamWriterClass)
-              .build(StreamWriterFactory.class));
   }
 
   @Singleton

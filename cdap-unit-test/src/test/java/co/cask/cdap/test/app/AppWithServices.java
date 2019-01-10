@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.BasicService;
@@ -197,7 +196,6 @@ public class AppWithServices extends AbstractApplication {
     protected void configure() {
       setName(DATASET_WORKER_SERVICE_NAME);
       addHandler(new NoOpHandler());
-      addStream(new Stream("text"));
     }
 
     private static final class NoOpHandler extends AbstractHttpServiceHandler {

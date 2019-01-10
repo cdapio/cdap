@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -82,20 +81,6 @@ public class BasicLineageWriter implements LineageWriter, FieldLineageWriter {
       LineageDataset
         .getLineageDataset(context, datasetFramework, getLineageDatasetId())
         .addAccess(run, datasetId, accessType, accessTime, component);
-    });
-  }
-
-  @Override
-  public void addAccess(ProgramRunId run, StreamId streamId, AccessType accessType,
-                        @Nullable NamespacedEntityId component) {
-    long accessTime = System.currentTimeMillis();
-    LOG.trace("Writing access for run {}, stream {}, accessType {}, component {}, accessTime = {}",
-              run, streamId, accessType, component, accessTime);
-
-    Transactionals.execute(transactional, context -> {
-      LineageDataset
-        .getLineageDataset(context, datasetFramework, getLineageDatasetId())
-        .addAccess(run, streamId, accessType, accessTime, component);
     });
   }
 

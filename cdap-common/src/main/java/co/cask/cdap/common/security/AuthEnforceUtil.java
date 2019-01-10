@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -58,7 +57,6 @@ public final class AuthEnforceUtil {
     CONS_CACHE = new IdentityHashMap<>();
     CONS_CACHE.put(InstanceId.class, findConstructor(InstanceId.class));
     CONS_CACHE.put(NamespaceId.class, findConstructor(NamespaceId.class));
-    CONS_CACHE.put(StreamId.class, findConstructor(StreamId.class));
     CONS_CACHE.put(DatasetId.class, findConstructor(DatasetId.class));
     CONS_CACHE.put(ApplicationId.class, findConstructor(ApplicationId.class));
     CONS_CACHE.put(ArtifactId.class, findConstructor(ArtifactId.class));
@@ -116,9 +114,6 @@ public final class AuthEnforceUtil {
     }
     if (enforceOn.equals(Type.getType(NamespaceId.class))) {
       return CONS_CACHE.get(NamespaceId.class).getParameterTypes().length;
-    }
-    if (enforceOn.equals(Type.getType(StreamId.class))) {
-      return CONS_CACHE.get(StreamId.class).getParameterTypes().length;
     }
     if (enforceOn.equals(Type.getType(DatasetId.class))) {
       return CONS_CACHE.get(DatasetId.class).getParameterTypes().length;

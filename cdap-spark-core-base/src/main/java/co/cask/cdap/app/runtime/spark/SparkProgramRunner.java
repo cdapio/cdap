@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,6 @@ import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -98,7 +97,6 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final DatasetFramework datasetFramework;
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final StreamAdmin streamAdmin;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -115,7 +113,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
                      TransactionSystemClient txClient, DatasetFramework datasetFramework,
                      MetricsCollectionService metricsCollectionService,
-                     DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
+                     DiscoveryServiceClient discoveryServiceClient,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
@@ -129,7 +127,6 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.datasetFramework = datasetFramework;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.streamAdmin = streamAdmin;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -189,7 +186,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       SparkRuntimeContext runtimeContext = new SparkRuntimeContext(new Configuration(hConf), program, options, cConf,
                                                                    host, txClient, programDatasetFramework,
                                                                    discoveryServiceClient,
-                                                                   metricsCollectionService, streamAdmin, workflowInfo,
+                                                                   metricsCollectionService, workflowInfo,
                                                                    pluginInstantiator, secureStore, secureStoreManager,
                                                                    authorizationEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,

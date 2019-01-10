@@ -42,7 +42,6 @@ import java.util.concurrent.CountDownLatch;
 public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConfig> {
 
   public static final String NAME = "AppWithSchedule";
-  public static final String STREAM = "SampleStream";
   public static final String WORKFLOW_NAME = "SampleWorkflow";
   public static final String SCHEDULE = "SampleSchedule";
   public static final String SCHEDULE_2 = "SampleSchedule2";
@@ -55,7 +54,6 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       setDescription("Sample application");
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
-      addStream(STREAM);
       AppConfig config = getConfig();
       // if add workflow is false, we want to add a flow, so the app will have at least one program, for testing deploy
       if (!config.addWorkflow) {

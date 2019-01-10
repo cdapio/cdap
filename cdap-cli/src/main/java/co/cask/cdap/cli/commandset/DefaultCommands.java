@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,6 @@ public class DefaultCommands extends CommandSet<Command> {
         .add(injector.getInstance(MetricsCommands.class))
         .add(injector.getInstance(ApplicationCommands.class))
         .add(injector.getInstance(ArtifactCommands.class))
-        .add(injector.getInstance(StreamCommands.class))
         .add(injector.getInstance(ProgramCommands.class))
         .add(injector.getInstance(DatasetCommands.class))
         .add(injector.getInstance(ServiceCommands.class))

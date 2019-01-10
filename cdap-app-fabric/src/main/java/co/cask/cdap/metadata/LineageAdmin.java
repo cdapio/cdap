@@ -37,7 +37,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
@@ -127,35 +126,6 @@ public class LineageAdmin {
   }
 
   /**
-   * Computes lineage for a stream between given time period.
-   *
-   * @param sourceStream stream to compute lineage for
-   * @param startMillis start time period
-   * @param endMillis end time period
-   * @param levels number of levels to compute lineage for
-   * @param rollup lineage collapse rollup
-   * @return lineage for sourceStream
-   */
-  public Lineage computeLineage(final StreamId sourceStream, long startMillis, long endMillis,
-                                int levels, String rollup) throws NotFoundException {
-    return doComputeLineage(sourceStream, startMillis, endMillis, levels, rollup);
-  }
-
-  /**
-   * Computes lineage for a stream between given time period.
-   *
-   * @param sourceStream stream to compute lineage for
-   * @param startMillis start time period
-   * @param endMillis end time period
-   * @param levels number of levels to compute lineage for
-   * @return lineage for sourceStream
-   */
-  public Lineage computeLineage(final StreamId sourceStream, long startMillis, long endMillis,
-                                int levels) throws NotFoundException {
-    return doComputeLineage(sourceStream, startMillis, endMillis, levels, null);
-  }
-
-  /**
    * @return metadata associated with a run
    */
   public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) {
@@ -202,10 +172,9 @@ public class LineageAdmin {
     return workflowProgramRunId;
   }
 
-  private Multimap<RelationKey, Relation> getRollupRelations (Multimap<RelationKey, Relation> relations,
-                                                              Map<ProgramRunId, RunRecordMeta> runRecordMap,
-                                                              Map<String, ProgramRunId> workflowIdMap)
-    throws NotFoundException {
+  private Multimap<RelationKey, Relation> getRollupRelations(Multimap<RelationKey, Relation> relations,
+                                                             Map<ProgramRunId, RunRecordMeta> runRecordMap,
+                                                             Map<String, ProgramRunId> workflowIdMap) {
 
     Multimap<RelationKey, Relation> relationsNew = HashMultimap.create();
     for (Map.Entry<RelationKey, Collection<Relation>> entry : relations.asMap().entrySet()) {
@@ -218,15 +187,15 @@ public class LineageAdmin {
                                                         workflowProgramRunId.getApplication(),
                                                         workflowProgramRunId.getType(),
                                                         workflowProgramRunId.getProgram());
-          Relation workflowRelation;
+
           NamespacedEntityId data = relation.getData();
-          if (data instanceof DatasetId) {
-            workflowRelation = new Relation((DatasetId) data, workflowProgramId,
-                                              relation.getAccess(), RunIds.fromString(workflowProgramRunId.getRun()));
-          } else {
-            workflowRelation = new Relation((StreamId) data, workflowProgramId,
-                                              relation.getAccess(), RunIds.fromString(workflowProgramRunId.getRun()));
+          if (!(data instanceof DatasetId)) {
+            // This shouldn't happen
+            throw new IllegalStateException("Unknown data type " + data);
           }
+          Relation workflowRelation = new Relation((DatasetId) data, workflowProgramId,
+                                                   relation.getAccess(),
+                                                   RunIds.fromString(workflowProgramRunId.getRun()));
           relationsNew.put(entry.getKey(), workflowRelation);
         }
       }
@@ -354,15 +323,10 @@ public class LineageAdmin {
 
   private Iterable<Relation> getProgramRelations(NamespacedEntityId data, long start, long end,
                                                  Predicate<Relation> filter) {
-    if (data instanceof DatasetId) {
-      return lineageStoreReader.getRelations((DatasetId) data, start, end, filter);
+    if (!(data instanceof DatasetId)) {
+      throw new IllegalStateException("Unknown data type " + data);
     }
-
-    if (data instanceof StreamId) {
-      return lineageStoreReader.getRelations((StreamId) data, start, end, filter);
-    }
-
-    throw new IllegalStateException("Unknown data type " + data);
+    return lineageStoreReader.getRelations((DatasetId) data, start, end, filter);
   }
 
   /**

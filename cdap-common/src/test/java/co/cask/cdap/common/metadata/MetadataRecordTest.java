@@ -26,7 +26,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.gson.Gson;
@@ -55,7 +54,6 @@ public class MetadataRecordTest {
   private final WorkerId workerId = new WorkerId(applicationId, "worker");
   private final WorkflowId workflowId = new WorkflowId(applicationId, "wflow");
   private final DatasetId datasetId = new DatasetId("ns", "ds2");
-  private final StreamId streamId = new StreamId("ns", "stream1");
 
   @Test
   public void testWithMetadataRecord() {
@@ -93,9 +91,5 @@ public class MetadataRecordTest {
     MetadataRecord datasetRecord = new MetadataRecord(datasetId, MetadataScope.USER, properties, tags);
     String datasetRecordJson = GSON.toJson(datasetRecord);
     Assert.assertEquals(datasetRecord, GSON.fromJson(datasetRecordJson, MetadataRecord.class));
-    // verify with Id.Stream
-    MetadataRecord streamRecord = new MetadataRecord(streamId, MetadataScope.USER, properties, tags);
-    String streamRecordJson = GSON.toJson(streamRecord);
-    Assert.assertEquals(streamRecord, GSON.fromJson(streamRecordJson, MetadataRecord.class));
   }
 }

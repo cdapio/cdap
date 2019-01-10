@@ -36,7 +36,6 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -80,7 +79,7 @@ public class MetadataDatasetTest {
   // Have to use Id.Program for comparison here because the MetadataDataset APIs return Id.Program.
   private final MetadataEntity program1 = new ProgramId("ns1", "app1", ProgramType.WORKER, "wk1").toMetadataEntity();
   private final MetadataEntity dataset1 = new DatasetId("ns1", "ds1").toMetadataEntity();
-  private final MetadataEntity stream1 = new StreamId("ns1", "s1").toMetadataEntity();
+  private final MetadataEntity dataset2 = new DatasetId("ns1", "ds2").toMetadataEntity();
   private final MetadataEntity artifact1 = new ArtifactId("ns1", "a1", "1.0.0").toMetadataEntity();
   private final MetadataEntity fileEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns1")
     .append(MetadataEntity.DATASET, "ds1").appendAsType("file", "f1").build();
@@ -111,7 +110,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getProperties(app1).size());
       Assert.assertEquals(0, dataset.getProperties(program1).size());
       Assert.assertEquals(0, dataset.getProperties(dataset1).size());
-      Assert.assertEquals(0, dataset.getProperties(stream1).size());
+      Assert.assertEquals(0, dataset.getProperties(dataset2).size());
       Assert.assertEquals(0, dataset.getProperties(artifact1).size());
       Assert.assertEquals(0, dataset.getProperties(fileEntity).size());
       Assert.assertEquals(0, dataset.getProperties(partitionFileEntity).size());
@@ -138,8 +137,8 @@ public class MetadataDatasetTest {
                                        Collections.emptySet()),
                           metadataChange.getLatest());
       dataset.setProperty(dataset1, "dkey1", "dvalue1");
-      dataset.setProperty(stream1, "skey1", "svalue1");
-      dataset.setProperty(stream1, "skey2", "svalue2");
+      dataset.setProperty(dataset2, "skey1", "svalue1");
+      dataset.setProperty(dataset2, "skey2", "svalue2");
       dataset.setProperty(artifact1, "rkey1", "rvalue1");
       dataset.setProperty(artifact1, "rkey2", "rvalue2");
       dataset.setProperty(fileEntity, "fkey2", "fvalue2");
@@ -177,7 +176,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getProperties(jarEntity).size());
       MetadataEntry expected = new MetadataEntry(dataset1, "dkey1", "dvalue1");
       Assert.assertEquals(expected, dataset.getProperty(dataset1, "dkey1"));
-      Assert.assertEquals(ImmutableMap.of("skey1", "svalue1", "skey2", "svalue2"), dataset.getProperties(stream1));
+      Assert.assertEquals(ImmutableMap.of("skey1", "svalue1", "skey2", "svalue2"), dataset.getProperties(dataset2));
       Map<String, String> properties = dataset.getProperties(artifact1);
       Assert.assertEquals(ImmutableMap.of("rkey1", "rvalue1", "rkey2", "rvalue2"), properties);
       MetadataEntry result = dataset.getProperty(artifact1, "rkey2");
@@ -191,15 +190,15 @@ public class MetadataDatasetTest {
       Assert.assertEquals(expected, result);
     });
     // reset a property
-    txnl.execute(() -> dataset.setProperty(stream1, "skey1", "sv1"));
+    txnl.execute(() -> dataset.setProperty(dataset2, "skey1", "sv1"));
     txnl.execute(() -> Assert.assertEquals(ImmutableMap.of("skey1", "sv1", "skey2", "svalue2"),
-                                           dataset.getProperties(stream1)));
+                                           dataset.getProperties(dataset2)));
     // cleanup
     txnl.execute(() -> {
       dataset.removeProperties(app1);
       dataset.removeProperties(program1);
       dataset.removeProperties(dataset1);
-      dataset.removeProperties(stream1);
+      dataset.removeProperties(dataset2);
       dataset.removeProperties(artifact1);
       dataset.removeProperties(fileEntity);
       dataset.removeProperties(partitionFileEntity);
@@ -208,7 +207,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getProperties(app1).size());
       Assert.assertEquals(0, dataset.getProperties(program1).size());
       Assert.assertEquals(0, dataset.getProperties(dataset1).size());
-      Assert.assertEquals(0, dataset.getProperties(stream1).size());
+      Assert.assertEquals(0, dataset.getProperties(dataset2).size());
       Assert.assertEquals(0, dataset.getProperties(artifact1).size());
       Assert.assertEquals(0, dataset.getProperties(fileEntity).size());
       Assert.assertEquals(0, dataset.getProperties(partitionFileEntity).size());
@@ -222,7 +221,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getTags(app1).size());
       Assert.assertEquals(0, dataset.getTags(program1).size());
       Assert.assertEquals(0, dataset.getTags(dataset1).size());
-      Assert.assertEquals(0, dataset.getTags(stream1).size());
+      Assert.assertEquals(0, dataset.getTags(dataset2).size());
       Assert.assertEquals(0, dataset.getTags(artifact1).size());
       Assert.assertEquals(0, dataset.getTags(fileEntity).size());
       Assert.assertEquals(0, dataset.getTags(partitionFileEntity).size());
@@ -247,7 +246,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(new Metadata(program1, Collections.emptyMap(), ImmutableSet.of("tag1", "tag2")),
                           metadataChange.getLatest());
       dataset.addTags(dataset1, "tag3", "tag2");
-      dataset.addTags(stream1, "tag2");
+      dataset.addTags(dataset2, "tag2");
       dataset.addTags(artifact1, "tag3");
       dataset.addTags(fileEntity, "tag5");
       dataset.addTags(partitionFileEntity, "tag6");
@@ -281,7 +280,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(2, tags.size());
       Assert.assertTrue(tags.contains("tag3"));
       Assert.assertTrue(tags.contains("tag2"));
-      tags = dataset.getTags(stream1);
+      tags = dataset.getTags(dataset2);
       Assert.assertEquals(1, tags.size());
       Assert.assertTrue(tags.contains("tag2"));
       tags = dataset.getTags(fileEntity);
@@ -319,7 +318,7 @@ public class MetadataDatasetTest {
       dataset.removeTags(app1);
       dataset.removeTags(program1);
       dataset.removeTags(dataset1);
-      dataset.removeTags(stream1);
+      dataset.removeTags(dataset2);
       dataset.removeTags(artifact1);
       dataset.removeTags(fileEntity);
       dataset.removeTags(partitionFileEntity);
@@ -329,7 +328,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getTags(app1).size());
       Assert.assertEquals(0, dataset.getTags(program1).size());
       Assert.assertEquals(0, dataset.getTags(dataset1).size());
-      Assert.assertEquals(0, dataset.getTags(stream1).size());
+      Assert.assertEquals(0, dataset.getTags(dataset2).size());
       Assert.assertEquals(0, dataset.getTags(artifact1).size());
       Assert.assertEquals(0, dataset.getTags(fileEntity).size());
       Assert.assertEquals(0, dataset.getTags(partitionFileEntity).size());
@@ -344,13 +343,13 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getTags(appNs2).size());
       Assert.assertEquals(0, dataset.getTags(program1).size());
       Assert.assertEquals(0, dataset.getTags(dataset1).size());
-      Assert.assertEquals(0, dataset.getTags(stream1).size());
+      Assert.assertEquals(0, dataset.getTags(dataset2).size());
       Assert.assertEquals(0, dataset.getTags(fileEntity).size());
       dataset.addTags(app1, "tag1", "tag2", "tag3");
       dataset.addTags(appNs2, "tag1", "tag2", "tag3_more");
       dataset.addTags(program1, "tag1");
       dataset.addTags(dataset1, "tag3", "tag2", "tag12-tag33");
-      dataset.addTags(stream1, "tag2, tag4");
+      dataset.addTags(dataset2, "tag2, tag4");
       dataset.addTags(fileEntity, "tag2, tag5");
     });
 
@@ -359,7 +358,7 @@ public class MetadataDatasetTest {
       List<MetadataEntry> results =
         searchByDefaultIndex("ns1", "tags:*", ImmutableSet.of(EntityTypeSimpleName.ALL));
       // results tags in ns1 are app1-tag1, tag2, tag3 + program1-tag1 + dataset1-tag3, tag2, tag12-tag33, tag12, tag33
-      // + stream1-tag2, tag4 + fileEntity-tag2, tag5
+      // + dataset2-tag2, tag4 + fileEntity-tag2, tag5
       Assert.assertEquals(13, results.size());
 
       // Try to search for tag1*
@@ -415,7 +414,7 @@ public class MetadataDatasetTest {
       dataset.removeTags(app1);
       dataset.removeTags(program1);
       dataset.removeTags(dataset1);
-      dataset.removeTags(stream1);
+      dataset.removeTags(dataset2);
     });
     // Search should be empty after deleting tags
     txnl.execute(() -> {
@@ -425,7 +424,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(0, dataset.getTags(app1).size());
       Assert.assertEquals(0, dataset.getTags(program1).size());
       Assert.assertEquals(0, dataset.getTags(dataset1).size());
-      Assert.assertEquals(0, dataset.getTags(stream1).size());
+      Assert.assertEquals(0, dataset.getTags(dataset2).size());
     });
   }
 
@@ -517,7 +516,7 @@ public class MetadataDatasetTest {
     });
 
     // Search based on value prefix
-    txnl.execute(() -> dataset.setProperty(stream1, "key21", "value21"));
+    txnl.execute(() -> dataset.setProperty(dataset2, "key21", "value21"));
     txnl.execute(() -> {
       List<MetadataEntry> results =
         searchByDefaultIndex("ns1", "value2*", ImmutableSet.of(EntityTypeSimpleName.ALL));
@@ -538,8 +537,8 @@ public class MetadataDatasetTest {
     final MetadataEntry flowEntry2 = new MetadataEntry(program1, "key2", "value2");
     final String multiWordKey = "multiword";
     final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
-    final MetadataEntry streamEntry1 = new MetadataEntry(stream1, "Key1", "Value1");
-    final MetadataEntry streamEntry2 = new MetadataEntry(stream1, "sKey1", "sValue1");
+    final MetadataEntry streamEntry1 = new MetadataEntry(dataset2, "Key1", "Value1");
+    final MetadataEntry streamEntry2 = new MetadataEntry(dataset2, "sKey1", "sValue1");
 
     txnl.execute(() -> {
       // Add some properties to program1
@@ -547,8 +546,8 @@ public class MetadataDatasetTest {
       dataset.setProperty(program1, "key2", "value2");
       // add a multi word value
       dataset.setProperty(program1, multiWordKey, multiWordValue);
-      dataset.setProperty(stream1, "sKey1", "sValue1");
-      dataset.setProperty(stream1, "Key1", "Value1");
+      dataset.setProperty(dataset2, "sKey1", "sValue1");
+      dataset.setProperty(dataset2, "Key1", "Value1");
     });
 
     txnl.execute(() -> {
@@ -765,9 +764,9 @@ public class MetadataDatasetTest {
     allMetadata.put(app1, new Metadata(app1,
                                        ImmutableMap.of("key20", "value20", "key21", "value21"),
                                        ImmutableSet.of()));
-    allMetadata.put(stream1, new Metadata(stream1,
-                                          ImmutableMap.of("key30", "value30", "key31", "value31", "key32", "value32"),
-                                          ImmutableSet.of()));
+    allMetadata.put(dataset2, new Metadata(dataset2,
+                                           ImmutableMap.of("key30", "value30", "key31", "value31", "key32", "value32"),
+                                           ImmutableSet.of()));
     allMetadata.put(artifact1, new Metadata(artifact1,
                                             ImmutableMap.of("key40", "value41"),
                                             ImmutableSet.of()));
@@ -793,11 +792,11 @@ public class MetadataDatasetTest {
 
       expected =
         ImmutableSet.<Metadata>builder()
-          .add(allMetadata.get(stream1))
+          .add(allMetadata.get(dataset2))
           .add(allMetadata.get(dataset1))
           .add(allMetadata.get(artifact1))
           .build();
-      Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(stream1, dataset1, artifact1)));
+      Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(dataset2, dataset1, artifact1)));
 
       expected =
         ImmutableSet.<Metadata>builder()
@@ -851,7 +850,7 @@ public class MetadataDatasetTest {
     doTestHistory(dataset, program1, "f_");
     doTestHistory(dataset, app1, "a_");
     doTestHistory(dataset, dataset1, "d_");
-    doTestHistory(dataset, stream1, "s_");
+    doTestHistory(dataset, dataset2, "s_");
   }
 
   @Test

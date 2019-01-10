@@ -278,7 +278,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertTrue(tags.containsAll(fieldTags));
     Assert.assertTrue(fieldTags.containsAll(tags));
 
-    // test prefix search, should match stream and application
+    // test prefix search, should match dataset and application
     Set<MetadataSearchResultRecord> searchTags =
       searchMetadata(NamespaceId.DEFAULT, "Wow*", EntityTypeSimpleName.ALL);
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(new MetadataSearchResultRecord(application));
@@ -606,7 +606,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testExploreSystemTags() throws Exception {
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AllProgramsApp.class));
 
-    //verify stream is explorable
+    //verify dataset is explorable
     // verify fileSet is explorable
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME4);
     Tasks.waitFor(ImmutableSet.of(DatasetSystemMetadataProvider.BATCH_TAG,
@@ -739,13 +739,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
     appClient.delete(app);
 
-    // deleting the app does not delete the dataset and stream, delete them explicitly to clear their system metadata
+    // deleting the app does not delete the dataset, delete them explicitly to clear their system metadata
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     for (String dataset : spec.getDatasets().keySet()) {
       datasetClient.delete(NamespaceId.DEFAULT.dataset(dataset));
-    }
-    for (String stream : spec.getStreams().keySet()) {
-      streamClient.delete(NamespaceId.DEFAULT.stream(stream));
     }
   }
 
@@ -821,7 +818,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     addTags(appId, tags);
     expectedUserMetadata.put(appId, new Metadata(props, tags));
 
-    // Add metadata to stream
+    // Add metadata to dataset
     props = ImmutableMap.of("key10", "value10", "key11", "value11");
     tags = ImmutableSet.of("tag11");
     addProperties(datasetId, props);

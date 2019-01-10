@@ -60,7 +60,6 @@ public class MapReduceContextConfigTest {
       Collections.emptyMap(),
       Collections.emptyMap(),
       Collections.emptyMap(),
-      Collections.emptyMap(),
       Collections.emptyMap()
     );
     cfg.setApplicationSpecification(appSpec);

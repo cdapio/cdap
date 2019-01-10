@@ -19,10 +19,8 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactSummary;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
-import co.cask.cdap.proto.id.ApplicationId;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
@@ -36,10 +34,8 @@ import javax.annotation.Nullable;
 public class ApplicationDetail {
   private final String name;
   private final String appVersion;
-  private final String artifactVersion;
   private final String description;
   private final String configuration;
-  private final List<StreamDetail> streams;
   private final List<DatasetDetail> datasets;
   private final List<ProgramRecord> programs;
   private final List<PluginDetail> plugins;
@@ -48,35 +44,9 @@ public class ApplicationDetail {
   private final String ownerPrincipal;
 
   public ApplicationDetail(String name,
-                           String description,
-                           String configuration,
-                           List<StreamDetail> streams,
-                           List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs,
-                           List<PluginDetail> plugins,
-                           ArtifactSummary artifact) {
-    this(name, ApplicationId.DEFAULT_VERSION, description, configuration, streams, datasets, programs,
-         plugins, artifact, null);
-  }
-
-  public ApplicationDetail(String name,
-                           String description,
-                           String configuration,
-                           List<StreamDetail> streams,
-                           List<DatasetDetail> datasets,
-                           List<ProgramRecord> programs,
-                           List<PluginDetail> plugins,
-                           ArtifactSummary artifact,
-                           @Nullable String ownerPrincipal) {
-    this(name, ApplicationId.DEFAULT_VERSION, description, configuration, streams, datasets, programs,
-         plugins, artifact, ownerPrincipal);
-  }
-
-  public ApplicationDetail(String name,
                            String appVersion,
                            String description,
                            String configuration,
-                           List<StreamDetail> streams,
                            List<DatasetDetail> datasets,
                            List<ProgramRecord> programs,
                            List<PluginDetail> plugins,
@@ -84,10 +54,8 @@ public class ApplicationDetail {
                            @Nullable String ownerPrincipal) {
     this.name = name;
     this.appVersion = appVersion;
-    this.artifactVersion = artifact.getVersion();
     this.description = description;
     this.configuration = configuration;
-    this.streams = streams;
     this.datasets = datasets;
     this.programs = programs;
     this.plugins = plugins;
@@ -108,10 +76,6 @@ public class ApplicationDetail {
 
   public String getConfiguration() {
     return configuration;
-  }
-
-  public List<StreamDetail> getStreams() {
-    return streams;
   }
 
   public List<DatasetDetail> getDatasets() {
@@ -159,11 +123,6 @@ public class ApplicationDetail {
                                      programSpec.getName(), programSpec.getDescription()));
     }
 
-    List<StreamDetail> streams = new ArrayList<>();
-    for (StreamSpecification streamSpec : spec.getStreams().values()) {
-      streams.add(new StreamDetail(streamSpec.getName()));
-    }
-
     List<DatasetDetail> datasets = new ArrayList<>();
     for (DatasetCreationSpec datasetSpec : spec.getDatasets().values()) {
       datasets.add(new DatasetDetail(datasetSpec.getInstanceName(), datasetSpec.getTypeName()));
@@ -181,6 +140,6 @@ public class ApplicationDetail {
     ArtifactSummary summary = spec.getArtifactId() == null ?
       new ArtifactSummary(spec.getName(), null) : ArtifactSummary.from(spec.getArtifactId());
     return new ApplicationDetail(spec.getName(), spec.getAppVersion(), spec.getDescription(), spec.getConfiguration(),
-                                 streams, datasets, programs, plugins, summary, ownerPrincipal);
+                                 datasets, programs, plugins, summary, ownerPrincipal);
   }
 }

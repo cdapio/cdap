@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.api;
 
 import co.cask.cdap.api.DatasetConfigurer;
-import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -30,18 +28,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation of {@link DatasetConfigurer} for adding datasets and streams in Configurers.
+ * Implementation of {@link DatasetConfigurer} for adding datasets in Configurers.
  */
 // TODO: Move this class to cdap-app-fabric once CDAP_2943 is fixed
 public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
-  private final Map<String, StreamSpecification> streams = new HashMap<>();
   private final Map<String, DatasetCreationSpec> datasetSpecs = new HashMap<>();
   private final Map<String, String> datasetModules = new HashMap<>();
-
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
-  }
 
   public Map<String, DatasetCreationSpec> getDatasetSpecs() {
     return datasetSpecs;
@@ -49,13 +42,6 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
 
   public Map<String, String> getDatasetModules() {
     return datasetModules;
-  }
-
-  public void addStreams(Map<String, StreamSpecification> streams) {
-    Set<String> duplicateStreams = findDuplicates(streams.keySet(), this.streams.keySet());
-    checkArgument(duplicateStreams.isEmpty(),
-                  "Streams %s have been added already. Remove the duplicates.", duplicateStreams);
-    this.streams.putAll(streams);
   }
 
   public void addDatasetSpecs(Map<String, DatasetCreationSpec> datasetSpecs) {
@@ -81,25 +67,6 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     Set<String> duplicates = new HashSet<>(setOne);
     duplicates.retainAll(setTwo);
     return duplicates;
-  }
-
-  @Override
-  public void addStream(Stream stream) {
-    checkArgument(stream != null, "Stream cannot be null.");
-    StreamSpecification spec = stream.configure();
-
-    StreamSpecification existingSpec = streams.get(spec.getName());
-    if (existingSpec != null && !existingSpec.equals(spec)) {
-      throw new IllegalArgumentException(String.format("Stream '%s' was added multiple times with different specs. " +
-        "Please resolve the conflict so that there is only one spec for the stream.", spec.getName()));
-    }
-    streams.put(spec.getName(), spec);
-  }
-
-  @Override
-  public void addStream(String streamName) {
-    checkArgument(streamName != null && !streamName.isEmpty(), "Stream Name cannot be null or empty");
-    addStream(new Stream(streamName));
   }
 
   @Override

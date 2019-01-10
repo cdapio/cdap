@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.lineage;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
@@ -40,15 +39,6 @@ public class CollapsedRelation {
   public CollapsedRelation(DatasetId dataset, ProgramId program, Set<AccessType> access, Set<RunId> runs,
                            Set<NamespacedEntityId> components) {
     this.data = dataset;
-    this.program = program;
-    this.access = ImmutableSet.copyOf(access);
-    this.runs = ImmutableSet.copyOf(runs);
-    this.components = ImmutableSet.copyOf(components);
-  }
-
-  public CollapsedRelation(StreamId stream, ProgramId program, Set<AccessType> access, Set<RunId> runs,
-                           Set<NamespacedEntityId> components) {
-    this.data = stream;
     this.program = program;
     this.access = ImmutableSet.copyOf(access);
     this.runs = ImmutableSet.copyOf(runs);

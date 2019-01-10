@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.id.DatasetId;
@@ -103,9 +102,6 @@ class ConversionHelpers {
       // TODO: (CDAP-3097) handle system datasets specially within a namespace instead of filtering them out
       // by the handler. This filter is only in the list endpoint because the other endpoints are used by
       // HBaseQueueAdmin through DatasetFramework.
-      if (QueueConstants.STATE_STORE_NAME.equals(spec.getName())) {
-        continue;
-      }
       spec = DatasetsUtil.fixOriginalProperties(spec);
       datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getDescription(),
                                                            spec.getOriginalProperties()));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,7 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
-import co.cask.cdap.internal.app.namespace.DistributedNamespaceResourceDeleter;
-import co.cask.cdap.internal.app.namespace.LocalNamespaceResourceDeleter;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceResourceDeleter;
 import co.cask.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -37,7 +36,7 @@ public class NamespaceAdminModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(NamespaceResourceDeleter.class).to(LocalNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
         bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
         bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
         bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
@@ -53,7 +52,7 @@ public class NamespaceAdminModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(NamespaceResourceDeleter.class).to(LocalNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
         bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
         bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
         bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);
@@ -69,7 +68,7 @@ public class NamespaceAdminModule extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(NamespaceResourceDeleter.class).to(DistributedNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
+        bind(NamespaceResourceDeleter.class).to(DefaultNamespaceResourceDeleter.class).in(Scopes.SINGLETON);
         bind(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
         bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class);
         bind(NamespaceQueryAdmin.class).to(DefaultNamespaceAdmin.class);

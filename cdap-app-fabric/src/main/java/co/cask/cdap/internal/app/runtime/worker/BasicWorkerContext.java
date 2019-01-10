@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,18 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.worker;
 
-import co.cask.cdap.api.data.stream.StreamBatchWriter;
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -44,10 +40,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -58,7 +50,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
   private final WorkerSpecification specification;
   private final int instanceId;
   private final LoggingContext loggingContext;
-  private final StreamWriter streamWriter;
   private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
@@ -67,7 +58,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      DatasetFramework datasetFramework,
                      TransactionSystemClient transactionSystemClient,
                      DiscoveryServiceClient discoveryServiceClient,
-                     StreamWriterFactory streamWriterFactory,
                      @Nullable PluginInstantiator pluginInstantiator,
                      SecureStore secureStore,
                      SecureStoreManager secureStoreManager,
@@ -84,10 +74,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.loggingContext = createLoggingContext(Id.Program.fromEntityId(program.getId()), getRunId());
-    this.streamWriter = streamWriterFactory.create(new Id.Run(Id.Program.fromEntityId(program.getId()),
-                                                              getRunId().getId()),
-                                                   getOwners(),
-                                                   retryStrategy);
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
@@ -118,33 +104,4 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.instanceCount = instanceCount;
   }
 
-  @Override
-  public void write(String stream, String data) throws IOException {
-    streamWriter.write(stream, data);
-  }
-
-  @Override
-  public void write(String stream, String data, Map<String, String> headers) throws IOException {
-    streamWriter.write(stream, data, headers);
-  }
-
-  @Override
-  public void write(String stream, ByteBuffer data) throws IOException {
-    streamWriter.write(stream, data);
-  }
-
-  @Override
-  public void write(String stream, StreamEventData data) throws IOException {
-    streamWriter.write(stream, data);
-  }
-
-  @Override
-  public void writeFile(String stream, File file, String contentType) throws IOException {
-    streamWriter.writeFile(stream, file, contentType);
-  }
-
-  @Override
-  public StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException {
-    return streamWriter.createBatchWriter(stream, contentType);
-  }
 }

@@ -23,11 +23,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.registry.UsageRegistry;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
-import co.cask.cdap.internal.app.deploy.pipeline.CreateStreamsStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
@@ -68,7 +66,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final CConfiguration configuration;
   private final Store store;
   private final OwnerAdmin ownerAdmin;
-  private final StreamAdmin streamAdmin;
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
@@ -86,7 +83,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           Store store, OwnerAdmin ownerAdmin,
                           DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                          StreamAdmin streamAdmin,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                           MetadataPublisher metadataPublisher,
@@ -100,7 +96,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.programTerminator = programTerminator;
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
-    this.streamAdmin = streamAdmin;
     this.metricStore = metricStore;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
@@ -121,7 +116,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                                    ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
                                                      authenticationContext));
-    pipeline.addLast(new CreateStreamsStage(streamAdmin, ownerAdmin, authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
                                                     metricStore, metadataPublisher, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,7 +46,6 @@ import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
@@ -67,8 +66,6 @@ import co.cask.cdap.master.startup.ServiceResourceKeys;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -156,8 +153,6 @@ import javax.annotation.Nullable;
 
 /**
  * Driver class for starting all master services.
- * AppFabricHttpService
- * TwillRunnables: MetricsProcessor, MetricsHttp, LogSaver, TransactionService, StreamHandler.
  */
 public class MasterServiceMain extends DaemonMain {
   private static final Logger LOG = LoggerFactory.getLogger(MasterServiceMain.class);
@@ -565,9 +560,6 @@ public class MasterServiceMain extends DaemonMain {
       new MetricsStoreModule(),
       new MessagingClientModule(),
       new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getDistributedModules(),
-      new NotificationServiceRuntimeModule().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuditModule().getDistributedModules(),
       new AuthorizationModule(),

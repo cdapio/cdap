@@ -31,6 +31,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.security.impersonation.Impersonator;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +44,8 @@ import java.util.concurrent.Callable;
 /**
  * Abstract class for deleting namespace components
  */
-public abstract class AbstractNamespaceResourceDeleter implements NamespaceResourceDeleter {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractNamespaceResourceDeleter.class);
+public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultNamespaceResourceDeleter.class);
 
   private final Impersonator impersonator;
   private final Store store;
@@ -58,14 +59,14 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
   private final MessagingService messagingService;
   private final ProfileService profileService;
 
-
-  AbstractNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
-                                   DashboardStore dashboardStore, DatasetFramework dsFramework,
-                                   MetricStore metricStore,
-                                   ApplicationLifecycleService applicationLifecycleService,
-                                   ArtifactRepository artifactRepository,
-                                   StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                                   MessagingService messagingService, ProfileService profileService) {
+  @Inject
+  DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
+                                  DashboardStore dashboardStore, DatasetFramework dsFramework,
+                                  MetricStore metricStore,
+                                  ApplicationLifecycleService applicationLifecycleService,
+                                  ArtifactRepository artifactRepository,
+                                  StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
+                                  MessagingService messagingService, ProfileService profileService) {
     this.impersonator = impersonator;
     this.store = store;
     this.preferencesService = preferencesService;
@@ -78,8 +79,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     this.messagingService = messagingService;
     this.profileService = profileService;
   }
-
-  protected abstract void deleteStreams(NamespaceId namespaceId) throws Exception;
 
   @Override
   public void deleteResources(NamespaceMeta namespaceMeta) throws Exception {
@@ -94,9 +93,6 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     // Delete datasets and modules
     dsFramework.deleteAllInstances(namespaceId);
     dsFramework.deleteAllModules(namespaceId);
-
-    // Delete all the streams in namespace
-    deleteStreams(namespaceId);
 
     // Delete all meta data
     store.removeAll(namespaceId);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 
 import javax.annotation.Nullable;
 
@@ -48,27 +47,5 @@ public interface LineageWriter {
    * @param component program component such as flowlet id, etc.
    */
   void addAccess(ProgramRunId run, DatasetId datasetInstance,
-                 AccessType accessType, @Nullable NamespacedEntityId component);
-
-  /**
-   * Add a program-stream access.
-   *
-   * @param run program run information
-   * @param stream stream accessed by the program
-   * @param accessType access type
-   */
-  default void addAccess(ProgramRunId run, StreamId stream, AccessType accessType) {
-    addAccess(run, stream, accessType, null);
-  }
-
-  /**
-   * Add a program-stream access.
-   *
-   * @param run program run information
-   * @param stream stream accessed by the program
-   * @param accessType access type
-   * @param component program component such as flowlet id, etc.
-   */
-  void addAccess(ProgramRunId run, StreamId stream,
                  AccessType accessType, @Nullable NamespacedEntityId component);
 }

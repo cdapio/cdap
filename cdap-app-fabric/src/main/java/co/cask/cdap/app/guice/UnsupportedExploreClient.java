@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -28,7 +27,6 @@ import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.IOException;
@@ -69,16 +67,6 @@ final class UnsupportedExploreClient implements ExploreClient {
 
   @Override
   public ListenableFuture<Void> disableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec) {
-    throw new UnsupportedOperationException("Explore is not supported. This method should not be called.");
-  }
-
-  @Override
-  public ListenableFuture<Void> enableExploreStream(StreamId stream, String tableName, FormatSpecification format) {
-    throw new UnsupportedOperationException("Explore is not supported. This method should not be called.");
-  }
-
-  @Override
-  public ListenableFuture<Void> disableExploreStream(StreamId stream, String tableName) {
     throw new UnsupportedOperationException("Explore is not supported. This method should not be called.");
   }
 

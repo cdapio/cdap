@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,35 +17,14 @@
 package co.cask.cdap.api;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 
 /**
- * Provides the ability to add stream, datasets.
+ * Provides the ability to add datasets.
  */
 public interface DatasetConfigurer {
-
-  /**
-   * Adds a {@link Stream}.
-   *
-   * @param stream {@link Stream}
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  void addStream(Stream stream);
-
-  /**
-   * Adds a {@link Stream} given the name of the stream.
-   *
-   * @param streamName name of the stream
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  void addStream(String streamName);
 
   /**
    * Adds a {@link DatasetModule} to be deployed automatically (if absent in the CDAP namespace) during application

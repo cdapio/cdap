@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,9 @@
  */
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
@@ -31,28 +28,16 @@ import com.google.inject.util.Modules;
  */
 public final class ProgramRunnerRuntimeModule extends RuntimeModule {
 
-  private final Class<? extends StreamWriter> streamWriterClass;
-
-  public ProgramRunnerRuntimeModule() {
-    this(DefaultStreamWriter.class);
-  }
-
-  @VisibleForTesting
-  public ProgramRunnerRuntimeModule(Class<? extends StreamWriter> streamWriterClass) {
-    this.streamWriterClass = streamWriterClass;
-  }
-
   @Override
   public Module getInMemoryModules() {
     // No remote execution module in unit-test
-    return Modules.combine(new InMemoryProgramRunnerModule(streamWriterClass),
+    return Modules.combine(new InMemoryProgramRunnerModule(),
                            new ProgramStateWriterModule());
   }
 
   @Override
   public Module getStandaloneModules() {
-    // In standalone, we always use the DefaultStreamWriter
-    return Modules.combine(new InMemoryProgramRunnerModule(DefaultStreamWriter.class),
+    return Modules.combine(new InMemoryProgramRunnerModule(),
                            new RemoteExecutionProgramRunnerModule(),
                            new ProgramStateWriterModule());
   }

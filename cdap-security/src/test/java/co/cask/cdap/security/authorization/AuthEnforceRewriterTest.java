@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,10 @@ import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.security.AuthEnforceRewriter;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
 import co.cask.cdap.internal.asm.ClassDefinition;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationTestContext;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -72,13 +72,15 @@ public class AuthEnforceRewriterTest {
 
     testRewrite(getMethod(cls, "testNameAnnotationPref", NamespaceId.class, String.class), rewrittenObject,
                 NamespaceId.DEFAULT, ExceptionAuthorizationEnforcer.ExpectedException.class,
-                NamespaceId.DEFAULT, "stream");
+                NamespaceId.DEFAULT, "dataset");
 
     testRewrite(getMethod(cls, "testMultipleParts", String.class, String.class), rewrittenObject,
-                new StreamId("ns", "stream"), ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "stream");
+                new DatasetId("ns", "dataset"),
+                ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "dataset");
 
     testRewrite(getMethod(cls, "testQueryPathParamAnnotations", String.class, String.class), rewrittenObject,
-                new StreamId("ns", "stream"), ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "stream");
+                new DatasetId("ns", "dataset"),
+                ExceptionAuthorizationEnforcer.ExpectedException.class, "ns", "dataset");
 
     testRewrite(getMethod(cls, "testMultipleAnnotationsPref", NamespaceId.class), rewrittenObject,
                 ExceptionAuthorizationEnforcer.ExpectedException.class, NamespaceId.DEFAULT);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -26,7 +25,6 @@ import co.cask.cdap.explore.service.MetaDataInfo;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
@@ -102,27 +100,6 @@ public interface ExploreClient extends Closeable {
    *         the success of the disable operation
    */
   ListenableFuture<Void> disableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec);
-
-  /**
-   * Enables ad-hoc exploration of the given stream.
-   *
-   * @param stream stream id
-   * @param tableName name of the Hive table to create
-   * @param format format of the stream events
-   * @return a {@code Future} object that can either successfully complete, or enters a failed state, depending on
-   *         the success of the enable operation
-   */
-  ListenableFuture<Void> enableExploreStream(StreamId stream, String tableName, FormatSpecification format);
-
-  /**
-   * Disable ad-hoc exploration of the given stream.
-   *
-   * @param stream stream id
-   * @param tableName the Hive table name to delete
-   * @return a {@code Future} object that can either successfully complete, or enters a failed state, depending on
-   *         the success of the enable operation
-   */
-  ListenableFuture<Void> disableExploreStream(StreamId stream, String tableName);
 
   /**
    * Add a partition to a dataset's table.

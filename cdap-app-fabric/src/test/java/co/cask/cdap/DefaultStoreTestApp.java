@@ -17,7 +17,6 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 
 /**
@@ -29,7 +28,6 @@ public class DefaultStoreTestApp extends AbstractApplication {
   public void configure() {
     setName("App");
     setDescription("Application which has everything");
-    addStream(new Stream("stream"));
     createDataset("kvt", KeyValueTable.class);
     addMapReduce(new AllProgramsApp.NoOpMR());
     addService(new AllProgramsApp.NoOpService());

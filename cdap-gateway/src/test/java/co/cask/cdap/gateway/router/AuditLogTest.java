@@ -47,7 +47,9 @@ import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -71,6 +73,9 @@ import javax.ws.rs.QueryParam;
  * Unit-test for audit log.
  */
 public class AuditLogTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static NettyRouter router;
   private static NettyHttpService httpService;

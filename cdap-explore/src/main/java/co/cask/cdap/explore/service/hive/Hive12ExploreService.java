@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,14 +21,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.HiveUtilities;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -74,13 +71,10 @@ public class Hive12ExploreService extends BaseHiveExploreService {
                               CConfiguration cConf, Configuration hConf,
                               @Named(Constants.Explore.PREVIEWS_DIR_NAME) File previewsDir,
                               @Named(Constants.Explore.CREDENTIALS_DIR_NAME) File credentialsDir,
-                              StreamAdmin streamAdmin, NamespaceQueryAdmin namespaceQueryAdmin,
-                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                              AuthorizationEnforcer authorizationEnforcer,
-                              AuthenticationContext authenticationContext) {
-    super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, streamAdmin, namespaceQueryAdmin,
-          datasetInstantiatorFactory, authorizationEnforcer,
-          authenticationContext);
+                              NamespaceQueryAdmin namespaceQueryAdmin,
+                              SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+    super(txClient, datasetFramework, cConf, hConf, previewsDir, credentialsDir, namespaceQueryAdmin,
+          datasetInstantiatorFactory);
   }
 
   @Override

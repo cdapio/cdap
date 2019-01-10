@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,8 +33,6 @@ public class NoOpSparkProgram implements JavaSparkMain {
   @Override
   public void run(JavaSparkExecutionContext sec) throws Exception {
     JavaSparkContext jsc = new JavaSparkContext();
-    JavaPairRDD<Long, String> streamRDD = sec.fromStream(AllProgramsApp.STREAM_NAME, String.class);
-    LOG.info("Stream events: {}", streamRDD.count());
 
     JavaPairRDD<byte[], byte[]> datasetRDD = sec.fromDataset(AllProgramsApp.DATASET_NAME);
     LOG.info("Dataset pairs: {}", datasetRDD.count());

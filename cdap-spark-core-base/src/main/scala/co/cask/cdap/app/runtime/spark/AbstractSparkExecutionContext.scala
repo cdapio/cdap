@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,51 +16,62 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.io.{Closeable, File, IOException}
-import java.net.{URI, URL}
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
-import java.util.concurrent.{CountDownLatch, TimeUnit}
-import java.{lang, util}
+import java.io.Closeable
+import java.io.File
+import java.io.IOException
+import java.net.URI
+import java.net.URL
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.lang
+import java.util
 
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
-import co.cask.cdap.api.data.batch.{BatchWritable, DatasetOutputCommitter, OutputFormatProvider, Split}
-import co.cask.cdap.api.data.format.FormatSpecification
+import co.cask.cdap.api.data.batch.BatchWritable
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter
+import co.cask.cdap.api.data.batch.OutputFormatProvider
+import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
-import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
+import co.cask.cdap.api.metadata.Metadata
+import co.cask.cdap.api.metadata.MetadataEntity
+import co.cask.cdap.api.metadata.MetadataScope
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
-import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
+import co.cask.cdap.api.spark.JavaSparkExecutionContext
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkSpecification
+import co.cask.cdap.api.workflow.WorkflowInfo
+import co.cask.cdap.api.workflow.WorkflowToken
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
 import co.cask.cdap.app.runtime.spark.data.DatasetRDD
-import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, SparkCompilerCleanupManager, URLAdder}
+import co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
+import co.cask.cdap.app.runtime.spark.dynamic.SparkClassFileHandler
+import co.cask.cdap.app.runtime.spark.dynamic.SparkCompilerCleanupManager
+import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
-import co.cask.cdap.app.runtime.spark.service.{DefaultSparkHttpServiceContext, SparkHttpServiceServer}
-import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
-import co.cask.cdap.common.conf.{ConfigurationUtil, Constants}
-import co.cask.cdap.common.id.Id
+import co.cask.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
+import co.cask.cdap.app.runtime.spark.service.SparkHttpServiceServer
+import co.cask.cdap.common.conf.ConfigurationUtil
+import co.cask.cdap.common.conf.Constants
 import co.cask.cdap.common.utils.DirUtils
 import co.cask.cdap.data.LineageDatasetContext
-import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
-import co.cask.cdap.proto.id.StreamId
-import co.cask.cdap.proto.security.Action
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.MRJobConfig
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
-import org.apache.spark.{SparkContext, TaskContext}
+import org.apache.spark.SparkContext
+import org.apache.spark.TaskContext
 import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
@@ -281,69 +292,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
     new DatasetRDD[K, V](sc, createDatasetCompute(), runtimeContext.getConfiguration, namespace,
                          datasetName, arguments, splits, getDriveHttpServiceBaseURI(sc))
-  }
-
-  override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
-                                      (implicit decoder: StreamEvent => T): RDD[T] = {
-    val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, getNamespace, streamName, startTime, endTime, None)
-
-    // Wrap the StreamEvent with a SerializableStreamEvent
-    // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
-    rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
-  }
-
-  override def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String, startTime: Long,
-                                       endTime: Long) (implicit decoder: StreamEvent => T): RDD[T] = {
-    val rdd: RDD[(Long, StreamEvent)] = fromStream(sc, namespace, streamName, startTime, endTime, None)
-
-    // Wrap the StreamEvent with a SerializableStreamEvent
-    // Don't use rdd.values() as it brings in implicit object from SparkContext, which is not available in Spark 1.2
-    rdd.map(t => new SerializableStreamEvent(t._2)).map(decoder)
-  }
-
-  override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, formatSpec: FormatSpecification,
-                                       startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])] = {
-    fromStream(sc, getNamespace, streamName, startTime, endTime, Some(formatSpec))
-  }
-
-  override def fromStream[T: ClassTag](sc: SparkContext, namespace: String,
-                                       streamName: String,
-                                       formatSpec: FormatSpecification,
-                                       startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])] = {
-    fromStream(sc, namespace, streamName, startTime, endTime, Some(formatSpec))
-  }
-
-  /**
-    * Creates a [[org.apache.spark.rdd.RDD]] by reading from the given stream and time range.
-    *
-    * @param sc the [[org.apache.spark.SparkContext]] to use
-    * @param namespace namespace of the stream
-    * @param streamName name of the stream
-    * @param startTime  the starting time of the stream to be read in milliseconds (inclusive);
-    *                   passing in `0` means start reading from the first event available in the stream.
-    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-    *                passing in `Long#MAX_VALUE` means read up to latest event available in the stream.
-    * @param formatSpec if provided, it describes the format in the stream and will be used to decode stream events
-    *                   to the given value type `T`
-    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
-    */
-  private def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String,
-                                      startTime: Long, endTime: Long,
-                                      formatSpec: Option[FormatSpecification]): RDD[(Long, T)] = {
-    val streamId = new StreamId(namespace, streamName)
-
-    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-    val configuration = configureStreamInput(new Configuration(runtimeContext.getConfiguration),
-      streamId, startTime, endTime, formatSpec)
-
-    val valueClass = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
-    val rdd = sc.newAPIHadoopRDD(configuration, classOf[SparkStreamInputFormat[LongWritable, T]],
-      classOf[LongWritable], valueClass)
-    recordStreamUsage(streamId)
-    // check if user has READ permission on the stream to make sure we fail early. this is done after we record stream
-    // usage since we want to record the intent
-    authorizationEnforcer.enforce(streamId, authenticationContext.getPrincipal, Action.READ)
-    rdd.map(t => (t._1.get(), t._2))
   }
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
@@ -572,41 +520,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       }
     })
 
-  }
-
-  private def configureStreamInput(configuration: Configuration, streamId: StreamId, startTime: Long,
-                                   endTime: Long, formatSpec: Option[FormatSpecification]): Configuration = {
-    val streamConfig = runtimeContext.getStreamAdmin.getConfig(streamId)
-    val streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation,
-                                                          StreamUtils.getGeneration(streamConfig))
-    AbstractStreamInputFormat.setStreamId(configuration, streamId)
-    AbstractStreamInputFormat.setTTL(configuration, streamConfig.getTTL)
-    AbstractStreamInputFormat.setStreamPath(configuration, streamPath.toURI)
-    AbstractStreamInputFormat.setTimeRange(configuration, startTime, endTime)
-    // Either use the identity decoder or use the format spec to decode
-    formatSpec.fold(
-      AbstractStreamInputFormat.inferDecoderClass(configuration, classOf[StreamEvent])
-    )(
-      spec => AbstractStreamInputFormat.setBodyFormatSpecification(configuration, spec)
-    )
-    configuration
-  }
-
-  private def recordStreamUsage(streamId: StreamId): Unit = {
-    val oldStreamId = Id.Stream.fromEntityId(streamId)
-
-    // Register for stream usage for the Spark program
-    val oldProgramId = runtimeContext.getProgram.getId
-    val owners = List(oldProgramId)
-    try {
-      runtimeContext.getStreamAdmin.register(owners, oldStreamId.toEntityId)
-      runtimeContext.getStreamAdmin.addAccess(oldProgramId.run(getRunId.getId), oldStreamId.toEntityId,
-        AccessType.READ)
-    }
-    catch {
-      case e: Exception =>
-        LOG.warn("Failed to register usage of {} -> {}", streamId, owners, e)
-    }
   }
 
   /**

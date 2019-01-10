@@ -29,7 +29,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
@@ -168,29 +167,23 @@ public abstract class RemotePrivilegesTestBase {
     DatasetId ds1 = NS.dataset("ds1");
     DatasetId ds2 = NS.dataset("ds2");
 
-    StreamId stream = NS.stream("stream");
-    StreamId stream1 = NS.stream("stream1");
-    StreamId stream2 = NS.stream("stream2");
-
     // Grant privileges on non-numbered entities to ALICE
     privilegesManager.grant(Authorizable.fromEntityId(PROGRAM), ALICE, Collections.singleton(Action.EXECUTE));
     privilegesManager.grant(Authorizable.fromEntityId(ds), ALICE, EnumSet.of(Action.READ, Action.WRITE));
-    privilegesManager.grant(Authorizable.fromEntityId(stream), ALICE, EnumSet.of(Action.READ));
 
     // Grant privileges on entities ending with 2 to BOB
     privilegesManager.grant(Authorizable.fromEntityId(program2), BOB, Collections.singleton(Action.ADMIN));
     privilegesManager.grant(Authorizable.fromEntityId(ds2), BOB, EnumSet.of(Action.READ, Action.WRITE));
-    privilegesManager.grant(Authorizable.fromEntityId(stream2), BOB, EnumSet.allOf(Action.class));
 
     Set<? extends EntityId> allEntities = ImmutableSet.of(NS,
-                                                          APP, PROGRAM, ds, stream,
-                                                          app1, program1, ds1, stream1,
-                                                          app2, program2, ds2, stream2);
+                                                          APP, PROGRAM, ds,
+                                                          app1, program1, ds1,
+                                                          app2, program2, ds2);
 
-    Assert.assertEquals(ImmutableSet.of(NS, APP, PROGRAM, ds, stream),
+    Assert.assertEquals(ImmutableSet.of(NS, APP, PROGRAM, ds),
                         authorizationEnforcer.isVisible(allEntities, ALICE));
 
-    Assert.assertEquals(ImmutableSet.of(NS, app2, program2, ds2, stream2),
+    Assert.assertEquals(ImmutableSet.of(NS, app2, program2, ds2),
                         authorizationEnforcer.isVisible(allEntities, BOB));
 
     Assert.assertEquals(ImmutableSet.of(),

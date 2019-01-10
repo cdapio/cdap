@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,11 +27,9 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.bootstrap.BootstrapService;
 import co.cask.cdap.internal.provision.ProvisioningService;
-import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
@@ -70,10 +68,8 @@ public class AppFabricServer extends AbstractIdleService {
   private final InetAddress hostname;
   private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final NotificationService notificationService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
-  private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final PluginService pluginService;
@@ -96,7 +92,6 @@ public class AppFabricServer extends AbstractIdleService {
   @Inject
   public AppFabricServer(CConfiguration cConf, SConfiguration sConf,
                          DiscoveryService discoveryService,
-                         NotificationService notificationService,
                          @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
@@ -104,7 +99,6 @@ public class AppFabricServer extends AbstractIdleService {
                          RunRecordCorrectorService runRecordCorrectorService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
-                         StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          PluginService pluginService,
@@ -121,11 +115,9 @@ public class AppFabricServer extends AbstractIdleService {
     this.sConf = sConf;
     this.metricsCollectionService = metricsCollectionService;
     this.programRuntimeService = programRuntimeService;
-    this.notificationService = notificationService;
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.streamCoordinatorClient = streamCoordinatorClient;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.pluginService = pluginService;
@@ -147,12 +139,10 @@ public class AppFabricServer extends AbstractIdleService {
                                                                        Constants.Service.APP_FABRIC_HTTP));
     Futures.allAsList(
       ImmutableList.of(
-        notificationService.start(),
         provisioningService.start(),
         applicationLifecycleService.start(),
         bootstrapService.start(),
         programRuntimeService.start(),
-        streamCoordinatorClient.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
         pluginService.start(),
@@ -204,7 +194,6 @@ public class AppFabricServer extends AbstractIdleService {
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
-    notificationService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();

@@ -25,7 +25,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -103,7 +102,6 @@ public final class Constants {
     public static final String METRICS = "metrics";
     public static final String LOGSAVER = "log.saver";
     public static final String GATEWAY = "gateway";
-    public static final String STREAMS = "streams";
     public static final String MASTER_SERVICES = "master.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
     public static final String DATASET_MANAGER = "dataset.service";
@@ -494,79 +492,11 @@ public final class Constants {
      * Dataset extensions.
      */
     public static final class Extensions {
-      public static final String DIR = "dataset.extensions.dir";
       public static final String MODULES = "dataset.extensions.modules";
 
       /** Over-rides for default table bindings- use with caution! **/
       public static final String DISTMODE_TABLE = "dataset.extensions.distributed.mode.table";
-      public static final String STREAM_CONSUMER_FACTORY = "stream.extension.consumer.factory";
-      public static final String DISTMODE_METRICS_TABLE = "dataset.extensions.distributed.mode.metrics.table";
-      public static final String DISTMODE_QUEUE_TABLE = "dataset.extensions.distributed.mode.queue.table";
     }
-  }
-
-  /**
-   * Stream configurations and constants.
-   */
-  public static final class Stream {
-    /* Begin CConfiguration keys */
-    public static final String BASE_DIR = "stream.base.dir";
-    public static final String TTL = "stream.event.ttl";
-    public static final String PARTITION_DURATION = "stream.partition.duration";
-    public static final String INDEX_INTERVAL = "stream.index.interval";
-    public static final String FILE_PREFIX = "stream.file.prefix";
-    public static final String INSTANCE_FILE_PREFIX = "stream.instance.file.prefix";
-    public static final String CONSUMER_TABLE_PRESPLITS = "stream.consumer.table.presplits";
-    public static final String FILE_CLEANUP_PERIOD = "stream.file.cleanup.period";
-    public static final String BATCH_BUFFER_THRESHOLD = "stream.batch.buffer.threshold";
-    public static final String NOTIFICATION_THRESHOLD = "stream.notification.threshold";
-
-    // Stream http service configurations.
-    public static final String STREAM_HANDLER = "stream.handler";
-    public static final String ADDRESS = "stream.bind.address";
-    public static final String PORT = "stream.bind.port";
-    public static final String WORKER_THREADS = "stream.worker.threads";
-    public static final String ASYNC_WORKER_THREADS = "stream.async.worker.threads";
-    public static final String ASYNC_QUEUE_SIZE = "stream.async.queue.size";
-
-    // YARN container configurations.
-    public static final String CONTAINER_VIRTUAL_CORES = "stream.container.num.cores";
-    public static final String CONTAINER_MEMORY_MB = "stream.container.memory.mb";
-    public static final String CONTAINER_INSTANCES = "stream.container.instances";
-
-    // Tell the instance id of the YARN container. Set by the StreamHandlerRunnable only, not in default.xml
-    public static final String CONTAINER_INSTANCE_ID = "stream.container.instance.id";
-    /* End CConfiguration keys */
-
-    /* Begin constants used by stream */
-
-    /** How often to check for new file when reading from stream in milliseconds. **/
-    public static final long NEW_FILE_CHECK_INTERVAL = TimeUnit.SECONDS.toMillis(10);
-    public static final int HBASE_WRITE_BUFFER_SIZE = 4 * 1024 * 1024;
-
-    public static final String URL_PREFIX = "stream://";
-    public static final String DESCRIPTION = "stream.description";
-    public static final String FORMAT_SPECIFICATION = "stream.format.specification";
-
-    /**
-     * Contains HTTP headers used by Stream handler.
-     */
-    public static final class Headers {
-      public static final String SCHEMA = "schema";
-      public static final String SCHEMA_HASH = "schema.hash";
-    }
-
-    // max instances of stream handler service
-    public static final String MAX_INSTANCES = "stream.container.instances";
-
-    public static final String SERVICE_DESCRIPTION = "Service that handles stream data ingestion.";
-    /* End constants used by stream */
-
-    // Period in seconds between two heartbeats in a stream service
-    public static final int HEARTBEAT_INTERVAL = 2;
-
-    // ZooKeeper namespace in which to keep the coordination metadata
-    public static final String STREAM_ZK_COORDINATION_NAMESPACE = String.format("/%s/coordination", Service.STREAMS);
   }
 
   /**
@@ -579,8 +509,6 @@ public final class Constants {
      */
     public static final String API_VERSION_3_TOKEN = "v3";
     public static final String API_VERSION_3 = "/" + API_VERSION_3_TOKEN;
-    public static final String STREAM_HANDLER_NAME = "stream_rest";
-    public static final String METRICS_CONTEXT = "gateway";
     public static final String API_KEY = "X-ApiKey";
   }
 
@@ -694,8 +622,6 @@ public final class Constants {
       public static final String HANDLER = "hnd";
       public static final String METHOD = "mtd";
       public static final String THREAD = "thd";
-
-      public static final String STREAM = "str";
 
       public static final String DATASET = "ds";
 
@@ -1105,14 +1031,11 @@ public final class Constants {
     public static final String TX_QUERY_KEY = "explore.hive.query.tx.id";
     public static final String TX_QUERY_CLOSED = "explore.hive.query.tx.commited";
     public static final String QUERY_ID = "explore.query.id";
-    public static final String FORMAT_SPEC = "explore.format.specification";
     public static final String CONTAINER_YARN_APP_CLASSPATH_FIRST = "explore.container.yarn.app.classpath.first";
 
     public static final String START_ON_DEMAND = "explore.start.on.demand";
     public static final String DATASET_NAME = "explore.dataset.name";
     public static final String DATASET_NAMESPACE = "explore.dataset.namespace";
-    public static final String STREAM_NAME = "explore.stream.name";
-    public static final String STREAM_NAMESPACE = "explore.stream.namespace";
     public static final String PREVIEWS_DIR_NAME = "explore.previews.dir";
     public static final String CREDENTIALS_DIR_NAME = "explore.credentials.dir";
 
@@ -1179,14 +1102,6 @@ public final class Constants {
   public static final class Notification {
     public static final String TOPIC = "notification.topic";
 
-    /**
-     * Notifications in Streams constants.
-     */
-    public static final class Stream {
-      public static final String STREAM_FEED_CATEGORY = "stream";
-      public static final String STREAM_INTERNAL_FEED_CATEGORY = "streamInternal";
-      public static final String STREAM_HEARTBEAT_FEED_NAME = "heartbeat";
-    }
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

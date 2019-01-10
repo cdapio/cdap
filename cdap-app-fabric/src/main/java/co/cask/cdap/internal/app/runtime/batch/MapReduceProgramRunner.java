@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,6 @@ import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -53,8 +52,6 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
@@ -84,7 +81,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceProgramRunner.class);
 
   private final Injector injector;
-  private final StreamAdmin streamAdmin;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final NamespacePathLocator locationFactory;
@@ -94,8 +90,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
-  private final AuthorizationEnforcer authorizationEnforcer;
-  private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
   private final MetadataReader metadataReader;
   private final FieldLineageWriter fieldLineageWriter;
@@ -105,14 +99,11 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   @Inject
   public MapReduceProgramRunner(Injector injector, CConfiguration cConf, Configuration hConf,
                                 NamespacePathLocator locationFactory,
-                                StreamAdmin streamAdmin,
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient,
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
-                                AuthorizationEnforcer authorizationEnforcer,
-                                AuthenticationContext authenticationContext,
                                 MessagingService messagingService, MetadataReader metadataReader,
                                 MetadataPublisher metadataPublisher, FieldLineageWriter fieldLineageWriter,
                                 NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -121,15 +112,12 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
-    this.streamAdmin = streamAdmin;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
-    this.authorizationEnforcer = authorizationEnforcer;
-    this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
@@ -182,7 +170,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, options, cConf, spec, workflowInfo, discoveryServiceClient,
-                                  metricsCollectionService, txSystemClient, programDatasetFramework, streamAdmin,
+                                  metricsCollectionService, txSystemClient, programDatasetFramework,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
                                   messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin);
       closeables.add(context);
@@ -205,9 +193,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                     context, program.getJarLocation(), locationFactory,
-                                                                    streamAdmin, authorizationEnforcer,
-                                                                    authenticationContext, fieldLineageWriter,
-                                                                    clusterMode);
+                                                                    fieldLineageWriter, clusterMode);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
       ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -26,7 +25,6 @@ import co.cask.cdap.explore.service.HandleNotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -40,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Explore client facade to be used by streams and datasets.
+ * Explore client facade to be used by datasets.
  */
 public class ExploreFacade {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreFacade.class);
@@ -57,52 +55,6 @@ public class ExploreFacade {
       LOG.warn("Explore functionality for datasets is disabled. All calls to enable explore will be no-ops");
     }
     this.httpTimeout = cConf.getInt(Constants.Explore.HTTP_TIMEOUT);
-  }
-
-  /**
-   * Enables ad-hoc exploration of the given stream.
-   *
-   * @param stream id of the stream.
-   * @param tableName name of the Hive table to create.
-   * @param format format of the stream events.
-   */
-  public void enableExploreStream(StreamId stream, String tableName,
-                                  FormatSpecification format) throws ExploreException, SQLException {
-    if (!exploreEnabled) {
-      return;
-    }
-
-    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreStream(stream, tableName, format);
-    handleExploreFuture(futureSuccess, "enable", "stream", stream.getStream());
-  }
-
-  /**
-   * Disables ad-hoc exploration of the given stream.
-   *
-   * @param stream id of the stream.
-   * @param tableName name of the Hive table to delete.
-   */
-  public void disableExploreStream(StreamId stream, String tableName) throws ExploreException, SQLException {
-    if (!exploreEnabled) {
-      return;
-    }
-
-    ListenableFuture<Void> futureSuccess = exploreClient.disableExploreStream(stream, tableName);
-    handleExploreFuture(futureSuccess, "disable", "stream", stream.getStream());
-  }
-
-  /**
-   * Enables ad-hoc exploration of the given {@link co.cask.cdap.api.data.batch.RecordScannable}.
-   *
-   * @param datasetInstance dataset instance id.
-   */
-  public void enableExploreDataset(DatasetId datasetInstance) throws ExploreException, SQLException {
-    if (!(exploreEnabled && isDatasetExplorable(datasetInstance))) {
-      return;
-    }
-
-    ListenableFuture<Void> futureSuccess = exploreClient.enableExploreDataset(datasetInstance);
-    handleExploreFuture(futureSuccess, "enable", "dataset", datasetInstance.getDataset());
   }
 
   /**
@@ -191,8 +143,8 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getDataset());
   }
 
-  public ListenableFuture<Void> concatenatePartition(DatasetId datasetInstance, DatasetSpecification spec,
-                                                     PartitionKey key) throws ExploreException, SQLException {
+  public ListenableFuture<Void> concatenatePartition(DatasetId datasetInstance,
+                                                     DatasetSpecification spec, PartitionKey key) {
     if (!exploreEnabled) {
       return Futures.immediateFuture(null);
     }
@@ -218,14 +170,9 @@ public class ExploreFacade {
     handleExploreFuture(futureSuccess, "remove", "namespace", namespace.getNamespace());
   }
 
-  //TODO: CDAP-4627 - Figure out a better way to identify system datasets in user namespaces
   // Same check is done in DatasetsUtil.isUserDataset method.
   private boolean isDatasetExplorable(DatasetId datasetInstance) {
-    return !NamespaceId.SYSTEM.getNamespace().equals(datasetInstance.getNamespace()) &&
-      !"system.queue.config".equals(datasetInstance.getDataset()) &&
-      !datasetInstance.getDataset().startsWith("system.sharded.queue") &&
-      !datasetInstance.getDataset().startsWith("system.queue") &&
-      !datasetInstance.getDataset().startsWith("system.stream");
+    return !NamespaceId.SYSTEM.getNamespace().equals(datasetInstance.getNamespace());
   }
 
   // wait for the enable/disable operation to finish and log and throw exceptions as appropriate if there was an error.

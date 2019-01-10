@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,9 +41,6 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.StreamService;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
@@ -70,8 +67,6 @@ import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -118,7 +113,6 @@ public class StandaloneMain {
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
   private final ServiceStore serviceStore;
-  private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
@@ -156,7 +150,6 @@ public class StandaloneMain {
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
-    streamService = injector.getInstance(StreamService.class);
     operationalStatsService = injector.getInstance(OperationalStatsService.class);
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                      Constants.AppFabric.RemoteExecution.class));
@@ -227,7 +220,6 @@ public class StandaloneMain {
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
-    streamService.startAndWait();
 
     remoteExecutionTwillRunnerService.start();
     metadataSubscriberService.startAndWait();
@@ -289,7 +281,6 @@ public class StandaloneMain {
 
       // Stop all services that requires tx service
       metadataSubscriberService.stopAndWait();
-      streamService.stopAndWait();
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
@@ -443,7 +434,6 @@ public class StandaloneMain {
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, localhost);
     cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
-    cConf.set(Constants.Stream.ADDRESS, localhost);
     cConf.set(Constants.Metrics.ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
@@ -469,13 +459,9 @@ public class StandaloneMain {
       new RouterModules().getStandaloneModules(),
       new SecurityModules().getStandaloneModules(),
       new SecureStoreModules().getStandaloneModules(),
-      new StreamServiceRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ServiceStoreModules().getStandaloneModules(),
       new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
-      new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),

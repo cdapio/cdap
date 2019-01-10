@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataWriter;
@@ -30,7 +29,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 /**
  * Context for {@link Worker}.
  */
-public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamWriter, MessagingContext,
+public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, MessagingContext,
   DatasetContext, PluginContext, Transactional, SecureStore, MetadataReader, MetadataWriter {
 
   /**

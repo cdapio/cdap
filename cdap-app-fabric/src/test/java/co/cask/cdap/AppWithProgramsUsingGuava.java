@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,6 @@ import com.google.common.base.Preconditions;
 public class AppWithProgramsUsingGuava extends AbstractApplication {
 
   public static final String NAME = "App";
-  public static final String STREAM_NAME = "stream";
   public static final String DATASET_NAME = "kvt";
 
   @Override

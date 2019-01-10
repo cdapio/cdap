@@ -106,7 +106,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
       .put(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2), EnumSet.of(Action.ADMIN))
       .put(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3), EnumSet.of(Action.ADMIN))
       .put(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME), EnumSet.of(Action.ADMIN))
-      .put(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME), EnumSet.of(Action.ADMIN))
       .build();
     setUpPrivilegesAndExpectFailedDeploy(neededPrivileges);
 

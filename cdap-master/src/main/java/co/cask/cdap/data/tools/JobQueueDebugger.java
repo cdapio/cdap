@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,6 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -62,8 +61,6 @@ import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -352,8 +349,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new ZKClientModule(),
       new ZKDiscoveryModule(),
       new DFSLocationModule(),
-      new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
       new DataFabricModules().getDistributedModules(),
@@ -362,7 +357,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
-      new NotificationServiceRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),

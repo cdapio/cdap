@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination METADATA_SERVICE = new RouteDestination(Constants.Service.METADATA_SERVICE);
   public static final RouteDestination EXPLORE_HTTP_USER_SERVICE = new RouteDestination(
     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
-  public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
   public static final RouteDestination TRANSACTION = new RouteDestination(Constants.Service.TRANSACTION_HTTP);
   public static final RouteDestination LOG_SAVER = new RouteDestination(Constants.Service.LOGSAVER);
@@ -118,7 +117,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       endsWith(uriParts, "metadata", "tags") || endsWith(uriParts, "metadata", "tags", null) ||
       endsWith(uriParts, "metadata", "search") ||
       beginsWith(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
-      beginsWith(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||
       beginsWith(uriParts, "v3", "metadata", "search"))) {
       return METADATA_SERVICE;
     } else if (beginsWith(uriParts, "v3", "security", "authorization") ||
@@ -127,8 +125,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "security", "store", "namespaces", null)) {
       return APP_FABRIC_HTTP;
-    } else if ((beginsWith(uriParts, "v3", "namespaces", null, "streams", null, "programs")
-      || beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
+    } else if (beginsWith(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs") &&
       requestMethod.equals(AllowedMethod.GET)) {
       return APP_FABRIC_HTTP;
     } else if (beginsWith(uriParts, "v3", "namespaces", null, "profiles") ||
@@ -140,8 +137,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return PREVIEW_HTTP;
     } else if (beginsWith(uriParts, "v3", "system", "serviceproviders")) {
       return APP_FABRIC_HTTP;
-    } else if ((uriParts.length >= 4) && uriParts[1].equals("namespaces") && uriParts[3].equals("streams")) {
-      return STREAMS_SERVICE;
     } else if ((uriParts.length >= 8 && uriParts[7].equals("logs")) ||
       (uriParts.length >= 10 && uriParts[9].equals("logs")) ||
       (uriParts.length >= 6 && uriParts[5].equals("logs"))) {
@@ -157,9 +152,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}
       return EXPLORE_HTTP_USER_SERVICE;
     } else if (uriParts.length >= 6 && uriParts[3].equals("data") && uriParts[4].equals("explore") &&
-      (uriParts[5].equals("queries") || uriParts[5].equals("streams") || uriParts[5].equals("datasets")
+      (uriParts[5].equals("queries") || uriParts[5].equals("datasets")
         || uriParts[5].equals("tables") || uriParts[5].equals("jdbc"))) {
-      // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/streams/{stream}/enable
+      // namespaced explore operations. For example, /v3/namespaces/{namespace-id}/data/explore/datasets/{ds}/enable
       return EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
       return EXPLORE_HTTP_USER_SERVICE;
@@ -171,7 +166,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.METRICS_PROCESSOR: return METRICS_PROCESSOR;
         case Constants.Service.METRICS: return METRICS;
         case Constants.Service.APP_FABRIC_HTTP: return APP_FABRIC_HTTP;
-        case Constants.Service.STREAMS: return STREAMS_SERVICE;
         case Constants.Service.DATASET_EXECUTOR: return DATASET_EXECUTOR;
         case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
         case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;

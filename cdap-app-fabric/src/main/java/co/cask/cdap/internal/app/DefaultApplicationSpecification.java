@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -46,7 +45,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final String description;
   private final String configuration;
   private final ArtifactId artifactId;
-  private final Map<String, StreamSpecification> streams;
   private final Map<String, String> datasetModules;
   private final Map<String, DatasetCreationSpec> datasetInstances;
   private final Map<String, MapReduceSpecification> mapReduces;
@@ -59,7 +57,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
 
   public DefaultApplicationSpecification(String name, String description, String configuration,
                                          ArtifactId artifactId,
-                                         Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
                                          Map<String, MapReduceSpecification> mapReduces,
@@ -69,14 +66,13 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
                                          Map<String, Plugin> plugins) {
-    this(name, ApplicationId.DEFAULT_VERSION, description, configuration, artifactId, streams, datasetModules,
+    this(name, ApplicationId.DEFAULT_VERSION, description, configuration, artifactId, datasetModules,
          datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
          plugins);
   }
 
   public DefaultApplicationSpecification(String name, String appVersion, String description, String configuration,
                                          ArtifactId artifactId,
-                                         Map<String, StreamSpecification> streams,
                                          Map<String, String> datasetModules,
                                          Map<String, DatasetCreationSpec> datasetInstances,
                                          Map<String, MapReduceSpecification> mapReduces,
@@ -91,7 +87,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.description = description;
     this.configuration = configuration;
     this.artifactId = artifactId;
-    this.streams = ImmutableMap.copyOf(streams);
     this.datasetModules = ImmutableMap.copyOf(datasetModules);
     this.datasetInstances = ImmutableMap.copyOf(datasetInstances);
     this.mapReduces = ImmutableMap.copyOf(mapReduces);
@@ -127,11 +122,6 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   @Override
   public ArtifactId getArtifactId() {
     return artifactId;
-  }
-
-  @Override
-  public Map<String, StreamSpecification> getStreams() {
-    return streams;
   }
 
   @Override

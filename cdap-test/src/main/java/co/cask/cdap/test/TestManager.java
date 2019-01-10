@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginClass;
-import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -35,7 +34,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 
 import java.io.File;
 import java.sql.Connection;
@@ -288,11 +286,6 @@ public interface TestManager {
    * @return a JDBC connection that allows the running of SQL queries over data sets
    */
   Connection getQueryClient(NamespaceId namespace) throws Exception;
-
-  /**
-   * Returns a {@link StreamManager} for the specified {@link Id.Stream}.
-   */
-  StreamManager getStreamManager(StreamId streamId);
 
   /**
    * Removes all apps in the specified namespace.

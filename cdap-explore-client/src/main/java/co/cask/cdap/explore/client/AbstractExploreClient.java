@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -32,7 +31,6 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
@@ -150,33 +148,6 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
       @Override
       public QueryHandle getHandle() throws ExploreException, SQLException {
         return doEnableExploreDataset(datasetInstance, spec, truncating);
-      }
-    });
-
-    // Exceptions will be thrown in case of an error in the futureHandle
-    return Futures.transform(futureResults, Functions.<Void>constant(null));
-  }
-
-  @Override
-  public ListenableFuture<Void> enableExploreStream(final StreamId stream, final String tableName,
-                                                    final FormatSpecification format) {
-    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
-      @Override
-      public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doEnableExploreStream(stream, tableName, format);
-      }
-    });
-
-    // Exceptions will be thrown in case of an error in the futureHandle
-    return Futures.transform(futureResults, Functions.<Void>constant(null));
-  }
-
-  @Override
-  public ListenableFuture<Void> disableExploreStream(final StreamId stream, final String tableName) {
-    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
-      @Override
-      public QueryHandle getHandle() throws ExploreException, SQLException {
-        return doDisableExploreStream(stream, tableName);
       }
     });
 

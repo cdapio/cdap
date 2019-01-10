@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.data2.registry.internal.keymaker.DatasetKeyMaker;
 import co.cask.cdap.data2.registry.internal.keymaker.ProgramKeyMaker;
-import co.cask.cdap.data2.registry.internal.keymaker.StreamKeyMaker;
 import co.cask.cdap.data2.registry.internal.pair.KeyMaker;
 import co.cask.cdap.data2.registry.internal.pair.OrderedPair;
 import co.cask.cdap.data2.registry.internal.pair.OrderedPairs;
@@ -35,7 +34,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -54,7 +52,6 @@ public class UsageDataset extends MetadataStoreDataset {
   // The following constants are used as row key prefixes. Any changes to these will make existing data unusable.
   private static final String PROGRAM = "p";
   private static final String DATASET = "d";
-  private static final String STREAM = "s";
 
   private final OrderedPairs orderedPairs;
 
@@ -93,7 +90,6 @@ public class UsageDataset extends MetadataStoreDataset {
       ImmutableMap.<String, KeyMaker<? extends EntityId>>builder()
         .put(PROGRAM, new ProgramKeyMaker())
         .put(DATASET, new DatasetKeyMaker())
-        .put(STREAM, new StreamKeyMaker())
         .build();
     orderedPairs = new OrderedPairs(keyMakers);
   }
@@ -109,16 +105,6 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Registers usage of a stream by a program.
-   * @param programId program
-   * @param streamId stream
-   */
-  public void register(ProgramId programId, StreamId streamId) {
-    write(orderedPairs.get(PROGRAM, STREAM).makeKey(programId, streamId), true);
-    write(orderedPairs.get(STREAM, PROGRAM).makeKey(streamId, programId), true);
-  }
-
-  /**
    * Unregisters all usage information of an application.
    * @param applicationId application
    */
@@ -130,14 +116,8 @@ public class UsageDataset extends MetadataStoreDataset {
       deleteAll(orderedPairs.get(DATASET, PROGRAM).makeKey(datasetInstanceId, programId));
     }
 
-    // Delete streams associated with applicationId
-    for (StreamId streamId : getStreams(applicationId)) {
-      deleteAll(orderedPairs.get(STREAM, PROGRAM).makeKey(streamId, programId));
-    }
-
     // Delete all mappings for applicationId
     deleteAll(orderedPairs.get(PROGRAM, DATASET).makeScanKey(programId));
-    deleteAll(orderedPairs.get(PROGRAM, STREAM).makeScanKey(programId));
   }
 
   /**
@@ -164,29 +144,6 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Returns streams used by a program.
-   * @param programId program
-   * @return streams used by programId
-   */
-  public Set<StreamId> getStreams(ProgramId programId) {
-    OrderedPair<ProgramId, StreamId> orderedPair = orderedPairs.get(PROGRAM, STREAM);
-    Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
-    return orderedPair.getSecond(datasetKeys.keySet());
-  }
-
-  /**
-   * Returns streams used by an application.
-   * @param applicationId application
-   * @return streams used by applicaionId
-   */
-  public Set<StreamId> getStreams(ApplicationId applicationId) {
-    ProgramId programId = ProgramKeyMaker.getProgramId(applicationId);
-    OrderedPair<ProgramId, StreamId> orderedPair = orderedPairs.get(PROGRAM, STREAM);
-    Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
-    return orderedPair.getSecond(datasetKeys.keySet());
-  }
-
-  /**
    * Returns programs using dataset.
    * @param datasetInstanceId dataset
    * @return programs using datasetInstanceId
@@ -194,17 +151,6 @@ public class UsageDataset extends MetadataStoreDataset {
   public Set<ProgramId> getPrograms(DatasetId datasetInstanceId) {
     OrderedPair<DatasetId, ProgramId> orderedPair = orderedPairs.get(DATASET, PROGRAM);
     Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(datasetInstanceId), Boolean.TYPE);
-    return orderedPair.getSecond(programKeys.keySet());
-  }
-
-  /**
-   * Returns programs using stream.
-   * @param streamId stream
-   * @return programs using streamId
-   */
-  public Set<ProgramId> getPrograms(StreamId streamId) {
-    OrderedPair<StreamId, ProgramId> orderedPair = orderedPairs.get(STREAM, PROGRAM);
-    Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(streamId), Boolean.TYPE);
     return orderedPair.getSecond(programKeys.keySet());
   }
 }

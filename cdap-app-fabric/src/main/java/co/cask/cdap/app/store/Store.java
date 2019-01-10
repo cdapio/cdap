@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -266,27 +265,6 @@ public interface Store {
    */
   @Nullable
   RunRecordMeta getRun(ProgramRunId id);
-
-  /**
-   * Creates a new stream if it does not exist.
-   * @param id the namespace id
-   * @param stream the stream to create
-   */
-  void addStream(NamespaceId id, StreamSpecification stream);
-
-  /**
-   * Get the spec of a named stream.
-   * @param id the namespace id
-   * @param name the name of the stream
-   */
-  StreamSpecification getStream(NamespaceId id, String name);
-
-  /**
-   * Get the specs of all streams for a namespace.
-   *
-   * @param id the namespace id
-   */
-  Collection<StreamSpecification> getAllStreams(NamespaceId id);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.

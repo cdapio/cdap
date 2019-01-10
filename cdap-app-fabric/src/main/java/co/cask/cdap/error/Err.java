@@ -79,14 +79,4 @@ public final class Err {
     }
   }
 
-  /**
-   * Defines Stream specific error messages.
-   */
-  public static class Stream {
-    /**
-     * Preventing Construction.
-     */
-    private Stream() {
-    }
-  }
 }

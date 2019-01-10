@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import java.io.IOException
 
 import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.data.format.FormatSpecification
-import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
 import co.cask.cdap.api.metadata.{MetadataReader, MetadataWriter}
 import co.cask.cdap.api.metrics.Metrics
@@ -29,7 +27,6 @@ import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.api.{RuntimeContext, ServiceDiscoverer, TaskLocalizationContext, Transactional, TxRunnable}
 import org.apache.spark.SparkContext
@@ -160,92 +157,6 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional with M
                                             datasetName: String,
                                             arguments: Map[String, String],
                                             splits: Option[Iterable[_ <: Split]]): RDD[(K, V)]
-  /**
-    * Creates a [[org.apache.spark.rdd.RDD]] that represents data from the given stream for events in the given
-    * time range.
-    * Using the implicit object co.cask.cdap.api.spark.SparkMain.SparkProgramContextFunctions is preferred.
-    *
-    * @param sc the [[org.apache.spark.SparkContext]] to use
-    * @param streamName name of the stream
-    * @param startTime  the starting time of the stream to be read in milliseconds (inclusive);
-    *                   passing in `0` means start reading from the first event available in the stream.
-    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-    *                passing in `Long#MAX_VALUE` means read up to latest event available in the stream.
-    * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value
-    * @tparam T value type
-    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
-    * @throws co.cask.cdap.api.data.DatasetInstantiationException if the stream doesn't exist
-    */
-  def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
-                             (implicit decoder: StreamEvent => T): RDD[T]
-
-  /**
-    * Creates a [[org.apache.spark.rdd.RDD]] that represents data from the given stream for events in the given
-    * namespace and time range.
-    * Using the implicit object co.cask.cdap.api.spark.SparkMain.SparkProgramContextFunctions is preferred.
-    *
-    * @param sc the [[org.apache.spark.SparkContext]] to use
-    * @param namespace namespace in which the stream exists
-    * @param streamName name of the stream
-    * @param startTime  the starting time of the stream to be read in milliseconds (inclusive);
-    *                   passing in `0` means start reading from the first event available in the stream.
-    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-    *                passing in `Long#MAX_VALUE` means read up to latest event available in the stream.
-    * @param decoder a function to convert a [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a value
-    * @tparam T value type
-    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
-    * @throws co.cask.cdap.api.data.DatasetInstantiationException if the stream doesn't exist
-    */
-  def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String, startTime: Long, endTime: Long)
-                             (implicit decoder: StreamEvent => T): RDD[T]
-
-  /**
-    * Creates a [[org.apache.spark.rdd.RDD]] that represents data from the given stream for events in the given
-    * time range. The data in the RDD is always a pair, with the first entry as a [[scala.Long]], representing the
-    * event timestamp, while the second entry is a [[co.cask.cdap.api.stream.GenericStreamEventData]],
-    * which contains data decoded from the stream event body base on
-    * the given [[co.cask.cdap.api.data.format.FormatSpecification]].
-    *
-    * Using the implicit object co.cask.cdap.api.spark.SparkMain.SparkProgramContextFunctions is preferred.
-    *
-    * @param sc the [[org.apache.spark.SparkContext]] to use
-    * @param streamName name of the stream
-    * @param formatSpec the [[co.cask.cdap.api.data.format.FormatSpecification]] describing the format in the stream
-    * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-    *                  default is 0, which means reading from beginning of the stream.
-    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-    *                default is [[scala.Long.MaxValue]], which means reading until the last event.
-    * @tparam T value type
-    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
-    * @throws co.cask.cdap.api.data.DatasetInstantiationException if the stream doesn't exist
-    */
-  def fromStream[T: ClassTag](sc: SparkContext, streamName: String, formatSpec: FormatSpecification,
-                              startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])]
-
-  /**
-    * Creates a [[org.apache.spark.rdd.RDD]] that represents data from the given stream for events in the given
-    * time range. The data in the RDD is always a pair, with the first entry as a [[scala.Long]], representing the
-    * event timestamp, while the second entry is a [[co.cask.cdap.api.stream.GenericStreamEventData]],
-    * which contains data decoded from the stream event body base on
-    * the given [[co.cask.cdap.api.data.format.FormatSpecification]].
-    *
-    * Using the implicit object co.cask.cdap.api.spark.SparkMain.SparkProgramContextFunctions is preferred.
-    *
-    * @param sc the [[org.apache.spark.SparkContext]] to use
-    * @param namespace namespace in which the stream exists
-    * @param streamName name of the stream
-    * @param formatSpec the [[co.cask.cdap.api.data.format.FormatSpecification]] describing the format in the stream
-    * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-    *                  default is 0, which means reading from beginning of the stream.
-    * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-    *                default is [[scala.Long.MaxValue]], which means reading until the last event.
-    * @tparam T value type
-    * @return a new [[org.apache.spark.rdd.RDD]] instance that reads from the given stream.
-    * @throws co.cask.cdap.api.data.DatasetInstantiationException if the stream doesn't exist
-    */
-  def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String, formatSpec: FormatSpecification,
-                              startTime: Long, endTime: Long): RDD[(Long, GenericStreamEventData[T])]
-
 
   /**
     * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConversions._
 
@@ -36,10 +35,10 @@ class TransactionSpark extends AbstractSpark with SparkMain  {
     val sc = new SparkContext
 
     val runtimeArgs: Map[String, String] = sec.getRuntimeArguments.toMap
-    val streamRDD: RDD[String] = sc.fromStream(runtimeArgs("source.stream"))
-    val wordsRDD = streamRDD.flatMap(_.split("\\s+"))
+    val inputRDD = sc.textFile(runtimeArgs("input.file"))
+    val wordsRDD = inputRDD.flatMap(_.split("\\s+"))
 
-    // Read the stream, split it and save it to dataset. This test the implicit transaction.
+    // Read the input, split it and save it to dataset. This test the implicit transaction.
     // The key is just some generated unique ID
     wordsRDD
       .zipWithUniqueId()

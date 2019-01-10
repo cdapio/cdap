@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.lineage;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.DataRecord;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -106,22 +105,13 @@ public final class LineageSerializer {
   }
 
   private static String makeDataKey(NamespacedEntityId data) {
-    if (data instanceof DatasetId) {
-      return makeDatasetKey((DatasetId) data);
+    if (!(data instanceof DatasetId)) {
+      throw new IllegalArgumentException("Unknown data object " + data);
     }
-
-    if (data instanceof StreamId) {
-      return makeStreamKey((StreamId) data);
-    }
-
-    throw new IllegalArgumentException("Unknown data object " + data);
+    return makeDatasetKey((DatasetId) data);
   }
 
   private static String makeDatasetKey(DatasetId datasetInstance) {
     return Joiner.on('.').join("dataset", datasetInstance.getNamespace(), datasetInstance.getEntityName());
-  }
-
-  private static String makeStreamKey(StreamId stream) {
-    return Joiner.on('.').join("stream", stream.getNamespace(), stream.getEntityName());
   }
 }

@@ -57,11 +57,9 @@ import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.test.remote.RemoteApplicationManager;
 import co.cask.cdap.test.remote.RemoteArtifactManager;
-import co.cask.cdap.test.remote.RemoteStreamManager;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -360,11 +358,6 @@ public class IntegrationTestManager extends AbstractTestManager {
     String url = String.format("%s%s:%d?%s", Constants.Explore.Jdbc.URL_PREFIX, connConfig.getHostname(),
                                connConfig.getPort(), Joiner.on("&").withKeyValueSeparator("=").join(connParams));
     return new ExploreDriver().connect(url, new Properties());
-  }
-
-  @Override
-  public StreamManager getStreamManager(StreamId streamId) {
-    return new RemoteStreamManager(clientConfig, restClient, streamId);
   }
 
   @Override

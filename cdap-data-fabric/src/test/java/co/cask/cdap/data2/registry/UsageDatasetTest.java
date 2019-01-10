@@ -23,7 +23,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableSet;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -51,9 +50,6 @@ public class UsageDatasetTest {
   protected final DatasetId datasetInstance1 = namespace1.dataset("ds1");
   protected final DatasetId datasetInstance2 = namespace1.dataset("ds2");
   protected final DatasetId datasetInstance3 = namespace1.dataset("ds3");
-
-  protected final StreamId stream1 = namespace1.stream("s1");
-  protected final StreamId stream2 = namespace2.stream("s1");
 
   @Test
   public void testOneMapping() throws Exception {
@@ -163,8 +159,6 @@ public class UsageDatasetTest {
       public void apply() throws Exception {
         usageDataset.register(worker1, datasetInstance1);
         usageDataset.register(service21, datasetInstance3);
-
-        usageDataset.register(worker2, stream1);
       }
     });
 
@@ -176,13 +170,8 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker2));
         Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-        Assert.assertEquals(ImmutableSet.of(stream1), usageDataset.getStreams(worker2));
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
-
-        // Verify dataset/stream mappings
+        // Verify dataset mappings
         Assert.assertEquals(ImmutableSet.of(worker1), usageDataset.getPrograms(datasetInstance1));
-        Assert.assertEquals(ImmutableSet.of(worker2), usageDataset.getPrograms(stream1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
       }
     });
 
@@ -202,39 +191,24 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker2));
         Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
-
-        // Verify dataset/stream mappings
+        // Verify dataset mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
 
         // Verify app mappings
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker1));
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker2));
         Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
-
-        // Verify dataset/stream mappings
+        // Verify dataset mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
 
         // Verify app mappings
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker1));
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker2));
         Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
-
-        // Verify dataset/stream mappings
+        // Verify dataset mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
       }
     });
 
@@ -254,13 +228,8 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(worker2));
         Assert.assertEquals(ImmutableSet.<DatasetId>of(), usageDataset.getDatasets(service21));
 
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
-        Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
-
-        // Verify dataset/stream mappings
+        // Verify dataset mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
-        Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
       }
     });
   }

@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
@@ -56,7 +55,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected NamespaceClient namespaceClient;
   protected ApplicationClient appClient;
   protected ProgramClient programClient;
-  protected StreamClient streamClient;
   protected DatasetClient datasetClient;
 
   @Before
@@ -67,7 +65,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
     namespaceClient = new NamespaceClient(getClientConfig());
     appClient = new ApplicationClient(getClientConfig());
     programClient = new ProgramClient(getClientConfig());
-    streamClient = new StreamClient(getClientConfig());
     datasetClient = new DatasetClient(getClientConfig());
   }
 
@@ -233,19 +230,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected LineageRecord fetchLineage(DatasetId datasetInstance, String start, String end,
                                        int levels) throws Exception {
     return lineageClient.getLineage(datasetInstance, start, end, levels);
-  }
-
-  protected LineageRecord fetchLineage(StreamId stream, long start, long end, int levels) throws Exception {
-    return lineageClient.getLineage(stream, start, end, levels);
-  }
-
-  protected LineageRecord fetchLineage(StreamId stream, String start, String end, int levels) throws Exception {
-    return lineageClient.getLineage(stream, start, end, levels);
-  }
-
-  protected LineageRecord fetchLineage(StreamId stream, long start, long end, Set<CollapseType> collapseTypes,
-                                       int levels) throws Exception {
-    return lineageClient.getLineage(stream, start, end, collapseTypes, levels);
   }
 
   protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {

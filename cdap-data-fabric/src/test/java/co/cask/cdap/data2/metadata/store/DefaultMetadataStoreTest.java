@@ -40,7 +40,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -86,12 +85,9 @@ public class DefaultMetadataStoreTest {
   private final ApplicationId app = NamespaceId.DEFAULT.app("app");
   private final ProgramId service = app.service("service");
   private final DatasetId dataset = NamespaceId.DEFAULT.dataset("ds");
-  private final StreamId stream = NamespaceId.DEFAULT.stream("stream");
   private final Set<String> datasetTags = ImmutableSet.of("dTag");
   private final Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue");
   private final Set<String> appTags = ImmutableSet.of("aTag");
-  private final Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
-  private final Map<String, String> updatedStreamProperties = ImmutableMap.of("stKey", "stV");
   private final Set<String> tags = ImmutableSet.of("fTag");
 
   private final AuditMessage auditMessage1 = new AuditMessage(
@@ -114,29 +110,6 @@ public class DefaultMetadataStoreTest {
       ImmutableMap.of(MetadataScope.USER, new Metadata(appProperties, EMPTY_TAGS)),
       ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, appTags)),
       EMPTY_USER_METADATA
-    )
-  );
-  private final AuditMessage auditMessage4 = new AuditMessage(
-    0, stream, "", AuditType.METADATA_CHANGE,
-    new MetadataPayload(
-      EMPTY_USER_METADATA,
-      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS)),
-      EMPTY_USER_METADATA
-    )
-  );
-  private final AuditMessage auditMessage5 = new AuditMessage(
-    0, stream, "", AuditType.METADATA_CHANGE,
-    new MetadataPayload(
-      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS)),
-      EMPTY_USER_METADATA, EMPTY_USER_METADATA
-    )
-  );
-  private final AuditMessage auditMessage6 = new AuditMessage(
-    0, stream, "", AuditType.METADATA_CHANGE,
-    new MetadataPayload(
-      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS)),
-      ImmutableMap.of(MetadataScope.USER, new Metadata(updatedStreamProperties, EMPTY_TAGS)),
-      ImmutableMap.of(MetadataScope.USER, new Metadata(streamProperties, EMPTY_TAGS))
     )
   );
   private final AuditMessage auditMessage7 = new AuditMessage(
@@ -163,14 +136,6 @@ public class DefaultMetadataStoreTest {
       ImmutableMap.of(MetadataScope.USER, new Metadata(EMPTY_PROPERTIES, datasetTags))
     )
   );
-  private final AuditMessage auditMessage10 = new AuditMessage(
-    0, stream, "", AuditType.METADATA_CHANGE,
-    new MetadataPayload(
-      ImmutableMap.of(MetadataScope.USER, new Metadata(updatedStreamProperties, EMPTY_TAGS)),
-      EMPTY_USER_METADATA,
-      ImmutableMap.of(MetadataScope.USER, new Metadata(updatedStreamProperties, EMPTY_TAGS))
-    )
-  );
   private final AuditMessage auditMessage11 = new AuditMessage(
     0, app, "", AuditType.METADATA_CHANGE,
     new MetadataPayload(
@@ -180,8 +145,8 @@ public class DefaultMetadataStoreTest {
     )
   );
   private final List<AuditMessage> expectedAuditMessages = ImmutableList.of(
-    auditMessage1, auditMessage2, auditMessage3, auditMessage4, auditMessage5, auditMessage6, auditMessage7,
-    auditMessage8, auditMessage9, auditMessage10, auditMessage11
+    auditMessage1, auditMessage2, auditMessage3, auditMessage7,
+    auditMessage8, auditMessage9, auditMessage11
   );
 
   private static CConfiguration cConf;
@@ -315,10 +280,10 @@ public class DefaultMetadataStoreTest {
   }
 
   @Test
-  public void testSearchWeight() throws Exception {
+  public void testSearchWeight() {
     ProgramId service1 = new ProgramId("ns1", "app1", ProgramType.SERVICE, "service1");
-    StreamId stream1 = new StreamId("ns1", "s1");
     DatasetId dataset1 = new DatasetId("ns1", "ds1");
+    DatasetId dataset2 = new DatasetId("ns1", "ds2");
 
     // Add metadata
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
@@ -333,15 +298,15 @@ public class DefaultMetadataStoreTest {
     store.setProperties(MetadataScope.SYSTEM, service1.toMetadataEntity(), systemProps);
     store.addTags(MetadataScope.USER, service1.toMetadataEntity(), userTags);
     store.addTags(MetadataScope.SYSTEM, service1.toMetadataEntity(), sysTags);
-    store.addTags(MetadataScope.USER, stream1.toMetadataEntity(), streamUserTags);
-    store.removeTags(MetadataScope.USER, stream1.toMetadataEntity(), streamUserTags);
-    store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), userProps);
-    store.removeProperties(MetadataScope.USER, stream1.toMetadataEntity(),
+    store.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserTags);
+    store.removeTags(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserTags);
+    store.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), userProps);
+    store.removeProperties(MetadataScope.USER, dataset2.toMetadataEntity(),
                            ImmutableSet.of("key1", "key2", "multiword"));
 
     Map<String, String> streamUserProps = ImmutableMap.of("sKey1", "sValue1 sValue2",
                                                           "Key1", "Value1");
-    store.setProperties(MetadataScope.USER, stream1.toMetadataEntity(), streamUserProps);
+    store.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserProps);
 
     Map<String, String> datasetUserProps = ImmutableMap.of("sKey1", "sValuee1 sValuee2");
     store.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), datasetUserProps);
@@ -362,7 +327,7 @@ public class DefaultMetadataStoreTest {
       Lists.newArrayList(
         new MetadataSearchResultRecord(service1,
                                        expectedMetadata),
-        new MetadataSearchResultRecord(stream1,
+        new MetadataSearchResultRecord(dataset2,
                                        expectedStreamMetadata)
       );
     Assert.assertEquals(expected, actual);
@@ -371,7 +336,7 @@ public class DefaultMetadataStoreTest {
     Assert.assertEquals(3, response.getTotal());
     actual = Lists.newArrayList(response.getResults());
     expected = Lists.newArrayList(
-      new MetadataSearchResultRecord(stream1,
+      new MetadataSearchResultRecord(dataset2,
                                      expectedStreamMetadata),
       new MetadataSearchResultRecord(dataset1,
                                      expectedDatasetMetadata),
@@ -647,13 +612,9 @@ public class DefaultMetadataStoreTest {
     store.addTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags);
     store.setProperties(MetadataScope.USER, app.toMetadataEntity(), appProperties);
     store.addTags(MetadataScope.USER, app.toMetadataEntity(), appTags);
-    store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
-    store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), streamProperties);
-    store.setProperties(MetadataScope.USER, stream.toMetadataEntity(), updatedStreamProperties);
     store.addTags(MetadataScope.USER, service.toMetadataEntity(), tags);
     store.removeTags(MetadataScope.USER, service.toMetadataEntity());
     store.removeTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags);
-    store.removeProperties(MetadataScope.USER, stream.toMetadataEntity());
     store.removeMetadata(MetadataScope.USER, app.toMetadataEntity());
   }
 

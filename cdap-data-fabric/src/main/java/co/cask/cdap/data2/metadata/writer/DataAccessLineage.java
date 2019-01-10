@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +38,6 @@ public class DataAccessLineage {
 
   private final long accessTime;
   private final AccessType accessType;
-  @Nullable
   private final DatasetId datasetId;
 
   // We don't serialize this field, but instead serialize the class name and the id parts
@@ -49,10 +47,6 @@ public class DataAccessLineage {
   private final String componentIdClassName;
   private final List<String> componentIdParts;
 
-  // Stream is deprecated since CDAP 5. Expect the field will be removed in future.
-  @Nullable
-  private final StreamId streamId;
-
   DataAccessLineage(AccessType accessType, EntityId dataEntityId,
                     @Nullable NamespacedEntityId componentId) {
     this(accessType, dataEntityId, componentId, System.currentTimeMillis());
@@ -61,17 +55,11 @@ public class DataAccessLineage {
   @VisibleForTesting
   DataAccessLineage(AccessType accessType, EntityId dataEntityId,
                     @Nullable NamespacedEntityId componentId, long accessTime) {
-    if (dataEntityId instanceof DatasetId) {
-      this.datasetId = (DatasetId) dataEntityId;
-      this.streamId = null;
-    } else if (dataEntityId instanceof StreamId) {
-      this.datasetId = null;
-      this.streamId = (StreamId) dataEntityId;
-    } else {
+    if (!(dataEntityId instanceof DatasetId)) {
       // This should never happen
-      throw new IllegalArgumentException("Only instance of DatasetId or StreamId can be used as the dataEntityId");
+      throw new IllegalArgumentException("Only instance of DatasetId can be used as the dataEntityId");
     }
-
+    this.datasetId = (DatasetId) dataEntityId;
     this.accessTime = accessTime;
     this.accessType = accessType;
     this.componentId = componentId;
@@ -94,7 +82,6 @@ public class DataAccessLineage {
     return accessType;
   }
 
-  @Nullable
   public DatasetId getDatasetId() {
     return datasetId;
   }
@@ -121,11 +108,6 @@ public class DataAccessLineage {
     }
   }
 
-  @Nullable
-  public StreamId getStreamId() {
-    return streamId;
-  }
-
   @Override
   public String toString() {
     return "DataAccessLineage{" +
@@ -133,7 +115,6 @@ public class DataAccessLineage {
       ", accessType=" + accessType +
       ", datasetId=" + datasetId +
       ", componentId=" + getComponentId() +
-      ", streamId=" + streamId +
       '}';
   }
 }

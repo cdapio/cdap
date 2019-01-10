@@ -16,10 +16,8 @@
 
 package co.cask.cdap.operations.cdap;
 
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
@@ -44,13 +42,11 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
   private ProgramLifecycleService programLifecycleService;
   private ArtifactRepository artifactRepository;
   private DatasetFramework dsFramework;
-  private StreamAdmin streamAdmin;
   private int namespaces;
   private int artifacts;
   private int apps;
   private int programs;
   private int datasets;
-  private int streams;
 
   @Override
   public void initialize(Injector injector) {
@@ -59,7 +55,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    streamAdmin = injector.getInstance(StreamAdmin.class);
   }
 
   @Override
@@ -93,11 +88,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
   }
 
   @Override
-  public int getStreams() {
-    return streams;
-  }
-
-  @Override
   public void collect() throws Exception {
     reset();
     List<NamespaceMeta> namespaceMetas;
@@ -115,8 +105,6 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
       }
       artifacts += artifactRepository.getArtifactSummaries(meta.getNamespaceId(), false).size();
       datasets += dsFramework.getInstances(meta.getNamespaceId()).size();
-      List<StreamSpecification> streamSpecs = streamAdmin.listStreams(meta.getNamespaceId());
-      streams += streamSpecs.size();
     }
   }
 
@@ -126,6 +114,5 @@ public class CDAPEntities extends AbstractCDAPStats implements CDAPEntitiesMXBea
     apps = 0;
     programs = 0;
     datasets = 0;
-    streams = 0;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,6 @@ final class MetricQueryParser {
   public enum PathType {
     APPS,
     DATASETS,
-    STREAMS,
     CLUSTER,
     SERVICES,
     SPARK
@@ -197,13 +196,13 @@ final class MetricQueryParser {
     }
 
 
-    // streams, datasets, apps, or nothing.
+    // datasets, apps, or nothing.
     if (!pathParts.hasNext()) {
       builder.setSliceByTagValues(tagValues);
       return;
     }
 
-    // apps, streams, or datasets
+    // apps or datasets
     String pathTypeStr = pathParts.next();
     PathType pathType;
     try {
@@ -219,14 +218,6 @@ final class MetricQueryParser {
         tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
         parseSubContext(pathParts, tagValues);
         break;
-      case STREAMS:
-        // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
-        tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
-        if (!pathParts.hasNext()) {
-          throw new MetricsPathException("'streams' must be followed by a stream name");
-        }
-        tagValues.put(Constants.Metrics.Tag.STREAM, urlDecode(pathParts.next()));
-        break;
       case DATASETS:
         // Note: If v3 APIs use this class, we may have to get namespaceId from higher up
         tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
@@ -237,7 +228,7 @@ final class MetricQueryParser {
         // path can be /metric/scope/datasets/{dataset}/apps/...
         if (pathParts.hasNext()) {
           if (!pathParts.next().equals("apps")) {
-            throw new MetricsPathException("expecting 'apps' after stream or dataset name");
+            throw new MetricsPathException("expecting 'apps' after dataset name");
           }
           tagValues.put(Constants.Metrics.Tag.APP, urlDecode(pathParts.next()));
           parseSubContext(pathParts, tagValues);

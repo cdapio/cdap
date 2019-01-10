@@ -17,20 +17,16 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.ProgramLifecycle;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
@@ -45,7 +41,6 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -57,10 +52,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.ByteBuffer;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -74,7 +65,6 @@ public class AllProgramsApp extends AbstractApplication {
   public static final String NAME = "App";
   public static final String DESC = "Application which has everything";
 
-  public static final String STREAM_NAME = "stream";
   public static final String DATASET_NAME = "kvt";
   public static final String DATASET_NAME2 = "kvt2";
   public static final String DATASET_NAME3 = "kvt3";
@@ -89,7 +79,6 @@ public class AllProgramsApp extends AbstractApplication {
   public void configure() {
     setName(NAME);
     setDescription(DESC);
-    addStream(new Stream(STREAM_NAME, "test stream"));
     createDataset(DATASET_NAME, KeyValueTable.class,
                   DatasetProperties.builder().setDescription("test dataset").build());
     createDataset(DATASET_NAME2, KeyValueTable.class);
@@ -138,13 +127,13 @@ public class AllProgramsApp extends AbstractApplication {
       Job job = context.getHadoopJob();
       job.setMapperClass(NoOpMapper.class);
       job.setReducerClass(NoOpReducer.class);
-      context.addInput(Input.ofStream(STREAM_NAME));
-      context.addOutput(Output.ofDataset(DATASET_NAME));
+      context.addInput(Input.ofDataset(DATASET_NAME));
+      context.addOutput(Output.ofDataset(DATASET_NAME2));
     }
   }
 
   /**
-   * Similar to {@link NoOpMR}, but uses a dataset as input, instead of a stream.
+   * Similar to {@link NoOpMR}.
    */
   public static class NoOpMR2 extends AbstractMapReduce {
     public static final String NAME = "NoOpMR2";
@@ -255,32 +244,7 @@ public class AllProgramsApp extends AbstractApplication {
 
     @Override
     public void run() {
-      try {
-        getContext().write(STREAM_NAME, ByteBuffer.wrap(Bytes.toBytes("NO-OP")));
-        getContext().execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            KeyValueTable table = context.getDataset(DATASET_NAME);
-            table.write("NOOP", "NOOP");
-          }
-        });
-        makeServiceCall();
-      } catch (Exception e) {
-        LOG.error("Worker ran into error", e);
-      }
-    }
-
-    private void makeServiceCall() throws IOException {
-      URL serviceURL = getContext().getServiceURL(NoOpService.NAME);
-      if (serviceURL != null) {
-        URL endpoint = new URL(serviceURL.toString() + NoOpService.ENDPOINT);
-        LOG.info("Calling service endpoint {}", endpoint);
-        URLConnection urlConnection = endpoint.openConnection();
-        urlConnection.connect();
-        try (InputStream inputStream = urlConnection.getInputStream()) {
-          ByteStreams.toByteArray(inputStream);
-        }
-      }
+      // no-op
     }
   }
 

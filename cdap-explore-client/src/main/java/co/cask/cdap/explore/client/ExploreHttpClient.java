@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.ExploreProperties;
@@ -46,7 +45,6 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -132,28 +130,6 @@ abstract class ExploreHttpClient implements Explore {
     throw new ExploreException(String.format("Unexpected response while checking explore status. " +
                                                "Received code '%s' and response message '%s'.",
                                              response.getResponseCode(), response.getResponseBodyAsString()));
-  }
-
-  protected QueryHandle doEnableExploreStream(StreamId stream, String tableName,
-                                              FormatSpecification format) throws ExploreException {
-    HttpResponse response = doPost(String.format(
-      "namespaces/%s/data/explore/streams/%s/tables/%s/enable",
-      stream.getNamespace(), stream.getEntityName(), tableName), format == null ? null : GSON.toJson(format), null);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
-    }
-    throw new ExploreException(String.format("Cannot enable explore on stream %s with table %s. Reason: %s",
-                                             stream.getEntityName(), tableName, response));
-  }
-
-  protected QueryHandle doDisableExploreStream(StreamId stream, String tableName) throws ExploreException {
-    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/streams/%s/tables/%s/disable",
-                                                 stream.getNamespace(), stream.getEntityName(), tableName), null, null);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
-    }
-    throw new ExploreException(String.format("Cannot disable explore on stream %s with table %s. Reason: %s",
-                                             stream.getEntityName(), tableName, response));
   }
 
   protected QueryHandle doAddPartition(DatasetId datasetInstance, DatasetSpecification spec,

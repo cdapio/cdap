@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.service.BasicService;
@@ -55,7 +54,6 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
   public void configure() {
     setName("dummy");
     setDescription("dummy app with a dataset that tracks open and close");
-    addStream(new Stream("xx"));
     createDataset("foo", TrackingTable.class);
     createDataset("bar", TrackingTable.class);
     addMapReduce(new DummyBatch());
