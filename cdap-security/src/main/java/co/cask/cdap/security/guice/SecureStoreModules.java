@@ -22,7 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.security.store.DefaultSecureStoreService;
+import co.cask.cdap.security.store.DefaultSecureStore;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
 import co.cask.cdap.security.store.SecureStoreUtils;
@@ -72,8 +72,8 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStore.class).to(DefaultSecureStore.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
       }
@@ -91,9 +91,9 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        bind(SecureStore.class).to(DefaultSecureStore.class);
         expose(SecureStore.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
         expose(SecureStoreManager.class);
       }
     };
@@ -110,8 +110,8 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStore.class).to(DefaultSecureStore.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
       }

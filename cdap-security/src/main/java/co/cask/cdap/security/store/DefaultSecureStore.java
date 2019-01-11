@@ -39,25 +39,23 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Default implementation of the service that manages access to the Secure Store,
  */
-public class DefaultSecureStoreService implements SecureStore, SecureStoreManager {
+public class DefaultSecureStore implements SecureStore, SecureStoreManager {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
   @Inject
-  DefaultSecureStoreService(AuthorizationEnforcer authorizationEnforcer,
-                            AuthenticationContext authenticationContext,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
+  DefaultSecureStore(AuthorizationEnforcer authorizationEnforcer,
+                     AuthenticationContext authenticationContext,
+                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
+                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
                               SecureStoreManager secureStoreManager) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
