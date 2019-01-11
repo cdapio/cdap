@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,9 @@ package co.cask.cdap.etl.spark.streaming;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
@@ -32,7 +30,6 @@ import co.cask.cdap.etl.spark.NoLookupProvider;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.IOException;
@@ -81,33 +78,6 @@ public class SparkStreamingExecutionContext extends AbstractTransformContext imp
   public <K, V> JavaPairRDD<K, V> fromDataset(String datasetName, Map<String, String> arguments,
                                               @Nullable Iterable<? extends Split> splits) {
     return sec.fromDataset(datasetName, arguments, splits);
-  }
-
-  @Override
-  public JavaRDD<StreamEvent> fromStream(String streamName) {
-    return sec.fromStream(streamName);
-  }
-
-  @Override
-  public JavaRDD<StreamEvent> fromStream(String streamName, long startTime, long endTime) {
-    return sec.fromStream(streamName, startTime, endTime);
-  }
-
-  @Override
-  public <V> JavaPairRDD<Long, V> fromStream(String streamName, Class<V> valueType) {
-    return sec.fromStream(streamName, valueType);
-  }
-
-  @Override
-  public <V> JavaPairRDD<Long, V> fromStream(String streamName, long startTime, long endTime, Class<V> valueType) {
-    return sec.fromStream(streamName, startTime, endTime, valueType);
-  }
-
-  @Override
-  public <K, V> JavaPairRDD<K, V> fromStream(String streamName, long startTime, long endTime,
-                                             Class<? extends StreamEventDecoder<K, V>> decoderClass,
-                                             Class<K> keyType, Class<V> valueType) {
-    return sec.fromStream(streamName, startTime, endTime, decoderClass, keyType, valueType);
   }
 
   @Override

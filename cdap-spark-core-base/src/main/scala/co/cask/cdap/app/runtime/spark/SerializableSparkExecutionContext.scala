@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,6 @@ import java.{lang, util}
 
 import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.data.batch.Split
-import co.cask.cdap.api.data.format.FormatSpecification
-import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.metadata.{Metadata, MetadataEntity, MetadataScope}
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
@@ -72,23 +70,6 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], datasetName: String,
                                                        arguments: Map[String, String]) =
     delegate.saveAsDataset(rdd, datasetName, arguments)
-
-  override def fromStream[T: ClassTag](sc: SparkContext, namespace: String, streamName: String,
-                                       formatSpec: FormatSpecification, startTime: Long, endTime: Long) =
-    delegate.fromStream[T](sc, namespace, streamName, formatSpec, startTime, endTime)
-
-  override def fromStream[T: ClassTag](sc: SparkContext, streamName: String,
-                                       formatSpec: FormatSpecification, startTime: Long, endTime: Long) =
-    delegate.fromStream[T](sc, streamName, formatSpec, startTime, endTime)
-
-  override def fromStream[T: ClassTag](sc: SparkContext, namespace: String,
-                                       streamName: String, startTime: Long, endTime: Long)
-                                      (implicit decoder: (StreamEvent) => T) =
-    delegate.fromStream(sc, namespace, streamName, startTime, endTime)
-
-  override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
-                                      (implicit decoder: (StreamEvent) => T) =
-    delegate.fromStream(sc, streamName, startTime, endTime)
 
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext, namespace: String,
                                                      datasetName: String, arguments: Map[String, String],

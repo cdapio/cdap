@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,6 @@ import co.cask.cdap.common.discovery.StickyEndpointStrategy;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -52,10 +51,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
-import co.cask.cdap.test.internal.StreamManagerFactory;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -131,8 +128,6 @@ public class UnitTestManager extends AbstractTestManager {
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryClient;
   private final ApplicationManagerFactory appManagerFactory;
-  private final NamespaceAdmin namespaceAdmin;
-  private final StreamManagerFactory streamManagerFactory;
   private final LocationFactory locationFactory;
   private final ArtifactRepository artifactRepository;
   private final ArtifactManagerFactory artifactManagerFactory;
@@ -145,8 +140,6 @@ public class UnitTestManager extends AbstractTestManager {
                          TransactionSystemClient txSystemClient,
                          DiscoveryServiceClient discoveryClient,
                          ApplicationManagerFactory appManagerFactory,
-                         NamespaceAdmin namespaceAdmin,
-                         StreamManagerFactory streamManagerFactory,
                          LocationFactory locationFactory,
                          MetricsManager metricsManager,
                          ArtifactRepository artifactRepository,
@@ -157,8 +150,6 @@ public class UnitTestManager extends AbstractTestManager {
     this.txSystemClient = txSystemClient;
     this.discoveryClient = discoveryClient;
     this.appManagerFactory = appManagerFactory;
-    this.namespaceAdmin = namespaceAdmin;
-    this.streamManagerFactory = streamManagerFactory;
     this.locationFactory = locationFactory;
     this.artifactRepository = artifactRepository;
     // this should have been set to a temp dir during injector setup
@@ -398,11 +389,6 @@ public class UnitTestManager extends AbstractTestManager {
                                          namespace.getNamespace());
 
     return DriverManager.getConnection(connectString);
-  }
-
-  @Override
-  public StreamManager getStreamManager(StreamId streamId) {
-    return streamManagerFactory.create(Id.Stream.fromEntityId(streamId));
   }
 
   @Override

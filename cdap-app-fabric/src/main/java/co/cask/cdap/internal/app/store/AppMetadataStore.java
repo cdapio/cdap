@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
@@ -120,7 +119,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final byte[] RUN_COUNT_PROGRESS = Bytes.toBytes("run.count.progress");
 
   private static final String TYPE_APP_META = "appMeta";
-  private static final String TYPE_STREAM = "stream";
 
   private static final String TYPE_RUN_RECORD_ACTIVE = "runRecordActive";
 
@@ -1118,22 +1116,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private long getInvertedTsScanKeyPart(long time) {
     long invertedTsKey = getInvertedTsKeyPart(time);
     return invertedTsKey < Long.MAX_VALUE ? invertedTsKey + 1 : invertedTsKey;
-  }
-
-  public void writeStream(String namespaceId, StreamSpecification spec) {
-    write(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, spec.getName()).build(), spec);
-  }
-
-  public StreamSpecification getStream(String namespaceId, String name) {
-    return getFirst(new MDSKey.Builder().add(TYPE_STREAM, namespaceId, name).build(), StreamSpecification.class);
-  }
-
-  public List<StreamSpecification> getAllStreams(String namespaceId) {
-    return list(new MDSKey.Builder().add(TYPE_STREAM, namespaceId).build(), StreamSpecification.class);
-  }
-
-  public void deleteAllStreams(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_STREAM, namespaceId).build());
   }
 
   public void deleteProgramHistory(String namespaceId, String appId, String versionId) {

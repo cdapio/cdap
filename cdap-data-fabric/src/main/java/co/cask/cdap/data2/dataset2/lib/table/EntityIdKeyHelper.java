@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableMap;
 
@@ -50,8 +49,6 @@ public final class EntityIdKeyHelper {
       .put(WorkflowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(ServiceId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
       .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
-      // TODO (CDAP-14584) remove stream and view
-      .put(StreamId.class, EntityTypeSimpleName.STREAM.getSerializedForm())
       .put(ScheduleId.class, EntityTypeSimpleName.SCHEDULE.getSerializedForm())
       .build();
 
@@ -82,13 +79,6 @@ public final class EntityIdKeyHelper {
       String datasetId = datasetInstance.getDataset();
       builder.add(namespaceId);
       builder.add(datasetId);
-    } else if (type.equals(TYPE_MAP.get(StreamId.class))) {
-      // TODO (CDAP-14584) remove stream and view
-      StreamId stream = (StreamId) namespacedEntityId;
-      String namespaceId = stream.getNamespace();
-      String streamId = stream.getStream();
-      builder.add(namespaceId);
-      builder.add(streamId);
     } else if (type.equals(TYPE_MAP.get(ArtifactId.class))) {
       ArtifactId artifactId = (ArtifactId) namespacedEntityId;
       String namespaceId = artifactId.getNamespace();
@@ -126,10 +116,6 @@ public final class EntityIdKeyHelper {
   public static String getV1TargetType(NamespacedEntityId namespacedEntityId) {
     String v1Type = TYPE_MAP.get(namespacedEntityId.getClass());
     switch (v1Type) {
-      // TODO (CDAP-14584) remove stream and view
-      case "stream_view":
-        v1Type = "view";
-        break;
       case MetadataEntity.DATASET:
         v1Type = "datasetinstance";
         break;

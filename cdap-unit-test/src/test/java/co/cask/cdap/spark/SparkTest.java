@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
-import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -29,11 +27,9 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.spark.app.ClassicSparkProgram;
@@ -43,12 +39,9 @@ import co.cask.cdap.spark.app.PythonSpark;
 import co.cask.cdap.spark.app.ScalaClassicSparkProgram;
 import co.cask.cdap.spark.app.ScalaDynamicSpark;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
-import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
 import co.cask.cdap.spark.app.SparkAppUsingGetDataset;
 import co.cask.cdap.spark.app.SparkLogParser;
 import co.cask.cdap.spark.app.SparkServiceProgram;
-import co.cask.cdap.spark.app.StreamFormatSpecSpark;
-import co.cask.cdap.spark.app.StreamSQLSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
 import co.cask.cdap.spark.app.TransactionSpark;
 import co.cask.cdap.spark.app.plugin.PluggableFunc;
@@ -57,20 +50,16 @@ import co.cask.cdap.spark.app.plugin.StringLengthUDT;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.filesystem.Location;
@@ -78,9 +67,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,8 +92,6 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -115,6 +104,8 @@ public class SparkTest extends TestFrameworkTestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTest.class);
 
@@ -128,38 +119,6 @@ public class SparkTest extends TestFrameworkTestBase {
 
   private ApplicationManager deploy(Class<? extends Application> appClass) throws Exception {
     return deployWithArtifact(appClass, ARTIFACTS.get(appClass));
-  }
-
-  @Test
-  public void testStreamSQL() throws Exception {
-    ApplicationManager appManager = deploy(TestSparkApp.class);
-
-    // Create a stream and set the format and schema
-    StreamManager streamManager = getStreamManager("sqlStream");
-    streamManager.createStream();
-    Schema schema = Schema.recordOf("person",
-                                    Schema.Field.of("firstName", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("lastName", Schema.of(Schema.Type.STRING)),
-                                    Schema.Field.of("age", Schema.of(Schema.Type.INT)));
-    streamManager.setStreamProperties(new StreamProperties(86400L, new FormatSpecification("csv", schema), 1000));
-
-    // Send some events. Send them with one milliseconds apart so that we can test the timestamp filter
-    streamManager.send("Bob,Robert,15");
-    TimeUnit.MILLISECONDS.sleep(1);
-    streamManager.send("Eddy,Edison,35");
-    TimeUnit.MILLISECONDS.sleep(1);
-    streamManager.send("Thomas,Edison,60");
-    TimeUnit.MILLISECONDS.sleep(1);
-    streamManager.send("Tom,Thomson,50");
-    TimeUnit.MILLISECONDS.sleep(1);
-    streamManager.send("Roy,Thomson,8");
-    TimeUnit.MILLISECONDS.sleep(1);
-    streamManager.send("Jane,Jenny,6");
-
-    // Run the testing spark program
-    appManager.getSparkManager(StreamSQLSpark.class.getSimpleName())
-      .startAndWaitForRun(Collections.singletonMap("input.stream", "sqlStream"),
-                          ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
   }
 
   @Test
@@ -210,14 +169,17 @@ public class SparkTest extends TestFrameworkTestBase {
   public void testDynamicSpark() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 
-    // Populate data into the stream
-    StreamManager streamManager = getStreamManager("SparkStream");
-    for (int i = 0; i < 10; i++) {
-      streamManager.send("Line " + (i + 1));
+    // Write some data to a local file
+    File inputFile = TEMP_FOLDER.newFile();
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), StandardCharsets.UTF_8)) {
+      for (int i = 0; i < 10; i++) {
+        writer.write("Line " + (i + 1));
+        writer.newLine();
+      }
     }
 
     SparkManager sparkManager = appManager.getSparkManager(ScalaDynamicSpark.class.getSimpleName());
-    sparkManager.startAndWaitForRun(ImmutableMap.of("input", "SparkStream",
+    sparkManager.startAndWaitForRun(ImmutableMap.of("input", inputFile.getAbsolutePath(),
                                                     "output", "ResultTable",
                                                     "tmpdir", TMP_FOLDER.newFolder().getAbsolutePath()),
                                     ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
@@ -233,66 +195,22 @@ public class SparkTest extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testStreamFormatSpec() throws Exception {
-    ApplicationManager appManager = deploy(TestSparkApp.class);
-
-    StreamManager stream = getStreamManager("PeopleStream");
-    stream.send("Old Man,50");
-    stream.send("Baby,1");
-    stream.send("Young Guy,18");
-    stream.send("Small Kid,5");
-    stream.send("Legal Drinker,21");
-
-    Map<String, String> outputArgs = new HashMap<>();
-    FileSetArguments.setOutputPath(outputArgs, "output");
-
-    Map<String, String> runtimeArgs = new HashMap<>();
-    runtimeArgs.putAll(RuntimeArguments.addScope(Scope.DATASET, "PeopleFileSet", outputArgs));
-    runtimeArgs.put("stream.name", "PeopleStream");
-    runtimeArgs.put("output.dataset", "PeopleFileSet");
-    runtimeArgs.put("sql.statement", "SELECT name, age FROM people WHERE age >= 21");
-
-    List<String> programs = Arrays.asList(
-      ScalaStreamFormatSpecSpark.class.getSimpleName(),
-      StreamFormatSpecSpark.class.getSimpleName()
-    );
-    for (String sparkProgramName : programs) {
-      // Clean the output before starting
-      DataSetManager<FileSet> fileSetManager = getDataset("PeopleFileSet");
-      Location outputDir = fileSetManager.get().getLocation("output");
-      outputDir.delete(true);
-
-      SparkManager sparkManager = appManager.getSparkManager(sparkProgramName);
-      sparkManager.startAndWaitForRun(runtimeArgs, ProgramRunStatus.COMPLETED, 180, TimeUnit.SECONDS);
-
-      // Find the output part file. There is only one because the program repartition to 1
-      Location outputFile = Iterables.find(outputDir.list(), input -> input.getName().startsWith("part-r-"));
-
-      // Verify the result
-      List<String> lines = CharStreams.readLines(CharStreams.newReaderSupplier(Locations.newInputSupplier(outputFile),
-                                                                               Charsets.UTF_8));
-      Map<String, Integer> result = new HashMap<>();
-      for (String line : lines) {
-        String[] parts = line.split(":");
-        result.put(parts[0], Integer.parseInt(parts[1]));
-      }
-      Assert.assertEquals(ImmutableMap.of("Old Man", 50, "Legal Drinker", 21), result);
-    }
-  }
-
-  @Test
   public void testPySpark() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
 
-    // Write something to the stream
-    StreamManager streamManager = getStreamManager("SparkStream");
-    for (int i = 0; i < 100; i++) {
-      streamManager.send("Event " + i);
+    // Write some data to a local file
+    File inputFile = TEMP_FOLDER.newFile();
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), StandardCharsets.UTF_8)) {
+      for (int i = 0; i < 100; i++) {
+        writer.write("Event " + i);
+        writer.newLine();
+      }
     }
 
     File outputDir = new File(TMP_FOLDER.newFolder(), "output");
     appManager.getSparkManager(PythonSpark.class.getSimpleName())
-      .startAndWaitForRun(ImmutableMap.of("input.stream", "SparkStream", "output.path", outputDir.getAbsolutePath()),
+      .startAndWaitForRun(ImmutableMap.of("input.file", inputFile.getAbsolutePath(),
+                                          "output.path", outputDir.getAbsolutePath()),
                           ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // Verify the result
@@ -354,19 +272,21 @@ public class SparkTest extends TestFrameworkTestBase {
   @Test
   public void testTransaction() throws Exception {
     ApplicationManager applicationManager = deploy(TestSparkApp.class);
-    StreamManager streamManager = getStreamManager("SparkStream");
 
-    // Write some sentences to the stream
-    streamManager.send("red fox");
-    streamManager.send("brown fox");
-    streamManager.send("grey fox");
-    streamManager.send("brown bear");
-    streamManager.send("black bear");
+    // Write some data to a local file
+    File inputFile = TEMP_FOLDER.newFile();
+    try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(inputFile.toPath(), StandardCharsets.UTF_8))) {
+      writer.println("red fox");
+      writer.println("brown fox");
+      writer.println("grey fox");
+      writer.println("brown bear");
+      writer.println("black bear");
+    }
 
     // Run the spark program
     SparkManager sparkManager = applicationManager.getSparkManager(TransactionSpark.class.getSimpleName());
     sparkManager.start(ImmutableMap.of(
-      "source.stream", "SparkStream",
+      "input.file", inputFile.getAbsolutePath(),
       "keyvalue.table", "KeyValueTable",
       "result.all.dataset", "SparkResult",
       "result.threshold", "2",

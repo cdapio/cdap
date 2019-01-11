@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,7 +82,6 @@ public class EntityExistenceTest {
     existenceVerifier.ensureExists(app);
     existenceVerifier.ensureExists(app.mr(AllProgramsApp.NoOpMR.NAME));
     existenceVerifier.ensureExists(NAMESPACE.dataset(AllProgramsApp.DATASET_NAME));
-    existenceVerifier.ensureExists(NAMESPACE.stream(AllProgramsApp.STREAM_NAME));
   }
 
   @Test
@@ -94,7 +93,6 @@ public class EntityExistenceTest {
     assertDoesNotExist(NamespaceId.DEFAULT.app(DOES_NOT_EXIST));
     assertDoesNotExist(app.mr(DOES_NOT_EXIST));
     assertDoesNotExist(NamespaceId.DEFAULT.dataset(DOES_NOT_EXIST));
-    assertDoesNotExist(NamespaceId.DEFAULT.stream(DOES_NOT_EXIST));
   }
 
   @SuppressWarnings("unchecked")

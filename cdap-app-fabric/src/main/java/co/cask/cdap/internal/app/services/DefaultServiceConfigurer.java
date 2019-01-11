@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -116,7 +116,6 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
                                   "Handler with name %s already existed.", spec.getName());
       handleSpecs.put(spec.getName(), spec);
-      addStreams(configurer.getStreams());
       addDatasetModules(configurer.getDatasetModules());
       addDatasetSpecs(configurer.getDatasetSpecs());
       addPlugins(configurer.getPlugins());

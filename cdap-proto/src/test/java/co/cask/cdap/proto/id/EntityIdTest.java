@@ -49,7 +49,6 @@ public class EntityIdTest {
     ids.add(Ids.namespace("foo").dataset("zoo"));
     ids.add(Ids.namespace("foo").datasetModule("moo"));
     ids.add(Ids.namespace("foo").datasetType("typ"));
-    ids.add(Ids.namespace("foo").stream("t"));
     ids.add(Ids.namespace("foo").app("app"));
     ids.add(Ids.namespace("foo").app("app").workflow("flo"));
     ids.add(Ids.namespace("foo").app("app").mr("flo"));
@@ -62,7 +61,6 @@ public class EntityIdTest {
     ids.add(Ids.namespace("zzz").dataset("zzz"));
     ids.add(Ids.namespace("zzz").datasetModule("zzz"));
     ids.add(Ids.namespace("zzz").datasetType("zzz"));
-    ids.add(Ids.namespace("zzz").stream("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz").workflow("zzz"));
     ids.add(Ids.namespace("zzz").app("zzz").mr("zzz"));
@@ -81,7 +79,6 @@ public class EntityIdTest {
     idsToString.put(Ids.namespace("foo").dataset("zoo"), "dataset:foo.zoo");
     idsToString.put(Ids.namespace("foo").datasetModule("moo"), "dataset_module:foo.moo");
     idsToString.put(Ids.namespace("foo").datasetType("typ"), "dataset_type:foo.typ");
-    idsToString.put(Ids.namespace("foo").stream("sdf"), "stream:foo.sdf");
     idsToString.put(Ids.namespace("foo").app("app"), "application:foo.app.-SNAPSHOT");
     idsToString.put(Ids.namespace("foo").app("app", "v1"), "application:foo.app.v1");
   }
@@ -104,9 +101,6 @@ public class EntityIdTest {
     idsToJson.put(
       Ids.namespace("foo").datasetType("typ"),
       "{\"namespace\":\"foo\",\"type\":\"typ\",\"entity\":\"DATASET_TYPE\"}");
-    idsToJson.put(
-      Ids.namespace("foo").stream("t"),
-      "{\"namespace\":\"foo\",\"stream\":\"t\",\"entity\":\"STREAM\"}");
     idsToJson.put(
       Ids.namespace("foo").app("app"),
       "{\"namespace\":\"foo\",\"application\":\"app\",\"version\":\"-SNAPSHOT\",\"entity\":\"APPLICATION\"}");

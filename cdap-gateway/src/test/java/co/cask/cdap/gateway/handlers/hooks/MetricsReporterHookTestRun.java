@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,25 +64,6 @@ public class MetricsReporterHookTestRun extends GatewayTestBase {
     verifyMetrics(received + 1, context, "system.request.received");
     verifyMetrics(successful + 1, context, "system.response.successful");
     verifyMetrics(clientError, context, "system.response.client-error");
-  }
-
-  @Test
-  public void testMetricsNotFound() throws Exception {
-    String context = "&tag=namespace:system&tag=component:appfabric&tag=handler:StreamHandler&tag=method:getInfo";
-
-    long received = getMetricValue(context, "system.request.received");
-    long successful = getMetricValue(context, "system.response.successful");
-    long clientError = getMetricValue(context, "system.response.client-error");
-
-    // Get info of non-existent stream
-    HttpResponse response = GatewayFastTestsSuite.doGet(
-      "/v3/namespaces/default/streams/metrics-hook-test-non-existent-stream");
-    Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getStatusLine().getStatusCode());
-
-    // received and clientError should have increased by one, successful should be the same
-    verifyMetrics(received + 1, context, "system.request.received");
-    verifyMetrics(successful, context, "system.response.successful");
-    verifyMetrics(clientError + 1, context, "system.response.client-error");
   }
 
   /**

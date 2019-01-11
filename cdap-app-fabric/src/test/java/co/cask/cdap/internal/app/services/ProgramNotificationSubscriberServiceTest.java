@@ -139,7 +139,7 @@ public class ProgramNotificationSubscriberServiceTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     programStateWriter.start(runId, programOptions, null, programDescriptor);
@@ -214,7 +214,7 @@ public class ProgramNotificationSubscriberServiceTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
     heartBeatTxnl.execute(() -> {
       programStateWriter.start(runId, programOptions, null, programDescriptor);

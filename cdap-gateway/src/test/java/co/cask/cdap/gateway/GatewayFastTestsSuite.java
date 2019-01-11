@@ -39,8 +39,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -57,7 +55,7 @@ import java.io.IOException;
   RuntimeArgumentTestRun.class
 })
 
-public class GatewayFastTestsSuite {
+public class GatewayFastTestsSuite extends GatewayTestBase {
 
   private static final Header AUTH_HEADER = GatewayTestBase.getAuthHeader();
 
@@ -155,20 +153,6 @@ public class GatewayFastTestsSuite {
                       String.format("%s-1.0.%d.jar", application.getSimpleName(), System.currentTimeMillis()));
     request.setEntity(new FileEntity(artifactJar));
     return execute(request);
-  }
-
-  @BeforeClass
-  public static void beforeClass() throws Exception {
-    GatewayTestBase.beforeClass();
-    GatewayTestBase.runBefore = false;
-    GatewayTestBase.runAfter = false;
-
-  }
-
-  @AfterClass
-  public static void afterClass() throws Exception {
-    GatewayTestBase.runAfter = true;
-    GatewayTestBase.afterClass();
   }
 
   private static File buildAppArtifact(Class<?> cls, String name, File tmpFolder) throws IOException {

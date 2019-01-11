@@ -48,7 +48,6 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -185,7 +184,6 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "list app versions " + FakeApp.NAME, V1_SNAPSHOT);
     testCommandOutputContains(cli, "list app versions " + FakeApp.NAME, ApplicationId.DEFAULT_VERSION);
     testCommandOutputContains(cli, "list dataset instances", FakeApp.DS_NAME);
-    testCommandOutputContains(cli, "list streams", FakeApp.STREAM_NAME);
   }
 
   @Test
@@ -311,66 +309,6 @@ public class CLIMainTest extends CLITestBase {
     }
     testCommandOutputContains(cli, "delete app " + "OwnedApp", "Successfully");
     testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
-  }
-
-  @Test
-  public void testStream() throws Exception {
-    String streamId = PREFIX + "sdf123";
-
-    File file = new File(TMP_FOLDER.newFolder(), "test1.txt");
-    StreamProperties streamProperties = new StreamProperties(2L, null, 10, "Golden Stream");
-    try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
-      writer.write(GSON.toJson(streamProperties));
-    }
-    testCommandOutputContains(cli, "create stream " + streamId + " " + file.getAbsolutePath(),
-                              "Successfully created stream");
-    testCommandOutputContains(cli, "describe stream " + streamId, "Golden Stream");
-    testCommandOutputContains(cli, "set stream description " + streamId + " 'Silver Stream'",
-                              "Successfully set stream description");
-    testCommandOutputContains(cli, "describe stream " + streamId, "Silver Stream");
-    testCommandOutputContains(cli, "delete stream " + streamId, "Successfully deleted stream");
-
-    testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
-    testCommandOutputContains(cli, "list streams", streamId);
-    testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "send stream " + streamId + " helloworld", "Successfully sent stream event");
-    testCommandOutputContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s 1", "helloworld");
-    testCommandOutputContains(cli, "get stream " + streamId + " -10m -0s", "helloworld");
-    testCommandOutputContains(cli, "get stream " + streamId + " -10m", "helloworld");
-    testCommandOutputContains(cli, "truncate stream " + streamId, "Successfully truncated stream");
-    testCommandOutputNotContains(cli, "get stream " + streamId, "helloworld");
-    testCommandOutputContains(cli, "set stream ttl " + streamId + " 100000", "Successfully set TTL of stream");
-    testCommandOutputContains(cli, "set stream notification-threshold " + streamId + " 1",
-                              "Successfully set notification threshold of stream");
-    testCommandOutputContains(cli, "describe stream " + streamId, "100000");
-
-    file = new File(TMP_FOLDER.newFolder(), "test2.txt");
-    // If the file not exist or not a file, upload should fails with an error.
-    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(), "Not a file");
-    testCommandOutputContains(cli,
-                              "load stream " + streamId + " " + file.getParentFile().getAbsolutePath(),
-                              "Not a file");
-
-    // Generate a file to send
-    try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
-      for (int i = 0; i < 10; i++) {
-        writer.write(String.format("%s, Event %s", i, i));
-        writer.newLine();
-      }
-    }
-    testCommandOutputContains(cli, "load stream " + streamId + " " + file.getAbsolutePath(),
-                              "Successfully loaded file to stream");
-    testCommandOutputContains(cli, "get stream " + streamId, "9, Event 9");
-    testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              String.format("No schema found for stream '%s'", streamId));
-    testCommandOutputContains(cli, "set stream format " + streamId + " csv 'body string'",
-                              String.format("Successfully set format of stream '%s'", streamId));
-    testCommandOutputContains(cli, "execute 'show tables'", String.format("stream_%s", streamId));
-    testCommandOutputContains(cli, "get stream-stats " + streamId,
-                              "Analyzed 10 Stream events in the time range [0, 9223372036854775807]");
-    testCommandOutputContains(cli, "get stream-stats " + streamId + " limit 5 start 5 end 10",
-                              "Analyzed 0 Stream events in the time range [5, 10]");
   }
 
   @Test
@@ -859,7 +797,7 @@ public class CLIMainTest extends CLITestBase {
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_WORKFLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
+    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,app");
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_APP_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));

@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -55,7 +54,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     }
     jsonObj.add("artifactId", context.serialize(src.getArtifactId()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("streams", serializeMap(src.getStreams(), context, StreamSpecification.class));
     jsonObj.add("datasetModules", serializeMap(src.getDatasetModules(), context, String.class));
     jsonObj.add("datasetInstances", serializeMap(src.getDatasets(), context, DatasetCreationSpec.class));
     jsonObj.add("mapReduces", serializeMap(src.getMapReduce(), context, MapReduceSpecification.class));
@@ -88,8 +86,6 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
 
     ArtifactId artifactId = context.deserialize(jsonObj.get("artifactId"), ArtifactId.class);
 
-    Map<String, StreamSpecification> streams = deserializeMap(jsonObj.get("streams"),
-                                                              context, StreamSpecification.class);
     Map<String, String> datasetModules = deserializeMap(jsonObj.get("datasetModules"), context, String.class);
     Map<String, DatasetCreationSpec> datasetInstances = deserializeMap(jsonObj.get("datasetInstances"),
                                                                        context,
@@ -111,7 +107,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               WorkerSpecification.class);
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
 
-    return new DefaultApplicationSpecification(name, appVersion, description, configuration, artifactId, streams,
+    return new DefaultApplicationSpecification(name, appVersion, description, configuration, artifactId,
                                                datasetModules, datasetInstances,
                                                mapReduces, sparks,
                                                workflows, services, programSchedules, workers, plugins);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,10 +39,7 @@ import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.preview.PreviewDataModules;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data.stream.preview.PreviewStreamAdminModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -109,8 +106,6 @@ public class DefaultPreviewManager implements PreviewManager {
   private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final StreamAdmin streamAdmin;
-  private final StreamCoordinatorClient streamCoordinatorClient;
   private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final Cache<ApplicationId, Injector> appInjectors;
@@ -121,7 +116,6 @@ public class DefaultPreviewManager implements PreviewManager {
                         PreferencesService preferencesService, SecureStore secureStore,
                         TransactionManager transactionManager, ArtifactRepository artifactRepository,
                         ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
-                        StreamAdmin streamAdmin, StreamCoordinatorClient streamCoordinatorClient,
                         PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -133,8 +127,6 @@ public class DefaultPreviewManager implements PreviewManager {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
-    this.streamAdmin = streamAdmin;
-    this.streamCoordinatorClient = streamCoordinatorClient;
     this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
 
@@ -214,12 +206,11 @@ public class DefaultPreviewManager implements PreviewManager {
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
       new PreviewSecureStoreModule(secureStore),
-      new PreviewStreamAdminModule(streamAdmin),
       new PreviewDiscoveryRuntimeModule(discoveryService),
       new LocalLocationModule(),
       new ConfigStoreModule().getStandaloneModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-                              privilegesManager, streamCoordinatorClient, preferencesService),
+                              privilegesManager, preferencesService),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionManager),
       new PreviewDataModules().getDataSetsModule(datasetFramework),

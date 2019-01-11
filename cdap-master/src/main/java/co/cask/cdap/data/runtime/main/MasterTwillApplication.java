@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,6 @@ public class MasterTwillApplication implements TwillApplication {
     .put(Constants.Service.MESSAGING_SERVICE, "messaging.")
     .put(Constants.Service.TRANSACTION, "data.tx.")
     .put(Constants.Service.DATASET_EXECUTOR, "dataset.executor.")
-    .put(Constants.Service.STREAMS, "stream.")
     .put(Constants.Service.LOGSAVER, "log.saver.")
     .put(Constants.Service.METRICS_PROCESSOR, "metrics.processor.")
     .put(Constants.Service.METRICS, "metrics.")
@@ -96,7 +95,7 @@ public class MasterTwillApplication implements TwillApplication {
 
     Map<String, Map<String, LocalizeResource>> runnableLocalizeResources = new HashMap<>();
     for (String service : ALL_SERVICES.keySet()) {
-      runnableLocalizeResources.put(service, new HashMap<String, LocalizeResource>());
+      runnableLocalizeResources.put(service, new HashMap<>());
     }
     this.runnableLocalizeResources = runnableLocalizeResources;
   }
@@ -154,12 +153,10 @@ public class MasterTwillApplication implements TwillApplication {
       addMessaging(
         addDatasetOpExecutor(
           addLogSaverService(
-            addStreamService(
-              addTransactionService(
-                addMetricsProcessor (
-                  addMetricsService(
-                    TwillSpecification.Builder.with().setName(NAME).withRunnable()
-                  )
+            addTransactionService(
+              addMetricsProcessor (
+                addMetricsService(
+                  TwillSpecification.Builder.with().setName(NAME).withRunnable()
                 )
               )
             )
@@ -174,8 +171,6 @@ public class MasterTwillApplication implements TwillApplication {
       LOG.info("Explore module disabled - will not launch explore runnable.");
     }
     return runnableSetter
-        .withPlacementPolicy()
-          .add(TwillSpecification.PlacementPolicy.Type.DISTRIBUTED, Constants.Service.STREAMS)
         .withOrder()
           .begin(Constants.Service.MESSAGING_SERVICE, Constants.Service.TRANSACTION, Constants.Service.DATASET_EXECUTOR)
         .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
@@ -216,15 +211,6 @@ public class MasterTwillApplication implements TwillApplication {
     return addResources(Constants.Service.TRANSACTION,
                         builder.add(new TransactionServiceTwillRunnable(Constants.Service.TRANSACTION,
                                                                         CCONF_NAME, HCONF_NAME), resourceSpec));
-  }
-
-  private Builder.RunnableSetter addStreamService(Builder.MoreRunnable builder) {
-    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Stream.CONTAINER_VIRTUAL_CORES,
-                                                                     Constants.Stream.CONTAINER_MEMORY_MB,
-                                                                     Constants.Service.STREAMS);
-    return addResources(Constants.Service.STREAMS,
-                        builder.add(new StreamHandlerRunnable(Constants.Service.STREAMS,
-                                                              CCONF_NAME, HCONF_NAME), resourceSpec));
   }
 
   private Builder.RunnableSetter addDatasetOpExecutor(Builder.MoreRunnable builder) {

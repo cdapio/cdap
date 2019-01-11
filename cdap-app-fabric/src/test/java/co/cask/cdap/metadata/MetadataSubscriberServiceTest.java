@@ -76,7 +76,6 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import co.cask.cdap.proto.profile.Profile;
@@ -105,7 +104,6 @@ import java.util.concurrent.TimeoutException;
  */
 public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
-  private final StreamId stream1 = NamespaceId.DEFAULT.stream("stream1");
   private final DatasetId dataset1 = NamespaceId.DEFAULT.dataset("dataset1");
   private final DatasetId dataset2 = NamespaceId.DEFAULT.dataset("dataset2");
   private final DatasetId dataset3 = NamespaceId.DEFAULT.dataset("dataset3");
@@ -204,13 +202,6 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Set<EntityId> expectedUsage = new HashSet<>(Arrays.asList(dataset1, dataset3));
     UsageRegistry usageRegistry = getInjector().getInstance(UsageRegistry.class);
     Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getDatasets(spark1)),
-                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
-    // Emit one more usage
-    usageWriter.register(service1, stream1);
-    expectedUsage.clear();
-    expectedUsage.add(stream1);
-    Tasks.waitFor(true, () -> expectedUsage.equals(usageRegistry.getStreams(service1)),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 

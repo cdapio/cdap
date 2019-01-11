@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,32 +40,39 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
   public void testSimpleJoin() throws Exception {
     ApplicationWithPrograms app = deployApp(AppWithMapReduceUsingMultipleInputs.class);
 
-    final FileSet fileSet = datasetCache.getDataset(AppWithMapReduceUsingMultipleInputs.PURCHASES);
+    FileSet fileSet = datasetCache.getDataset(AppWithMapReduceUsingMultipleInputs.PURCHASES);
     Location inputFile = fileSet.getBaseLocation().append("inputFile");
     inputFile.createNew();
 
-    PrintWriter writer = new PrintWriter(inputFile.getOutputStream());
-    // the PURCHASES dataset consists of purchase records in the format: <customerId> <spend>
-    writer.println("1 20");
-    writer.println("1 25");
-    writer.println("1 30");
-    writer.println("2 5");
-    writer.close();
+    try (PrintWriter writer = new PrintWriter(inputFile.getOutputStream())) {
+      // the PURCHASES dataset consists of purchase records in the format: <customerId> <spend>
+      writer.println("1 20");
+      writer.println("1 25");
+      writer.println("1 30");
+      writer.println("2 5");
+    }
 
-    // write some of the purchases to the stream
-    writeToStream(AppWithMapReduceUsingMultipleInputs.PURCHASES, "2 13");
-    writeToStream(AppWithMapReduceUsingMultipleInputs.PURCHASES, "3 60");
+    // write some of the purchases to the second input file set
+    fileSet = datasetCache.getDataset(AppWithMapReduceUsingMultipleInputs.PURCHASES2);
+    inputFile = fileSet.getBaseLocation().append("inputFile");
+    inputFile.createNew();
+
+    try (PrintWriter writer = new PrintWriter(inputFile.getOutputStream())) {
+      // the PURCHASES dataset consists of purchase records in the format: <customerId> <spend>
+      writer.println("2 13");
+      writer.println("3 60");
+    }
 
     FileSet fileSet2 = datasetCache.getDataset(AppWithMapReduceUsingMultipleInputs.CUSTOMERS);
     inputFile = fileSet2.getBaseLocation().append("inputFile");
     inputFile.createNew();
 
     // the CUSTOMERS dataset consists of records in the format: <customerId> <customerName>
-    writer = new PrintWriter(inputFile.getOutputStream());
-    writer.println("1 Bob");
-    writer.println("2 Samuel");
-    writer.println("3 Joe");
-    writer.close();
+    try (PrintWriter writer = new PrintWriter(inputFile.getOutputStream())) {
+      writer.println("1 Bob");
+      writer.println("2 Samuel");
+      writer.println("3 Joe");
+    }
 
     // Using multiple inputs, this MapReduce will join on the two above datasets to get aggregate results.
     // The records are expected to be in the form: <customerId> <customerName> <totalSpend>

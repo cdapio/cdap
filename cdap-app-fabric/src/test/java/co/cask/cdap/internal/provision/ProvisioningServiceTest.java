@@ -352,7 +352,7 @@ public class ProvisioningServiceTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap(), Collections.emptyMap());
+      Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programRunId.getParent(), appSpec);
 
     return new TaskFields(programDescriptor, programOptions, programRunId);

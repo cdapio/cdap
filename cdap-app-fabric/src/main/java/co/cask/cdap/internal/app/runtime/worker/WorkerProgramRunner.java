@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.ProgramContextAware;
@@ -51,7 +50,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.Closeable;
 import java.util.Collections;
 
 /**
@@ -64,7 +62,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private final StreamWriterFactory streamWriterFactory;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -75,7 +72,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                             TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
+                             TransactionSystemClient txClient,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService, MetadataReader metadataReader,
                              MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin) {
@@ -85,7 +82,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.streamWriterFactory = streamWriterFactory;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
@@ -132,7 +128,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       BasicWorkerContext context = new BasicWorkerContext(newWorkerSpec, program, options,
                                                           cConf, instanceId, instanceCount,
                                                           metricsCollectionService, datasetFramework, txClient,
-                                                          discoveryServiceClient, streamWriterFactory,
+                                                          discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, metadataReader, metadataPublisher,
                                                           namespaceQueryAdmin);
@@ -140,7 +136,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
-      worker.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),
+      worker.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
                          Threads.SAME_THREAD_EXECUTOR);
 
       ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId().run(runId),

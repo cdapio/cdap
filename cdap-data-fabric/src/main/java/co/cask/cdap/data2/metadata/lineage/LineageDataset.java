@@ -35,7 +35,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -46,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +90,6 @@ public class LineageDataset extends AbstractDataset {
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
-  private static final char STREAM_MARKER = 's';
   private static final char TOPIC_MARKER = 't';
   private static final char NONE_MARKER = '0';
 
@@ -173,38 +172,6 @@ public class LineageDataset extends AbstractDataset {
   }
 
   /**
-   * Add a program-stream access.
-   *
-   * @param run program run information
-   * @param stream stream accessed by the program
-   * @param accessType access type
-   * @param accessTimeMillis time of access
-   */
-  public void addAccess(ProgramRunId run, StreamId stream,
-                        AccessType accessType, long accessTimeMillis) {
-    addAccess(run, stream, accessType, accessTimeMillis, null);
-  }
-
-  /**
-   * Add a program-stream access.
-   *
-   * @param run program run information
-   * @param stream stream accessed by the program
-   * @param accessType access type
-   * @param accessTimeMillis time of access
-   * @param component program component such as flowlet id, etc.
-   */
-  public void addAccess(ProgramRunId run, StreamId stream,
-                        AccessType accessType, long accessTimeMillis, @Nullable NamespacedEntityId component) {
-    LOG.trace("Recording access run={}, stream={}, accessType={}, accessTime={}, component={}",
-              run, stream, accessType, accessTimeMillis, component);
-    accessRegistryTable.put(getStreamKey(stream, run, accessType, component),
-                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
-    accessRegistryTable.put(getProgramKey(run, stream, accessType, component),
-                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
-  }
-
-  /**
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
   public Set<NamespacedEntityId> getEntitiesForRun(ProgramRunId run) {
@@ -239,21 +206,6 @@ public class LineageDataset extends AbstractDataset {
                                     Predicate<Relation> filter) {
     return scanRelations(getDatasetScanStartKey(datasetInstance, end),
                          getDatasetScanEndKey(datasetInstance, start),
-                         filter);
-  }
-
-  /**
-   * Fetch program-stream access information for a dataset for a given period.
-   *
-   * @param stream stream for which to fetch access information
-   * @param start start time period
-   * @param end end time period
-   * @param filter filter to be applied on result set
-   * @return program-dataset access information
-   */
-  public Set<Relation> getRelations(StreamId stream, long start, long end, Predicate<Relation> filter) {
-    return scanRelations(getStreamScanStartKey(stream, end),
-                         getStreamScanEndKey(stream, start),
                          filter);
   }
 
@@ -319,14 +271,6 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getStreamKey(StreamId stream, ProgramRunId run,
-                              AccessType accessType, @Nullable NamespacedEntityId component) {
-    MDSKey.Builder builder = new MDSKey.Builder();
-    addStream(builder, stream);
-    addDataKey(builder, run, accessType, component);
-    return builder.build().getKey();
-  }
-
   private byte[] getTopicKey(TopicId topicId) {
     return new MDSKey.Builder()
       .add(TOPIC_MARKER)
@@ -358,20 +302,6 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getProgramKey(ProgramRunId run, StreamId stream,
-                               AccessType accessType, @Nullable NamespacedEntityId component) {
-    long invertedStartTime = getInvertedStartTime(run);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    addProgram(builder, run.getParent());
-    builder.add(invertedStartTime);
-    addStream(builder, stream);
-    builder.add(run.getEntityName());
-    builder.add(accessType.getType());
-    addComponent(builder, component);
-
-    return builder.build().getKey();
-  }
-
   private RowKey parseRow(Row row) {
     ProgramId program;
     NamespacedEntityId data;
@@ -389,7 +319,6 @@ public class LineageDataset extends AbstractDataset {
         return new RowKey(program, data, runId);
 
       case DATASET_MARKER:
-      case STREAM_MARKER:
         data = toEntityId(splitter, marker);
         splitter.skipLong(); // inverted start time
         marker = (char) splitter.getInt();
@@ -421,27 +350,6 @@ public class LineageDataset extends AbstractDataset {
     // time is inverted, hence we need to have start time in end key.
     // Since start time is inclusive, subtract 1 to make it exclusive.
     return getDatasetScanKey(datasetInstance, start - 1);
-  }
-
-  private byte[] getStreamScanKey(StreamId stream, long time) {
-    long invertedStartTime = invertTime(time);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    addStream(builder, stream);
-    builder.add(invertedStartTime);
-
-    return builder.build().getKey();
-  }
-
-  private byte[] getStreamScanStartKey(StreamId stream, long end) {
-    // time is inverted, hence we need to have end time in start key.
-    // Since end time is exclusive, add 1 to make it inclusive.
-    return getStreamScanKey(stream, end + 1);
-  }
-
-  private byte[] getStreamScanEndKey(StreamId stream, long start) {
-    // time is inverted, hence we need to have start time in end key.
-    // Since start time is inclusive, subtract 1 to make it exclusive.
-    return getStreamScanKey(stream, start - 1);
   }
 
   private byte[] getProgramScanKey(ProgramId program, long time) {
@@ -478,12 +386,6 @@ public class LineageDataset extends AbstractDataset {
       .add(datasetInstance.getEntityName());
   }
 
-  private void addStream(MDSKey.Builder keyBuilder, StreamId stream) {
-    keyBuilder.add(STREAM_MARKER)
-      .add(stream.getNamespace())
-      .add(stream.getEntityName());
-  }
-
   private void addProgram(MDSKey.Builder keyBuilder, ProgramId program) {
     keyBuilder.add(PROGRAM_MARKER)
       .add(program.getNamespace())
@@ -500,9 +402,6 @@ public class LineageDataset extends AbstractDataset {
     switch (marker) {
       case DATASET_MARKER:
         return new DatasetId(splitter.getString(), splitter.getString());
-
-      case STREAM_MARKER:
-        return new StreamId(splitter.getString(), splitter.getString());
 
       case PROGRAM_MARKER:
         return new ProgramId(splitter.getString(), splitter.getString(),
@@ -557,31 +456,17 @@ public class LineageDataset extends AbstractDataset {
 
     DatasetId datasetInstance = (DatasetId) rowInfo.get(DATASET_MARKER);
     LOG.trace("Got datasetInstance {}", datasetInstance);
-    StreamId stream = (StreamId) rowInfo.get(STREAM_MARKER);
-    LOG.trace("Got stream {}", stream);
 
     ProgramId program = (ProgramId) rowInfo.get(PROGRAM_MARKER);
     LOG.trace("Got program {}", program);
     NamespacedEntityId component = toComponent(splitter, program);
     LOG.trace("Got component {}", component);
 
-    if (stream == null) {
-      return new Relation(datasetInstance,
-                          program,
-                          accessType,
-                          runId,
-                          component == null ?
-                            ImmutableSet.<NamespacedEntityId>of() :
-                            ImmutableSet.of((NamespacedEntityId) component));
-    }
-
-    return new Relation(stream,
+    return new Relation(datasetInstance,
                         program,
                         accessType,
                         runId,
-                        component == null ?
-                          ImmutableSet.<NamespacedEntityId>of() :
-                          ImmutableSet.of((NamespacedEntityId) component));
+                        component == null ? Collections.emptySet() : Collections.singleton(component));
   }
 
   private static final class RowKey {

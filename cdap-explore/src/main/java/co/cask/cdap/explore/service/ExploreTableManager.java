@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
@@ -44,18 +43,12 @@ import co.cask.cdap.explore.table.CreateStatementBuilder;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
 import co.cask.cdap.hive.objectinspector.ObjectInspectorFactory;
-import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -76,15 +69,10 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Executes disabling and enabling of datasets and streams and adding and dropping of partitions.
+ * Executes disabling and enabling of datasets and adding and dropping of partitions.
  */
 public class ExploreTableManager {
   private static final Logger LOG = LoggerFactory.getLogger(ExploreTableManager.class);
-
-  // A GSON object that knows how to serialize Schema type.
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
 
   // additional session configuration to make Hive fail without sleep/retry if it can't acquire locks
   private static final Map<String, String> IMMEDIATE_TIMEOUT_CONF =
@@ -106,62 +94,6 @@ public class ExploreTableManager {
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.tableNaming = tableNaming;
     this.shouldEscapeColumns = ExploreServiceUtils.shouldEscapeColumns(cConf, hConf);
-  }
-
-  /**
-   * Enable exploration on a stream by creating a corresponding Hive table. Enabling exploration on a
-   * stream that has already been enabled is a no-op. Assumes the stream actually exists.
-   *
-   * @param tableName name of the Hive table to create
-   * @param streamId the ID of the stream
-   * @param formatSpec the format specification for the table
-   * @return query handle for creating the Hive table for the stream
-   * @throws UnsupportedTypeException if the stream schema is not compatible with Hive
-   * @throws ExploreException if there was an exception submitting the create table statement
-   * @throws SQLException if there was a problem with the create table statement
-   */
-  public QueryHandle enableStream(String tableName, StreamId streamId, FormatSpecification formatSpec)
-    throws UnsupportedTypeException, ExploreException, SQLException {
-    String streamName = streamId.getStream();
-    LOG.debug("Enabling explore for stream {} with table {}", streamId, tableName);
-
-    // schema of a stream is always timestamp, headers, and then the schema of the body.
-    List<Schema.Field> fields = Lists.newArrayList(
-      Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("headers", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
-    if (formatSpec.getSchema() != null) {
-      fields.addAll(formatSpec.getSchema().getFields());
-    }
-    Schema schema = Schema.recordOf("streamEvent", fields);
-
-    Map<String, String> serdeProperties = ImmutableMap.of(
-      Constants.Explore.STREAM_NAME, streamName,
-      Constants.Explore.STREAM_NAMESPACE, streamId.getNamespace(),
-      Constants.Explore.FORMAT_SPEC, GSON.toJson(formatSpec));
-
-    String createStatement = new CreateStatementBuilder(streamName, null, tableName, shouldEscapeColumns)
-      .setSchema(schema)
-      .setTableComment("CDAP Stream")
-      .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
-
-    LOG.debug("Running create statement for stream {} with table {}: {}", streamName, tableName, createStatement);
-
-    return exploreService.execute(streamId.getParent(), createStatement);
-  }
-
-  /**
-   * Disable exploration on the given stream by dropping the Hive table for the stream.
-   *
-   * @param tableName name of the table to delete
-   * @param streamId the ID of the stream to disable
-   * @return the query handle for disabling the stream
-   * @throws ExploreException if there was an exception dropping the table
-   * @throws SQLException if there was a problem with the drop table statement
-   */
-  public QueryHandle disableStream(String tableName, StreamId streamId) throws ExploreException, SQLException {
-    LOG.debug("Disabling explore for stream {} with table {}", streamId, tableName);
-    String deleteStatement = generateDeleteTableStatement(null, tableName);
-    return exploreService.execute(streamId.getParent(), deleteStatement);
   }
 
   /**

@@ -31,22 +31,16 @@ public class UsageRegistryTest extends UsageDatasetTest {
     UsageRegistry registry = new BasicUsageRegistry(
       dsFrameworkUtil.getFramework(), dsFrameworkUtil.getInjector().getInstance(TransactionSystemClient.class));
 
-    // register usage for a stream and a dataset for single and multiple "owners", including a non-program
+    // register usage for a dataset for single and multiple "owners", including a non-program
     registry.register(worker1, datasetInstance1);
-    registry.register(worker2, stream1);
     registry.registerAll(ImmutableList.of(worker21, worker22), datasetInstance2);
-    registry.registerAll(ImmutableList.of(worker21, worker22), stream1);
 
     // validate usage
     Assert.assertEquals(ImmutableSet.of(datasetInstance1), registry.getDatasets(worker1));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker2));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker21));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker22));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker21));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker22));
     Assert.assertEquals(ImmutableSet.of(worker1), registry.getPrograms(datasetInstance1));
     Assert.assertEquals(ImmutableSet.of(worker21, worker22), registry.getPrograms(datasetInstance2));
-    Assert.assertEquals(ImmutableSet.of(worker2, worker21, worker22), registry.getPrograms(stream1));
 
     // register datasets again
     registry.register(worker1, datasetInstance1);
@@ -54,42 +48,29 @@ public class UsageRegistryTest extends UsageDatasetTest {
 
     // validate usage
     Assert.assertEquals(ImmutableSet.of(datasetInstance1), registry.getDatasets(worker1));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker2));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker21));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker22));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker21));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker22));
     Assert.assertEquals(ImmutableSet.of(worker1), registry.getPrograms(datasetInstance1));
     Assert.assertEquals(ImmutableSet.of(worker21, worker22), registry.getPrograms(datasetInstance2));
-    Assert.assertEquals(ImmutableSet.of(worker2, worker21, worker22), registry.getPrograms(stream1));
 
     // unregister app
     registry.unregister(worker1.getParent());
 
     // validate usage for that app is gone
     Assert.assertEquals(ImmutableSet.of(), registry.getDatasets(worker1));
-    Assert.assertEquals(ImmutableSet.of(), registry.getStreams(worker2));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker21));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker22));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker21));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker22));
     Assert.assertEquals(ImmutableSet.of(), registry.getPrograms(datasetInstance1));
     Assert.assertEquals(ImmutableSet.of(worker21, worker22), registry.getPrograms(datasetInstance2));
-    Assert.assertEquals(ImmutableSet.of(worker21, worker22), registry.getPrograms(stream1));
 
     // register application 1 again
     registry.register(worker1, datasetInstance1);
-    registry.register(worker2, stream1);
 
     // validate it was re-registered
     Assert.assertEquals(ImmutableSet.of(datasetInstance1), registry.getDatasets(worker1));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker2));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker21));
     Assert.assertEquals(ImmutableSet.of(datasetInstance2), registry.getDatasets(worker22));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker21));
-    Assert.assertEquals(ImmutableSet.of(stream1), registry.getStreams(worker22));
     Assert.assertEquals(ImmutableSet.of(worker1), registry.getPrograms(datasetInstance1));
     Assert.assertEquals(ImmutableSet.of(worker21, worker22), registry.getPrograms(datasetInstance2));
-    Assert.assertEquals(ImmutableSet.of(worker2, worker21, worker22), registry.getPrograms(stream1));
   }
 }

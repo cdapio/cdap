@@ -25,7 +25,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.reflect.TypeToken;
@@ -41,6 +40,8 @@ import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -71,12 +72,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
   public void testWorkerUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.worker(AllProgramsApp.NoOpWorker.NAME);
-    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
     Assert.assertEquals(0, getAppDatasetUsage(app).size());
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
@@ -88,19 +84,11 @@ public class UsageHandlerTestRun extends ClientTestBase {
       // Wait for the worker to complete
       assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 20);
 
-      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
-      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
-      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
-
       Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
     } finally {
       deleteApp(app);
-
-      Assert.assertEquals(0, getAppStreamUsage(app).size());
-      Assert.assertEquals(0, getProgramStreamUsage(program).size());
-      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
 
       Assert.assertEquals(0, getAppDatasetUsage(app).size());
       Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
@@ -111,15 +99,12 @@ public class UsageHandlerTestRun extends ClientTestBase {
   public void testMapReduceUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.mr(AllProgramsApp.NoOpMR.NAME);
-    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
     final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+    final DatasetId dataset3 = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3);
 
     Assert.assertEquals(0, getAppDatasetUsage(app).size());
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    Assert.assertEquals(0, getDatasetProgramUsage(dataset3).size());
 
     deployApp(AllProgramsApp.class);
     // now that we only support dynamic dataset instantiation in initialize (and not in configure as before),
@@ -128,22 +113,18 @@ public class UsageHandlerTestRun extends ClientTestBase {
     assertProgramRunning(getProgramClient(), program);
     assertProgramStopped(getProgramClient(), program);
     try {
-      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
-      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
-      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
-
       Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
       Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
       Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+
+      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset3));
+      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset3));
+      Assert.assertTrue(getDatasetProgramUsage(dataset3).contains(program));
     } finally {
       deleteApp(app);
-
-      Assert.assertEquals(0, getAppStreamUsage(app).size());
-      Assert.assertEquals(0, getProgramStreamUsage(program).size());
-      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
       Assert.assertEquals(0, getAppDatasetUsage(app).size());
       Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset3).size());
     }
   }
 
@@ -151,15 +132,16 @@ public class UsageHandlerTestRun extends ClientTestBase {
   public void testSparkUsage() throws Exception {
     final ApplicationId app = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
     final ProgramId program = app.spark(AllProgramsApp.NoOpSpark.NAME);
-    final StreamId stream = NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME);
-    final DatasetId dataset = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
-
-    Assert.assertEquals(0, getAppStreamUsage(app).size());
-    Assert.assertEquals(0, getProgramStreamUsage(program).size());
-    Assert.assertEquals(0, getStreamProgramUsage(stream).size());
+    List<DatasetId> datasets = Arrays.asList(
+      NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME),
+      NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2),
+      NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3)
+    );
 
     Assert.assertEquals(0, getAppDatasetUsage(app).size());
-    Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    for (DatasetId dataset : datasets) {
+      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+    }
 
     deployApp(AllProgramsApp.class);
 
@@ -168,47 +150,18 @@ public class UsageHandlerTestRun extends ClientTestBase {
       startProgram(program);
       assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 60);
 
-      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
-      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
-      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
-
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
-      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
-      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+      for (DatasetId dataset : datasets) {
+        Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
+        Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
+        Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
+      }
     } finally {
       deleteApp(app);
 
-      Assert.assertEquals(0, getAppStreamUsage(app).size());
-      Assert.assertEquals(0, getProgramStreamUsage(program).size());
-      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
       Assert.assertEquals(0, getAppDatasetUsage(app).size());
-      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
-    }
-
-    deployApp(AllProgramsApp.class);
-
-    try {
-      // the program will run and stop by itself.
-      startProgram(program);
-      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 20);
-
-      Assert.assertTrue(getAppStreamUsage(app).contains(stream));
-      Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
-      Assert.assertTrue(getStreamProgramUsage(stream).contains(program));
-
-      Assert.assertTrue(getProgramDatasetUsage(program).contains(dataset));
-      Assert.assertTrue(getAppDatasetUsage(app).contains(dataset));
-      Assert.assertTrue(getDatasetProgramUsage(dataset).contains(program));
-    } finally {
-      deleteApp(app);
-
-      Assert.assertEquals(0, getAppStreamUsage(app).size());
-      Assert.assertEquals(0, getProgramStreamUsage(program).size());
-      Assert.assertEquals(0, getStreamProgramUsage(stream).size());
-
-      Assert.assertEquals(0, getAppDatasetUsage(app).size());
-      Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+      for (DatasetId dataset : datasets) {
+        Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
+      }
     }
   }
 
@@ -259,13 +212,6 @@ public class UsageHandlerTestRun extends ClientTestBase {
     return datasetIds;
   }
 
-  private Set<StreamId> getAppStreamUsage(ApplicationId app) throws Exception {
-    Set<StreamId> streamIds =
-      doGet(String.format("/v3/namespaces/%s/apps/%s/streams", app.getNamespace(), app.getEntityName()),
-            new TypeToken<Set<StreamId>>() { }.getType());
-    return streamIds;
-  }
-
   private Set<DatasetId> getProgramDatasetUsage(ProgramId program) throws Exception {
     Set<DatasetId> datasetIds =
       doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/datasets",
@@ -275,23 +221,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     return datasetIds;
   }
 
-  private Set<StreamId> getProgramStreamUsage(ProgramId program) throws Exception {
-    Set<StreamId> streamIds =
-      doGet(String.format("/v3/namespaces/%s/apps/%s/%s/%s/streams",
-                          program.getNamespace(), program.getApplication(), program.getType().getCategoryName(),
-                          program.getEntityName()),
-            new TypeToken<Set<StreamId>>() { }.getType());
-    return streamIds;
-  }
-
-  // dataset/stream -> program
-
-  private Set<ProgramId> getStreamProgramUsage(StreamId stream) throws Exception {
-    Set<ProgramId> programIds =
-      doGet(String.format("/v3/namespaces/%s/streams/%s/programs", stream.getNamespace(), stream.getEntityName()),
-            new TypeToken<Set<ProgramId>>() { }.getType());
-    return programIds;
-  }
+  // dataset -> program
 
   private Set<ProgramId> getDatasetProgramUsage(DatasetId dataset) throws Exception {
     Set<ProgramId> programIds =

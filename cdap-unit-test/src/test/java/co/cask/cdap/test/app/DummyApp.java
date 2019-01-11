@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -42,7 +41,6 @@ public class DummyApp extends AbstractApplication {
   public void configure() {
     setName("DummyApp");
     setDescription("DummyApp");
-    addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class);
     createDataset("customDataset", CustomDummyDataset.class);
     addService(new Greeting());

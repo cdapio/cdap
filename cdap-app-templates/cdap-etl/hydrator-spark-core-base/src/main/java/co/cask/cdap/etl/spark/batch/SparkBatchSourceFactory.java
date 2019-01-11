@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,7 @@ package co.cask.cdap.etl.spark.batch;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -46,13 +43,11 @@ import static java.lang.Thread.currentThread;
  */
 final class SparkBatchSourceFactory {
 
-  private final Map<String, Input.StreamInput> streams;
   private final Map<String, InputFormatProvider> inputFormatProviders;
   private final Map<String, DatasetInfo> datasetInfos;
   private final Map<String, Set<String>> sourceInputs;
 
   SparkBatchSourceFactory() {
-    this.streams = new HashMap<>();
     this.inputFormatProviders = new HashMap<>();
     this.datasetInfos = new HashMap<>();
     this.sourceInputs = new HashMap<>();
@@ -69,16 +64,7 @@ final class SparkBatchSourceFactory {
       addInput(stageName, ifpInput.getAlias(),
                new BasicInputFormatProvider(ifpInput.getInputFormatProvider().getInputFormatClassName(),
                                             ifpInput.getInputFormatProvider().getInputFormatConfiguration()));
-    } else if (input instanceof Input.StreamInput) {
-      Input.StreamInput streamInput = (Input.StreamInput) input;
-      addInput(stageName, streamInput.getAlias(), streamInput);
     }
-  }
-
-  private void addInput(String stageName, String alias, Input.StreamInput streamInput) {
-    duplicateAliasCheck(alias);
-    streams.put(alias, streamInput);
-    addStageInput(stageName, alias);
   }
 
   private void addInput(String stageName, String datasetName, String alias, Map<String, String> datasetArgs,
@@ -95,8 +81,7 @@ final class SparkBatchSourceFactory {
   }
 
   private void duplicateAliasCheck(String alias) {
-    if (inputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)
-      || streams.containsKey(alias)) {
+    if (inputFormatProviders.containsKey(alias) || datasetInfos.containsKey(alias)) {
       // this will never happen since alias will be unique since we append it with UUID
       throw new IllegalStateException(alias + " has already been added. Can't add an input with the same alias.");
     }
@@ -121,37 +106,6 @@ final class SparkBatchSourceFactory {
   @SuppressWarnings("unchecked")
   private <K, V> JavaPairRDD<K, V> createInputRDD(JavaSparkExecutionContext sec, JavaSparkContext jsc, String inputName,
                                                   Class<K> keyClass, Class<V> valueClass) {
-    if (streams.containsKey(inputName)) {
-      Input.StreamInput streamInput = streams.get(inputName);
-      FormatSpecification formatSpec = streamInput.getBodyFormatSpec();
-      if (formatSpec != null) {
-        return (JavaPairRDD<K, V>) sec.fromStream(streamInput.getName(),
-                                                  formatSpec,
-                                                  streamInput.getStartTime(),
-                                                  streamInput.getEndTime(),
-                                                  StructuredRecord.class);
-      }
-
-      String decoderType = streamInput.getDecoderType();
-      if (decoderType == null) {
-        return (JavaPairRDD<K, V>) sec.fromStream(streamInput.getName(),
-                                                  streamInput.getStartTime(),
-                                                  streamInput.getEndTime(),
-                                                  valueClass);
-      } else {
-        try {
-          Class<StreamEventDecoder<K, V>> decoderClass =
-            (Class<StreamEventDecoder<K, V>>) Thread.currentThread().getContextClassLoader().loadClass(decoderType);
-          return sec.fromStream(streamInput.getName(),
-                                streamInput.getStartTime(),
-                                streamInput.getEndTime(),
-                                decoderClass, keyClass, valueClass);
-        } catch (Exception e) {
-          throw Throwables.propagate(e);
-        }
-      }
-    }
-
     if (inputFormatProviders.containsKey(inputName)) {
       InputFormatProvider inputFormatProvider = inputFormatProviders.get(inputName);
       Configuration hConf = new Configuration();

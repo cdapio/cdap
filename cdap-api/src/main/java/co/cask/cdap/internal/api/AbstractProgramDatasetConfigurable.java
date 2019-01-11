@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.internal.api;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -31,26 +30,6 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 public abstract class AbstractProgramDatasetConfigurable<T extends DatasetConfigurer> {
 
   protected abstract T getConfigurer();
-
-  /**
-   * @see DatasetConfigurer#addStream(String)
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  protected final void addStream(String stream) {
-    getConfigurer().addStream(stream);
-  }
-
-  /**
-   * @see DatasetConfigurer#addStream(Stream)
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  protected final void addStream(Stream stream) {
-    getConfigurer().addStream(stream);
-  }
 
   /**
    * @see DatasetConfigurer#addDatasetModule(String, Class)

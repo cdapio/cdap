@@ -19,8 +19,6 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.gateway.handlers.log.LogHandlerTestRun;
 import co.cask.cdap.gateway.handlers.metrics.MetricsHandlerTestRun;
 import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -33,18 +31,6 @@ import org.junit.runners.Suite;
   LogHandlerTestRun.class
 })
 
-public class MetricsServiceTestsSuite  {
+public class MetricsServiceTestsSuite extends MetricsSuiteTestBase {
 
-  @BeforeClass
-  public static void init() throws Exception {
-    MetricsSuiteTestBase.beforeClass();
-    MetricsSuiteTestBase.runBefore = false;
-    MetricsSuiteTestBase.runAfter = false;
-  }
-
-  @AfterClass
-  public static void finish() throws Exception {
-    MetricsSuiteTestBase.runAfter = true;
-    MetricsSuiteTestBase.afterClass();
-  }
 }

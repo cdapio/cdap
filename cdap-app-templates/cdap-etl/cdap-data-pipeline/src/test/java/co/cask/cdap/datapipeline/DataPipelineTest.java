@@ -22,6 +22,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.messaging.Message;
@@ -100,7 +102,6 @@ import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkflowManager;
 import co.cask.common.http.HttpRequest;
@@ -122,6 +123,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -2100,15 +2102,20 @@ public class DataPipelineTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // ingest in some messages to be classified
-    StreamManager textsToClassify = getStreamManager(NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
-    textsToClassify.send("how are you doing today");
-    textsToClassify.send("free money money");
-    textsToClassify.send("what are you doing today");
-    textsToClassify.send("genuine report");
+    DataSetManager<FileSet> fileSetManager = getDataset(NaiveBayesTrainer.TEXTS_TO_CLASSIFY);
+    FileSet fileSet = fileSetManager.get();
+    try (PrintStream out = new PrintStream(fileSet.getLocation("inputTexts").getOutputStream(), true, "UTF-8")) {
+      out.println("how are you doing today");
+      out.println("free money money");
+      out.println("what are you doing today");
+      out.println("genuine report");
+    }
 
     // manually trigger the pipeline
+    Map<String, String> runtimeArgs = new HashMap<>();
+    FileSetArguments.setInputPath(runtimeArgs, "inputTexts");
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
+    workflowManager.start(runtimeArgs);
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> classifiedTexts = getDataset(NaiveBayesTrainer.CLASSIFIED_TEXTS);
@@ -2131,7 +2138,8 @@ public class DataPipelineTest extends HydratorTestBase {
     String classifiedTextsTable = "classifiedTextTable";
 
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
-      .addStage(new ETLStage("source", MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY, SpamMessage.SCHEMA)))
+      .addStage(new ETLStage("source",
+                             MockSource.getPlugin(NaiveBayesTrainer.TEXTS_TO_CLASSIFY_SOURCE, SpamMessage.SCHEMA)))
       .addStage(new ETLStage("sparkcompute",
                              new ETLPlugin(NaiveBayesClassifier.PLUGIN_NAME, SparkCompute.PLUGIN_TYPE,
                                            ImmutableMap.of("fileSetName", "modelFileSet",
@@ -2156,7 +2164,8 @@ public class DataPipelineTest extends HydratorTestBase {
     messagesToWrite.add(new SpamMessage("what are you doing today").toStructuredRecord());
     messagesToWrite.add(new SpamMessage("genuine report").toStructuredRecord());
 
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(NaiveBayesTrainer.TEXTS_TO_CLASSIFY));
+    DataSetManager<Table> inputManager =
+      getDataset(NamespaceId.DEFAULT.dataset(NaiveBayesTrainer.TEXTS_TO_CLASSIFY_SOURCE));
     MockSource.writeInput(inputManager, messagesToWrite);
 
     // manually trigger the pipeline

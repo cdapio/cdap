@@ -16,7 +16,6 @@
 
 package co.cask.cdap.docgen.client;
 
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.DatasetClient;
@@ -27,7 +26,6 @@ import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.QueryClient;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.ApplicationRecord;
@@ -35,14 +33,11 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -123,64 +118,6 @@ public class GenerateClientUsageExample {
 
     // Stop a service in the HelloWorld example
     programClient.stop(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
-  }
-
-  public void streamClient() throws Exception {
-    // Construct the client used to interact with CDAP
-    StreamClient streamClient = new StreamClient(clientConfig);
-
-    // Fetch the stream list
-    List streams = streamClient.list(NamespaceId.DEFAULT);
-
-    // Create a stream, using the Purchase example
-    StreamId streamId = NamespaceId.DEFAULT.stream("purchases");
-    streamClient.create(streamId);
-
-    // Fetch a stream's properties
-    StreamProperties config = streamClient.getConfig(streamId);
-
-    // Send events to a stream
-    streamClient.sendEvent(streamId, "Tom bought 5 apples for $10");
-
-    // Read all events from a stream (results in events)
-    List<StreamEvent> events = Lists.newArrayList();
-    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, Integer.MAX_VALUE, events);
-
-    // Read first 5 events from a stream (results in events)
-    events = Lists.newArrayList();
-    streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
-
-    // Read 2nd and 3rd events from a stream, after first calling getEvents
-    long startTime = events.get(1).getTimestamp();
-    long endTime = events.get(2).getTimestamp() + 1;
-    events.clear();
-    streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
-
-    // Write asynchronously to a stream
-    streamId = NamespaceId.DEFAULT.stream("testAsync");
-    events = Lists.newArrayList();
-
-    streamClient.create(streamId);
-
-    // Send 10 async writes
-    int msgCount = 10;
-    for (int i = 0; i < msgCount; i++) {
-      streamClient.asyncSendEvent(streamId, "Testing " + i);
-    }
-
-    // Read them back; need to read it multiple times as the writes happen asynchronously
-    while (events.size() != msgCount) {
-      events.clear();
-      streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
-    }
-
-    // Check that there are no more events
-    events.clear();
-    while (events.isEmpty()) {
-      events.clear();
-      streamClient.getEvents(streamId, 0, Long.MAX_VALUE, msgCount, events);
-    }
-    // End write asynchronously
   }
 
   public void datasetClient() throws Exception {

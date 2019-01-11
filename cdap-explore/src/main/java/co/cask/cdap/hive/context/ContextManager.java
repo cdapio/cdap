@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,18 +34,12 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
-import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
@@ -54,8 +48,6 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
@@ -75,18 +67,18 @@ import javax.annotation.Nullable;
  * information, such as their schema. The context is also used to instantiate datasets.
  *
  * This is a weird class because it is used in two different code paths that call the same method.
- * When Hive executes a query, it calls the SerDe's initialize method. The {@link DatasetSerDe} and
- * {@link StreamSerDe} both use this ContextManager to look up required information. This call to initialize
+ * When Hive executes a query, it calls the SerDe's initialize method. The {@link DatasetSerDe}
+ * use this ContextManager to look up required information. This call to initialize
  * happens both in the process that launches the Hive job (explore service), and in the mapreduce job that was launched.
  *
- * When called from a mapreduce job, we need to create a DatasetFramework, StreamAdmin, and ZKClientService.
+ * When called from a mapreduce job, we need to create a DatasetFramework and ZKClientService.
  * This is done by deserializing CDAP's configuration from the Hadoop Configuration, creating an injector,
  * and instantiating those object.
  *
  * When called from the explore service, we don't want to instantiate everything all over again for every
  * query, especially since Hive calls initialize multiple times per query for some reason. In that scenario,
- * the explore service calls {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory,
- * AuthorizationEnforcer, AuthenticationContext)} when it starts up, in order to cache the Context.
+ * the explore service calls {@link #saveContext(DatasetFramework, SystemDatasetInstantiatorFactory)}
+ * when it starts up, in order to cache the Context.
  *
  * Since there is no way for the SerDe to know if it's in a mapreduce job or in the explore service, it relies
  * on whether the Context has been cached to determine whether to create a new Context.
@@ -98,17 +90,14 @@ public class ContextManager {
    * Create and save a context, so that any call to {@link #getContext(Configuration)} that is made in this jvm
    * will return the context created from this call.
    */
-  public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                                 SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                 AuthorizationEnforcer authorizationEnforcer,
-                                 AuthenticationContext authenticationContext) {
-    savedContext = new Context(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
-                               authenticationContext);
+  public static void saveContext(DatasetFramework datasetFramework,
+                                 SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
+    savedContext = new Context(datasetFramework, datasetInstantiatorFactory);
   }
 
   /**
-   * If a context was saved using {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory,
-   * AuthorizationEnforcer, AuthenticationContext)}, returns the saved context. This is what happens in the
+   * If a context was saved using {@link #saveContext(DatasetFramework, SystemDatasetInstantiatorFactory)},
+   * returns the saved context. This is what happens in the
    * Explore service. If no context was saved and the conf is not null, creates a context and returns it.
    * The context must be closed by the caller. The context created will not be saved, meaning the next time this
    * method is called, a new context will be created. This is what happens in map reduce jobs launched by Hive.
@@ -141,8 +130,6 @@ public class ContextManager {
       new DataFabricModules("cdap.explore.ContextManager").getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
-      new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedClientModule(),
       new KafkaClientModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
@@ -176,63 +163,36 @@ public class ContextManager {
     zkClientService.startAndWait();
 
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       injector.getInstance(SystemDatasetInstantiatorFactory.class);
-    AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
-    AuthorizationEnforcer authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
-    return new Context(datasetFramework, streamAdmin, zkClientService, datasetInstantiatorFactory,
-                       authenticationContext, authorizationEnforcer);
+    return new Context(datasetFramework, zkClientService, datasetInstantiatorFactory);
   }
 
   /**
-   * Contains DatasetFramework object and StreamAdmin object required to run Hive queries in MapReduce jobs.
+   * Contains DatasetFramework object required to run Hive queries in MapReduce jobs.
    */
   public static class Context implements Closeable {
     private final DatasetFramework datasetFramework;
-    private final StreamAdmin streamAdmin;
     private final ZKClientService zkClientService;
     private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
-    private final AuthenticationContext authenticationContext;
-    private final AuthorizationEnforcer authorizationEnforcer;
 
-    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                   ZKClientService zkClientService,
-                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                   AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer) {
+    public Context(DatasetFramework datasetFramework,
+                   @Nullable ZKClientService zkClientService,
+                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
       // This constructor is called from the MR job Hive launches.
       this.datasetFramework = datasetFramework;
-      this.streamAdmin = streamAdmin;
       this.zkClientService = zkClientService;
       this.datasetInstantiatorFactory = datasetInstantiatorFactory;
-      this.authenticationContext = authenticationContext;
-      this.authorizationEnforcer = authorizationEnforcer;
     }
 
-    public Context(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
-                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                   AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
+    public Context(DatasetFramework datasetFramework,
+                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
       // This constructor is called from Hive server, that is the Explore module.
-      this(datasetFramework, streamAdmin, null, datasetInstantiatorFactory, authenticationContext,
-           authorizationEnforcer);
-    }
-
-    public StreamConfig getStreamConfig(StreamId streamId) throws IOException {
-      return streamAdmin.getConfig(streamId);
+      this(datasetFramework, null, datasetInstantiatorFactory);
     }
 
     public DatasetSpecification getDatasetSpec(DatasetId datasetId) throws DatasetManagementException {
       return datasetFramework.getDatasetSpec(datasetId);
-    }
-
-    @Nullable
-    public AuthenticationContext getAuthenticationContext() {
-      return authenticationContext;
-    }
-
-    @Nullable
-    public AuthorizationEnforcer getAuthorizationEnforcer() {
-      return authorizationEnforcer;
     }
 
     /**

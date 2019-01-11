@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.services.http.handlers;
 import co.cask.cdap.AppForUnrecoverableResetTest;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.AppWithServices;
-import co.cask.cdap.AppWithStream;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -27,7 +26,6 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceConfig;
@@ -36,7 +34,6 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -268,18 +265,14 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(nsLocation.exists());
 
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    StreamAdmin streamAdmin = getInjector().getInstance(StreamAdmin.class);
 
     deploy(AppWithServices.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
     deploy(AppWithDataset.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, NAME);
-    deploy(AppWithStream.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
     deploy(AppForUnrecoverableResetTest.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, OTHER_NAME);
 
     DatasetId myDataset = new DatasetId(NAME, "myds");
-    StreamId myStream = new StreamId(OTHER_NAME, "stream");
 
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
-    Assert.assertTrue(streamAdmin.exists(myStream));
     Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
     waitState(program, ProgramStatus.RUNNING.name());
@@ -297,9 +290,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(200, deleteNamespace(NAME));
     Assert.assertFalse(nsLocation.exists());
     Assert.assertFalse(dsFramework.hasInstance(myDataset));
-    Assert.assertTrue(streamAdmin.exists(myStream));
     assertResponseCode(200, deleteNamespace(OTHER_NAME));
-    Assert.assertFalse(streamAdmin.exists(myStream));
 
     // Create the namespace again and deploy the application containing schedules.
     // Application deployment should succeed.

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.datapipeline.service;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.AbstractService;
@@ -42,7 +41,6 @@ public class ServiceApp extends AbstractApplication {
   public void configure() {
     setName("ServiceApp");
     setDescription("A program which exposes a simple service");
-    addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class, DatasetProperties.builder().setDescription("Store names").build());
     addService(new Name());
   }

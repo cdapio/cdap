@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,10 +39,8 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.data.ProgramContextAware;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -195,8 +193,6 @@ public final class SparkRuntimeContextProvider {
       if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE) {
         // Add the Kafka client for logs collection
         coreServices.add(injector.getInstance(KafkaClientService.class));
-        // Stream is only supported on premise
-        coreServices.add(injector.getInstance(StreamCoordinatorClient.class));
       }
 
       // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
@@ -249,7 +245,6 @@ public final class SparkRuntimeContextProvider {
         programDatasetFramework,
         injector.getInstance(DiscoveryServiceClient.class),
         metricsCollectionService,
-        injector.getInstance(StreamAdmin.class),
         contextConfig.getWorkflowProgramInfo(),
         pluginInstantiator,
         injector.getInstance(SecureStore.class),

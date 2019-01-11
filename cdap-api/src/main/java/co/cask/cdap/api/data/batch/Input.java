@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,6 @@
 package co.cask.cdap.api.data.batch;
 
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,7 +67,7 @@ public abstract class Input {
 
   /**
    * @return an alias of the input, to be used as the input name instead of the actual name of the input (i.e. dataset
-   * name or stream name). Defaults to the actual name, in the case that no alias was set.
+   * name). Defaults to the actual name, in the case that no alias was set.
    */
   public String getAlias() {
     return alias == null ? name : alias;
@@ -137,65 +134,6 @@ public abstract class Input {
   }
 
   /**
-   * Returns an Input defined with the given stream name with all time range.
-   *
-   * @param streamName Name of the stream.
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  public static Input ofStream(String streamName) {
-    return ofStream(streamName, 0, Long.MAX_VALUE);
-  }
-
-  /**
-   * Returns an Input defined by a stream with the given properties.
-   *
-   * @param streamName Name of the stream.
-   * @param startTime Start timestamp in milliseconds.
-   * @param endTime End timestamp in milliseconds.
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  public static Input ofStream(String streamName, long startTime, long endTime) {
-    return new StreamInput(streamName, startTime, endTime, null, null);
-  }
-
-  /**
-   * Returns an Input defined by a stream with the given properties.
-   *
-   * @param streamName Name of the stream
-   * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
-   * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
-   * @param decoderType The {@link StreamEventDecoder} class for decoding {@link StreamEvent}
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  public static Input ofStream(String streamName, long startTime,
-                               long endTime, Class<? extends StreamEventDecoder> decoderType) {
-    return new StreamInput(streamName, startTime, endTime, decoderType.toString(), null);
-  }
-
-  /**
-   * Returns an Input defined by a stream with the given properties.
-   *
-   * @param streamName Name of the stream
-   * @param startTime Start timestamp in milliseconds (inclusive) of stream events provided to the job
-   * @param endTime End timestamp in milliseconds (exclusive) of stream events provided to the job
-   * @param bodyFormatSpec The {@link FormatSpecification} class for decoding {@link StreamEvent}
-   *
-   * @deprecated As of release 5.0.0, use Kafka as a replacement technology for Streams
-   */
-  @Deprecated
-  public static Input ofStream(String streamName, long startTime,
-                               long endTime, FormatSpecification bodyFormatSpec) {
-    return new StreamInput(streamName, startTime, endTime, null, bodyFormatSpec);
-  }
-
-
-  /**
    * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.dataset.Dataset} as an input.
    */
   public static class DatasetInput extends Input {
@@ -237,55 +175,6 @@ public abstract class Input {
     @Override
     public DatasetInput fromNamespace(String namespace) {
       return new DatasetInput(super.name, arguments, splits, namespace);
-    }
-  }
-
-  /**
-   * An implementation of {@link Input}, which defines a {@link co.cask.cdap.api.data.stream.Stream} as an input.
-   */
-  @Deprecated
-  public static class StreamInput extends Input {
-    private final long startTime;
-    private final long endTime;
-    private final String decoderType;
-    private final FormatSpecification bodyFormatSpec;
-
-    private StreamInput(String name, long startTime, long endTime, @Nullable String decoderType,
-                       @Nullable FormatSpecification bodyFormatSpec) {
-      super(name);
-      this.startTime = startTime;
-      this.endTime = endTime;
-      this.decoderType = decoderType;
-      this.bodyFormatSpec = bodyFormatSpec;
-    }
-
-    private StreamInput(String name, long startTime, long endTime, @Nullable String decoderType,
-                        @Nullable FormatSpecification bodyFormatSpec, String namespace) {
-      this(name, startTime, endTime, decoderType, bodyFormatSpec);
-      super.fromNamespace(namespace);
-    }
-
-    @Override
-    public StreamInput fromNamespace(String namespace) {
-      return new StreamInput(super.name, startTime, endTime, decoderType, bodyFormatSpec, namespace);
-    }
-
-    public long getStartTime() {
-      return startTime;
-    }
-
-    public long getEndTime() {
-      return endTime;
-    }
-
-    @Nullable
-    public String getDecoderType() {
-      return decoderType;
-    }
-
-    @Nullable
-    public FormatSpecification getBodyFormatSpec() {
-      return bodyFormatSpec;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -360,10 +359,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     Location homeDir = namespacePathLocator.get(new NamespaceId("dd1"));
     Location dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     Location tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
-    Location streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
-    Location deletedDir = streamsDir.append(StreamUtils.DELETED);
 
-    for (Location loc : new Location[] { homeDir, dataDir, tempDir, streamsDir, deletedDir }) {
+    for (Location loc : new Location[] { homeDir, dataDir, tempDir }) {
       Assert.assertTrue(loc.exists());
       Assert.assertEquals(UserGroupInformation.getCurrentUser().getPrimaryGroupName(), loc.getGroup());
     }
@@ -382,12 +379,10 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     homeDir = namespacePathLocator.get(new NamespaceId("dd2"));
     dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
-    streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
-    deletedDir = streamsDir.append(StreamUtils.DELETED);
 
     Assert.assertTrue(homeDir.exists());
     Assert.assertEquals(nsGroup, homeDir.getGroup());
-    for (Location loc : new Location[] { dataDir, tempDir, streamsDir, deletedDir }) {
+    for (Location loc : new Location[] { dataDir, tempDir }) {
       Assert.assertTrue(loc.exists());
       Assert.assertEquals(nsGroup, loc.getGroup());
       Assert.assertEquals("rwx", loc.getPermissions().substring(3, 6));
@@ -403,10 +398,8 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
-    streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
-    deletedDir = streamsDir.append(StreamUtils.DELETED);
 
-    for (Location loc : new Location[] { homeDir, dataDir, tempDir, streamsDir, deletedDir }) {
+    for (Location loc : new Location[] { homeDir, dataDir, tempDir }) {
       Assert.assertTrue(loc.exists());
       Assert.assertEquals(homeGroup, loc.getGroup());
     }
@@ -422,14 +415,12 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
 
     dataDir = homeDir.append(Constants.Dataset.DEFAULT_DATA_DIR);
     tempDir = homeDir.append(cConf.get(Constants.AppFabric.TEMP_DIR));
-    streamsDir = homeDir.append(cConf.get(Constants.Stream.BASE_DIR));
-    deletedDir = streamsDir.append(StreamUtils.DELETED);
 
     // home dir should have existing group and permissions
     Assert.assertTrue(homeDir.exists());
     Assert.assertEquals(homeGroup, homeDir.getGroup());
     Assert.assertEquals(homePermissions, homeDir.getPermissions());
-    for (Location loc : new Location[] { dataDir, tempDir, streamsDir, deletedDir }) {
+    for (Location loc : new Location[] { dataDir, tempDir }) {
       Assert.assertTrue(loc.exists());
       Assert.assertEquals(nsGroup, loc.getGroup());
       Assert.assertEquals("rwx", loc.getPermissions().substring(3, 6));

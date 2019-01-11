@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
@@ -79,13 +78,6 @@ public class BasicUsageRegistry implements UsageRegistry {
   }
 
   @Override
-  public void register(EntityId user, StreamId streamId) {
-    if (user instanceof ProgramId) {
-      register((ProgramId) user, streamId);
-    }
-  }
-
-  @Override
   public void register(EntityId user, DatasetId datasetId) {
     if (user instanceof ProgramId) {
       register((ProgramId) user, datasetId);
@@ -95,11 +87,6 @@ public class BasicUsageRegistry implements UsageRegistry {
   @Override
   public void register(final ProgramId programId, final DatasetId datasetInstanceId) {
     execute(usageDataset -> usageDataset.register(programId, datasetInstanceId));
-  }
-
-  @Override
-  public void register(final ProgramId programId, final StreamId streamId) {
-    execute(usageDataset -> usageDataset.register(programId, streamId));
   }
 
   @Override
@@ -113,23 +100,8 @@ public class BasicUsageRegistry implements UsageRegistry {
   }
 
   @Override
-  public Set<StreamId> getStreams(final ApplicationId id) {
-    return call(usageDataset -> usageDataset.getStreams(id));
-  }
-
-  @Override
   public Set<DatasetId> getDatasets(final ProgramId id) {
     return call(usageDataset -> usageDataset.getDatasets(id));
-  }
-
-  @Override
-  public Set<StreamId> getStreams(final ProgramId id) {
-    return call(usageDataset -> usageDataset.getStreams(id));
-  }
-
-  @Override
-  public Set<ProgramId> getPrograms(final StreamId id) {
-    return call(usageDataset -> usageDataset.getPrograms(id));
   }
 
   @Override

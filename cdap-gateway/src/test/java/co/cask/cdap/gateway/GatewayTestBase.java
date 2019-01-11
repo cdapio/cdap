@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,18 +22,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
-import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.StreamService;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -41,8 +31,6 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -61,7 +49,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
@@ -88,6 +75,10 @@ import java.util.concurrent.TimeUnit;
  */
 // TODO: refactor this test. It is complete mess
 public abstract class GatewayTestBase {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final Gson GSON = new Gson();
 
   private static final String API_KEY = "SampleTestApiKey";
@@ -97,9 +88,6 @@ public abstract class GatewayTestBase {
   private static int port;
 
   private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
-
-  @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder().setName(TEST_NAMESPACE1)
@@ -118,37 +106,30 @@ public abstract class GatewayTestBase {
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
-  private static NotificationService notificationService;
-  private static StreamService streamService;
   private static MessagingService messagingService;
   protected static NamespaceAdmin namespaceAdmin;
-  private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  // Controls for test suite for whether to run BeforeClass/AfterClass
-  public static boolean runBefore = true;
-  public static boolean runAfter = true;
+  private static int nestedStartCount;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    if (!runBefore) {
+    if (nestedStartCount++ > 0) {
       return;
     }
-    tmpFolder.create();
     conf = CConfiguration.create();
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.set(Constants.Router.ADDRESS, hostname);
     conf.setInt(Constants.Router.ROUTER_PORT, 0);
-    conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     injector = startGateway(conf);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    if (!runAfter) {
+    if (nestedStartCount-- != 0) {
       return;
     }
     stopGateway(conf);
-    tmpFolder.delete();
   }
 
   public static Injector startGateway(final CConfiguration conf) throws Exception {
@@ -170,22 +151,14 @@ public abstract class GatewayTestBase {
           }
         },
         new SecurityModules().getInMemoryModules(),
-        new NotificationServiceRuntimeModule().getInMemoryModules(),
         new AppFabricTestModule(conf)
       ).with(new AbstractModule() {
         @Override
         protected void configure() {
-          install(new StreamServiceRuntimeModule().getStandaloneModules());
-
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
           // AppFabricServiceModule
           bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
-          bind(StreamConsumerStateStoreFactory.class)
-            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
-          bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
-          bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
           bind(PrivilegesManager.class).to(NoOpAuthorizer.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
         }
@@ -208,11 +181,6 @@ public abstract class GatewayTestBase {
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    notificationService = injector.getInstance(NotificationService.class);
-    notificationService.startAndWait();
-    streamService = injector.getInstance(StreamService.class);
-    streamService.startAndWait();
-
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(TEST_NAMESPACE_META1);
     namespaceAdmin.create(TEST_NAMESPACE_META2);
@@ -229,8 +197,6 @@ public abstract class GatewayTestBase {
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE1));
     namespaceAdmin.delete(new NamespaceId(TEST_NAMESPACE2));
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    streamService.stopAndWait();
-    notificationService.stopAndWait();
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     metricsQueryService.stopAndWait();
@@ -242,10 +208,6 @@ public abstract class GatewayTestBase {
       ((Service) messagingService).stopAndWait();
     }
     conf.clear();
-  }
-
-  public static Injector getInjector() {
-    return injector;
   }
 
   public static int getPort() {

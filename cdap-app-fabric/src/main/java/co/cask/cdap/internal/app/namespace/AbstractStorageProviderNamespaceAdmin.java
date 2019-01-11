@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -146,12 +145,9 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
     }
     Location dataLoc = namespaceHome.append(Constants.Dataset.DEFAULT_DATA_DIR); // data/
     Location tempLoc = namespaceHome.append(cConf.get(Constants.AppFabric.TEMP_DIR)); // tmp/
-    Location streamsLoc = namespaceHome.append(cConf.get(Constants.Stream.BASE_DIR)); // streams/
-    Location deletedLoc = streamsLoc.append(StreamUtils.DELETED); // streams/.deleted/
     String configuredGroupName = namespaceMeta.getConfig().getGroupName();
     boolean createdData = false;
     boolean createdTemp = false;
-    boolean createdStreams = false;
     try {
       if (createdHome && SecurityUtil.isKerberosEnabled(cConf)) {
         // set the group id of the namespace home if configured, or the current user's primary group
@@ -180,13 +176,11 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
       // create all the directories with default permissions
       createdData = createNamespaceDir(dataLoc, "data", namespaceId);
       createdTemp = createNamespaceDir(tempLoc, "temp", namespaceId);
-      createdStreams = createNamespaceDir(streamsLoc, "streams", namespaceId);
-      createNamespaceDir(deletedLoc, "deleted streams", namespaceId);
 
       // in secure mode, if a group name was configured, then that group must be able to write inside subdirs:
       // set all these directories to be owned and group writable by the configured group.
       if (SecurityUtil.isKerberosEnabled(cConf) && configuredGroupName != null) {
-        for (Location loc : new Location[] { dataLoc, tempLoc, streamsLoc, deletedLoc }) {
+        for (Location loc : new Location[] { dataLoc, tempLoc }) {
           loc.setGroup(configuredGroupName);
           // set the permissions to rwx for group
           String permissions = loc.getPermissions();
@@ -202,9 +196,6 @@ abstract class AbstractStorageProviderNamespaceAdmin implements StorageProviderN
         }
         if (createdTemp) {
           deleteDirSilently(tempLoc, t, "temp", namespaceMeta.getNamespaceId());
-        }
-        if (createdStreams) {
-          deleteDirSilently(streamsLoc, t, "streams", namespaceMeta.getNamespaceId());
         }
       }
       throw t;

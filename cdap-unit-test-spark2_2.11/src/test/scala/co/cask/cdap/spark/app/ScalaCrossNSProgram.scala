@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,8 @@
 package co.cask.cdap.spark.app
 
 import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.spark.AbstractSpark
-import co.cask.cdap.api.spark.SparkExecutionContext
-import co.cask.cdap.api.spark.SparkMain
+import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import org.apache.hadoop.io.{LongWritable, Text}
 import org.apache.spark.SparkContext
 
 import scala.collection.JavaConverters._
@@ -40,23 +39,25 @@ class ScalaCrossNSProgram(name: String) extends AbstractSpark with SparkMain {
 
   override def run(implicit sec: SparkExecutionContext) {
     val arguments = sec.getRuntimeArguments.asScala
-    val streamNamespace = arguments.getOrElse(ScalaCrossNSProgram.STREAM_NAMESPACE, sec.getNamespace)
-    val streamName = arguments.getOrElse(ScalaCrossNSProgram.STREAM_NAME, "testStream")
-    val datasetNamespace = arguments.getOrElse(ScalaCrossNSProgram.DATASET_NAMESPACE, sec.getNamespace)
-    val datasetName = arguments.getOrElse(ScalaCrossNSProgram.DATASET_NAME, "count")
+
+    val inputNS = arguments.getOrElse(ScalaCrossNSProgram.INPUT_NAMESPACE, sec.getNamespace)
+    val inputName = arguments.getOrElse(ScalaCrossNSProgram.INPUT_NAME, "input")
+
+    val outputNS = arguments.getOrElse(ScalaCrossNSProgram.OUTPUT_NAMESPACE, sec.getNamespace)
+    val outputName = arguments.getOrElse(ScalaCrossNSProgram.OUTPUT_NAME, "count")
 
     val sparkContext = new SparkContext
-    val trainingData = sparkContext.fromStream[String](streamNamespace.toString, streamName.toString, 0, Long.MaxValue)
+    val trainingData = sparkContext.fromDataset[LongWritable, Text](inputNS, inputName).values.map(t => t.toString)
     val num = trainingData.count()
     trainingData
       .map(x => (Bytes.toBytes(x), Bytes.toBytes(x)))
-      .saveAsDataset(datasetNamespace.toString, datasetName.toString)
+      .saveAsDataset(outputNS.toString, outputName.toString)
   }
 }
 
 object ScalaCrossNSProgram {
-  val STREAM_NAMESPACE = "stream.namespace"
-  val STREAM_NAME = "stream.name"
-  val DATASET_NAMESPACE = "dataset.namespace"
-  val DATASET_NAME = "dataset.name"
+  val INPUT_NAMESPACE = "input.namespace"
+  val INPUT_NAME = "input.name"
+  val OUTPUT_NAMESPACE = "output.namespace"
+  val OUTPUT_NAME = "output.name"
 }

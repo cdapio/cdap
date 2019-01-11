@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,10 +27,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.AuthenticationChannelHandler;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
@@ -392,10 +392,10 @@ public class AuthorizationHandlerTest {
   public void testWildCardEntities() throws Exception {
     // in-mem authorizer does not support wildcard privileges so we can't actually enforce after grant.
     // this test is just to check that our grant apis work fine. After grant we list privileges to check for existence
-    StreamId streamId = new StreamId("ns", "wildcard");
-    String wildcardEntityStar = streamId.toString().replace("wildcard", "*");
+    DatasetId datasetId = new DatasetId("ns", "wildcard");
+    String wildcardEntityStar = datasetId.toString().replace("wildcard", "*");
     client.grant(Authorizable.fromString(wildcardEntityStar), admin, ImmutableSet.of(Action.ADMIN));
-    String wildcardEntityQuestion = streamId.toString().replace("wildcard", "someSt?");
+    String wildcardEntityQuestion = datasetId.toString().replace("wildcard", "someSt?");
     client.grant(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(Action.ADMIN));
 
     Set<Privilege> privileges = client.listPrivileges(admin);
@@ -412,7 +412,7 @@ public class AuthorizationHandlerTest {
     // revoke all should work too
     String authFromPrivilege = null;
     for (Privilege privilege : privileges) {
-      if (privilege.getAuthorizable().getEntityType().equals(EntityType.STREAM)) {
+      if (privilege.getAuthorizable().getEntityType().equals(EntityType.DATASET)) {
         authFromPrivilege = privilege.getAuthorizable().toString();
       }
     }

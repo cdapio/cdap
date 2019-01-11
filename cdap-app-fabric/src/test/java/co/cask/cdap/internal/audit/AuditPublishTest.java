@@ -134,11 +134,6 @@ public class AuditPublishTest {
       expectedMetadataChangeEntities.add(appId.schedule(schedule));
     }
 
-    // Stream only has creation (eventually will be removed)
-    for (String stream : spec.getStreams().keySet()) {
-      expectedCreateEntities.add(NamespaceId.DEFAULT.stream(stream));
-    }
-
     Multimap<AuditType, EntityId> expectedAuditEntities = HashMultimap.create();
     expectedAuditEntities.putAll(AuditType.METADATA_CHANGE, expectedMetadataChangeEntities);
 

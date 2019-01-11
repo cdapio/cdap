@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -82,21 +81,6 @@ public class DefaultLineageStoreReader implements LineageStoreReader {
   public Set<Relation> getRelations(final DatasetId datasetInstance, final long start, final long end,
                                     final Predicate<Relation> filter) {
     return execute(input -> input.getRelations(datasetInstance, start, end, filter));
-  }
-
-  /**
-   * Fetch program-stream access information for a dataset for a given period.
-   *
-   * @param stream stream for which to fetch access information
-   * @param start start time period
-   * @param end end time period
-   * @param filter filter to be applied on result set
-   * @return program-stream access information
-   */
-  @Override
-  public Set<Relation> getRelations(final StreamId stream, final long start, final long end,
-                                    final Predicate<Relation> filter) {
-    return execute(input -> input.getRelations(stream, start, end, filter));
   }
 
   /**

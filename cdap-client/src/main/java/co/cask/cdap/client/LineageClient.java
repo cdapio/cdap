@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -133,74 +132,6 @@ public class LineageClient {
       path = String.format("%s&levels=%d", path, levels);
     }
     return getLineage(datasetInstance, path);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds
-   * @param endTime end time for the query, in seconds
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
-   */
-  public LineageRecord getLineage(StreamId streamId, long startTime, long endTime, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds
-   * @param endTime end time for the query, in seconds
-   * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
-   */
-  public LineageRecord getLineage(StreamId streamId, long startTime, long endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId, Long.toString(startTime), Long.toString(endTime), collapseTypes, levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds, or in 'now - xs' format
-   * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
-   */
-  public LineageRecord getLineage(StreamId streamId, String startTime, String endTime, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    return getLineage(streamId, startTime, endTime, Collections.<CollapseType>emptySet(), levels);
-  }
-
-  /**
-   * Retrieves Lineage for a given stream.
-   *
-   * @param streamId the stream for which to retrieve lineage
-   * @param startTime start time for the query, in seconds, or in 'now - xs' format
-   * @param endTime end time for the query, in seconds, or in 'now - xs' format
-   * @param collapseTypes fields on which lineage relations can be collapsed on
-   * @param levels number of levels to compute lineage for, or {@code null} to use the LineageHandler's default value
-   * @return {@link LineageRecord} for the specified stream.
-   */
-  public LineageRecord getLineage(StreamId streamId, String startTime, String endTime,
-                                  Set<CollapseType> collapseTypes, @Nullable Integer levels)
-    throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
-    String path = String.format("streams/%s/lineage?start=%s&end=%s", streamId.getStream(),
-                                URLEncoder.encode(startTime, "UTF-8"), URLEncoder.encode(endTime, "UTF-8"));
-    for (CollapseType collapseType : collapseTypes) {
-      path = String.format("%s&collapse=%s", path, collapseType);
-    }
-    if (levels != null) {
-      path = String.format("%s&levels=%d", path, levels);
-    }
-    return getLineage(streamId, path);
   }
 
   private LineageRecord getLineage(NamespacedEntityId namespacedId, String path)

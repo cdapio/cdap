@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.client;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.common.UnauthenticatedException;
@@ -28,7 +27,6 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -91,16 +89,6 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
 
   @Override
   public ListenableFuture<Void> disableExploreDataset(DatasetId datasetInstance, DatasetSpecification spec) {
-    return null;
-  }
-
-  @Override
-  public ListenableFuture<Void> enableExploreStream(StreamId stream, String tableName, FormatSpecification format) {
-    return null;
-  }
-
-  @Override
-  public ListenableFuture<Void> disableExploreStream(StreamId stream, String tableName) {
     return null;
   }
 

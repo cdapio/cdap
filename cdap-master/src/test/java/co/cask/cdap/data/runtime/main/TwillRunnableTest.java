@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * Tests for {@link ExploreServiceTwillRunnable}, {@link DatasetOpExecutorServerTwillRunnable},
- * {@link StreamHandlerRunnable}.
+ * Tests for master services.
  */
 public class TwillRunnableTest {
   @Test
@@ -45,11 +44,6 @@ public class TwillRunnableTest {
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
     Assert.assertNotNull(namespaceQueryAdmin);
-  }
-
-  @Test
-  public void testStreamHandlerTwillRunnableInjector() {
-    StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration(), "");
   }
 
   @Test

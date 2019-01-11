@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.input;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputContext;
 import co.cask.cdap.api.data.batch.Output;
@@ -31,7 +30,6 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -44,6 +42,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * App used to test whether M/R can read and perform a join across multiple inputs.
@@ -51,6 +50,7 @@ import java.util.Map;
 public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
 
   public static final String PURCHASES = "purchases";
+  public static final String PURCHASES2 = "purchases2";
   public static final String CUSTOMERS = "customers";
   public static final String OUTPUT_DATASET = "saturatedRecords";
 
@@ -58,8 +58,10 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
   public void configure() {
     setName("AppWithMapReduceUsingMultipleInputs");
     setDescription("Application with MapReduce job using multiple inputs");
-    addStream(PURCHASES);
     createDataset(PURCHASES, "fileSet", FileSetProperties.builder()
+      .setInputFormat(TextInputFormat.class)
+      .build());
+    createDataset(PURCHASES2, "fileSet", FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
       .build());
     createDataset(CUSTOMERS, "fileSet", FileSetProperties.builder()
@@ -84,9 +86,9 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
       Map<String, String> inputArgs = new HashMap<>();
       FileSetArguments.setInputPath(inputArgs, "inputFile");
 
-      // test using a stream with the same name, but aliasing it differently (so mapper gets the alias'd name)
-      context.addInput(Input.ofStream(PURCHASES).alias("streamPurchases"), StreamTestBatchMapper.class);
       context.addInput(Input.ofDataset(PURCHASES, inputArgs), FileMapper.class);
+      // A second input, aliasing so mapper gets the alias'd name
+      context.addInput(Input.ofDataset(PURCHASES2, inputArgs).alias("secondPurchases"), FileMapper2.class);
       // since we set a Mapper class on the job itself, omitting the mapper in the addInput call will default to that
       context.addInput(Input.ofDataset(CUSTOMERS, inputArgs));
 
@@ -105,38 +107,15 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
    */
   public static final class InvalidMapReduce extends ComputeSum {
     @Override
-    public void initialize() throws Exception {
+    public void initialize() {
       getContext().addInput(Input.ofDataset(PURCHASES, ImmutableMap.of("key", "value")));
-    }
-  }
-
-  public static class StreamTestBatchMapper extends Mapper<LongWritable, BytesWritable, LongWritable, Text>
-    implements ProgramLifecycle<MapReduceTaskContext> {
-
-    @Override
-    protected void map(LongWritable key, BytesWritable value,
-                       Context context) throws IOException, InterruptedException {
-      String[] split = Bytes.toString(value.copyBytes()).split(" ");
-      // tag each record with the source as 'purchases', because we know this mapper is only used for that input
-      context.write(new LongWritable(Long.valueOf(split[0])), new Text("purchases " + split[1]));
-    }
-
-    @Override
-    public void initialize(MapReduceTaskContext context) throws Exception {
-      // we aliased the stream 'purchases' as 'streamPurchases'
-      Preconditions.checkArgument("streamPurchases".equals(context.getInputContext().getInputName()));
-    }
-
-    @Override
-    public void destroy() {
-      // no-op
     }
   }
 
   public static class FileMapper extends Mapper<LongWritable, Text, LongWritable, Text>
     implements ProgramLifecycle<MapReduceTaskContext> {
 
-    private String source;
+    protected String source;
 
     @Override
     public void initialize(MapReduceTaskContext context) throws Exception {
@@ -146,9 +125,11 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
       InputContext inputContext = context.getInputContext();
       // just want to assert that we're not getting any unexpected type of InputContext
       Preconditions.checkArgument(!(inputContext instanceof PartitionedFileSetInputContext));
-
-      Preconditions.checkArgument(source.equals(inputContext.getInputName()));
       Preconditions.checkNotNull(source);
+      validateSource(source);
+    }
+
+    protected void validateSource(String source) {
       Preconditions.checkArgument(PURCHASES.equals(source) || CUSTOMERS.equals(source));
     }
 
@@ -174,6 +155,23 @@ public class AppWithMapReduceUsingMultipleInputs extends AbstractApplication {
       String[] split = data.toString().split(" ");
       // tag each record with the source, so the reducer is simpler
       context.write(new LongWritable(Long.valueOf(split[0])), new Text(source + " " + split[1]));
+    }
+  }
+
+  public static class FileMapper2 extends FileMapper {
+
+    @Override
+    public void initialize(MapReduceTaskContext context) throws Exception {
+      super.initialize(context);
+
+      // Change the source so that the map() method will emit data with the same "source" id for the reducer to match.
+      source = PURCHASES;
+    }
+
+    @Override
+    protected void validateSource(@Nullable String source) {
+      // we aliased the fileset 'purchases2' as 'secondPurchases'
+      Preconditions.checkArgument("secondPurchases".equals(source));
     }
   }
 

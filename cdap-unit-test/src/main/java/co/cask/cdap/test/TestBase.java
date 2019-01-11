@@ -50,24 +50,9 @@ import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
-import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data.stream.StreamFileWriterFactory;
-import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
-import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
-import co.cask.cdap.data.stream.service.StreamFetchHandler;
-import co.cask.cdap.data.stream.service.StreamFileJanitorService;
-import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -90,8 +75,6 @@ import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ScheduleDetail;
@@ -104,7 +87,6 @@ import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
@@ -122,9 +104,6 @@ import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultArtifactManager;
-import co.cask.cdap.test.internal.DefaultStreamManager;
-import co.cask.cdap.test.internal.LocalStreamWriter;
-import co.cask.cdap.test.internal.StreamManagerFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -140,7 +119,6 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
@@ -199,7 +177,6 @@ public class TestBase {
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
-  private static StreamCoordinatorClient streamCoordinatorClient;
   private static MetricsManager metricsManager;
   private static TestManager testManager;
   private static NamespaceAdmin namespaceAdmin;
@@ -256,18 +233,13 @@ public class TestBase {
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
-      new ProgramRunnerRuntimeModule(LocalStreamWriter.class).getInMemoryModules(),
+      new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new SecureStoreModules().getInMemoryModules(),
       new MetadataReaderWriterModules().getInMemoryModules(),
       new MetadataServiceModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(StreamHandler.class).in(Scopes.SINGLETON);
-          bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
-          bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
-          bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
-          bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
           bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
         }
       },
@@ -278,8 +250,6 @@ public class TestBase {
       new LogReaderRuntimeModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
-      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new NamespaceStoreModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
@@ -294,8 +264,6 @@ public class TestBase {
                     .build(ApplicationManagerFactory.class));
           install(new FactoryModuleBuilder().implement(ArtifactManager.class, DefaultArtifactManager.class)
                     .build(ArtifactManagerFactory.class));
-          install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
-                    .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(TMP_FOLDER);
           bind(AuthorizationHandler.class).in(Scopes.SINGLETON);
         }
@@ -340,8 +308,6 @@ public class TestBase {
                                  "%s service is not up after 5 seconds", Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       exploreClient = injector.getInstance(ExploreClient.class);
     }
-    streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
-    streamCoordinatorClient.startAndWait();
     programScheduler = injector.getInstance(Scheduler.class);
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).startAndWait();
@@ -442,7 +408,6 @@ public class TestBase {
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, localhost);
     cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
-    cConf.set(Constants.Stream.ADDRESS, localhost);
     cConf.set(Constants.Metrics.ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
@@ -462,16 +427,11 @@ public class TestBase {
   }
 
   private static Module createDataFabricModule() {
-    return Modules.override(new DataFabricModules().getInMemoryModules(),
-                            new StreamAdminModules().getInMemoryModules())
+    return Modules.override(new DataFabricModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override
         protected void configure() {
-          bind(StreamConsumerStateStoreFactory.class)
-            .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-          bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
-          bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
           // we inject a TxSystemClient that creates transaction objects with additional fields for validation
           bind(InMemoryTxSystemClient.class).in(Scopes.SINGLETON);
           bind(TransactionSystemClient.class).to(RevealingTxSystemClient.class).in(Scopes.SINGLETON);
@@ -509,7 +469,6 @@ public class TestBase {
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
     }
-    streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
@@ -914,26 +873,6 @@ public class TestBase {
    */
   protected final Connection getQueryClient() throws Exception {
     return getQueryClient(NamespaceId.DEFAULT);
-  }
-
-  /**
-   * Returns a {@link StreamManager} for the specified stream in the default namespace
-   *
-   * @param streamName the specified stream
-   * @return {@link StreamManager} for the specified stream in the default namespace
-   */
-  protected final StreamManager getStreamManager(String streamName) {
-    return getStreamManager(NamespaceId.DEFAULT.stream(streamName));
-  }
-
-  /**
-   * Returns a {@link StreamManager} for the specified stream in the specified namespace
-   *
-   * @param streamId the stream to get
-   * @return {@link StreamManager} for the specified stream in the specified namespace
-   */
-  protected final StreamManager getStreamManager(StreamId streamId) {
-    return getTestManager().getStreamManager(streamId);
   }
 
   /**

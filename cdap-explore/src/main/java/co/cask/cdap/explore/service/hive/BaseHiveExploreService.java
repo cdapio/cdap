@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
@@ -40,7 +39,6 @@ import co.cask.cdap.hive.context.ContextManager;
 import co.cask.cdap.hive.context.HConfCodec;
 import co.cask.cdap.hive.context.TxnCodec;
 import co.cask.cdap.hive.datasets.DatasetStorageHandler;
-import co.cask.cdap.hive.stream.StreamStorageHandler;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
@@ -50,8 +48,6 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -194,11 +190,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf,
-                                   File previewsDir, File credentialsDir, StreamAdmin streamAdmin,
+                                   File previewsDir, File credentialsDir,
                                    NamespaceQueryAdmin namespaceQueryAdmin,
-                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
-                                   AuthorizationEnforcer authorizationEnforcer,
-                                   AuthenticationContext authenticationContext) {
+                                   SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.schedulerQueueResolver = new SchedulerQueueResolver(cConf, namespaceQueryAdmin);
@@ -230,8 +224,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
     this.txClient = txClient;
 
-    ContextManager.saveContext(datasetFramework, streamAdmin, datasetInstantiatorFactory, authorizationEnforcer,
-                               authenticationContext);
+    ContextManager.saveContext(datasetFramework, datasetInstantiatorFactory);
 
     cleanupJobSchedule = cConf.getLong(Constants.Explore.CLEANUP_JOB_SCHEDULE_SECS);
 
@@ -657,9 +650,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
       // tables created after CDAP 2.6 should set the "cdap.name" property, but older ones
       // do not. So also check if it uses a cdap storage handler.
       String storageHandler = tableInfo.getParameters().get("storage_handler");
-      boolean isDatasetTable = cdapName != null ||
-        DatasetStorageHandler.class.getName().equals(storageHandler) ||
-        StreamStorageHandler.class.getName().equals(storageHandler);
+      boolean isDatasetTable = cdapName != null || DatasetStorageHandler.class.getName().equals(storageHandler);
 
       return new TableInfo(tableInfo.getTableName(), tableInfo.getDbName(), tableInfo.getOwner(),
                            (long) tableInfo.getCreateTime() * 1000, (long) tableInfo.getLastAccessTime() * 1000,

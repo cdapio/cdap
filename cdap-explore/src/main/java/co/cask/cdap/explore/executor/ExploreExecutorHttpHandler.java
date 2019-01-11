@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.executor;
 
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -33,7 +32,6 @@ import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.DisableExploreParameters;
 import co.cask.cdap.explore.client.EnableExploreParameters;
 import co.cask.cdap.explore.client.UpdateExploreParameters;
@@ -42,10 +40,8 @@ import co.cask.cdap.explore.service.ExploreTableManager;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.http.AbstractHttpHandler;
@@ -90,82 +86,18 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private final ExploreTableManager exploreTableManager;
   private final DatasetFramework datasetFramework;
-  private final StreamAdmin streamAdmin;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
   private final Impersonator impersonator;
 
   @Inject
   public ExploreExecutorHttpHandler(ExploreTableManager exploreTableManager,
                                     DatasetFramework datasetFramework,
-                                    StreamAdmin streamAdmin,
                                     SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                     Impersonator impersonator) {
     this.exploreTableManager = exploreTableManager;
     this.datasetFramework = datasetFramework;
-    this.streamAdmin = streamAdmin;
     this.datasetInstantiatorFactory = datasetInstantiatorFactory;
     this.impersonator = impersonator;
-  }
-
-  @POST
-  @Path("streams/{stream}/tables/{table}/enable")
-  @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void enableStream(FullHttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespace,
-                           @PathParam("stream") String streamName,
-                           @PathParam("table") final String tableName) throws Exception {
-    final StreamId streamId = new StreamId(namespace, streamName);
-    try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()))) {
-      final FormatSpecification format = GSON.fromJson(reader, FormatSpecification.class);
-      if (format == null) {
-        throw new BadRequestException("Expected format in the body");
-      }
-      QueryHandle handle = impersonator.doAs(streamId, new Callable<QueryHandle>() {
-        @Override
-        public QueryHandle call() throws Exception {
-          return exploreTableManager.enableStream(tableName, streamId, format);
-        }
-      });
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json.toString());
-    } catch (UnsupportedTypeException e) {
-      LOG.error("Exception while generating create statement for stream {}", streamName, e);
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
-  }
-
-  @POST
-  @Path("streams/{stream}/tables/{table}/disable")
-  public void disableStream(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespace,
-                            @PathParam("stream") String streamName,
-                            @PathParam("table") final String tableName) {
-
-    final StreamId streamId = new StreamId(namespace, streamName);
-    try {
-      // throws io exception if there is no stream
-      streamAdmin.getConfig(streamId);
-    } catch (IOException e) {
-      LOG.debug("Could not find stream {} to disable explore on.", streamName, e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Could not find stream " + streamName);
-      return;
-    }
-
-    try {
-      QueryHandle handle = impersonator.doAs(new NamespaceId(namespace), new Callable<QueryHandle>() {
-        @Override
-        public QueryHandle call() throws Exception {
-          return exploreTableManager.disableStream(tableName, streamId);
-        }
-      });
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json.toString());
-    } catch (Throwable t) {
-      LOG.error("Got exception disabling exploration for stream {}", streamId, t);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, t.getMessage());
-    }
   }
 
   @POST

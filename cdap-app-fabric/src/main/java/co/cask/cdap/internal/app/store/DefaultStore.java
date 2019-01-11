@@ -22,7 +22,6 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -439,27 +438,6 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void addStream(NamespaceId id, StreamSpecification streamSpec) {
-    Transactionals.execute(transactional, context -> {
-      getAppMetadataStore(context).writeStream(id.getNamespace(), streamSpec);
-    });
-  }
-
-  @Override
-  public StreamSpecification getStream(NamespaceId id, String name) {
-    return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getStream(id.getNamespace(), name);
-    });
-  }
-
-  @Override
-  public Collection<StreamSpecification> getAllStreams(NamespaceId id) {
-    return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getAllStreams(id.getNamespace());
-    });
-  }
-
-  @Override
   public void setWorkerInstances(ProgramId id, int instances) {
     Preconditions.checkArgument(instances > 0, "Cannot change number of worker instances to %s", instances);
     Transactionals.execute(transactional, context -> {
@@ -550,7 +528,6 @@ public class DefaultStore implements Store {
     Transactionals.execute(transactional, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
       metaStore.deleteApplications(id.getNamespace());
-      metaStore.deleteAllStreams(id.getNamespace());
       metaStore.deleteProgramHistory(id.getNamespace());
     });
   }

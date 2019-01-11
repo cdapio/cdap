@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.cli.commandset;
 import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.lineage.GetDatasetLineageCommand;
-import co.cask.cdap.cli.command.lineage.GetStreamLineageCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -36,7 +35,6 @@ public class LineageCommands extends CommandSet<Command> implements Categorized 
     super(
       ImmutableList.<Command>builder()
         .add(injector.getInstance(GetDatasetLineageCommand.class))
-        .add(injector.getInstance(GetStreamLineageCommand.class))
         .build());
   }
 

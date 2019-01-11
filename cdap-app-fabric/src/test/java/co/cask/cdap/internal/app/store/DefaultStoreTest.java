@@ -26,7 +26,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -497,8 +496,6 @@ public class DefaultStoreTest {
     public void configure() {
       setName("FooApp");
       setDescription("Foo App");
-      addStream(new Stream("stream1"));
-      addStream(new Stream("stream2"));
       createDataset("dataset1", Table.class);
       createDataset("dataset2", KeyValueTable.class);
       addMapReduce(new FooMapReduceJob("mrJob1"));
@@ -511,8 +508,6 @@ public class DefaultStoreTest {
     public void configure() {
       setName("FooApp");
       setDescription("Foo App");
-      addStream(new Stream("stream2"));
-      addStream(new Stream("stream3"));
       createDataset("dataset2", KeyValueTable.class);
 
       createDataset("dataset3", IndexedTable.class,

@@ -63,7 +63,6 @@ import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
-import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -801,14 +800,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                       return appId.program(input.getType(), input.getName());
                                     }
                                   }, null);
-    List<StreamDetail> filteredStreams =
-      AuthorizationUtil.isVisible(applicationDetail.getStreams(), authorizationEnforcer, principal,
-                                  new Function<StreamDetail, EntityId>() {
-                                    @Override
-                                    public EntityId apply(StreamDetail input) {
-                                      return appId.getNamespaceId().stream(input.getName());
-                                    }
-                                  }, null);
     List<DatasetDetail> filteredDatasets =
       AuthorizationUtil.isVisible(applicationDetail.getDatasets(), authorizationEnforcer, principal,
                                   new Function<DatasetDetail, EntityId>() {
@@ -819,7 +810,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                   }, null);
     return new ApplicationDetail(applicationDetail.getName(), applicationDetail.getAppVersion(),
                                  applicationDetail.getDescription(), applicationDetail.getConfiguration(),
-                                 filteredStreams, filteredDatasets, filteredPrograms, applicationDetail.getPlugins(),
+                                 filteredDatasets, filteredPrograms, applicationDetail.getPlugins(),
                                  applicationDetail.getArtifact(), applicationDetail.getOwnerPrincipal());
   }
 

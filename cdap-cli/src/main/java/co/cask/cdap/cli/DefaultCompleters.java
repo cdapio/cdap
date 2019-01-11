@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,9 @@
 
 package co.cask.cdap.cli;
 
-import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.cli.command.system.RenderAsCommand;
-import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.cli.completer.element.AppIdCompleter;
 import co.cask.cdap.cli.completer.element.ArtifactNameCompleter;
 import co.cask.cdap.cli.completer.element.DatasetModuleNameCompleter;
@@ -29,7 +27,6 @@ import co.cask.cdap.cli.completer.element.DatasetTypeNameCompleter;
 import co.cask.cdap.cli.completer.element.EndpointCompleter;
 import co.cask.cdap.cli.completer.element.NamespaceNameCompleter;
 import co.cask.cdap.cli.completer.element.ProgramIdCompleter;
-import co.cask.cdap.cli.completer.element.StreamIdCompleter;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -59,7 +56,6 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.DATASET_MODULE.getName(), injector.getInstance(DatasetModuleNameCompleter.class))
         .put(ArgumentName.DATASET.getName(), injector.getInstance(DatasetNameCompleter.class))
         .put(ArgumentName.DATASET_TYPE.getName(), injector.getInstance(DatasetTypeNameCompleter.class))
-        .put(ArgumentName.STREAM.getName(), injector.getInstance(StreamIdCompleter.class))
         .put(ArgumentName.LOCAL_FILE_PATH.getName(), new FileNameCompleter())
         .put(ArgumentName.APP_JAR_FILE.getName(), new FileNameCompleter())
         .put(ArgumentName.DATASET_MODULE_JAR_FILE.getName(), new FileNameCompleter())
@@ -74,7 +70,6 @@ public class DefaultCompleters implements Supplier<Map<String, Completer>> {
         .put(ArgumentName.WORKFLOW_TOKEN_SCOPE.getName(), new EnumCompleter(WorkflowToken.Scope.class))
         .put(ArgumentName.TARGET_TYPE.getName(), new EnumCompleter(EntityTypeSimpleName.class))
         .put(ArgumentName.METADATA_SCOPE.getName(), new EnumCompleter(MetadataScope.class))
-        .put(ArgumentName.FORMAT.getName(), new StringsCompleter(Formats.ALL))
         .put(ArgumentName.PRINCIPAL_TYPE.getName(), new EnumCompleter(Principal.PrincipalType.class))
         .putAll(generateProgramIdCompleters(injector)).build();
   }

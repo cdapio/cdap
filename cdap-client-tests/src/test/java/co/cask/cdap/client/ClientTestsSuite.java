@@ -42,7 +42,6 @@ import org.junit.runners.Suite;
   ProgramClientTestRun.class,
   ScheduleClientTestRun.class,
   ServiceClientTestRun.class,
-  StreamClientTestRun.class,
   UsageHandlerTestRun.class,
   WorkflowClientTestRun.class,
 })

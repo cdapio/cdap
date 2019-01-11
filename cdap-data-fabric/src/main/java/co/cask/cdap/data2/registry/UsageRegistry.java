@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,11 @@ package co.cask.cdap.data2.registry;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Set;
 
 /**
- * Store program -> dataset/stream usage information.
+ * Store program -> dataset usage information.
  */
 public interface UsageRegistry extends UsageWriter {
 
@@ -37,13 +36,7 @@ public interface UsageRegistry extends UsageWriter {
 
   Set<DatasetId> getDatasets(ApplicationId id);
 
-  Set<StreamId> getStreams(ApplicationId id);
-
   Set<DatasetId> getDatasets(ProgramId id);
-
-  Set<StreamId> getStreams(ProgramId id);
-
-  Set<ProgramId> getPrograms(StreamId id);
 
   Set<ProgramId> getPrograms(DatasetId id);
 }

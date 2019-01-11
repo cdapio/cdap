@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.explore.service;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -30,43 +29,27 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.StreamAdminModules;
-import co.cask.cdap.data.stream.service.StreamFetchHandler;
-import co.cask.cdap.data.stream.service.StreamHandler;
-import co.cask.cdap.data.stream.service.StreamHttpService;
-import co.cask.cdap.data.stream.service.StreamMetaStore;
-import co.cask.cdap.data.stream.service.StreamService;
-import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
-import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -75,22 +58,17 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.http.HttpHandler;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -107,25 +85,16 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
-import javax.ws.rs.HttpMethod;
 
 /**
  * Base class for tests that need explore service to be running.
  */
 public class BaseHiveExploreServiceTest {
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
-    .create();
 
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId("namespace");
   protected static final NamespaceId OTHER_NAMESPACE_ID = new NamespaceId("other");
@@ -151,14 +120,9 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
-  protected static NotificationService notificationService;
-  protected static StreamHttpService streamHttpService;
-  protected static StreamService streamService;
   protected static DiscoveryExploreClient exploreClient;
   protected static ExploreTableManager exploreTableManager;
   protected static NamespaceAdmin namespaceAdmin;
-  private static StreamAdmin streamAdmin;
-  private static StreamMetaStore streamMetaStore;
   private static NamespacePathLocator namespacePathLocator;
 
   protected static Injector injector;
@@ -209,18 +173,7 @@ public class BaseHiveExploreServiceTest {
     exploreService = injector.getInstance(ExploreService.class);
     exploreClient.ping();
 
-    notificationService = injector.getInstance(NotificationService.class);
-    notificationService.startAndWait();
-
-    streamService = injector.getInstance(StreamService.class);
-    streamService.startAndWait();
-    streamHttpService = injector.getInstance(StreamHttpService.class);
-    streamHttpService.startAndWait();
-
     exploreTableManager = injector.getInstance(ExploreTableManager.class);
-
-    streamAdmin = injector.getInstance(StreamAdmin.class);
-    streamMetaStore = injector.getInstance(StreamMetaStore.class);
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
@@ -243,9 +196,6 @@ public class BaseHiveExploreServiceTest {
     deleteNamespace(NamespaceId.DEFAULT);
     deleteNamespace(NAMESPACE_ID);
     deleteNamespace(OTHER_NAMESPACE_ID);
-    streamHttpService.stopAndWait();
-    streamService.stopAndWait();
-    notificationService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
@@ -349,56 +299,6 @@ public class BaseHiveExploreServiceTest {
     return newResults;
   }
 
-  protected static void createStream(StreamId streamId) throws Exception {
-    streamAdmin.create(streamId);
-    streamMetaStore.addStream(streamId);
-  }
-
-  protected static void dropStream(StreamId streamId) throws Exception {
-    streamAdmin.drop(streamId);
-    streamMetaStore.removeStream(streamId);
-  }
-
-  protected static void setStreamProperties(String namespace, String streamName,
-                                            StreamProperties properties) throws IOException {
-    int port = streamHttpService.getBindAddress().getPort();
-    URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s/properties",
-                                    port, Constants.Gateway.API_VERSION_3, namespace, streamName));
-    HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-    urlConn.setRequestMethod(HttpMethod.PUT);
-    urlConn.setDoOutput(true);
-    urlConn.getOutputStream().write(GSON.toJson(properties).getBytes(StandardCharsets.UTF_8));
-    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
-    urlConn.disconnect();
-  }
-
-  protected static void sendStreamEvent(StreamId streamId, byte[] body) throws IOException {
-    sendStreamEvent(streamId, Collections.<String, String>emptyMap(), body);
-  }
-
-  protected static void sendStreamEvent(StreamId streamId, Map<String, String> headers, byte[] body)
-    throws IOException {
-    HttpURLConnection urlConn = openStreamConnection(streamId);
-    urlConn.setRequestMethod(HttpMethod.POST);
-    urlConn.setDoOutput(true);
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      // headers must be prefixed by the stream name, otherwise they are filtered out by the StreamHandler.
-      // the handler also strips the stream name from the key before writing it to the stream.
-      urlConn.addRequestProperty(streamId.getEntityName() + "." + header.getKey(), header.getValue());
-    }
-    urlConn.getOutputStream().write(body);
-    Assert.assertEquals(HttpResponseStatus.OK.code(), urlConn.getResponseCode());
-    urlConn.disconnect();
-  }
-
-  private static HttpURLConnection openStreamConnection(StreamId streamId) throws IOException {
-    int port = streamHttpService.getBindAddress().getPort();
-    URL url = new URL(String.format("http://127.0.0.1:%d%s/namespaces/%s/streams/%s",
-                                    port, Constants.Gateway.API_VERSION_3,
-                                    streamId.getNamespace(), streamId.getEntityName()));
-    return (HttpURLConnection) url.openConnection();
-  }
-
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
                                                     TemporaryFolder tmpFolder) throws IOException {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
@@ -418,9 +318,6 @@ public class BaseHiveExploreServiceTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new StreamServiceRuntimeModule().getInMemoryModules(),
-      new StreamAdminModules().getInMemoryModules(),
-      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
@@ -428,17 +325,9 @@ public class BaseHiveExploreServiceTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
-
-          Multibinder<HttpHandler> handlerBinder =
-            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
-          handlerBinder.addBinding().to(StreamHandler.class);
-          handlerBinder.addBinding().to(StreamFetchHandler.class);
-          CommonHandlers.add(handlerBinder);
-          bind(StreamHttpService.class).in(Scopes.SINGLETON);
 
           // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
           install(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
@@ -480,9 +369,6 @@ public class BaseHiveExploreServiceTest {
       new MetricsClientRuntimeModule().getStandaloneModules(),
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
-      new StreamServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules(),
-      new NotificationServiceRuntimeModule().getStandaloneModules(),
       new NamespaceAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
@@ -490,15 +376,7 @@ public class BaseHiveExploreServiceTest {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-
-          Multibinder<HttpHandler> handlerBinder =
-            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
-          handlerBinder.addBinding().to(StreamHandler.class);
-          handlerBinder.addBinding().to(StreamFetchHandler.class);
-          CommonHandlers.add(handlerBinder);
-          bind(StreamHttpService.class).in(Scopes.SINGLETON);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }

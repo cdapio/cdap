@@ -303,7 +303,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
       new DefaultApplicationSpecification(APP1_ID.getApplication(), "dummy app", null,
                                           ARTIFACT_ID1.toApiArtifactId(),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap());
@@ -316,7 +316,7 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     ApplicationSpecification dummyAppSpec2 =
       new DefaultApplicationSpecification(APP2_ID.getApplication(), "dummy app", null,
                                           ARTIFACT_ID2.toApiArtifactId(),
-                                          Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyMap(), Collections.emptyMap(),
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),
                                           Collections.emptyMap(), Collections.emptyMap(),

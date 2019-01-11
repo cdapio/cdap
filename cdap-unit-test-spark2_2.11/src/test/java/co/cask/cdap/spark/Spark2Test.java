@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,9 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
@@ -34,6 +37,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
@@ -45,14 +49,15 @@ import co.cask.cdap.spark.app.SparkAppUsingObjectStore;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -63,6 +68,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
@@ -70,6 +76,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,37 +179,43 @@ public class Spark2Test extends TestBaseWithSpark2 {
 
   @Test
   public void testScalaSparkCrossNSStream() throws Exception {
-    // create a namespace for stream and create the stream in it
-    NamespaceMeta crossNSStreamMeta = new NamespaceMeta.Builder().setName("streamSpaceForSpark").build();
-    getNamespaceAdmin().create(crossNSStreamMeta);
-    StreamManager streamManager = getStreamManager(crossNSStreamMeta.getNamespaceId().stream("testStream"));
+    // create a namespace for input and create a file set instance
+    NamespaceMeta inputNSMeta = new NamespaceMeta.Builder().setName("inputSpaceForSpark").build();
+    getNamespaceAdmin().create(inputNSMeta);
+    DatasetId inputDatasetId = inputNSMeta.getNamespaceId().dataset("input");
+    addDatasetInstance(FileSet.class.getName(), inputDatasetId,
+                       FileSetProperties.builder().setInputFormat(TextInputFormat.class).build());
 
     // create a namespace for dataset and add the dataset instance in it
-    NamespaceMeta crossNSDatasetMeta = new NamespaceMeta.Builder().setName("crossNSDataset").build();
-    getNamespaceAdmin().create(crossNSDatasetMeta);
-    addDatasetInstance(crossNSDatasetMeta.getNamespaceId().dataset("count"), "keyValueTable");
+    NamespaceMeta outputNSMeta = new NamespaceMeta.Builder().setName("crossNSDataset").build();
+    getNamespaceAdmin().create(outputNSMeta);
+    addDatasetInstance(outputNSMeta.getNamespaceId().dataset("count"), "keyValueTable");
 
-    // write something to the stream
-    streamManager.createStream();
-    for (int i = 0; i < 50; i++) {
-      streamManager.send(String.valueOf(i));
+    // write something to the input dataset
+    Location inputFile = this.<FileSet>getDataset(inputDatasetId).get().getLocation("inputFile");
+    try (PrintStream printer = new PrintStream(inputFile.getOutputStream(), true, "UTF-8")) {
+      for (int i = 0; i < 50; i++) {
+        printer.println(String.valueOf(i));
+      }
     }
 
     // deploy the spark app in another namespace (default)
     ApplicationManager applicationManager = deploy(NamespaceId.DEFAULT, SparkAppUsingObjectStore.class);
 
-    Map<String, String> args = ImmutableMap.of(ScalaCrossNSProgram.STREAM_NAMESPACE(),
-                                               crossNSStreamMeta.getNamespaceId().getNamespace(),
-                                               ScalaCrossNSProgram.DATASET_NAMESPACE(),
-                                               crossNSDatasetMeta.getNamespaceId().getNamespace(),
-                                               ScalaCrossNSProgram.DATASET_NAME(), "count");
+    Map<String, String> args = new HashMap<>();
+    args.put(ScalaCrossNSProgram.INPUT_NAMESPACE(), inputNSMeta.getNamespaceId().getNamespace());
+    args.put(ScalaCrossNSProgram.OUTPUT_NAMESPACE(), outputNSMeta.getNamespaceId().getNamespace());
+    args.put(ScalaCrossNSProgram.OUTPUT_NAME(), "count");
+
+    FileSetArguments.setInputPath(args, "inputFile");
+
     SparkManager sparkManager =
       applicationManager.getSparkManager(ScalaCrossNSProgram.class.getSimpleName()).start(args);
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     sparkManager.waitForStopped(60, TimeUnit.SECONDS);
 
     // get the dataset from the other namespace where we expect it to exist and compare the data
-    DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().dataset("count"));
+    DataSetManager<KeyValueTable> countManager = getDataset(outputNSMeta.getNamespaceId().dataset("count"));
     KeyValueTable results = countManager.get();
     for (int i = 0; i < 50; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);

@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -68,11 +67,6 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public ArtifactId getArtifactId() {
     return delegate.getArtifactId();
-  }
-
-  @Override
-  public Map<String, StreamSpecification> getStreams() {
-    return delegate.getStreams();
   }
 
   @Override

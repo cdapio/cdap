@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
@@ -82,7 +81,7 @@ public class UGIProviderTest {
   private static KerberosPrincipalId bobKerberosPrincipalId;
   private static KerberosPrincipalId eveKerberosPrincipalId;
   private static NamespaceId namespaceId = new NamespaceId("UGIProviderTest");
-  private static StreamId aliceEntity = namespaceId.stream("dummyStream");
+  private static DatasetId aliceEntity = namespaceId.dataset("aliceDataset");
   private static DatasetId bobEntity = namespaceId.dataset("dummyDataset");
 
   private static File localKeytabDirPath;

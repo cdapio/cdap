@@ -25,7 +25,6 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.WorkerId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.gson.JsonDeserializationContext;
@@ -65,14 +64,12 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
         return deserializeWorkflowId(jsonObj);
       case "dataset":
         return deserializeDatasetId(jsonObj);
-      case "stream":
-        return deserializeStreamId(jsonObj);
       case "artifact":
         return deserializeArtifactId(jsonObj);
       default:
         throw new UnsupportedOperationException(
           String.format("Unsupported object of entity %s found. Deserialization of only %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s, %s is supported.",
+                          "%s, %s is supported.",
                         entity,
                         ApplicationId.class.getSimpleName(),
                         ProgramId.class.getSimpleName(),
@@ -81,7 +78,6 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
                         WorkerId.class.getSimpleName(),
                         WorkflowId.class.getSimpleName(),
                         DatasetId.class.getSimpleName(),
-                        StreamId.class.getSimpleName(),
                         ArtifactId.class.getSimpleName()
           )
         );
@@ -138,12 +134,6 @@ public class NamespacedEntityIdCodec extends AbstractSpecificationCodec<Namespac
     NamespaceId namespace = deserializeNamespace(id);
     String instanceId = id.get("dataset").getAsString();
     return new DatasetId(namespace.getNamespace(), instanceId);
-  }
-
-  private StreamId deserializeStreamId(JsonObject id) {
-    NamespaceId namespace = deserializeNamespace(id);
-    String streamName = id.get("stream").getAsString();
-    return new StreamId(namespace.getNamespace(), streamName);
   }
 
   @Override

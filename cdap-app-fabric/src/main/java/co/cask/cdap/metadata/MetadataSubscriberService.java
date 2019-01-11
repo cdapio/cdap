@@ -237,16 +237,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
 
-      if (lineage.getDatasetId() != null) {
-        lineageDataset.addAccess(programRunId, lineage.getDatasetId(),
-                                 lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
-      } else if (lineage.getStreamId() != null) {
-        lineageDataset.addAccess(programRunId, lineage.getStreamId(),
-                                 lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
-      } else {
-        // This shouldn't happen
-        LOG.warn("Missing dataset id from the lineage access information. Ignoring the message {}", message);
-      }
+      lineageDataset.addAccess(programRunId, lineage.getDatasetId(),
+                               lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
     }
   }
 
@@ -301,14 +293,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       }
       DatasetUsage usage = message.getPayload(GSON, DatasetUsage.class);
       ProgramId programId = (ProgramId) message.getEntityId();
-      if (usage.getDatasetId() != null) {
-        usageDataset.register(programId, usage.getDatasetId());
-      } else if (usage.getStreamId() != null) {
-        usageDataset.register(programId, usage.getStreamId());
-      } else {
-        // This shouldn't happen
-        LOG.warn("Missing dataset id from the usage information. Ignoring the message {}", message);
-      }
+      usageDataset.register(programId, usage.getDatasetId());
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Cask Data, Inc.
+ * Copyright 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,7 +83,6 @@ public class DefaultMetricStore implements MetricStore {
   private static final String BY_WORKER = "worker";
   private static final String BY_WORKFLOW = "workflow";
   private static final String BY_SPARK = "spark";
-  private static final String BY_STREAM = "stream";
   private static final String BY_DATASET = "dataset";
   private static final String BY_PROFILE = "profile";
   private static final String BY_COMPONENT = "component";
@@ -170,12 +169,6 @@ public class DefaultMetricStore implements MetricStore {
       // i.e. for spark only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.SPARK)));
-
-    // Streams:
-    aggs.put(BY_STREAM, new DefaultAggregation(
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM),
-      // i.e. for streams only
-      ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.STREAM)));
 
     // Datasets:
     aggs.put(BY_DATASET, new DefaultAggregation(

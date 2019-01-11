@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
@@ -57,30 +56,12 @@ public class MessagingUsageWriter implements UsageWriter {
   }
 
   @Override
-  public void registerAll(Iterable<? extends EntityId> users, StreamId streamId) {
-    try {
-      doRegisterAll(users, streamId);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to publish usage for " + streamId
-                                   + " with owners " + Iterables.toString(users), e);
-    }
-  }
-
-  @Override
   public void registerAll(Iterable<? extends EntityId> users, DatasetId datasetId) {
     try {
       doRegisterAll(users, datasetId);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish usage for " + datasetId
                                    + " with owners " + Iterables.toString(users), e);
-    }
-  }
-
-  @Override
-  public void register(EntityId user, StreamId streamId) {
-    if (user instanceof ProgramId) {
-      // Only record usage from program
-      register((ProgramId) user, streamId);
     }
   }
 
@@ -102,19 +83,6 @@ public class MessagingUsageWriter implements UsageWriter {
       Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
     } catch (Exception e) {
       throw new RuntimeException("Failed to publish usage for " + datasetId + " for program " + programId, e);
-    }
-  }
-
-  @Override
-  public void register(ProgramId programId, StreamId streamId) {
-    MetadataMessage message = new MetadataMessage(MetadataMessage.Type.USAGE, programId,
-                                                  GSON.toJsonTree(new DatasetUsage(streamId)));
-    StoreRequest request = StoreRequestBuilder.of(topic).addPayload(GSON.toJson(message)).build();
-
-    try {
-      Retries.callWithRetries(() -> messagingService.publish(request), retryStrategy, Retries.ALWAYS_TRUE);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to publish usage for " + streamId + " for program " + programId, e);
     }
   }
 

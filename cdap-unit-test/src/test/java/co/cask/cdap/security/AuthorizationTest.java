@@ -56,7 +56,6 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
@@ -230,40 +229,6 @@ public class AuthorizationTest extends TestBase {
 
   @Test
   @Category(SlowTests.class)
-  public void testStreams() throws Exception {
-    createAuthNamespace();
-    StreamId streamId = AUTH_NAMESPACE.stream("someStream");
-    grantAndAssertSuccess(streamId, ALICE, EnumSet.allOf(Action.class));
-    cleanUpEntities.add(streamId);
-
-    // create stream as alice
-    getStreamManager(streamId).createStream();
-
-    // grant admin to BOB on the stream id so he can create the stream
-    grantAndAssertSuccess(streamId, BOB, ImmutableSet.of(Action.ADMIN));
-
-    // switch to bob
-    SecurityRequestContext.setUserId(BOB.getName());
-
-    // try to create the same stream as bob
-    // this will not fail since stream create is idempotent
-    getStreamManager(streamId).createStream();
-
-    // verify that alice and bob privilege do not change
-    assertAllAccess(ALICE, streamId);
-    getAuthorizer().enforce(streamId, BOB, Action.ADMIN);
-    try {
-      getAuthorizer().enforce(streamId, BOB, EnumSet.of(Action.READ, Action.WRITE, Action.EXECUTE));
-    } catch (UnauthorizedException e) {
-      // expected
-    }
-
-    // set user id back to ALICE so we can delete the namespace and the stream in the namespace
-    SecurityRequestContext.setUserId(ALICE.getName());
-  }
-
-  @Test
-  @Category(SlowTests.class)
   public void testApps() throws Exception {
     try {
       deployApplication(NamespaceId.DEFAULT, DummyApp.class);
@@ -278,7 +243,6 @@ public class AuthorizationTest extends TestBase {
       .put(dummyAppId, EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.artifact(DummyApp.class.getSimpleName(), "1.0-SNAPSHOT"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset("whom"), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.stream("who"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset("customDataset"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.datasetType(KeyValueTable.class.getName()), EnumSet.of(Action.ADMIN))
       .build();
@@ -346,7 +310,6 @@ public class AuthorizationTest extends TestBase {
       .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME2), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME3), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.stream(AllProgramsApp.STREAM_NAME), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.datasetType(ObjectMappedTable.class.getName()), EnumSet.of(Action.ADMIN))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, anotherAppNeededPrivilege);
@@ -393,7 +356,6 @@ public class AuthorizationTest extends TestBase {
                                                       public ProgramId apply(ProgramRecord input) {
                                                         return appId.program(input.getType(), input.getName());
                                                       }})));
-    Assert.assertEquals(Collections.emptyList(), applicationDetail.getStreams());
 
     // Switch to ALICE, deletion should be successful since ALICE has ADMIN privileges
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -490,7 +452,6 @@ public class AuthorizationTest extends TestBase {
       .put(dummyAppId, EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.artifact(DummyApp.class.getSimpleName(), "1.0-SNAPSHOT"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset("whom"), EnumSet.of(Action.ADMIN))
-      .put(AUTH_NAMESPACE.stream("who"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.datasetType(KeyValueTable.class.getName()), EnumSet.of(Action.ADMIN))
       .put(serviceId, EnumSet.of(Action.EXECUTE, Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset("customDataset"), EnumSet.of(Action.ADMIN))
@@ -1287,7 +1248,6 @@ public class AuthorizationTest extends TestBase {
     ArtifactId artifactId = namespaceId.artifact(DummyApp.class.getSimpleName(), "1.0-SNAPSHOT");
     DatasetId datasetId = namespaceId.dataset("whom");
     DatasetTypeId datasetTypeId = namespaceId.datasetType(KeyValueTable.class.getName());
-    StreamId streamId = namespaceId.stream("who");
     String owner = appOwner != null ? appOwner : nsMeta.getConfig().getPrincipal();
     KerberosPrincipalId principalId = new KerberosPrincipalId(owner);
     Principal principal = new Principal(owner, Principal.PrincipalType.USER);
@@ -1300,7 +1260,6 @@ public class AuthorizationTest extends TestBase {
       .put(dummyAppId, EnumSet.of(Action.ADMIN))
       .put(artifactId, EnumSet.of(Action.ADMIN))
       .put(datasetId, EnumSet.of(Action.ADMIN))
-      .put(streamId, EnumSet.of(Action.ADMIN))
       .put(datasetTypeId, EnumSet.of(Action.ADMIN))
       .put(principalId, EnumSet.of(Action.ADMIN))
       .put(dummyDatasetId, EnumSet.of(Action.ADMIN))
@@ -1321,11 +1280,10 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
 
-    // revoke privileges on datasets and streams from alice, she does not need these privileges to deploy the app
+    // revoke privileges on datasets from alice, she does not need these privileges to deploy the app
     // the owner will need these privileges to deploy
     revokeAndAssertSuccess(datasetId);
     revokeAndAssertSuccess(datasetTypeId);
-    revokeAndAssertSuccess(streamId);
     revokeAndAssertSuccess(dummyDatasetId);
     revokeAndAssertSuccess(dummyTypeId);
     revokeAndAssertSuccess(dummyModuleId);
@@ -1333,7 +1291,6 @@ public class AuthorizationTest extends TestBase {
     // grant ADMIN privileges to owner
     grantAndAssertSuccess(datasetId, principal, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(datasetTypeId, principal, EnumSet.of(Action.ADMIN));
-    grantAndAssertSuccess(streamId, principal, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(dummyDatasetId, principal, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(dummyTypeId, principal, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(dummyModuleId, principal, EnumSet.of(Action.ADMIN));

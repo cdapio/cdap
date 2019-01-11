@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.io;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.DatumWriter;
@@ -27,7 +26,6 @@ import co.cask.cdap.internal.io.ASMFieldAccessorFactory;
 import co.cask.cdap.internal.io.ReflectionDatumReader;
 import co.cask.cdap.internal.io.ReflectionDatumWriter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -42,7 +40,6 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -385,24 +382,6 @@ public class ASMDatumCodecTest {
     Node value = reader.read(new BinaryDecoder(is), getSchema(type));
 
     Assert.assertEquals(root, value);
-  }
-
-  @Test
-  public void testStreamEvent() throws IOException, UnsupportedTypeException {
-    TypeToken<StreamEvent> type = new TypeToken<StreamEvent>() { };
-    PipedOutputStream os = new PipedOutputStream();
-    PipedInputStream is = new PipedInputStream(os);
-
-    DatumWriter<StreamEvent> writer = getWriter(type);
-    StreamEvent event = new StreamEvent(ImmutableMap.of("key", "value"),
-                                        ByteBuffer.wrap("Testing message".getBytes(Charsets.UTF_8)));
-    writer.encode(event, new BinaryEncoder(os));
-
-    ReflectionDatumReader<StreamEvent> reader = new ReflectionDatumReader<>(getSchema(type), type);
-    StreamEvent value = reader.read(new BinaryDecoder(is), getSchema(type));
-
-    Assert.assertEquals(event.getHeaders(), value.getHeaders());
-    Assert.assertEquals(event.getBody(), value.getBody());
   }
 
   @Ignore

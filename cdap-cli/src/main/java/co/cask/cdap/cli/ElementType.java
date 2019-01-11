@@ -51,8 +51,6 @@ public enum ElementType {
 
   QUERY("query", new Noun("query"), new Noun("Query"), null, null, ArgumentName.QUERY),
 
-  STREAM("stream", new Noun("stream"), new Noun("Stream"), null, null, ArgumentName.STREAM, Capability.LIST),
-
   PROGRAM("program", new Noun("program"), new Noun("Program"), null, null, ArgumentName.PROGRAM),
 
   SCHEDULE("schedule", new Noun("schedule"), new Noun("Schedule"), null, null, ArgumentName.SCHEDULE),

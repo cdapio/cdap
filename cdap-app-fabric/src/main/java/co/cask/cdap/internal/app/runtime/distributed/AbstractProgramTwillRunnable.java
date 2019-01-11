@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.program.StateChangeListener;
@@ -521,7 +520,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
                                     MetricsCollectionService metricsCollectionService, Collection<Service> services) {
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(BrokerService.class));
-    services.add(injector.getInstance(StreamCoordinatorClient.class));
     services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));
   }
 

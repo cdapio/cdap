@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,14 +40,12 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.Outputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
-import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
@@ -83,7 +81,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
 
@@ -105,7 +102,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         MetricsCollectionService metricsCollectionService,
                         TransactionSystemClient txClient,
                         DatasetFramework dsFramework,
-                        StreamAdmin streamAdmin,
                         @Nullable File pluginArchive,
                         @Nullable PluginInstantiator pluginInstantiator,
                         SecureStore secureStore,
@@ -122,7 +118,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     this.spec = spec;
     this.mapperResources = SystemArguments.getResources(getMapperRuntimeArguments(), spec.getMapperResources());
     this.reducerResources = SystemArguments.getResources(getReducerRuntimeArguments(), spec.getReducerResources());
-    this.streamAdmin = streamAdmin;
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
 
@@ -210,15 +205,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
       Input.DatasetInput datasetInput = (Input.DatasetInput) input;
       Input.InputFormatProviderInput createdInput = createInput(datasetInput);
       addInput(createdInput.getAlias(), createdInput.getInputFormatProvider(), mapperCls);
-    } else if (input instanceof Input.StreamInput) {
-      Input.StreamInput streamInput = (Input.StreamInput) input;
-      String namespace = streamInput.getNamespace();
-      if (namespace == null) {
-        namespace = getProgram().getNamespaceId();
-      }
-      addInput(input.getAlias(),
-               new StreamInputFormatProvider(new NamespaceId(namespace), streamInput, streamAdmin),
-               mapperCls);
     } else if (input instanceof Input.InputFormatProviderInput) {
       addInput(input.getAlias(), ((Input.InputFormatProviderInput) input).getInputFormatProvider(), mapperCls);
     } else {

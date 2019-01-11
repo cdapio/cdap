@@ -19,7 +19,6 @@ package co.cask.cdap.client.app;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.data.stream.Stream;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -32,7 +31,6 @@ import javax.annotation.Nullable;
 public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
 
   public static final String NAME = "FakeApp";
-  public static final String STREAM_NAME = "fakeStream";
   public static final String DS_NAME = "fakeds";
 
   public static final String TIME_SCHEDULE_NAME = "someSchedule";
@@ -75,7 +73,6 @@ public class FakeApp extends AbstractApplication<FakeApp.AppConfig> {
   @Override
   public void configure() {
     setName(NAME);
-    addStream(new Stream(STREAM_NAME));
     addDatasetModule(FakeDatasetModule.NAME, FakeDatasetModule.class);
     createDataset(DS_NAME, FakeDataset.class.getName());
     addSpark(new FakeSpark());

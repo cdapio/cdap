@@ -23,11 +23,6 @@ import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
-import co.cask.cdap.data2.transaction.stream.StreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
-import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -64,7 +59,6 @@ import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
@@ -78,19 +72,16 @@ public class PreviewRunnerModule extends PrivateModule {
   private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PrivilegesManager privilegesManager;
-  private final StreamCoordinatorClient streamCoordinatorClient;
   private final PreferencesService preferencesService;
 
   public PreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
                              AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
-                             PrivilegesManager privilegesManager,
-                             StreamCoordinatorClient streamCoordinatorClient, PreferencesService preferencesService) {
+                             PrivilegesManager privilegesManager, PreferencesService preferencesService) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.privilegesManager = privilegesManager;
-    this.streamCoordinatorClient = streamCoordinatorClient;
     this.preferencesService = preferencesService;
   }
 
@@ -106,14 +97,6 @@ public class PreviewRunnerModule extends PrivateModule {
     expose(AuthorizationEnforcer.class);
     bind(PrivilegesManager.class).toInstance(privilegesManager);
     expose(PrivilegesManager.class);
-
-    bind(StreamConsumerStateStoreFactory.class)
-      .to(LevelDBStreamConsumerStateStoreFactory.class).in(Singleton.class);
-    bind(StreamConsumerFactory.class).to(LevelDBStreamFileConsumerFactory.class).in(Singleton.class);
-    expose(StreamConsumerFactory.class);
-
-    bind(StreamCoordinatorClient.class).toInstance(streamCoordinatorClient);
-    expose(StreamCoordinatorClient.class);
     bind(PreferencesService.class).toInstance(preferencesService);
     // bind explore client to mock.
     bind(ExploreClient.class).to(MockExploreClient.class);

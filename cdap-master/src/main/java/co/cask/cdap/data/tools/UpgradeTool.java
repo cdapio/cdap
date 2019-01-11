@@ -39,7 +39,6 @@ import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -72,8 +71,6 @@ import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
-import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
-import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -212,15 +209,11 @@ public class UpgradeTool {
           }
         }
       ),
-      new StreamAdminModules().getDistributedModules(),
-      new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
-      // don't need real notifications for upgrade, so use the in-memory implementations
-      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
       new NamespaceStoreModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),

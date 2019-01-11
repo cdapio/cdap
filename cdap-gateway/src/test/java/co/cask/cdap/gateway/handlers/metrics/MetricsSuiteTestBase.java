@@ -70,6 +70,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.net.URI;
@@ -82,9 +83,11 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class MetricsSuiteTestBase {
 
-  // Controls for test suite for whether to run BeforeClass/AfterClass
-  public static boolean runBefore = true;
-  public static boolean runAfter = true;
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+  // Control for test suite for whether to run BeforeClass/AfterClass
+  public static int nestedStartCount;
 
   private static final String API_KEY = "SampleTestApiKey";
   private static final String CLUSTER = "SampleTestClusterName";
@@ -98,7 +101,6 @@ public abstract class MetricsSuiteTestBase {
   protected static Store store;
   protected static LocationFactory locationFactory;
   private static CConfiguration conf;
-  private static TemporaryFolder tmpFolder;
 
   private static TransactionManager transactionManager;
   private static DatasetOpExecutor dsOpService;
@@ -109,14 +111,12 @@ public abstract class MetricsSuiteTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    if (!runBefore) {
+    if (nestedStartCount++ > 0) {
       return;
     }
-    tmpFolder = new TemporaryFolder();
     conf = CConfiguration.create();
+    conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     conf.set(Constants.Metrics.ADDRESS, hostname);
-    conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
-    conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     conf.setBoolean(Constants.Metrics.CONFIG_AUTHENTICATION_REQUIRED, true);
     conf.set(Constants.Metrics.CLUSTER_NAME, CLUSTER);
@@ -125,21 +125,18 @@ public abstract class MetricsSuiteTestBase {
     store = injector.getInstance(Store.class);
     locationFactory = injector.getInstance(LocationFactory.class);
     metricStore = injector.getInstance(MetricStore.class);
-
-    tmpFolder.create();
   }
 
   @AfterClass
-  public static void afterClass() throws Exception {
-    if (!runAfter) {
+  public static void afterClass() {
+    if (--nestedStartCount != 0) {
       return;
     }
     stopMetricsService(conf);
-    tmpFolder.delete();
   }
 
   @After
-  public void after() throws Exception {
+  public void after() {
     metricStore.deleteAll();
   }
 

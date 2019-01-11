@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,15 +33,12 @@ import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
-import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageWriter;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -65,7 +62,6 @@ import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.tools.KeyStores;
-import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
@@ -95,7 +91,6 @@ import javax.annotation.Nullable;
 public class DistributedProgramContainerModule extends AbstractModule {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramContainerModule.class);
-  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -200,7 +195,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
     modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new NamespaceQueryAdminModule());
-    modules.add(new DistributedProgramStreamModule());
   }
 
   private void addIsolatedModules(List<Module> modules) {
@@ -228,8 +222,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
       @Override
       protected void configure() {
         // Bind to unsupported/no-op class implementations for features that are not supported in isolated cluster mode
-        bind(StreamAdmin.class).to(UnsupportedStreamAdmin.class);
-        bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class);
         bind(ExploreClient.class).to(UnsupportedExploreClient.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -66,12 +65,6 @@ public class MessagingLineageWriter implements LineageWriter, FieldLineageWriter
   public void addAccess(ProgramRunId programRunId, DatasetId datasetId,
                         AccessType accessType, @Nullable NamespacedEntityId componentId) {
     publishLineage(programRunId, new DataAccessLineage(accessType, datasetId, componentId));
-  }
-
-  @Override
-  public void addAccess(ProgramRunId programRunId, StreamId streamId,
-                        AccessType accessType, @Nullable NamespacedEntityId componentId) {
-    publishLineage(programRunId, new DataAccessLineage(accessType, streamId, componentId));
   }
 
   @Override

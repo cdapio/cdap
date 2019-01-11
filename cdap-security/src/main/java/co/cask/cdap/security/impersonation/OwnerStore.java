@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,6 @@ import javax.annotation.Nullable;
  * <p>
  * Currently: Owner information is stored for the following entities:
  * <ul>
- * <li>{@link co.cask.cdap.api.data.stream.Stream}</li>
  * <li>{@link co.cask.cdap.api.dataset.Dataset}</li>
  * <li>{@link co.cask.cdap.api.app.Application}</li>
  * <li>{@link co.cask.cdap.common.conf.Constants.Namespace}</li>
@@ -52,7 +51,6 @@ public abstract class OwnerStore {
   private static final Set<EntityType> SUPPORTED_ENTITY_TYPES = Sets.immutableEnumSet(EntityType.NAMESPACE,
                                                                                       EntityType.APPLICATION,
                                                                                       EntityType.DATASET,
-                                                                                      EntityType.STREAM,
                                                                                       EntityType.ARTIFACT);
 
   /**

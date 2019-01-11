@@ -24,14 +24,12 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.NotificationFeedId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.QueryId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.id.SystemServiceId;
 import co.cask.cdap.proto.id.TopicId;
 
@@ -54,12 +52,9 @@ public enum EntityType {
   PROGRAM(ProgramId.class),
   PROGRAM_RUN(ProgramRunId.class),
 
-  STREAM(StreamId.class),
-
   DATASET_TYPE(DatasetTypeId.class),
   DATASET_MODULE(DatasetModuleId.class),
   SCHEDULE(ScheduleId.class),
-  NOTIFICATION_FEED(NotificationFeedId.class),
   ARTIFACT(ArtifactId.class),
   DATASET(DatasetId.class),
   SECUREKEY(SecureKeyId.class),

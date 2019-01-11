@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,12 +47,6 @@ public final class MasterUtils {
                                    Constants.Transaction.Container.NUM_CORES,
                                    Constants.Transaction.Container.NUM_INSTANCES,
                                    Constants.Transaction.Container.MAX_INSTANCES))
-      .add(new ServiceResourceKeys(cConf,
-                                   Constants.Service.STREAMS,
-                                   Constants.Stream.CONTAINER_MEMORY_MB,
-                                   Constants.Stream.CONTAINER_VIRTUAL_CORES,
-                                   Constants.Stream.CONTAINER_INSTANCES,
-                                   Constants.Stream.MAX_INSTANCES))
       .add(new ServiceResourceKeys(cConf,
                                    Constants.Service.METRICS,
                                    Constants.Metrics.MEMORY_MB,

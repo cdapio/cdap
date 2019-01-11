@@ -255,7 +255,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     }
 
     return new DefaultApplicationSpecification(appName, appVersion, description,
-                                               configuration, artifactId, getStreams(),
+                                               configuration, artifactId,
                                                getDatasetModules(), getDatasetSpecs(),
                                                mapReduces, sparks, workflows, services,
                                                builtScheduleSpecs, workers, getPlugins());
@@ -272,7 +272,6 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   }
 
   private void addDatasets(DefaultDatasetConfigurer configurer) {
-    addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
   }

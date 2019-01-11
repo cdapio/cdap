@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.lineage;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 
@@ -44,19 +43,6 @@ public class Relation {
   public Relation(DatasetId data, ProgramId program, AccessType access, RunId run,
                   Set<? extends NamespacedEntityId> components) {
     this.data = data;
-    this.program = program;
-    this.access = access;
-    this.run = run;
-    this.components = ImmutableSet.copyOf(components);
-  }
-
-  public Relation(StreamId stream, ProgramId program, AccessType access, RunId run) {
-    this(stream, program, access, run, Collections.<NamespacedEntityId>emptySet());
-  }
-
-  public Relation(StreamId stream, ProgramId program, AccessType access, RunId run,
-                  Set<? extends NamespacedEntityId> components) {
-    this.data = stream;
     this.program = program;
     this.access = access;
     this.run = run;

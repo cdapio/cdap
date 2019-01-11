@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.SecureKeyId;
-import co.cask.cdap.proto.id.StreamId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -125,20 +124,6 @@ public class AuthorizableTest {
 
     Assert.assertEquals(kerberosPrincipalId.toString() + "*.com",
                         Authorizable.fromString(authorizable.toString() + "*.com").toString());
-  }
-
-  @Test
-  public void testStream() {
-    StreamId streamId = new StreamId("ns", "test_stream");
-    Authorizable authorizable = Authorizable.fromEntityId(streamId);
-    Assert.assertEquals(streamId.toString(), authorizable.toString());
-
-    String widcardId = streamId.toString().replace("est", "*es?t");
-    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
-
-    verifyInvalidString("stream:ns");
-    verifyInvalidString("stream:ns.stream1.invalid");
-    verifyInvalidString("stream:ns:stream1");
   }
 
   @Test

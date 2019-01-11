@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright © 2017 Cask Data, Inc.
+# Copyright © 2017-2019 Cask Data, Inc.
 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ sql = SQLContext(sc)
 sec = SparkExecutionContext()
 metrics = sec.getMetrics()
 
-streamName = sec.getRuntimeArguments()['input.stream']
+inputFile = sec.getRuntimeArguments()['input.file']
 
 def isEven(body):
   metrics.count("body", 1)
@@ -33,6 +33,9 @@ def isEven(body):
 
 sql.udf.register("isEven", isEven, BooleanType())
 
-sql.sql("SELECT body FROM cdapstream." + streamName + " WHERE isEven(body)=True") \
+df = sql.read.format('text').load(inputFile)
+df.registerTempTable('input')
+
+sql.sql("SELECT value FROM input WHERE isEven(value)=True") \
   .coalesce(1) \
   .write.format("text").save(sec.getRuntimeArguments().get("output.path"))

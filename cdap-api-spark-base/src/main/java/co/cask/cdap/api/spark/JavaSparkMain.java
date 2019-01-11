@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,14 +32,14 @@ import java.io.Serializable;
  *   public void run(JavaSparkExecutionContext sec) throws Exception {
  *     JavaSparkContext sc = new JavaSparkContext();
  *
- *     // Create a RDD from stream "input", with event body decoded as UTF-8 String
- *     JavaRDD&lt;String&gt; streamRDD = sec.fromStreamAsStringPair("input").values();
+ *     // Create a RDD from dataset "input", with event body decoded as UTF-8 String
+ *     JavaRDD&lt;String&gt; inputRDD = sec.fromDataset("input").values();
  *
  *     // Create a RDD from dataset "lookup", which represents a lookup table from String to Long
  *     JavaPairRDD&lt;String, Long&gt; lookupRDD = sec.fromDataset("lookup");
  *
- *     // Join the "input" stream with the "lookup" dataset and save it to "output" dataset
- *     JavaPairRDD&lt;String, Long&gt; resultRDD = streamRDD
+ *     // Join the "input" input with the "lookup" dataset and save it to "output" dataset
+ *     JavaPairRDD&lt;String, Long&gt; resultRDD = inputRDD
  *       .mapToPair(new PairFunction&lt;String, String, String&gt;() {
  *         {@literal @}Override
  *         public Tuple2&lt;String, String&gt; call(String s) throws Exception {

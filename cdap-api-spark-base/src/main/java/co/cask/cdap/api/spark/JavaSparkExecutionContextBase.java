@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,9 +25,7 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataWriter;
@@ -35,14 +33,9 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
-import co.cask.cdap.api.stream.GenericStreamEventData;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
-import org.apache.hadoop.io.ByteWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.spark.Partition;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
@@ -209,246 +202,6 @@ public abstract class JavaSparkExecutionContextBase implements SchedulableProgra
   public abstract <K, V> JavaPairRDD<K, V> fromDataset(String namespace, String datasetName,
                                                        Map<String, String> arguments,
                                                        @Nullable Iterable<? extends Split> splits);
-
-
-  /**
-   * Creates a {@link JavaRDD} that represents all events from the given stream.
-   *
-   * @param streamName name of the stream
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public JavaRDD<StreamEvent> fromStream(String streamName) {
-    return fromStream(streamName, 0, Long.MAX_VALUE);
-  }
-
-  /**
-   * Creates a {@link JavaRDD} that represents all events from the given stream.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public JavaRDD<StreamEvent> fromStream(String namespace, String streamName) {
-    return fromStream(namespace, streamName, 0, Long.MAX_VALUE);
-  }
-
-  /**
-   * Creates a {@link JavaRDD} that represents events from the given stream in the given time range.
-   *
-   * @param streamName name of the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public abstract JavaRDD<StreamEvent> fromStream(String streamName, long startTime, long endTime);
-
-  /**
-   * Creates a {@link JavaRDD} that represents events from the given stream in the given time range.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public abstract JavaRDD<StreamEvent> fromStream(String namespace, String streamName, long startTime, long endTime);
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents all events from the given stream. The key in the
-   * resulting {@link JavaPairRDD} is the event timestamp. The stream body will
-   * be decoded as the give value type. Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
-   *
-   * @param streamName name of the stream
-   * @param valueType type of the stream body to decode to
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public <V> JavaPairRDD<Long, V> fromStream(String streamName, Class<V> valueType) {
-    return fromStream(streamName, 0, Long.MAX_VALUE, valueType);
-  }
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents all events from the given stream. The key in the
-   * resulting {@link JavaPairRDD} is the event timestamp. The stream body will
-   * be decoded as the give value type. Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @param valueType type of the stream body to decode to
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public <V> JavaPairRDD<Long, V> fromStream(String namespace, String streamName, Class<V> valueType) {
-    return fromStream(namespace, streamName, 0, Long.MAX_VALUE, valueType);
-  }
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
-   * The key in the resulting {@link JavaPairRDD} is the event timestamp.
-   * The stream body will be decoded as the give value type.
-   * Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
-   *
-   * @param streamName name of the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @param valueType type of the stream body to decode to
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public abstract <V> JavaPairRDD<Long, V> fromStream(String streamName, long startTime, long endTime,
-                                                      Class<V> valueType);
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
-   * The key in the resulting {@link JavaPairRDD} is the event timestamp.
-   * The stream body will be decoded as the give value type.
-   * Currently it supports {@link Text}, {@link String} and {@link ByteWritable}.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @param valueType type of the stream body to decode to
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public abstract <V> JavaPairRDD<Long, V> fromStream(String namespace, String streamName, long startTime, long endTime,
-                                                      Class<V> valueType);
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
-   * Each steam event will be decoded by an instance of the given {@link StreamEventDecoder} class.
-   *
-   * @param streamName name of the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @param decoderClass the {@link StreamEventDecoder} for decoding {@link StreamEvent}
-   * @param keyType the type of the decoded key
-   * @param valueType the type of the decoded value
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public abstract <K, V> JavaPairRDD<K, V> fromStream(String streamName, long startTime, long endTime,
-                                                      Class<? extends StreamEventDecoder<K, V>> decoderClass,
-                                                      Class<K> keyType, Class<V> valueType);
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents events from the given stream in the given time range.
-   * Each steam event will be decoded by an instance of the given {@link StreamEventDecoder} class.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @param decoderClass the {@link StreamEventDecoder} for decoding {@link StreamEvent}
-   * @param keyType the type of the decoded key
-   * @param valueType the type of the decoded value
-   * @return A new {@link JavaRDD} instance that reads from the given stream
-   * @throws DatasetInstantiationException if the stream doesn't exist
-   */
-  public abstract <K, V> JavaPairRDD<K, V> fromStream(String namespace, String streamName, long startTime, long endTime,
-                                                      Class<? extends StreamEventDecoder<K, V>> decoderClass,
-                                                      Class<K> keyType, Class<V> valueType);
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents all events from the given stream.
-   * The first entry in the pair is a {@link Long}, representing the
-   * event timestamp, while the second entry is a {@link GenericStreamEventData},
-   * which contains data decoded from the stream event body base on
-   * the given {@link FormatSpecification}.
-   *
-   * @param streamName name of the stream
-   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
-   * @param <T> value type
-   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
-   * @throws DatasetInstantiationException if the Stream doesn't exist
-   */
-  public <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String streamName,
-                                                                     FormatSpecification formatSpec,
-                                                                     Class<T> dataType) {
-    return fromStream(streamName, formatSpec, 0, Long.MAX_VALUE, dataType);
-  }
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents all events from the given stream.
-   * The first entry in the pair is a {@link Long}, representing the
-   * event timestamp, while the second entry is a {@link GenericStreamEventData},
-   * which contains data decoded from the stream event body base on
-   * the given {@link FormatSpecification}.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
-   * @param <T> value type
-   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
-   * @throws DatasetInstantiationException if the Stream doesn't exist
-   */
-  public <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String namespace, String streamName,
-                                                                     FormatSpecification formatSpec,
-                                                                     Class<T> dataType) {
-    return fromStream(namespace, streamName, formatSpec, 0, Long.MAX_VALUE, dataType);
-  }
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents data from the given stream for events in the given
-   * time range. The first entry in the pair is a {@link Long}, representing the
-   * event timestamp, while the second entry is a {@link GenericStreamEventData},
-   * which contains data decoded from the stream event body base on
-   * the given {@link FormatSpecification}.
-   *
-   * @param streamName name of the stream
-   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @param <T> value type
-   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
-   * @throws DatasetInstantiationException if the Stream doesn't exist
-   */
-  public abstract <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String streamName,
-                                                                              FormatSpecification formatSpec,
-                                                                              long startTime, long endTime,
-                                                                              Class<T> dataType);
-
-  /**
-   * Creates a {@link JavaPairRDD} that represents data from the given stream for events in the given
-   * time range. The first entry in the pair is a {@link Long}, representing the
-   * event timestamp, while the second entry is a {@link GenericStreamEventData},
-   * which contains data decoded from the stream event body base on
-   * the given {@link FormatSpecification}.
-   *
-   * @param namespace namespace in which the stream exists
-   * @param streamName name of the stream
-   * @param formatSpec the {@link FormatSpecification} describing the format in the stream
-   * @param startTime the starting time of the stream to be read in milliseconds (inclusive);
-   *                  passing in {@code 0} means start reading from the first event available in the stream.
-   * @param endTime the ending time of the streams to be read in milliseconds (exclusive);
-   *                passing in {@link Long#MAX_VALUE} means read up to latest event available in the stream.
-   * @param <T> value type
-   * @return a new {@link JavaPairRDD} instance that reads from the given stream.
-   * @throws DatasetInstantiationException if the Stream doesn't exist
-   */
-  public abstract <T> JavaPairRDD<Long, GenericStreamEventData<T>> fromStream(String namespace, String streamName,
-                                                                              FormatSpecification formatSpec,
-                                                                              long startTime, long endTime,
-                                                                              Class<T> dataType);
 
   /**
    * Saves the given {@link JavaPairRDD} to the given {@link Dataset}.

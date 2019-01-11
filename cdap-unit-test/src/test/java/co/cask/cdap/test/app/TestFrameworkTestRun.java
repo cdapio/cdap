@@ -35,7 +35,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -67,7 +66,6 @@ import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
@@ -102,9 +100,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -350,13 +346,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
                                                 String.format("user.destroy.%s", AppWithPlugin.WORKFLOW),
                                                 1, 60, TimeUnit.SECONDS);
 
-    // Testing Spark Plugins. First send some data to stream for the Spark program to process
-    StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);
-    for (int i = 0; i < 5; i++) {
-      streamManager.send("Message " + i);
+    // Testing Spark Plugins. First send some data to fileset for the Spark program to process
+    DataSetManager<FileSet> fileSetManager = getDataset(AppWithPlugin.SPARK_INPUT);
+    FileSet fileSet = fileSetManager.get();
+    try (PrintStream out = new PrintStream(fileSet.getLocation("input").append("file.txt").getOutputStream(),
+                                           true, "UTF-8")) {
+      for (int i = 0; i < 5; i++) {
+        out.println("Message " + i);
+      }
     }
 
-    SparkManager sparkManager = appManager.getSparkManager(AppWithPlugin.SPARK).start();
+    Map<String, String> sparkArgs = new HashMap<>();
+    FileSetArguments.setInputPath(sparkArgs, "input");
+
+    SparkManager sparkManager = appManager.getSparkManager(AppWithPlugin.SPARK).start(sparkArgs);
     sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
 
     // Verify the Spark result.
@@ -990,48 +993,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(expected, tokenNodeDetail.getTokenDataAtNode());
   }
 
-  @Test
-  public void testBatchStreamUpload() throws Exception {
-    StreamManager batchStream = getStreamManager("batchStream");
-    batchStream.createStream();
-    String event1 = "this,is,some";
-    String event2 = "test,csv,data";
-    String event3 = "that,can,be,used,to,test";
-    String event4 = "batch,upload,capability";
-    String event5 = "for,streams in testbase";
-    File testData = TEMP_FOLDER.newFile("test-stream-data.txt");
-    try (FileWriter fileWriter = new FileWriter(testData);
-         BufferedWriter out = new BufferedWriter(fileWriter)) {
-      out.write(String.format("%s\n", event1));
-      out.write(String.format("%s\n", event2));
-      out.write(String.format("%s\n", event3));
-      out.write(String.format("%s\n", event4));
-      out.write(String.format("%s\n", event5));
-    }
-
-    // Batch upload file containing 10 events
-    batchStream.send(testData, "text/csv");
-    // Verify upload
-    List<StreamEvent> uploadedEvents = batchStream.getEvents(0, System.currentTimeMillis(), 100);
-    Assert.assertEquals(5, uploadedEvents.size());
-    Assert.assertEquals(event1, Bytes.toString(uploadedEvents.get(0).getBody()));
-    Assert.assertEquals(event2, Bytes.toString(uploadedEvents.get(1).getBody()));
-    Assert.assertEquals(event3, Bytes.toString(uploadedEvents.get(2).getBody()));
-    Assert.assertEquals(event4, Bytes.toString(uploadedEvents.get(3).getBody()));
-    Assert.assertEquals(event5, Bytes.toString(uploadedEvents.get(4).getBody()));
-  }
-
-  private void waitForWorkflowStatus(final WorkflowManager wfmanager, ProgramRunStatus expected) throws Exception {
-    Tasks.waitFor(expected, new Callable<ProgramRunStatus>() {
-      @Override
-      public ProgramRunStatus call() throws Exception {
-        List<RunRecord> history = wfmanager.getHistory();
-        RunRecord runRecord = history.get(history.size() - 1);
-        return runRecord.getStatus();
-      }
-    }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
-  }
-
   private void waitForScheduleState(final String scheduleId, final WorkflowManager wfmanager,
                                     ProgramScheduleStatus expected) throws Exception {
     Tasks.waitFor(expected, new Callable<ProgramScheduleStatus>() {
@@ -1250,8 +1211,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       } catch (IllegalArgumentException e) {
         //expected, this will finally cause AppWithCustomTx.SERVICE to have FAILED status
       }
-      // now start all the programs with valid tx timeouts
-      getStreamManager(testSpace.stream(AppWithCustomTx.INPUT)).send("hello");
       // wait for the failed status of AppWithCustomTx.SERVICE to be persisted, so that it can be started again
       Tasks.waitFor(1, new Callable<Integer>() {
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -35,7 +34,6 @@ public class AppWithDataset extends AbstractApplication {
   @Override
   public void configure() {
     setDescription("Application with Dataset");
-    addStream(new Stream("mystream"));
     createDataset("myds", KeyValueTable.class);
     addService(new BasicService("PingService", new PingHandler()));
   }
