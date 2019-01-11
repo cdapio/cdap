@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.data.table.field;
 
+import co.cask.cdap.spi.data.InvalidFieldException;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;
@@ -64,6 +65,17 @@ public final class FieldType {
    */
   public Type getType() {
     return type;
+  }
+
+  /**
+   * Validate the given field has the correct type of value.
+   *
+   * @param field the field to validate
+   * @param isKey whether this field is key or not
+   * @throws InvalidFieldException if the type does not match
+   */
+  public void validateFieldType(Field<?> field, boolean isKey) throws InvalidFieldException {
+
   }
 
   @Override
