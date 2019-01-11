@@ -17,14 +17,26 @@ import * as React from 'react';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemLink from 'components/AppHeader/ListItemLink';
+import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import { Link } from 'react-router-dom';
+import {
+  appDrawerListItemTextStyles,
+  appDrawerListItemStyles,
+} from 'components/AppHeader/AppDrawer/AppDrawer';
+import classnames from 'classnames';
+const colorVariables = require('styles/variables.scss');
 
-const styles = () => {
+const styles = (theme) => {
   return {
-    listItemText: {
-      fontWeight: 600,
-      fontSize: '1rem',
+    listItemText: appDrawerListItemTextStyles,
+    listItem: appDrawerListItemStyles,
+    nestListPadding: {
+      paddingLeft: theme.spacing.unit * 5,
+    },
+    activeListItem: {
+      backgroundColor: colorVariables.bluegrey06,
+      color: colorVariables.blue02,
     },
   };
 };
@@ -36,30 +48,45 @@ interface IDrawerFeatureLinkProps extends WithStyles<typeof styles> {
   featureName: string;
   featureUrl: string;
   isAngular?: boolean;
+  isActive?: boolean;
+  subMenu?: IDrawerFeatureLinkProps[];
+  'data-cy'?: string;
 }
 
 class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
-  public render() {
-    const {
-      classes,
-      componentDidNavigate = () => null,
+  private renderListItem(
+    {
+      componentDidNavigate,
       featureFlag,
       featureName,
       featureUrl,
-      isAngular = false,
-    } = this.props;
+      isAngular,
+      isActive,
+      ...rest
+    }: IDrawerFeatureLinkProps,
+    isSubMenu = false
+  ) {
+    const { isNativeLink } = this.props.context;
+    const { classes } = this.props;
+    const { pathname } = location;
+    const reactFeatureUrl = `/cdap${featureUrl}`;
+    const activeFeatureUrl = isAngular ? featureUrl : reactFeatureUrl;
+    const localIsActive =
+      typeof isActive === 'undefined' ? pathname.startsWith(activeFeatureUrl) : isActive;
     if (featureFlag === false) {
       return null;
     }
-
-    const { isNativeLink } = this.props.context;
-
     return (
       <ListItemLink
+        className={classnames(classes.listItem, {
+          [classes.nestListPadding]: isSubMenu,
+          [classes.activeListItem]: localIsActive,
+        })}
         component={isNativeLink || isAngular ? 'a' : Link}
-        href={isAngular ? featureUrl : `/cdap${featureUrl}`}
+        href={isAngular ? featureUrl : reactFeatureUrl}
         to={featureUrl}
         onClick={componentDidNavigate}
+        data-cy={rest['data-cy']}
       >
         <ListItemText
           disableTypography
@@ -67,6 +94,28 @@ class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
           primary={featureName}
         />
       </ListItemLink>
+    );
+  }
+  private renderSubMenu() {
+    const { subMenu = [] } = this.props;
+    if (!subMenu.length) {
+      return null;
+    }
+
+    return (
+      <List disablePadding>
+        {subMenu.map((menu, i) => (
+          <React.Fragment key={i}> {this.renderListItem(menu, true)}</React.Fragment>
+        ))}
+      </List>
+    );
+  }
+  public render() {
+    return (
+      <React.Fragment>
+        {this.renderListItem(this.props)}
+        {this.renderSubMenu()}
+      </React.Fragment>
     );
   }
 }
