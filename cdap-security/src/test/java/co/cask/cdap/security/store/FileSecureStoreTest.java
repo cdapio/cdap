@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -129,13 +130,17 @@ public class FileSecureStoreTest {
     Assert.assertEquals(metadata2.getName(), secureStore.getSecureData(NAMESPACE1, KEY2).getMetadata().getName());
   }
 
-  @Test(expected = Exception.class)
+  @Test
   public void testOverwrite() throws Exception {
     secureStoreManager.putSecureData(NAMESPACE1, KEY1, VALUE1, DESCRIPTION1, PROPERTIES_1);
     SecureStoreData oldData = secureStore.getSecureData(NAMESPACE1, KEY1);
     Assert.assertArrayEquals(VALUE1.getBytes(Charsets.UTF_8), oldData.get());
     String newVal = "New value";
-    secureStoreManager.putSecureData(NAMESPACE1, KEY1, newVal, DESCRIPTION1, PROPERTIES_1);
+    secureStoreManager.putSecureData(NAMESPACE1, KEY1, newVal, DESCRIPTION2, PROPERTIES_1);
+
+    SecureStoreData updated = secureStore.getSecureData(NAMESPACE1, KEY1);
+    Assert.assertArrayEquals(newVal.getBytes(StandardCharsets.UTF_8), updated.get());
+    Assert.assertEquals(DESCRIPTION2, updated.getMetadata().getDescription());
   }
 
   @Test(expected = NotFoundException.class)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,7 @@ public interface SecureStoreManager {
    * @param description User provided description of the entry.
    * @param properties associated with this element.
    * @throws IOException If the attempt to store the element failed.
-   * @throws Exception If the specified namespace does not exist or the name already exists. Updating is not supported.
+   * @throws Exception If the specified namespace does not exist.
    */
   void putSecureData(String namespace, String name, String data, String description, Map<String, String> properties)
     throws Exception;

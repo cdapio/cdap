@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.client;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.SecureKeyAlreadyExistsException;
 import co.cask.cdap.common.SecureKeyNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -99,12 +98,6 @@ public class SecureStoreClientTest extends AbstractClientTest {
     SecureKeyId id = new SecureKeyId(NamespaceId.DEFAULT.getNamespace(), "key1");
     SecureKeyCreateRequest request = new SecureKeyCreateRequest("", "a", ImmutableMap.<String, String>of());
     client.createKey(id, request);
-    try {
-      client.createKey(id, request);
-      Assert.fail("Should have thrown exception since the key already exists");
-    } catch (SecureKeyAlreadyExistsException e) {
-      // expected
-    }
     client.deleteKey(id);
   }
 
@@ -129,6 +122,13 @@ public class SecureStoreClientTest extends AbstractClientTest {
     Assert.assertTrue(metadata.getLastModifiedTime() >= creationTime);
     Assert.assertEquals(properties, metadata.getProperties());
 
+    client.createKey(secureKeyId, new SecureKeyCreateRequest(desc, "updatedSecureData", properties));
+    Assert.assertEquals("updatedSecureData", client.getData(secureKeyId));
+    Assert.assertEquals(1, client.listKeys(NamespaceId.DEFAULT).size());
+    metadata = client.getKeyMetadata(secureKeyId);
+    Assert.assertEquals(desc, metadata.getDescription());
+    Assert.assertTrue(metadata.getLastModifiedTime() >= creationTime);
+    Assert.assertEquals(properties, metadata.getProperties());
     // delete the key
     client.deleteKey(secureKeyId);
     Assert.assertTrue(client.listKeys(NamespaceId.DEFAULT).isEmpty());
