@@ -22,9 +22,7 @@ import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.base.Function;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
@@ -41,6 +39,7 @@ import org.apache.twill.common.Cancellable;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
 
 /**
  * A {@link TwillRunnerService} wrapper that provides impersonation support.
@@ -113,24 +112,20 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
   @Override
   public Iterable<LiveInfo> lookupLive() {
-    return Iterables.transform(delegate.lookupLive(), new Function<LiveInfo, LiveInfo>() {
-      @Override
-      public LiveInfo apply(final LiveInfo liveInfo) {
-        return new LiveInfo() {
-          @Override
-          public String getApplicationName() {
-            return liveInfo.getApplicationName();
-          }
+    return StreamSupport.stream(delegate.lookupLive().spliterator(), false).<LiveInfo>map(info -> new LiveInfo() {
+        @Override
+        public String getApplicationName() {
+          return info.getApplicationName();
+        }
 
-          @Override
-          public Iterable<TwillController> getControllers() {
-            return wrapControllers(liveInfo.getControllers(), liveInfo.getApplicationName());
-          }
-        };
-      }
-    });
+        @Override
+        public Iterable<TwillController> getControllers() {
+          return wrapControllers(info.getControllers(), info.getApplicationName());
+        }
+      })::iterator;
   }
 
+  @Deprecated
   @Override
   public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay,
                                                long delay, TimeUnit unit) {
@@ -150,13 +145,10 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
     }
 
     try {
-      final ProgramId programId = TwillAppNames.fromTwillAppName(applicationName);
-      return Iterables.transform(controllers, new Function<TwillController, TwillController>() {
-        @Override
-        public TwillController apply(TwillController controller) {
-          return new ImpersonatedTwillController(controller, impersonator, programId);
-        }
-      });
+      ProgramId programId = TwillAppNames.fromTwillAppName(applicationName);
+      return StreamSupport.stream(controllers.spliterator(), false)
+        .<TwillController>map(controller -> new ImpersonatedTwillController(controller,
+                                                                            impersonator, programId))::iterator;
     } catch (IllegalArgumentException e) {
       // If the conversion from twill app name to programId failed, don't wrap
       return controllers;
@@ -184,12 +176,9 @@ final class ImpersonatedTwillRunnerService implements TwillRunnerService {
 
         try {
           // Impersonate as the program owner and call the renewer
-          impersonator.doAs(programId, new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              renewer.renew(application, runId, secureStoreWriter);
-              return null;
-            }
+          impersonator.doAs(programId, (Callable<Void>) () -> {
+            renewer.renew(application, runId, secureStoreWriter);
+            return null;
           });
         } catch (Exception e) {
           // it should already be a runtime exception anyways, since none of the methods in the above callable

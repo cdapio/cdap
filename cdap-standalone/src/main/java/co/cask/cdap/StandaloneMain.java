@@ -449,10 +449,11 @@ public class StandaloneMain {
     // configure all services except for router and auth to bind to 127.0.0.1
     String localhost = InetAddress.getLoopbackAddress().getHostAddress();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, localhost);
+    cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, localhost);
     cConf.set(Constants.Transaction.Container.ADDRESS, localhost);
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
     cConf.set(Constants.Metrics.ADDRESS, localhost);
-    cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
+    cConf.set(Constants.MetricsProcessor.BIND_ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
     cConf.set(Constants.LogQuery.ADDRESS, localhost);
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
