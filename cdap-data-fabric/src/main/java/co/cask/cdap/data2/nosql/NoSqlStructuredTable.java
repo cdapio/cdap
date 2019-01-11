@@ -19,6 +19,8 @@ package co.cask.cdap.data2.nosql;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
@@ -59,22 +61,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public void upsert(Collection<Field<?>> fields) throws InvalidFieldException {
     LOG.trace("Table {}: Write fields {}", schema.getTableId(), fields);
-    Put put = convertFieldsToBytes(fields);
-    table.put(put.key, put.columns, put.values);
+    table.put(convertFieldsToBytes(fields));
   }
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException {
-    return read(keys, Collections.emptySet());
+    return read(keys, Collections.emptySet(), true);
   }
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
                                       Collection<String> columns) throws InvalidFieldException {
-    LOG.trace("Table {}: Read with keys {} and columns", schema.getTableId(), keys, columns);
-    co.cask.cdap.api.dataset.table.Row row = table.get(convertKeyToBytes(keys, false),
-                                                       convertColumnsToBytes(columns));
-    return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
+    return read(keys, columns, false);
   }
 
   @Override
@@ -112,6 +110,16 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public void close() throws IOException {
     table.close();
+  }
+
+  private Optional<StructuredRow> read(Collection<Field<?>> keys, Collection<String> columns,
+                                       boolean allowEmptyColumn) throws InvalidFieldException {
+    if (!allowEmptyColumn && (columns == null || columns.isEmpty())) {
+      throw new InvalidFieldException(schema.getTableId(), columns, "No columns are specified in reading.");
+    }
+    LOG.trace("Table {}: Read with keys {} and columns", schema.getTableId(), keys, columns);
+    Row row = table.get(convertKeyToBytes(keys, false), convertColumnsToBytes(columns));
+    return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
   }
 
   /**
@@ -191,7 +199,11 @@ public final class NoSqlStructuredTable implements StructuredTable {
       }
     }
 
-    return new Put(key.build().getKey(), columns, values);
+    Put put = new Put(key.build().getKey());
+    for (int index = 0; index < columns.length; index++) {
+      put.add(columns[index], values[index]);
+    }
+    return put;
   }
 
   private void addKey(MDSKey.Builder key, Field<?> field, FieldType.Type type) throws InvalidFieldException {
@@ -232,18 +244,6 @@ public final class NoSqlStructuredTable implements StructuredTable {
         return Bytes.toBytes((String) field.getValue());
       default:
         throw new InvalidFieldException(schema.getTableId(), field.getName());
-    }
-  }
-
-  private static final class Put {
-    private final byte[] key;
-    private final byte[][] columns;
-    private final byte[][] values;
-
-    Put(byte[] key, byte[][] columns, byte[][] values) {
-      this.key = key;
-      this.columns = columns;
-      this.values = values;
     }
   }
 

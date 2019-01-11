@@ -61,7 +61,8 @@ public interface StructuredTable extends Closeable {
    * Read a single row with the specified columns from the table.
    *
    * @param keys the primary key of the row to read
-   * @param columns the columns to read. Empty collection returns all the columns
+   * @param columns the columns to read. This collection must not be empty, otherwise InvalidFieldException will be
+   *                thrown
    * @return the row addressed by the primary key
    * @throws InvalidFieldException if any of the keys are not part of the table schema, or the types of the value
    *                               do not match

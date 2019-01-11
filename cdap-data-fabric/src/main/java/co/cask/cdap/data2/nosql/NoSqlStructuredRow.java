@@ -22,8 +22,8 @@ import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.field.FieldType;
+import com.google.common.collect.ImmutableMap;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -34,45 +34,48 @@ import javax.annotation.Nullable;
 public final class NoSqlStructuredRow implements StructuredRow {
   private final Row row;
   private final StructuredTableSchema tableSchema;
-  private final Map<String, ? super Object> keyFields;
+  private final Map<String, Object> keyFields;
 
   NoSqlStructuredRow(Row row, StructuredTableSchema tableSchema) {
     this.row = row;
     this.tableSchema = tableSchema;
-    this.keyFields = new HashMap<>();
+    this.keyFields = extractKeys();
   }
 
   @Nullable
   @Override
   public Integer getInteger(String fieldName) throws InvalidFieldException {
-    return get(fieldName, tableSchema.getType(fieldName));
+    return get(fieldName);
   }
 
   @Nullable
   @Override
   public Long getLong(String fieldName) throws InvalidFieldException {
-    return get(fieldName, tableSchema.getType(fieldName));
+    return get(fieldName);
   }
 
   @Nullable
   @Override
   public String getString(String fieldName) throws InvalidFieldException {
-    return get(fieldName, tableSchema.getType(fieldName));
+    return get(fieldName);
   }
 
   @Nullable
   @Override
   public Float getFloat(String fieldName) throws InvalidFieldException {
-    return get(fieldName, tableSchema.getType(fieldName));
+    return get(fieldName);
   }
 
   @Nullable
   @Override
   public Double getDouble(String fieldName) throws InvalidFieldException {
-    return get(fieldName, tableSchema.getType(fieldName));
+    return get(fieldName);
   }
 
-  private <T> T get(String fieldName, @Nullable FieldType.Type expectedType) throws InvalidFieldException {
+  @Nullable
+  @SuppressWarnings("unchecked")
+  private <T> T get(String fieldName) throws InvalidFieldException {
+    FieldType.Type expectedType = tableSchema.getType(fieldName);
     if (expectedType == null) {
       // Field is not present in the schema
       throw new InvalidFieldException(tableSchema.getTableId(), fieldName);
@@ -80,46 +83,33 @@ public final class NoSqlStructuredRow implements StructuredRow {
 
     // Check if field is a key
     if (tableSchema.isPrimaryKeyColumn(fieldName)) {
-      return getKeyValue(fieldName);
+      return (T) keyFields.get(fieldName);
     }
 
     // Field is a regular column
-    T value = getFieldValue(fieldName, expectedType);
-    if (value != null) {
-      return value;
-    }
-
-    // Field is null in storage
-    return null;
+    return getFieldValue(fieldName, expectedType);
   }
 
-  private <T> T getKeyValue(String fieldName) throws InvalidFieldException {
-    // Lazy extract keys on first get
-    if (keyFields.isEmpty()) {
-      extractKeys();
-    }
-    //noinspection unchecked
-    return (T) keyFields.get(fieldName);
-  }
-
-  private void extractKeys() throws InvalidFieldException {
+  private Map<String, Object> extractKeys() {
+    ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     MDSKey.Splitter splitter = new MDSKey(row.getRow()).split();
     for (String key : tableSchema.getPrimaryKeys()) {
       // the NullPointerException should never be thrown since the primary keys must always have a type
       switch (Objects.requireNonNull(tableSchema.getType(key))) {
         case INTEGER:
-          keyFields.put(key, splitter.getInt());
+          builder.put(key, splitter.getInt());
           break;
         case LONG:
-          keyFields.put(key, splitter.getLong());
+          builder.put(key, splitter.getLong());
           break;
         case STRING:
-          keyFields.put(key, splitter.getString());
+          builder.put(key, splitter.getString());
           break;
         default:
-          throw new InvalidFieldException(tableSchema.getTableId(), key);
+          // this should never happen since all the keys are from the table schema and should never contain other types
       }
     }
+    return builder.build();
   }
 
   @SuppressWarnings("unchecked")

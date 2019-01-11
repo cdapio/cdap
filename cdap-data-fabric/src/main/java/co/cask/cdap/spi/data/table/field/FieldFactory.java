@@ -41,7 +41,7 @@ public final class FieldFactory {
    * but provided value is null.
    */
   public Field<Integer> createIntField(String fieldName, @Nullable Integer value) throws InvalidFieldException {
-   return validateAndCreateField(fieldName, FieldType.Type.INTEGER, tableSchema.getType(fieldName), value);
+   return validateAndCreateField(fieldName, FieldType.Type.INTEGER, value);
   }
 
   /**
@@ -54,7 +54,7 @@ public final class FieldFactory {
    * but provided value is null.
    */
   public Field<Long> createLongField(String fieldName, @Nullable Long value) throws InvalidFieldException {
-    return validateAndCreateField(fieldName, FieldType.Type.LONG, tableSchema.getType(fieldName), value);
+    return validateAndCreateField(fieldName, FieldType.Type.LONG, value);
   }
 
   /**
@@ -67,7 +67,7 @@ public final class FieldFactory {
    * but provided value is null.
    */
   public Field<String> createStringField(String fieldName, @Nullable String value) throws InvalidFieldException {
-    return validateAndCreateField(fieldName, FieldType.Type.STRING, tableSchema.getType(fieldName), value);
+    return validateAndCreateField(fieldName, FieldType.Type.STRING, value);
   }
 
   /**
@@ -80,7 +80,7 @@ public final class FieldFactory {
    * but provided value is null.
    */
   public Field<Double> createDoubleField(String fieldName, @Nullable Double value) throws InvalidFieldException {
-    return validateAndCreateField(fieldName, FieldType.Type.DOUBLE, tableSchema.getType(fieldName), value);
+    return validateAndCreateField(fieldName, FieldType.Type.DOUBLE, value);
   }
 
   /**
@@ -93,12 +93,12 @@ public final class FieldFactory {
    * but provided value is null.
    */
   public Field<Float> createFloatField(String fieldName, @Nullable Float value) throws InvalidFieldException {
-    return validateAndCreateField(fieldName, FieldType.Type.FLOAT, tableSchema.getType(fieldName), value);
+    return validateAndCreateField(fieldName, FieldType.Type.FLOAT, value);
   }
 
   private <T> Field<T> validateAndCreateField(String fieldName, FieldType.Type expected,
-                                          @Nullable FieldType.Type actual,
-                                          @Nullable T value) throws InvalidFieldException {
+                                              @Nullable T value) throws InvalidFieldException {
+    FieldType.Type actual = tableSchema.getType(fieldName);
     if (actual == null || !actual.equals(expected)) {
       throw new InvalidFieldException(tableSchema.getTableId(), fieldName, expected, actual);
     }

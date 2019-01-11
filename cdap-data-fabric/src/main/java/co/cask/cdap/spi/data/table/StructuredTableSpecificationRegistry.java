@@ -24,10 +24,10 @@ import javax.annotation.Nullable;
  * A tempory class to register the specification of the table created.
  * TODO: CDAP-14673 convert this into actual schema registry
  */
-public final class StructuredTableSpecificationRegistor {
+public final class StructuredTableSpecificationRegistry {
   private static final Map<StructuredTableId, StructuredTableSpecification> specMap = new ConcurrentHashMap<>();
 
-  private StructuredTableSpecificationRegistor() {
+  private StructuredTableSpecificationRegistry() {
     // prevent instantiation
   }
 

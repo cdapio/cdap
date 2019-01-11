@@ -26,7 +26,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistor;
+import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +37,7 @@ import java.io.IOException;
  */
 public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTableAdmin.class);
+  private static final String ENTITY_TABLE_NAME = "entity.store";
 
   private final DatasetFramework datasetFramework;
   private final NamespaceId namespaceId;
@@ -50,7 +51,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
   public void create(StructuredTableSpecification spec) throws IOException {
     LOG.info("Creating table {} in namespace {}", spec, namespaceId);
     try {
-      DatasetId datasetInstanceId = namespaceId.dataset(spec.getTableId().getName());
+      DatasetId datasetInstanceId = namespaceId.dataset(ENTITY_TABLE_NAME);
       if (!datasetFramework.hasInstance(datasetInstanceId)) {
         datasetFramework.addInstance(Table.class.getName(), datasetInstanceId, DatasetProperties.EMPTY);
       }
@@ -64,12 +65,12 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
     } catch (DatasetManagementException e) {
       throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
     }
-    StructuredTableSpecificationRegistor.registerSpecification(spec);
+    StructuredTableSpecificationRegistry.registerSpecification(spec);
   }
 
   @Override
   public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-    return StructuredTableSpecificationRegistor.getSpecification(tableId);
+    return StructuredTableSpecificationRegistry.getSpecification(tableId);
   }
 
   @Override
@@ -83,7 +84,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
       }
       admin.drop();
       datasetFramework.deleteInstance(datasetInstanceId);
-      StructuredTableSpecificationRegistor.removeSpecification(tableId);
+      StructuredTableSpecificationRegistry.removeSpecification(tableId);
     } catch (DatasetManagementException e) {
       throw new IOException(String.format("Error dropping table %s", tableId), e);
     }
