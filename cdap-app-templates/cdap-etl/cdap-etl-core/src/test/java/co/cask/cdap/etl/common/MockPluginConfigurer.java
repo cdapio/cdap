@@ -38,7 +38,7 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 
 /**
- * Mock {@link PluginConfigurer} for unit tests. No-op for dataset methods.
+ * Mock {@link PluginConfigurer} for unit tests. No-op for store methods.
  * Use the setter methods to populate the plugin objects that should be returned by the PluginConfigurer methods.
  */
 public class MockPluginConfigurer implements PluginConfigurer, DatasetConfigurer {

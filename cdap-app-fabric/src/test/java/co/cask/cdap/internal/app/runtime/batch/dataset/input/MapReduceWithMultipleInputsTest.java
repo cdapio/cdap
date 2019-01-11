@@ -45,7 +45,7 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     inputFile.createNew();
 
     PrintWriter writer = new PrintWriter(inputFile.getOutputStream());
-    // the PURCHASES dataset consists of purchase records in the format: <customerId> <spend>
+    // the PURCHASES store consists of purchase records in the format: <customerId> <spend>
     writer.println("1 20");
     writer.println("1 25");
     writer.println("1 30");
@@ -60,7 +60,7 @@ public class MapReduceWithMultipleInputsTest extends MapReduceRunnerTestBase {
     inputFile = fileSet2.getBaseLocation().append("inputFile");
     inputFile.createNew();
 
-    // the CUSTOMERS dataset consists of records in the format: <customerId> <customerName>
+    // the CUSTOMERS store consists of records in the format: <customerId> <customerName>
     writer = new PrintWriter(inputFile.getOutputStream());
     writer.println("1 Bob");
     writer.println("2 Samuel");

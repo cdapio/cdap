@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * App used to test whether M/R can write to multiple outputs. Tests writing to the same dataset, with different runtime
+ * App used to test whether M/R can write to multiple outputs. Tests writing to the same store, with different runtime
  * arguments, as two different outputs.
  */
 public class AppWithMapReduceUsingMultipleOutputs extends AbstractApplication {

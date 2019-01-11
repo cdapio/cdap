@@ -36,12 +36,12 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Test dataset module
+ * Test store module
  */
 public class TestModule2 implements DatasetModule {
 
   public static final String NOT_RECONFIGURABLE = "noreconf";
-  public static final String DESCRIPTION = "dataset test module 2 description";
+  public static final String DESCRIPTION = "store test module 2 description";
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
@@ -66,7 +66,7 @@ public class TestModule2 implements DatasetModule {
       return DatasetSpecification
         .builder(instanceName, getName())
         .setDescription(DESCRIPTION)
-        // This is to test that the dataset summary returned by list() contains the original properties.
+        // This is to test that the store summary returned by list() contains the original properties.
         // Original properties are different from the spec.getProperties() if the configure() method
         // modifies the original properties. That is what we mimic here.
         .properties(ImmutableMap.<String, String>builder()

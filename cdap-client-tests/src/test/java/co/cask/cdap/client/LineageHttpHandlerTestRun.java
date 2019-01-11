@@ -117,10 +117,10 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
       long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
       long oneHour = TimeUnit.HOURS.toSeconds(1);
 
-      // Fetch dataset lineage
+      // Fetch store lineage
       LineageRecord lineage = fetchLineage(dataset, now - oneHour, now + oneHour, toSet(CollapseType.ACCESS), 10);
 
-      // dataset is accessed by all programs
+      // store is accessed by all programs
       LineageRecord expected =
         LineageSerializer.toLineageRecord(
           now - oneHour,

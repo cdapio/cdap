@@ -330,10 +330,10 @@ public abstract class AppFabricTestBase {
     // reduce the number of app fabric threads
     cConf.setInt(Constants.AppFabric.WORKER_THREADS, 2);
     cConf.setInt(Constants.AppFabric.EXEC_THREADS, 5);
-    // reduce the number of dataset service threads
+    // reduce the number of store service threads
     cConf.setInt(Constants.Dataset.Manager.WORKER_THREADS, 2);
     cConf.setInt(Constants.Dataset.Manager.EXEC_THREADS, 5);
-    // reduce the number of dataset executor threads
+    // reduce the number of store executor threads
     cConf.setInt(Constants.Dataset.Executor.WORKER_THREADS, 2);
     cConf.setInt(Constants.Dataset.Executor.EXEC_THREADS, 5);
     return cConf;

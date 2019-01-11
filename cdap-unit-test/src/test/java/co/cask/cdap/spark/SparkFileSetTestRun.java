@@ -204,12 +204,12 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     TimePartitionedFileSet tpfs = tpfsManager.get();
 
     PartitionDetail partition = tpfs.getPartitionByTime(outputTime);
-    Assert.assertNotNull("Output partition is null while for running without custom dataset arguments",
+    Assert.assertNotNull("Output partition is null while for running without custom store arguments",
                          partition);
     validateFileOutput(partition.getLocation());
 
     PartitionDetail customPartition = tpfs.getPartitionByTime(customOutputPartitionKey);
-    Assert.assertNotNull("Output partition is null while for running with custom dataset arguments",
+    Assert.assertNotNull("Output partition is null while for running with custom store arguments",
                          customPartition);
     validateFileOutput(customPartition.getLocation());
 

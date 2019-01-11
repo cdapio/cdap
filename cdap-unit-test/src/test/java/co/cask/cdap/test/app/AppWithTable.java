@@ -22,14 +22,14 @@ import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 
 /**
- * Simple app with table dataset.
+ * Simple app with table store.
  */
 public class AppWithTable extends AbstractApplication {
 
   @Override
   public void configure() {
     setName("AppWithTable");
-    setDescription("Simple app with table dataset");
+    setDescription("Simple app with table store");
     createDataset("my_table", Table.class);
     addService(new BasicService("fooService", new AbstractHttpServiceHandler() { }));
   }

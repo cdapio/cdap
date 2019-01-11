@@ -116,7 +116,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     manager.start(ImmutableMap.of("new.base.path", newBasePath.getPath()));
     manager.waitForRun(ProgramRunStatus.COMPLETED, 30, TimeUnit.SECONDS);
 
-    // validate that worker created dataset a
+    // validate that worker created store a
     DataSetManager<Table> aManager = getDataset("a");
     Assert.assertNull(aManager.get().scan(null, null).next());
     aManager.flush();
@@ -130,11 +130,11 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(newBasePath.exists());
     bManager.flush();
 
-    // validate that dataset c is empty
+    // validate that store c is empty
     Assert.assertNull(cManager.get().scan(null, null).next());
     cManager.flush();
 
-    // validate that dataset d is gone
+    // validate that store d is gone
     Assert.assertNull(getDataset("d").get());
 
     // run the worker again to drop all datasets
@@ -157,7 +157,7 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     try {
       URI serviceURI = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI();
 
-      // dataset nn should not exist
+      // store nn should not exist
       HttpResponse response = HttpRequests.execute(HttpRequest.get(serviceURI.resolve("exists/nn").toURL()).build());
       Assert.assertEquals(200, response.getResponseCode());
       Assert.assertEquals("false", response.getResponseBodyAsString());
@@ -300,13 +300,13 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
     addDatasetInstance("keyValueTable", "lines");
     addDatasetInstance("keyValueTable", "counts");
 
-    // add some lines to the input dataset
+    // add some lines to the input store
     DataSetManager<KeyValueTable> linesManager = getDataset("lines");
     linesManager.get().write("1", "hello world");
     linesManager.get().write("2", "hi world");
     linesManager.flush();
 
-    // add some counts to the output dataset
+    // add some counts to the output store
     DataSetManager<KeyValueTable> countsManager = getDataset("counts");
     countsManager.get().write("you", Bytes.toBytes(5));
     countsManager.get().write("me", Bytes.toBytes(3));

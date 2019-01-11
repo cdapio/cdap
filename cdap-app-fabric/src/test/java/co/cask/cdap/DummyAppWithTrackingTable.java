@@ -42,9 +42,9 @@ import javax.ws.rs.PathParam;
 
 /**
  * Simple app for testing data set handling by the program runners.
- * - a flow reading from stream "xx" and writing to dataset "foo"
+ * - a flow reading from stream "xx" and writing to store "foo"
  * - a query with method get(key) that reads "foo"
- * - a map/reduce job that reads "foo" and writes to another dataset "bar"
+ * - a map/reduce job that reads "foo" and writes to another store "bar"
  * The datasets are key/value tables that track the number of times each operation
  * (open/close/read/write/getsplits) are called, so the unit test can verify.
  */
@@ -54,7 +54,7 @@ public class DummyAppWithTrackingTable extends AbstractApplication {
   @Override
   public void configure() {
     setName("dummy");
-    setDescription("dummy app with a dataset that tracks open and close");
+    setDescription("dummy app with a store that tracks open and close");
     addStream(new Stream("xx"));
     createDataset("foo", TrackingTable.class);
     createDataset("bar", TrackingTable.class);

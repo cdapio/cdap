@@ -31,7 +31,7 @@ public class UsageRegistryTest extends UsageDatasetTest {
     UsageRegistry registry = new BasicUsageRegistry(
       dsFrameworkUtil.getFramework(), dsFrameworkUtil.getInjector().getInstance(TransactionSystemClient.class));
 
-    // register usage for a stream and a dataset for single and multiple "owners", including a non-program
+    // register usage for a stream and a store for single and multiple "owners", including a non-program
     registry.register(worker1, datasetInstance1);
     registry.register(worker2, stream1);
     registry.registerAll(ImmutableList.of(worker21, worker22), datasetInstance2);

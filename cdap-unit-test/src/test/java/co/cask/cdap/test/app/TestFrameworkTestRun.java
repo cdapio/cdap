@@ -168,7 +168,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationId appId = NamespaceId.DEFAULT.app("InvalidApp");
 
-    // test with duplicate dataset should fail as we don't allow multiple deployment of dataset
+    // test with duplicate store should fail as we don't allow multiple deployment of store
     try {
       AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
         new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion()),
@@ -559,7 +559,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
 
-    // Verify dataset metrics
+    // Verify store metrics
     String readCountName = "system." + Constants.Metrics.Name.Dataset.READ_COUNT;
     String writeCountName = "system." + Constants.Metrics.Name.Dataset.WRITE_COUNT;
     Collection<MetricTimeSeries> metrics = getMetricsManager().query(
@@ -670,17 +670,17 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String runId = executeWorkflow(applicationManager, additionalParams, 1);
     verifyWorkflowRun(runId, false, false, "COMPLETED");
 
-    additionalParams.put("dataset.wordcount.keep.local", "true");
+    additionalParams.put("store.wordcount.keep.local", "true");
     runId = executeWorkflow(applicationManager, additionalParams, 2);
     verifyWorkflowRun(runId, true, false, "COMPLETED");
 
     additionalParams.clear();
-    additionalParams.put("dataset.*.keep.local", "true");
+    additionalParams.put("store.*.keep.local", "true");
     runId = executeWorkflow(applicationManager, additionalParams, 3);
     verifyWorkflowRun(runId, true, true, "COMPLETED");
 
     additionalParams.clear();
-    additionalParams.put("dataset.*.keep.local", "true");
+    additionalParams.put("store.*.keep.local", "true");
     additionalParams.put("destroy.throw.exception", "true");
     runId = executeWorkflow(applicationManager, additionalParams, 4);
     verifyWorkflowRun(runId, true, true, "STARTED");
@@ -736,7 +736,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.RESULT_DATASET));
     Assert.assertEquals("6", Bytes.toString(nonLocalKeyValueDataset.get().read("UniqueWordCount")));
 
-    // There should not be any local copy of the non local dataset
+    // There should not be any local copy of the non local store
     nonLocalKeyValueDataset = getDataset(testSpace.dataset(WorkflowAppWithLocalDatasets.RESULT_DATASET + "." + runId));
     Assert.assertNull(nonLocalKeyValueDataset.get());
 
@@ -1060,10 +1060,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Verify that the service was able to hit the CentralService and retrieve the answer.
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
 
-    // Wait for the worker completed to make sure a value has been written to the dataset
+    // Wait for the worker completed to make sure a value has been written to the store
     pingingWorker.waitForRun(ProgramRunStatus.COMPLETED, 30, TimeUnit.SECONDS);
 
-    // Validate the value in the dataset by reading it via the service
+    // Validate the value in the store by reading it via the service
     result = callServiceGet(serviceManager.getServiceURL(), "read/" + AppUsingGetServiceURL.DATASET_KEY);
     decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppUsingGetServiceURL.ANSWER, decodedResult);
@@ -1093,7 +1093,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   /**
    * Checks to ensure that a particular key is present in a {@link KeyValueTable}
    * @param namespace {@link NamespaceId}
-   * @param datasetName name of the dataset
+   * @param datasetName name of the store
    * @param expectedKey expected key byte array
    *
    * @throws Exception if the key is not found even after 15 seconds of timeout
@@ -1164,7 +1164,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workerInstancesCheck(lifecycleWorkerManager, 5);
     workerInstancesCheck(workerManager, 2);
 
-    // Assert the LifecycleWorker dataset writes
+    // Assert the LifecycleWorker store writes
     // 3 workers should have started with 3 total instances. 2 more should later start with 5 total instances.
     assertWorkerDatasetWrites(Bytes.toBytes("init"),
                               Bytes.stopKeyForPrefix(Bytes.toBytes("init.2")), 3, 3);
@@ -1572,7 +1572,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     noopManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // We don't know when the datasetWorker run() method executed, hence need to retry on the service call
-    // until it can get a value from a dataset, which was written out by the datasetWorker.
+    // until it can get a value from a store, which was written out by the datasetWorker.
     AtomicInteger called = new AtomicInteger(0);
     AtomicInteger failed = new AtomicInteger(0);
     Tasks.waitFor(AppWithServices.DATASET_TEST_VALUE, new Callable<String>() {
@@ -1618,7 +1618,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
     LOG.info("ServerService Stopped");
 
-    // Since all worker are stopped, we can just hit the service to read the dataset. No retry needed.
+    // Since all worker are stopped, we can just hit the service to read the store. No retry needed.
     String result = callServiceGet(noopManager.getServiceURL(), "ping/" + AppWithServices.DATASET_TEST_KEY_STOP);
     String decodedResult = new Gson().fromJson(result, String.class);
     Assert.assertEquals(AppWithServices.DATASET_TEST_VALUE_STOP, decodedResult);
@@ -1662,7 +1662,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     });
 
-    // The dataset should not be written by the time this request is made, since the transaction to write
+    // The store should not be written by the time this request is made, since the transaction to write
     // has not been committed yet.
     URL url = new URL(String.format("%s/read/%s", baseUrl, AppWithServices.DATASET_TEST_KEY));
     HttpRequest request = HttpRequest.get(url).build();
@@ -1812,7 +1812,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }
 
-    // Setup input and output dataset arguments
+    // Setup input and output store arguments
     Map<String, String> inputArgs = new HashMap<>();
     FileSetArguments.setInputPath(inputArgs, "input");
     Map<String, String> outputArgs = new HashMap<>();
@@ -1901,7 +1901,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     long count = Long.parseLong(response.getResponseBodyAsString());
     serviceManager.stop();
 
-    // Verify the record count with dataset
+    // Verify the record count with store
     DataSetManager<KeyValueTable> recordsManager = getDataset(testSpace.dataset("records"));
     KeyValueTable records = recordsManager.get();
     Assert.assertEquals(count, Bytes.toLong(records.read("PUBLIC")));

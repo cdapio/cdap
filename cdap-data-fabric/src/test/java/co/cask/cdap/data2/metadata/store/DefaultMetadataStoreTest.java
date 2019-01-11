@@ -483,7 +483,7 @@ public class DefaultMetadataStoreTest {
     NamespaceId nsId = new NamespaceId("ns");
     MetadataEntity service = nsId.app("app").service("service").toMetadataEntity();
     MetadataEntity worker = nsId.app("app2").worker("worker").toMetadataEntity();
-    MetadataEntity dataset = nsId.dataset("dataset").toMetadataEntity();
+    MetadataEntity dataset = nsId.dataset("store").toMetadataEntity();
     // add a dummy entity which starts with _ to test that it doesnt show up see: CDAP-7910
     MetadataEntity trackerDataset = nsId.dataset("_auditLog").toMetadataEntity();
 
@@ -498,7 +498,7 @@ public class DefaultMetadataStoreTest {
     MetadataSearchResultRecord datasetSearchResult = new MetadataSearchResultRecord(dataset);
     MetadataSearchResultRecord trackerDatasetSearchResult = new MetadataSearchResultRecord(trackerDataset);
 
-    // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, flow
+    // relevance order for searchQuery "tag*" is trackerDataset, store, stream, flow
     // (this depends on how many tags got matched with the search query)
     // trackerDataset entity should not be part
     MetadataSearchResponse response = search(nsId.getNamespace(), "tag*", 0, Integer.MAX_VALUE, 1);

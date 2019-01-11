@@ -230,7 +230,7 @@ public class SystemDatasetDefinitionTest {
     }
 
     // test reconfiguring a PFS created before CDAP-13120, with no defaulted base path
-    // no base path should be set for the reconfigured dataset either
+    // no base path should be set for the reconfigured store either
     DatasetProperties oldProps = PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addStringField("s").build())
       .add(PartitionedFileSetDefinition.NAME_AS_BASE_PATH_DEFAULT, "false")
@@ -240,7 +240,7 @@ public class SystemDatasetDefinitionTest {
     // make sure base path is not set
     Assert.assertNull(newSpec.getSpecification("files").getProperty(FileSetProperties.BASE_PATH));
 
-    // test reconfiguring a PFS created after CDAP-13120, where base path is default to the dataset name
+    // test reconfiguring a PFS created after CDAP-13120, where base path is default to the store name
     props = PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addStringField("s").build())
       .build();

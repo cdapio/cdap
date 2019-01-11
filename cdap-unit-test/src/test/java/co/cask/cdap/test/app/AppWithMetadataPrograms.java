@@ -64,9 +64,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
 
     /************************************************ GET ************************************************************/
     @GET
-    @Path("metadata/{dataset}")
+    @Path("metadata/{store}")
     public void getMetadata(HttpServiceRequest request, HttpServiceResponder responder,
-                            @PathParam("dataset") String dataset) {
+                            @PathParam("store") String dataset) {
       Map<MetadataScope, Metadata> metadata = null;
       try {
         metadata = getContext().getMetadata(MetadataEntity.ofDataset(getContext().getNamespace(), dataset));
@@ -86,9 +86,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
 
     /************************************************* PUT ***********************************************************/
     @PUT
-    @Path("metadata/{dataset}/tags")
+    @Path("metadata/{store}/tags")
     public void addTag(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("dataset") String dataset) {
+                       @PathParam("store") String dataset) {
       String tag = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       getContext().addTags(MetadataEntity.ofDataset(getContext().getNamespace(), dataset), tag);
       // wait till change is recorded to store
@@ -105,9 +105,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
     }
 
     @PUT
-    @Path("metadata/{dataset}/properties")
+    @Path("metadata/{store}/properties")
     public void addProperties(HttpServiceRequest request, HttpServiceResponder responder,
-                              @PathParam("dataset") String dataset) {
+                              @PathParam("store") String dataset) {
       String body = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       Map<String, String> properties = GSON.fromJson(body, MAP_STRING_STRING_TYPE);
       getContext().addProperties(MetadataEntity.ofDataset(getContext().getNamespace(), dataset), properties);
@@ -126,9 +126,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
 
     /************************************************ DELETE *********************************************************/
     @DELETE
-    @Path("metadata/{dataset}/tags/{tag}")
+    @Path("metadata/{store}/tags/{tag}")
     public void removeTag(HttpServiceRequest request, HttpServiceResponder responder,
-                          @PathParam("dataset") String dataset, @PathParam("tag") String tag) {
+                          @PathParam("store") String dataset, @PathParam("tag") String tag) {
       getContext().removeTags(MetadataEntity.ofDataset(getContext().getNamespace(), dataset), tag);
       // wait till change is recorded to store
       try {
@@ -144,9 +144,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
     }
 
     @DELETE
-    @Path("metadata/{dataset}/tags")
+    @Path("metadata/{store}/tags")
     public void removeAllTags(HttpServiceRequest request, HttpServiceResponder responder,
-                              @PathParam("dataset") String dataset) {
+                              @PathParam("store") String dataset) {
       getContext().removeTags(MetadataEntity.ofDataset(getContext().getNamespace(), dataset));
       // wait till change is recorded to store
       try {
@@ -162,9 +162,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
     }
 
     @DELETE
-    @Path("metadata/{dataset}/properties/{key}")
+    @Path("metadata/{store}/properties/{key}")
     public void removeProperty(HttpServiceRequest request, HttpServiceResponder responder,
-                               @PathParam("dataset") String dataset, @PathParam("key") String key) {
+                               @PathParam("store") String dataset, @PathParam("key") String key) {
       getContext().removeProperties(MetadataEntity.ofDataset(getContext().getNamespace(), dataset), key);
       // wait till change is recorded to store
       try {
@@ -180,9 +180,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
     }
 
     @DELETE
-    @Path("metadata/{dataset}/properties")
+    @Path("metadata/{store}/properties")
     public void removeAllProperties(HttpServiceRequest request, HttpServiceResponder responder,
-                                    @PathParam("dataset") String dataset) {
+                                    @PathParam("store") String dataset) {
       getContext().removeProperties(MetadataEntity.ofDataset(getContext().getNamespace(), dataset));
       // wait till change is recorded to store
       try {
@@ -198,9 +198,9 @@ public class AppWithMetadataPrograms extends AbstractApplication {
     }
 
     @DELETE
-    @Path("metadata/{dataset}")
+    @Path("metadata/{store}")
     public void removeMetadata(HttpServiceRequest request, HttpServiceResponder responder,
-                               @PathParam("dataset") String dataset) {
+                               @PathParam("store") String dataset) {
       getContext().removeMetadata(MetadataEntity.ofDataset(getContext().getNamespace(), dataset));
       // wait till change is recorded to store
       try {

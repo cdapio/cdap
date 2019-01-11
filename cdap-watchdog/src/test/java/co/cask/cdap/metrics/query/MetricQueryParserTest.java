@@ -538,7 +538,7 @@ public class MetricQueryParserTest {
       "/system/apps/appX/mapreduces/mapreduceY/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/mapper/metric?aggregate=true",
       "/system/apps/appX/mapreduce/mapreduceY/reducer/metric?aggregate=true",
-      "/system/dataset/datasetA/metric?aggregate=true",
+      "/system/store/datasetA/metric?aggregate=true",
       "/system/datasets/datasetA/app/appX/metric?aggregate=true",
       "/system/datasets/datasetA/apps/appX/flow/flowY/metric?aggregate=true",
       "/system/datasets/datasetA/apps/appX/flows/flowY/flowlet/flowletZ/metric?aggregate=true",

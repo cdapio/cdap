@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * A dataset that accepts runtime arguments at instantiation time.
+ * A store that accepts runtime arguments at instantiation time.
  * The arguments specify a key prefix that is prepended to all keys passed to read/write methods.
  */
 public class PrefixedTableModule implements DatasetModule {

@@ -28,16 +28,16 @@ import org.apache.spark.api.java.JavaSparkContext;
 import java.util.Map;
 
 /**
- * A dummy app with spark program which reads from a dataset in different namespace and write to a dataset in  a
+ * A dummy app with spark program which reads from a store in different namespace and write to a store in  a
  * different namespace if they have been provided through runtime arguments else it defaults to its own namespace.
  */
 public class TestSparkCrossNSDatasetApp extends AbstractApplication {
   public static final String APP_NAME = "TestSparkCrossNSDatasetApp";
   public static final String SPARK_PROGRAM_NAME = "SparkCrossNSDatasetProgram";
-  public static final String INPUT_DATASET_NAMESPACE = "input.dataset.namespace";
-  public static final String INPUT_DATASET_NAME = "input.dataset.name";
-  public static final String OUTPUT_DATASET_NAMESPACE = "output.dataset.namespace";
-  public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
+  public static final String INPUT_DATASET_NAMESPACE = "input.store.namespace";
+  public static final String INPUT_DATASET_NAME = "input.store.name";
+  public static final String OUTPUT_DATASET_NAMESPACE = "output.store.namespace";
+  public static final String OUTPUT_DATASET_NAME = "output.store.name";
   public static final String DEFAULT_OUTPUT_DATASET = "outputDataset";
 
   @Override

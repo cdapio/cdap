@@ -99,7 +99,7 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
                                                                 metadataAdmin);
     EndPoint endPoint = EndPoint.of(NamespaceId.DEFAULT.getNamespace(), "file");
 
-    // test that when there is no schema information present for the dataset and the we request for lineage with
+    // test that when there is no schema information present for the store and the we request for lineage with
     // includeCurrent set to true we get lineage fields correctly.
     Set<Field> expected = getFields(getFieldNames());
     // includeCurrent set to true
@@ -115,7 +115,7 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
                       Schema.Field.of("diffField2", Schema.nullableOf(Schema.of(Schema.Type.INT)))
       );
 
-    // add the the dataset with the schema with fields known in lineage store
+    // add the the store with the schema with fields known in lineage store
     TableProperties.Builder props = TableProperties.builder();
     TableProperties.setSchema(props, schema);
     TableProperties.setRowFieldName(props, "name");
@@ -123,19 +123,19 @@ public class FieldLineageAdminTest extends AppFabricTestBase {
     MetadataEntity entity = datasetId.toMetadataEntity();
     datasetFramework.addInstance("table", datasetId, props.build());
 
-    // wait until the metadata for this dataset has been stored
+    // wait until the metadata for this store has been stored
     Tasks.waitFor(false, () -> metadataAdmin.getProperties(MetadataScope.SYSTEM, entity).isEmpty(),
                   5, TimeUnit.SECONDS);
 
     // test all fields expected should have all the fields which was known the lineage store but should not contains
-    // any dataset schema field since the includeCurrent is set to false
+    // any store schema field since the includeCurrent is set to false
     expected = getFields(getFieldNames());
     actual = fieldLineageAdmin.getFields(endPoint, 0, Long.MAX_VALUE, null, false);
     Assert.assertEquals(expected, actual);
 
     // test all fields expected should have all the fields which was known the lineage store and also the fields
-    // which were only present in the dataset schema since includeCurrent is set to true.
-    // this also test that for the fields which are common in lineage store and dataset schema for example address in
+    // which were only present in the store schema since includeCurrent is set to true.
+    // this also test that for the fields which are common in lineage store and store schema for example address in
     // this case has their lineage info field set to true as we do have lineage for this field
     expected = getFields(getFieldNames());
     expected.addAll(new HashSet<>(Arrays.asList(new Field("addiffField1", false),

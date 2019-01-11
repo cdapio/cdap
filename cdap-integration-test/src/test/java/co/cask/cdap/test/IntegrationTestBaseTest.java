@@ -92,7 +92,7 @@ public class IntegrationTestBaseTest extends IntegrationTestBase {
       ResultSet results = connection.prepareStatement("select key from dataset_mytable where hex(value) = '31'")
         .executeQuery()
     ) {
-      // run a query over the dataset
+      // run a query over the store
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));
       Assert.assertTrue(results.next());

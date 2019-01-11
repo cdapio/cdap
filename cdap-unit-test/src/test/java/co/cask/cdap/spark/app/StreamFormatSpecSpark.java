@@ -81,7 +81,7 @@ public class StreamFormatSpecSpark extends AbstractSpark implements JavaSparkMai
       })
       .repartition(1);
 
-    sec.saveAsDataset(resultRDD, sec.getRuntimeArguments().get("output.dataset"));
+    sec.saveAsDataset(resultRDD, sec.getRuntimeArguments().get("output.store"));
   }
 
   public static class Person implements Serializable {

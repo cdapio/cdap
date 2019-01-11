@@ -40,7 +40,7 @@ public class AppWithMapReduceUsingObjectStore extends AbstractApplication {
   public void configure() {
     try {
       setName("AppWithMapReduceObjectStore");
-      setDescription("Application with MapReduce job using objectstore as dataset");
+      setDescription("Application with MapReduce job using objectstore as store");
       createDataset("count", KeyValueTable.class);
       ObjectStores.createObjectStore(getConfigurer(), "keys", String.class);
       addMapReduce(new ComputeCounts());

@@ -120,7 +120,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
   /**
    * Tests that initialize() and getSplits() are called in the same transaction,
-   * and with the same instance of the input dataset.
+   * and with the same instance of the input store.
    */
   @Test
   public void testTransactionHandling() throws Exception {
@@ -136,8 +136,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
                           AppWithMapReduceUsingFileSet.ComputeSum.class,
                           null, null, null);
 
-    // test reading and writing same dataset
-    // this time configure the output format to use # as the separator, overriding the dataset properties
+    // test reading and writing same store
+    // this time configure the output format to use # as the separator, overriding the store properties
     testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
                           AppWithMapReduceUsingFileSet.class,
                           AppWithMapReduceUsingFileSet.ComputeSum.class,
@@ -166,7 +166,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Map<String, String> runtimeArguments = Maps.newHashMap();
 
     // Make sure there is only one mapper running at a time since this test has the Mapper writing
-    // to a dataset using increment and the in-memory table doesn't really support concurrent increment
+    // to a store using increment and the in-memory table doesn't really support concurrent increment
     runtimeArguments.put("mr.job.conf.mapreduce.local.map.tasks.maximum", "1");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_NAME, "rtInput1");
     runtimeArguments.put(AppWithMapReduceUsingRuntimeDatasets.INPUT_PATHS, "abc, xyz");
@@ -198,7 +198,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     Assert.assertEquals(1, ts.getTimeValues().size());
     Assert.assertEquals(1, ts.getTimeValues().get(0).getValue());
 
-    // test reading and writing same dataset
+    // test reading and writing same store
     dsFramework.addInstance("fileSet", rtInput2, FileSetProperties.builder()
       .setBasePath("rtInput2")
       .setInputFormat(TextInputFormat.class)
@@ -361,10 +361,10 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     final ObjectStore<String> input = datasetCache.getDataset("someOtherNameSpace", "keys");
 
-    // Get dataset from a non existing namespace
+    // Get store from a non existing namespace
     try {
       datasetCache.getDataset("nonExistingNameSpace", "keys");
-      Assert.fail("getDataset() should throw an exception when accessing dataset from a non-existing namespace.");
+      Assert.fail("getDataset() should throw an exception when accessing store from a non-existing namespace.");
     } catch (DatasetInstantiationException e) {
       // expected
     }
@@ -410,14 +410,14 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
 
     try {
       datasetCache.getDataset("someOtherNameSpace", "jobConfig");
-      Assert.fail("getDataset() should throw an exception when accessing a non-existing dataset.");
+      Assert.fail("getDataset() should throw an exception when accessing a non-existing store.");
     } catch (DatasetInstantiationException e) {
       // expected
     }
     // Should work if explicitly specify the default namespace
     final KeyValueTable jobConfigTable = datasetCache.getDataset(NamespaceId.DEFAULT.getNamespace(), "jobConfig");
 
-    // write config into dataset
+    // write config into store
     Transactions.createTransactionExecutor(txExecutorFactory, jobConfigTable).execute(
       new TransactionExecutor.Subroutine() {
         @Override
@@ -712,7 +712,7 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
   public void testFailureInOutputCommitter() throws Exception {
     final ApplicationWithPrograms app = deployApp(AppWithMapReduce.class);
 
-    // We want to verify that when a mapreduce fails when committing the dataset outputs,
+    // We want to verify that when a mapreduce fails when committing the store outputs,
     // the destroy method is still called and committed.
 
     // (1) setup the datasets we use

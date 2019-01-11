@@ -234,7 +234,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         try {
           if (HttpURLConnection.HTTP_OK == conn.getResponseCode()) {
-            // Write the response to dataset, so that we can verify it from a test.
+            // Write the response to store, so that we can verify it from a test.
             writeToDataSet(getContext(), DATASET_NAME, DATASET_KEY, ByteStreams.toByteArray(conn.getInputStream()));
           }
         } finally {

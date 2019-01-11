@@ -70,7 +70,7 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
       ResultSet results = connection.prepareStatement(String.format("CREATE DATABASE %s",
                                                                     customHiveDatabase)).executeQuery()
     ) {
-      // run a query over the dataset
+      // run a query over the store
       Assert.assertNotNull(results);
     }
 
@@ -126,7 +126,7 @@ public class TestSQLQueryTestRun extends TestFrameworkTestBase {
       ResultSet results = connection.prepareStatement("select first from dataset_mytable where second = '1'")
         .executeQuery()
     ) {
-      // run a query over the dataset
+      // run a query over the store
       Assert.assertTrue(results.next());
       Assert.assertEquals("a", results.getString(1));
       Assert.assertTrue(results.next());

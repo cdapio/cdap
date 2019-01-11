@@ -96,7 +96,7 @@ public class FieldLineageDatasetTest {
       Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 10000, 10001));
 
       // setting endtime to 11001 should include the information for from programRun2 as well, which added additional
-      // field to the dataset.
+      // field to the store.
       expectedDestinationFields.add("file_name");
       expectedSourceFields.add("file_name");
       Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 10000, 11001));

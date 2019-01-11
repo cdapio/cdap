@@ -46,7 +46,7 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
     inputFile.createNew();
 
     PrintWriter writer = new PrintWriter(inputFile.getOutputStream());
-    // the PURCHASES dataset consists of purchase records in the format: <customerId> <spend>
+    // the PURCHASES store consists of purchase records in the format: <customerId> <spend>
     writer.println("1 20");
     writer.println("1 65");
     writer.println("1 30");
@@ -56,7 +56,7 @@ public class MapReduceWithMultipleOutputsTest extends MapReduceRunnerTestBase {
     writer.println("3 101");
     writer.close();
 
-    // Using multiple outputs, this MapReduce send the records to a different path of the same dataset, depending
+    // Using multiple outputs, this MapReduce send the records to a different path of the same store, depending
     // on the value in the data (large spend amounts will go to one file, while small will go to another file.
     runProgram(app, AppWithMapReduceUsingMultipleOutputs.SeparatePurchases.class, new BasicArguments());
     FileSet outputFileSet = datasetCache.getDataset(AppWithMapReduceUsingMultipleOutputs.SEPARATED_PURCHASES);

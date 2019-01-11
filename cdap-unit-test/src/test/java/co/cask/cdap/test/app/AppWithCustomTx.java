@@ -71,7 +71,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
- * An app that starts transactions with custom timeout and validates the timeout using a custom dataset.
+ * An app that starts transactions with custom timeout and validates the timeout using a custom store.
  * This app also has methods with @TransactionPolicy annotations, to validate that these don't get run inside a tx.
  * These methods will then start transactions explicitly, and attempt to nest transactions.
  *

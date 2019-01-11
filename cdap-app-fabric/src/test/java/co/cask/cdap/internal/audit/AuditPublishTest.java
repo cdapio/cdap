@@ -122,7 +122,7 @@ public class AuditPublishTest {
       }
     }
 
-    // All dataset would have metadata change as well as creation
+    // All store would have metadata change as well as creation
     Set<EntityId> expectedCreateEntities = new HashSet<>();
     for (String dataset : spec.getDatasets().keySet()) {
       expectedCreateEntities.add(NamespaceId.DEFAULT.dataset(dataset));

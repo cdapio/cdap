@@ -138,7 +138,7 @@ public class FileSetTest {
       fsPermissions = "rwx--x--x";
     }
 
-    // create a dataset with configured permissions that are different from the default
+    // create a store with configured permissions that are different from the default
     DatasetId datasetId = OTHER_NAMESPACE.dataset("testPermFS");
     dsFrameworkUtil.createInstance("fileSet", datasetId, FileSetProperties.builder()
       .setBasePath("perm/test/path")
@@ -181,7 +181,7 @@ public class FileSetTest {
     Assert.assertEquals(customPermissions, child.getPermissions());
     Assert.assertEquals(customPermissions, grandchild.getPermissions());
 
-    // instantiate the dataset with custom permissions in the runtime arguments
+    // instantiate the store with custom permissions in the runtime arguments
     fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
       FileSetProperties.PROPERTY_FILES_PERMISSIONS, customPermissions));
 
@@ -198,25 +198,25 @@ public class FileSetTest {
 
   @Test
   public void testInputOutputFormatClassAtRuntime() throws Exception {
-    // create a dataset with text input and output formats
+    // create a store with text input and output formats
     DatasetId datasetId = OTHER_NAMESPACE.dataset("testRuntimeFormats");
     dsFrameworkUtil.createInstance("fileSet", datasetId, FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .build());
 
-    // without passing anything in arguments, the input/output format classes will come from dataset properties
+    // without passing anything in arguments, the input/output format classes will come from store properties
     FileSet fs = dsFrameworkUtil.getInstance(datasetId);
     Assert.assertEquals(TextInputFormat.class.getName(), fs.getInputFormatClassName());
     Assert.assertEquals(TextOutputFormat.class.getName(), fs.getOutputFormatClassName());
 
-    // allow overriding the input format in dataset runtime args
+    // allow overriding the input format in store runtime args
     fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
       FileSetProperties.INPUT_FORMAT, CombineTextInputFormat.class.getName()));
     Assert.assertEquals(CombineTextInputFormat.class.getName(), fs.getInputFormatClassName());
     Assert.assertEquals(TextOutputFormat.class.getName(), fs.getOutputFormatClassName());
 
-    // allow overriding both the input and output format in dataset runtime args
+    // allow overriding both the input and output format in store runtime args
     fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
       FileSetProperties.INPUT_FORMAT, CombineTextInputFormat.class.getName(),
       FileSetProperties.OUTPUT_FORMAT, NullOutputFormat.class.getName()));
@@ -281,7 +281,7 @@ public class FileSetTest {
     File someFile = new File(absoluteFile, "some.file");
     someFile.createNewFile();
 
-    // create an external dataset
+    // create an external store
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
                                    FileSetProperties.builder()
                                      .setBasePath(absolutePath)
@@ -308,7 +308,7 @@ public class FileSetTest {
       // expected
     }
 
-    // delete the dataset and validate that the files are still there
+    // delete the store and validate that the files are still there
     dsFrameworkUtil.deleteInstance(testFileSetInstance5);
     Assert.assertTrue(someFile.exists());
   }
@@ -317,7 +317,7 @@ public class FileSetTest {
   public void testExternalNonExistentPath() throws IOException, DatasetManagementException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
-    // attempt to create an external dataset - should fail
+    // attempt to create an external store - should fail
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
                                    FileSetProperties.builder()
                                      .setBasePath(absolutePath)
@@ -378,7 +378,7 @@ public class FileSetTest {
   public void testReuseNonExistentPath() throws IOException, DatasetManagementException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
-    // attempt to create an external dataset - should fail
+    // attempt to create an external store - should fail
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
                                    FileSetProperties.builder()
                                      .setBasePath(absolutePath)
@@ -390,7 +390,7 @@ public class FileSetTest {
   public void testPossessNonExistentPath() throws IOException, DatasetManagementException {
     // create an external dir and create a file in it
     String absolutePath = tmpFolder.newFolder() + "/not/there";
-    // attempt to create an external dataset - should fail
+    // attempt to create an external store - should fail
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
                                    FileSetProperties.builder()
                                      .setBasePath(absolutePath)
@@ -406,7 +406,7 @@ public class FileSetTest {
     File someFile = new File(existingDir, "some.file");
     someFile.createNewFile();
 
-    // create an external dataset
+    // create an external store
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
                                    FileSetProperties.builder()
                                      .setBasePath(existingPath)
@@ -431,7 +431,7 @@ public class FileSetTest {
     File someFile = new File(existingDir, "some.file");
     someFile.createNewFile();
 
-    // create an external dataset
+    // create an external store
     dsFrameworkUtil.createInstance("fileSet", testFileSetInstance5,
                                    FileSetProperties.builder()
                                      .setBasePath(existingPath)

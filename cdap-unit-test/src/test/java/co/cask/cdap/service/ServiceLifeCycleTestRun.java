@@ -281,7 +281,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       serviceManager = appManager.getServiceManager("test")
         .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1"));
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
-      // Clean up the dataset first to avoid being affected by other tests
+      // Clean up the store first to avoid being affected by other tests
       datasetManager.get().delete(Bytes.toBytes("called"));
       datasetManager.get().delete(Bytes.toBytes("completed"));
       datasetManager.flush();
@@ -303,7 +303,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       Multimap<Integer, String> states = getStates(serviceManager);
       Assert.assertEquals(6, states.size());
 
-      // Set the complete flag in the dataset
+      // Set the complete flag in the store
       datasetManager.get().write("completed", Bytes.toBytes(true));
       datasetManager.flush();
 
@@ -328,7 +328,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       serviceManager = appManager.getServiceManager("test")
         .start(ImmutableMap.of(SystemArguments.SERVICE_THREADS, "1"));
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
-      // Clean up the dataset first to avoid being affected by other tests
+      // Clean up the store first to avoid being affected by other tests
       datasetManager.get().delete(Bytes.toBytes("called"));
       datasetManager.get().delete(Bytes.toBytes("completed"));
       datasetManager.flush();
@@ -360,7 +360,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       Multimap<Integer, String> states = getStates(serviceManager);
       Assert.assertEquals(6, states.size());
 
-      // Set the complete flag in the dataset
+      // Set the complete flag in the store
       datasetManager.get().write("completed", Bytes.toBytes(true));
       datasetManager.flush();
 

@@ -77,7 +77,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(0, instances.size());
 
     try {
-      // create dataset instance with type that is not yet known to the system should fail
+      // create store instance with type that is not yet known to the system should fail
       DatasetProperties props = DatasetProperties.builder().add("prop1", "val1").build();
       Assert.assertEquals(HttpStatus.SC_NOT_FOUND, createInstance("dataset1", "datasetType2", props).getResponseCode());
 
@@ -85,18 +85,18 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       deployModule("module1", TestModule1.class);
       deployModule("module2", TestModule2.class);
 
-      // create dataset instance
+      // create store instance
       String description = "test instance description";
       HttpResponse response = createInstance("dataset1", "datasetType2", description, props);
       Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
 
-      // verify module cannot be deleted which type is used for the dataset
+      // verify module cannot be deleted which type is used for the store
       int modulesBeforeDelete = getModules().getResponseObject().size();
       Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2").getResponseCode());
       Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules().getResponseCode());
       Assert.assertEquals(modulesBeforeDelete, getModules().getResponseObject().size());
 
-      // Verify that dataset instance can be retrieved using specified properties
+      // Verify that store instance can be retrieved using specified properties
       Map<String, String> properties = new HashMap<>(props.getProperties());
       instances = getInstancesWithProperties(NamespaceId.DEFAULT.getNamespace(), properties).getResponseObject();
       Assert.assertEquals(1, instances.size());
@@ -125,31 +125,31 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
                                     ImmutableList.of("module1"), Collections.emptyList());
 
       // try to retrieve non-existed instance
-      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-dataset").getResponseCode());
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, getInstance("non-existing-store").getResponseCode());
 
       // cannot create instance with same name again
       Assert.assertEquals(HttpStatus.SC_CONFLICT, createInstance("dataset1", "datasetType2", props).getResponseCode());
       Assert.assertEquals(1, getInstances().getResponseObject().size());
 
-      // cannot delete non-existing dataset instance
-      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-dataset").getResponseCode());
+      // cannot delete non-existing store instance
+      Assert.assertEquals(HttpStatus.SC_NOT_FOUND, deleteInstance("non-existing-store").getResponseCode());
       Assert.assertEquals(1, getInstances().getResponseObject().size());
 
-      // verify creation of dataset instance with null properties
+      // verify creation of store instance with null properties
       Assert.assertEquals(HttpStatus.SC_OK, createInstance("nullPropertiesTable", "datasetType2").getResponseCode());
-      // since dataset instance description is not provided, we are using the description given by the dataset type
+      // since store instance description is not provided, we are using the description given by the store type
       DatasetSpecification nullPropertiesTableSpec = createType2Spec("nullPropertiesTable", "datasetType2",
                                                           TestModule2.DESCRIPTION, DatasetProperties.EMPTY);
       DatasetSpecificationSummary actualSummary = getSummaryForInstance("nullPropertiesTable",
                                                                         getInstances().getResponseObject());
       Assert.assertEquals(spec2Summary(nullPropertiesTableSpec), actualSummary);
 
-      // delete dataset instance
+      // delete store instance
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("nullPropertiesTable").getResponseCode());
       Assert.assertEquals(0, getInstances().getResponseObject().size());
 
-      // create workflow local dataset instance
+      // create workflow local store instance
       DatasetProperties localDSProperties = DatasetProperties.builder().add("prop1", "val1")
         .add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true").build();
       Assert.assertEquals(HttpStatus.SC_OK, createInstance("localDSInstance", "datasetType2",
@@ -159,7 +159,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(0, getInstances().getResponseObject().size());
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("localDSInstance").getResponseCode());
 
-      // delete dataset modules
+      // delete store modules
       Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
       Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
 
@@ -177,12 +177,12 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     // deploy modules
     deployModule("module1", TestModule1.class);
 
-    // should not be able to create a dataset with invalid kerberos principal format
+    // should not be able to create a store with invalid kerberos principal format
     HttpResponse response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
                                            DatasetProperties.EMPTY, "alice/bob/somehost.net@somekdc.net");
     Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, response.getResponseCode());
 
-    // should be able to create a dataset with valid kerberos principal format
+    // should be able to create a store with valid kerberos principal format
     String alicePrincipal = "alice/somehost.net@somekdc.net";
     response = createInstance(NamespaceId.DEFAULT.dataset("ownedDataset"), "datasetType1", null,
                               DatasetProperties.EMPTY,
@@ -197,7 +197,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(alicePrincipal, meta.getOwnerPrincipal());
 
 
-    // deleting the dataset should delete the owner information
+    // deleting the store should delete the owner information
     response = deleteInstance(NamespaceId.DEFAULT.dataset("ownedDataset"));
     Assert.assertEquals(HttpStatus.SC_OK, response.getResponseCode());
     Assert.assertNull(ownerAdmin.getOwner(NamespaceId.DEFAULT.dataset("ownedDataset")));
@@ -230,7 +230,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       deployModule("module1", TestModule1.class);
       deployModule("module2", TestModule2.class);
 
-      // create dataset instance
+      // create store instance
       Assert.assertEquals(HttpStatus.SC_OK, createInstance("dataset1", "datasetType2", props).getResponseCode());
 
       // verify instance was created
@@ -251,7 +251,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
         .build();
       Assert.assertEquals(HttpStatus.SC_CONFLICT, updateInstance("dataset1", newProps).getResponseCode());
 
-      // update dataset instance with valid properties
+      // update store instance with valid properties
       newProps = DatasetProperties.builder()
         .add("prop2", "val2")
         .add(TestModule2.NOT_RECONFIGURABLE, "this")
@@ -267,11 +267,11 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(newProps.getProperties(), retrievedProps);
 
     } finally {
-      // delete dataset instance
+      // delete store instance
       Assert.assertEquals(HttpStatus.SC_OK, deleteInstance("dataset1").getResponseCode());
       Assert.assertEquals(0, getInstances().getResponseObject().size());
 
-      // delete dataset modules
+      // delete store modules
       Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module2").getResponseCode());
       Assert.assertEquals(HttpStatus.SC_OK, deleteModule("module1").getResponseCode());
     }
@@ -358,7 +358,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     HttpResponse response = makeInstancesRequest(nonExistent.getNamespace());
     assertNamespaceNotFound(response, nonExistent);
 
-    // TODO: commented out for now until we add back namespace checks on get dataset CDAP-3901
+    // TODO: commented out for now until we add back namespace checks on get store CDAP-3901
 //    response = getInstance(datasetInstance);
 //    assertNamespaceNotFound(response, nonExistent);
 
@@ -546,7 +546,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       validatePut(getUrl("inval+d", "/data/datasets/x"), "{'type':'tab", 400);
       validatePut(getUrl("inval+d", "/data/datasets/x"), "", 400);
 
-      // create one dataset to test PUT .../properties on it
+      // create one store to test PUT .../properties on it
       validatePut(getUrl("/data/datasets/x"), "{'typeName':'table'}", 200);
 
       // TODO (CDAP-4420): commented because netty-http throws "response already sent" for these and request times out

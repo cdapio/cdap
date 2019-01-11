@@ -69,7 +69,7 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
   @Override
   public void configure() {
     setName("AppWithMapReduceUsingAvroDynamicPartitioner");
-    setDescription("Application with MapReduce job using file as dataset");
+    setDescription("Application with MapReduce job using file as store");
     createDataset(INPUT_DATASET, KeyValueTable.class);
 
     createDataset(OUTPUT_DATASET, PartitionedFileSet.class, PartitionedFileSetProperties.builder()

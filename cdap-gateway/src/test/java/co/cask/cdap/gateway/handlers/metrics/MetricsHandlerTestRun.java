@@ -211,8 +211,8 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
                                  "app", "WordCount1",
                                  "app", "WCount1",
                                  "component", "metrics",
-                                 "component", "dataset.service",
-                                 "component", "dataset.executor",
+                                 "component", "store.service",
+                                 "component", "store.executor",
                                  "component", "transactions",
                                  "component", "metrics.processor"));
 
@@ -610,27 +610,27 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
   public void testSearchMetricsWithTags() throws Exception {
     // metrics in myspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=flow:WordCounter&tag=store:*&tag=run:run1&tag=flowlet:splitter",
                              ImmutableList.of("system.reads", "system.writes", "user.reads", "user.writes"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:collector",
+                               "&tag=flow:WordCounter&tag=store:*&tag=run:run1&tag=flowlet:collector",
                              ImmutableList.of("system.aa", "system.ab", "system.zz"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1",
+                               "&tag=flow:WordCounter&tag=store:*&tag=run:run1",
                              ImmutableList.of("system.aa", "system.ab", "system.reads",
                                               "system.writes", "system.zz", "user.reads", "user.writes"));
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=flow:WordCounter&tag=store:*&tag=run:run1&tag=flowlet:splitter",
                              ImmutableList.<String>of());
 
 
     // metrics in yourspace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace&tag=app:WCount1" +
-                               "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=flow:WCounter&tag=store:*&tag=run:run1&tag=flowlet:splitter",
                              ImmutableList.of("system.reads"));
 
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:yourspace",
@@ -638,16 +638,16 @@ public class MetricsHandlerTestRun extends MetricsSuiteTestBase {
 
     // wrong namespace
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WCount1" +
-                               "&tag=flow:WCounter&tag=dataset:*&tag=run:run1&tag=flowlet:splitter",
+                               "&tag=flow:WCounter&tag=store:*&tag=run:run1&tag=flowlet:splitter",
                              ImmutableList.<String>of());
 
     // verify "*"
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:WordCounter&tag=dataset:*&tag=run:run1&tag=flowlet:*",
+                               "&tag=flow:WordCounter&tag=store:*&tag=run:run1&tag=flowlet:*",
                              ImmutableList.of("system.aa", "system.ab", "system.reads",
                                               "system.writes", "system.zz", "user.reads", "user.writes"));
     verifySearchMetricResult("/v3/metrics/search?target=metric&tag=namespace:myspace&tag=app:WordCount1" +
-                               "&tag=flow:*&tag=dataset:*&tag=run:run1",
+                               "&tag=flow:*&tag=store:*&tag=run:run1",
                              ImmutableList.of("system.aa", "system.ab", "system.reads",
                                               "system.writes", "system.zz", "user.reads", "user.writes"));
   }

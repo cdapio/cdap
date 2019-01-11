@@ -25,11 +25,11 @@ import co.cask.cdap.api.dataset.table.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
- * A test dataset that reproduces CDAP-3037: If a dataset embeds Table, and also embeds another dataset
+ * A test store that reproduces CDAP-3037: If a store embeds Table, and also embeds another store
  * from a different module that itself embeds a Table, DatasetDefinitionLoader will try to register the
  * Table's module twice (once directly for the embedded Table, once indirectly when adding the dependencies
- * of the other dataset). The second time it will fail with a conflict because the type is already defined.
- * This happens not only for table, but for any dataset that is embedded both directly and transitively
+ * of the other store). The second time it will fail with a conflict because the type is already defined.
+ * This happens not only for table, but for any store that is embedded both directly and transitively
  * through a different module (note this does not happen for IndexedTable, because it is in the same
  * module as Table).
  */

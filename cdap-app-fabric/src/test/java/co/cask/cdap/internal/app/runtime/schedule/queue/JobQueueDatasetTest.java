@@ -270,7 +270,7 @@ public class JobQueueDatasetTest {
 
   @Test
   public void testGetAllJobs() throws Exception {
-    // Test that getJobs can be called even when there are messageIds persisted in the same dataset.
+    // Test that getJobs can be called even when there are messageIds persisted in the same store.
     // This tests rowkey isolation, since getJobs is a scan across the entire job row-space.
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
@@ -358,7 +358,7 @@ public class JobQueueDatasetTest {
         jobQueue.put(SCHED1_JOB);
         Assert.assertEquals(SCHED1_JOB, jobQueue.getJob(SCHED1_JOB.getJobKey()));
 
-        // Since notification and SCHED1 have the same dataset id DATASET_ID, notification will be added to
+        // Since notification and SCHED1 have the same store id DATASET_ID, notification will be added to
         // SCHED1_JOB, which is a job in SCHED1
         jobQueue.addNotification(
           new ProgramScheduleRecord(SCHED1, new ProgramScheduleMeta(ProgramScheduleStatus.SCHEDULED, 0L)),

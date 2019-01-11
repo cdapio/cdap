@@ -87,7 +87,7 @@ public class DummyApp extends AbstractApplication {
   }
 
   /**
-   * A dummy custom dataset to test the creation
+   * A dummy custom store to test the creation
    */
   public static final class CustomDummyDataset implements Dataset {
 

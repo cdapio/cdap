@@ -134,18 +134,18 @@ public class ExploreDisabledTest {
 
   @Test
   public void testDeployRecordScannable() throws Exception {
-    // Try to deploy a dataset that is not record scannable, when explore is enabled.
+    // Try to deploy a store that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
     DatasetModuleId module1 = new DatasetModuleId(namespaceId.getNamespace(), "module1");
     DatasetId instance1 = namespaceId.dataset("table1");
     datasetFramework.addModule(module1, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
-    // Performing admin operations to create dataset instance
+    // Performing admin operations to create store instance
     datasetFramework.addInstance("keyStructValueTable", instance1, DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
       datasetFramework.getDataset(instance1, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
@@ -177,18 +177,18 @@ public class ExploreDisabledTest {
 
   @Test
   public void testDeployNotRecordScannable() throws Exception {
-    // Try to deploy a dataset that is not record scannable, when explore is enabled.
+    // Try to deploy a store that is not record scannable, when explore is enabled.
     // This should be processed with no exceptionbeing thrown
     DatasetModuleId module2 = namespaceId.datasetModule("module2");
     DatasetId instance2 = namespaceId.dataset("table1");
     datasetFramework.addModule(module2, new NotRecordScannableTableDefinition.NotRecordScannableTableModule());
 
-    // Performing admin operations to create dataset instance
+    // Performing admin operations to create store instance
     datasetFramework.addInstance("NotRecordScannableTableDef", instance2, DatasetProperties.EMPTY);
 
     Transaction tx1 = transactionManager.startShort(100);
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     NotRecordScannableTableDefinition.KeyValueTable table =
       datasetFramework.getDataset(instance2, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);

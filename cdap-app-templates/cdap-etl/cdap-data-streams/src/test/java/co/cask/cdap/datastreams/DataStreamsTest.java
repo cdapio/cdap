@@ -159,7 +159,7 @@ public class DataStreamsTest extends HydratorTestBase {
     sparkManager.start(ImmutableMap.of("field", "name", "val1", val1, "val2", val2, "output", outputName));
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
-    // since dataset name is a macro, the dataset isn't created until it is needed. Wait for it to exist
+    // since store name is a macro, the store isn't created until it is needed. Wait for it to exist
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

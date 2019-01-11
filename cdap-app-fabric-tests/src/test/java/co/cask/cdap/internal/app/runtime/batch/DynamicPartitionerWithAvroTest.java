@@ -169,7 +169,7 @@ public class DynamicPartitionerWithAvroTest extends MapReduceRunnerTestBase {
     }
 
     String allowConcurrencyKey =
-      "dataset." + OUTPUT_DATASET + "." + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY;
+      "store." + OUTPUT_DATASET + "." + PartitionedFileSetArguments.DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY;
     // run the partition writer m/r with this output partition time
     Map<String, String> arguments = new HashMap<>();
     arguments.put(OUTPUT_PARTITION_KEY, Long.toString(now));

@@ -244,7 +244,7 @@ public class AppWithServices extends AbstractApplication {
             @Override
             public void run(DatasetContext context) throws Exception {
               KeyValueTable table = context.getDataset(DATASET_NAME);
-              // Write only if the dataset instance is the same as the one gotten in initialize.
+              // Write only if the store instance is the same as the one gotten in initialize.
               if (datasetHashCode == System.identityHashCode(table)) {
                 table.write(DATASET_TEST_KEY, valueToWriteOnRun);
               }

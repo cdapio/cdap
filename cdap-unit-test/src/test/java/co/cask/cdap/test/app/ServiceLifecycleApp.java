@@ -211,7 +211,7 @@ public class ServiceLifecycleApp extends AbstractApplication {
     }
 
     /**
-     * A {@link HttpContentProducer} that will keep producing "0" until it reads a flag from a dataset
+     * A {@link HttpContentProducer} that will keep producing "0" until it reads a flag from a store
      */
     private static final class DownloadHttpContentProducer extends HttpContentProducer {
 

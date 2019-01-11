@@ -154,7 +154,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     JsonObject appDetails = getAppDetails(NamespaceId.DEFAULT.getNamespace(), applicationId.getApplication());
     Assert.assertEquals(ownerPrincipal, appDetails.get(Constants.Security.PRINCIPAL).getAsString());
 
-    // the dataset created by the app should have the app owner too
+    // the store created by the app should have the app owner too
     Assert.assertEquals(ownerPrincipal,
                         getDatasetMeta(applicationId.getNamespaceId().dataset(AllProgramsApp.DATASET_NAME))
                           .getOwnerPrincipal());
@@ -191,7 +191,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
                         doDelete(getVersionedAPIPath("apps/" + applicationId.getApplication(),
                                                      applicationId.getNamespace())).getResponseCode());
 
-    // deletion of app should delete the dataset owner information as they themselves are not deleted
+    // deletion of app should delete the store owner information as they themselves are not deleted
     Assert.assertEquals(ownerPrincipal,
                         getDatasetMeta(applicationId.getNamespaceId().dataset(AllProgramsApp.DATASET_NAME))
                           .getOwnerPrincipal());
@@ -308,7 +308,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   /**
-   * Tests deploying an application with dataset same name as existing dataset but a different type
+   * Tests deploying an application with store same name as existing store but a different type
    */
   @Test
   public void testDeployFailure() throws Exception {

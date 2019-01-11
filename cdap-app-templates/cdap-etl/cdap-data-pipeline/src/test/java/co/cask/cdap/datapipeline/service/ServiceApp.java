@@ -48,7 +48,7 @@ public class ServiceApp extends AbstractApplication {
   }
 
   /**
-   * A Service that checks if the name is stored in the kv dataset or not. If name does not exist it returns "null" or
+   * A Service that checks if the name is stored in the kv store or not. If name does not exist it returns "null" or
    * returns same name
    */
   public static final class Name extends AbstractService {
@@ -58,7 +58,7 @@ public class ServiceApp extends AbstractApplication {
     @Override
     protected void configure() {
       setName(SERVICE_NAME);
-      setDescription("Service that checks if the name is stored in the kv dataset or not");
+      setDescription("Service that checks if the name is stored in the kv store or not");
       addHandler(new NameHandler());
       addHandler(new NameSaveHandler());
     }

@@ -226,8 +226,8 @@ public abstract class NotificationTest {
 
   @Test
   public void useTransactionTest() throws Exception {
-    // Performing admin operations to create dataset instance
-    // keyValueTable is a system dataset module
+    // Performing admin operations to create store instance
+    // keyValueTable is a system store module
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespace).build());
     DatasetId myTableInstance = namespace.dataset("myTable");
     dsFramework.addInstance("keyValueTable", myTableInstance, DatasetProperties.EMPTY);

@@ -42,7 +42,7 @@ public class AppWithMapReduceUsingFileSet extends AbstractApplication<AppWithMap
   @Override
   public void configure() {
     setName("AppWithMapReduceUsingFile");
-    setDescription("Application with MapReduce job using file as dataset");
+    setDescription("Application with MapReduce job using file as store");
     String inputDataset = getConfig().inputDataset;
     String outputDataset = getConfig().outputDataset;
     createDataset(inputDataset, "fileSet", FileSetProperties.builder()

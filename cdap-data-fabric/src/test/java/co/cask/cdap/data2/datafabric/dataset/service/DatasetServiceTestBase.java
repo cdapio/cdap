@@ -243,7 +243,7 @@ public abstract class DatasetServiceTestBase {
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  opExecutor, new HashSet<>(), typeService, instanceService);
 
-    // Start dataset service, wait for it to be discoverable
+    // Start store service, wait for it to be discoverable
     service.startAndWait();
     waitForService(Constants.Service.DATASET_EXECUTOR);
     waitForService(Constants.Service.DATASET_MANAGER);

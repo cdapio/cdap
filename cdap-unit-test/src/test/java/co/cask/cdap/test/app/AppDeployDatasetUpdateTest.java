@@ -30,7 +30,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 /**
- * Tests an update of an app that defines a dataset type; tests both compatible and incompatible update.
+ * Tests an update of an app that defines a store type; tests both compatible and incompatible update.
  */
 @Category(SlowTests.class)
 public class AppDeployDatasetUpdateTest extends TestBase {
@@ -47,7 +47,7 @@ public class AppDeployDatasetUpdateTest extends TestBase {
     Record expectedRecord = new Record("0AXB", "john", "doe");
     CompatibleRecord compatibleRecord = new CompatibleRecord("0AXB", "john", "doe");
 
-    // deploy the app, get the dataset, write a record, retrieve and validate it
+    // deploy the app, get the store, write a record, retrieve and validate it
     deployApplication(DatasetDeployApp.class);
     DataSetManager<DatasetDeployApp.RecordDataset> datasetManager =
       getDataset(DatasetDeployApp.DATASET_NAME);
@@ -69,19 +69,19 @@ public class AppDeployDatasetUpdateTest extends TestBase {
     } catch (Exception e) {
       // Expected exception due to incompatible Dataset upgrade
     }
-    // validate that the dataset is unchanged
+    // validate that the store is unchanged
     datasetManager = getDataset(DatasetDeployApp.DATASET_NAME);
     Assert.assertEquals(CompatibleRecord.class.getName(), datasetManager.get().getRecordClassName());
     Assert.assertEquals(compatibleRecord, datasetManager.get().getRecord("key"));
 
-    // Test upgrade to an app that uses a different dataset module name ("other" instead of "record")
+    // Test upgrade to an app that uses a different store module name ("other" instead of "record")
     try {
       deployApplication(ModuleConflictDatasetDeployApp.class);
       Assert.fail("Expected to throw exception here due to an incompatible Dataset module upgrade.");
     } catch (Exception e) {
       // Expected exception due to incompatible Dataset upgrade
     }
-    // validate that the dataset is unchanged
+    // validate that the store is unchanged
     datasetManager = getDataset(DatasetDeployApp.DATASET_NAME);
     Assert.assertEquals(CompatibleRecord.class.getName(), datasetManager.get().getRecordClassName());
     Assert.assertEquals(compatibleRecord, datasetManager.get().getRecord("key"));

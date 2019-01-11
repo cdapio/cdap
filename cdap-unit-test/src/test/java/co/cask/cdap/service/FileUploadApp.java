@@ -76,10 +76,10 @@ public class FileUploadApp extends AbstractApplication {
      * under the given partition. It also verifies the upload content MD5.
      */
     @POST
-    @Path("/upload/{dataset}/{partition}")
+    @Path("/upload/{store}/{partition}")
     public HttpContentConsumer upload(HttpServiceRequest request,
                                       HttpServiceResponder responder,
-                                      @PathParam("dataset") String dataset,
+                                      @PathParam("store") String dataset,
                                       @PathParam("partition") long partition) throws Exception {
       final String md5 = request.getHeader("Content-MD5");
       if (md5 == null) {
@@ -94,7 +94,7 @@ public class FileUploadApp extends AbstractApplication {
       final Location partitionDir = partitionOutput.getLocation();
       if (!partitionDir.mkdirs()) {
         responder.sendError(HttpURLConnection.HTTP_CONFLICT,
-                            String.format("Partition for key '%s' already exists for dataset '%s'",
+                            String.format("Partition for key '%s' already exists for store '%s'",
                                           partitionKey, dataset));
         return null;
       }

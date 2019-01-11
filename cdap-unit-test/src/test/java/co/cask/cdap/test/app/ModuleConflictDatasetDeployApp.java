@@ -19,7 +19,7 @@ package co.cask.cdap.test.app;
 import co.cask.cdap.api.dataset.DatasetProperties;
 
 /**
- * An app that is the same as DatasetDeployApp but uses a different name for its dataset module.
+ * An app that is the same as DatasetDeployApp but uses a different name for its store module.
  */
 public class ModuleConflictDatasetDeployApp extends DatasetDeployApp {
 

@@ -59,11 +59,11 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
 
   @Test
   public void testSparkCrossNS() throws Exception {
-    // Test for reading stream cross namespace, reading and writing to dataset cross namespace
+    // Test for reading stream cross namespace, reading and writing to store cross namespace
     // TestSparkStreamIntegrationApp deployed in default namespace
-    // which reads a stream from streamNS and writes to a dataset in its own ns (default)
+    // which reads a stream from streamNS and writes to a store in its own ns (default)
     // TestSparkCrossNSDatasetApp deployed at crossNSDatasetAppNS:
-    //  reading from the dataset in default (created by TestSparkStreamIntegrationApp) and write to a dataset
+    //  reading from the store in default (created by TestSparkStreamIntegrationApp) and write to a store
     // in outputDatasetNS
     NamespaceMeta streamNSMeta = new NamespaceMeta.Builder().setName("streamNS").build();
     NamespaceMeta crossNSDatasetAppNS = new NamespaceMeta.Builder().setName("crossNSDatasetAppNS").build();
@@ -95,7 +95,7 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> datasetManager = getDataset("result");
     verifyDatasetResult(datasetManager);
 
-    // deploy the cross  ns dataset app in datasetNS namespace
+    // deploy the cross  ns store app in datasetNS namespace
     ApplicationManager spark2 = deployApplication(crossNSDatasetAppNS.getNamespaceId(),
                                                   TestSparkCrossNSDatasetApp.class);
     args = ImmutableMap.of(

@@ -23,7 +23,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import org.apache.tephra.Transaction;
 
 /**
- * A dataset whose only purpose is to remember the transaction when it is started.
+ * A store whose only purpose is to remember the transaction when it is started.
  */
 public class TransactionCapturingTable extends AbstractDataset {
 

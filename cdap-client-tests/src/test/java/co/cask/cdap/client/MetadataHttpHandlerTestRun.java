@@ -375,7 +375,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(runId.toMetadataEntity(), runMetadata.getMetadataEntity());
     Assert.assertEquals(runProperties, runMetadata.getProperties());
     Assert.assertEquals(runTags, runMetadata.getTags());
-    // verify dataset
+    // verify store
     metadataRecords = getMetadata(myds.toMetadataEntity(), MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
@@ -505,7 +505,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   public void testSystemMetadataRetrieval() throws Exception {
     appClient.deploy(NamespaceId.DEFAULT, createAppJarFile(AllProgramsApp.class));
 
-    // verify dataset system metadata
+    // verify store system metadata
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME);
     Tasks.waitFor(ImmutableSet.of(DatasetSystemMetadataProvider.BATCH_TAG, AbstractSystemMetadataWriter.EXPLORE_TAG),
                   () -> getTags(datasetInstance, MetadataScope.SYSTEM),
@@ -523,7 +523,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableMap.of(
         "type", KeyValueTable.class.getName(),
-        AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test dataset",
+        AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test store",
         AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
         AbstractSystemMetadataWriter.ENTITY_NAME_KEY, datasetInstance.getEntityName()
       ),
@@ -533,7 +533,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     //Update properties, and make sure that system metadata gets updated (except create time)
     datasetClient.update(datasetInstance, TableProperties.builder().setTTL(100000L).build().getProperties());
     Tasks.waitFor(ImmutableMap.of("type", KeyValueTable.class.getName(),
-                                  AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test dataset",
+                                  AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test store",
                                   AbstractSystemMetadataWriter.TTL_KEY, "100000",
                                   AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
                                   AbstractSystemMetadataWriter.ENTITY_NAME_KEY, datasetInstance.getEntityName()),
@@ -583,7 +583,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch",
                                 AllProgramsApp.NoOpWorkflow.DESCRIPTION, ProfileId.NATIVE);
 
-    // update dataset properties to add the workflow.local.dataset property to it.
+    // update store properties to add the workflow.local.store property to it.
     try {
       datasetClient.update(datasetInstance,
                            Collections.singletonMap(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY,
@@ -739,7 +739,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
     appClient.delete(app);
 
-    // deleting the app does not delete the dataset and stream, delete them explicitly to clear their system metadata
+    // deleting the app does not delete the store and stream, delete them explicitly to clear their system metadata
     ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
     for (String dataset : spec.getDatasets().keySet()) {
       datasetClient.delete(NamespaceId.DEFAULT.dataset(dataset));
@@ -761,7 +761,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     ApplicationId appId = namespace.app(AllProgramsApp.NAME);
     addTags(appId, tags);
 
-    // Add metadata to dataset
+    // Add metadata to store
     tags = ImmutableSet.of("utag21");
     DatasetId datasetId = namespace.dataset(AllProgramsApp.DATASET_NAME);
     addTags(datasetId, tags);
@@ -1150,7 +1150,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // the sorted result order _auditLog mydataset text2 text1 (ascending: creation from earliest time)
     String sort = AbstractSystemMetadataWriter.CREATION_TIME_KEY + " " + SortInfo.SortOrder.ASC;
 
-    // offset 1, limit 2, 2 cursors, should return just the dataset created above other than trackerDataset even
+    // offset 1, limit 2, 2 cursors, should return just the store created above other than trackerDataset even
     // though it was created before since showHidden is false and it should not affect pagination
     List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(mydataset));
     Tasks.waitFor(true, () -> {
@@ -1471,7 +1471,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                           .build(),
                         metadataSearchResultRecords);
 
-    // search dataset
+    // search store
     ImmutableSet<MetadataSearchResultRecord> expectedKvTables = ImmutableSet.of(
       new MetadataSearchResultRecord(datasetInstance),
       new MetadataSearchResultRecord(datasetInstance2),

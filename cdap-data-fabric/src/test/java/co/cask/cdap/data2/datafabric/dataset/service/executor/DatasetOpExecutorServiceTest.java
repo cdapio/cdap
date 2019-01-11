@@ -215,7 +215,7 @@ public class DatasetOpExecutorServiceTest {
     dsFramework.addInstance("table", bob, DatasetProperties.EMPTY);
     testAdminOp(bob, "exists", 200, true);
 
-    dsFramework.updateInstance(bob, DatasetProperties.builder().add("dataset.table.ttl", "10000").build());
+    dsFramework.updateInstance(bob, DatasetProperties.builder().add("store.table.ttl", "10000").build());
     // check upgrade
     testAdminOp(bob, "upgrade", 200, null);
 

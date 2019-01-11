@@ -135,7 +135,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  new QueryResult(Lists.<Object>newArrayList(1, "samuel")),
                  new QueryResult(Lists.<Object>newArrayList(2, "dwayne"))));
 
-    // drop the dataset
+    // drop the store
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
@@ -184,7 +184,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     runCommand(NAMESPACE_ID, showTablesCommand, true, null,
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(hiveTableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     FileSet fileSet = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(fileSet);
 
@@ -238,7 +238,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  new QueryResult(Lists.<Object>newArrayList("b3")),
                  new QueryResult(Lists.<Object>newArrayList("b4"))));
 
-    // drop the dataset
+    // drop the store
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
@@ -295,7 +295,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     runCommand(NAMESPACE_ID, showTablesCommand, true, null,
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(hiveTableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     final PartitionedFileSet partitioned = datasetFramework
       .getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(partitioned);
@@ -381,7 +381,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     validatePartitionsInHive(queryTableName, ImmutableSet.of(keyX1, keyY1));
     validatePartitionsInPFS(partitioned, ImmutableSet.of(keyX1, keyY1, keyY2));
 
-    // make sure the partition can still be dropped from the PFS dataset
+    // make sure the partition can still be dropped from the PFS store
     dropPartition(partitioned, keyY2);
     validatePartitions(queryTableName, partitioned, ImmutableSet.of(keyX1, keyY1));
 
@@ -405,7 +405,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     runCommand(NAMESPACE_ID, showTablesCommand, true, null,
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(hiveTableName))));
 
-    // drop the dataset
+    // drop the store
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
@@ -444,7 +444,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     PartitionedFileSet partitioned = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS,
                                                                  null);
     Assert.assertNotNull(partitioned);
@@ -473,7 +473,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
     // drop a partition and query again
     dropPartition(partitioned, key1);
 
-    // drop the dataset
+    // drop the store
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
@@ -593,7 +593,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
       .setTableProperty("avro.schema.literal", SCHEMA.toString())
       .build());
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     PartitionedFileSet partitioned = datasetFramework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(partitioned);
     FileSet fileSet = partitioned.getEmbeddedFileSet();
@@ -651,7 +651,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     PartitionedFileSet partitioned = datasetFramework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(partitioned);
     FileSet fileSet = partitioned.getEmbeddedFileSet();
@@ -677,7 +677,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  // text line has the form 1,x\1x:1, format is csv -> key=1 value=x\1x:1
                  new QueryResult(Lists.<Object>newArrayList("1", "x\1x:1", 1))));
 
-    // update the dataset properties with a different delimiter
+    // update the store properties with a different delimiter
     datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addIntField("number").build())
       .setEnableExploreOnCreate(true)
@@ -713,7 +713,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     PartitionedFileSet partitioned = datasetFramework.getDataset(datasetId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(partitioned);
     FileSet fileSet = partitioned.getEmbeddedFileSet();
@@ -739,7 +739,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  // text line has the form 1,x\1x:1, format is csv -> key=1 value=x\1x:1
                  new QueryResult(Lists.<Object>newArrayList("1", "x\1x:1", 1))));
 
-    // update the dataset properties with a different delimiter
+    // update the store properties with a different delimiter
     datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addIntField("number").build())
       .setEnableExploreOnCreate(true)
@@ -757,7 +757,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  // text line has the form 2,x\1x:2, format is text -> key=2,x value=x:2
                  new QueryResult(Lists.<Object>newArrayList("2,x", "x:2", 2))));
 
-    // update the dataset properties with a different delimiter
+    // update the store properties with a different delimiter
     datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addIntField("number").build())
       .setEnableExploreOnCreate(true)
@@ -776,7 +776,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  // text line has the form 2,x\1x:2, format is text -> key=3,x\1x value=3
                  new QueryResult(Lists.<Object>newArrayList("3,x\1x", "3", 3))));
 
-    // update the dataset properties with a different format (avro)
+    // update the store properties with a different format (avro)
     datasetFramework.updateInstance(datasetId, PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder().addIntField("number").build())
       .setEnableExploreOnCreate(true)
@@ -819,7 +819,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(tableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     TimePartitionedFileSet tpfs = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(tpfs);
     Assert.assertTrue(tpfs instanceof TransactionAware);
@@ -887,7 +887,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                  new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=1/minute=0")),
                  new QueryResult(Lists.<Object>newArrayList("year=2014/month=12/day=10/hour=3/minute=0"))));
 
-    // drop the dataset
+    // drop the store
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone
@@ -941,7 +941,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(new ColumnDesc("tab_name", "STRING", 1, "from deserializer")),
                Lists.newArrayList(new QueryResult(Lists.newArrayList(tableName))));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     TimePartitionedFileSet tpfs = datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(tpfs);
 
@@ -963,7 +963,7 @@ public class HiveExploreServiceFileSetTestRun extends BaseHiveExploreServiceTest
                Lists.newArrayList(
                  new QueryResult(Lists.newArrayList(1, "alice", "1970-01-01", "2018-09-07 16:09:50.595"))));
 
-    // drop the dataset
+    // drop the store
     datasetFramework.deleteInstance(datasetInstanceId);
 
     // verify the Hive table is gone

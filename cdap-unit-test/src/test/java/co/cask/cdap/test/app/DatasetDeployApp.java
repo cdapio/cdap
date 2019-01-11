@@ -44,11 +44,11 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * An app that embeds a dataset type and creates a dataset of that type.
+ * An app that embeds a store type and creates a store of that type.
  */
 public class DatasetDeployApp extends AbstractApplication {
   public static final String NAME = "DatasetDeployApp";
-  public static final String DATASET_NAME = "dataset";
+  public static final String DATASET_NAME = "store";
   private static final Gson GSON = new Gson();
 
   public static class RecordConfig extends Config {

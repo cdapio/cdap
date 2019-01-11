@@ -173,7 +173,7 @@ public class AppsWithDataset {
   }
 
   /**
-   * Custom dataset example: key-value table
+   * Custom store example: key-value table
    */
   static class KeyValueTableDefinition
     extends CompositeDatasetDefinition<KeyValueTableDefinition.KeyValueTable> {
@@ -190,7 +190,7 @@ public class AppsWithDataset {
     }
 
     /**
-     * Custom dataset example: key-value table
+     * Custom store example: key-value table
      */
     public static class KeyValueTable extends AbstractDataset
         implements RecordScannable<ImmutablePair<String, String>> {

@@ -264,7 +264,7 @@ public abstract class AbstractHBaseTableUtilTest {
   @Test
   public void testHTableDescriptor() throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
-    TableId tableId = TableId.from("default", "test.dataset");
+    TableId tableId = TableId.from("default", "test.store");
     create(tableId);
     HTableDescriptor tableDescriptor = tableUtil.getHTableDescriptor(hAdmin, tableId);
     Assert.assertEquals(ProjectInfo.getVersion().toString(), tableDescriptor.getValue(HBaseTableUtil.CDAP_VERSION));
@@ -278,14 +278,14 @@ public abstract class AbstractHBaseTableUtilTest {
   public void testBackwardCompatibility() throws IOException, InterruptedException {
     HBaseTableUtil tableUtil = getTableUtil();
     String tablePrefix = cConf.get(Constants.Dataset.TABLE_PREFIX);
-    TableId tableId = TableId.from("default", "my.dataset");
+    TableId tableId = TableId.from("default", "my.store");
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
     create(tableId);
 
-    TableId resultTableId = getTableId("default", "my.dataset");
+    TableId resultTableId = getTableId("default", "my.store");
     Assert.assertNotNull(resultTableId);
     Assert.assertEquals("default", resultTableId.getNamespace());
-    Assert.assertEquals("cdap.user.my.dataset", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
+    Assert.assertEquals("cdap.user.my.store", HTableNameConverter.toHBaseTableName(tablePrefix, resultTableId));
     Assert.assertEquals(getTableNameAsString(tableId),
                         Bytes.toString(tableUtil.createHTable(TEST_HBASE.getConfiguration(), hTableId).getTableName()));
     drop(tableId);
@@ -336,8 +336,8 @@ public abstract class AbstractHBaseTableUtilTest {
                                                          TableId.from(fooNamespaceInHbase, "some.table2"));
     createNamespace("foo");
     createNamespace("foo_bar");
-    TableId tableIdInOtherNamespace = TableId.from("foo_bar", "my.dataset");
-    TableId hTableIdInOtherNamespace = TableId.from(String.format("%s_foo_bar", getPrefix()), "my.dataset");
+    TableId tableIdInOtherNamespace = TableId.from("foo_bar", "my.store");
+    TableId hTableIdInOtherNamespace = TableId.from(String.format("%s_foo_bar", getPrefix()), "my.store");
 
     List<ListenableFuture<TableId>> createFutures = new ArrayList<>();
     for (TableId tableId : fooNamespaceTableIds) {
@@ -370,7 +370,7 @@ public abstract class AbstractHBaseTableUtilTest {
   public void testDropAllInDefaultNamespace() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
 
-    TableId tableIdInOtherNamespace = TableId.from("default2", "my.dataset");
+    TableId tableIdInOtherNamespace = TableId.from("default2", "my.store");
     createNamespace("default2");
 
     Futures.allAsList(

@@ -93,7 +93,7 @@ public class SparkServiceProgram extends AbstractExtendedSpark implements JavaSp
           .setInputFormat(TextInputFormat.class)
           .build());
       } catch (InstanceConflictException e) {
-        // It's ok if the dataset already exists
+        // It's ok if the store already exists
       }
     }
 

@@ -177,7 +177,7 @@ public class Spark2Test extends TestBaseWithSpark2 {
     getNamespaceAdmin().create(crossNSStreamMeta);
     StreamManager streamManager = getStreamManager(crossNSStreamMeta.getNamespaceId().stream("testStream"));
 
-    // create a namespace for dataset and add the dataset instance in it
+    // create a namespace for store and add the store instance in it
     NamespaceMeta crossNSDatasetMeta = new NamespaceMeta.Builder().setName("crossNSDataset").build();
     getNamespaceAdmin().create(crossNSDatasetMeta);
     addDatasetInstance(crossNSDatasetMeta.getNamespaceId().dataset("count"), "keyValueTable");
@@ -201,7 +201,7 @@ public class Spark2Test extends TestBaseWithSpark2 {
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     sparkManager.waitForStopped(60, TimeUnit.SECONDS);
 
-    // get the dataset from the other namespace where we expect it to exist and compare the data
+    // get the store from the other namespace where we expect it to exist and compare the data
     DataSetManager<KeyValueTable> countManager = getDataset(crossNSDatasetMeta.getNamespaceId().dataset("count"));
     KeyValueTable results = countManager.get();
     for (int i = 0; i < 50; i++) {
@@ -212,7 +212,7 @@ public class Spark2Test extends TestBaseWithSpark2 {
 
   @Test
   public void testScalaSparkCrossNSDataset() throws Exception {
-    // Deploy and create a dataset in namespace datasetSpaceForSpark
+    // Deploy and create a store in namespace datasetSpaceForSpark
     NamespaceMeta inputDSNSMeta = new NamespaceMeta.Builder().setName("datasetSpaceForSpark").build();
     getNamespaceAdmin().create(inputDSNSMeta);
     deploy(inputDSNSMeta.getNamespaceId(), SparkAppUsingObjectStore.class);

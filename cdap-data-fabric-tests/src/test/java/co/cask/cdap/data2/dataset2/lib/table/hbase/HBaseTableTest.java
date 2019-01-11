@@ -411,8 +411,8 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
           throw e;
         }
       }
-      testScannerCache(numRows, tableName, "100", null, null); // cache=100 as dataset property
-      testScannerCache(numRows, tableName, "1000", "100", null); // cache=100 as dataset runtime argument
+      testScannerCache(numRows, tableName, "100", null, null); // cache=100 as store property
+      testScannerCache(numRows, tableName, "1000", "100", null); // cache=100 as store runtime argument
       testScannerCache(numRows, tableName, "5000", "1000", "100"); // cache=100 as scan property
     } finally {
       admin.drop();

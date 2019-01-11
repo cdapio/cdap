@@ -91,7 +91,7 @@ public class AllProgramsApp extends AbstractApplication {
     setDescription(DESC);
     addStream(new Stream(STREAM_NAME, "test stream"));
     createDataset(DATASET_NAME, KeyValueTable.class,
-                  DatasetProperties.builder().setDescription("test dataset").build());
+                  DatasetProperties.builder().setDescription("test store").build());
     createDataset(DATASET_NAME2, KeyValueTable.class);
     createDataset(DATASET_NAME3, KeyValueTable.class);
     addMapReduce(new NoOpMR());
@@ -144,7 +144,7 @@ public class AllProgramsApp extends AbstractApplication {
   }
 
   /**
-   * Similar to {@link NoOpMR}, but uses a dataset as input, instead of a stream.
+   * Similar to {@link NoOpMR}, but uses a store as input, instead of a stream.
    */
   public static class NoOpMR2 extends AbstractMapReduce {
     public static final String NAME = "NoOpMR2";

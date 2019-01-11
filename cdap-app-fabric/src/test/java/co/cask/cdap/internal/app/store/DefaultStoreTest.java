@@ -227,7 +227,7 @@ public class DefaultStoreTest {
     setStartAndRunning(sparkProgram.run(sparkRunId.getId()), ImmutableMap.of(), systemArgs, artifactId);
 
     // stop the Spark program with failure
-    NullPointerException npe = new NullPointerException("dataset not found");
+    NullPointerException npe = new NullPointerException("store not found");
     IllegalArgumentException iae = new IllegalArgumentException("illegal argument", npe);
     store.setStop(sparkProgram.run(sparkRunId.getId()), currentTime + 100, ProgramRunStatus.FAILED,
                   new BasicThrowable(iae), AppFabricTestHelper.createSourceId(++sourceId));
@@ -259,7 +259,7 @@ public class DefaultStoreTest {
     Assert.assertEquals(IllegalArgumentException.class.getName(), failureCause.getClassName());
     failureCause = failureCause.getCause();
     Assert.assertNotNull(failureCause);
-    Assert.assertEquals("dataset not found", failureCause.getMessage());
+    Assert.assertEquals("store not found", failureCause.getMessage());
     Assert.assertEquals(NullPointerException.class.getName(), failureCause.getClassName());
     Assert.assertNull(failureCause.getCause());
   }

@@ -79,7 +79,7 @@ public class ApplicationClientTestRun extends ClientTestBase {
 
   @After
   public void cleanup() throws Throwable {
-    // Delete FakeApp's dataset and module so that DatasetClientTestRun works when running both inside a test suite
+    // Delete FakeApp's store and module so that DatasetClientTestRun works when running both inside a test suite
     // This is due to DatasetClientTestRun assuming that it is using a blank CDAP instance
 
     try {

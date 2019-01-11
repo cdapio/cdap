@@ -32,10 +32,10 @@ import java.io.IOException;
 public class DatasetCrossNSAccessWithMAPApp extends AbstractApplication {
 
   public static final String MAPREDUCE_PROGRAM = "copymr";
-  public static final String INPUT_DATASET_NS = "input.dataset.namespace";
-  public static final String OUTPUT_DATASET_NS = "output.dataset.namespace";
-  public static final String INPUT_DATASET_NAME = "input.dataset.name";
-  public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
+  public static final String INPUT_DATASET_NS = "input.store.namespace";
+  public static final String OUTPUT_DATASET_NS = "output.store.namespace";
+  public static final String INPUT_DATASET_NAME = "input.store.name";
+  public static final String OUTPUT_DATASET_NAME = "output.store.name";
 
   @Override
   public void configure() {

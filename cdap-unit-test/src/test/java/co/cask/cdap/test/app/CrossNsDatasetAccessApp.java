@@ -28,14 +28,14 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * An app using dataset from another namespace
+ * An app using store from another namespace
  */
 public class CrossNsDatasetAccessApp extends AbstractApplication {
 
   public static final String APP_NAME = "WriterApp";
   public static final String SERVICE_NAME = "CrossNsService";
-  public static final String OUTPUT_DATASET_NS = "output.dataset.ns";
-  public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
+  public static final String OUTPUT_DATASET_NS = "output.store.ns";
+  public static final String OUTPUT_DATASET_NAME = "output.store.name";
 
   @Override
   public void configure() {
@@ -44,7 +44,7 @@ public class CrossNsDatasetAccessApp extends AbstractApplication {
   }
 
   /**
-   * A handler that gets deployed in one NS and write to a dataset in another NS.
+   * A handler that gets deployed in one NS and write to a store in another NS.
    */
   public static final class WriteHandler extends AbstractHttpServiceHandler {
 

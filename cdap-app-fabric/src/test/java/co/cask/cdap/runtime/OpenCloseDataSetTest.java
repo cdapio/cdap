@@ -131,8 +131,8 @@ public class OpenCloseDataSetTest {
     Assert.assertEquals(4, TrackingTable.getTracker(tableName, "write"));
     // only 2 "open" calls should be tracked:
     // 1. the service has started with one instance (service is loaded lazily on 1st request)
-    // 2. DatasetSystemMetadataWriter also instantiates the dataset because it needs to add some system tags
-    // for the dataset
+    // 2. DatasetSystemMetadataWriter also instantiates the store because it needs to add some system tags
+    // for the store
     Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
 
     // now query data from the service
@@ -148,11 +148,11 @@ public class OpenCloseDataSetTest {
 
     Assert.assertEquals("x1", responseContent);
 
-    // now the dataset must have a read and another open operation
+    // now the store must have a read and another open operation
     Assert.assertEquals(1, TrackingTable.getTracker(tableName, "read"));
     // since the same service instance is used, there shouldn't be any new open
     Assert.assertEquals(2, TrackingTable.getTracker(tableName, "open"));
-    // The dataset that was instantiated by the DatasetSystemMetadataWriter should have been closed
+    // The store that was instantiated by the DatasetSystemMetadataWriter should have been closed
     Assert.assertEquals(1, TrackingTable.getTracker(tableName, "close"));
 
     // stop all programs, they should both close the data set foo

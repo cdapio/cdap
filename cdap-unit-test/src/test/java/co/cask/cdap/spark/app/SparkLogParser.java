@@ -88,7 +88,7 @@ public class SparkLogParser extends AbstractSpark implements JavaSparkMain {
       }
     });
 
-    // Collect all data to driver and write to dataset directly. That's the intend of the test.
+    // Collect all data to driver and write to store directly. That's the intend of the test.
     sec.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {

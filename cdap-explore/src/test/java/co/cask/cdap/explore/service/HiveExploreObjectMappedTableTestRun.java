@@ -81,7 +81,7 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
     datasetFramework.addInstance(ObjectMappedTable.class.getName(), MY_TABLE,
                                  setupProperties(dbName, tableName, "row_key"));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     ObjectMappedTable<Record> table = datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 

@@ -57,7 +57,7 @@ public class AuditPublishersTest {
     messages = auditPublisher.popMessages();
     Assert.assertEquals(1, messages.size());
 
-    // Different dataset name, hence a message should be published
+    // Different store name, hence a message should be published
     datasetId = NamespaceId.DEFAULT.dataset(datasetName2);
     AuditPublishers.publishAccess(auditPublisher, datasetId, AccessType.READ_WRITE, workerId);
     messages = auditPublisher.popMessages();

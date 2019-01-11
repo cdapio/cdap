@@ -203,8 +203,8 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testLocalDatasetDeletion() throws Exception {
-    String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
-    String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
+    String keyValueTableType = "co.cask.cdap.api.store.lib.KeyValueTable";
+    String filesetType = "co.cask.cdap.api.store.lib.FileSet";
     Map<String, String> keyValueTableProperties = ImmutableMap.of("foo", "bar");
     Map<String, String> filesetProperties = ImmutableMap.of("anotherFoo", "anotherBar");
 
@@ -218,7 +218,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     startProgram(Id.Program.fromEntityId(workflowId), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
                                                                       "done.file", doneFile.getAbsolutePath(),
-                                                                      "dataset.*.keep.local", "true"));
+                                                                      "store.*.keep.local", "true"));
 
     while (!waitFile.exists()) {
       TimeUnit.MILLISECONDS.sleep(50);
@@ -250,7 +250,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     startProgram(Id.Program.fromEntityId(workflowId), ImmutableMap.of("wait.file", waitFile.getAbsolutePath(),
                                                     "done.file", doneFile.getAbsolutePath(),
-                                                    "dataset.MyTable.keep.local", "true"));
+                                                    "store.MyTable.keep.local", "true"));
 
     while (!waitFile.exists()) {
       TimeUnit.MILLISECONDS.sleep(50);
@@ -670,10 +670,10 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     runtimeArguments.put("mapreduce.*.processing.time", "1HR");
 
-    runtimeArguments.put("dataset.Purchase.cache.seconds", "30");
-    runtimeArguments.put("dataset.UserProfile.schema.property", "constant");
-    runtimeArguments.put("dataset.unknown.dataset", "false");
-    runtimeArguments.put("dataset.*.read.timeout", "60");
+    runtimeArguments.put("store.Purchase.cache.seconds", "30");
+    runtimeArguments.put("store.UserProfile.schema.property", "constant");
+    runtimeArguments.put("store.unknown.store", "false");
+    runtimeArguments.put("store.*.read.timeout", "60");
 
     setAndTestRuntimeArgs(Id.Program.fromEntityId(programId), runtimeArguments);
 

@@ -117,7 +117,7 @@ public abstract class DynamicDatasetCacheTest {
   protected void testDatasetCache(@Nullable Map<String, TestDataset> datasetMap)
     throws IOException, DatasetManagementException, TransactionFailureException {
 
-    // test that getting the same dataset are always the same object
+    // test that getting the same store are always the same object
     TestDataset a = cache.getDataset("a");
     TestDataset a1 = cache.getDataset("a");
     TestDataset a2 = cache.getDataset("a", A_ARGUMENTS);
@@ -164,11 +164,11 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertNotEquals(0L, a.getCurrentTransaction().getWritePointer());
     Assert.assertEquals(a.getCurrentTransaction(), b.getCurrentTransaction());
 
-    // get another dataset, validate that it participates in the same tx
+    // get another store, validate that it participates in the same tx
     TestDataset c = cache.getDataset("c", C_ARGUMENTS);
     Assert.assertEquals(a.getCurrentTransaction(), c.getCurrentTransaction());
 
-    // another dataset from different namespace
+    // another store from different namespace
     TestDataset cn2 = cache.getDataset(NAMESPACE2.getEntityName(), "c2", C_ARGUMENTS);
     Assert.assertEquals(an2.getCurrentTransaction(), cn2.getCurrentTransaction());
 
@@ -193,7 +193,7 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertFalse(c.isClosed());
     Assert.assertFalse(cn2.isClosed());
 
-    // validate that static dataset b is still in the tx-awares, whereas c was dropped
+    // validate that static store b is still in the tx-awares, whereas c was dropped
     txAwares = getTxAwares();
     Assert.assertEquals(3, txAwares.size());
     Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b));
@@ -219,7 +219,7 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertFalse(c.isClosed());
     Assert.assertFalse(cn2.isClosed());
 
-    // validate that static dataset b is still in the tx-awares, whereas c was dropped
+    // validate that static store b is still in the tx-awares, whereas c was dropped
     txAwares = getTxAwares();
     Assert.assertEquals(3, txAwares.size());
     Assert.assertTrue(verifyTxAwaresContains(txAwares, a, an2, b));
@@ -239,7 +239,7 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertTrue(c.isClosed());
     Assert.assertTrue(cn2.isClosed());
 
-    // but also that b (a static dataset) remains and was not closed
+    // but also that b (a static store) remains and was not closed
     Assert.assertFalse(b.isClosed());
 
     // validate the tx context does not include c in the next transaction
@@ -250,7 +250,7 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertNull(c.getCurrentTransaction());
     Assert.assertNull(cn2.getCurrentTransaction());
 
-    // validate that discarding a dataset that is not in the tx does not cause errors
+    // validate that discarding a store that is not in the tx does not cause errors
     cache.discardDataset(c);
     cache.discardDataset(cn2);
 
@@ -289,7 +289,7 @@ public abstract class DynamicDatasetCacheTest {
         TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
         ds.write();
         // this would close and discard ds, but the transaction is going on, so we should get the
-        // identical instance of the dataset again
+        // identical instance of the store again
         cache.discardDataset(ds);
         TestDataset ds2 = cache.getDataset("a", X_ARGUMENTS);
         Assert.assertSame(ds, ds2);
@@ -298,7 +298,7 @@ public abstract class DynamicDatasetCacheTest {
         throw Throwables.propagate(e);
       }
       try {
-        // get the same dataset again. It should be the same object
+        // get the same store again. It should be the same object
         TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
         Assert.assertSame(ref.get(), ds);
         cache.discardDataset(ds);
@@ -307,7 +307,7 @@ public abstract class DynamicDatasetCacheTest {
       }
     });
 
-    // now validate that the dataset did participate in the commit of the tx
+    // now validate that the store did participate in the commit of the tx
     Transactions.execute(cache.newTransactionContext(), "foo", () -> {
       try {
         TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
@@ -317,7 +317,7 @@ public abstract class DynamicDatasetCacheTest {
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
-      // validate that only the new instance of the dataset remained active
+      // validate that only the new instance of the store remained active
       Assert.assertEquals(1,
                           Iterables.size(cache.getTransactionAwares())
                             - Iterables.size(cache.getStaticTransactionAwares()));
@@ -326,7 +326,7 @@ public abstract class DynamicDatasetCacheTest {
 
   @Test
   public void testAccessAwareCache() {
-    // Same dataset of different types should return the same instance
+    // Same store of different types should return the same instance
     TestDataset a1 = cache.getDataset("a", Collections.emptyMap(), AccessType.READ);
     TestDataset a2 = cache.getDataset("a", Collections.emptyMap(), AccessType.WRITE);
 
@@ -337,7 +337,7 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertTrue(a1.isClosed());
     Assert.assertTrue(a2.isClosed());
 
-    // Getting the dataset again should return different instances than last one,
+    // Getting the store again should return different instances than last one,
     // but the two new one should be the same instance
     TestDataset oldA1 = a1;
     a1 = cache.getDataset("a", Collections.emptyMap(), AccessType.READ);

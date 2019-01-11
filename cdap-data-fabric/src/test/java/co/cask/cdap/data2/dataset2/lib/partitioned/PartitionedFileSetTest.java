@@ -191,7 +191,7 @@ public class PartitionedFileSetTest {
     TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
     txContext.start();
     try {
-      // didn't add any partitions to the dataset, so any partition key should throw a PartitionNotFoundException
+      // didn't add any partitions to the store, so any partition key should throw a PartitionNotFoundException
       pfs.addMetadata(key, "metaKey", "metaValue");
       Assert.fail("Expected not to find key: " + key);
     } catch (PartitionNotFoundException e) {
@@ -243,7 +243,7 @@ public class PartitionedFileSetTest {
     // exercises the edge case of partition consumption, when partitions are being consumed, while another in-progress
     // transaction has added a partition, but it has not yet committed, so the partition is not available for the
     // consumer
-    // note: each concurrent transaction needs its own instance of the dataset because the dataset holds the txId
+    // note: each concurrent transaction needs its own instance of the store because the store holds the txId
     // as an instance variable
     PartitionedFileSet dataset1 = dsFrameworkUtil.getInstance(pfsInstance);
     PartitionedFileSet dataset2 = dsFrameworkUtil.getInstance(pfsInstance);
@@ -330,7 +330,7 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
-        // those partitions are added to the dataset at this point
+        // those partitions are added to the store at this point
         List<Partition> consumedPartitions = Lists.newArrayList();
         Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions());
 
@@ -427,7 +427,7 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
-        // those partitions are added to the dataset at this point
+        // those partitions are added to the store at this point
         List<Partition> consumedPartitions = Lists.newArrayList();
 
         // with limit = 1, the returned iterator is only size 1, even though there are more unconsumed partitions
@@ -933,7 +933,7 @@ public class PartitionedFileSetTest {
         Assert.assertTrue(someFile.exists());
       }
     });
-    // drop the dataset and validate that the base dir still exists
+    // drop the store and validate that the base dir still exists
     dsFrameworkUtil.deleteInstance(pfsExternalInstance);
     Assert.assertTrue(pfsBaseLocation.exists());
     Assert.assertTrue(absolutePath.isDirectory());

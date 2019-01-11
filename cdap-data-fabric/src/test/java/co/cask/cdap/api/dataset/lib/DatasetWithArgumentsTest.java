@@ -30,7 +30,7 @@ import org.junit.Test;
 import java.util.Collections;
 
 /**
- * Tests dataset instantiation with arguments.
+ * Tests store instantiation with arguments.
  */
 public class DatasetWithArgumentsTest {
   @ClassRule

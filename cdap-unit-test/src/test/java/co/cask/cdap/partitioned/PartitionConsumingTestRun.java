@@ -105,7 +105,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     createPartition(serviceURL, LINE3, "3");
 
     // running the program job now processes these two new partitions (LINE2 and LINE3) and updates the counts
-    // dataset accordingly
+    // store accordingly
     programManager = runProgram.apply(applicationManager);
     programManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
 
@@ -113,7 +113,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
 
-    // running the program without adding new partitions does not affect the counts dataset
+    // running the program without adding new partitions does not affect the counts store
     programManager = runProgram.apply(applicationManager);
     programManager.waitForRuns(ProgramRunStatus.COMPLETED, 3, 5, TimeUnit.MINUTES);
 
@@ -128,7 +128,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     // however, Worker run doesn't produce a new output partition if there's no new input partition
     Assert.assertEquals(produceOutputPartitionEachRun ? 3 : 2, partitions.size());
 
-    // we only store the counts to the "outputLines" dataset
+    // we only store the counts to the "outputLines" store
     List<String> expectedCounts = Lists.newArrayList("1", "1", "2", "2", "3");
     List<String> outputRecords = getDataFromExplore("outputLines");
     Collections.sort(outputRecords);

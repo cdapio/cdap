@@ -58,7 +58,7 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
   @Override
   public void configure() {
     setName(APP_NAME);
-    setDescription("Application with MapReduce job using file as dataset");
+    setDescription("Application with MapReduce job using file as store");
     addMapReduce(new ComputeSum());
     createDataset("rtt", Table.class.getName());
     createDataset(COUNTERS, KeyValueTable.class.getName());

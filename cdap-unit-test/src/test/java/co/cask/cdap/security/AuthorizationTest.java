@@ -284,7 +284,7 @@ public class AuthorizationTest extends TestBase {
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
-    // alice will not be able to deploy the app since she does not have privilege on the implicit dataset module
+    // alice will not be able to deploy the app since she does not have privilege on the implicit store module
     try {
       deployApplication(AUTH_NAMESPACE, DummyApp.class);
       Assert.fail();
@@ -598,7 +598,7 @@ public class AuthorizationTest extends TestBase {
   private void testSystemDatasetAccessFromService(ServiceManager serviceManager) throws Exception {
     addDatasetInstance(NamespaceId.SYSTEM.dataset("store"), "keyValueTable");
 
-    // give bob write permission on the dataset
+    // give bob write permission on the store
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("store"), BOB, EnumSet.of(Action.WRITE));
 
     // switch to BOB
@@ -612,11 +612,11 @@ public class AuthorizationTest extends TestBase {
     // Start the Service as BOB
     serviceManager.start(args);
 
-    // Try to write data, it should fail as BOB don't have the permission to get system dataset
+    // Try to write data, it should fail as BOB don't have the permission to get system store
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
     HttpResponse response = HttpRequests.execute(HttpRequest.put(url).build());
     Assert.assertEquals(500, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains("Cannot access dataset store in system namespace"));
+    Assert.assertTrue(response.getResponseBodyAsString().contains("Cannot access store store in system namespace"));
 
     serviceManager.stop();
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
@@ -665,7 +665,7 @@ public class AuthorizationTest extends TestBase {
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
 
-    // Give BOB permission to write to the dataset in another namespace
+    // Give BOB permission to write to the store in another namespace
     grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.WRITE));
 
     // switch back to BOB to run service again
@@ -818,23 +818,23 @@ public class AuthorizationTest extends TestBase {
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
-    // Verify nothing write to the output dataset
+    // Verify nothing write to the output store
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
 
-    // give privilege to BOB on the input dataset
+    // give privilege to BOB on the input store
     grantAndAssertSuccess(inputDatasetNS.getNamespaceId().dataset("table1"), BOB, EnumSet.of(Action.READ));
 
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
-    // dataset
+    // store
     SecurityRequestContext.setUserId(BOB.getName());
     assertProgramFailure(argsForMR, mrManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
-    // Verify nothing write to the output dataset
+    // Verify nothing write to the output store
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "table2");
 
-    // give privilege to BOB on the output dataset
+    // give privilege to BOB on the output store
     grantAndAssertSuccess(outputDatasetNS.getNamespaceId().dataset("table2"), BOB, EnumSet.of(Action.WRITE));
 
     // switch back to BOB and run MR again. this should work
@@ -1025,7 +1025,7 @@ public class AuthorizationTest extends TestBase {
     grantAndAssertSuccess(NamespaceId.SYSTEM.dataset("table2"), BOB, EnumSet.of(Action.WRITE));
     grantAndAssertSuccess(otherNS.getNamespaceId().dataset("otherTable"), BOB, ALL_ACTIONS);
 
-    // Switch to Bob and run the spark program. this will fail because bob is trying to read from a system dataset
+    // Switch to Bob and run the spark program. this will fail because bob is trying to read from a system store
     SecurityRequestContext.setUserId(BOB.getName());
     Map<String, String> args = ImmutableMap.of(
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAMESPACE,
@@ -1085,11 +1085,11 @@ public class AuthorizationTest extends TestBase {
     getNamespaceAdmin().create(outputDatasetNSMeta);
     addDatasetInstance(inputTableId, "keyValueTable").create();
     addDatasetInstance(outputTableId, "keyValueTable").create();
-    // write sample stuff in input dataset
+    // write sample stuff in input store
     addDummyData(inputDatasetNSMeta.getNamespaceId(), "input");
 
     // Switch to Bob and run the spark program. this will fail because bob does not have access to either input or
-    // output dataset
+    // output store
     SecurityRequestContext.setUserId(BOB.getName());
     Map<String, String> args = ImmutableMap.of(
       TestSparkCrossNSDatasetApp.INPUT_DATASET_NAMESPACE,
@@ -1103,23 +1103,23 @@ public class AuthorizationTest extends TestBase {
     assertProgramFailure(args, sparkManager);
 
     SecurityRequestContext.setUserId(ALICE.getName());
-    // Verify nothing write to the output dataset
+    // Verify nothing write to the output store
     assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
-    // give privilege to BOB on the input dataset
+    // give privilege to BOB on the input store
     grantAndAssertSuccess(inputDatasetNSMeta.getNamespaceId().dataset("input"), BOB, EnumSet.of(Action.READ));
 
     // switch back to bob and try running again. this will still fail since bob does not have access on the output
-    // dataset
+    // store
     SecurityRequestContext.setUserId(BOB.getName());
     assertProgramFailure(args, sparkManager);
 
     // Switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
-    // Verify nothing write to the output dataset
+    // Verify nothing write to the output store
     assertDatasetIsEmpty(outputDatasetNSMeta.getNamespaceId(), "output");
 
-    // give privilege to BOB on the output dataset
+    // give privilege to BOB on the output store
     grantAndAssertSuccess(outputDatasetNSMeta.getNamespaceId().dataset("output"), BOB, EnumSet.of(Action.WRITE));
 
     // switch back to BOB and run spark again. this should work
@@ -1173,13 +1173,13 @@ public class AuthorizationTest extends TestBase {
     try {
       request = HttpRequest.post(url).withBody(text).build();
       response = HttpRequests.execute(request);
-      // should fail because bob does not have write privileges on the dataset
+      // should fail because bob does not have write privileges on the store
       Assert.assertEquals(500, response.getResponseCode());
     } finally {
       pfsService.stop();
       pfsService.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     }
-    // grant read and write on dataset and restart
+    // grant read and write on store and restart
     grantAndAssertSuccess(datasetId, BOB, EnumSet.of(Action.WRITE, Action.READ));
     pfsService.start();
     pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
@@ -1188,7 +1188,7 @@ public class AuthorizationTest extends TestBase {
     try  {
       request = HttpRequest.post(url).withBody(text).build();
       response = HttpRequests.execute(request);
-      // should succeed now because bob was granted write privileges on the dataset
+      // should succeed now because bob was granted write privileges on the store
       Assert.assertEquals(200, response.getResponseCode());
       // make sure that the partition was added
       request = HttpRequest.get(url).build();
@@ -1211,7 +1211,7 @@ public class AuthorizationTest extends TestBase {
    */
   @Test
   public void testDeleteSystemDatasets() throws Exception {
-    // create a random user and try to delete a system dataset
+    // create a random user and try to delete a system store
     UserGroupInformation remoteUser = UserGroupInformation.createRemoteUser("random");
     remoteUser.doAs(new PrivilegedAction<Void>() {
       @Override

@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.dataset2.customds;
 
 /**
- * An interface for testing dataset class rewrite.
+ * An interface for testing store class rewrite.
  */
 public interface CustomOperations {
 

@@ -73,7 +73,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
 
   @Test
   public void testTxRetryOnFailure() throws Exception {
-    // This test ensures that there's no non-transactional cache used in cube dataset. For that, it
+    // This test ensures that there's no non-transactional cache used in cube store. For that, it
     // 1) simulates transaction conflict for the first write to cube
     // 2) attempts to write again, writes successfully
     // 3) uses second cube instance to read the result

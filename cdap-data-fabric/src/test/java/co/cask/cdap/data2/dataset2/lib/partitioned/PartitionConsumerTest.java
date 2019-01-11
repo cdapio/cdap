@@ -180,7 +180,7 @@ public class PartitionConsumerTest {
       @Override
       public void apply() throws Exception {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
-        // those partitions are added to the dataset at this point
+        // those partitions are added to the store at this point
         List<? extends Partition> consumedPartitions = partitionConsumer.consumePartitions().getPartitions();
         Assert.assertEquals(partitionKeys1, toKeys(consumedPartitions));
       }
@@ -352,7 +352,7 @@ public class PartitionConsumerTest {
       @Override
       public void apply() throws Exception {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
-        // those partitions are added to the dataset at this point
+        // those partitions are added to the store at this point
         List<Partition> consumedPartitions = new ArrayList<>();
 
         // with limit = 1, the returned iterator is only size 1, even though there are more unconsumed partitions
@@ -851,7 +851,7 @@ public class PartitionConsumerTest {
       }
     });
 
-    // dropping partitionKey1 from the dataset makes it no longer available for consuming
+    // dropping partitionKey1 from the store makes it no longer available for consuming
 
     dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override

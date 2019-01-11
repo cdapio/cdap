@@ -37,28 +37,28 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
   @Test
   public void testInstanceMetaCache() throws Exception {
 
-    // deploy a dataset
+    // deploy a store
     instanceService.create(NamespaceId.DEFAULT.getEntityName(), "testds",
                            new DatasetInstanceConfiguration("table", new HashMap<>()));
 
-    // get the dataset meta for two different owners, assert it is the same
+    // get the store meta for two different owners, assert it is the same
     DatasetMeta meta = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     DatasetMeta met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     Assert.assertSame(meta, met2);
 
-    // update the dataset
+    // update the store
     instanceService.update(NamespaceId.DEFAULT.dataset("testds"),
                            ImmutableMap.of("ttl", "12345678"));
 
-    // get the dataset meta, validate it changed
+    // get the store meta, validate it changed
     met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     Assert.assertNotSame(meta, met2);
     Assert.assertEquals("12345678", met2.getSpec().getProperty("ttl"));
 
-    // delete the dataset
+    // delete the store
     instanceService.drop(NamespaceId.DEFAULT.dataset("testds"));
 
-    // get the dataset meta, validate not found
+    // get the store meta, validate not found
     try {
       instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
       Assert.fail("get() should have thrown NotFoundException");
@@ -66,11 +66,11 @@ public class DatasetInstanceServiceTest extends DatasetServiceTestBase {
       // expected
     }
 
-    // recreate the dataset
+    // recreate the store
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "testds",
                            new DatasetInstanceConfiguration("table", new HashMap<>()));
 
-    // get the dataset meta, validate it is up to date
+    // get the store meta, validate it is up to date
     met2 = instanceService.get(NamespaceId.DEFAULT.dataset("testds"));
     Assert.assertEquals(meta.getSpec(), met2.getSpec());
   }

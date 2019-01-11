@@ -633,7 +633,7 @@ public class MetadataDatasetTest {
       // search only artifacts - should only return system artifact
       results = searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + multiWordValue,
                                      ImmutableSet.of(EntityTypeSimpleName.ARTIFACT));
-      // this query returns the system artifact 4 times, since the dataset returns a list with duplicates for scoring
+      // this query returns the system artifact 4 times, since the store returns a list with duplicates for scoring
       // purposes. Convert to a Set for comparison.
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
       // search all entities in namespace 'ns2' - should return the system artifact and the same artifact in ns2
@@ -875,7 +875,7 @@ public class MetadataDatasetTest {
       Assert.assertTrue(searchResults.isEmpty());
       searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetValue", targetTypes);
       Assert.assertTrue(searchResults.isEmpty());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
+      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:store*", targetTypes);
       Assert.assertTrue(searchResults.isEmpty());
     });
     final AtomicReference<byte[]> startRowKeyForNextBatch = new AtomicReference<>();
@@ -892,13 +892,13 @@ public class MetadataDatasetTest {
         flowSearchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
         Assert.assertEquals(1, flowSearchResults.size());
         Assert.assertTrue(dsSearchResults.isEmpty());
-        dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
+        dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:store*", targetTypes);
         Assert.assertTrue(dsSearchResults.isEmpty());
       } else {
         flowSearchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
         Assert.assertTrue(flowSearchResults.isEmpty());
         Assert.assertEquals(1, dsSearchResults.size());
-        dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
+        dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:store*", targetTypes);
         Assert.assertEquals(1, dsSearchResults.size());
       }
     });
@@ -913,7 +913,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(1, searchResults.size());
       searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetValue", targetTypes);
       Assert.assertEquals(1, searchResults.size());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
+      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:store*", targetTypes);
       Assert.assertEquals(1, searchResults.size());
     });
   }
@@ -1048,7 +1048,7 @@ public class MetadataDatasetTest {
     SearchRequest request2 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
                                                0, 2, 3, null, false, EnumSet.allOf(EntityScope.class));
     SearchResults results = txnl.execute(() -> dataset.search(request2));
-    // dataset returns all pages, so results should be in same order
+    // store returns all pages, so results should be in same order
     Assert.assertEquals(expected, results.getResults());
 
     // check the cursors
@@ -1115,14 +1115,14 @@ public class MetadataDatasetTest {
     MetadataEntry dsEntry = new MetadataEntry(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, dsName);
     MetadataEntry appEntry = new MetadataEntry(app1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
     txnl.execute(() -> {
-      // since no sort is to be performed by the dataset, we return all (ignore limit and offset)
+      // since no sort is to be performed by the store, we return all (ignore limit and offset)
       SearchRequest request = new SearchRequest(namespaceId, "name*", targets, SortInfo.DEFAULT, 0, 3, 1, null,
                                                 false, EnumSet.allOf(EntityScope.class));
       SearchResults searchResults = dataset.search(request);
       Assert.assertEquals(
         // since default indexer is used:
         // 1 index for flow: 'name11'
-        // 3 indexes for dataset: 'name21', 'name21 name22', 'name22'
+        // 3 indexes for store: 'name21', 'name21 name22', 'name22'
         // 4 indexes for app: 'name31', 'name31 name32 name33', 'name32', 'name33'
         ImmutableList.of(flowEntry, dsEntry, dsEntry, dsEntry, appEntry, appEntry, appEntry, appEntry),
         searchResults.getResults()

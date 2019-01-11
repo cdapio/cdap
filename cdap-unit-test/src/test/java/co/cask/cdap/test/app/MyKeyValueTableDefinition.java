@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Custom dataset example: key-value table
+ * Custom store example: key-value table
  */
 public class MyKeyValueTableDefinition
   extends CompositeDatasetDefinition<MyKeyValueTableDefinition.KeyValueTable> {
@@ -59,7 +59,7 @@ public class MyKeyValueTableDefinition
   }
 
   /**
-   * Custom dataset example: key-value table
+   * Custom store example: key-value table
    */
   public static class KeyValueTable
     extends AbstractDataset implements BatchReadable<String, String>, BatchWritable<String, String> {

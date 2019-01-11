@@ -85,7 +85,7 @@ public class TimePartitionedFileSetTest {
     dsFrameworkUtil.newInMemoryTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        // make sure the dataset has no partitions
+        // make sure the store has no partitions
         validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
         Date date = DATE_FORMAT.parse("6/4/12 10:00 am");
@@ -266,7 +266,7 @@ public class TimePartitionedFileSetTest {
    */
   @Test
   public void testInputPartitionPaths() throws Exception {
-    // make sure the dataset has no partitions
+    // make sure the store has no partitions
     final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
     TransactionAware txAwareDataset = (TransactionAware) tpfs;
     TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset);

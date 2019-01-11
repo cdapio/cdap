@@ -80,7 +80,7 @@ public class SparkAppUsingFileSet extends AbstractApplication {
   }
 
   /**
-   * A custom dataset embedding a fileset. It delegates all operations to the embedded fileset, but it
+   * A custom store embedding a fileset. It delegates all operations to the embedded fileset, but it
    * overrides the DatasetOutputCommitter to create a file names "success" or "failure", which can be
    * validated by the test case.
    */

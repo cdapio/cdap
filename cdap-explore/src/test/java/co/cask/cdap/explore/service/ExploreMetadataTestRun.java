@@ -57,7 +57,7 @@ public class ExploreMetadataTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
-    // Performing admin operations to create dataset instance
+    // Performing admin operations to create store instance
     datasetFramework.addInstance("keyStructValueTable", MY_TABLE, DatasetProperties.EMPTY);
     datasetFramework.addInstance("keyStructValueTable", otherTable, DatasetProperties.EMPTY);
     datasetFramework.addInstance("keyStructValueTable", OTHER_MY_TABLE, DatasetProperties.EMPTY);

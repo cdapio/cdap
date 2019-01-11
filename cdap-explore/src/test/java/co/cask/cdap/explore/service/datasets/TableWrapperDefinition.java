@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A wrapper around the Table dataset. You wouldn't actually do this, purely for testing purposes.
+ * A wrapper around the Table store. You wouldn't actually do this, purely for testing purposes.
  */
 public class TableWrapperDefinition extends
   AbstractDatasetDefinition<TableWrapperDefinition.TableWrapper, DatasetAdmin> {

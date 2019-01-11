@@ -72,7 +72,7 @@ public class StorageProviderNamespaceAdminTest {
     ));
     namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
     storageProviderNamespaceAdmin = injector.getInstance(StorageProviderNamespaceAdmin.class);
-    // start the dataset service for namespace store to work
+    // start the store service for namespace store to work
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);

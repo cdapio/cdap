@@ -69,7 +69,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   @Override
   public void configure() {
     setName("WorkflowAppWithLocalDatasets");
-    setDescription("App to test the local dataset functionality for the Workflow.");
+    setDescription("App to test the local store functionality for the Workflow.");
 
     addSpark(new SparkCSVToSpaceProgram());
     addMapReduce(new WordCount());
@@ -79,7 +79,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   }
 
   /**
-   * Workflow which configures the local dataset.
+   * Workflow which configures the local store.
    */
   public static class WorkflowWithLocalDatasets extends AbstractWorkflow {
 
@@ -96,7 +96,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
     public void destroy() {
       KeyValueTable uniqueIdTable = getContext().getDataset(UNIQUE_ID_DATASET);
       if (uniqueIdTable.read("id") == null) {
-        throw new RuntimeException("Failed to read from local dataset in destroy method.");
+        throw new RuntimeException("Failed to read from local store in destroy method.");
       }
       KeyValueTable workflowRuns = getContext().getDataset(WORKFLOW_RUNS_DATASET);
       String status = Bytes.toString(workflowRuns.read(getContext().getRunId().getId()));
@@ -129,7 +129,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   }
 
   /**
-   * Custom action writing to the local file set dataset.
+   * Custom action writing to the local file set store.
    */
   public static class LocalDatasetWriter extends AbstractCustomAction {
 
@@ -192,7 +192,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   }
 
   /**
-   * Reducer to write the word counts to the local Workflow dataset.
+   * Reducer to write the word counts to the local Workflow store.
    */
   public static class IntSumReducer extends Reducer<Text, IntWritable, byte[], byte[]> {
     private IntWritable result = new IntWritable();
@@ -211,7 +211,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   }
 
   /**
-   * Custom action that reads the local dataset and writes to the non-local dataset.
+   * Custom action that reads the local store and writes to the non-local store.
    */
   public static class LocalDatasetReader extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(LocalDatasetReader.class);
@@ -237,7 +237,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
 
     @Override
     public void run() {
-      LOG.info("Read the local dataset");
+      LOG.info("Read the local store");
       try {
         File waitFile = new File(getContext().getRuntimeArguments().get("wait.file"));
         waitFile.createNewFile();

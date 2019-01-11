@@ -66,7 +66,7 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
     // all partitions are missing. drop/recrete Hive table and add all partitions
     WorkerManager workerManager = appManager.getWorkerManager("PartitionWorker")
       .start(ImmutableMap.of(
-        "dataset.name", "tpfs",
+        "store.name", "tpfs",
         "batch.size", "5",
         "verbose", "true"));
     workerManager.waitForRun(ProgramRunStatus.COMPLETED, 60, TimeUnit.SECONDS);
@@ -81,7 +81,7 @@ public class PartitionCorrectorTestRun extends TestFrameworkTestBase {
     // some partitions are missing, some present keep the Hive table and try to add all partitions
     workerManager = appManager.getWorkerManager("PartitionWorker")
       .start(ImmutableMap.of(
-        "dataset.name", "tpfs",
+        "store.name", "tpfs",
         "batch.size", "8",
         "verbose", "false",
         "disable.explore", "false"));

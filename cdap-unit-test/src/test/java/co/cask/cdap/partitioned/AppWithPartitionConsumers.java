@@ -158,7 +158,7 @@ public class AppWithPartitionConsumers extends AbstractApplication {
 
       // process the partitions (same as WordCountMapReduce):
       //   - read the partitions' files
-      //   - increment the words' counts in the 'counts' dataset accordingly
+      //   - increment the words' counts in the 'counts' store accordingly
       //   - write the counts to the 'outputLines' partitioned fileset
       try {
         getContext().execute(new TxRunnable() {

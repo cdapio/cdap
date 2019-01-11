@@ -63,7 +63,7 @@ public class CharCountProgram extends AbstractSpark implements JavaSparkMain {
     Preconditions.checkArgument(
       "org.apache.spark.io.LZFCompressionCodec".equals(sc.getConf().get("spark.io.compression.codec")));
 
-    // read the dataset
+    // read the store
     JavaPairRDD<byte[], String> inputData = sec.fromDataset("keys");
 
     // create a new RDD with the same key but with a new value which is the length of the string
@@ -83,7 +83,7 @@ public class CharCountProgram extends AbstractSpark implements JavaSparkMain {
         Table totals = context.getDataset("totals");
         totals.increment(new Increment("total").add("total", count));
 
-        // write the character count to dataset
+        // write the character count to store
         sec.saveAsDataset(stringLengths, "count");
       }
     });

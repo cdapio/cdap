@@ -124,7 +124,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_OK, deployModule("module1", TestModule1x.class).getResponseCode());
     verifyAll(ONLY_MODULE1X, ONLY_1X_DEPENDENCIES);
 
-    // create a dataset instance, verify that we cannot redeploy the module with fewer types, even with force option
+    // create a store instance, verify that we cannot redeploy the module with fewer types, even with force option
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",
                            new DatasetInstanceConfiguration("datasetType1x", new HashMap<>()));
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class).getResponseCode());
@@ -155,7 +155,7 @@ public class DatasetTypeHandlerTest extends DatasetServiceTestBase {
     Assert.assertEquals(HttpStatus.SC_CONFLICT, deployModule("module1", TestModule1.class).getResponseCode());
     verifyAll(MODULES_1X_AND_2, BOTH_1X_2_DEPENDENCIES);
 
-    // create dataset instances, try force deploy of same module again with fewer types - should fail
+    // create store instances, try force deploy of same module again with fewer types - should fail
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1",
                            new DatasetInstanceConfiguration("datasetType1", new HashMap<>()));
     instanceService.create(NamespaceId.DEFAULT.getNamespace(), "instance1x",

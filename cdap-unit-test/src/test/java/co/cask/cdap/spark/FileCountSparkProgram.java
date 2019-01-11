@@ -45,30 +45,30 @@ public class FileCountSparkProgram extends AbstractSpark implements JavaSparkMai
     String input = sec.getRuntimeArguments().get("input");
     String output = sec.getRuntimeArguments().get("output");
 
-    // read the dataset
+    // read the store
     JavaPairRDD<Long, String> inputData = sec.fromDataset(input);
 
     JavaPairRDD<String, Integer> stringLengths = transformRDD(inputData);
 
-    // write the character count to dataset
+    // write the character count to store
     sec.saveAsDataset(stringLengths, output);
 
     String inputPartitionTime = sec.getRuntimeArguments().get("inputKey");
     String outputPartitionTime = sec.getRuntimeArguments().get("outputKey");
 
-    // read and write datasets with dataset arguments
+    // read and write datasets with store arguments
     if (inputPartitionTime != null && outputPartitionTime != null) {
       Map<String, String> inputArgs = new HashMap<>();
       TimePartitionedFileSetArguments.setInputStartTime(inputArgs, Long.parseLong(inputPartitionTime) - 100);
       TimePartitionedFileSetArguments.setInputEndTime(inputArgs, Long.parseLong(inputPartitionTime) + 100);
 
-      // read the dataset with user custom dataset args
+      // read the store with user custom store args
       JavaPairRDD<Long, String> customPartitionData = sec.fromDataset(input, inputArgs);
 
       // create a new RDD with the same key but with a new value which is the length of the string
       JavaPairRDD<String, Integer> customPartitionStringLengths = transformRDD(customPartitionData);
 
-      // write the character count to dataset with user custom dataset args
+      // write the character count to store with user custom store args
       Map<String, String> outputArgs = new HashMap<>();
       TimePartitionedFileSetArguments.setOutputPartitionTime(outputArgs, Long.parseLong(outputPartitionTime));
       sec.saveAsDataset(customPartitionStringLengths, output, outputArgs);

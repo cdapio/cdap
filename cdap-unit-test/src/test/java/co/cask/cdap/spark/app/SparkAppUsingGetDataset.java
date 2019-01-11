@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * App to test dataset access/update using getDataset() from a spark program
+ * App to test store access/update using getDataset() from a spark program
  */
 public class SparkAppUsingGetDataset extends AbstractApplication {
 

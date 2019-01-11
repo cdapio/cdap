@@ -188,7 +188,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
                                  new InMemoryDatasetOpExecutor(framework), new HashSet<>(),
                                  typeService, instanceService);
-    // Start dataset service, wait for it to be discoverable
+    // Start store service, wait for it to be discoverable
     service.startAndWait();
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
       () -> discoveryServiceClient.discover(Constants.Service.DATASET_MANAGER));

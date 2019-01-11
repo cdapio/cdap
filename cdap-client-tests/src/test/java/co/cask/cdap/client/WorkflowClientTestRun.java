@@ -75,12 +75,12 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
   @Test
   public void testWorkflowClient() throws Exception {
-    String keyValueTableType = "co.cask.cdap.api.dataset.lib.KeyValueTable";
-    String filesetType = "co.cask.cdap.api.dataset.lib.FileSet";
+    String keyValueTableType = "co.cask.cdap.api.store.lib.KeyValueTable";
+    String filesetType = "co.cask.cdap.api.store.lib.FileSet";
 
     String outputPath = new File(TMP_FOLDER.newFolder(), "output").getAbsolutePath();
     Map<String, String> runtimeArgs = ImmutableMap.of("inputPath", createInput("input"),
-                                                      "outputPath", outputPath, "dataset.*.keep.local", "true");
+                                                      "outputPath", outputPath, "store.*.keep.local", "true");
     final WorkflowId workflowId =
       NamespaceId.DEFAULT.app(AppWithWorkflow.NAME).workflow(AppWithWorkflow.SampleWorkflow.NAME);
 

@@ -113,7 +113,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
                             usageDataset.getDatasets(worker21.getParent()));
 
-        // Verify dataset mappings
+        // Verify store mappings
         Assert.assertEquals(ImmutableSet.of(worker1, service11, service21), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.of(worker2, worker21), usageDataset.getPrograms(datasetInstance2));
         Assert.assertEquals(ImmutableSet.of(worker1), usageDataset.getPrograms(datasetInstance3));
@@ -144,7 +144,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2),
                             usageDataset.getDatasets(worker21.getParent()));
 
-        // Verify dataset mappings
+        // Verify store mappings
         Assert.assertEquals(ImmutableSet.of(service21), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.of(worker21), usageDataset.getPrograms(datasetInstance2));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance3));
@@ -179,7 +179,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.of(stream1), usageDataset.getStreams(worker2));
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
 
-        // Verify dataset/stream mappings
+        // Verify store/stream mappings
         Assert.assertEquals(ImmutableSet.of(worker1), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.of(worker2), usageDataset.getPrograms(stream1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
@@ -205,7 +205,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
 
-        // Verify dataset/stream mappings
+        // Verify store/stream mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
@@ -218,7 +218,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
 
-        // Verify dataset/stream mappings
+        // Verify store/stream mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
@@ -231,7 +231,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
 
-        // Verify dataset/stream mappings
+        // Verify store/stream mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));
@@ -257,7 +257,7 @@ public class UsageDatasetTest {
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker2));
         Assert.assertEquals(ImmutableSet.<StreamId>of(), usageDataset.getStreams(worker22));
 
-        // Verify dataset/stream mappings
+        // Verify store/stream mappings
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(datasetInstance1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream1));
         Assert.assertEquals(ImmutableSet.<ProgramId>of(), usageDataset.getPrograms(stream2));

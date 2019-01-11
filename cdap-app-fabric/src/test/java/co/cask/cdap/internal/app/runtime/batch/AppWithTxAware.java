@@ -46,7 +46,7 @@ public class AppWithTxAware extends AbstractApplication {
   @Override
   public void configure() {
     setName("AppWithTxAware");
-    setDescription("Application with MapReduce job that uses a TxAware dataset");
+    setDescription("Application with MapReduce job that uses a TxAware store");
     createDataset("pedanticTxAware", PedanticTxAware.class);
     addMapReduce(new PedanticMapReduce());
   }
@@ -113,7 +113,7 @@ public class AppWithTxAware extends AbstractApplication {
     }
 
     public static class DummySplit extends Split {
-      // this is actually never used except that the dataset wants to serialize it
+      // this is actually never used except that the store wants to serialize it
     }
 
     @Override

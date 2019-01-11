@@ -222,7 +222,7 @@ public class SparkTest extends TestFrameworkTestBase {
                                                     "tmpdir", TMP_FOLDER.newFolder().getAbsolutePath()),
                                     ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
-    // Validate the result written to dataset
+    // Validate the result written to store
     KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
     // There should be ten "Line"
     Assert.assertEquals(10, Bytes.toInt(resultTable.read("Line")));
@@ -249,7 +249,7 @@ public class SparkTest extends TestFrameworkTestBase {
     Map<String, String> runtimeArgs = new HashMap<>();
     runtimeArgs.putAll(RuntimeArguments.addScope(Scope.DATASET, "PeopleFileSet", outputArgs));
     runtimeArgs.put("stream.name", "PeopleStream");
-    runtimeArgs.put("output.dataset", "PeopleFileSet");
+    runtimeArgs.put("output.store", "PeopleFileSet");
     runtimeArgs.put("sql.statement", "SELECT name, age FROM people WHERE age >= 21");
 
     List<String> programs = Arrays.asList(
@@ -368,16 +368,16 @@ public class SparkTest extends TestFrameworkTestBase {
     sparkManager.start(ImmutableMap.of(
       "source.stream", "SparkStream",
       "keyvalue.table", "KeyValueTable",
-      "result.all.dataset", "SparkResult",
+      "result.all.store", "SparkResult",
       "result.threshold", "2",
-      "result.threshold.dataset", "SparkThresholdResult"
+      "result.threshold.store", "SparkThresholdResult"
     ));
 
-    // Verify result from dataset before the Spark program terminates
+    // Verify result from store before the Spark program terminates
     final DataSetManager<KeyValueTable> resultManager = getDataset("SparkThresholdResult");
     final KeyValueTable resultTable = resultManager.get();
 
-    // Expect the threshold result dataset, with threshold >=2, contains [brown, fox, bear]
+    // Expect the threshold result store, with threshold >=2, contains [brown, fox, bear]
     Tasks.waitFor(ImmutableSet.of("brown", "fox", "bear"), () -> {
       resultManager.flush();    // This is to start a new TX
       LOG.info("Reading from threshold result");

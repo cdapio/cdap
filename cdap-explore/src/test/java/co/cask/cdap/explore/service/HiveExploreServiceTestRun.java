@@ -83,11 +83,11 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addModule(KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addModule(OTHER_KEY_STRUCT_VALUE, new KeyStructValueTableDefinition.KeyStructValueTableModule());
 
-    // Performing admin operations to create dataset instance
+    // Performing admin operations to create store instance
     datasetFramework.addInstance("keyStructValueTable", MY_TABLE, DatasetProperties.EMPTY);
     datasetFramework.addInstance("keyStructValueTable", OTHER_MY_TABLE, DatasetProperties.EMPTY);
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
       datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
@@ -163,7 +163,7 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testDeployNotRecordScannable() throws Exception {
-    // Try to deploy a dataset that is not record scannable, when explore is enabled.
+    // Try to deploy a store that is not record scannable, when explore is enabled.
     // This should be processed with no exception being thrown
     DatasetModuleId module2 = NAMESPACE_ID.datasetModule("module2");
     DatasetId myTableNotRecordScannable = NAMESPACE_ID.dataset("my_table_not_record_scannable");
@@ -651,13 +651,13 @@ public class HiveExploreServiceTestRun extends BaseHiveExploreServiceTest {
   public void testJoin() throws Exception {
     DatasetId myTable1 = NAMESPACE_ID.dataset("my_table_1");
     String myTable1Name = getDatasetHiveName(myTable1);
-    // Performing admin operations to create dataset instance
+    // Performing admin operations to create store instance
     datasetFramework.addInstance("keyStructValueTable", myTable1, DatasetProperties.EMPTY);
 
     try {
       Transaction tx1 = transactionManager.startShort(100);
 
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       KeyStructValueTableDefinition.KeyStructValueTable table =
         datasetFramework.getDataset(myTable1, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);

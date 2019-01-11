@@ -74,7 +74,7 @@ public class TestMapReduceServiceIntegrationApp extends AbstractApplication {
   }
 
   /**
-   * Map Reduce to count squared amount of all words in input dataset.
+   * Map Reduce to count squared amount of all words in input store.
    */
   public static class CountTotal extends AbstractMapReduce {
     @Override

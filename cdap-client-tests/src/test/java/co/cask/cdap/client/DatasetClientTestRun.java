@@ -135,8 +135,8 @@ public class DatasetClientTestRun extends ClientTestBase {
       // expected
     }
 
-    LOG.info("Creating, truncating, and deleting dataset of new Dataset type");
-    // Before creating dataset, there are some system datasets already exist
+    LOG.info("Creating, truncating, and deleting store of new Dataset type");
+    // Before creating store, there are some system datasets already exist
     int numBaseDataset = datasetClient.list(TEST_NAMESPACE).size();
 
     DatasetId instance = TEST_NAMESPACE.dataset("testDataset");
@@ -147,7 +147,7 @@ public class DatasetClientTestRun extends ClientTestBase {
                                                           Collections.<String, String>emptyMap(), description, null));
     Assert.assertEquals(numBaseDataset + 1, datasetClient.list(TEST_NAMESPACE).size());
 
-    // Assert dataset summary for the newly created dataset
+    // Assert store summary for the newly created store
     DatasetSpecificationSummary expectedSpec =
       new DatasetSpecificationSummary(instance.getDataset(), StandaloneDataset.TYPE_NAME, description,
                                       Collections.<String, String>emptyMap());
@@ -204,8 +204,8 @@ public class DatasetClientTestRun extends ClientTestBase {
 
   @Test
   public void testSystemTypes() throws Exception {
-    // Tests that a dataset can be created in a namespace, even if the type does not exist in that namespace.
-    // The dataset type is being resolved from the system namespace.
+    // Tests that a store can be created in a namespace, even if the type does not exist in that namespace.
+    // The store type is being resolved from the system namespace.
     DatasetTypeId type = TEST_NAMESPACE.datasetType(Table.class.getName());
     DatasetId instance = TEST_NAMESPACE.dataset("tableTypeDataset");
 

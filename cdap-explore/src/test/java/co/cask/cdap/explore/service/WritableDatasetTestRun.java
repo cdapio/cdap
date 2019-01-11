@@ -75,13 +75,13 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
   }
 
   private static void initKeyValueTable(DatasetId datasetInstanceId, boolean addData) throws Exception {
-    // Performing admin operations to create dataset instance
+    // Performing admin operations to create store instance
     datasetFramework.addInstance("keyStructValueTable", datasetInstanceId, DatasetProperties.EMPTY);
     if (!addData) {
       return;
     }
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     KeyStructValueTableDefinition.KeyStructValueTable table =
       datasetFramework.getDataset(datasetInstanceId, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
@@ -121,7 +121,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       ExploreExecutionResult result = future.get();
       result.close();
 
-      // Assert the values have been inserted into the dataset
+      // Assert the values have been inserted into the store
       KeyStructValueTableDefinition.KeyStructValueTable table =
         datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
@@ -154,9 +154,9 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
   @Test
   public void testTablesWithSpecialChars() throws Exception {
-    // '.' are replaced with "_" in hive, so create a dataset with . in name.
+    // '.' are replaced with "_" in hive, so create a store with . in name.
     DatasetId myTable1 = NAMESPACE_ID.dataset("dot.table");
-    // '_' are replaced with "_" in hive, so create a dataset with . in name.
+    // '_' are replaced with "_" in hive, so create a store with . in name.
     DatasetId myTable2 = NAMESPACE_ID.dataset("hyphen-table");
     try {
       initKeyValueTable(myTable1, true);
@@ -186,7 +186,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
     datasetFramework.addInstance("keyExtendedStructValueTable", extendedTable, DatasetProperties.EMPTY);
     try {
       initKeyValueTable(MY_TABLE, true);
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable table =
         datasetFramework.getDataset(extendedTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
@@ -247,7 +247,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
                                new WritableKeyStructValueTableDefinition.KeyStructValueTableModule());
     datasetFramework.addInstance("writableKeyStructValueTable", writableTable, DatasetProperties.EMPTY);
     try {
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       KeyExtendedStructValueTableDefinition.KeyExtendedStructValueTable table =
         datasetFramework.getDataset(extendedTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
@@ -384,7 +384,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       exploreClient.submit(NAMESPACE_ID, "create table test (first INT, second STRING) ROW FORMAT " +
                              "DELIMITED FIELDS TERMINATED BY '\\t'").get().close();
 
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       KeyValueTableDefinition.KeyValueTable table =
         datasetFramework.getDataset(simpleTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
@@ -428,7 +428,7 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
                                                            "select * from " + simpleTableName).get();
       Assert.assertFalse(result.hasNext());
 
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       KeyValueTableDefinition.KeyValueTable table =
         datasetFramework.getDataset(simpleTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);

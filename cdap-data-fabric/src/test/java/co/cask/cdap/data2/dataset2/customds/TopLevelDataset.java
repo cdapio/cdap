@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.dataset2.customds;
 
 /**
- * A top level dataset class.
+ * A top level store class.
  */
 public class TopLevelDataset extends TopLevelDirectDataset {
 

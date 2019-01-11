@@ -78,7 +78,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     transactional.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        // Accessing dataset instance to perform data operations
+        // Accessing store instance to perform data operations
         EmailTableDefinition.EmailTable table = context.getDataset(MY_TABLE.getDataset());
         Assert.assertNotNull(table);
         table.writeEmail("email1", "this is the subject", "this is the body", "sljackson@boss.com");
@@ -278,7 +278,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     transactional.execute(new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        // Read the data back via dataset directly
+        // Read the data back via store directly
         ObjectMappedTable<Person> objTable = context.getDataset(datasetId.getDataset());
 
         Person person = objTable.read("bobby");
@@ -289,7 +289,7 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
       }
     });
 
-    // Delete the dataset, hence also drop the table.
+    // Delete the store, hence also drop the table.
     datasetFramework.deleteInstance(datasetId);
   }
 }

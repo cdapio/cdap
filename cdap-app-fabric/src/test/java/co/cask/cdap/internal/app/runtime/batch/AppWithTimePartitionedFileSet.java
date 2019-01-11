@@ -51,7 +51,7 @@ public class AppWithTimePartitionedFileSet extends AbstractApplication {
   @Override
   public void configure() {
     setName("AppWithMapReduceUsingFile");
-    setDescription("Application with MapReduce job using file as dataset");
+    setDescription("Application with MapReduce job using file as store");
     createDataset(INPUT, "table");
     createDataset(OUTPUT, "table");
 

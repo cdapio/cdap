@@ -360,7 +360,7 @@ public class RouterPathLookupTest {
     // all program metadata
     assertRouting("/v3/namespaces/default//apps/WordCount//flows//WordCountFlow//metadata",
                   RouterPathLookup.METADATA_SERVICE);
-    // all dataset metadata
+    // all store metadata
     assertRouting("/v3/namespaces/default//datasets/ds1//////metadata", RouterPathLookup.METADATA_SERVICE);
     // all stream metadata
     assertRouting("/v3/namespaces/default//streams/s1//////metadata", RouterPathLookup.METADATA_SERVICE);
@@ -375,7 +375,7 @@ public class RouterPathLookupTest {
     // program metadata properties
     assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/properties"
       , RouterPathLookup.METADATA_SERVICE);
-    // dataset metadata properties
+    // store metadata properties
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
     // stream metadata properties
     assertRouting("/v3/namespaces////default////streams//s1/metadata/properties", RouterPathLookup.METADATA_SERVICE);
@@ -390,7 +390,7 @@ public class RouterPathLookupTest {
     // program metadata tags
     assertRouting("/v3/namespaces/default//apps/WordCount/flows/WordCountFlow/metadata/tags",
                   RouterPathLookup.METADATA_SERVICE);
-    // dataset metadata tags
+    // store metadata tags
     assertRouting("/v3/namespaces/default/////datasets/ds1/metadata/tags", RouterPathLookup.METADATA_SERVICE);
     // stream metadata tags
     assertRouting("/v3/namespaces////default////streams//s1/metadata/tags", RouterPathLookup.METADATA_SERVICE);

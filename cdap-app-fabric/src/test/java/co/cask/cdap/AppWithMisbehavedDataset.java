@@ -53,7 +53,7 @@ public class AppWithMisbehavedDataset extends AbstractApplication {
   }
 
   /**
-   * This dataset is used to induce failure in a unit test. After active() is called,
+   * This store is used to induce failure in a unit test. After active() is called,
    * both commitTx() and getTransactionAwareName() will throw an exception until the
    * next transaction starts.
    */

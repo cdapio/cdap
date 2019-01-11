@@ -90,13 +90,13 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
     SecurityRequestContext.setUserId(ALICE.getName());
     assertAuthorizationFailure(() -> dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY),
-                               "Alice should not be able to add a dataset instance since she does not have ADMIN" +
-                                 " privileges on the dataset");
-    // grant alice ADMIN access to the dsId and ADMIN access on the dataset type
+                               "Alice should not be able to add a store instance since she does not have ADMIN" +
+                                 " privileges on the store");
+    // grant alice ADMIN access to the dsId and ADMIN access on the store type
     grantAndAssertSuccess(dsId, ALICE, ImmutableSet.of(Action.ADMIN));
     // now adding an instance should succeed
     dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
-    // alice should be able to perform all operations on the dataset
+    // alice should be able to perform all operations on the store
     Assert.assertTrue(dsFramework.hasInstance(dsId));
     Assert.assertNotNull(dsFramework.getDataset(dsId, ImmutableMap.of(), null));
     dsFramework.updateInstance(dsId, DatasetProperties.builder().add("key", "value").build());
@@ -118,7 +118,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     DatasetSpecification datasetSpec = dsFramework.getDatasetSpec(dsId);
     Assert.assertNotNull(datasetSpec);
     Assert.assertEquals("val", datasetSpec.getProperty("key"));
-    // grant Bob corresponding privilege to create the dataset
+    // grant Bob corresponding privilege to create the store
     grantAndAssertSuccess(dsId1, BOB, ImmutableSet.of(Action.ADMIN));
     grantAndAssertSuccess(dsId2, BOB, ImmutableSet.of(Action.ADMIN));
     dsFramework.addInstance(Table.class.getName(), dsId1, DatasetProperties.EMPTY);
@@ -126,7 +126,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // since Bob now has some privileges on all datasets, the list API should return all datasets for him
     Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
-    // Alice should only be able to see dsId, since she only has privilege on this dataset
+    // Alice should only be able to see dsId, since she only has privilege on this store
     SecurityRequestContext.setUserId(ALICE.getName());
     Assert.assertEquals(ImmutableSet.of(dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
@@ -142,7 +142,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     } catch (Exception e) {
       Assert.assertTrue(e.getMessage().contains("is not authorized to perform actions"));
     }
-    // alice should still be able to see all dataset instances
+    // alice should still be able to see all store instances
     Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
 
@@ -204,10 +204,10 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       Assert.assertTrue(e.getMessage().contains("is not authorized to perform any one of the actions"));
     }
     SecurityRequestContext.setUserId(ALICE.getName());
-    // user need to have access to the dataset to do any operations, even though the dataset does not exist
+    // user need to have access to the store to do any operations, even though the store does not exist
     grantAndAssertSuccess(nonExistingInstance, ALICE, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(nonExistingModule, ALICE, EnumSet.of(Action.ADMIN));
-    // after grant user should be able to check the dataset info
+    // after grant user should be able to check the store info
     Assert.assertNull(dsFramework.getDatasetSpec(nonExistingInstance));
     Assert.assertFalse(dsFramework.hasInstance(nonExistingInstance));
     assertNotFound(() -> dsFramework.updateInstance(nonExistingInstance, DatasetProperties.EMPTY),
@@ -218,7 +218,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
                    String.format("Expected %s to not exist", nonExistingInstance));
     assertAuthorizationFailure(
       () -> dsFramework.addInstance(nonExistingType.getType(), nonExistingInstance, DatasetProperties.EMPTY),
-      "Alice needs to have READ/ADMIN on the dataset type to create the dataset");
+      "Alice needs to have READ/ADMIN on the store type to create the store");
     assertNotFound(() -> dsFramework.deleteModule(nonExistingModule),
                    String.format("Expected %s to not exist", nonExistingModule));
     grantAndAssertSuccess(nonExistingType, ALICE, EnumSet.of(Action.ADMIN));
@@ -242,7 +242,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
                     ALICE, Action.ADMIN, module1));
     // grant alice ADMIN on module1
     grantAndAssertSuccess(module1, ALICE, EnumSet.of(Action.ADMIN));
-    // grant all privileges needed to create a dataset
+    // grant all privileges needed to create a store
     grantAndAssertSuccess(type1, ALICE, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(type1x, ALICE, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(datasetId, ALICE, EnumSet.of(Action.ADMIN));
@@ -259,7 +259,7 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       String.format("Creating an instance of a type from %s should fail as %s does not have any privileges on it.",
                     module1, BOB));
 
-    // granting ADMIN on the module, BOB should now be able to create the dataset type
+    // granting ADMIN on the module, BOB should now be able to create the store type
     grantAndAssertSuccess(module2, BOB, EnumSet.of(Action.ADMIN));
     grantAndAssertSuccess(type2, BOB, EnumSet.of(Action.ADMIN));
 

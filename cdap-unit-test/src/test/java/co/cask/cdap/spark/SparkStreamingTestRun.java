@@ -68,7 +68,7 @@ public class SparkStreamingTestRun extends TestFrameworkTestBase {
       "checkpoint.path", checkpointDir.getAbsolutePath(),
       "kafka.brokers", KAFKA_TESTER.getBrokerService().getBrokerList(),
       "kafka.topics", "testtopic",
-      "result.dataset", "TimeSeriesResult"
+      "result.store", "TimeSeriesResult"
     );
     SparkManager manager = appManager.getSparkManager(KafkaSparkStreaming.class.getSimpleName());
     manager.start(args);

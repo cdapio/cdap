@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Test dataset module
+ * Test store module
  */
 public class TestModule1x implements DatasetModule {
   @Override

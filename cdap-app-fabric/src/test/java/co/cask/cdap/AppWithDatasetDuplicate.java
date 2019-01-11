@@ -27,7 +27,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 /**
- * App which creates a dataset using the new Datasets API used for testing
+ * App which creates a store using the new Datasets API used for testing
  */
 public class AppWithDatasetDuplicate extends AbstractApplication {
 

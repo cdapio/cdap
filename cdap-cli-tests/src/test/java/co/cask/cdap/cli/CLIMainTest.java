@@ -184,7 +184,7 @@ public class CLIMainTest extends CLITestBase {
   public void testList() throws Exception {
     testCommandOutputContains(cli, "list app versions " + FakeApp.NAME, V1_SNAPSHOT);
     testCommandOutputContains(cli, "list app versions " + FakeApp.NAME, ApplicationId.DEFAULT_VERSION);
-    testCommandOutputContains(cli, "list dataset instances", FakeApp.DS_NAME);
+    testCommandOutputContains(cli, "list store instances", FakeApp.DS_NAME);
     testCommandOutputContains(cli, "list streams", FakeApp.STREAM_NAME);
   }
 
@@ -252,9 +252,9 @@ public class CLIMainTest extends CLITestBase {
     if (!appJarFile.delete()) {
       LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
     }
-    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "list store instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
-    testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
+    testCommandOutputContains(cli, "delete store instance " + datasetId, "Successfully deleted");
   }
 
   @Test
@@ -275,9 +275,9 @@ public class CLIMainTest extends CLITestBase {
 
     testCommandOutputContains(cli, String.format("deploy app %s with config %s", appJarFile.getAbsolutePath(),
                                                  configFile.getAbsolutePath()), "Successfully deployed application");
-    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "list store instances", datasetId);
     testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
-    testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
+    testCommandOutputContains(cli, "delete store instance " + datasetId, "Successfully deleted");
   }
 
   @Test
@@ -310,7 +310,7 @@ public class CLIMainTest extends CLITestBase {
       LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
     }
     testCommandOutputContains(cli, "delete app " + "OwnedApp", "Successfully");
-    testCommandOutputContains(cli, "delete dataset instance " + datasetId, "Successfully deleted");
+    testCommandOutputContains(cli, "delete store instance " + datasetId, "Successfully deleted");
   }
 
   @Test
@@ -392,48 +392,48 @@ public class CLIMainTest extends CLITestBase {
 
     DatasetTypeClient datasetTypeClient = new DatasetTypeClient(cliConfig.getClientConfig());
     DatasetTypeMeta datasetType = datasetTypeClient.list(NamespaceId.DEFAULT).get(0);
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
-                              "Successfully created dataset");
-    testCommandOutputContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
-    testCommandOutputContains(cli, "get dataset instance properties " + datasetName, "a,1");
+    testCommandOutputContains(cli, "create store instance " + datasetType.getName() + " " + datasetName + " \"a=1\"",
+                              "Successfully created store");
+    testCommandOutputContains(cli, "list store instances", FakeDataset.class.getSimpleName());
+    testCommandOutputContains(cli, "get store instance properties " + datasetName, "a,1");
 
-    // test dataset creation with owner
-    String commandOutput = getCommandOutput(cli, "create dataset instance " + datasetType.getName() + " " +
+    // test store creation with owner
+    String commandOutput = getCommandOutput(cli, "create store instance " + datasetType.getName() + " " +
       ownedDatasetName + " \"a=1\"" + " " + "someDescription " + ArgumentName.PRINCIPAL +
       " alice/somehost.net@somekdc.net");
-    Assert.assertTrue(commandOutput.contains("Successfully created dataset"));
+    Assert.assertTrue(commandOutput.contains("Successfully created store"));
     Assert.assertTrue(commandOutput.contains("alice/somehost.net@somekdc.net"));
 
     // test describing the table returns the given owner information
-    testCommandOutputContains(cli, "describe dataset instance " + ownedDatasetName, "alice/somehost.net@somekdc.net");
+    testCommandOutputContains(cli, "describe store instance " + ownedDatasetName, "alice/somehost.net@somekdc.net");
 
     NamespaceClient namespaceClient = new NamespaceClient(cliConfig.getClientConfig());
     NamespaceId barspace = new NamespaceId("bar");
     namespaceClient.create(new NamespaceMeta.Builder().setName(barspace).build());
     cliConfig.setNamespace(barspace);
-    // list of dataset instances is different in 'foo' namespace
-    testCommandOutputNotContains(cli, "list dataset instances", FakeDataset.class.getSimpleName());
+    // list of store instances is different in 'foo' namespace
+    testCommandOutputNotContains(cli, "list store instances", FakeDataset.class.getSimpleName());
 
-    // also can not create dataset instances if the type it depends on exists only in a different namespace.
+    // also can not create store instances if the type it depends on exists only in a different namespace.
     DatasetTypeId datasetType1 = barspace.datasetType(datasetType.getName());
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName,
+    testCommandOutputContains(cli, "create store instance " + datasetType.getName() + " " + datasetName,
                               new DatasetTypeNotFoundException(datasetType1).getMessage());
 
     testCommandOutputContains(cli, "use namespace default", "Now using namespace 'default'");
     try {
-      testCommandOutputContains(cli, "truncate dataset instance " + datasetName, "Successfully truncated");
+      testCommandOutputContains(cli, "truncate store instance " + datasetName, "Successfully truncated");
     } finally {
-      testCommandOutputContains(cli, "delete dataset instance " + datasetName, "Successfully deleted");
+      testCommandOutputContains(cli, "delete store instance " + datasetName, "Successfully deleted");
     }
 
     String datasetName2 = PREFIX + "asoijm39485";
     String description = "test-description-for-" + datasetName2;
-    testCommandOutputContains(cli, "create dataset instance " + datasetType.getName() + " " + datasetName2 +
+    testCommandOutputContains(cli, "create store instance " + datasetType.getName() + " " + datasetName2 +
                                 " \"a=1\"" + " " + description,
-                              "Successfully created dataset");
-    testCommandOutputContains(cli, "list dataset instances", description);
-    testCommandOutputContains(cli, "delete dataset instance " + datasetName2, "Successfully deleted");
-    testCommandOutputContains(cli, "delete dataset instance " + ownedDatasetName, "Successfully deleted");
+                              "Successfully created store");
+    testCommandOutputContains(cli, "list store instances", description);
+    testCommandOutputContains(cli, "delete store instance " + datasetName2, "Successfully deleted");
+    testCommandOutputContains(cli, "delete store instance " + ownedDatasetName, "Successfully deleted");
   }
 
   @Test
@@ -832,22 +832,22 @@ public class CLIMainTest extends CLITestBase {
     lines = Arrays.asList(output.split("\\r?\\n"));
     List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_SPARK_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", FAKE_DS_ID.toString());
+    testCommandOutputContains(cli, "search metadata fake* filtered by target-type store", FAKE_DS_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.TIME_SCHEDULE_NAME),
                               FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type app", PingService.NAME),
                               FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type program",
                                                  PrefixedEchoHandler.NAME), PREFIXED_ECHO_HANDLER_ID.toString());
-    testCommandOutputContains(cli, "search metadata batch* filtered by target-type dataset", FAKE_DS_ID.toString());
-    testCommandOutputNotContains(cli, "search metadata batchwritable filtered by target-type dataset",
+    testCommandOutputContains(cli, "search metadata batch* filtered by target-type store", FAKE_DS_ID.toString());
+    testCommandOutputNotContains(cli, "search metadata batchwritable filtered by target-type store",
                                  FAKE_DS_ID.toString());
-    testCommandOutputContains(cli, "search metadata bat* filtered by target-type dataset", FAKE_DS_ID.toString());
+    testCommandOutputContains(cli, "search metadata bat* filtered by target-type store", FAKE_DS_ID.toString());
     output = getCommandOutput(cli, "search metadata batch filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_WORKFLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,stream,app");
+    output = getCommandOutput(cli, "search metadata fake* filtered by target-type store,stream,app");
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_APP_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));

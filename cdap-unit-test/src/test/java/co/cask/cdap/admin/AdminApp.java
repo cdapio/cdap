@@ -136,17 +136,17 @@ public class AdminApp extends AbstractApplication {
     private static final Gson GSON = new Gson();
 
     @GET
-    @Path("exists/{dataset}")
+    @Path("exists/{store}")
     public void exists(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("dataset") String dataset) throws DatasetManagementException {
+                       @PathParam("store") String dataset) throws DatasetManagementException {
       Admin admin = getContext().getAdmin();
       responder.sendString(Boolean.toString(admin.datasetExists(dataset)));
     }
 
     @GET
-    @Path("type/{dataset}")
+    @Path("type/{store}")
     public void type(HttpServiceRequest request, HttpServiceResponder responder,
-                     @PathParam("dataset") String dataset) throws DatasetManagementException {
+                     @PathParam("store") String dataset) throws DatasetManagementException {
       Admin admin = getContext().getAdmin();
       if (!admin.datasetExists(dataset)) {
         responder.sendStatus(404);
@@ -156,9 +156,9 @@ public class AdminApp extends AbstractApplication {
     }
 
     @GET
-    @Path("props/{dataset}")
+    @Path("props/{store}")
     public void properties(HttpServiceRequest request, HttpServiceResponder responder,
-                           @PathParam("dataset") String dataset) throws DatasetManagementException {
+                           @PathParam("store") String dataset) throws DatasetManagementException {
       Admin admin = getContext().getAdmin();
       if (!admin.datasetExists(dataset)) {
         responder.sendStatus(404);
@@ -168,9 +168,9 @@ public class AdminApp extends AbstractApplication {
     }
 
     @PUT
-    @Path("create/{dataset}/{type}")
+    @Path("create/{store}/{type}")
     public void create(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("dataset") String dataset, @PathParam("type") String type)
+                       @PathParam("store") String dataset, @PathParam("type") String type)
       throws DatasetManagementException {
 
       DatasetProperties datasetProps = parseBodyAsProps(request);
@@ -184,9 +184,9 @@ public class AdminApp extends AbstractApplication {
     }
 
     @PUT
-    @Path("update/{dataset}")
+    @Path("update/{store}")
     public void update(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("dataset") String dataset)
+                       @PathParam("store") String dataset)
       throws DatasetManagementException {
 
       DatasetProperties datasetProps = parseBodyAsProps(request);
@@ -200,9 +200,9 @@ public class AdminApp extends AbstractApplication {
     }
 
     @POST
-    @Path("truncate/{dataset}")
+    @Path("truncate/{store}")
     public void truncate(HttpServiceRequest request, HttpServiceResponder responder,
-                         @PathParam("dataset") String dataset)
+                         @PathParam("store") String dataset)
       throws DatasetManagementException {
 
       Admin admin = getContext().getAdmin();
@@ -215,9 +215,9 @@ public class AdminApp extends AbstractApplication {
     }
 
     @DELETE
-    @Path("delete/{dataset}")
+    @Path("delete/{store}")
     public void delete(HttpServiceRequest request, HttpServiceResponder responder,
-                       @PathParam("dataset") String dataset)
+                       @PathParam("store") String dataset)
       throws DatasetManagementException {
 
       Admin admin = getContext().getAdmin();
@@ -321,7 +321,7 @@ public class AdminApp extends AbstractApplication {
       context.addInput(Input.ofDataset("lines"));
       context.addOutput(Output.ofDataset("counts"));
 
-      // truncate the output dataset
+      // truncate the output store
       context.getAdmin().truncateDataset("counts");
     }
 

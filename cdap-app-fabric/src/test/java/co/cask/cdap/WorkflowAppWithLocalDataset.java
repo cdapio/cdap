@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- * App with local dataset.
+ * App with local store.
  */
 public class WorkflowAppWithLocalDataset extends AbstractApplication {
   public static final String APP_NAME = "WorkflowAppWithLocalDataset";
@@ -33,7 +33,7 @@ public class WorkflowAppWithLocalDataset extends AbstractApplication {
   }
 
   /**
-   * Workflow with local dataset.
+   * Workflow with local store.
    */
   public static class WorkflowWithLocalDataset extends AbstractWorkflow {
 

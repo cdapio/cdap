@@ -180,7 +180,7 @@ public class LocalLogAppenderResilientTest {
     // The wait time has to be > 3 seconds because DatasetServiceClient has 1 second timeout on discovery
     failureLatch.await(5, TimeUnit.SECONDS);
 
-    // Start dataset service, wait for it to be discoverable
+    // Start store service, wait for it to be discoverable
     DatasetService dsService = injector.getInstance(DatasetService.class);
     dsService.startAndWait();
 

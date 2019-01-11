@@ -244,7 +244,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
       .app(WorkflowAppWithLocalDataset.APP_NAME)
       .workflow(WorkflowAppWithLocalDataset.WORKFLOW_NAME);
 
-    startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("dataset.*.keep.local", "true"));
+    startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("store.*.keep.local", "true"));
 
     // Wait until we have a COMPLETED run record
     Tasks.waitFor(1, () -> getProgramRuns(Id.Program.fromEntityId(workflow), ProgramRunStatus.COMPLETED).size(),
@@ -257,7 +257,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     String pid = runRecords.get(0).getPid();
 
-    // Get the local dataset specifications
+    // Get the local store specifications
     final Map<String, String> properties = ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
     Collection<DatasetSpecificationSummary> instances = datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1),
                                                                                       properties);
@@ -266,13 +266,13 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     DatasetSpecificationSummary summary = instances.iterator().next();
     Assert.assertTrue(summary.getName().endsWith(pid));
 
-    // Update the dataset properties to remove keep.local so that local dataset deleter can delete it
+    // Update the store properties to remove keep.local so that local store deleter can delete it
     Map<String, String> updatedProperties = new HashMap<>(summary.getProperties());
     updatedProperties.remove(Constants.AppFabric.WORKFLOW_KEEP_LOCAL);
     datasetFramework.updateInstance(new DatasetId(TEST_NAMESPACE1, summary.getName()),
                                     DatasetProperties.of(updatedProperties));
 
-    // Start the local dataset deletion service now
+    // Start the local store deletion service now
     CConfiguration testConf = CConfiguration.create();
     // set threshold to 0 so that it will actually correct the record
     testConf.set(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS, "1");
@@ -280,7 +280,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     new LocalRunRecordCorrectorService(testConf, store, programStateWriter,
                                        runtimeService, namespaceAdmin, datasetFramework).startUp();
 //
-    // Wait for the deletion of the local dataset
+    // Wait for the deletion of the local store
     Tasks.waitFor(0, () -> datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1), properties).size(),
                   30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
   }

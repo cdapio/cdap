@@ -122,7 +122,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     Assert.assertEquals(0, getDatasetProgramUsage(dataset).size());
 
     deployApp(AllProgramsApp.class);
-    // now that we only support dynamic dataset instantiation in initialize (and not in configure as before),
+    // now that we only support dynamic store instantiation in initialize (and not in configure as before),
     // we must run the mapreduce program to register its usage
     startProgram(program);
     assertProgramRunning(getProgramClient(), program);
@@ -284,7 +284,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     return streamIds;
   }
 
-  // dataset/stream -> program
+  // store/stream -> program
 
   private Set<ProgramId> getStreamProgramUsage(StreamId stream) throws Exception {
     Set<ProgramId> programIds =

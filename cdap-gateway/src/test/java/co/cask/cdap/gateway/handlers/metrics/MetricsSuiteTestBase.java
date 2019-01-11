@@ -187,7 +187,7 @@ public abstract class MetricsSuiteTestBase {
 
     logReader = injector.getInstance(LogReader.class);
 
-    // initialize the dataset instantiator
+    // initialize the store instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
 
     EndpointStrategy metricsEndPoints = new RandomEndpointStrategy(

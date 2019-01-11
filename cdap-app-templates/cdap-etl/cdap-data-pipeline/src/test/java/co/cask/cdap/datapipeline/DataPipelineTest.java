@@ -2617,11 +2617,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .setEngine(engine)
       .build();
 
-    // place dataset names into secure storage
+    // place store names into secure storage
     getSecureStoreManager().putSecureData("default", prefix + "source", prefix + "MockSecureSourceDataset",
-                                          "secure source dataset name", new HashMap<>());
+                                          "secure source store name", new HashMap<>());
     getSecureStoreManager().putSecureData("default", prefix + "sink", prefix + "MockSecureSinkDataset",
-                                          "secure dataset name", new HashMap<>());
+                                          "secure store name", new HashMap<>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("App-" + engine);
@@ -2814,7 +2814,7 @@ public class DataPipelineTest extends HydratorTestBase {
 
 
   /**
-   * Tests that if no macro is provided to the dataset name property, datasets will be created at config time.
+   * Tests that if no macro is provided to the store name property, datasets will be created at config time.
    */
   @Test
   public void testNoMacroMapReduce() throws Exception {
@@ -2989,7 +2989,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("MetadataTestApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
-    // wait for the system metadata for the app and the dataset to show up - the pipeline validates them
+    // wait for the system metadata for the app and the store to show up - the pipeline validates them
     Tasks.waitFor(false, () -> metadataAdmin
                     .getProperties(MetadataScope.SYSTEM, appId.toMetadataEntity()).isEmpty(),
                   10, TimeUnit.SECONDS);

@@ -105,7 +105,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     }
     datasetFramework.addInstance(Table.class.getName(), MY_TABLE, setupTableProperties(dbName, tableName, SCHEMA));
 
-    // Accessing dataset instance to perform data operations
+    // Accessing store instance to perform data operations
     Table table = datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
     Assert.assertNotNull(table);
 
@@ -490,7 +490,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                                    .setExploreTableName("tt")
                                    .build());
     try {
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       Table tt = datasetFramework.getDataset(ttId, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(tt);
       Transaction tx = transactionManager.startShort(100);
@@ -546,7 +546,7 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                                    .setExploreTableName("other_dt_ts_table")
                                    .build());
     try {
-      // Accessing dataset instance to perform data operations
+      // Accessing store instance to perform data operations
       Table table = datasetFramework.getDataset(dtTsTable, DatasetDefinition.NO_ARGUMENTS, null);
       Assert.assertNotNull(table);
       Transaction tx = transactionManager.startShort(100);
