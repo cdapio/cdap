@@ -27,12 +27,12 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
@@ -74,6 +74,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -89,6 +90,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+
+  private static final Set<String> DESCRIPTION_SET = Collections.singleton(SystemMetadataProvider.DESCRIPTION_KEY);
+  private static final Set<String> CREATION_TIME_SET = Collections.singleton(SystemMetadataProvider.CREATION_TIME_KEY);
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
@@ -362,34 +366,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         case CREATE: {
           MetadataOperation.Create create = (MetadataOperation.Create) operation;
           // all the new metadata is in System scope - no validation
-          boolean hasProperties = create.getProperties() != null && !create.getProperties().isEmpty();
-          boolean hasTags = create.getTags() != null && !create.getTags().isEmpty();
-          // TODO (CDAP-14584): All the following operations should be one method
-          // find the existing metadata
-          MetadataRecord existing = metadataStore.getMetadata(MetadataScope.SYSTEM, create.getEntity());
-          // figure out what properties to set
-          Map<String, String> propertiesToSet =
-            hasProperties ? new HashMap<>(create.getProperties()) : new HashMap<>();
-          // creation time never changes: copy it to properties to set
-          if (existing.getProperties().containsKey(SystemMetadataProvider.CREATION_TIME_KEY)) {
-            propertiesToSet.put(SystemMetadataProvider.CREATION_TIME_KEY,
-                                existing.getProperties().get(SystemMetadataProvider.CREATION_TIME_KEY));
-          }
-          // description must be preserved if new properties don't have it
-          if (!propertiesToSet.containsKey(SystemMetadataProvider.DESCRIPTION_KEY)) {
-            String description = existing.getProperties().get(SystemMetadataProvider.DESCRIPTION_KEY);
-            if (description != null) {
-              propertiesToSet.put(SystemMetadataProvider.DESCRIPTION_KEY, description);
-            }
-          }
-          // now perform all updates: remove all tags and properties, set new tags and properties
-          metadataStore.removeMetadata(MetadataScope.SYSTEM, entity);
-          if (!propertiesToSet.isEmpty()) {
-            metadataStore.setProperties(MetadataScope.SYSTEM, entity, propertiesToSet);
-          }
-          if (hasTags) {
-            metadataStore.addTags(MetadataScope.SYSTEM, entity, create.getTags());
-          }
+          metadataStore.replaceMetadata(MetadataScope.SYSTEM,
+                                        new Metadata(entity, create.getProperties(), create.getTags()),
+                                        DESCRIPTION_SET, CREATION_TIME_SET);
           break;
         }
         case DROP: {

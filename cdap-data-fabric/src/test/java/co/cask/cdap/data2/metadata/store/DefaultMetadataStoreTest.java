@@ -61,6 +61,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -259,6 +260,58 @@ public class DefaultMetadataStoreTest {
     }
     // reset config
     cConf.setBoolean(Constants.Audit.ENABLED, auditEnabled);
+  }
+
+  // this tests the replaceMetadata() method, especially for the case when it is called repeatedly
+  @Test
+  public void testSystemMetadata() {
+    MetadataEntity entity = NamespaceId.DEFAULT.app("appX").workflow("wtf").toMetadataEntity();
+    store.replaceMetadata(MetadataScope.SYSTEM,
+                          new co.cask.cdap.data2.metadata.dataset.Metadata(
+                            entity,
+                            ImmutableMap.of("a", "b", "x", "y"),
+                            ImmutableSet.of("tag1", "tag2")),
+                          ImmutableSet.of("a"), ImmutableSet.of("x"));
+    MetadataSearchResponse response = store.search(
+      new SearchRequest(null, "tag1", Collections.emptySet(),
+                        SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class)));
+    Set<MetadataSearchResultRecord> results = response.getResults();
+    Assert.assertEquals(1, results.size());
+
+    store.replaceMetadata(MetadataScope.SYSTEM,
+                          new co.cask.cdap.data2.metadata.dataset.Metadata(
+                            entity,
+                            ImmutableMap.of("a", "b", "x", "y"),
+                            ImmutableSet.of("tag1", "tag2")),
+                          ImmutableSet.of("a"), ImmutableSet.of("x"));
+    response = store.search(
+      new SearchRequest(null, "tag1", Collections.emptySet(),
+                        SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class)));
+    results = response.getResults();
+    Assert.assertEquals(1, results.size());
+  }
+
+  @Test
+  @Ignore
+  // TODO (CDAP-14744): fix addTags() and remove the ignore annotation
+  public void testAddNoNoTags() {
+    MetadataEntity entity = NamespaceId.DEFAULT.app("appX").workflow("wtf").toMetadataEntity();
+    store.addTags(MetadataScope.SYSTEM, entity, ImmutableSet.of("tag1", "tag2"));
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), store.getTags(MetadataScope.SYSTEM, entity));
+    MetadataSearchResponse response = store.search(
+      new SearchRequest(null, "tag1", Collections.emptySet(),
+                        SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class)));
+    Set<MetadataSearchResultRecord> results = response.getResults();
+    Assert.assertEquals(1, results.size());
+
+    // add an empty set of tags. This should have no effect on retrieval or search of tags
+    store.addTags(MetadataScope.SYSTEM, entity, ImmutableSet.of());
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), store.getTags(MetadataScope.SYSTEM, entity));
+    response = store.search(
+      new SearchRequest(null, "tag1", Collections.emptySet(),
+                        SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class)));
+    results = response.getResults();
+    Assert.assertEquals(1, results.size());
   }
 
   @Test

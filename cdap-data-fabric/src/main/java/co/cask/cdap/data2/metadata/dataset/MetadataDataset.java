@@ -286,7 +286,7 @@ public class MetadataDataset extends AbstractDataset {
     // if there are more key-value properties then process them updating the final metadata state
     while (iterator.hasNext()) {
       Map.Entry<String, String> next = iterator.next();
-      finalMetadata = setMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getExisting();
+      finalMetadata = setMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getLatest();
     }
     return new MetadataChange(previousMetadata, finalMetadata);
   }

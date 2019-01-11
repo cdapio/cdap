@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecord;
+import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import com.google.common.collect.ImmutableSet;
@@ -30,6 +31,12 @@ import java.util.Set;
  * Implementation of {@link MetadataStore} used in memory mode.
  */
 public class NoOpMetadataStore implements MetadataStore {
+
+  @Override
+  public void replaceMetadata(MetadataScope scope, Metadata metadata,
+                              Set<String> propertiesToKeep, Set<String> propertiesToPreserve) {
+    // NO-OP
+  }
 
   @Override
   public void setProperties(MetadataScope scope, MetadataEntity metadataEntity,
