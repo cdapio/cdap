@@ -3450,7 +3450,16 @@
     <name>security.store.provider</name>
     <value>none</value>
     <description>
-      Backend provider for the secure store; use 'none' if no secure store
+      Backend provider for the secure store; use 'none' if no secure store. If cloud based secure store should be
+      used, provide the name of the secure store extension
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.extensions.dir</name>
+    <value>/opt/cdap/master/ext/securestores</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for secure store extensions
     </description>
   </property>
 

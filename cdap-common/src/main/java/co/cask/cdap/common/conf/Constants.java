@@ -1026,6 +1026,10 @@ public final class Constants {
       public static final String FILE_PASSWORD = "security.store.file.password";
       /** Backend provider for the secure store. e.g. file */
       public static final String PROVIDER = "security.store.provider";
+      /** Secure store extension dir*/
+      public static final String EXTENSIONS_DIR = "security.store.extensions.dir";
+      /** Secure store service*/
+      public static final String SECURE_STORE_SERVICE = "security.store.service";
     }
 
     /**

@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
+  private static final String NONE = "none";
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
@@ -32,6 +33,11 @@ public class SecureStoreUtils {
 
   public static boolean isFileBacked(final CConfiguration cConf) {
     return FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+  }
+
+  public static boolean isCloudBacked(final CConfiguration cConf) {
+    return !NONE.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER)) &&
+      !isKMSBacked(cConf) && !isFileBacked(cConf);
   }
 
   public static boolean isKMSCapable() {

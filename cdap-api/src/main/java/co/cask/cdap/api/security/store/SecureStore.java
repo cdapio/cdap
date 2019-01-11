@@ -31,7 +31,7 @@ public interface SecureStore {
   /**
    * List of all the entries in the secure store.
    * @param namespace The namespace that this key belongs to.
-   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
+   * @return A Map of String objects representing the data stored in the store and associated description.
    * @throws IOException If there was a problem reading from the keystore.
    * @throws Exception If the specified namespace does not exist.
    */

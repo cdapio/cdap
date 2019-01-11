@@ -55,8 +55,7 @@ public class DefaultSecureStore implements SecureStore, SecureStoreManager {
   DefaultSecureStore(AuthorizationEnforcer authorizationEnforcer,
                      AuthenticationContext authenticationContext,
                      @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
-                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
-                              SecureStoreManager secureStoreManager) {
+                     @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER) SecureStoreManager secureStoreManager) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.secureStore = secureStore;
