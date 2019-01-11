@@ -106,6 +106,16 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureUrl={`/ns/${namespace}/pipelines`}
             componentDidNavigate={this.props.componentDidNavigate}
             data-cy="navbar-pipelines-link"
+            subMenu={[
+              {
+                featureName: Theme.featureNames.pipelineStudio,
+                featureFlag: Theme.showPipelineStudio,
+                featureUrl: `/pipelines/ns/${namespace}/studio`,
+                componentDidNavigate: this.props.componentDidNavigate,
+                isAngular: true,
+                'data-cy': 'navbar-pipeline-studio-link',
+              },
+            ]}
           />
           <DrawerFeatureLink
             featureName={Theme.featureNames.dataPrep}
