@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- *
+ * TODO: CDAP-14750 add more unit tests for the StructuredTable
  */
 public abstract class StructuredTableTest {
   // TODO: test complex schema will all allowed data types
