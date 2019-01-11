@@ -19,6 +19,7 @@ package co.cask.cdap.spi.data;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.Range;
 
 import java.io.Closeable;
@@ -91,4 +92,12 @@ public interface StructuredTable extends Closeable {
    * @throws IOException if there is an error deleting from the table
    */
   void delete(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
+
+  /**
+   * Get a field factory to generate field for this table, the factory will gaurantee the type of the value of the
+   * field is correct.
+   *
+   * @return the field factory
+   */
+  FieldFactory getFieldFactory();
 }

@@ -16,15 +16,17 @@
 
 package co.cask.cdap.spi.data.table;
 
+import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Class for the table schema, which provides convenient way to fetch for fields, primary key and index.
@@ -33,14 +35,14 @@ public class StructuredTableSchema {
   private final StructuredTableId tableId;
   private final Map<String, FieldType.Type> fields;
   // primary keys have to be ordered as defined in the table schema
-  private final Set<String> primaryKeys;
+  private final List<String> primaryKeys;
   private final Set<String> indexes;
 
   public StructuredTableSchema(StructuredTableSpecification spec) {
     this.tableId = spec.getTableId();
     this.fields = Collections.unmodifiableMap(spec.getFieldTypes().stream().collect(
       Collectors.toMap(FieldType::getName, FieldType::getType)));
-    this.primaryKeys = Collections.unmodifiableSet(new LinkedHashSet<>(spec.getPrimaryKeys()));
+    this.primaryKeys = Collections.unmodifiableList(new ArrayList<>(spec.getPrimaryKeys()));
     this.indexes = Collections.unmodifiableSet(new HashSet<>(spec.getIndexes()));
   }
 
@@ -48,7 +50,7 @@ public class StructuredTableSchema {
     return tableId;
   }
 
-  public Set<String> getPrimaryKeys() {
+  public List<String> getPrimaryKeys() {
     return primaryKeys;
   }
 
@@ -76,9 +78,36 @@ public class StructuredTableSchema {
    * Get the field type of the given field name.
    *
    * @param fieldName the field name
-   * @return optional containing the field type, empty if the field name is not part of the schema
+   * @return the field type of the fieldname, null if not present in schema
    */
-  public Optional<FieldType.Type> getType(String fieldName) {
-    return Optional.ofNullable(fields.get(fieldName));
+  @Nullable
+  public FieldType.Type getType(String fieldName) {
+    return fields.get(fieldName);
+  }
+
+  /**
+   * Validate if the given keys are prefix or complete primary keys.
+   *
+   * @param keys the keys to validate
+   * @param allowPrefix boolean to indicate whether the given collection keys can be a prefix of the primary keys
+   * @throws InvalidFieldException if the given keys have extra key which is not in primary key, or are not in correct
+   * order of the primary keys or are not complete keys if allowPrefix is set to false.
+   */
+  public void validatePrimaryKeys(List<String> keys, boolean allowPrefix) throws InvalidFieldException {
+    if (keys.size() > primaryKeys.size()) {
+      throw new InvalidFieldException(tableId, keys, String.format("Given keys %s contains more fields than the" +
+                                                                     " primary keys %s", keys, primaryKeys));
+    }
+
+    if (!allowPrefix && keys.size() < primaryKeys.size()) {
+      throw new InvalidFieldException(tableId, keys,
+                                      String.format("Given keys %s do not contain all the primary keys %s", keys,
+                                                    primaryKeys));
+    }
+
+    if (Collections.indexOfSubList(primaryKeys, keys) == -1) {
+      throw new InvalidFieldException(tableId, keys, String.format("Given keys %s are not the prefix of " +
+                                                                     "the primary keys %s", keys, primaryKeys));
+    }
   }
 }
