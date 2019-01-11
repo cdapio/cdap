@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.data.table.field;
 
+import co.cask.cdap.spi.data.InvalidFieldException;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;
