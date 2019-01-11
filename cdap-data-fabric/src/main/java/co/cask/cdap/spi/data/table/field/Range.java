@@ -20,6 +20,7 @@ import co.cask.cdap.spi.data.InvalidFieldException;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * Represents a range of fields.
@@ -52,9 +53,9 @@ public final class Range {
    * @param endBound the match type for the end fields
    */
   private Range(Collection<Field<?>> begin, Bound beginBound, Collection<Field<?>> end, Bound endBound) {
-    this.begin = begin;
+    this.begin = begin == null ? Collections.emptySet() : begin;
     this.beginBound = beginBound;
-    this.end = end;
+    this.end = end == null ? Collections.emptySet() : end;
     this.endBound = endBound;
   }
 

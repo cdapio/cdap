@@ -28,7 +28,7 @@ public final class Field<T> {
   private final String name;
   private final T value;
 
-  public Field(String name, @Nullable T value) {
+  Field(String name, @Nullable T value) {
     this.name = name;
     this.value = value;
   }
