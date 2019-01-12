@@ -1035,7 +1035,7 @@ public class MetadataDataset extends AbstractDataset {
     }
     writeValue(entryToWrite);
     // store indexes for the tags being added
-    storeIndexes(entry, indexers);
+    storeIndexes(entryToWrite, indexers);
     // snapshot the update
     writeHistory(updatedMetadata);
     return updatedMetadata;
