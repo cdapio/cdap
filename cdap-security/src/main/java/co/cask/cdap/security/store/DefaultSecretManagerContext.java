@@ -34,7 +34,7 @@ import java.util.Map;
  * Default implementation of {@link SecretManagerContext}.
  *
  */
-public class DefaultSecretManagercontext implements SecretManagerContext {
+public class DefaultSecretManagerContext implements SecretManagerContext {
   @Override
   public Map<String, String> getProperties() {
     return Collections.emptyMap();

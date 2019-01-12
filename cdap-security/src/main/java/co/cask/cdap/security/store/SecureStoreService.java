@@ -21,11 +21,12 @@ import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.SecureKeyNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.securestore.spi.SecretManager;
 import co.cask.cdap.securestore.spi.SecretNotFoundException;
 import co.cask.cdap.securestore.spi.secret.Secret;
@@ -54,7 +55,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
   private final String dir;
   private final String type;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private DefaultSecretManagercontext context;
+  private DefaultSecretManagerContext context;
   private SecretManager secretManager;
 
   @Inject
@@ -74,7 +75,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
                                                  "the implementation matches %s property", type,
                                                Constants.Security.Store.PROVIDER));
     }
-    this.context = new DefaultSecretManagercontext();
+    this.context = new DefaultSecretManagerContext();
     this.secretManager.initialize(context);
   }
 
@@ -113,7 +114,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
    * Returns the metadata for the secret identified by the given name.
    * @param name Name of the secret
    * @return An object representing the metadata associated with the secret
-   * @throws NotFoundException If the key was not found in the store
+   * @throws SecureKeyNotFoundException If the key was not found in the store
    * @throws IOException If there was a problem in getting the key from the secret manager
    */
   @Override
@@ -126,7 +127,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
                                                          metadata.getCreationTimeMs(), metadata.getProperties()),
                                  secret.getData());
     } catch (SecretNotFoundException e) {
-      throw new NotFoundException(String.format("Key name %s not found in the secure store.", name));
+      throw new SecureKeyNotFoundException(new SecureKeyId(namespace, name));
     }
   }
 
@@ -149,7 +150,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
                                                 new SecretMetadata(name, description, System.currentTimeMillis(),
                                                                    ImmutableMap.copyOf(properties))));
     } catch (Exception e) {
-      throw new IOException(String.format("Failed to store key %s under namespace %s", name,namespace), e);
+      throw new IOException(String.format("Failed to store key %s under namespace %s", name, namespace), e);
     }
   }
 
@@ -158,7 +159,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
    * @param namespace The namespace this key belongs to
    * @param name Name of the secret to be deleted
    * @throws NamespaceNotFoundException If the specified namespace does not exist
-   * @throws NotFoundException If the key to be deleted is not found
+   * @throws SecureKeyNotFoundException If the key to be deleted is not found
    * @throws IOException If their was a problem during deleting the key from the secret manager
    */
   @Override
@@ -167,7 +168,7 @@ public class SecureStoreService extends AbstractIdleService implements SecureSto
     try {
       secretManager.delete(namespace, name);
     } catch (SecretNotFoundException e) {
-      throw new NotFoundException(String.format("Key name %s not found in the secure store.", name));
+      throw new SecureKeyNotFoundException(new SecureKeyId(namespace, name));
     }
   }
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi;
+package co.cask.cdap.securestore.gcp.cloudkms;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -143,7 +143,7 @@ class CloudKMSClient {
    * @param cryptoKeyId crypto key id
    * @throws IOException if there's an error creating crypto key
    */
-  void createCryptoKey(String cryptoKeyId) throws IOException{
+  void createCryptoKey(String cryptoKeyId) throws IOException {
     // If crypto key is already created, do not attempt to create it again.
     if (crypoKeyList.contains(cryptoKeyId)) {
       return;

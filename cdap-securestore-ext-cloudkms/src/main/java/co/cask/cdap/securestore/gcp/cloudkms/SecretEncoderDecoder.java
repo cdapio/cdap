@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.securestore.spi;
+package co.cask.cdap.securestore.gcp.cloudkms;
 
 import co.cask.cdap.securestore.spi.secret.Decoder;
 import co.cask.cdap.securestore.spi.secret.Encoder;

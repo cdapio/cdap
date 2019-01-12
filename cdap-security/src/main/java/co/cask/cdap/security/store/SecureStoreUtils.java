@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,13 @@ public class SecureStoreUtils {
     return FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
   }
 
-  public static boolean isCloudBacked(final CConfiguration cConf) {
+  /**
+   * Checks if the store provider is extension based or not. If it is extension based, method returns true.
+   *
+   * @param cConf configuration to get the store provider name
+   * @return if it is extension based, method returns true.
+   */
+  public static boolean isExtension(final CConfiguration cConf) {
     return !NONE.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER)) &&
       !isKMSBacked(cConf) && !isFileBacked(cConf);
   }

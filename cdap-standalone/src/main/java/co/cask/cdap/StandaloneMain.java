@@ -134,6 +134,7 @@ public class StandaloneMain {
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
+  //private final SecureStoreManager secureStoreService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -158,6 +159,8 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
     operationalStatsService = injector.getInstance(OperationalStatsService.class);
+//    secureStoreService = injector.getInstance(Key.get(SecureStoreManager.class,
+//                                                      Names.named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)));
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
@@ -261,6 +264,9 @@ public class StandaloneMain {
     metadataService.startAndWait();
 
     operationalStatsService.startAndWait();
+//    if (secureStoreService instanceof Service) {
+//      ((Service) secureStoreService).startAndWait();
+//    }
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -286,6 +292,9 @@ public class StandaloneMain {
       router.stopAndWait();
 
       operationalStatsService.stopAndWait();
+//      if (secureStoreService instanceof Service) {
+//        ((Service) secureStoreService).stopAndWait();
+//      }
 
       // Stop all services that requires tx service
       metadataSubscriberService.stopAndWait();

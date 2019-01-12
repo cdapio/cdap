@@ -250,10 +250,10 @@
     </description>
   </property>
 
-  <!-- Secure Storage Configuration -->
+  <!-- Secure Store Configuration -->
   <property>
     <name>security.store.provider</name>
-    <value>file</value>
+    <value>cloudkms</value>
     <description>
       The secure store provider that defines the actual storage system backing the CDAP secure
       store APIs. Secure store APIs are used by custom programs that need to write or look up
@@ -262,6 +262,15 @@
       The 'file' provider is only used in the sandbox. In distributed environments, this should
       be set to 'kms', presuming your cluster has been configured to use KMS. The 'file' provider
       will not work in distributed environments.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.extensions.dir</name>
+    <value>ext/securestores</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for
+      program runtime extensions
     </description>
   </property>
 

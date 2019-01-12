@@ -224,6 +224,7 @@
         <stage.security.ext.dir>${stage.opt.dir}/ext/security</stage.security.ext.dir>
         <stage.operations.ext.dir>${stage.opt.dir}/ext/operations</stage.operations.ext.dir>
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
+        <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
