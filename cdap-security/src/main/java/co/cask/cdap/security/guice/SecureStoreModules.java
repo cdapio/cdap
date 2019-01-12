@@ -25,6 +25,7 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.security.store.DefaultSecureStore;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.DefaultSecureStoreService;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Strings;
@@ -96,6 +97,7 @@ public class SecureStoreModules extends RuntimeModule {
         expose(SecureStore.class);
         bind(SecureStoreManager.class).to(DefaultSecureStore.class);
         expose(SecureStoreManager.class);
+        bind(SecureStoreService.class).to(DefaultSecureStoreService.class).in(Singleton.class);
       }
     };
   }
@@ -171,7 +173,7 @@ public class SecureStoreModules extends RuntimeModule {
     @SuppressWarnings("unchecked")
     public T get() {
       if (SecureStoreUtils.isExtension(cConf)) {
-        return (T) injector.getInstance(SecureStoreService.class);
+        return (T) injector.getInstance(DefaultSecureStoreService.class);
       }
       boolean fileBacked = SecureStoreUtils.isFileBacked(cConf);
       boolean validPassword = !Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD));

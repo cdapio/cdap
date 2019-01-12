@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -79,6 +80,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
+import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -134,7 +136,7 @@ public class StandaloneMain {
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
-  //private final SecureStoreManager secureStoreService;
+  private final SecureStoreManager secureStoreService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -159,8 +161,6 @@ public class StandaloneMain {
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
     operationalStatsService = injector.getInstance(OperationalStatsService.class);
-//    secureStoreService = injector.getInstance(Key.get(SecureStoreManager.class,
-//                                                      Names.named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)));
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
@@ -185,6 +185,8 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
+
+    secureStoreService = injector.getInstance(SecureStoreService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -264,9 +266,10 @@ public class StandaloneMain {
     metadataService.startAndWait();
 
     operationalStatsService.startAndWait();
-//    if (secureStoreService instanceof Service) {
-//      ((Service) secureStoreService).startAndWait();
-//    }
+
+    if (secureStoreService instanceof Service) {
+      ((Service) secureStoreService).startAndWait();
+    }
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -291,14 +294,16 @@ public class StandaloneMain {
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
 
+      if (secureStoreService instanceof Service) {
+        ((Service) secureStoreService).stopAndWait();
+      }
+
       operationalStatsService.stopAndWait();
-//      if (secureStoreService instanceof Service) {
-//        ((Service) secureStoreService).stopAndWait();
-//      }
 
       // Stop all services that requires tx service
       metadataSubscriberService.stopAndWait();
       streamService.stopAndWait();
+
       if (exploreExecutorService != null) {
         exploreExecutorService.stopAndWait();
       }
