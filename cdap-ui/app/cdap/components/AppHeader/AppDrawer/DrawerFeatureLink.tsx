@@ -20,15 +20,23 @@ import ListItemLink from 'components/AppHeader/ListItemLink';
 import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import { Link } from 'react-router-dom';
+import {
+  appDrawerListItemTextStyles,
+  appDrawerListItemStyles,
+} from 'components/AppHeader/AppDrawer/AppDrawer';
+import classnames from 'classnames';
+const colorVariables = require('styles/variables.scss');
 
 const styles = (theme) => {
   return {
-    listItemText: {
-      fontWeight: 600,
-      fontSize: '1rem',
-    },
+    listItemText: appDrawerListItemTextStyles,
+    listItem: appDrawerListItemStyles,
     nestListPadding: {
-      paddingLeft: theme.spacing.unit * 4,
+      paddingLeft: theme.spacing.unit * 5,
+    },
+    activeListItem: {
+      backgroundColor: colorVariables.bluegrey06,
+      color: colorVariables.blue02,
     },
   };
 };
@@ -40,6 +48,7 @@ interface IDrawerFeatureLinkProps extends WithStyles<typeof styles> {
   featureName: string;
   featureUrl: string;
   isAngular?: boolean;
+  isActive?: boolean;
   subMenu?: IDrawerFeatureLinkProps[];
 }
 
@@ -51,19 +60,28 @@ class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
       featureName,
       featureUrl,
       isAngular,
+      isActive,
     }: IDrawerFeatureLinkProps,
     isSubMenu = false
   ) {
     const { isNativeLink } = this.props.context;
     const { classes } = this.props;
+    const { pathname } = location;
+    const reactFeatureUrl = `/cdap${featureUrl}`;
+    const activeFeatureUrl = isAngular ? featureUrl : reactFeatureUrl;
+    const localIsActive =
+      typeof isActive === 'undefined' ? pathname.startsWith(activeFeatureUrl) : isActive;
     if (featureFlag === false) {
       return null;
     }
     return (
       <ListItemLink
-        className={isSubMenu ? classes.nestListPadding : ''}
+        className={classnames(classes.listItem, {
+          [classes.nestListPadding]: isSubMenu,
+          [classes.activeListItem]: localIsActive,
+        })}
         component={isNativeLink || isAngular ? 'a' : Link}
-        href={isAngular ? featureUrl : `/cdap${featureUrl}`}
+        href={isAngular ? featureUrl : reactFeatureUrl}
         to={featureUrl}
         onClick={componentDidNavigate}
       >

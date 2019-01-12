@@ -25,7 +25,7 @@ $dark-font: #666666;
 $grey-font: #bbbbbb;
 $success-color: #7ed321;
 $star-color: #373a3c;
-$namespace-card-width: 225px;
+$namespace-card-width: 240px;
 
 #header-namespace-dropdown {
   padding-left: 0;
@@ -45,7 +45,7 @@ $namespace-card-width: 225px;
 
   &.opened,
   &:hover {
-    background-color: rgba(0, 0, 0, 0.08);
+    background-color: $grey-06;
   }
 
   div[disabled] { cursor: not-allowed; }
@@ -113,6 +113,7 @@ $namespace-card-width: 225px;
   }
   .dropdown-menu {
     width: $namespace-card-width;
+    left: -24px;
     border-bottom-left-radius: 3px;
     outline: none;
     border-top-left-radius: 0;

@@ -23,11 +23,20 @@ import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 const colorVariables = require('styles/variables.scss');
 import { Link } from 'react-router-dom';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
-import ListItemLink from 'components/AppHeader/ListItemLink';
 import DrawerFeatureLink from 'components/AppHeader/AppDrawer/DrawerFeatureLink';
 import { Theme } from 'services/ThemeHelper';
 
-const DRAWER_WIDTH = '250px';
+const DRAWER_WIDTH = '240px';
+export const appDrawerListItemTextStyles = {
+  fontWeight: 400,
+  fontSize: '14px',
+};
+export const appDrawerListItemStyles = {
+  '&:hover': {
+    backgroundColor: colorVariables.grey06,
+    color: colorVariables.grey02,
+  },
+};
 const styles = (theme) => {
   return {
     drawer: {
@@ -38,11 +47,18 @@ const styles = (theme) => {
       width: DRAWER_WIDTH,
       backgroundColor: colorVariables.grey08,
     },
-    listItemText: {
-      fontWeight: 600,
-      fontSize: '1rem',
-    },
+    listItemText: appDrawerListItemTextStyles,
     toolbar: theme.mixins.toolbar,
+    mainMenu: {
+      borderTop: `1px solid ${colorVariables.grey06}`,
+    },
+    namespaceAdminMenu: {
+      // WUT TS?
+      position: 'absolute' as 'absolute',
+      bottom: '130px',
+      width: '100%',
+      borderTop: `1px solid ${colorVariables.grey06}`,
+    },
   };
 };
 
@@ -63,6 +79,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
   public render() {
     const { classes, open, onClose, componentDidNavigate = () => null } = this.props;
     const { isNativeLink, namespace } = this.props.context;
+    const nsurl = `ns/${namespace}`;
     return (
       <Drawer
         open={open}
@@ -85,33 +102,34 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           onNamespaceChange={onClose}
           tag={isNativeLink ? 'a' : Link}
         />
-        <List component="nav" dense={true}>
-          <ListItemLink
-            component={isNativeLink ? 'a' : Link}
-            href={`/cdap/ns/${namespace}`}
-            to={`/ns/${namespace}`}
-            onClick={componentDidNavigate}
-          >
-            <ListItemText
-              disableTypography
-              classes={{ root: classes.listItemText }}
-              primary={Theme.featureNames.controlCenter}
-            />
-          </ListItemLink>
-        </List>
-        <List component="nav" dense={true}>
+        <List component="nav" dense={true} className={classes.mainMenu}>
+          <DrawerFeatureLink
+            featureName={Theme.featureNames.controlCenter}
+            featureFlag={true}
+            featureUrl={`/${nsurl}`}
+            componentDidNavigate={componentDidNavigate}
+            isActive={
+              location.pathname === `/cdap/${nsurl}` ||
+              location.pathname.startsWith(`/cdap/${nsurl}/dataset`) ||
+              location.pathname.startsWith(`/cdap/${nsurl}/apps`)
+            }
+          />
           <DrawerFeatureLink
             featureName={Theme.featureNames.pipelines}
             featureFlag={Theme.showPipelines}
-            featureUrl={`/ns/${namespace}/pipelines`}
-            componentDidNavigate={this.props.componentDidNavigate}
+            featureUrl={`/${nsurl}/pipelines`}
+            componentDidNavigate={componentDidNavigate}
             data-cy="navbar-pipelines-link"
+            isActive={
+              location.pathname.startsWith(`/${nsurl}/pipelines`) ||
+              location.pathname.startsWith(`/pipelines/${nsurl}`)
+            }
             subMenu={[
               {
                 featureName: Theme.featureNames.pipelineStudio,
                 featureFlag: Theme.showPipelineStudio,
-                featureUrl: `/pipelines/ns/${namespace}/studio`,
-                componentDidNavigate: this.props.componentDidNavigate,
+                featureUrl: `/pipelines/${nsurl}/studio`,
+                componentDidNavigate,
                 isAngular: true,
                 'data-cy': 'navbar-pipeline-studio-link',
               },
@@ -120,41 +138,39 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           <DrawerFeatureLink
             featureName={Theme.featureNames.dataPrep}
             featureFlag={Theme.showDataPrep}
-            featureUrl={`/ns/${namespace}/dataprep`}
-            componentDidNavigate={this.props.componentDidNavigate}
+            featureUrl={`/${nsurl}/dataprep`}
+            componentDidNavigate={componentDidNavigate}
+            isActive={
+              location.pathname.startsWith(`/cdap/${nsurl}/dataprep`) ||
+              location.pathname.startsWith(`/cdap/${nsurl}/connections`)
+            }
           />
           <DrawerFeatureLink
-            featureUrl={`/ns/${namespace}/experiments`}
+            featureUrl={`/${nsurl}/experiments`}
             featureFlag={Theme.showAnalytics}
             featureName={Theme.featureNames.analytics}
-            componentDidNavigate={this.props.componentDidNavigate}
+            componentDidNavigate={componentDidNavigate}
           />
           <DrawerFeatureLink
-            featureUrl={`/ns/${namespace}/rulesengine`}
+            featureUrl={`/${nsurl}/rulesengine`}
             featureFlag={Theme.showRulesEngine}
             featureName={Theme.featureNames.rulesEngine}
-            componentDidNavigate={this.props.componentDidNavigate}
+            componentDidNavigate={componentDidNavigate}
           />
           <DrawerFeatureLink
-            featureUrl={`/metadata/ns/${namespace}`}
+            featureUrl={`/metadata/${nsurl}`}
             featureFlag={Theme.showMetadata}
             featureName={Theme.featureNames.metadata}
             isAngular={true}
           />
         </List>
-        <List component="nav" dense={true}>
-          <ListItemLink
-            component={isNativeLink ? 'a' : Link}
-            href="/cdap/administration/configuration"
-            to="/administration/configuration"
-            onClick={componentDidNavigate}
-          >
-            <ListItemText
-              disableTypography
-              classes={{ root: classes.listItemText }}
-              primary={Theme.featureNames.projectAdmin}
-            />
-          </ListItemLink>
+        <List component="nav" dense={true} className={classes.namespaceAdminMenu}>
+          <DrawerFeatureLink
+            featureUrl="/administration/configuration"
+            featureName={Theme.featureNames.projectAdmin}
+            featureFlag={true}
+            componentDidNavigate={componentDidNavigate}
+          />
         </List>
       </Drawer>
     );

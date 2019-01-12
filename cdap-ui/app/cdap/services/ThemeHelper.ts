@@ -216,7 +216,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         pipelineStudio: 'Studio',
         reports: 'Reports',
         rulesEngine: 'Rules',
-        projectAdmin: 'Project Admin',
+        projectAdmin: 'Namespace Admin',
         systemAdmin: 'System Admin',
       },
     };
