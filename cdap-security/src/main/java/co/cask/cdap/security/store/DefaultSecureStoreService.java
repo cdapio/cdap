@@ -19,7 +19,6 @@ package co.cask.cdap.security.store;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -39,10 +38,8 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Default implementation of the service that manages access to the Secure Store,
@@ -112,7 +109,6 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
    * @throws BadRequestException If the request does not contain the value to be stored.
    * @throws UnauthorizedException If the user does not have write permissions on the namespace.
    * @throws NamespaceNotFoundException If the specified namespace does not exist.
-   * @throws AlreadyExistsException If the key already exists in the namespace. Updating is not supported.
    * @throws IOException If there was a problem storing the key to underlying provider.
    */
   @Override
