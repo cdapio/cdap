@@ -108,6 +108,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureFlag={true}
             featureUrl={`/${nsurl}`}
             componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-control-center-link"
             isActive={
               location.pathname === `/cdap/${nsurl}` ||
               location.pathname.startsWith(`/cdap/${nsurl}/dataset`) ||
@@ -121,8 +122,9 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             componentDidNavigate={componentDidNavigate}
             data-cy="navbar-pipelines-link"
             isActive={
-              location.pathname.startsWith(`/${nsurl}/pipelines`) ||
-              location.pathname.startsWith(`/pipelines/${nsurl}`)
+              (location.pathname.startsWith(`/cdap/${nsurl}/pipelines`) ||
+                location.pathname.startsWith(`/pipelines/${nsurl}`)) &&
+              !location.pathname.startsWith(`/pipelines/${nsurl}/studio`)
             }
             subMenu={[
               {
@@ -140,6 +142,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureFlag={Theme.showDataPrep}
             featureUrl={`/${nsurl}/dataprep`}
             componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-dataprep-link"
             isActive={
               location.pathname.startsWith(`/cdap/${nsurl}/dataprep`) ||
               location.pathname.startsWith(`/cdap/${nsurl}/connections`)
@@ -150,18 +153,21 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureFlag={Theme.showAnalytics}
             featureName={Theme.featureNames.analytics}
             componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-experiments-link"
           />
           <DrawerFeatureLink
             featureUrl={`/${nsurl}/rulesengine`}
             featureFlag={Theme.showRulesEngine}
             featureName={Theme.featureNames.rulesEngine}
             componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-rulesengine-link"
           />
           <DrawerFeatureLink
             featureUrl={`/metadata/${nsurl}`}
             featureFlag={Theme.showMetadata}
             featureName={Theme.featureNames.metadata}
             isAngular={true}
+            data-cy="navbar-metadata-link"
           />
         </List>
         <List component="nav" dense={true} className={classes.namespaceAdminMenu}>
@@ -170,6 +176,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureName={Theme.featureNames.projectAdmin}
             featureFlag={true}
             componentDidNavigate={componentDidNavigate}
+            data-cy="navbar-project-admin-link"
           />
         </List>
       </Drawer>

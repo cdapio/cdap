@@ -50,6 +50,7 @@ interface IDrawerFeatureLinkProps extends WithStyles<typeof styles> {
   isAngular?: boolean;
   isActive?: boolean;
   subMenu?: IDrawerFeatureLinkProps[];
+  'data-cy'?: string;
 }
 
 class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
@@ -61,6 +62,7 @@ class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
       featureUrl,
       isAngular,
       isActive,
+      ...rest
     }: IDrawerFeatureLinkProps,
     isSubMenu = false
   ) {
@@ -84,6 +86,7 @@ class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
         href={isAngular ? featureUrl : reactFeatureUrl}
         to={featureUrl}
         onClick={componentDidNavigate}
+        data-cy={rest['data-cy']}
       >
         <ListItemText
           disableTypography
