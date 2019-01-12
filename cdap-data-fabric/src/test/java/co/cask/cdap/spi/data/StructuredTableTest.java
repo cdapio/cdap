@@ -176,8 +176,7 @@ public abstract class StructuredTableTest {
     List<Collection<Field<?>>> actual = new ArrayList<>(max);
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
-      try (CloseableIterator<StructuredRow> iterator =
-             table.scan(range, max)) {
+      try (CloseableIterator<StructuredRow> iterator = table.scan(range, max)) {
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
           actual.add(Arrays.asList(FIELD_FACTORY.createIntField(KEY, row.getInteger(KEY)),

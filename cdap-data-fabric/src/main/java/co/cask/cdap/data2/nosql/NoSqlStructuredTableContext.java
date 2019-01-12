@@ -32,13 +32,10 @@ import co.cask.cdap.spi.data.table.StructuredTableSpecification;
  * The nosql context to get the table.
  */
 public class NoSqlStructuredTableContext implements StructuredTableContext {
-  private final NamespaceId namespaceId;
   private final DatasetContext datasetContext;
   private final StructuredTableAdmin tableAdmin;
 
-  public NoSqlStructuredTableContext(NamespaceId namespaceId, DatasetContext datasetContext,
-                                     StructuredTableAdmin tableAdmin) {
-    this.namespaceId = namespaceId;
+  public NoSqlStructuredTableContext(DatasetContext datasetContext, StructuredTableAdmin tableAdmin) {
     this.datasetContext = datasetContext;
     this.tableAdmin = tableAdmin;
   }
@@ -51,7 +48,8 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
       if (specification == null) {
         throw new NotFoundException(tableId);
       }
-      return new NoSqlStructuredTable(datasetContext.getDataset(namespaceId.getNamespace(), tableId.getName()),
+      return new NoSqlStructuredTable(datasetContext.getDataset(NamespaceId.SYSTEM.getNamespace(),
+                                                                NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME),
                                       new StructuredTableSchema(specification));
     } catch (DatasetInstantiationException e) {
       throw new StructuredTableInstantiationException(tableId,

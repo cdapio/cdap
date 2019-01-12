@@ -36,22 +36,20 @@ import java.io.IOException;
  * The Nosql admin will use the existing dataset framework to create and drop tables.
  */
 public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
+  static final String ENTITY_TABLE_NAME = "entity.store";
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTableAdmin.class);
-  private static final String ENTITY_TABLE_NAME = "entity.store";
 
   private final DatasetFramework datasetFramework;
-  private final NamespaceId namespaceId;
 
-  public NoSqlStructuredTableAdmin(DatasetFramework datasetFramework, NamespaceId namespaceId) {
+  public NoSqlStructuredTableAdmin(DatasetFramework datasetFramework) {
     this.datasetFramework = datasetFramework;
-    this.namespaceId = namespaceId;
   }
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException {
-    LOG.info("Creating table {} in namespace {}", spec, namespaceId);
+    LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
     try {
-      DatasetId datasetInstanceId = namespaceId.dataset(ENTITY_TABLE_NAME);
+      DatasetId datasetInstanceId = NamespaceId.SYSTEM.dataset(ENTITY_TABLE_NAME);
       if (!datasetFramework.hasInstance(datasetInstanceId)) {
         datasetFramework.addInstance(Table.class.getName(), datasetInstanceId, DatasetProperties.EMPTY);
       }
@@ -75,9 +73,9 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void drop(StructuredTableId tableId) throws IOException {
-    LOG.info("Dropping table {} in namespace {}", tableId, namespaceId);
+    LOG.info("Dropping table {} in namespace {}", tableId, NamespaceId.SYSTEM);
     try {
-      DatasetId datasetInstanceId = namespaceId.dataset(tableId.getName());
+      DatasetId datasetInstanceId = NamespaceId.SYSTEM.dataset(ENTITY_TABLE_NAME);
       DatasetAdmin admin = datasetFramework.getAdmin(datasetInstanceId, null);
       if (admin == null) {
         throw new IOException(String.format("Error dropping table %s. Cannot get DatasetAdmin", tableId));

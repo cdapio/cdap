@@ -93,9 +93,12 @@ public final class NoSqlStructuredRow implements StructuredRow {
   private Map<String, Object> extractKeys() {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     MDSKey.Splitter splitter = new MDSKey(row.getRow()).split();
+    // extract the first part since we always have the table name as the prefix
+    splitter.getString();
     for (String key : tableSchema.getPrimaryKeys()) {
       // the NullPointerException should never be thrown since the primary keys must always have a type
-      switch (Objects.requireNonNull(tableSchema.getType(key))) {
+      FieldType.Type type = tableSchema.getType(key);
+      switch (Objects.requireNonNull(type)) {
         case INTEGER:
           builder.put(key, splitter.getInt());
           break;
@@ -107,6 +110,8 @@ public final class NoSqlStructuredRow implements StructuredRow {
           break;
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
+          throw new IllegalStateException(
+            String.format("The type %s of the primary key %s is not a valid key type", type, key));
       }
     }
     return builder.build();

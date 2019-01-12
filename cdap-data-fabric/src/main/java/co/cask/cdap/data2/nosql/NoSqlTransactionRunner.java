@@ -29,12 +29,10 @@ import org.apache.tephra.TransactionFailureException;
  */
 public class NoSqlTransactionRunner implements TransactionRunner {
   private final StructuredTableAdmin tableAdmin;
-  private final NamespaceId namespaceId;
   private final Transactional transactional;
 
-  public NoSqlTransactionRunner(StructuredTableAdmin tableAdmin, NamespaceId namespaceId, Transactional transactional) {
+  public NoSqlTransactionRunner(StructuredTableAdmin tableAdmin, Transactional transactional) {
     this.tableAdmin = tableAdmin;
-    this.namespaceId = namespaceId;
     this.transactional = transactional;
   }
 
@@ -42,7 +40,7 @@ public class NoSqlTransactionRunner implements TransactionRunner {
   public void run(TxRunnable runnable) throws TransactionException {
     try {
       transactional.execute(
-        datasetContext -> runnable.run(new NoSqlStructuredTableContext(namespaceId, datasetContext, tableAdmin))
+        datasetContext -> runnable.run(new NoSqlStructuredTableContext(datasetContext, tableAdmin))
       );
     } catch (TransactionFailureException e) {
       throw new TransactionException("Failure executing NoSql transaction:", e);

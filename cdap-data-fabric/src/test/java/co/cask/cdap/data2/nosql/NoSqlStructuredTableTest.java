@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -58,7 +59,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final DatasetContext CONTEXT1 = DatasetContext.from("ns1");
+  private static final DatasetContext CONTEXT1 = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
   private static final NamespaceId NS1 = new NamespaceId(CONTEXT1.getNamespaceId());
   private static final StructuredTableSchema SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
 
@@ -78,7 +79,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
                                    new TransactionSystemClientAdapter(txClient),
                                    NS1,
                                    Collections.emptyMap(), null, null));
-    return new NoSqlTransactionRunner(getStructuredTableAdmin(), NS1, txnl);
+    return new NoSqlTransactionRunner(getStructuredTableAdmin(), txnl);
   }
 
   @BeforeClass
@@ -87,7 +88,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     txClient = new InMemoryTxSystemClient(txManager);
-    noSqlTableAdmin = new NoSqlStructuredTableAdmin(dsFrameworkUtil.getFramework(), NS1);
+    noSqlTableAdmin = new NoSqlStructuredTableAdmin(dsFrameworkUtil.getFramework());
   }
 
   @AfterClass
@@ -178,7 +179,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     public Row next() {
       if (iterator.hasNext()) {
         int i = iterator.next();
-        return createResult(i, "c" + i, "v" + i);
+        return createResult(new MDSKey.Builder().add("tableNamePrefix").add(i).build().getKey(), "c" + i, "v" + i);
       }
       return null;
     }
@@ -193,7 +194,7 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     }
   }
 
-  private static Result createResult(int row, String col, String val) {
-    return new Result(Bytes.toBytes(row), Collections.singletonMap(Bytes.toBytes(col), Bytes.toBytes(val)));
+  private static Result createResult(byte[] row, String col, String val) {
+    return new Result(row, Collections.singletonMap(Bytes.toBytes(col), Bytes.toBytes(val)));
   }
 }

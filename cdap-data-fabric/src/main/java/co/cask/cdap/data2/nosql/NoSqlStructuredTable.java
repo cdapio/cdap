@@ -38,10 +38,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Nosql structured table implementation.
@@ -51,11 +51,14 @@ public final class NoSqlStructuredTable implements StructuredTable {
   private final Table table;
   private final StructuredTableSchema schema;
   private final FieldFactory fieldFactory;
+  // this key prefix will be used for any row in this table
+  private final MDSKey keyPrefix;
 
   public NoSqlStructuredTable(Table table, StructuredTableSchema schema) {
     this.table = table;
     this.schema = schema;
     this.fieldFactory = new FieldFactory(schema);
+    this.keyPrefix = new MDSKey.Builder().add(schema.getTableId().getName()).build();
   }
 
   @Override
@@ -66,20 +69,25 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException {
-    return read(keys, Collections.emptySet(), true);
+    return readRow(keys, null);
   }
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
                                       Collection<String> columns) throws InvalidFieldException {
-    return read(keys, columns, false);
+    if (columns == null || columns.isEmpty()) {
+      throw new InvalidFieldException(schema.getTableId(), columns, "No columns are specified in reading.");
+    }
+    return readRow(keys, columns);
   }
 
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
     LOG.trace("Table {}: Scan range {} with limit {}", schema.getTableId(), keyRange, limit);
-    byte[] begin = keyRange.getBegin() == null ? null : convertKeyToBytes(keyRange.getBegin(), true);
-    byte[] end = keyRange.getEnd() == null ? null : convertKeyToBytes(keyRange.getEnd(), true);
+    byte[] begin = keyRange.getBegin() == null ? null : convertKeyToBytes(keyRange.getBegin(), new MDSKey.Builder(keyPrefix),
+                                                                          true);
+    byte[] end = keyRange.getEnd() == null ? null : convertKeyToBytes(keyRange.getEnd(), new MDSKey.Builder(keyPrefix),
+                                                                      true);
 
     // Table.scan() start key is inclusive by default
     if (begin != null && keyRange.getBeginBound() == Range.Bound.EXCLUSIVE) {
@@ -98,7 +106,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public void delete(Collection<Field<?>> keys) throws InvalidFieldException {
     LOG.trace("Table {}: Delete with keys {}", schema.getTableId(), keys);
-    table.delete(convertKeyToBytes(keys, false));
+    table.delete(convertKeyToBytes(keys, new MDSKey.Builder(keyPrefix), false));
   }
 
   @Override
@@ -112,13 +120,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
     table.close();
   }
 
-  private Optional<StructuredRow> read(Collection<Field<?>> keys, Collection<String> columns,
-                                       boolean allowEmptyColumn) throws InvalidFieldException {
-    if (!allowEmptyColumn && (columns == null || columns.isEmpty())) {
-      throw new InvalidFieldException(schema.getTableId(), columns, "No columns are specified in reading.");
-    }
-    LOG.trace("Table {}: Read with keys {} and columns", schema.getTableId(), keys, columns);
-    Row row = table.get(convertKeyToBytes(keys, false), convertColumnsToBytes(columns));
+  /**
+   * Read a row from the table. Null columns mean read from all columns.
+   *
+   * @param keys key of the row
+   * @param columns columns to read, null means read from all
+   * @return an optional containing the row or empty optional if the row does not exist
+   */
+  private Optional<StructuredRow> readRow(Collection<Field<?>> keys,
+                                          @Nullable Collection<String> columns) throws InvalidFieldException {
+    LOG.trace("Table {}: Read with keys {} and columns {}", schema.getTableId(), keys, columns);
+    Row row = table.get(convertKeyToBytes(keys, new MDSKey.Builder(keyPrefix), false),
+                        convertColumnsToBytes(columns));
     return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
   }
 
@@ -127,29 +140,31 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * on the value of allowPrefix.
    *
    * @param keys keys to convert
+   * @param builder the prefix of the key
    * @param allowPrefix true if the keys can be prefix false if the keys have to contain all the primary keys.
    * @return the byte array converted
    * @throws InvalidFieldException if the key are not prefix or complete primary keys
    */
-  private byte[] convertKeyToBytes(Collection<Field<?>> keys, boolean allowPrefix) throws InvalidFieldException {
+  private byte[] convertKeyToBytes(Collection<Field<?>> keys, MDSKey.Builder builder,
+                                   boolean allowPrefix) throws InvalidFieldException {
     schema.validatePrimaryKeys(keys.stream().map(Field::getName).collect(Collectors.toList()), allowPrefix);
-    MDSKey.Builder byteKey = new MDSKey.Builder();
     for (Field<?> key : keys) {
-      addKey(byteKey, key, schema.getType(key.getName()));
+      addKey(builder, key, schema.getType(key.getName()));
     }
-    return byteKey.build().getKey();
+    return builder.build().getKey();
   }
 
   /**
    * Convert the columns to corresponding byte array, each column has to be part of the schema.
    *
    * @param columns columns to convert
-   * @return the converted byte array
+   * @return the converted byte array, null if read for all columns
    * @throws InvalidFieldException some column is not part of the schema
    */
-  private byte[][] convertColumnsToBytes(Collection<String> columns) throws InvalidFieldException {
+  @Nullable
+  private byte[][] convertColumnsToBytes(@Nullable Collection<String> columns) throws InvalidFieldException {
     // Empty columns means to read all columns. The corresponding parameter for Table is null
-    if (columns.isEmpty()) {
+    if (columns == null) {
       return null;
     }
 
@@ -181,7 +196,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
     int numColumns = fields.size() - schema.getPrimaryKeys().size();
 
-    MDSKey.Builder key = new MDSKey.Builder();
+    // add the table name as the prefix
+    MDSKey.Builder key = new MDSKey.Builder(keyPrefix);
     byte[][] columns = new byte[numColumns][];
     byte[][] values = new byte[numColumns][];
 
@@ -295,7 +311,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
     @Override
     protected StructuredRow computeNext() {
-      co.cask.cdap.api.dataset.table.Row row = scanner.next();
+      Row row = scanner.next();
       if (row == null) {
         return endOfData();
       }
