@@ -645,7 +645,8 @@ public class MasterServiceMain extends DaemonMain {
       ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);
 
-      LOG.info("########### Adding secure store service for extension.");
+      LOG.info("########### Adding secure store service for extension. {} ", SecureStoreUtils.isExtensionBased(cConf));
+      LOG.info("############ Configured Secure store {}", cConf.get(Constants.Security.Store.PROVIDER));
       if (SecureStoreUtils.isExtensionBased(cConf)) {
         LOG.info("############# Added secure store service for extension");
         services.add((Service) injector.getInstance(SecureStoreService.class));
