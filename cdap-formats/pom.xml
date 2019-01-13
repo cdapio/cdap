@@ -46,6 +46,10 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.thekraken</groupId>
+      <artifactId>grok</artifactId>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
     </dependency>
