@@ -112,6 +112,9 @@ public class DefaultSecureStoreExtensionService extends AbstractIdleService impl
    */
   @Override
   public Map<String, String> listSecureData(String namespace) throws Exception {
+    if (secretManager == null) {
+      throw new RuntimeException("Secret manager is either not initialized or not loaded. ");
+    }
     checkNamespaceExists(namespace);
     Map<String, String> map = new HashMap<>();
     try {
@@ -134,6 +137,9 @@ public class DefaultSecureStoreExtensionService extends AbstractIdleService impl
    */
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+    if (secretManager == null) {
+      throw new RuntimeException("Secret manager is either not initialized or not loaded. ");
+    }
     checkNamespaceExists(namespace);
     try {
       Secret secret = secretManager.get(namespace, name);
@@ -159,6 +165,9 @@ public class DefaultSecureStoreExtensionService extends AbstractIdleService impl
   @Override
   public void putSecureData(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
+    if (secretManager == null) {
+      throw new RuntimeException("Secret manager is either not initialized or not loaded. ");
+    }
     checkNamespaceExists(namespace);
     try {
       secretManager.store(namespace, new Secret(data.getBytes(StandardCharsets.UTF_8),
@@ -179,6 +188,9 @@ public class DefaultSecureStoreExtensionService extends AbstractIdleService impl
    */
   @Override
   public void deleteSecureData(String namespace, String name) throws Exception {
+    if (secretManager == null) {
+      throw new RuntimeException("Secret manager is either not initialized or not loaded. ");
+    }
     checkNamespaceExists(namespace);
     try {
       secretManager.delete(namespace, name);

@@ -43,7 +43,9 @@ import java.net.HttpURLConnection;
 import java.util.Map;
 
 /**
- * Remote secure store bindings.
+ * The client implementation of {@link SecureStore} and {@link SecureStoreManager}.
+ *
+ * NOTE: This class shouldn't be exposed to end user (e.g. cdap-client module).
  */
 public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   private static final HttpRequestConfig HTTP_REQUEST_CONFIG = new DefaultHttpRequestConfig();
@@ -59,22 +61,25 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
 
   @Override
   public Map<String, String> listSecureData(String namespace) throws Exception {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, namespace + "/" + "securekeys/").build();
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, namespace + "/" + "securekeys/").build();
     HttpResponse response = remoteClient.execute(request);
-    handleError(response, namespace, namespace, "Error in listing keys ");
+    handleResponse(response, namespace, namespace, "Error occurred while listing secure keys");
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
   @Override
   public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, namespace + "/" + "securekeys/" + name).build();
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, namespace + "/" + "securekeys/" + name).build();
     HttpResponse response = remoteClient.execute(request);
-    handleError(response, namespace, namespace, "Error in getting key ");
+    handleResponse(response, namespace, namespace,
+                   String.format("Error occurred while getting key %s:%s", namespace, name));
     // response is not json but just plain text data
     byte[] data = response.getResponseBody();
-    request = remoteClient.requestBuilder(HttpMethod.PUT, namespace + "/" + "securekeys/" + name + "/metadata").build();
+
+    request = remoteClient.requestBuilder(HttpMethod.GET, namespace + "/" + "securekeys/" + name + "/metadata").build();
     response = remoteClient.execute(request);
-    handleError(response, namespace, namespace, "Error in getting key ");
+    handleResponse(response, namespace, namespace,
+                   String.format("Error occurred while getting metadata for key %s:%s", namespace, name));
     SecureStoreMetadata metadata = GSON.fromJson(response.getResponseBodyAsString(), SecureStoreMetadata.class);
     return new SecureStoreData(metadata, data);
   }
@@ -87,7 +92,8 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
       .withBody(GSON.toJson(createRequest))
       .build();
     HttpResponse response = remoteClient.execute(request);
-    handleError(response, namespace, name, "Failed to write secure key.");
+    handleResponse(response, namespace, name,
+                   String.format("Error occurred while putting key %s:%s", namespace, name));
   }
 
   @Override
@@ -95,14 +101,15 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, namespace + "/" + "securekeys/" + name)
       .build();
     HttpResponse response = remoteClient.execute(request);
-    handleError(response, namespace, name, "Failed to delete key");
+    handleResponse(response, namespace, name,
+                   String.format("Error occurred while getting key %s:%s", namespace, name));
   }
 
   /**
    * Handles error response based on the given response code.
    */
-  private void handleError(final HttpResponse response, String namespace, String name,
-                           String errorPrefix) throws Exception {
+  private void handleResponse(final HttpResponse response, String namespace, String name,
+                              String errorPrefix) throws Exception {
     int responseCode = response.getResponseCode();
     switch (responseCode) {
       case HttpURLConnection.HTTP_OK:
@@ -113,6 +120,8 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
         throw new SecureKeyAlreadyExistsException(new SecureKeyId(namespace, name));
       case HttpURLConnection.HTTP_UNAVAILABLE:
         throw new ServiceUnavailableException(Constants.Security.Store.SECURE_STORE_SERVICE);
+      case HttpURLConnection.HTTP_BAD_REQUEST:
+        throw new IllegalArgumentException(errorPrefix + ". Reason: " + response.getResponseBodyAsString());
       default:
         throw new IOException(errorPrefix + ". Reason: " + response.getResponseBodyAsString());
     }

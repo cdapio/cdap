@@ -34,9 +34,7 @@ import com.google.inject.Scopes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -46,11 +44,7 @@ import java.util.Map;
  * Tests for {@link DefaultSecureStoreExtensionService}.
  */
 public class DefaultSecureStoreExtensionServiceTest {
-  @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-
   private static final String NAMESPACE1 = "namespace1";
-
   private static SecureStoreManager secureStoreManager;
   private static SecureStore secureStore;
   private static SecureStoreService extensionService;
@@ -58,7 +52,6 @@ public class DefaultSecureStoreExtensionServiceTest {
   @BeforeClass
   public static void setUp() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.Security.Store.FILE_PATH, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.Security.Store.PROVIDER, MockSecretManager.MOCK_SECRET_MANAGER);
 
     Injector injector = Guice.createInjector(new ConfigModule(cConf),
@@ -91,7 +84,7 @@ public class DefaultSecureStoreExtensionServiceTest {
   }
 
   @AfterClass
-  public static void cleanupClass() {
+  public static void cleanUp() {
     if (extensionService instanceof Service) {
       ((Service) extensionService).startAndWait();
     }
