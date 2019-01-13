@@ -432,7 +432,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreModules().getClientModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AbstractModule() {
         @Override

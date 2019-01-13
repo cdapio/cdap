@@ -22,10 +22,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.security.store.DefaultSecureStore;
+import co.cask.cdap.security.store.DefaultSecureStoreExtensionService;
+import co.cask.cdap.security.store.DefaultSecureStoreService;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
-import co.cask.cdap.security.store.DefaultSecureStoreService;
+import co.cask.cdap.security.store.RemoteSecureStore;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import com.google.common.base.Strings;
@@ -34,6 +35,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -74,8 +76,8 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStore.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
+        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
       }
@@ -93,11 +95,12 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStore.class);
+        bind(SecureStore.class).to(DefaultSecureStoreService.class);
         expose(SecureStore.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
         expose(SecureStoreManager.class);
-        bind(SecureStoreService.class).to(DefaultSecureStoreService.class).in(Singleton.class);
+        bind(SecureStoreService.class).to(DefaultSecureStoreExtensionService.class);
+        expose(SecureStoreService.class);
       }
     };
   }
@@ -113,10 +116,20 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class)
           .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
           .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStore.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStore.class);
+        bind(SecureStore.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
+      }
+    };
+  }
+
+  public final Module getClientModules() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(SecureStore.class).to(RemoteSecureStore.class).in(Scopes.SINGLETON);
+        bind(SecureStoreManager.class).to(RemoteSecureStore.class).in(Scopes.SINGLETON);
       }
     };
   }
@@ -172,8 +185,8 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
-      if (SecureStoreUtils.isExtension(cConf)) {
-        return (T) injector.getInstance(DefaultSecureStoreService.class);
+      if (SecureStoreUtils.isExtensionBased(cConf)) {
+        return (T) injector.getInstance(DefaultSecureStoreExtensionService.class);
       }
       boolean fileBacked = SecureStoreUtils.isFileBacked(cConf);
       boolean validPassword = !Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD));

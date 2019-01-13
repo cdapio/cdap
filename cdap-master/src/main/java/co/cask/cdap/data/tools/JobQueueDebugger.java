@@ -370,7 +370,7 @@ public class JobQueueDebugger extends AbstractIdleService {
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreModules().getClientModules(),
       new MessagingClientModule(),
       new AbstractModule() {
         @Override

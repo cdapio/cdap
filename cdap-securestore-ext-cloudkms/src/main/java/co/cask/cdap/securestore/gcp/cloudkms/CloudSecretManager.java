@@ -22,16 +22,19 @@ import co.cask.cdap.securestore.spi.SecretNotFoundException;
 import co.cask.cdap.securestore.spi.SecretStore;
 import co.cask.cdap.securestore.spi.secret.Secret;
 import co.cask.cdap.securestore.spi.secret.SecretMetadata;
-import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * A {@link SecretManager} which manages sensitive data using Google Cloud KMS.
  */
 public class CloudSecretManager implements SecretManager {
+  private static final Logger LOG = LoggerFactory.getLogger(CloudSecretManager.class);
   private SecretStore store;
   private CloudKMSClient client;
   private SecretEncoderDecoder encoderDecoder;
@@ -68,7 +71,12 @@ public class CloudSecretManager implements SecretManager {
   @Override
   public Collection<SecretMetadata> list(String namespace) throws IOException {
     Collection<Secret> secrets = store.list(namespace, encoderDecoder);
-    return secrets.stream().map(Secret::getMetadata).collect(Collectors.toCollection(ImmutableList::of));
+    List<SecretMetadata> metadata = new ArrayList<>();
+    for (Secret secret : secrets) {
+      LOG.info("######## Secret Name: {}", secret.getMetadata().getName());
+      metadata.add(secret.getMetadata());
+    }
+    return metadata;
   }
 
   @Override

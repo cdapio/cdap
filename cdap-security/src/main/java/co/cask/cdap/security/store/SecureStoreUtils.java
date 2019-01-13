@@ -41,7 +41,7 @@ public class SecureStoreUtils {
    * @param cConf configuration to get the store provider name
    * @return if it is extension based, method returns true.
    */
-  public static boolean isExtension(final CConfiguration cConf) {
+  public static boolean isExtensionBased(final CConfiguration cConf) {
     return !NONE.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER)) &&
       !isKMSBacked(cConf) && !isFileBacked(cConf);
   }

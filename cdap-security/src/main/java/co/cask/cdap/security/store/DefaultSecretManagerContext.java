@@ -51,7 +51,7 @@ public class DefaultSecretManagerContext implements SecretManagerContext {
       @Override
       public <T> T get(String namespace, String name, Decoder<T> decoder) throws SecretNotFoundException, IOException {
         String key = getKey(namespace, name);
-        if (!exists(key)) {
+        if (!inMemoryDataStore.containsKey(key)) {
           throw new SecretNotFoundException(namespace, name);
         }
         return decoder.decode(inMemoryDataStore.get(key));
@@ -59,6 +59,7 @@ public class DefaultSecretManagerContext implements SecretManagerContext {
 
       @Override
       public <T> Collection<T> list(String namespace, Decoder<T> decoder) throws IOException {
+
         List<T> list = new ArrayList<>();
         for (Map.Entry<String, byte[]> entry : inMemoryDataStore.entrySet()) {
           String[] splitted = entry.getKey().split(":");
@@ -86,10 +87,6 @@ public class DefaultSecretManagerContext implements SecretManagerContext {
 
       private String getKey(String namespace, String name) {
         return namespace + SEPARATOR + name;
-      }
-
-      private boolean exists(String key) {
-        return inMemoryDataStore.containsKey(key);
       }
     };
   }

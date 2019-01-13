@@ -65,7 +65,7 @@ class CloudKMSClient {
    */
   CloudKMSClient() throws IOException {
     this.crypoKeyList = new ArrayList<>();
-    this.projectId = getSystemProjectId();
+    this.projectId = "cdap-dogfood";
     this.cloudKMS = createAuthorizedClient();
   }
 
@@ -130,10 +130,11 @@ class CloudKMSClient {
         .execute();
     } catch (GoogleJsonResponseException e) {
       // if key ring already exists, then do not throw any exception.
-      if (e.getStatusCode() == 409) {
-        LOG.trace(String.format("Key ring %s already exists", KEYRING_ID));
+      if (e.getDetails() != null && e.getDetails().getCode() == 409) {
+        LOG.trace(String.format("Key ring %s already exists.", KEYRING_ID));
+        return;
       }
-      throw new IOException(String.format("Exception occurred while creating key ring %s", KEYRING_ID));
+      throw new IOException(String.format("Error occurred while creating key ring %s", KEYRING_ID), e);
     }
   }
 
@@ -164,11 +165,13 @@ class CloudKMSClient {
     } catch (GoogleJsonResponseException e) {
       // Crypto key is shared for all the namespaces. So if crypto key already exists, then do not throw any exception.
       // This will happen if key for the same namespace is being created.
-      if (e.getStatusCode() == 409) {
-        LOG.trace(String.format("Key %s already exists", cryptoKeyId));
-      } else {
-        throw new IOException("Error occurred while creating cryptographic key for namespace %s" , e);
+      if (e.getDetails() != null && e.getDetails().getCode() == 409) {
+        LOG.trace(String.format("Key %s already exists.", cryptoKeyId));
+        return;
       }
+
+      throw new IOException("Error occurred while creating cryptographic key for namespace %s" , e);
+
     }
 
     // In-memory cache to keep list of crypto keys stored so far.

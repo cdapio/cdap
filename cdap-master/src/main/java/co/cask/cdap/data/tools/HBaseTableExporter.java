@@ -121,7 +121,7 @@ public class HBaseTableExporter {
       new AuthorizationEnforcementModule().getMasterModule(),
       new AuthenticationContextModules().getMasterModule(),
       new NamespaceQueryAdminModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreModules().getClientModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

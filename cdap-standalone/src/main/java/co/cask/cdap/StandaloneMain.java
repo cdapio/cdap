@@ -17,7 +17,6 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -81,6 +80,7 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.security.store.SecureStoreService;
+import co.cask.cdap.security.store.SecureStoreUtils;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -136,7 +136,7 @@ public class StandaloneMain {
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
-  private final SecureStoreManager secureStoreService;
+  private final SecureStoreService secureStoreService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -186,7 +186,11 @@ public class StandaloneMain {
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
 
-    secureStoreService = injector.getInstance(SecureStoreService.class);
+    if (SecureStoreUtils.isExtensionBased(cConf)) {
+      secureStoreService = injector.getInstance(SecureStoreService.class);
+    } else {
+      secureStoreService = null;
+    }
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -267,7 +271,7 @@ public class StandaloneMain {
 
     operationalStatsService.startAndWait();
 
-    if (secureStoreService instanceof Service) {
+    if (secureStoreService !=  null && secureStoreService instanceof Service) {
       ((Service) secureStoreService).startAndWait();
     }
 
@@ -294,8 +298,8 @@ public class StandaloneMain {
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
 
-      if (secureStoreService instanceof Service) {
-        ((Service) secureStoreService).stopAndWait();
+      if (secureStoreService !=  null && secureStoreService instanceof Service) {
+        ((Service) secureStoreService).startAndWait();
       }
 
       operationalStatsService.stopAndWait();

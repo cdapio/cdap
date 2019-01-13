@@ -121,7 +121,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new NotificationFeedClientModule(),
       new AuditModule().getDistributedModules(),
       new EntityVerifierModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreModules().getClientModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {

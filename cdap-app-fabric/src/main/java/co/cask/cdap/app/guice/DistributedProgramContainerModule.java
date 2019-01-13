@@ -154,7 +154,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new MessagingClientModule());
     modules.add(new AuditModule().getDistributedModules());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
-    modules.add(new SecureStoreModules().getDistributedModules());
+    modules.add(new SecureStoreModules().getClientModules());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new AbstractModule() {
       @Override
