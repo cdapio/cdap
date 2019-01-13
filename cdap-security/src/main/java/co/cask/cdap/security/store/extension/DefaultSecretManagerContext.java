@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package co.cask.cdap.security.store.extension;
 
 import co.cask.cdap.securestore.spi.SecretManagerContext;
 import co.cask.cdap.securestore.spi.SecretNotFoundException;
@@ -59,7 +59,6 @@ public class DefaultSecretManagerContext implements SecretManagerContext {
 
       @Override
       public <T> Collection<T> list(String namespace, Decoder<T> decoder) throws IOException {
-
         List<T> list = new ArrayList<>();
         for (Map.Entry<String, byte[]> entry : inMemoryDataStore.entrySet()) {
           String[] splitted = entry.getKey().split(":");

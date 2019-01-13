@@ -22,13 +22,15 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.security.store.DefaultSecureStoreExtensionService;
 import co.cask.cdap.security.store.DefaultSecureStoreService;
 import co.cask.cdap.security.store.DummySecureStore;
 import co.cask.cdap.security.store.FileSecureStore;
-import co.cask.cdap.security.store.RemoteSecureStore;
-import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.security.store.SecureStoreUtils;
+import co.cask.cdap.security.store.client.RemoteSecureStore;
+import co.cask.cdap.security.store.extension.DefaultSecretManagerProvider;
+import co.cask.cdap.security.store.extension.DefaultSecureStoreExtensionService;
+import co.cask.cdap.security.store.extension.SecretManagerProvider;
+import co.cask.cdap.security.store.extension.SecureStoreService;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -99,6 +101,8 @@ public class SecureStoreModules extends RuntimeModule {
         expose(SecureStore.class);
         bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
         expose(SecureStoreManager.class);
+        // Bindings for secure store extensions
+        bind(SecretManagerProvider.class).to(DefaultSecretManagerProvider.class);
         bind(SecureStoreService.class).to(DefaultSecureStoreExtensionService.class);
         expose(SecureStoreService.class);
       }
@@ -120,6 +124,8 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
+        // Bindings for secure store extensions
+        bind(SecretManagerProvider.class).to(DefaultSecretManagerProvider.class);
         bind(SecureStoreService.class).to(DefaultSecureStoreExtensionService.class);
         expose(SecureStoreService.class);
       }

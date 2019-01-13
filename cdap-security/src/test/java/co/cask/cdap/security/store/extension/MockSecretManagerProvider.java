@@ -14,13 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package co.cask.cdap.security.store.extension;
 
-import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.securestore.spi.SecretManager;
 
 /**
- *
+ * Mock secret manager provider for testing.
  */
-public interface SecureStoreService extends SecureStoreManager, SecureStore {
+public class MockSecretManagerProvider implements SecretManagerProvider {
+  @Override
+  public SecretManager loadSecretManager(String type) {
+    return new MockSecretManager();
+  }
 }

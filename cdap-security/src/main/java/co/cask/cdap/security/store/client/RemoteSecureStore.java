@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package co.cask.cdap.security.store.client;
 
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;

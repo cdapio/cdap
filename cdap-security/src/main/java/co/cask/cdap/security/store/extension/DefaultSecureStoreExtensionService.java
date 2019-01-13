@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package co.cask.cdap.security.store.extension;
 
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
@@ -29,6 +29,7 @@ import co.cask.cdap.securestore.spi.SecretManager;
 import co.cask.cdap.securestore.spi.SecretNotFoundException;
 import co.cask.cdap.securestore.spi.secret.Secret;
 import co.cask.cdap.securestore.spi.secret.SecretMetadata;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -51,25 +52,28 @@ import java.util.Map;
 public class DefaultSecureStoreExtensionService extends AbstractIdleService implements SecureStoreService {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSecureStoreExtensionService.class);
 
-  private final String dir;
   private final String type;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-  private DefaultSecretManagerContext context;
+  private final DefaultSecretManagerContext context;
+  private final SecretManagerProvider secretManagerProvider;
   private SecretManager secretManager;
 
+  @VisibleForTesting
   @Inject
-  public DefaultSecureStoreExtensionService(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
-    this.dir = cConf.get(Constants.Security.Store.EXTENSIONS_DIR);
+  public DefaultSecureStoreExtensionService(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin,
+                                            SecretManagerProvider secretManagerProvider) {
     this.type = cConf.get(Constants.Security.Store.PROVIDER);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.secretManagerProvider = secretManagerProvider;
+    this.context = new DefaultSecretManagerContext();
   }
 
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}.", getClass().getSimpleName());
-    SecureStoreExtensionLoader secureStoreExtensionLoader = new SecureStoreExtensionLoader(dir);
+
     // Depending on type of the secret manager, there will only be one secret manager
-    this.secretManager = secureStoreExtensionLoader.getAll().get(type);
+    this.secretManager = secretManagerProvider.loadSecretManager(type);
     if (this.secretManager == null) {
       LOG.error(String.format("Secure store extension %s can not be loaded. Make sure the name of " +
                                 "the implementation matches %s property.", type,
@@ -78,7 +82,6 @@ public class DefaultSecureStoreExtensionService extends AbstractIdleService impl
     }
 
     try {
-      this.context = new DefaultSecretManagerContext();
       this.secretManager.initialize(context);
       LOG.info("Initialized secure store of type {}", type);
     } catch (IOException e) {

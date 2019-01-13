@@ -71,7 +71,7 @@ public interface SecretManager {
    * @return a {@code Collection} of metadata of all the secrets in the provided namespace
    * @throws IOException if unable to list secrets
    */
-  Collection<SecretMetadata> list(String namespace) throws SecretNotFoundException, IOException;
+  Collection<SecretMetadata> list(String namespace) throws IOException;
 
   /**
    * Deletes the secret with the provided name.

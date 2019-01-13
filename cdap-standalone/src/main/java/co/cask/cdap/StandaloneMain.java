@@ -79,7 +79,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
-import co.cask.cdap.security.store.SecureStoreService;
+import co.cask.cdap.security.store.extension.SecureStoreService;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;

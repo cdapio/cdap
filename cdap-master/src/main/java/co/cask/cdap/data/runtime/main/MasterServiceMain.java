@@ -77,7 +77,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.security.store.SecureStoreService;
+import co.cask.cdap.security.store.extension.SecureStoreService;
 import co.cask.cdap.security.store.SecureStoreUtils;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.guice.NamespaceStoreModule;

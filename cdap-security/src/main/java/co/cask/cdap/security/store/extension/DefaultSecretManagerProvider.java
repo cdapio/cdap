@@ -14,22 +14,27 @@
  * the License.
  */
 
-package co.cask.cdap.security.store;
+package co.cask.cdap.security.store.extension;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.extension.AbstractExtensionLoader;
 import co.cask.cdap.securestore.spi.SecretManager;
+import com.google.inject.Inject;
 
 import java.util.Collections;
 import java.util.Set;
 
 /**
- * Secure Store extension loader.
+ * Secret Manager provider which loads secret manager implementation.
  */
-public class SecureStoreExtensionLoader extends AbstractExtensionLoader<String, SecretManager> {
+public class DefaultSecretManagerProvider extends AbstractExtensionLoader<String, SecretManager>
+  implements SecretManagerProvider {
 
-  public SecureStoreExtensionLoader(String dir) {
-    super(dir);
+  @Inject
+  public DefaultSecretManagerProvider(CConfiguration cConf) {
+    super(cConf.get(Constants.Security.Store.EXTENSIONS_DIR));
   }
 
   @Override
@@ -51,5 +56,10 @@ public class SecureStoreExtensionLoader extends AbstractExtensionLoader<String, 
         return packageName.startsWith("co/cask/cdap/securestore/spi");
       }
     });
+  }
+
+  @Override
+  public SecretManager loadSecretManager(String type) {
+    return get(type);
   }
 }
