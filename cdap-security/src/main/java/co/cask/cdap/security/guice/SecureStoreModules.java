@@ -120,6 +120,8 @@ public class SecureStoreModules extends RuntimeModule {
         bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
+        bind(SecureStoreService.class).to(DefaultSecureStoreExtensionService.class);
+        expose(SecureStoreService.class);
       }
     };
   }
@@ -148,6 +150,10 @@ public class SecureStoreModules extends RuntimeModule {
     @Override
     @SuppressWarnings("unchecked")
     public T get() {
+      if (SecureStoreUtils.isExtensionBased(cConf)) {
+        return (T) injector.getInstance(DefaultSecureStoreExtensionService.class);
+      }
+
       boolean kmsBacked = SecureStoreUtils.isKMSBacked(cConf);
       if (kmsBacked && SecureStoreUtils.isKMSCapable()) {
         return (T) injector.getInstance(SecureStoreUtils.getKMSSecureStore());
