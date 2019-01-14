@@ -16,6 +16,11 @@
 
 import { Theme } from 'services/ThemeHelper';
 
+const NAVBAR_MENU_HIGHLIGHT_COLOR = 'rgb(220, 224, 234)';
+const NAVBAR_MENU_FONT_COLOR = 'rgb(0, 118, 220)';
+const NAVBAR_BG_COLOR = 'rgb(51, 51, 51)';
+const NAVBAR_BG_COLOR_LIGHT = 'rgb(59, 120, 231)';
+
 describe('Navbar tests', () => {
   after(() => {
     cy.request({
@@ -30,7 +35,7 @@ describe('Navbar tests', () => {
     cy.visit('/cdap');
     cy.get('[data-cy="app-navbar"]').then((navbar) => {
       const bgcolor = navbar.css('background-color');
-      expect(bgcolor).to.be.eq('rgb(51, 51, 51)');
+      expect(bgcolor).to.be.eq(NAVBAR_BG_COLOR);
     });
   });
   it('Should have right features enabled', () => {
@@ -64,7 +69,7 @@ describe('Navbar tests', () => {
       cy.visit('/cdap');
       cy.get('[data-cy="app-navbar"]').then((navbar) => {
         const bgcolor = navbar.css('background-color');
-        expect(bgcolor).to.be.eq('rgb(59, 120, 231)');
+        expect(bgcolor).to.be.eq(NAVBAR_BG_COLOR_LIGHT);
       });
     });
   });
@@ -77,6 +82,33 @@ describe('Navbar tests', () => {
     cy.contains(Theme.featureNames.analytics);
     cy.contains(Theme.featureNames.rulesEngine);
     cy.contains(Theme.featureNames.metadata);
+    cy.contains(Theme.featureNames.pipelineStudio);
     cy.get('[data-cy="navbar-hamburger-icon"]').click();
+  });
+  it('Should have the right features highlighted in the drawer', () => {
+    const assetFeatureHighlight = (featureSelector) => {
+      cy.get('[data-cy="navbar-hamburger-icon"]').click();
+      cy.get(`[data-cy="${featureSelector}"]`).click();
+      cy.get('[data-cy="navbar-hamburger-icon"]').click();
+      cy.get(`[data-cy="${featureSelector}"]`).then((subject) => {
+        subject.css('background-color', NAVBAR_MENU_HIGHLIGHT_COLOR);
+        subject.css('color', NAVBAR_MENU_FONT_COLOR);
+      });
+      cy.get('[data-cy="navbar-hamburger-icon"]').click();
+    };
+
+    cy.visit('/cdap');
+    cy.get('[data-cy="navbar-hamburger-icon"]').click();
+    cy.get(`[data-cy="navbar-control-center-link"]`).then((subject) => {
+      subject.css('background-color', NAVBAR_MENU_HIGHLIGHT_COLOR);
+      subject.css('color', NAVBAR_MENU_FONT_COLOR);
+    });
+    cy.get('[data-cy="navbar-hamburger-icon"]').click();
+
+    assetFeatureHighlight('navbar-pipelines-link');
+    assetFeatureHighlight('navbar-pipeline-studio-link');
+    assetFeatureHighlight('navbar-experiments-link');
+    assetFeatureHighlight('navbar-metadata-link');
+    assetFeatureHighlight('navbar-project-admin-link');
   });
 });
