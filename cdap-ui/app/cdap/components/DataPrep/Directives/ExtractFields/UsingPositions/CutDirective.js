@@ -93,7 +93,7 @@ export default class CutDirective extends Component {
       return null;
     }
     let { start, end } = this.state.textSelectionRange;
-    let tableContainer = document.getElementById('dataprep-table-id');
+    let tableContainer = document.querySelector('#dataprep-table-id table');
     let targetId = `highlight-cell-${this.state.textSelectionRange.index}`;
     /*
       FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276
@@ -101,15 +101,20 @@ export default class CutDirective extends Component {
     return (
       <Popover
         placement="bottom-start"
-        className="highlight-popover"
-        innerClassName="cut-directive-popover"
         isOpen={this.state.showPopover}
         target={targetId}
+        innerClassName="cut-directive-popover"
+        className="highlight-popover"
         container={tableContainer}
         modifiers={{
           shift: {
             order: 800,
             enabled: true,
+          },
+          preventOverflow: {
+            enabled: true,
+            boundariesElement: tableContainer,
+            priority: ['left'],
           },
         }}
         hideArrow
