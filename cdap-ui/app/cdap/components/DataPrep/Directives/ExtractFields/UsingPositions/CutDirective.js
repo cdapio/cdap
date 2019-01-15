@@ -93,7 +93,7 @@ export default class CutDirective extends Component {
       return null;
     }
     let { start, end } = this.state.textSelectionRange;
-    let tableContainer = document.querySelector('#dataprep-table-id table');
+    let tableContainer = document.getElementById('dataprep-table-id');
     let targetId = `highlight-cell-${this.state.textSelectionRange.index}`;
     /*
       FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276

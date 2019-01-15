@@ -154,16 +154,16 @@ export default class ColumnTextSelection extends Component {
         >
           <div className={CELLHIGHLIGHTCLASSNAME}>
             {index === this.state.textSelectionRange.index ? (
-              <span>
+              <div>
                 <span>{row[head].slice(0, this.state.textSelectionRange.start)}</span>
-                <span id={`highlight-cell-${index}`}>
+                <span id={`highlight-cell-${index}`} style={{ position: 'relative' }}>
                   {row[head].slice(
                     this.state.textSelectionRange.start,
                     this.state.textSelectionRange.end
                   )}
                 </span>
                 <span>{row[head].slice(this.state.textSelectionRange.end)}</span>
-              </span>
+              </div>
             ) : (
               row[head]
             )}
