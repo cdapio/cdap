@@ -20,7 +20,7 @@
       "type": "CREATE_APPLICATION",
       "runCondition": "ONCE",
       "arguments": {
-        "namespace": "default",
+        "namespace": "system",
         "name": "dataprep",
         "artifact": {
           "name": "wrangler-service",
@@ -34,7 +34,7 @@
       "type": "START_PROGRAM",
       "runCondition": "ALWAYS",
       "arguments": {
-        "namespace": "default",
+        "namespace": "system",
         "application": "dataprep",
         "type": "service",
         "name": "service"
