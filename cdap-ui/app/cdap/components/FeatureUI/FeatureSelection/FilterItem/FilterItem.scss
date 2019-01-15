@@ -5,12 +5,16 @@
   border-radius: 10px;
   box-shadow: 3px 3px 5px #888888;
   background-color: #e3e2e4;
+  .error-box {
+    font-size: x-small;
+    color: red;
+    padding-top: 2px;
+  }
 }
 
 .filter-type-box {
   width: 100%;
   display: inline-flex;
-  padding-bottom: 10px;
   .action-icon {
     padding-left: 10px;
     font-size: 20px;
@@ -27,6 +31,7 @@
   width: 100%;
   display: flex;
   align-items: center;
+  padding-top: 10px;
   .filter-column-label {
     padding-right: 15px;
     padding-top: 2px;

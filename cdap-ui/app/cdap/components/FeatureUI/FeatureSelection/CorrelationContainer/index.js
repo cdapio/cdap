@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import './CorrelationContainer.scss';
 import { isNil } from 'lodash';
+import propTypes from 'prop-types';
 
 
 class CorrelationContainer extends Component {
@@ -28,9 +29,8 @@ class CorrelationContainer extends Component {
   }
 
   applyCorrelation = () => {
-    const {applyCorrelation} = this.props;
-    if (!isNil(applyCorrelation)) {
-      applyCorrelation(this.state.selectedAlgo);
+    if (!isNil(this.props.applyCorrelation)) {
+      this.props.applyCorrelation(this.state.selectedAlgo);
     }
   }
 
@@ -66,3 +66,8 @@ class CorrelationContainer extends Component {
 }
 
 export default CorrelationContainer;
+
+CorrelationContainer.propTypes = {
+  applyCorrelation: propTypes.func,
+ };
+
