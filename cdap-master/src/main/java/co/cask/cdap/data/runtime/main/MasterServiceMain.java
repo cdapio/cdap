@@ -64,6 +64,7 @@ import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
+import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.master.startup.ServiceResourceKeys;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -579,7 +580,8 @@ public class MasterServiceMain extends DaemonMain {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreModules().getDistributedModules(),
       new OperationalStatsModule(),
-      new PreviewHttpModule(),
+      //new PreviewHttpModule(),
+      //new LogReaderRuntimeModules().getTestDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

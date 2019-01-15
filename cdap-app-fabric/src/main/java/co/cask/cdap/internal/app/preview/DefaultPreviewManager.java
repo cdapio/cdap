@@ -36,6 +36,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.config.guice.ConfigStoreModule;
+import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.preview.PreviewDataModules;
@@ -79,7 +80,9 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,7 +108,7 @@ public class DefaultPreviewManager implements PreviewManager {
   private final DatasetFramework datasetFramework;
   private final PreferencesService preferencesService;
   private final SecureStore secureStore;
-  private final TransactionManager transactionManager;
+  private final TransactionSystemClient transactionSystemClient;
   private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
@@ -119,7 +122,7 @@ public class DefaultPreviewManager implements PreviewManager {
   DefaultPreviewManager(final CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         PreferencesService preferencesService, SecureStore secureStore,
-                        TransactionManager transactionManager, ArtifactRepository artifactRepository,
+                        TransactionSystemClient transactionSystemClient, ArtifactRepository artifactRepository,
                         ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
                         StreamAdmin streamAdmin, StreamCoordinatorClient streamCoordinatorClient,
                         PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
@@ -129,7 +132,7 @@ public class DefaultPreviewManager implements PreviewManager {
     this.discoveryService = discoveryService;
     this.preferencesService = preferencesService;
     this.secureStore = secureStore;
-    this.transactionManager = transactionManager;
+    this.transactionSystemClient = transactionSystemClient;
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -206,6 +209,7 @@ public class DefaultPreviewManager implements PreviewManager {
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     Configuration previewHConf = new Configuration(hConf);
     previewHConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
 
@@ -221,7 +225,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
                               privilegesManager, streamCoordinatorClient, preferencesService),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new PreviewDataModules().getDataFabricModule(transactionManager),
+      new PreviewDataModules().getDataFabricModule(transactionSystemClient),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new DataSetServiceModules().getStandaloneModules(),
       // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but

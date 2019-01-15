@@ -158,7 +158,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
 
     if (isLocal(contextConfig.getHConf())) {
       // Just create a local location factory. It's for temp usage only as the program location is always absolute.
-      programLocation = locationFactory.create(contextConfig.getProgramJarURI());
+      System.out.println("owo: " + new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
+      programLocation = locationFactory.create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());
     } else {
       // In distributed mode, the program jar is localized to the container
       programLocation = locationFactory.create(new File(contextConfig.getProgramJarName()).getAbsoluteFile().toURI());

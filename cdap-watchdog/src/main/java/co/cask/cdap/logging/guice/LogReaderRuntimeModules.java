@@ -20,6 +20,8 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.security.impersonation.CurrentUGIProvider;
+import co.cask.cdap.security.impersonation.DefaultUGIProvider;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import com.google.inject.AbstractModule;
@@ -58,6 +60,16 @@ public final class LogReaderRuntimeModules extends RuntimeModule {
       protected void configure() {
         bind(LogReader.class).to(DistributedLogReader.class);
         bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+      }
+    };
+  }
+
+  public Module getTestDistributedModules() {
+    return new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(LogReader.class).to(FileLogReader.class);
+        bind(UGIProvider.class).to(DefaultUGIProvider.class).in(Scopes.SINGLETON);
       }
     };
   }

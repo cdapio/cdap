@@ -31,6 +31,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.distributed.PooledClientProvider;
 import org.apache.tephra.distributed.ThreadLocalClientProvider;

@@ -146,7 +146,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       : Optional.ofNullable(remoteProgramRunnerFactory).orElseThrow(UnsupportedOperationException::new)
     ).create(programId.getType());
 
-
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {

@@ -1299,6 +1299,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // in local mode, also add localize resources in a temporary directory
         localizedFilePath =
           LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir).getAbsolutePath();
+        LOG.error("x3nuzzles: " + localizedFilePath);
       } else {
         URI uri = entry.getValue().getURI();
         // in distributed mode, use the MapReduce Job object to localize resources

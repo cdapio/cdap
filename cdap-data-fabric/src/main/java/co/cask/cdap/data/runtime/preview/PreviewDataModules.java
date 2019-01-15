@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.runtime.preview;
 
+import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.DataFabricLocalModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -30,9 +31,17 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
+import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.registry.NoOpUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
+import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.DistributedTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
+import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
+import co.cask.cdap.data2.transaction.queue.QueueAdmin;
+import co.cask.cdap.data2.transaction.queue.inmemory.InMemoryQueueAdmin;
+import co.cask.cdap.data2.transaction.queue.leveldb.LevelDBAndInMemoryQueueClientFactory;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.inject.AbstractModule;
@@ -41,10 +50,15 @@ import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.distributed.ThriftClientProvider;
+import org.apache.tephra.metrics.MetricsCollector;
+import org.apache.tephra.runtime.TransactionModules;
 
 /**
  * Data fabric modules for preview
@@ -52,12 +66,11 @@ import org.apache.tephra.TransactionManager;
 public class PreviewDataModules {
   public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
 
-  public Module getDataFabricModule(final TransactionManager transactionManager) {
+  public Module getDataFabricModule(final TransactionSystemClient transactionSystemClient) {
     return Modules.override(new DataFabricLocalModule()).with(new AbstractModule() {
       @Override
       protected void configure() {
-        // InMemorySystemTxClient uses TransactionManager directly, so we need to share TransactionManager.
-        bind(TransactionManager.class).toInstance(transactionManager);
+        bind(TransactionSystemClient.class).toInstance(transactionSystemClient);
       }
     });
   }

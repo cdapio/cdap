@@ -185,7 +185,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     final Configuration hConf = job.getConfiguration();
     hConf.setBoolean("mapreduce.map.speculative", false);
     hConf.setBoolean("mapreduce.reduce.speculative", false);
-
     // plugin name -> runtime args for that plugin
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                          context.getLogicalStartTime(),

@@ -52,7 +52,9 @@ import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.NoOpScheduler;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
+import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
+import co.cask.cdap.security.impersonation.DefaultUGIProvider;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.impersonation.UGIProvider;
@@ -125,7 +127,7 @@ public class PreviewRunnerModule extends PrivateModule {
     bind(Store.class).to(DefaultStore.class);
     bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 
-    bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+    bind(UGIProvider.class).to(DefaultUGIProvider.class);
     expose(UGIProvider.class);
 
     bind(WorkflowStateWriter.class).to(BasicWorkflowStateWriter.class);
