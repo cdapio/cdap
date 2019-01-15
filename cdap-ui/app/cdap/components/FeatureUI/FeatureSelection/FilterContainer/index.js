@@ -19,8 +19,11 @@ class FilterContainer extends Component {
       selectedOrderbyColumn: { id: -1, name: 'Select' },
       orderByCOlumnList: cloneDeep(this.filterColumnList),
       filterItemList: [this.getFilterItemVO()],
-      minLimitValue:"",
-      maxLimitValue:""
+      minLimitValue: "0",
+      maxLimitValue: "1000",
+      activeApplyBtn: false,
+      hasLimitError: false,
+      limitErrorMsg: ""
     };
   }
 
@@ -48,7 +51,7 @@ class FilterContainer extends Component {
       filterColumnList: this.filterColumnList,
       selectedFilterColumn: { id: -1, name: 'Select' },
       filterViewMaps: this.filterViewMaps,
-      minValue: '', maxValue: ''
+      minValue: '', maxValue: '', hasRangeError: false,
     };
   }
 
@@ -64,11 +67,23 @@ class FilterContainer extends Component {
     }
 
     if (value.hasOwnProperty('minValue')) {
-      item['minValue'] = value.minValue;
+      item['minValue'] = value.minValue.trim();
     }
 
     if (value.hasOwnProperty('maxValue')) {
-      item['maxValue'] = value.maxValue;
+      item['maxValue'] = value.maxValue.trim();
+    }
+
+    if (item.selectedFilterType.name === 'Range' && item.minValue != '' && item.maxValue != '') {
+      const min = Number(item.minValue);
+      const max = Number(item.maxValue);
+      if (isNaN(item.minValue) || isNaN(item.maxValue) || max <= min) {
+        item.hasRangeError = true;
+      } else {
+        item.hasRangeError = false;
+      }
+    } else {
+      item.hasRangeError = false;
     }
 
 
@@ -83,13 +98,33 @@ class FilterContainer extends Component {
     this.setState({ filterItemList: itemList });
   }
 
-  minLimitChanged = (evt)=> {
-    this.setState({minLimitValue: evt.target.value});
+  minLimitChanged = (evt) => {
+    const min = evt.target.value.trim();
+    this.updateLimitError(min, this.state.maxLimitValue);
+    this.setState({ minLimitValue: min });
   }
 
-  maxLimitChanged = (evt)=> {
-    this.setState({maxLimitValue: evt.target.value});
+  maxLimitChanged = (evt) => {
+    const max = evt.target.value.trim();
+    this.updateLimitError(this.state.minLimitValue, max);
+    this.setState({ maxLimitValue: max });
   }
+
+  updateLimitError = (min, max) => {
+    if (min === "" || max === "") {
+      this.setState({ hasLimitError: true, limitErrorMsg: 'Limit values are required' });
+    } else {
+      const minValue = Number(min);
+      const maxValue = Number(max);
+      if (isNaN(min) || isNaN(max) || maxValue <= minValue) {
+        this.setState({ hasLimitError: true, limitErrorMsg:'Invalid limit range values' });
+      } else {
+        this.setState({ hasLimitError: false, limitErrorMsg:'' });
+      }
+    }
+  }
+
+
 
   applyFilter = () => {
     this.props.applyFilter(this.state);
@@ -144,16 +179,19 @@ class FilterContainer extends Component {
         </div>
 
         <div className="limit-box">
-          <label className="limit-label">Limit Within:   </label>
+          <label className="limit-label">Limit Within*:   </label>
           <input className="limit-input" type="number" min="0" value={this.state.minLimitValue}
             onChange={this.minLimitChanged}></input>
           <label className="value-seperator">-</label>
           <input className="limit-input" type="number" min="0" value={this.state.maxLimitValue}
             onChange={this.maxLimitChanged}></input>
-
-            <button className="feature-button apply-btn" onClick={this.applyFilter}>Apply</button>
+          <button className="feature-button apply-btn" onClick={this.applyFilter} disabled={this.state.activeApplyBtn}>Apply</button>
         </div>
-
+        {
+          this.state.hasLimitError ?
+            <div className="error-box">{this.state.limitErrorMsg}</div>
+            : null
+        }
       </div>
     );
 

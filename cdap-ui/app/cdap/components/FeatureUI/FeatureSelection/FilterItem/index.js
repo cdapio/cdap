@@ -92,6 +92,11 @@ class FilterItem extends Component {
           }
           <i className="fa fa-minus-circle text-danger action-icon" aria-hidden="true" onClick={this.props.removeFilterItem}></i>
         </div>
+        {
+          this.props.itemVO.hasRangeError ?
+            <div className="error-box">Invalid range values</div>
+            : null
+        }
         <div className="filter-column-box">
           <label className="filter-column-label">Column Name:</label>
           <Dropdown className="filter-type-dropdown" isOpen={this.state.columnOpen} toggle={this.toggleColumnDropDown.bind(this)}>
