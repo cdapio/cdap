@@ -475,8 +475,6 @@ public class UpgradeTool {
     throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
-    // artifacts
-    ArtifactStore.setupDatasets(datasetFramework);
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced

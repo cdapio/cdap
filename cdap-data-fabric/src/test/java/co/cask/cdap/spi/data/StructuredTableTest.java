@@ -18,10 +18,8 @@ package co.cask.cdap.spi.data;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.spi.data.table.StructuredTableId;
-import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
@@ -48,7 +46,6 @@ public abstract class StructuredTableTest {
   protected static final StructuredTableSpecification SIMPLE_SPEC;
 
   private static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simpleTable");
-  private static final FieldFactory FIELD_FACTORY;
   private static final String KEY = "key";
   private static final String KEY2 = "key2";
   private static final String COL1 = "col1";
@@ -69,7 +66,6 @@ public abstract class StructuredTableTest {
       // this should not happen
     }
     SIMPLE_SPEC = specification;
-    FIELD_FACTORY = new FieldFactory(new StructuredTableSchema(SIMPLE_SPEC));
   }
 
   protected abstract StructuredTableAdmin getStructuredTableAdmin() throws Exception;
@@ -95,18 +91,18 @@ public abstract class StructuredTableTest {
 
     // scan from (1, 8L) inclusive to (3, 3L) inclusive, should return (2, 2L) and (3, 3L)
     actual = scanSimpleStructuredRows(
-      Range.create(ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 1),
-                                    FIELD_FACTORY.createLongField(KEY2, 8L)), Range.Bound.INCLUSIVE,
-                   ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 3),
-                                    FIELD_FACTORY.createLongField(KEY2, 3L)), Range.Bound.INCLUSIVE), max);
+      Range.create(ImmutableList.of(Fields.intField(KEY, 1),
+                                    Fields.longField(KEY2, 8L)), Range.Bound.INCLUSIVE,
+                   ImmutableList.of(Fields.intField(KEY, 3),
+                                    Fields.longField(KEY2, 3L)), Range.Bound.INCLUSIVE), max);
     Assert.assertEquals(expected.subList(2, 4), actual);
 
     // scan from (1, 8L) inclusive to (3, 3L) exclusive, should only return (2, 2L)
     actual = scanSimpleStructuredRows(
-      Range.create(ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 1),
-                                    FIELD_FACTORY.createLongField(KEY2, 8L)), Range.Bound.INCLUSIVE,
-                   ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 3),
-                                    FIELD_FACTORY.createLongField(KEY2, 3L)), Range.Bound.EXCLUSIVE), max);
+      Range.create(ImmutableList.of(Fields.intField(KEY, 1),
+                                    Fields.longField(KEY2, 8L)), Range.Bound.INCLUSIVE,
+                   ImmutableList.of(Fields.intField(KEY, 3),
+                                    Fields.longField(KEY2, 3L)), Range.Bound.EXCLUSIVE), max);
     Assert.assertEquals(expected.subList(2, 3), actual);
   }
 
@@ -137,19 +133,19 @@ public abstract class StructuredTableTest {
 
     List<Collection<Field<?>>> actual =
       scanSimpleStructuredRows(
-        Range.create(Collections.singleton(FIELD_FACTORY.createIntField(KEY, 5)), Range.Bound.INCLUSIVE,
-                     Collections.singleton(FIELD_FACTORY.createIntField(KEY, 15)), Range.Bound.EXCLUSIVE), max);
+        Range.create(Collections.singleton(Fields.intField(KEY, 5)), Range.Bound.INCLUSIVE,
+                     Collections.singleton(Fields.intField(KEY, 15)), Range.Bound.EXCLUSIVE), max);
     Assert.assertEquals(expected.subList(5, 15), actual);
 
     actual =
       scanSimpleStructuredRows(
-        Range.create(Collections.singleton(FIELD_FACTORY.createIntField(KEY, 5)), Range.Bound.EXCLUSIVE,
-                     Collections.singleton(FIELD_FACTORY.createIntField(KEY, 15)), Range.Bound.INCLUSIVE), max);
+        Range.create(Collections.singleton(Fields.intField(KEY, 5)), Range.Bound.EXCLUSIVE,
+                     Collections.singleton(Fields.intField(KEY, 15)), Range.Bound.INCLUSIVE), max);
 
     Assert.assertEquals(expected.subList(6, 16), actual);
 
     actual = scanSimpleStructuredRows(
-      Range.singleton(Collections.singleton(FIELD_FACTORY.createIntField(KEY, 46))), max);
+      Range.singleton(Collections.singleton(Fields.intField(KEY, 46))), max);
     Assert.assertEquals(expected.subList(46, 47), actual);
 
     // TODO: test invalid range
@@ -174,11 +170,11 @@ public abstract class StructuredTableTest {
   private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {
     List<Collection<Field<?>>> expected = new ArrayList<>(max);
     for (int i = 0; i < max; i++) {
-      List<Field<?>> fields = Arrays.asList(FIELD_FACTORY.createIntField(KEY, i),
-                                            FIELD_FACTORY.createLongField(KEY2, (long) i),
-                                            FIELD_FACTORY.createStringField(COL1, VAL + i + suffix),
-                                            FIELD_FACTORY.createDoubleField(COL2, (double) i),
-                                            FIELD_FACTORY.createFloatField(COL3, (float) i));
+      List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i),
+                                            Fields.longField(KEY2, (long) i),
+                                            Fields.stringField(COL1, VAL + i + suffix),
+                                            Fields.doubleField(COL2, (double) i),
+                                            Fields.floatField(COL3, (float) i));
       expected.add(fields);
 
       getTransactionRunner().run(context -> {
@@ -192,30 +188,30 @@ public abstract class StructuredTableTest {
   private List<Collection<Field<?>>> readSimpleStructuredRows(int max) throws Exception {
     List<Collection<Field<?>>> actual = new ArrayList<>(max);
     for (int i = 0; i < max; i++) {
-      Field<Integer> key = FIELD_FACTORY.createIntField(KEY, i);
-      Field<Long> key2 = FIELD_FACTORY.createLongField(KEY2, (long) i);
+      Field<Integer> key = Fields.intField(KEY, i);
+      Field<Long> key2 = Fields.longField(KEY2, (long) i);
       final AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
-        rowRef.set(table.read(ImmutableList.of(key, key2), ImmutableList.of(COL1, KEY2, COL2, COL3)));
+        rowRef.set(table.read(ImmutableList.of(key, key2), ImmutableList.of(COL1, COL2, COL3)));
       });
 
       Optional<StructuredRow> row = rowRef.get();
-      if (row.isPresent()) {
-        actual.add(Arrays.asList(key, FIELD_FACTORY.createLongField(KEY2, row.get().getLong(KEY2)),
-                                 FIELD_FACTORY.createStringField(COL1, row.get().getString(COL1)),
-                                 FIELD_FACTORY.createDoubleField(COL2, row.get().getDouble(COL2)),
-                                 FIELD_FACTORY.createFloatField(COL3, row.get().getFloat(COL3))));
-      }
+      row.ifPresent(
+        structuredRow -> actual.add(Arrays.asList(Fields.intField(KEY, structuredRow.getInteger(KEY)),
+                                                  Fields.longField(KEY2, structuredRow.getLong(KEY2)),
+                                                  Fields.stringField(COL1, structuredRow.getString(COL1)),
+                                                  Fields.doubleField(COL2, structuredRow.getDouble(COL2)),
+                                                  Fields.floatField(COL3, structuredRow.getFloat(COL3)))));
     }
     return actual;
   }
 
   private void deleteSimpleStructuredRows(int max) throws Exception {
     for (int i = 0; i < max; i++) {
-      Field<Integer> key = FIELD_FACTORY.createIntField(KEY, i);
-      Field<Long> key2 = FIELD_FACTORY.createLongField(KEY2, (long) i);
+      Field<Integer> key = Fields.intField(KEY, i);
+      Field<Long> key2 = Fields.longField(KEY2, (long) i);
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
@@ -231,11 +227,11 @@ public abstract class StructuredTableTest {
       try (CloseableIterator<StructuredRow> iterator = table.scan(range, max)) {
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
-          actual.add(Arrays.asList(FIELD_FACTORY.createIntField(KEY, row.getInteger(KEY)),
-                                   FIELD_FACTORY.createLongField(KEY2, row.getLong(KEY2)),
-                                   FIELD_FACTORY.createStringField(COL1, row.getString(COL1)),
-                                   FIELD_FACTORY.createDoubleField(COL2, row.getDouble(COL2)),
-                                   FIELD_FACTORY.createFloatField(COL3, row.getFloat(COL3))));
+          actual.add(Arrays.asList(Fields.intField(KEY, row.getInteger(KEY)),
+                                   Fields.longField(KEY2, row.getLong(KEY2)),
+                                   Fields.stringField(COL1, row.getString(COL1)),
+                                   Fields.doubleField(COL2, row.getDouble(COL2)),
+                                   Fields.floatField(COL3, row.getFloat(COL3))));
         }
       }
     });

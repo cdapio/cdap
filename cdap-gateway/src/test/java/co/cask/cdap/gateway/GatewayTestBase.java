@@ -40,6 +40,8 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -189,6 +191,8 @@ public abstract class GatewayTestBase {
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
     port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
+
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     return injector;
   }

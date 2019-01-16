@@ -25,19 +25,26 @@ import javax.annotation.Nullable;
  *           Valid types for primary keys are int, long and string.
  */
 public final class Field<T> {
-  private final String name;
+  private final FieldType fieldType;
   private final T value;
 
-  Field(String name, @Nullable T value) {
-    this.name = name;
+  Field(FieldType fieldType, @Nullable T value) {
+    this.fieldType = fieldType;
     this.value = value;
+  }
+
+  /**
+   * @return the type of the field
+   */
+  public FieldType.Type getFieldType() {
+    return fieldType.getType();
   }
 
   /**
    * @return the field name
    */
   public String getName() {
-    return name;
+    return fieldType.getName();
   }
 
   /**
@@ -57,19 +64,20 @@ public final class Field<T> {
       return false;
     }
     Field field = (Field) o;
-    return Objects.equals(name, field.name) &&
+    return Objects.equals(fieldType, field.fieldType) &&
       Objects.equals(value, field.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, value);
+    return Objects.hash(fieldType, value);
   }
 
   @Override
   public String toString() {
     return "Field{" +
-      "name='" + name + '\'' +
+      "name='" + fieldType.getName() + '\'' +
+      ", type='" + fieldType.getType() + '\'' +
       ", value='" + value + '\'' +
       '}';
   }

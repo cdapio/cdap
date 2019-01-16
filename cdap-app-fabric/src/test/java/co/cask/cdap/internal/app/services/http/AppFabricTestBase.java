@@ -85,6 +85,8 @@ import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
@@ -260,6 +262,9 @@ public abstract class AppFabricTestBase {
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metricStore = injector.getInstance(MetricStore.class);
+
+    // create the tables required for unit test
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.

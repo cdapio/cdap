@@ -44,5 +44,6 @@ public class DataFabricLevelDBModule extends AbstractModule {
       }
     }));
     install(new TransactionExecutorModule());
+    install(new StorageModule());
   }
 }

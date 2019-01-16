@@ -23,6 +23,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.MasterUtils;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -75,7 +76,9 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.store.SecureStoreService;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -683,6 +686,15 @@ public class MasterServiceMain extends DaemonMain {
           // leader election's listener will then shutdown the master
           stop(true);
           throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
+        }
+      }
+
+      StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+      if (tableAdmin.getSpecification(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
+        try {
+          StoreDefinition.createAllTables(tableAdmin);
+        } catch (IOException | AlreadyExistsException e) {
+          throw new RuntimeException("Unable to create the system tables.", e);
         }
       }
       LOG.info("CDAP Master started successfully.");

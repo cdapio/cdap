@@ -23,8 +23,8 @@ import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.FieldType;
+import co.cask.cdap.spi.data.table.field.FieldValidator;
 import co.cask.cdap.spi.data.table.field.Range;
 import com.google.common.base.Joiner;
 import org.slf4j.Logger;
@@ -56,12 +56,12 @@ public class PostgresSqlStructuredTable implements StructuredTable {
 
   private final Connection connection;
   private final StructuredTableSchema tableSchema;
-  private final FieldFactory fieldFactory;
+  private final FieldValidator fieldValidator;
 
   public PostgresSqlStructuredTable(Connection connection, StructuredTableSchema tableSchema) {
     this.connection = connection;
     this.tableSchema = tableSchema;
-    this.fieldFactory = new FieldFactory(tableSchema);
+    this.fieldValidator = new FieldValidator(tableSchema);
   }
 
   @Override
@@ -98,7 +98,11 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     if (columns == null || columns.isEmpty()) {
       throw new InvalidFieldException(tableSchema.getTableId(), columns, "No columns are specified in reading");
     }
-    return readRow(keys, columns);
+
+    // always have the primary key fields included in the columns
+    Set<String> columnFields = new HashSet<>(columns);
+    columnFields.addAll(keys.stream().map(Field::getName).collect(Collectors.toSet()));
+    return readRow(keys, columnFields);
   }
 
   @Override
@@ -153,11 +157,6 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
-  public FieldFactory getFieldFactory() {
-    return fieldFactory;
-  }
-
-  @Override
   public void close() throws IOException {
     try {
       connection.close();
@@ -205,6 +204,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
 
   private void setField(PreparedStatement statement, Field field,
                         int parameterIndex) throws SQLException, InvalidFieldException {
+    fieldValidator.validateField(field);
     Object value = field.getValue();
     FieldType.Type type = tableSchema.getType(field.getName());
     if (type == null) {
@@ -300,7 +300,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   private String getScanQuery(Range range, int limit) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ").append(tableSchema.getTableId().getName());
     if (range.getBegin().isEmpty() && range.getEnd().isEmpty()) {
-      return queryString.append(";").toString();
+      return queryString.append(" LIMIT ").append(limit).append(";").toString();
     }
 
     queryString.append(" WHERE ");
@@ -310,7 +310,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     }
     appendScanBound(queryString, range.getEnd(), range.getEndBound().equals(Range.Bound.INCLUSIVE) ? "<=" : "<");
     queryString.append(" LIMIT ").append(limit).append(";");
-     return queryString.toString();
+    return queryString.toString();
   }
 
   private void appendScanBound(StringBuilder sb,

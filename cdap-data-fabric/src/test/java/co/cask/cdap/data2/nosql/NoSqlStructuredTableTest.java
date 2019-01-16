@@ -59,27 +59,20 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final DatasetContext CONTEXT1 = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
-  private static final NamespaceId NS1 = new NamespaceId(CONTEXT1.getNamespaceId());
   private static final StructuredTableSchema SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
 
   private static TransactionManager txManager;
-  private static TransactionSystemClient txClient;
   private static NoSqlStructuredTableAdmin noSqlTableAdmin;
+  private static TransactionRunner transactionRunner;
 
   @Override
-  protected StructuredTableAdmin getStructuredTableAdmin() throws Exception {
+  protected StructuredTableAdmin getStructuredTableAdmin() {
     return noSqlTableAdmin;
   }
 
   @Override
-  protected TransactionRunner getTransactionRunner() throws Exception {
-    Transactional txnl = Transactions.createTransactional(
-      new SingleThreadDatasetCache(new SystemDatasetInstantiator(dsFrameworkUtil.getFramework()),
-                                   new TransactionSystemClientAdapter(txClient),
-                                   NS1,
-                                   Collections.emptyMap(), null, null));
-    return new NoSqlTransactionRunner(getStructuredTableAdmin(), txnl);
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
   }
 
   @BeforeClass
@@ -87,8 +80,10 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     Configuration txConf = HBaseConfiguration.create();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
-    txClient = new InMemoryTxSystemClient(txManager);
+    TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
     noSqlTableAdmin = new NoSqlStructuredTableAdmin(dsFrameworkUtil.getFramework());
+    transactionRunner = new NoSqlTransactionRunner(dsFrameworkUtil.getFramework(),
+                                                   new TransactionSystemClientAdapter(txClient));
   }
 
   @AfterClass
