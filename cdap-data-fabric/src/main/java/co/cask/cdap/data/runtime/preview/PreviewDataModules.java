@@ -44,7 +44,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 
 /**
  * Data fabric modules for preview
@@ -52,12 +52,12 @@ import org.apache.tephra.TransactionManager;
 public class PreviewDataModules {
   public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
 
-  public Module getDataFabricModule(final TransactionManager transactionManager) {
+  public Module getDataFabricModule(final TransactionSystemClient transactionSystemClient) {
     return Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
       @Override
       protected void configure() {
-        // InMemorySystemTxClient uses TransactionManager directly, so we need to share TransactionManager.
-        bind(TransactionManager.class).toInstance(transactionManager);
+        // Use the distributed version of the transaction client
+        bind(TransactionSystemClient.class).toInstance(transactionSystemClient);
       }
     });
   }

@@ -103,7 +103,7 @@ public class DefaultPreviewManagerTest {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new SecureStoreModules().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new PreviewHttpModule(),
+      new PreviewHttpModule().getStandaloneModules(),
       new ProvisionerModule(),
       new AbstractModule() {
         @Override

@@ -22,6 +22,7 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
+import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -274,7 +275,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getDistributedModules() {
 
-    return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
+    return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class, PreviewHttpHandler.class),
+                           new PreviewHttpModule().getDistributedModules(),
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule().getDistributedModule(),
                            new EntityVerifierModule(),
@@ -319,11 +321,13 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
+                               handlerHookNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
                              }
                            });
   }
