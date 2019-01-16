@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.test.MockTwillContext;
+import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -54,13 +55,21 @@ public class SparkTwillRunnableModuleTest {
         }
       }.createModule(CConfiguration.create(), new Configuration(),
                      createProgramOptions(programRunId, mode), programRunId);
-      Guice.createInjector(module).getInstance(SparkProgramRunner.class);
+      Injector injector = Guice.createInjector(module);
+      injector.getInstance(SparkProgramRunner.class);
+      if (mode == ClusterMode.ON_PREMISE) {
+        injector.getInstance(ExploreClient.class);
+      }
 
       Injector contextInjector = SparkRuntimeContextProvider.createInjector(CConfiguration.create(),
                                                                             new Configuration(),
                                                                             programRunId.getParent(),
                                                                             createProgramOptions(programRunId, mode));
       contextInjector.getInstance(PluginFinder.class);
+
+      if (mode == ClusterMode.ON_PREMISE) {
+        contextInjector.getInstance(ExploreClient.class);
+      }
     }
   }
 
