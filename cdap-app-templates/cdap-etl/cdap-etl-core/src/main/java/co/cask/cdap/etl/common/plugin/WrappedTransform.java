@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
@@ -46,6 +47,14 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     caller.callUnchecked((Callable<Void>) () -> {
       transform.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      transform.propagateSchema(stageConfigurer);
       return null;
     });
   }

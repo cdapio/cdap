@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.plugin;
 
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
@@ -48,6 +49,14 @@ public class WrappedStreamingSource<T> extends StreamingSource<T> {
         source.configurePipeline(pipelineConfigurer);
         return null;
       }
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      source.propagateSchema(stageConfigurer);
+      return null;
     });
   }
 

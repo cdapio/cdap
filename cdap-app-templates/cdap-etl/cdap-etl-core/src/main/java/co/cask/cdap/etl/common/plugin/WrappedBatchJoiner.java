@@ -19,6 +19,7 @@ package co.cask.cdap.etl.common.plugin;
 import co.cask.cdap.etl.api.JoinConfig;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
+import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerContext;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
@@ -50,6 +51,13 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
   public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       joiner.configurePipeline(multiInputPipelineConfigurer);
+      return null;
+    });
+  }
+  @Override
+  public void propagateSchema(MultiInputStageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      joiner.propagateSchema(stageConfigurer);
       return null;
     });
   }

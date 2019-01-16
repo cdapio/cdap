@@ -325,12 +325,15 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
     try {
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
+        multiPlugin.propagateSchema(pipelineConfigurer.getStageConfigurer());
         multiPlugin.configurePipeline(pipelineConfigurer);
       } else if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
         MultiOutputPipelineConfigurable multiOutputPlugin = (MultiOutputPipelineConfigurable) plugin;
+        multiOutputPlugin.propagateSchema(pipelineConfigurer.getStageConfigurer());
         multiOutputPlugin.configurePipeline(pipelineConfigurer);
       } else if (!type.equals(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
         PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
+        singlePlugin.propagateSchema(pipelineConfigurer.getStageConfigurer());
         singlePlugin.configurePipeline(pipelineConfigurer);
       }
     } catch (Exception e) {

@@ -50,6 +50,7 @@ import co.cask.cdap.datapipeline.spark.LineFilterProgram;
 import co.cask.cdap.datapipeline.spark.WordCount;
 import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.Engine;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
@@ -179,6 +180,20 @@ public class DataPipelineTest extends HydratorTestBase {
   @After
   public void cleanupTest() {
     getMetricsManager().resetAll();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testValidateCalledAtDeployment() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("tableName", "dummySource");
+    properties.put("schema", "--invalid--");
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", new ETLPlugin(MockSource.NAME, BatchSource.PLUGIN_TYPE, properties)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin("dummySink")))
+      .addConnection("source", "sink")
+      .build();
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    deployApplication(NamespaceId.DEFAULT.app(UUID.randomUUID().toString()), appRequest);
   }
 
   @Test

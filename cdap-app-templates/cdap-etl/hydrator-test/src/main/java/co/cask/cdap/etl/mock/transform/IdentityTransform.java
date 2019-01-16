@@ -23,7 +23,6 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
@@ -42,8 +41,7 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 

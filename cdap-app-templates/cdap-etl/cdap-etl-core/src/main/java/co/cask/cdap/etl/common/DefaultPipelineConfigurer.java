@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.DatasetConfigurer;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
@@ -123,6 +124,12 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
     return stageConfigurer;
   }
 
+  @Nullable
+  @Override
+  public Schema getInputSchema() {
+    return stageConfigurer.getInputSchema();
+  }
+
   @Override
   public Engine getEngine() {
     return engine;
@@ -137,6 +144,11 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
   @Override
   public MultiInputStageConfigurer getMultiInputStageConfigurer() {
     return stageConfigurer;
+  }
+
+  @Override
+  public Map<String, Schema> getInputSchemas() {
+    return stageConfigurer.getInputSchemas();
   }
 
   @Override

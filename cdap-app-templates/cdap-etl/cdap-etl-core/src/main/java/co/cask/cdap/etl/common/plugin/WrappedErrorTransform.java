@@ -20,6 +20,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 
@@ -48,6 +49,14 @@ public class WrappedErrorTransform<IN, OUT> extends ErrorTransform<IN, OUT> {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     caller.callUnchecked((Callable<Void>) () -> {
       transform.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      transform.propagateSchema(stageConfigurer);
       return null;
     });
   }

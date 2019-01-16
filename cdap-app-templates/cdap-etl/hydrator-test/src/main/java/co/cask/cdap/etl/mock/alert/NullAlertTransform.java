@@ -23,7 +23,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -47,15 +46,14 @@ public class NullAlertTransform extends Transform<StructuredRecord, StructuredRe
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     if (input.get(conf.field) == null) {
-      emitter.emitAlert(new HashMap<String, String>());
+      emitter.emitAlert(new HashMap<>());
     } else {
       emitter.emit(input);
     }

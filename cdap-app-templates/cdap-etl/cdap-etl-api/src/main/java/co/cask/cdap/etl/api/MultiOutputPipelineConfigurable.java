@@ -17,18 +17,20 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.validation.SchemaPropagator;
 
 /**
  * Allows a stage with multiple outputs to configure the pipeline.
  */
 @Beta
-public interface MultiOutputPipelineConfigurable {
+public interface MultiOutputPipelineConfigurable extends SchemaPropagator<MultiOutputStageConfigurer> {
 
   /**
-   * Configure a pipeline, adding datasets and streams that the stage needs.
+   * Configure a pipeline, adding datasets and plugins that the stage needs.
    *
-   * @param multiOutputPipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiOutputPipelineConfigurer the configurer used to add required datasets and plugins
    * @throws IllegalArgumentException if the given config is invalid
    */
   void configurePipeline(MultiOutputPipelineConfigurer multiOutputPipelineConfigurer);
+
 }

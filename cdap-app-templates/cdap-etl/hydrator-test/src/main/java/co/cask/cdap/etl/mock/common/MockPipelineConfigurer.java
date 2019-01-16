@@ -32,7 +32,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Mock test configurer used to test configure pipeline's validation of input schema and setting of output shcema.
+ * Mock test configurer used to test configure pipeline's validation of input schema and setting of output schema.
  */
 public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfigurer {
   private final Schema inputSchema;
@@ -50,7 +50,7 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
   }
 
   public MockPipelineConfigurer(Schema inputSchema) {
-    this(inputSchema, Collections.<String, Object>emptyMap());
+    this(inputSchema, Collections.emptyMap());
   }
 
   @Nullable
@@ -77,6 +77,12 @@ public class MockPipelineConfigurer implements PipelineConfigurer, DatasetConfig
 
       }
     };
+  }
+
+  @Nullable
+  @Override
+  public Schema getInputSchema() {
+    return inputSchema;
   }
 
   @Override

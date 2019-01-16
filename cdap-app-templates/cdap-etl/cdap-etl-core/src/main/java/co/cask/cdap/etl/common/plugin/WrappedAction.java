@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 
@@ -39,6 +40,14 @@ public class WrappedAction extends Action {
   public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       action.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      action.propagateSchema(stageConfigurer);
       return null;
     });
   }

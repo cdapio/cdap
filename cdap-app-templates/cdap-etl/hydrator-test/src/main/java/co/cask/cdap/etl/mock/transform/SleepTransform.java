@@ -24,11 +24,10 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -50,11 +49,10 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    if (config.millis < 1) {
-      throw new IllegalArgumentException("millis must be at least 1.");
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    if (config.millis != null && config.millis < 1) {
+      throw new InvalidConfigPropertyException("millis", "millis must be at least 1.");
     }
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 

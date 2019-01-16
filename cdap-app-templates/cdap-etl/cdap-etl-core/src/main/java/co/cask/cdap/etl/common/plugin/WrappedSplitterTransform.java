@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.api.MultiOutputPipelineConfigurer;
+import co.cask.cdap.etl.api.MultiOutputStageConfigurer;
 import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.TransformContext;
 
@@ -46,6 +47,14 @@ public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
   public void configurePipeline(MultiOutputPipelineConfigurer multiOutputPipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       transform.configurePipeline(multiOutputPipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(MultiOutputStageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      transform.propagateSchema(stageConfigurer);
       return null;
     });
   }

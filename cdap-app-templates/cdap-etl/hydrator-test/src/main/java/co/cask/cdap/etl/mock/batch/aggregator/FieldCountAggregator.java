@@ -25,7 +25,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
@@ -53,15 +52,14 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     if (!config.containsMacro("fieldType") && !config.containsMacro("fieldName")) {
       stageConfigurer.setOutputSchema(config.getSchema());
     }
   }
 
   @Override
-  public void prepareRun(BatchAggregatorContext context) throws Exception {
+  public void prepareRun(BatchAggregatorContext context) {
     if ("long".equalsIgnoreCase(config.fieldType)) {
       context.setGroupKeyClass(Long.class);
     } else {
@@ -70,7 +68,7 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
   }
 
   @Override
-  public void groupBy(StructuredRecord input, Emitter<Object> emitter) throws Exception {
+  public void groupBy(StructuredRecord input, Emitter<Object> emitter) {
     if ("long".equalsIgnoreCase(config.fieldType)) {
       emitter.emit(input.get(config.fieldName));
       emitter.emit(0L);
@@ -82,7 +80,7 @@ public class FieldCountAggregator extends BatchAggregator<Object, StructuredReco
 
   @Override
   public void aggregate(Object groupKey, Iterator<StructuredRecord> groupValues,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+                        Emitter<StructuredRecord> emitter) {
     long count = 0;
     while (groupValues.hasNext()) {
       groupValues.next();

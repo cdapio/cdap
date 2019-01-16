@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.plugin;
 
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.plugin.Caller;
 
@@ -43,6 +44,14 @@ public class WrappedWindower extends Windower {
         windower.configurePipeline(pipelineConfigurer);
         return null;
       }
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      windower.propagateSchema(stageConfigurer);
+      return null;
     });
   }
 

@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -40,19 +39,18 @@ public class IdentityAggregator extends BatchAggregator<StructuredRecord, Struct
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 
   @Override
-  public void groupBy(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
+  public void groupBy(StructuredRecord input, Emitter<StructuredRecord> emitter) {
     emitter.emit(input);
   }
 
   @Override
   public void aggregate(StructuredRecord structuredRecord, Iterator<StructuredRecord> groupValues,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+                        Emitter<StructuredRecord> emitter) {
     while (groupValues.hasNext()) {
       emitter.emit(groupValues.next());
     }

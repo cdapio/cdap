@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
@@ -50,6 +51,14 @@ public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAg
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       aggregator.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      aggregator.propagateSchema(stageConfigurer);
       return null;
     });
   }

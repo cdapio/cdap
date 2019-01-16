@@ -17,18 +17,21 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.validation.SchemaPropagator;
 
 /**
  * Allows the stage to configure pipeline.
  */
 @Beta
-public interface PipelineConfigurable {
+public interface PipelineConfigurable extends SchemaPropagator<StageConfigurer> {
 
   /**
-   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   * Configure a pipeline, declaring what datasets and plugins will be needed when the pipeline actually runs.
+   * This is called exactly once, when a pipeline is deployed.
    *
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
+   * @param pipelineConfigurer the configurer used to add required datasets and plugins
    * @throws IllegalArgumentException if the given config is invalid
    */
-  void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException;
+  void configurePipeline(PipelineConfigurer pipelineConfigurer);
+
 }

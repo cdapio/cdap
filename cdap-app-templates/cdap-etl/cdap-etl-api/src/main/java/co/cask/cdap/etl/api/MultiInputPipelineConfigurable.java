@@ -17,17 +17,19 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.validation.SchemaPropagator;
 
 /**
  * Allows the stage with multiple inputs to configure pipeline.
  */
 @Beta
-public interface MultiInputPipelineConfigurable {
+public interface MultiInputPipelineConfigurable extends SchemaPropagator<MultiInputStageConfigurer> {
   /**
-   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   * Configure an ETL pipeline, adding datasets and plugins that the stage needs.
    *
-   * @param multiInputPipelineConfigurer the configurer used to add required datasets and streams
+   * @param multiInputPipelineConfigurer the configurer used to add required datasets and plugins
    * @throws IllegalArgumentException if the given config is invalid
    */
   void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) throws IllegalArgumentException;
+
 }

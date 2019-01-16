@@ -27,9 +27,10 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.JoinConfig;
 import co.cask.cdap.etl.api.JoinElement;
-import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
 import co.cask.cdap.etl.api.MultiInputStageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
@@ -55,11 +56,10 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
   }
 
   @Override
-  public void configurePipeline(MultiInputPipelineConfigurer pipelineConfigurer) {
-    MultiInputStageConfigurer stageConfigurer = pipelineConfigurer.getMultiInputStageConfigurer();
+  public void propagateSchema(MultiInputStageConfigurer stageConfigurer) {
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     if (inputSchemas.size() != 2) {
-      throw new IllegalArgumentException(String.format(
+      throw new InvalidStageException(String.format(
         "The DupeFlagger plugin must have exactly two inputs with the same schema, but found %d inputs.",
         inputSchemas.size()));
     }
@@ -67,12 +67,12 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
     Schema schema1 = schemaIterator.next();
     Schema schema2 = schemaIterator.next();
     if (!schema1.equals(schema2)) {
-      throw new IllegalArgumentException("The DupeFlagger plugin must have exactly two inputs with the same schema, " +
-                                           "but the schemas are not the same.");
+      throw new InvalidStageException("The DupeFlagger plugin must have exactly two inputs with the same schema, " +
+                                        "but the schemas are not the same.");
     }
     if (!config.containsMacro("keep")) {
       if (!inputSchemas.keySet().contains(config.keep)) {
-        throw new IllegalArgumentException(config.keep + " is not an input.");
+        throw new InvalidConfigPropertyException("keep", config.keep + " is not an input.");
       }
     }
 
@@ -89,7 +89,7 @@ public class DupeFlagger extends BatchJoiner<StructuredRecord, StructuredRecord,
   }
 
   @Override
-  public StructuredRecord joinOn(String stageName, StructuredRecord record) throws Exception {
+  public StructuredRecord joinOn(String stageName, StructuredRecord record) {
     return record;
   }
 

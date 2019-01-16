@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.MultiOutputPipelineConfigurer;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.SplitterTransform;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -882,13 +883,17 @@ public class PipelineSpecGeneratorTest {
     }
 
     @Override
-    public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    public void propagateSchema(StageConfigurer stageConfigurer) {
       if (outputSchema != null) {
-        pipelineConfigurer.getStageConfigurer().setOutputSchema(outputSchema);
+        stageConfigurer.setOutputSchema(outputSchema);
       }
       if (errorSchema != null) {
-        pipelineConfigurer.getStageConfigurer().setErrorSchema(errorSchema);
+        stageConfigurer.setErrorSchema(errorSchema);
       }
+    }
+
+    @Override
+    public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
       pipelineConfigurer.setPipelineProperties(pipelineProperties);
     }
 

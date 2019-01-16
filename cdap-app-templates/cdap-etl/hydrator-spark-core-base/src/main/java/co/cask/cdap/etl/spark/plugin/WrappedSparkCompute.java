@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.plugin;
 
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.common.plugin.Caller;
@@ -48,6 +49,14 @@ public class WrappedSparkCompute<IN, OUT> extends SparkCompute<IN, OUT> {
         compute.configurePipeline(pipelineConfigurer);
         return null;
       }
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      compute.propagateSchema(stageConfigurer);
+      return null;
     });
   }
 

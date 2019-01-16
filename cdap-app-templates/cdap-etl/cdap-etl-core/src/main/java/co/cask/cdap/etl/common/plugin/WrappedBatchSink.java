@@ -19,6 +19,7 @@ package co.cask.cdap.etl.common.plugin;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
@@ -88,6 +89,14 @@ public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OU
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       batchSink.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      batchSink.propagateSchema(stageConfigurer);
       return null;
     });
   }

@@ -23,9 +23,10 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.collect.ImmutableMap;
@@ -62,11 +63,11 @@ public class MockSource extends StreamingSource<StructuredRecord> {
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     try {
-      pipelineConfigurer.getStageConfigurer().setOutputSchema(Schema.parseJson(conf.schema));
+      stageConfigurer.setOutputSchema(Schema.parseJson(conf.schema));
     } catch (IOException e) {
-      throw new IllegalArgumentException("Could not parse schema " + conf.schema);
+      throw new InvalidConfigPropertyException("schema", "Could not parse schema " + conf.schema);
     }
   }
 

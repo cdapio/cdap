@@ -25,7 +25,6 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.ErrorTransform;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
@@ -44,8 +43,7 @@ public class FlattenErrorTransform extends ErrorTransform<StructuredRecord, Stru
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     Schema inputSchema = stageConfigurer.getInputSchema();
     if (inputSchema != null) {
       stageConfigurer.setOutputSchema(getOutputSchema(inputSchema));

@@ -19,6 +19,7 @@ package co.cask.cdap.etl.common.plugin;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -94,6 +95,14 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN,
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked((Callable<Void>) () -> {
       batchSource.configurePipeline(pipelineConfigurer);
+      return null;
+    });
+  }
+
+  @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    caller.callUnchecked(() -> {
+      batchSource.propagateSchema(stageConfigurer);
       return null;
     });
   }

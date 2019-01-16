@@ -24,9 +24,9 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
@@ -49,13 +49,12 @@ public class FieldsPrefixTransform extends Transform<StructuredRecord, Structure
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+  public void propagateSchema(StageConfigurer stageConfigurer) {
     try {
       Schema outSchema = config.getOutputSchema(Schema.parseJson(config.schemaStr));
       stageConfigurer.setOutputSchema(outSchema);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Invalid output schema: " + e.getMessage(), e);
+      throw new InvalidConfigPropertyException("schemaStr", "Invalid output schema: " + e.getMessage(), e);
     }
   }
 

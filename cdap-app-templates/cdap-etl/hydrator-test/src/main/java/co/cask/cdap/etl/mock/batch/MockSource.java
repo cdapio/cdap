@@ -36,9 +36,11 @@ import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.cdap.test.DataSetManager;
@@ -61,9 +63,9 @@ import javax.annotation.Nullable;
  * Mock source that can be used to write a list of records in a Table and reads them out in a pipeline run.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
-@Name("Mock")
+@Name(MockSource.NAME)
 public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
-
+  public static final String NAME = "Mock";
   private static final Logger LOG = LoggerFactory.getLogger(MockSource.class);
 
   private static final Gson GSON = new GsonBuilder()
@@ -93,16 +95,20 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   }
 
   @Override
+  public void propagateSchema(StageConfigurer stageConfigurer) {
+    if (config.schema != null) {
+      try {
+        stageConfigurer.setOutputSchema(Schema.parseJson(config.schema));
+      } catch (IOException e) {
+        throw new InvalidConfigPropertyException("schema", "Could not parse schema: " + e.getMessage());
+      }
+    }
+  }
+
+  @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     pipelineConfigurer.createDataset(config.tableName, Table.class);
-    if (config.schema != null) {
-      try {
-        pipelineConfigurer.getStageConfigurer().setOutputSchema(Schema.parseJson(config.schema));
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Could not parse schema " + config.schema, e);
-      }
-    }
   }
 
   @Override

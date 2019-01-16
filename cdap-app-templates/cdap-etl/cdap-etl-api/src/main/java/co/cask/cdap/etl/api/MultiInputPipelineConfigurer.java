@@ -18,7 +18,9 @@ package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.validation.SchemaPropagator;
 
 import java.util.Map;
 
@@ -33,8 +35,17 @@ public interface MultiInputPipelineConfigurer extends PluginConfigurer, DatasetC
   /**
    * Get multi input stage configurer for the pipeline stage
    * @return multi input stage configurer
+   * @deprecated schema propagation should be handled by {@link SchemaPropagator#propagateSchema(Object)}
    */
+  @Deprecated
   MultiInputStageConfigurer getMultiInputStageConfigurer();
+
+  /**
+   * Get the map of input stageName to input schema for this stage, or an empty map if its unknown
+   *
+   * @return map of input schemas
+   */
+  Map<String, Schema> getInputSchemas();
 
   /**
    * @return the engine for this pipeline

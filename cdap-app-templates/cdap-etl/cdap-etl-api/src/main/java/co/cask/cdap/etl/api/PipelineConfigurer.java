@@ -18,9 +18,12 @@ package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.etl.api.validation.SchemaPropagator;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
@@ -32,8 +35,18 @@ public interface PipelineConfigurer extends PluginConfigurer, DatasetConfigurer 
   /**
    * Get stage configurer for the pipeline stage
    * @return stage configurer
+   * @deprecated schema propagation should be done be {@link SchemaPropagator#propagateSchema(Object)}
    */
+  @Deprecated
   StageConfigurer getStageConfigurer();
+
+  /**
+   * Get the input schema for this stage, or null if its unknown
+   *
+   * @return input schema
+   */
+  @Nullable
+  Schema getInputSchema();
 
   /**
    * @return the engine for this pipeline
