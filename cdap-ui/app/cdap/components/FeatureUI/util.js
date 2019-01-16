@@ -1,6 +1,7 @@
 import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
+import isNil from 'lodash/isNil';
 
 export function toCamelCase(value) {
   return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
@@ -156,3 +157,19 @@ export function getFeatureObject(props) {
   return featureObject;
 }
 
+export function checkResponseError(result) {
+  return (isNil(result) ||
+  (result.status && result.status > 200) ||
+  (result.statusCode && result.statusCode > 200) ||
+  (result.response && result.response.status && result.response.status > 200));
+}
+
+export function getErrorMessage(error) {
+  let errorMessage = "Error in retrieving data";
+  if(!isEmpty(error.message)) {
+    errorMessage = error.message;
+  } else if(error.response && !isEmpty(error.response.message)) {
+    errorMessage = error.response.message;
+  }
+  return errorMessage;
+}
