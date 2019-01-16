@@ -94,7 +94,7 @@ export default class CutDirective extends Component {
     }
     let { start, end } = this.state.textSelectionRange;
     let tableContainer = document.getElementById('dataprep-table-id');
-    let targetId = `highlight-cell-${this.state.textSelectionRange.index}`;
+    let targetId = document.getElementById(`highlight-cell-${this.state.textSelectionRange.index}`);
     /*
       FIXME: Follow up on this issue: https://github.com/FezVrasta/popper.js/issues/276
     */
@@ -105,7 +105,6 @@ export default class CutDirective extends Component {
         target={targetId}
         innerClassName="cut-directive-popover"
         className="highlight-popover"
-        container={tableContainer}
         modifiers={{
           shift: {
             order: 800,

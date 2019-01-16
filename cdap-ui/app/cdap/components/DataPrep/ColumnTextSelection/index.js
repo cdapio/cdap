@@ -112,11 +112,13 @@ export default class ColumnTextSelection extends Component {
           textSelectionRange,
         },
         () => {
-          this.props.onSelect({
-            textSelectionRange,
-            rowNumber: index,
-          });
-          this.props.togglePopover(true);
+          setTimeout(() => {
+            this.props.onSelect({
+              textSelectionRange,
+              rowNumber: index,
+            });
+            this.props.togglePopover(true);
+          }, 2000);
         }
       );
       this.newColName = this.props.columns[0] + '_copy';
@@ -156,7 +158,7 @@ export default class ColumnTextSelection extends Component {
             {index === this.state.textSelectionRange.index ? (
               <div>
                 <span>{row[head].slice(0, this.state.textSelectionRange.start)}</span>
-                <span id={`highlight-cell-${index}`} style={{ position: 'relative' }}>
+                <span id={`highlight-cell-${index}`}>
                   {row[head].slice(
                     this.state.textSelectionRange.start,
                     this.state.textSelectionRange.end
