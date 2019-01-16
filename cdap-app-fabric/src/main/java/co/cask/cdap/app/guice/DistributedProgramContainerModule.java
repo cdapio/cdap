@@ -40,6 +40,7 @@ import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
 import co.cask.cdap.data2.registry.MessagingUsageWriter;
 import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
@@ -195,6 +196,13 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
     modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new NamespaceQueryAdminModule());
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
+        bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
+      }
+    });
   }
 
   private void addIsolatedModules(List<Module> modules) {

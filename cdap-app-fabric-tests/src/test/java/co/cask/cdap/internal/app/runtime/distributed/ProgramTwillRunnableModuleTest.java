@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.test.MockTwillContext;
+import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -54,7 +55,9 @@ public class ProgramTwillRunnableModuleTest {
       }
     }.createModule(CConfiguration.create(), new Configuration(),
                    createProgramOptions(programRunId, ClusterMode.ON_PREMISE), programRunId);
-    Guice.createInjector(module).getInstance(ServiceProgramRunner.class);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(ServiceProgramRunner.class);
+    injector.getInstance(ExploreClient.class);
   }
 
   @Test
@@ -64,7 +67,9 @@ public class ProgramTwillRunnableModuleTest {
                                                                    createProgramOptions(programRunId,
                                                                                         ClusterMode.ON_PREMISE),
                                                                    programRunId);
-    Guice.createInjector(module).getInstance(WorkerProgramRunner.class);
+    Injector injector = Guice.createInjector(module);
+    injector.getInstance(WorkerProgramRunner.class);
+    injector.getInstance(ExploreClient.class);
   }
 
   @Test
@@ -74,7 +79,11 @@ public class ProgramTwillRunnableModuleTest {
       Module module = new MapReduceTwillRunnable("mapreduce").createModule(CConfiguration.create(), new Configuration(),
                                                                            createProgramOptions(programRunId, mode),
                                                                            programRunId);
-      Guice.createInjector(module).getInstance(MapReduceProgramRunner.class);
+      Injector injector = Guice.createInjector(module);
+      injector.getInstance(MapReduceProgramRunner.class);
+      if (mode == ClusterMode.ON_PREMISE) {
+        injector.getInstance(ExploreClient.class);
+      }
     }
   }
 
@@ -89,6 +98,10 @@ public class ProgramTwillRunnableModuleTest {
       injector.getInstance(WorkflowProgramRunner.class);
       // Workflow supports spark, which supports PluginFinder
       injector.getInstance(PluginFinder.class);
+
+      if (mode == ClusterMode.ON_PREMISE) {
+        injector.getInstance(ExploreClient.class);
+      }
     }
   }
 
