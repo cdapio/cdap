@@ -7,12 +7,7 @@ import './GridContainer.scss';
 
 class GridContainer extends Component {
     constructor(props) {
-        super(props);
-
-        // this.state = {
-        //   columnDefs:this.props.gridColums,
-        //   rowData:this.props.rowData
-        // };
+      super(props);
     }
 
     refreshGridColumns = (data) => {
