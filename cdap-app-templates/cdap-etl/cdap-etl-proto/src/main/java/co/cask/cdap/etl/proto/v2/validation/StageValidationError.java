@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,32 +12,22 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package co.cask.cdap.etl.batch;
-
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
+package co.cask.cdap.etl.proto.v2.validation;
 
 import java.util.Objects;
 
 /**
- * Specification for a batch action.
+ * An error specific to a single pipeline stage.
  */
-public class ActionSpec {
-  private final String name;
-  private final PluginSpec plugin;
+public class StageValidationError extends ValidationError {
+  protected final String stage;
 
-  public ActionSpec(String name, PluginSpec plugin) {
-    this.name = name;
-    this.plugin = plugin;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public PluginSpec getPluginSpec() {
-    return plugin;
+  public StageValidationError(Type type, String message, String stage) {
+    super(type, message);
+    this.stage = stage;
   }
 
   @Override
@@ -48,23 +38,15 @@ public class ActionSpec {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    ActionSpec that = (ActionSpec) o;
-
-    return Objects.equals(name, that.name) &&
-      Objects.equals(plugin, that.plugin);
+    if (!super.equals(o)) {
+      return false;
+    }
+    StageValidationError that = (StageValidationError) o;
+    return Objects.equals(stage, that.stage);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin);
-  }
-
-  @Override
-  public String toString() {
-    return "ActionSpec{" +
-      "name='" + name + '\'' +
-      ", plugin=" + plugin +
-      '}';
+    return Objects.hash(super.hashCode(), stage);
   }
 }

@@ -43,6 +43,7 @@ public final class ETLBatchConfig extends ETLConfig {
   private final List<ETLStage> postActions;
   // for backwards compatibility
   private final List<ETLStage> actions;
+  private final boolean service;
 
   private ETLBatchConfig(Set<ETLStage> stages,
                          Set<Connection> connections,
@@ -56,7 +57,8 @@ public final class ETLBatchConfig extends ETLConfig {
                          Resources clientResources,
                          int numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
-                         Map<String, String> engineProperties) {
+                         Map<String, String> engineProperties,
+                         boolean service) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, engineProperties);
     this.postActions = ImmutableList.copyOf(postActions);
@@ -65,6 +67,11 @@ public final class ETLBatchConfig extends ETLConfig {
     this.maxConcurrentRuns = maxConcurrentRuns;
     // field only exists for backwards compatibility -- used by convertOldConfig()
     this.actions = null;
+    this.service = service;
+  }
+
+  public boolean isService() {
+    return service;
   }
 
   /**
@@ -159,6 +166,14 @@ public final class ETLBatchConfig extends ETLConfig {
   }
 
   /**
+   * @return the config used for the system service and not a pipeline.
+   */
+  public static ETLBatchConfig forSystemService() {
+    return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
+                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true);
+  }
+
+  /**
    * Builder for creating configs.
    */
   public static class Builder extends ETLConfig.Builder<Builder> {
@@ -216,7 +231,7 @@ public final class ETLBatchConfig extends ETLConfig {
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, maxConcurrentRuns, properties);
+                                numOfRecordsPreview, maxConcurrentRuns, properties, false);
     }
   }
 }

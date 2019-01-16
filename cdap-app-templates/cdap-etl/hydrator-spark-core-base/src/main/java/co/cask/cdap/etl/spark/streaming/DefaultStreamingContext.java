@@ -29,7 +29,7 @@ import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;

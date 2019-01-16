@@ -25,7 +25,7 @@ import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.ArrayList;
 import java.util.Collections;

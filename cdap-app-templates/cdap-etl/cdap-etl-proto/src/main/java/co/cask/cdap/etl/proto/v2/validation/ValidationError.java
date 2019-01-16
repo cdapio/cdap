@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,32 +12,36 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package co.cask.cdap.etl.batch;
-
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
+package co.cask.cdap.etl.proto.v2.validation;
 
 import java.util.Objects;
 
 /**
- * Specification for a batch action.
+ * Represents some sort of error that occurred during validation.
  */
-public class ActionSpec {
-  private final String name;
-  private final PluginSpec plugin;
+public class ValidationError {
+  protected final Type type;
+  protected final String message;
 
-  public ActionSpec(String name, PluginSpec plugin) {
-    this.name = name;
-    this.plugin = plugin;
+  /**
+   * Types of validation errors
+   */
+  public enum Type {
+    ERROR,
+    INVALID_FIELD,
+    MISSING_ARTIFACT
   }
 
-  public String getName() {
-    return name;
+  public ValidationError(String message) {
+    this(Type.ERROR, message);
   }
 
-  public PluginSpec getPluginSpec() {
-    return plugin;
+  public ValidationError(Type type, String message) {
+    this.type = type;
+    this.message = message;
   }
 
   @Override
@@ -48,23 +52,13 @@ public class ActionSpec {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    ActionSpec that = (ActionSpec) o;
-
-    return Objects.equals(name, that.name) &&
-      Objects.equals(plugin, that.plugin);
+    ValidationError that = (ValidationError) o;
+    return type == that.type &&
+      Objects.equals(message, that.message);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin);
-  }
-
-  @Override
-  public String toString() {
-    return "ActionSpec{" +
-      "name='" + name + '\'' +
-      ", plugin=" + plugin +
-      '}';
+    return Objects.hash(type, message);
   }
 }

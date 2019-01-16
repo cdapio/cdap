@@ -20,7 +20,7 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.List;
 import java.util.Map;

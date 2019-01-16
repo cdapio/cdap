@@ -20,7 +20,7 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 /**
  * Creates DefaultAggregatorContexts.

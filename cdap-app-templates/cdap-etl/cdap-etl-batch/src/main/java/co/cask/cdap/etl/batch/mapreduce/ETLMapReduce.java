@@ -61,7 +61,7 @@ import co.cask.cdap.etl.common.submit.Finisher;
 import co.cask.cdap.etl.common.submit.JoinerContextProvider;
 import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.log.LogStageInjector;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;

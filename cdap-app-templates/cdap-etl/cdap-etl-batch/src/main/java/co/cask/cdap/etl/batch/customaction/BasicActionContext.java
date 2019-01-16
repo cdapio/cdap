@@ -22,7 +22,7 @@ import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 
 import java.util.List;

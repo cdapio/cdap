@@ -19,6 +19,7 @@ package co.cask.cdap.datapipeline;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
+import co.cask.cdap.datapipeline.service.StudioService;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.SplitterTransform;
@@ -53,8 +54,15 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   @Override
   public void configure() {
     ETLBatchConfig config = getConfig();
-    setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
 
+    // if this is for the system services and not an actual pipeline
+    if (config.isService()) {
+      addService(new StudioService());
+      setDescription("Data Pipeline System Services.");
+      return;
+    }
+
+    setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
     addWorkflow(new SmartWorkflow(config, supportedPluginTypes, getConfigurer()));
 
     String timeSchedule = config.getSchedule();

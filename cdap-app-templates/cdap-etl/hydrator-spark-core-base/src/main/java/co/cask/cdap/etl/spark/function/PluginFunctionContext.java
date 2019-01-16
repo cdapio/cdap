@@ -33,9 +33,9 @@ import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.batch.SparkBatchRuntimeContext;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
-import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.Serializable;
 import java.util.Map;

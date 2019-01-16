@@ -27,7 +27,7 @@ import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;

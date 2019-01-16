@@ -28,7 +28,7 @@ import co.cask.cdap.etl.batch.connector.ConnectorSink;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.HashSet;
 import java.util.Set;

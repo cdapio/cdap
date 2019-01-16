@@ -26,8 +26,8 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.spec.PluginSpec;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.gson.Gson;
 
 import java.util.HashMap;

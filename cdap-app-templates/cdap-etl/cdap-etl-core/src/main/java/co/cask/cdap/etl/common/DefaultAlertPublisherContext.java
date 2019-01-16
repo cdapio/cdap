@@ -24,7 +24,7 @@ import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.io.IOException;
 import java.util.List;
