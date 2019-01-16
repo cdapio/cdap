@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@ import co.cask.cdap.common.conf.Constants;
 public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
+  private static final String NONE = "none";
+  private static final String KMS_CLASS_NAME = "co.cask.cdap.security.store.KMSSecureStoreService";
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
@@ -32,6 +34,13 @@ public class SecureStoreUtils {
 
   public static boolean isFileBacked(final CConfiguration cConf) {
     return FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+  }
+
+  /**
+   * Checks if the store provider is none. Returns true if the provider value is set to none.
+   */
+  public static boolean isNone(final CConfiguration cConf) {
+    return NONE.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
   }
 
   public static boolean isKMSCapable() {
@@ -45,9 +54,11 @@ public class SecureStoreUtils {
     }
   }
 
-  public static Class<?> getKMSSecureStore() {
+  @SuppressWarnings("unchecked")
+  public static Class<? extends SecureStoreService> getKMSSecureStore() {
     try {
-      return Class.forName("co.cask.cdap.security.store.KMSSecureStore");
+      // we know that the class is a SecureStoreService
+      return (Class<? extends SecureStoreService>) Class.forName(KMS_CLASS_NAME);
     } catch (ClassNotFoundException e) {
       // KMSSecureStore could not be loaded
       throw new RuntimeException("CDAP KMS classes could not be loaded. " +
