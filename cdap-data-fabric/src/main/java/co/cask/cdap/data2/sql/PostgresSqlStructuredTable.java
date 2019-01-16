@@ -300,7 +300,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   private String getScanQuery(Range range, int limit) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ").append(tableSchema.getTableId().getName());
     if (range.getBegin().isEmpty() && range.getEnd().isEmpty()) {
-      return queryString.append(";").toString();
+      return queryString.append(" LIMIT ").append(limit).append(";").toString();
     }
 
     queryString.append(" WHERE ");
@@ -310,7 +310,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     }
     appendScanBound(queryString, range.getEnd(), range.getEndBound().equals(Range.Bound.INCLUSIVE) ? "<=" : "<");
     queryString.append(" LIMIT ").append(limit).append(";");
-     return queryString.toString();
+    return queryString.toString();
   }
 
   private void appendScanBound(StringBuilder sb,
