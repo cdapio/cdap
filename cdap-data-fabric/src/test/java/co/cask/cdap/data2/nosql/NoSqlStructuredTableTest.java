@@ -179,7 +179,8 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     public Row next() {
       if (iterator.hasNext()) {
         int i = iterator.next();
-        return createResult(new MDSKey.Builder().add("tableNamePrefix").add(i).build().getKey(), "c" + i, "v" + i);
+        return createResult(new MDSKey.Builder().add("tableNamePrefix").add(i).add((long) i).build().getKey(),
+                            "c" + i, "v" + i);
       }
       return null;
     }

@@ -25,6 +25,7 @@ import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import com.google.common.collect.ImmutableList;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,7 +50,10 @@ public abstract class StructuredTableTest {
   private static final StructuredTableId SIMPLE_TABLE = new StructuredTableId("simpleTable");
   private static final FieldFactory FIELD_FACTORY;
   private static final String KEY = "key";
-  private static final String COL = "col";
+  private static final String KEY2 = "key2";
+  private static final String COL1 = "col1";
+  private static final String COL2 = "col2";
+  private static final String COL3 = "col3";
   private static final String VAL = "val";
 
   static {
@@ -57,8 +61,9 @@ public abstract class StructuredTableTest {
     try {
        specification = new StructuredTableSpecification.Builder()
         .withId(SIMPLE_TABLE)
-        .withFields(Fields.intType(KEY), Fields.stringType(COL))
-        .withPrimaryKeys(KEY)
+        .withFields(Fields.intType(KEY), Fields.stringType(COL1), Fields.longType(KEY2),
+                    Fields.doubleType(COL2), Fields.floatType(COL3))
+        .withPrimaryKeys(KEY, KEY2)
         .build();
     } catch (InvalidFieldException e) {
       // this should not happen
@@ -66,8 +71,6 @@ public abstract class StructuredTableTest {
     SIMPLE_SPEC = specification;
     FIELD_FACTORY = new FieldFactory(new StructuredTableSchema(SIMPLE_SPEC));
   }
-
-
 
   protected abstract StructuredTableAdmin getStructuredTableAdmin() throws Exception;
   protected abstract TransactionRunner getTransactionRunner() throws Exception;
@@ -83,6 +86,31 @@ public abstract class StructuredTableTest {
   }
 
   @Test
+  public void testMultipleKeyScan() throws Exception {
+    int max = 10;
+    // Write rows and read them, the rows will have keys (0, 0L), (2, 2L), ..., (9, 9L)
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    List<Collection<Field<?>>> actual = readSimpleStructuredRows(max);
+    Assert.assertEquals(expected, actual);
+
+    // scan from (1, 8L) inclusive to (3, 3L) inclusive, should return (2, 2L) and (3, 3L)
+    actual = scanSimpleStructuredRows(
+      Range.create(ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 1),
+                                    FIELD_FACTORY.createLongField(KEY2, 8L)), Range.Bound.INCLUSIVE,
+                   ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 3),
+                                    FIELD_FACTORY.createLongField(KEY2, 3L)), Range.Bound.INCLUSIVE), max);
+    Assert.assertEquals(expected.subList(2, 4), actual);
+
+    // scan from (1, 8L) inclusive to (3, 3L) exclusive, should only return (2, 2L)
+    actual = scanSimpleStructuredRows(
+      Range.create(ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 1),
+                                    FIELD_FACTORY.createLongField(KEY2, 8L)), Range.Bound.INCLUSIVE,
+                   ImmutableList.of(FIELD_FACTORY.createIntField(KEY, 3),
+                                    FIELD_FACTORY.createLongField(KEY2, 3L)), Range.Bound.EXCLUSIVE), max);
+    Assert.assertEquals(expected.subList(2, 3), actual);
+  }
+
+  @Test
   public void testSimpleReadWriteDelete() throws Exception {
     int max = 10;
 
@@ -91,7 +119,7 @@ public abstract class StructuredTableTest {
     Assert.assertEquals(Collections.emptyList(), actual);
 
     // Write rows and read them
-    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max);
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
     actual = readSimpleStructuredRows(max);
     Assert.assertEquals(expected, actual);
 
@@ -104,7 +132,8 @@ public abstract class StructuredTableTest {
   @Test
   public void testSimpleScan() throws Exception {
     int max = 100;
-    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max);
+
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
 
     List<Collection<Field<?>>> actual =
       scanSimpleStructuredRows(
@@ -128,11 +157,28 @@ public abstract class StructuredTableTest {
     // TODO: test end only range
   }
 
-  private List<Collection<Field<?>>> writeSimpleStructuredRows(int max) throws Exception {
+  @Test
+  public void testSimpleUpdate() throws Exception {
+    int max = 10;
+    // write to table and read
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    List<Collection<Field<?>>> actual = readSimpleStructuredRows(max);
+    Assert.assertEquals(expected, actual);
+
+    // update the same row keys with different value
+    expected = writeSimpleStructuredRows(max, "newVal");
+    actual = readSimpleStructuredRows(max);
+    Assert.assertEquals(expected, actual);
+  }
+
+  private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {
     List<Collection<Field<?>>> expected = new ArrayList<>(max);
     for (int i = 0; i < max; i++) {
       List<Field<?>> fields = Arrays.asList(FIELD_FACTORY.createIntField(KEY, i),
-                                            FIELD_FACTORY.createStringField(COL, VAL + i));
+                                            FIELD_FACTORY.createLongField(KEY2, (long) i),
+                                            FIELD_FACTORY.createStringField(COL1, VAL + i + suffix),
+                                            FIELD_FACTORY.createDoubleField(COL2, (double) i),
+                                            FIELD_FACTORY.createFloatField(COL3, (float) i));
       expected.add(fields);
 
       getTransactionRunner().run(context -> {
@@ -147,16 +193,20 @@ public abstract class StructuredTableTest {
     List<Collection<Field<?>>> actual = new ArrayList<>(max);
     for (int i = 0; i < max; i++) {
       Field<Integer> key = FIELD_FACTORY.createIntField(KEY, i);
+      Field<Long> key2 = FIELD_FACTORY.createLongField(KEY2, (long) i);
       final AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
-        rowRef.set(table.read(Collections.singleton(key), Collections.singleton(COL)));
+        rowRef.set(table.read(ImmutableList.of(key, key2), ImmutableList.of(COL1, KEY2, COL2, COL3)));
       });
 
       Optional<StructuredRow> row = rowRef.get();
       if (row.isPresent()) {
-        actual.add(Arrays.asList(key, FIELD_FACTORY.createStringField(COL, row.get().getString(COL))));
+        actual.add(Arrays.asList(key, FIELD_FACTORY.createLongField(KEY2, row.get().getLong(KEY2)),
+                                 FIELD_FACTORY.createStringField(COL1, row.get().getString(COL1)),
+                                 FIELD_FACTORY.createDoubleField(COL2, row.get().getDouble(COL2)),
+                                 FIELD_FACTORY.createFloatField(COL3, row.get().getFloat(COL3))));
       }
     }
     return actual;
@@ -165,10 +215,11 @@ public abstract class StructuredTableTest {
   private void deleteSimpleStructuredRows(int max) throws Exception {
     for (int i = 0; i < max; i++) {
       Field<Integer> key = FIELD_FACTORY.createIntField(KEY, i);
+      Field<Long> key2 = FIELD_FACTORY.createLongField(KEY2, (long) i);
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
-        table.delete(Collections.singleton(key));
+        table.delete(ImmutableList.of(key, key2));
       });
     }
   }
@@ -181,7 +232,10 @@ public abstract class StructuredTableTest {
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
           actual.add(Arrays.asList(FIELD_FACTORY.createIntField(KEY, row.getInteger(KEY)),
-                                   FIELD_FACTORY.createStringField(COL, row.getString(COL))));
+                                   FIELD_FACTORY.createLongField(KEY2, row.getLong(KEY2)),
+                                   FIELD_FACTORY.createStringField(COL1, row.getString(COL1)),
+                                   FIELD_FACTORY.createDoubleField(COL2, row.getDouble(COL2)),
+                                   FIELD_FACTORY.createFloatField(COL3, row.getFloat(COL3))));
         }
       }
     });

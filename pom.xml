@@ -184,6 +184,7 @@
     <twitter4j.version>4.0.3</twitter4j.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
+    <opentable.version>0.12.6</opentable.version>
 
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
@@ -1643,6 +1644,12 @@
         <groupId>org.apache.sshd</groupId>
         <artifactId>sshd-core</artifactId>
         <version>${sshd.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.opentable.components</groupId>
+        <artifactId>otj-pg-embedded</artifactId>
+        <version>${opentable.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
