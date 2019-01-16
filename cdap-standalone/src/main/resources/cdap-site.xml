@@ -238,7 +238,7 @@
     </description>
   </property>
 
-  <!-- Secure Storage Configuration -->
+  <!-- Secure Store Configuration -->
   <property>
     <name>security.store.provider</name>
     <value>file</value>
@@ -247,9 +247,17 @@
       store APIs. Secure store APIs are used by custom programs that need to write or look up
       sensitive information, such as password. It is also used to look up values whenever the
       ${secure(my-key)} macro is used in pipelines or compute profiles.
-      The 'file' provider is only used in the sandbox. In distributed environments, this should
-      be set to 'kms', presuming your cluster has been configured to use KMS. The 'file' provider
-      will not work in distributed environments.
+      The 'file' provider is only used in the sandbox. Sandbox also supports secure store extensions.
+      In distributed environments, this should be set to 'kms', presuming your cluster has been configured to use KMS.
+      The 'file' provider will not work in distributed environments.
+    </description>
+  </property>
+
+  <property>
+    <name>security.store.extensions.dir</name>
+    <value>ext/securestores</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for secure store extensions
     </description>
   </property>
 
