@@ -25,6 +25,7 @@ import { Link } from 'react-router-dom';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import DrawerFeatureLink from 'components/AppHeader/AppDrawer/DrawerFeatureLink';
 import { Theme } from 'services/ThemeHelper';
+import IconSVG from 'components/IconSVG';
 
 const DRAWER_WIDTH = '240px';
 export const appDrawerListItemTextStyles = {
@@ -48,14 +49,16 @@ const styles = (theme) => {
       backgroundColor: colorVariables.grey08,
     },
     listItemText: appDrawerListItemTextStyles,
-    toolbar: theme.mixins.toolbar,
+    toolbar: {
+      minHeight: '48px',
+    },
     mainMenu: {
       borderTop: `1px solid ${colorVariables.grey06}`,
     },
     namespaceAdminMenu: {
       // WUT TS?
       position: 'absolute' as 'absolute',
-      bottom: '130px',
+      bottom: '0px',
       width: '100%',
       borderTop: `1px solid ${colorVariables.grey06}`,
     },
@@ -105,6 +108,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
         <List component="nav" dense={true} className={classes.mainMenu}>
           <DrawerFeatureLink
             featureName={Theme.featureNames.controlCenter}
+            featureSVGIconName="icon-control_center"
             featureFlag={true}
             featureUrl={`/${nsurl}`}
             componentDidNavigate={componentDidNavigate}
@@ -117,20 +121,21 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           />
           <DrawerFeatureLink
             featureName={Theme.featureNames.pipelines}
-            featureFlag={Theme.showPipelines}
-            featureUrl={`/${nsurl}/pipelines`}
-            componentDidNavigate={componentDidNavigate}
-            data-cy="navbar-pipelines-link"
-            isActive={
-              (location.pathname.startsWith(`/cdap/${nsurl}/pipelines`) ||
-                location.pathname.startsWith(`/pipelines/${nsurl}`)) &&
-              !location.pathname.startsWith(`/pipelines/${nsurl}/studio`)
-            }
+            featureSVGIconName="icon-pipeline_hollow"
             subMenu={[
+              {
+                featureName: Theme.featureNames.pipelinesList,
+                featureFlag: Theme.showPipelines,
+                featureUrl: `/${nsurl}/pipelines`,
+                componentDidNavigate,
+                featureSVGIconName: 'icon-list',
+                'data-cy': 'navbar-pipelines-link',
+              },
               {
                 featureName: Theme.featureNames.pipelineStudio,
                 featureFlag: Theme.showPipelineStudio,
                 featureUrl: `/pipelines/${nsurl}/studio`,
+                featureSVGIconName: 'icon-pipeline_filled',
                 componentDidNavigate,
                 isAngular: true,
                 'data-cy': 'navbar-pipeline-studio-link',
@@ -140,6 +145,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           <DrawerFeatureLink
             featureName={Theme.featureNames.dataPrep}
             featureFlag={Theme.showDataPrep}
+            featureSVGIconName="icon-transform"
             featureUrl={`/${nsurl}/dataprep`}
             componentDidNavigate={componentDidNavigate}
             data-cy="navbar-dataprep-link"
@@ -150,6 +156,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           />
           <DrawerFeatureLink
             featureUrl={`/${nsurl}/experiments`}
+            featureSVGIconName="icon-analytics"
             featureFlag={Theme.showAnalytics}
             featureName={Theme.featureNames.analytics}
             componentDidNavigate={componentDidNavigate}
@@ -157,6 +164,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           />
           <DrawerFeatureLink
             featureUrl={`/${nsurl}/rulesengine`}
+            featureSVGIconName="icon-rules"
             featureFlag={Theme.showRulesEngine}
             featureName={Theme.featureNames.rulesEngine}
             componentDidNavigate={componentDidNavigate}
@@ -164,6 +172,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
           />
           <DrawerFeatureLink
             featureUrl={`/metadata/${nsurl}`}
+            featureSVGIconName="icon-metadata"
             featureFlag={Theme.showMetadata}
             featureName={Theme.featureNames.metadata}
             isAngular={true}

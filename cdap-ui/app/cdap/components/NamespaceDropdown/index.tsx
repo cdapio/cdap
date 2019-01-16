@@ -294,7 +294,7 @@ export default class NamespaceDropdown extends React.PureComponent<
         <Dropdown isOpen={this.state.openDropdown} toggle={this.toggle} inNavbar={true}>
           <DropdownToggle className="current-namespace" tag="div" onClick={this.toggle}>
             <div className="namespace-text">
-              <small>{T.translate('features.Navbar.NamespaceDropdown.namespaceLabel')}</small>
+              <div>{T.translate('features.Navbar.NamespaceDropdown.namespaceLabel')}</div>
             </div>
             <div className="namespace-and-caret">
               <span title={currentNamespace}>{currentNamespace}</span>

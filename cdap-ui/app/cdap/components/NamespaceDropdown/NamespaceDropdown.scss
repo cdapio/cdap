@@ -74,6 +74,7 @@ $namespace-card-width: 240px;
     padding: 0;
     padding-left: 0;
     color: inherit;
+    padding-top: 8px;
 
     &:hover,
     &:active,
@@ -88,9 +89,10 @@ $namespace-card-width: 240px;
       height: 16px;
       padding-top: 2px;
 
-      small {
+      div {
         color: inherit;
-        font-size: 10px;
+        font-size: 13px;
+        color: $grey-03;
       }
     }
 
