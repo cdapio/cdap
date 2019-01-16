@@ -21,7 +21,7 @@ class FeatureSelection extends Component {
 
   constructor(props) {
     super(props);
-    this.state = Object.assign({activeTab: "1"}, this.dataParser(this.props.pipeLineData));
+    this.state = Object.assign({ activeTab: "1" }, this.dataParser(this.props.pipeLineData));
   }
 
   dataParser = (data) => {
@@ -77,6 +77,7 @@ class FeatureSelection extends Component {
 
   requestGenerator = (value) => {
     const filtersList = [];
+    let result = {};
     if (!isNil(value) && !isNil(value.filterItemList)) {
       value.filterItemList.forEach(element => {
         let low = 0;
@@ -96,14 +97,19 @@ class FeatureSelection extends Component {
         });
       });
     }
-    return {
-      orderByStat: value.selectedOrderbyColumn.name.replace(/\s/g, ""),
+
+    result = {
       startPosition: value.minLimitValue.trim() == "" ? 0 : Number(value.minLimitValue.trim()),
       endPosition: value.maxLimitValue.trim() == "" ? 0 : Number(value.maxLimitValue.trim()),
       isComposite: true,
       compositeType: "OR",
       filterList: filtersList
     };
+    if (value.selectedOrderbyColumn.id != -1) {
+      result['orderByStat'] = value.selectedOrderbyColumn.name.replace(/\s/g, "");
+    }
+
+    return result;
   }
 
   getFilteredRecords(requestObj) {
@@ -122,7 +128,7 @@ class FeatureSelection extends Component {
         (result) => {
           if (!isNil(result) && !isNil(result["featureStatsList"])) {
             const parsedResult = this.dataParser(result["featureStatsList"]);
-            this.setState({gridRowData:parsedResult.gridRowData});
+            this.setState({ gridRowData: parsedResult.gridRowData });
           }
         },
         (error) => {

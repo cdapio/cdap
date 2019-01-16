@@ -40,6 +40,13 @@
   color: white;
 }
 
+.feature-button:disabled,
+.feature-button[disabled] {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
+
 .mandatory {
   font-size: 8px !important;
   padding-bottom: 5px;

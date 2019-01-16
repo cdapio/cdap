@@ -4,6 +4,7 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap
 import FilterItem from '../FilterItem/index';
 import './FilterContainer.scss';
 import { cloneDeep } from "lodash";
+
 // import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
 class FilterContainer extends Component {
@@ -86,8 +87,10 @@ class FilterContainer extends Component {
       item.hasRangeError = false;
     }
 
-
     this.setState({ filterItemList: itemList });
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    }, 500);
   }
 
   removeFilterItem = (index) => {
@@ -96,18 +99,31 @@ class FilterContainer extends Component {
       itemList.splice(index, 1);
     }
     this.setState({ filterItemList: itemList });
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    }, 500);
+
   }
 
   minLimitChanged = (evt) => {
     const min = evt.target.value.trim();
     this.updateLimitError(min, this.state.maxLimitValue);
     this.setState({ minLimitValue: min });
+
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    }, 500);
   }
 
   maxLimitChanged = (evt) => {
     const max = evt.target.value.trim();
     this.updateLimitError(this.state.minLimitValue, max);
     this.setState({ maxLimitValue: max });
+
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    }, 500);
+
   }
 
   updateLimitError = (min, max) => {
@@ -117,20 +133,44 @@ class FilterContainer extends Component {
       const minValue = Number(min);
       const maxValue = Number(max);
       if (isNaN(min) || isNaN(max) || maxValue <= minValue) {
-        this.setState({ hasLimitError: true, limitErrorMsg:'Invalid limit range values' });
+        this.setState({ hasLimitError: true, limitErrorMsg: 'Invalid limit range values' });
       } else {
-        this.setState({ hasLimitError: false, limitErrorMsg:'' });
+        this.setState({ hasLimitError: false, limitErrorMsg: '' });
       }
     }
   }
 
 
+  updateApplyBtnStatus = () => {
+    let isValidFilterItems = true;
+
+    for (let i = 0; i < this.state.filterItemList.length; i++) {
+      const item = this.state.filterItemList[i];
+      if (item.hasRangeError || item.selectedFilterType.id === -1 || item.selectedFilterColumn.id === -1) {
+        isValidFilterItems = false;
+      } else {
+        const filterType = item.selectedFilterType.name;
+        const mapItemList = this.filterViewMaps.filter((item) => item.name === filterType);
+        const mapItem = mapItemList.length > 0 ? mapItemList[0] : {};
+        if (mapItem.view === 'single') {
+          isValidFilterItems = item.minValue != '';
+        } else {
+          isValidFilterItems = item.minValue != '' && item.maxValue != '';
+        }
+      }
+    }
+
+    //check limit range
+    if (this.state.hasLimitError || !isValidFilterItems) {
+      this.setState({ activeApplyBtn: false });
+    } else {
+      this.setState({ activeApplyBtn: true });
+    }
+  }
 
   applyFilter = () => {
     this.props.applyFilter(this.state);
   }
-
-
 
   render() {
     let filterItems = (
@@ -185,7 +225,7 @@ class FilterContainer extends Component {
           <label className="value-seperator">-</label>
           <input className="limit-input" type="number" min="0" value={this.state.maxLimitValue}
             onChange={this.maxLimitChanged}></input>
-          <button className="feature-button apply-btn" onClick={this.applyFilter} disabled={this.state.activeApplyBtn}>Apply</button>
+          <button className="feature-button apply-btn" onClick={this.applyFilter} disabled={!this.state.activeApplyBtn}>Apply</button>
         </div>
         {
           this.state.hasLimitError ?
