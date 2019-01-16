@@ -16,9 +16,8 @@
 
 package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
+import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,7 +26,7 @@ import java.util.Map;
  * A dummy class that is loaded when the user has set the provider to "kms" but the cluster does not
  * have the required libraries. All operations on this class throw an UnsupportedOperationException.
  */
-public class DummySecureStore implements SecureStore, SecureStoreManager {
+public class DummySecureStoreService extends AbstractIdleService implements SecureStoreService {
 
   private static final String SECURE_STORE_SETUP = "Secure store is not configured. To use secure store the provider " +
     "needs to be set using the \"security.store.provider\" property in cdap-site.xml. " +
@@ -58,5 +57,15 @@ public class DummySecureStore implements SecureStore, SecureStoreManager {
   @Override
   public void deleteSecureData(String namespace, String name) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // no-op
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // no-op
   }
 }

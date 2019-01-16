@@ -23,15 +23,18 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.security.store.DefaultSecureStoreService;
-import co.cask.cdap.security.store.DummySecureStore;
-import co.cask.cdap.security.store.FileSecureStore;
+import co.cask.cdap.security.store.DummySecureStoreService;
+import co.cask.cdap.security.store.FileSecureStoreService;
+import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.security.store.SecureStoreUtils;
+import co.cask.cdap.security.store.secretmanager.SecretManagerSecureStoreService;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -39,9 +42,9 @@ import com.google.inject.name.Names;
 /**
  * Guice bindings for security store related classes.
  *
- * file - InMemory    - with password       - Valid, returns FileSecureStore
+ * file - InMemory    - with password       - Valid, returns FileSecureStoreService
  *                    - without password    - Invalid, throws IllegalArgumentException. (Set password)
- *      - Standalone  - with password       - Valid, returns FileSecureStore
+ *      - Standalone  - with password       - Valid, returns FileSecureStoreService
  *                    - without password    - Invalid, throws IllegalArgumentException. (Set password)
  *      - Distributed - with password       - Invalid, throws IllegalArgumentException. (mode not supported)
  *                    - without password    - Invalid, throws IllegalArgumentException. (mode not supported)
@@ -50,53 +53,47 @@ import com.google.inject.name.Names;
  *                    - < Hadoop 2.6        - Invalid, throws IllegalArgumentException. (mode not supported)
  *      - Standalone  - > Hadoop 2.6        - Invalid, throws IllegalArgumentException. (mode not supported)
  *                    - < Hadoop 2.6        - Invalid, throws IllegalArgumentException. (mode not supported)
- *      - Distributed - > Hadoop 2.6        - Valid, returns KMSSecureStore
+ *      - Distributed - > Hadoop 2.6        - Valid, returns KMSSecureStoreService
  *                    - < Hadoop 2.6        - Invalid, throws IllegalArgumentException. (Hadoop unsupported)
  *
  * none  - Loads a dummy store. Logs an error message explaining how to setup secure store if any secure store
  *         operations are performed.
  *
+ * ext   - Extension based secure store is supported in standalone and distributed mode.
+ *
  */
 public class SecureStoreModules extends RuntimeModule {
-  public static final String DELEGATE_SECURE_STORE = "delegateSecureStore";
-  public static final String DELEGATE_SECURE_STORE_MANAGER = "delegateSecureStoreManager";
+  public static final String DELEGATE_SECURE_STORE_SERVICE = "delegateSecureStoreService";
 
   @Override
   public final Module getInMemoryModules() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(SecureStore.class)
-          .annotatedWith(Names.named(DELEGATE_SECURE_STORE))
-          .toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
-        bind(SecureStoreManager.class)
-          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
-          .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
-        expose(SecureStore.class);
-        expose(SecureStoreManager.class);
-      }
-    };
+    return new LocalModule();
   }
 
   @Override
   public final Module getStandaloneModules() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(SecureStore.class)
-          .annotatedWith(Names.named(DELEGATE_SECURE_STORE))
-          .toProvider(new TypeLiteral<StoreProvider<SecureStore>>() { });
-        bind(SecureStoreManager.class)
-          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
-          .toProvider(new TypeLiteral<StoreProvider<SecureStoreManager>>() { });
-        bind(SecureStore.class).to(DefaultSecureStoreService.class);
-        expose(SecureStore.class);
-        bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
-        expose(SecureStoreManager.class);
-      }
-    };
+    return new LocalModule();
+  }
+
+  /**
+   * Guice module being used in in memory as well as standalone mode.
+   */
+  private final class LocalModule extends PrivateModule {
+
+    @Override
+    protected void configure() {
+      bind(SecureStoreService.class)
+        .annotatedWith(Names.named(DELEGATE_SECURE_STORE_SERVICE))
+        .toProvider(StoreProvider.class);
+
+      bind(DefaultSecureStoreService.class).in(Scopes.SINGLETON);
+      bind(SecureStore.class).to(DefaultSecureStoreService.class);
+      bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+      bind(SecureStoreService.class).to(DefaultSecureStoreService.class);
+      expose(SecureStore.class);
+      expose(SecureStoreManager.class);
+      expose(SecureStoreService.class);
+    }
   }
 
   @Override
@@ -104,16 +101,17 @@ public class SecureStoreModules extends RuntimeModule {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        bind(SecureStore.class)
-          .annotatedWith(Names.named(DELEGATE_SECURE_STORE))
-          .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStore>>() { });
-        bind(SecureStoreManager.class)
-          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_MANAGER))
-          .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreManager>>() { });
+        bind(SecureStoreService.class)
+          .annotatedWith(Names.named(DELEGATE_SECURE_STORE_SERVICE))
+          .toProvider(new TypeLiteral<DistributedStoreProvider<SecureStoreService>>() { });
+
+        bind(DefaultSecureStoreService.class).in(Scopes.SINGLETON);
         bind(SecureStore.class).to(DefaultSecureStoreService.class);
         bind(SecureStoreManager.class).to(DefaultSecureStoreService.class);
+        bind(SecureStoreService.class).to(DefaultSecureStoreService.class);
         expose(SecureStore.class);
         expose(SecureStoreManager.class);
+        expose(SecureStoreService.class);
       }
     };
   }
@@ -149,12 +147,16 @@ public class SecureStoreModules extends RuntimeModule {
                    "To be able to use secure store in a distributed environment you" +
                    "will need to use the Hadoop KMS based provider.");
       }
-      return (T) injector.getInstance(DummySecureStore.class);
+
+      if (SecureStoreUtils.isExtensionBased(cConf)) {
+        return (T) injector.getInstance(SecretManagerSecureStoreService.class);
+      }
+      return (T) injector.getInstance(DummySecureStoreService.class);
     }
   }
 
   @Singleton
-  private static final class StoreProvider<T> implements Provider<T> {
+  private static final class StoreProvider implements Provider<SecureStoreService> {
     private final CConfiguration cConf;
     private final SConfiguration sConf;
     private final Injector injector;
@@ -168,12 +170,12 @@ public class SecureStoreModules extends RuntimeModule {
 
     @Override
     @SuppressWarnings("unchecked")
-    public T get() {
+    public SecureStoreService get() {
       boolean fileBacked = SecureStoreUtils.isFileBacked(cConf);
       boolean validPassword = !Strings.isNullOrEmpty(sConf.get(Constants.Security.Store.FILE_PASSWORD));
 
       if (fileBacked && validPassword) {
-        return (T) injector.getInstance(FileSecureStore.class);
+        return injector.getInstance(FileSecureStoreService.class);
       }
       if (fileBacked) {
         throw new IllegalArgumentException("File secure store password is not set. " +
@@ -186,7 +188,12 @@ public class SecureStoreModules extends RuntimeModule {
                                              "to file and set the \"security.store.file.password\" property in " +
                                              "your cdap-security.xml.");
       }
-      return (T) injector.getInstance(DummySecureStore.class);
+
+      if (SecureStoreUtils.isExtensionBased(cConf)) {
+        return injector.getInstance(SecretManagerSecureStoreService.class);
+      }
+
+      return injector.getInstance(DummySecureStoreService.class);
     }
   }
 }

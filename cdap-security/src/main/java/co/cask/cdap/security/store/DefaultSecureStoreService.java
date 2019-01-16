@@ -16,13 +16,10 @@
 
 package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
@@ -32,8 +29,8 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Function;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
@@ -44,22 +41,19 @@ import java.util.Map;
 /**
  * Default implementation of the service that manages access to the Secure Store,
  */
-public class DefaultSecureStoreService implements SecureStore, SecureStoreManager {
+public class DefaultSecureStoreService extends AbstractIdleService implements SecureStoreService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final SecureStore secureStore;
-  private final SecureStoreManager secureStoreManager;
+  private final SecureStoreService secureStoreService;
 
   @Inject
   DefaultSecureStoreService(AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE) SecureStore secureStore,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE_MANAGER)
-                              SecureStoreManager secureStoreManager) {
+                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE_SERVICE)
+                              SecureStoreService secureStoreService) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
-    this.secureStore = secureStore;
-    this.secureStoreManager = secureStoreManager;
+    this.secureStoreService = secureStoreService;
   }
 
   /**
@@ -74,14 +68,9 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
   @Override
   public final Map<String, String> listSecureData(final String namespace) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Map<String, String> metadatas = new HashMap<>(secureStore.listSecureData(namespace));
+    Map<String, String> metadatas = new HashMap<>(secureStoreService.listSecureData(namespace));
     metadatas.keySet().retainAll(AuthorizationUtil.isVisible(metadatas.keySet(), authorizationEnforcer, principal,
-                                                             new Function<String, EntityId>() {
-                                                               @Override
-                                                               public EntityId apply(String input) {
-                                                                 return new SecureKeyId(namespace, input);
-                                                               }
-                                                             }, null));
+                                                             input -> new SecureKeyId(namespace, input), null));
     return metadatas;
   }
 
@@ -100,7 +89,7 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
     Principal principal = authenticationContext.getPrincipal();
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     authorizationEnforcer.enforce(secureKeyId, principal, Action.READ);
-    return secureStore.getSecureData(namespace, name);
+    return secureStoreService.getSecureData(namespace, name);
   }
 
   /**
@@ -124,7 +113,7 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
                                       "securely.");
     }
 
-    secureStoreManager.putSecureData(namespace, name, value, description, properties);
+    secureStoreService.putSecureData(namespace, name, value, description, properties);
   }
 
   /**
@@ -140,6 +129,16 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
     Principal principal = authenticationContext.getPrincipal();
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
-    secureStoreManager.deleteSecureData(namespace, name);
+    secureStoreService.deleteSecureData(namespace, name);
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    secureStoreService.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    secureStoreService.stopAndWait();
   }
 }

@@ -16,9 +16,7 @@
 
 package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NamespaceNotFoundException;
@@ -29,6 +27,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.key.KeyProvider;
@@ -58,7 +57,7 @@ import java.util.Map;
  */
 // TODO: Find a better way to handle javadoc so this class does not need to be public.
 @SuppressWarnings("unused")
-public class KMSSecureStore implements SecureStore, SecureStoreManager, DelegationTokensUpdater {
+public class KMSSecureStore extends AbstractIdleService implements SecureStoreService, DelegationTokensUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(KMSSecureStore.class);
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";
@@ -249,5 +248,15 @@ public class KMSSecureStore implements SecureStore, SecureStoreManager, Delegati
 
   private static String getKeyName(final String namespace, final String name) {
     return namespace + NAME_SEPARATOR + name;
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // no-op
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // no-op
   }
 }

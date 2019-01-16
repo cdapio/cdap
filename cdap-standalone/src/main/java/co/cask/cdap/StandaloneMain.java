@@ -74,6 +74,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
+import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -128,6 +129,7 @@ public class StandaloneMain {
   private final TwillRunnerService remoteExecutionTwillRunnerService;
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
+  private final SecureStoreService secureStoreService;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -175,6 +177,7 @@ public class StandaloneMain {
 
     exploreClient = injector.getInstance(ExploreClient.class);
     metadataService = injector.getInstance(MetadataService.class);
+    secureStoreService = injector.getInstance(SecureStoreService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -254,6 +257,8 @@ public class StandaloneMain {
 
     operationalStatsService.startAndWait();
 
+    secureStoreService.startAndWait();
+
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
@@ -277,6 +282,7 @@ public class StandaloneMain {
       //  shut down router to stop all incoming traffic
       router.stopAndWait();
 
+      secureStoreService.stopAndWait();
       operationalStatsService.stopAndWait();
 
       // Stop all services that requires tx service

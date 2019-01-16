@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FileSecureStoreTest {
+public class FileSecureStoreServiceTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -84,9 +84,9 @@ public class FileSecureStoreTest {
       .setName(NAMESPACE2)
       .build();
     namespaceClient.create(namespaceMeta);
-    FileSecureStore fileSecureStore = new FileSecureStore(conf, sConf, namespaceClient);
-    secureStoreManager = fileSecureStore;
-    secureStore = fileSecureStore;
+    FileSecureStoreService fileSecureStoreService = new FileSecureStoreService(conf, sConf, namespaceClient);
+    secureStoreManager = fileSecureStoreService;
+    secureStore = fileSecureStoreService;
   }
 
   private void populateStore() throws Exception {

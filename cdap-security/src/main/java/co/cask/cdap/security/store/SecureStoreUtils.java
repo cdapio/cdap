@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 public class SecureStoreUtils {
   private static final String KMS_BACKED = "kms";
   private static final String FILE_BACKED = "file";
+  private static final String NONE = "none";
 
   public static boolean isKMSBacked(final CConfiguration cConf) {
     return KMS_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
@@ -32,6 +33,17 @@ public class SecureStoreUtils {
 
   public static boolean isFileBacked(final CConfiguration cConf) {
     return FILE_BACKED.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER));
+  }
+
+  /**
+   * Checks if the store provider is extension based or not. If it is extension based, method returns true.
+   *
+   * @param cConf configuration to get the store provider name
+   * @return if it is extension based, method returns true.
+   */
+  public static boolean isExtensionBased(final CConfiguration cConf) {
+    return !NONE.equalsIgnoreCase(cConf.get(Constants.Security.Store.PROVIDER)) &&
+      !isKMSBacked(cConf) && !isFileBacked(cConf);
   }
 
   public static boolean isKMSCapable() {
@@ -47,7 +59,7 @@ public class SecureStoreUtils {
 
   public static Class<?> getKMSSecureStore() {
     try {
-      return Class.forName("co.cask.cdap.security.store.KMSSecureStore");
+      return Class.forName("co.cask.cdap.security.store.KMSSecureStoreService");
     } catch (ClassNotFoundException e) {
       // KMSSecureStore could not be loaded
       throw new RuntimeException("CDAP KMS classes could not be loaded. " +
