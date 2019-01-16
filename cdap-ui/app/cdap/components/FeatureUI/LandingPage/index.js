@@ -8,25 +8,14 @@ import AddFeatureWizard from '../AddFeatureWizard';
 import FeatureTable from '../FeatureTable';
 import {
   PIPELINE_TYPES,
-  PIPELINES_REQUEST,
-  PIPELINES_REQUEST_PARAMS,
-  SERVER_IP,
-  SCHEMA_REQUEST,
-  PROPERTY_REQUEST,
-  CONFIGURATION_REQUEST,
   GET_PIPELINE,
   GET_SCHEMA,
   GET_PROPERTY,
   GET_CONFIGURATION,
   IS_OFFLINE,
-  SAVE_REQUEST,
-  DELETE_REQUEST,
   DELETE_PIPELINE,
-  READ_REQUEST,
   READ_PIPELINE,
   EDIT_PIPELINE,
-  EDIT_REQUEST,
-  GET_PIPE_LINE_DATA,
   PIPELINE_RUN_NAME,
   PIPELINE_SCHEMAS,
   CLONE_PIPELINE
@@ -34,8 +23,9 @@ import {
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
 import FeatureSelection from '../FeatureSelection';
-import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject } from '../util';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError, getErrorMessage } from '../util';
 import NamespaceStore from 'services/NamespaceStore';
+import FEDataServiceApi from '../feDataService';
 
 
 require('./LandingPage.scss');
@@ -46,7 +36,6 @@ const ConfigurationData = [{ "paramName": "DFSDepth", "description": "", "isColl
 
 class LandingPage extends React.Component {
   currentPipeline;
-
   sampleData = [
     { "featureName": "plusonelog_first_errors_numwords_event_hostname____24", "featureStatistics": { "Mean": 0.04316484976694808, "Norm L1": 59.61065752815533, "Norm L2": 6.427982513741404, "Max": 0.6931471805599453, "50 Percentile": 0.6931471805599453, "Variance": 0.02807672037699529, "No. of Non Zeros": 86.0, "25 Percentile": 0.6931471805599453, "Min": 0.0, "No. of Nulls": 1295, "Inter Quartile Percentile": 0.0, "75 Percentile": 0.6931471805599453 } }
   ]
@@ -80,6 +69,7 @@ class LandingPage extends React.Component {
     }
   }
 
+
   fetchWizardData() {
     this.fetchProperties();
     this.fetchConfiguration();
@@ -109,74 +99,73 @@ class LandingPage extends React.Component {
   }
 
   getPipelines(type) {
-    let request = SERVER_IP + PIPELINES_REQUEST;
-    if (type != "All") {
-      request = request + PIPELINES_REQUEST_PARAMS + '=' + type;
-    }
-    fetch(request)
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["pipelineInfoList"])) {
-            alert("Pipeline Data Error");
+    FEDataServiceApi.pipelines(
+      {
+        namespace: NamespaceStore.getState().selectedNamespace,
+        type: type == "All" ? '' : type
+      }).subscribe(
+        result => {
+          if (checkResponseError(result) || isNil(result["pipelineInfoList"])) {
+            this.handleError(result, GET_PIPELINE);
           } else {
             this.setState({
               data: result["pipelineInfoList"]
             });
           }
         },
-        (error) => {
+        error => {
           this.handleError(error, GET_PIPELINE);
         }
       );
   }
+
 
   onFeatureSelection(pipeline) {
     this.currentPipeline = pipeline;
-    let request = SERVER_IP + GET_PIPE_LINE_DATA + pipeline.pipelineName;
-    fetch(request)
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["featureStatsList"])) {
-            alert("Pipeline Data Error");
-          } else {
-            this.setState({
-              pipeLineData: result["featureStatsList"],
-              data: result["featureStatsList"],
-              selectedPipeline: this.currentPipeline,
-              displayFeatureSelection: true
-            });
-          }
-        },
-        (error) => {
-          this.handleError(error, GET_PIPELINE);
+    FEDataServiceApi.pipelineData({
+      namespace: NamespaceStore.getState().selectedNamespace,
+      pipeline: pipeline.pipelineName
+    }).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["featureStatsList"])) {
+          this.handleError(result, GET_PIPE_LINE_DATA);
+        } else {
+          this.setState({
+            pipeLineData: result["featureStatsList"],
+            data: result["featureStatsList"],
+            selectedPipeline: this.currentPipeline,
+            displayFeatureSelection: true
+          });
         }
-      );
+      },
+      error => {
+        this.handleError(error, GET_PIPELINE);
+      }
+    );
   }
 
   viewPipeline(pipeline) {
-    let navigatePath = `${window.location.origin}/pipelines/ns/${this.state.currentNamespace}/view/${pipeline.pipelineName}`;
+    let navigatePath = `${window.location.origin}/pipelines/ns/${NamespaceStore.getState().selectedNamespace}/view/${pipeline.pipelineName}`;
     window.location.href = navigatePath;
   }
 
   editPipeline(type, pipeline) {
     this.currentPipeline = pipeline;
-    let fetchUrl = SERVER_IP + READ_REQUEST.replace('$NAME', pipeline.pipelineName);
-    fetch(fetchUrl)
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["featureGenerationRequest"])) {
-            this.handleError(result, READ_PIPELINE);
-          } else {
-            this.updateStoreForEdit(type, result["featureGenerationRequest"]);
-          }
-        },
-        (error) => {
-          this.handleError(error, READ_PIPELINE);
+    FEDataServiceApi.readPipeline({
+      namespace: NamespaceStore.getState().selectedNamespace,
+      pipeline: pipeline.pipelineName
+    }).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["featureGenerationRequest"])) {
+          this.handleError(result, READ_PIPELINE);
+        } else {
+          this.updateStoreForEdit(type, result["featureGenerationRequest"]);
         }
-      );
+      },
+      error => {
+        this.handleError(error, READ_PIPELINE);
+      }
+    );
   }
 
   updateStoreForEdit(type, pipelineData) {
@@ -320,28 +309,26 @@ class LandingPage extends React.Component {
   }
 
   deletePipeline(pipeline) {
-    let fetchUrl = SERVER_IP + DELETE_REQUEST.replace('$NAME', pipeline.pipelineName);
-    fetch(fetchUrl, {
-      method: 'DELETE',
-    })
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || (result.status && result.status > 200)) {
-            this.handleError(result, DELETE_PIPELINE);
-          } else {
-            this.getPipelines(this.state.selectedPipelineType);
-          }
-        },
-        (error) => {
-          this.handleError(error, DELETE_PIPELINE);
+    FEDataServiceApi.deletePipeline({
+      namespace: NamespaceStore.getState().selectedNamespace,
+      pipeline: pipeline.pipelineName
+    }).subscribe(
+      result => {
+        if (checkResponseError(result)) {
+          this.handleError(result, DELETE_PIPELINE);
+        } else {
+          this.getPipelines(this.state.selectedPipelineType);
         }
-      );
+      },
+      error => {
+        this.handleError(error, DELETE_PIPELINE);
+      }
+    );
   }
 
   handleError(error, type) {
     console.log(type, error);
-    error.message ? alert(error.message) : alert(error);
+    alert(getErrorMessage(error));
   }
 
   onWizardClose() {
@@ -365,33 +352,38 @@ class LandingPage extends React.Component {
 
   saveFeature() {
     let featureObject = getFeatureObject(this.props);
-    let saveUrl = SERVER_IP + SAVE_REQUEST.replace('$NAME', featureObject.pipelineRunName);
+    let fetchObserver;
     let type = this.props.operationType;
     if (type == EDIT_PIPELINE) {
-      saveUrl = SERVER_IP + EDIT_REQUEST.replace('$NAME', featureObject.pipelineRunName);
+      fetchObserver = FEDataServiceApi.updatePipeline({
+        namespace: NamespaceStore.getState().selectedNamespace,
+        pipeline: featureObject.pipelineRunName
+      }, featureObject);
+    } else {
+      fetchObserver = FEDataServiceApi.createPipeline({
+        namespace: NamespaceStore.getState().selectedNamespace,
+        pipeline: featureObject.pipelineRunName
+      }, featureObject);
     }
     console.log(featureObject);
+
     return Observable.create((observer) => {
-      fetch(saveUrl, {
-        method: 'POST',
-        body: JSON.stringify(featureObject)
-      }).then(res => res.json())
-        .then(
-          (result) => {
-            if (isNil(result) || (result.status && result.status > 200)) {
-              this.handleError(result, type);
-              observer.error(result);
-            } else {
-              this.getPipelines(this.state.selectedPipelineType);
-              observer.next(result);
-              observer.complete();
-            }
-          },
-          (error) => {
-            this.handleError(error, type);
-            observer.error(error);
+      fetchObserver.subscribe(
+        result => {
+          if (checkResponseError(result)) {
+            this.handleError(result, type);
+            observer.error(result);
+          } else {
+            this.getPipelines(this.state.selectedPipelineType);
+            observer.next(result);
+            observer.complete();
           }
-        );
+        },
+        err => {
+          this.handleError(err, type);
+          observer.error(err);
+        }
+      );
     });
   }
 
@@ -491,61 +483,58 @@ class LandingPage extends React.Component {
   }
 
   fetchSchemas() {
-    let fetchUrl = SERVER_IP + SCHEMA_REQUEST;
-    fetch(fetchUrl)
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["dataSchemaList"])) {
-            this.handleError(result, GET_SCHEMA);
-          } else {
-            this.props.setAvailableSchemas(result["dataSchemaList"]);
-          }
-        },
-        (error) => {
-          this.handleError(error, GET_SCHEMA);
+    FEDataServiceApi.schema({
+      namespace: NamespaceStore.getState().selectedNamespace
+    }).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["configParamList"])) {
+          this.handleError(result, GET_SCHEMA);
+        } else {
+          this.props.setAvailableSchemas(result["dataSchemaList"]);
         }
-      );
+      },
+      error => {
+        this.handleError(error, GET_SCHEMA);
+      }
+    );
   }
 
   fetchProperties() {
-    let fetchUrl = SERVER_IP + PROPERTY_REQUEST;
-    fetch(fetchUrl)
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["configParamList"])) {
-            this.handleError(result, GET_PROPERTY);
-          } else {
-            let configParamList = result["configParamList"];
-            let mandatoryParamList = configParamList.filter(item => item.isMandatory);
-            let nonMandatoryParamList = configParamList.filter(item => !item.isMandatory);
-            this.props.setAvailableProperties(mandatoryParamList.concat(nonMandatoryParamList));
-          }
-        },
-        (error) => {
-          this.handleError(error, GET_PROPERTY);
+    FEDataServiceApi.metadataConfig({
+      namespace: NamespaceStore.getState().selectedNamespace
+    }).subscribe(
+      result => {
+        if (checkResponseError(result)) {
+          this.handleError(result, GET_PROPERTY);
+        } else {
+          let configParamList = result["configParamList"];
+          let mandatoryParamList = configParamList.filter(item => item.isMandatory);
+          let nonMandatoryParamList = configParamList.filter(item => !item.isMandatory);
+          this.props.setAvailableProperties(mandatoryParamList.concat(nonMandatoryParamList));
         }
-      );
+      },
+      error => {
+        this.handleError(error, GET_PROPERTY);
+      }
+    );
   }
 
   fetchConfiguration() {
-    let fetchUrl = SERVER_IP + CONFIGURATION_REQUEST;
-    fetch(fetchUrl)
-      .then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["configParamList"])) {
-            this.handleError(result, GET_CONFIGURATION);
-          } else {
-            this.props.setAvailableConfigurations(result["configParamList"]);
-            this.updateConfigurationList(result["configParamList"], []);
-          }
-        },
-        (error) => {
-          this.handleError(error, GET_CONFIGURATION);
+    FEDataServiceApi.engineConfig({
+      namespace: NamespaceStore.getState().selectedNamespace
+    }).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["configParamList"])) {
+          this.handleError(result, GET_CONFIGURATION);
+        } else {
+          this.props.setAvailableConfigurations(result["configParamList"]);
+          this.updateConfigurationList(result["configParamList"], []);
         }
-      );
+      },
+      error => {
+        this.handleError(error, GET_CONFIGURATION);
+      }
+    );
   }
 
   render() {
