@@ -468,7 +468,7 @@ public class StandaloneMain {
       new AuditModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
-      new PreviewHttpModule(),
+      new PreviewHttpModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new OperationalStatsModule()

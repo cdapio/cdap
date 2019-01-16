@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.preview;
 
+import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -23,6 +24,9 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import co.cask.cdap.internal.app.preview.DefaultPreviewManager;
+import co.cask.cdap.logging.read.FileLogReader;
+import co.cask.cdap.logging.read.LogReader;
+import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
@@ -30,16 +34,43 @@ import com.google.inject.name.Names;
 /**
  * Provides bindings required create the {@link PreviewHttpHandler}.
  */
-public class PreviewHttpModule extends PrivateModule {
-  @Override
-  protected void configure() {
-    bind(DatasetDefinitionRegistryFactory.class)
-      .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+public class PreviewHttpModule extends RuntimeModule {
 
-    bind(DatasetFramework.class)
-      .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-      .to(RemoteDatasetFramework.class);
-    bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
-    expose(PreviewManager.class);
+  @Override
+  public Module getInMemoryModules() {
+    return getStandaloneModules();
+  }
+
+  @Override
+  public Module getStandaloneModules() {
+    return new InternalPreviewHttpModule();
+  }
+
+  @Override
+  public Module getDistributedModules() {
+    return new InternalPreviewHttpModule() {
+      @Override
+      protected void addAdditionalBindings() {
+        bind(LogReader.class).to(FileLogReader.class);
+        expose(LogReader.class);
+      }
+    };
+  }
+
+  private class InternalPreviewHttpModule extends PrivateModule {
+    @Override
+    protected void configure() {
+      bind(DatasetDefinitionRegistryFactory.class)
+        .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+
+      bind(DatasetFramework.class)
+        .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+        .to(RemoteDatasetFramework.class);
+      bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
+      expose(PreviewManager.class);
+      addAdditionalBindings();
+    }
+
+    protected void addAdditionalBindings() {};
   }
 }
