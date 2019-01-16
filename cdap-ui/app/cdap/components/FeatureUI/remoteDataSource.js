@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-const REMOTE_IP = "http://192.168.156.36:11015";
+import { REMOTE_IP } from './config';
 
 class RemoteDataSource {
   request(reqObj) {
