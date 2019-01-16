@@ -17,7 +17,6 @@ export const REMOTE_IP = "http://192.168.110.103:11015";
 const SERVICE_PORT = "11015";
 
 export const SERVER_IP = (window.location.hostname == "localhost") ? REMOTE_IP : (window.location.protocol + "//" + window.location.hostname + ":" + SERVICE_PORT);
-export const GET_PIPE_LINE_FILTERED_DATA = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/ManualFeatureSelectionService/methods/featureengineering/";
 export const GET_PIPE_LINE_CORRELATED_DATA = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/ManualFeatureSelectionService/methods/featureengineering/features/correlation/matrix/get?pipelineName=";
 
 export const PIPELINE_TYPES = ["All", "featureGeneration", "featureSelection"];

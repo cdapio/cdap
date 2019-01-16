@@ -18,7 +18,8 @@ import {
   EDIT_PIPELINE,
   PIPELINE_RUN_NAME,
   PIPELINE_SCHEMAS,
-  CLONE_PIPELINE
+  CLONE_PIPELINE,
+  GET_PIPE_LINE_DATA
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
@@ -487,7 +488,7 @@ class LandingPage extends React.Component {
       namespace: NamespaceStore.getState().selectedNamespace
     }).subscribe(
       result => {
-        if (checkResponseError(result) || isNil(result["configParamList"])) {
+        if (checkResponseError(result) || isNil(result["dataSchemaList"])) {
           this.handleError(result, GET_SCHEMA);
         } else {
           this.props.setAvailableSchemas(result["dataSchemaList"]);

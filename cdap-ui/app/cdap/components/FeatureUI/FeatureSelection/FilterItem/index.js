@@ -44,7 +44,6 @@ class FilterItem extends Component {
   }
 
   minValueChange = (evt) => {
-    console.log("min value :: " + evt.target.value);
     const result = { minValue: evt.target.value };
     this.props.changFilterItem(result, this.props.itemIndex);
   }

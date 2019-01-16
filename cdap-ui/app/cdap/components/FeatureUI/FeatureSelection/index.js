@@ -7,7 +7,6 @@ import GridContainer from './GridContainer';
 import { isNil } from 'lodash';
 import {
   SERVER_IP,
-  GET_PIPE_LINE_FILTERED_DATA,
   GET_PIPE_LINE_FILTERED,
   GET_PIPE_LINE_CORRELATED_DATA,
   GET_PIPELINE
@@ -15,6 +14,9 @@ import {
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import CorrelationContainer from './CorrelationContainer';
+import FEDataServiceApi from '../feDataService';
+import NamespaceStore from 'services/NamespaceStore';
+import { checkResponseError,getErrorMessage } from '../util';
 
 class FeatureSelection extends Component {
 
@@ -114,24 +116,20 @@ class FeatureSelection extends Component {
 
   getFilteredRecords(requestObj) {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
-    let URL = SERVER_IP + GET_PIPE_LINE_FILTERED_DATA + featureGenerationPipelineName + '/features/filter';
-
-    fetch(URL, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestObj)
-    }).then(res => res.json())
-      .then(
-        (result) => {
-          if (!isNil(result) && !isNil(result["featureStatsList"])) {
+    FEDataServiceApi.pipelineFilteredData(
+      {
+        namespace: NamespaceStore.getState().selectedNamespace,
+        pipeline: featureGenerationPipelineName,
+      }, requestObj).subscribe(
+        result => {
+          if (checkResponseError(result) || isNil(result["featureStatsList"])) {
+            this.handleError(result, GET_PIPE_LINE_FILTERED);
+          } else {
             const parsedResult = this.dataParser(result["featureStatsList"]);
             this.setState({ gridRowData: parsedResult.gridRowData });
           }
         },
-        (error) => {
+        error => {
           this.handleError(error, GET_PIPE_LINE_FILTERED);
         }
       );
@@ -170,6 +168,11 @@ class FeatureSelection extends Component {
       );
   }
 
+
+  handleError(error, type) {
+    console.log(type,error);
+    alert(getErrorMessage(error));
+  }
 
   render() {
     return (
