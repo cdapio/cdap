@@ -36,24 +36,18 @@ public class WrappedPostAction extends PostAction {
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        postAction.configurePipeline(pipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      postAction.configurePipeline(pipelineConfigurer);
+      return null;
     });
   }
 
   @Override
-  public void run(final BatchActionContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        postAction.run(context);
-        return null;
-      }
+  public void run(BatchActionContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      postAction.run(context);
+      return null;
     });
   }
 }

@@ -47,72 +47,54 @@ public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAg
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        aggregator.configurePipeline(pipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      aggregator.configurePipeline(pipelineConfigurer);
+      return null;
     });
   }
 
   @Override
-  public void initialize(final BatchRuntimeContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        aggregator.initialize(context);
-        return null;
-      }
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      aggregator.initialize(context);
+      return null;
     });
   }
 
   @Override
   public void destroy() {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        aggregator.destroy();
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      aggregator.destroy();
+      return null;
     });
   }
 
   @Override
-  public void prepareRun(final BatchAggregatorContext context) throws Exception {
+  public void prepareRun(BatchAggregatorContext context) throws Exception {
     context.setGroupKeyClass(TypeChecker.getGroupKeyClass(aggregator));
     context.setGroupValueClass(TypeChecker.getGroupValueClass(aggregator));
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        aggregator.prepareRun(context);
-        return null;
-      }
+    caller.call((Callable<Void>) () -> {
+      aggregator.prepareRun(context);
+      return null;
     });
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final BatchAggregatorContext context) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        aggregator.onRunFinish(succeeded, context);
-        return null;
-      }
+  public void onRunFinish(boolean succeeded, BatchAggregatorContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      aggregator.onRunFinish(succeeded, context);
+      return null;
     });
   }
 
   @Override
-  public void groupBy(final GROUP_VALUE groupValue, final Emitter<GROUP_KEY> emitter) throws Exception {
+  public void groupBy(GROUP_VALUE groupValue, Emitter<GROUP_KEY> emitter) throws Exception {
     operationTimer.start();
     try {
-      caller.call(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          aggregator.groupBy(groupValue, new UntimedEmitter<>(emitter, operationTimer));
-          return null;
-        }
+      caller.call((Callable<Void>) () -> {
+        aggregator.groupBy(groupValue, new UntimedEmitter<>(emitter, operationTimer));
+        return null;
       });
     } finally {
       operationTimer.reset();
@@ -120,16 +102,13 @@ public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAg
   }
 
   @Override
-  public void aggregate(final GROUP_KEY groupKey, final Iterator<GROUP_VALUE> groupValues,
-                        final Emitter<OUT> emitter) throws Exception {
+  public void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues,
+                        Emitter<OUT> emitter) throws Exception {
     operationTimer.start();
     try {
-      caller.call(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          aggregator.aggregate(groupKey, groupValues, new UntimedEmitter<>(emitter, operationTimer));
-          return null;
-        }
+      caller.call((Callable<Void>) () -> {
+        aggregator.aggregate(groupKey, groupValues, new UntimedEmitter<>(emitter, operationTimer));
+        return null;
       });
     } finally {
       operationTimer.reset();

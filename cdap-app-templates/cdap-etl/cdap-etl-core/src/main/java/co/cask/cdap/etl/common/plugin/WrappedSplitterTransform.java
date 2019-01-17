@@ -43,48 +43,36 @@ public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
   }
 
   @Override
-  public void configurePipeline(final MultiOutputPipelineConfigurer multiOutputPipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.configurePipeline(multiOutputPipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(MultiOutputPipelineConfigurer multiOutputPipelineConfigurer) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      transform.configurePipeline(multiOutputPipelineConfigurer);
+      return null;
     });
   }
 
   @Override
-  public void initialize(final TransformContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.initialize(context);
-        return null;
-      }
+  public void initialize(TransformContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      transform.initialize(context);
+      return null;
     });
   }
 
   @Override
   public void destroy() {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.destroy();
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      transform.destroy();
+      return null;
     });
   }
 
   @Override
-  public void transform(final T input, final MultiOutputEmitter<E> emitter) throws Exception {
+  public void transform(T input, MultiOutputEmitter<E> emitter) throws Exception {
     operationTimer.start();
     try {
-      caller.call(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          transform.transform(input, new UntimedMultiOutputEmitter<>(emitter, operationTimer));
-          return null;
-        }
+      caller.call((Callable<Void>) () -> {
+        transform.transform(input, new UntimedMultiOutputEmitter<>(emitter, operationTimer));
+        return null;
       });
     } finally {
       operationTimer.reset();

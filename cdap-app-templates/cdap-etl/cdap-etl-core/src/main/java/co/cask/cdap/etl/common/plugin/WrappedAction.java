@@ -37,23 +37,17 @@ public class WrappedAction extends Action {
 
   @Override
   public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        action.configurePipeline(pipelineConfigurer);
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      action.configurePipeline(pipelineConfigurer);
+      return null;
     });
   }
 
   @Override
   public void run(final ActionContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        action.run(context);
-        return null;
-      }
+    caller.call((Callable<Void>) () -> {
+      action.run(context);
+      return null;
     });
   }
 }

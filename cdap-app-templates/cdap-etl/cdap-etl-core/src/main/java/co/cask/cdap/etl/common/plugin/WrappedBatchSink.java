@@ -47,38 +47,29 @@ public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OU
   }
 
   @Override
-  public void prepareRun(final BatchSinkContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSink.prepareRun(context);
-        return null;
-      }
+  public void prepareRun(BatchSinkContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      batchSink.prepareRun(context);
+      return null;
     });
   }
 
   @Override
-  public void initialize(final BatchRuntimeContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSink.initialize(context);
-        return null;
-      }
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      batchSink.initialize(context);
+      return null;
     });
   }
 
   @Override
-  public void transform(final IN input,
-                        final Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
+  public void transform(IN input,
+                        Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
     operationTimer.start();
     try {
-      caller.call(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          batchSink.transform(input, new UntimedEmitter<>(emitter, operationTimer));
-          return null;
-        }
+      caller.call((Callable<Void>) () -> {
+        batchSink.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+        return null;
       });
     } finally {
       operationTimer.reset();
@@ -87,34 +78,25 @@ public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OU
 
   @Override
   public void destroy() {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSink.destroy();
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      batchSink.destroy();
+      return null;
     });
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSink.configurePipeline(pipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      batchSink.configurePipeline(pipelineConfigurer);
+      return null;
     });
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final BatchSinkContext context) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSink.onRunFinish(succeeded, context);
-        return null;
-      }
+  public void onRunFinish(boolean succeeded, BatchSinkContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      batchSink.onRunFinish(succeeded, context);
+      return null;
     });
   }
 }
