@@ -47,72 +47,52 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
   }
 
   @Override
-  public void configurePipeline(final MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        joiner.configurePipeline(multiInputPipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      joiner.configurePipeline(multiInputPipelineConfigurer);
+      return null;
     });
   }
 
   @Override
-  public void prepareRun(final BatchJoinerContext context) throws Exception {
+  public void prepareRun(BatchJoinerContext context) throws Exception {
     context.setJoinKeyClass(TypeChecker.getJoinKeyClass(joiner));
     context.setJoinInputRecordClass(TypeChecker.getJoinInputRecordClass(joiner));
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        joiner.prepareRun(context);
-        return null;
-      }
+    caller.call((Callable<Void>) () -> {
+      joiner.prepareRun(context);
+      return null;
     });
   }
 
   @Override
-  public void initialize(final BatchJoinerRuntimeContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        joiner.initialize(context);
-        return null;
-      }
+  public void initialize(BatchJoinerRuntimeContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      joiner.initialize(context);
+      return null;
     });
   }
 
   @Override
   public void destroy() {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        joiner.destroy();
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      joiner.destroy();
+      return null;
     });
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final BatchJoinerContext context) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        joiner.onRunFinish(succeeded, context);
-        return null;
-      }
+  public void onRunFinish(boolean succeeded, BatchJoinerContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      joiner.onRunFinish(succeeded, context);
+      return null;
     });
   }
 
   @Override
-  public JOIN_KEY joinOn(final String stageName, final INPUT_RECORD inputRecord) throws Exception {
+  public JOIN_KEY joinOn(String stageName, INPUT_RECORD inputRecord) throws Exception {
     operationTimer.start();
     try {
-      return caller.call(new Callable<JOIN_KEY>() {
-        @Override
-        public JOIN_KEY call() throws Exception {
-          return joiner.joinOn(stageName, inputRecord);
-        }
-      });
+      return caller.call(() -> joiner.joinOn(stageName, inputRecord));
     } finally {
       operationTimer.reset();
     }
@@ -120,24 +100,14 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
 
   @Override
   public JoinConfig getJoinConfig() throws Exception {
-    return caller.call(new Callable<JoinConfig>() {
-      @Override
-      public JoinConfig call() throws Exception {
-        return joiner.getJoinConfig();
-      }
-    });
+    return caller.call(joiner::getJoinConfig);
   }
 
   @Override
-  public OUT merge(final JOIN_KEY joinKey, final Iterable<JoinElement<INPUT_RECORD>> joinResult) throws Exception {
+  public OUT merge(JOIN_KEY joinKey, Iterable<JoinElement<INPUT_RECORD>> joinResult) throws Exception {
     operationTimer.start();
     try {
-      return caller.call(new Callable<OUT>() {
-        @Override
-        public OUT call() throws Exception {
-          return joiner.merge(joinKey, joinResult);
-        }
-      });
+      return caller.call(() -> joiner.merge(joinKey, joinResult));
     } finally {
       operationTimer.reset();
     }

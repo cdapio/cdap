@@ -43,70 +43,52 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        transform.configurePipeline(pipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+    caller.callUnchecked((Callable<Void>) () -> {
+      transform.configurePipeline(pipelineConfigurer);
+      return null;
     });
   }
 
   @Override
-  public void prepareRun(final StageSubmitterContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.prepareRun(context);
-        return null;
-      }
+  public void prepareRun(StageSubmitterContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      transform.prepareRun(context);
+      return null;
     });
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final StageSubmitterContext context) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        transform.onRunFinish(succeeded, context);
-        return null;
-      }
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      transform.onRunFinish(succeeded, context);
+      return null;
     });
   }
 
   @Override
-  public void initialize(final TransformContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.initialize(context);
-        return null;
-      }
+  public void initialize(TransformContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      transform.initialize(context);
+      return null;
     });
   }
 
   @Override
   public void destroy() {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.destroy();
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      transform.destroy();
+      return null;
     });
   }
 
   @Override
-  public void transform(final IN input, final Emitter<OUT> emitter) throws Exception {
+  public void transform(IN input, Emitter<OUT> emitter) throws Exception {
     operationTimer.start();
     try {
-      caller.call(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          transform.transform(input, new UntimedEmitter<>(emitter, operationTimer));
-          return null;
-        }
+      caller.call((Callable<Void>) () -> {
+        transform.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+        return null;
       });
     } finally {
       operationTimer.reset();

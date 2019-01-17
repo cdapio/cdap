@@ -46,37 +46,28 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN,
   }
 
   @Override
-  public void prepareRun(final BatchSourceContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSource.prepareRun(context);
-        return null;
-      }
+  public void prepareRun(BatchSourceContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      batchSource.prepareRun(context);
+      return null;
     });
   }
 
   @Override
-  public void initialize(final BatchRuntimeContext context) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSource.initialize(context);
-        return null;
-      }
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      batchSource.initialize(context);
+      return null;
     });
   }
 
   @Override
-  public void transform(final KeyValue<KEY_IN, VAL_IN> input, final Emitter<OUT> emitter) throws Exception {
+  public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
     operationTimer.start();
     try {
-      caller.call(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          batchSource.transform(input, new UntimedEmitter<>(emitter, operationTimer));
-          return null;
-        }
+      caller.call((Callable<Void>) () -> {
+        batchSource.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+        return null;
       });
     } finally {
       operationTimer.reset();
@@ -85,34 +76,25 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN,
 
   @Override
   public void destroy() {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSource.destroy();
-        return null;
-      }
+    caller.callUnchecked((Callable<Void>) () -> {
+      batchSource.destroy();
+      return null;
     });
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final BatchSourceContext context) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSource.onRunFinish(succeeded, context);
-        return null;
-      }
+  public void onRunFinish(boolean succeeded, BatchSourceContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      batchSource.onRunFinish(succeeded, context);
+      return null;
     });
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
-    caller.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSource.configurePipeline(pipelineConfigurer);
-        return null;
-      }
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      batchSource.configurePipeline(pipelineConfigurer);
+      return null;
     });
   }
 }
