@@ -74,6 +74,7 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.security.impersonation.SecurityUtil;
+import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -634,6 +635,7 @@ public class MasterServiceMain extends DaemonMain {
       services.add(getAndStart(injector, OperationalStatsService.class));
       ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);
+      services.add(injector.getInstance(SecureStoreService.class));
 
       twillRunner = injector.getInstance(TwillRunnerService.class);
       twillRunner.start();
