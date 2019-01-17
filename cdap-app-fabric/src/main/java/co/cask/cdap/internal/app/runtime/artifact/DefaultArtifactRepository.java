@@ -281,51 +281,35 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public void writeArtifactProperties(Id.Artifact artifactId, final Map<String, String> properties) throws Exception {
-    artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
-      @Override
-      public Map<String, String> apply(Map<String, String> oldProperties) {
-        return properties;
-      }
-    });
+    artifactStore.updateArtifactProperties(artifactId, oldProperties -> properties);
   }
 
   @Override
   public void writeArtifactProperty(Id.Artifact artifactId, final String key, final String value) throws Exception {
-    artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
-      @Override
-      public Map<String, String> apply(Map<String, String> oldProperties) {
-        Map<String, String> updated = new HashMap<>();
-        updated.putAll(oldProperties);
-        updated.put(key, value);
-        return updated;
-      }
+    artifactStore.updateArtifactProperties(artifactId, oldProperties -> {
+      Map<String, String> updated = new HashMap<>();
+      updated.putAll(oldProperties);
+      updated.put(key, value);
+      return updated;
     });
   }
 
   @Override
   public void deleteArtifactProperty(Id.Artifact artifactId, final String key) throws Exception {
-    artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
-      @Override
-      public Map<String, String> apply(Map<String, String> oldProperties) {
-        if (!oldProperties.containsKey(key)) {
-          return oldProperties;
-        }
-        Map<String, String> updated = new HashMap<>();
-        updated.putAll(oldProperties);
-        updated.remove(key);
-        return updated;
+    artifactStore.updateArtifactProperties(artifactId, oldProperties -> {
+      if (!oldProperties.containsKey(key)) {
+        return oldProperties;
       }
+      Map<String, String> updated = new HashMap<>();
+      updated.putAll(oldProperties);
+      updated.remove(key);
+      return updated;
     });
   }
 
   @Override
   public void deleteArtifactProperties(Id.Artifact artifactId) throws Exception {
-    artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
-      @Override
-      public Map<String, String> apply(Map<String, String> oldProperties) {
-        return new HashMap<>();
-      }
-    });
+    artifactStore.updateArtifactProperties(artifactId, oldProperties -> new HashMap<>());
   }
 
   @Override

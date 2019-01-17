@@ -19,12 +19,18 @@ package co.cask.cdap.data2.sql;
 import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -34,11 +40,13 @@ import javax.annotation.Nullable;
 public class SqlStructuredRow implements StructuredRow {
 
   private final Map<String, Object> columns;
+  private final Collection<Field<?>> keys;
   private final StructuredTableSchema tableSchema;
 
   public SqlStructuredRow(StructuredTableSchema tableSchema, Map<String, Object> columns) {
     this.tableSchema = tableSchema;
     this.columns = Collections.unmodifiableMap(new HashMap<>(columns));
+    this.keys = extractKeys();
   }
 
   @Nullable
@@ -74,6 +82,36 @@ public class SqlStructuredRow implements StructuredRow {
   public Double getDouble(String fieldName) throws InvalidFieldException {
     validateField(fieldName, ImmutableSet.of(FieldType.Type.FLOAT, FieldType.Type.DOUBLE));
     return (Double) columns.get(fieldName);
+  }
+
+  @Override
+  public Collection<Field<?>> getPrimaryKeys() {
+    return keys;
+  }
+
+  private List<Field<?>> extractKeys() {
+    List<Field<?>> result = new ArrayList<>();
+    FieldFactory fieldFactory = new FieldFactory(tableSchema);
+    for (String key : tableSchema.getPrimaryKeys()) {
+      // the NullPointerException should never be thrown since the primary keys must always have a type
+      FieldType.Type type = tableSchema.getType(key);
+      switch (Objects.requireNonNull(type)) {
+        case INTEGER:
+          result.add(fieldFactory.createIntField(key, (int) columns.get(key)));
+          break;
+        case LONG:
+          result.add(fieldFactory.createLongField(key, (long) columns.get(key)));
+          break;
+        case STRING:
+          result.add(fieldFactory.createStringField(key, (String) columns.get(key)));
+          break;
+        default:
+          // this should never happen since all the keys are from the table schema and should never contain other types
+          throw new IllegalStateException(
+            String.format("The type %s of the primary key %s is not a valid key type", type, key));
+      }
+    }
+    return result;
   }
 
   private void validateField(String fieldName, Set<FieldType.Type> validTypes) throws InvalidFieldException {

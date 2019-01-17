@@ -16,6 +16,9 @@
 
 package co.cask.cdap.spi.data;
 
+import co.cask.cdap.spi.data.table.field.Field;
+
+import java.util.Collection;
 import javax.annotation.Nullable;
 
 /**
@@ -59,4 +62,9 @@ public interface StructuredRow {
    */
   @Nullable
   Double getDouble(String fieldName) throws InvalidFieldException;
+
+  /**
+   * @return the primary keys of this row
+   */
+  Collection<Field<?>> getPrimaryKeys();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,63 +16,49 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.FieldFactory;
+import co.cask.cdap.spi.data.table.field.Range;
+import co.cask.cdap.spi.data.transaction.TransactionException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.MinMaxPriorityQueue;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionConflictException;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -83,6 +69,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -90,15 +77,20 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.Spliterators;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -173,13 +165,6 @@ import javax.annotation.Nullable;
  */
 public class ArtifactStore {
   private static final String ARTIFACTS_PATH = "artifacts";
-  private static final String ARTIFACT_PREFIX = "r";
-  private static final String PLUGIN_PREFIX = "p";
-  private static final String UNIVERSAL_PLUGIN_PREFIX = "u";
-  private static final String APPCLASS_PREFIX = "a";
-  private static final DatasetId META_ID = NamespaceId.SYSTEM.dataset("artifact.meta");
-  private static final DatasetProperties META_PROPERTIES =
-    TableProperties.builder().setConflictDetection(ConflictDetection.COLUMN).build();
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -188,44 +173,41 @@ public class ArtifactStore {
 
   private final LocationFactory locationFactory;
   private final NamespacePathLocator namespacePathLocator;
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
   private final Impersonator impersonator;
   private final Set<String> requirementBlacklist;
+  private final StructuredTableAdmin tableAdmin;
+  private final TransactionRunner transactionRunner;
 
+  // TODO: Fix Guice injection, otherwise all other injections will break
   @Inject
-  ArtifactStore(CConfiguration cConf, DatasetFramework datasetFramework,
+  ArtifactStore(CConfiguration cConf,
                 NamespacePathLocator namespacePathLocator,
                 LocationFactory locationFactory,
-                TransactionSystemClient txClient,
                 Impersonator impersonator) {
     this.locationFactory = locationFactory;
     this.namespacePathLocator = namespacePathLocator;
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                                   new TransactionSystemClientAdapter(txClient),
-                                                                   META_ID.getParent(),
-                                                                   Collections.<String, String>emptyMap(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
     this.impersonator = impersonator;
     this.requirementBlacklist =
       new HashSet<>(cConf.getTrimmedStringCollection(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE))
         .stream().map(String::toLowerCase).collect(Collectors.toSet());
+    this.tableAdmin = null;
+    this.transactionRunner = null;
   }
 
-  /**
-   * Adds datasets and types to the given {@link DatasetFramework} used by artifact store.
-   *
-   * @param framework framework to add types and datasets to
-   */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), META_ID, META_PROPERTIES);
-  }
-
-  private Table getMetaTable(DatasetContext context) throws IOException, DatasetManagementException {
-    return DatasetsUtil.getOrCreateDataset(context, datasetFramework, META_ID, Table.class.getName(), META_PROPERTIES);
+  ArtifactStore(CConfiguration cConf,
+                NamespacePathLocator namespacePathLocator,
+                LocationFactory locationFactory,
+                Impersonator impersonator,
+                StructuredTableAdmin tableAdmin,
+                TransactionRunner transactionRunner) {
+    this.locationFactory = locationFactory;
+    this.namespacePathLocator = namespacePathLocator;
+    this.impersonator = impersonator;
+    this.requirementBlacklist =
+      new HashSet<>(cConf.getTrimmedStringCollection(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE))
+        .stream().map(String::toLowerCase).collect(Collectors.toSet());
+    this.tableAdmin = tableAdmin;
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -237,13 +219,13 @@ public class ArtifactStore {
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
   public List<ArtifactDetail> getArtifacts(final NamespaceId namespace) throws IOException {
-    return Transactionals.execute(transactional, context -> {
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       List<ArtifactDetail> artifacts = Lists.newArrayList();
-      try (Scanner scanner = getMetaTable(context).scan(scanArtifacts(namespace))) {
-        Row row;
-        while ((row = scanner.next()) != null) {
-          getArtifacts(row, Integer.MAX_VALUE, null, () -> artifacts);
-        }
+      Range scanRange = createArtifactScanRange(namespace, table.getFieldFactory());
+      // TODO: add scan method without limit
+      try (CloseableIterator<StructuredRow> iterator = table.scan(scanRange, Integer.MAX_VALUE)) {
+        getArtifacts(iterator, Integer.MAX_VALUE, null, () -> artifacts);
       }
       return Collections.unmodifiableList(artifacts);
     }, IOException.class);
@@ -259,41 +241,50 @@ public class ArtifactStore {
    *         is returned
    */
   public List<ArtifactDetail> getArtifacts(ArtifactRange range, int limit, ArtifactSortOrder order) {
-    return Transactionals.execute(transactional, context -> {
-      return getArtifacts(getMetaTable(context), range, limit, order);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getArtifacts(context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE), range, limit, order);
     });
   }
 
-  private List<ArtifactDetail> getArtifacts(Table metaTable, ArtifactRange range,
-                                            int limit, ArtifactSortOrder order) throws IOException {
-    ArtifactKey artifactKey = new ArtifactKey(range.getNamespace(), range.getName());
-    Row row = metaTable.get(artifactKey.getRowKey());
-    return getArtifacts(row, limit, order, range);
+  private List<ArtifactDetail> getArtifacts(StructuredTable artifactDataTable, ArtifactRange range,
+                                            int limit,
+                                            ArtifactSortOrder order) throws IOException {
+    FieldFactory fieldFactory = artifactDataTable.getFieldFactory();
+    Collection<Field<?>> keys =
+      Arrays.asList(fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD,
+                                                   range.getNamespace()),
+                    fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD,
+                                                   range.getName()));
+    try (CloseableIterator<StructuredRow> iterator = artifactDataTable.scan(Range.singleton(keys), limit)) {
+      return getArtifacts(iterator, limit, order, range);
+    }
   }
 
-  private List<ArtifactDetail> getArtifacts(Row row, int limit, ArtifactSortOrder order,
+  private List<ArtifactDetail> getArtifacts(Iterator<StructuredRow> iterator, int limit,
+                                            ArtifactSortOrder order,
                                             @Nullable ArtifactRange range) throws IOException {
-    if (row.isEmpty()) {
+    if (!iterator.hasNext()) {
       return Collections.emptyList();
     }
 
     List<ArtifactDetail> result = (order == ArtifactSortOrder.UNORDERED)
-      ? getArtifacts(row, limit, range, ArrayList::new)
-      : getSortedArtifacts(row, limit, order, range, ArrayList::new);
+      ? getArtifacts(iterator, limit, range, ArrayList::new)
+      : getSortedArtifacts(iterator, limit, order, range, ArrayList::new);
 
     return Collections.unmodifiableList(result);
   }
 
-  private List<ArtifactDetail> getArtifacts(Row row, int limit, @Nullable ArtifactRange range,
-                                            Supplier<List<ArtifactDetail>> resultSupplier) throws IOException {
-    return collectArtifacts(row, range, limit, Collector.of(resultSupplier, List::add, createUnsupportedCombiner()));
+  private List<ArtifactDetail> getArtifacts(Iterator<StructuredRow> iterator, int limit, @Nullable ArtifactRange range,
+                                            Supplier<List<ArtifactDetail>> resultSupplier) {
+    return collectArtifacts(iterator, range, limit,
+                            Collector.of(resultSupplier, List::add, createUnsupportedCombiner()));
   }
 
-  private List<ArtifactDetail> getSortedArtifacts(Row row, int limit,
+  private List<ArtifactDetail> getSortedArtifacts(Iterator<StructuredRow> iterator, int limit,
                                                   ArtifactSortOrder order, @Nullable ArtifactRange range,
                                                   Supplier<List<ArtifactDetail>> resultSupplier) {
     // Create a priority queue for remembering the highest/lowest N
-    return collectArtifacts(row, range, Integer.MAX_VALUE, Collector.of(
+    return collectArtifacts(iterator, range, Integer.MAX_VALUE, Collector.of(
       () -> MinMaxPriorityQueue.orderedBy(Comparator.comparing(ArtifactDetail::getDescriptor)).create(),
       (queue, artifactDetail) -> {
         queue.add(artifactDetail);
@@ -325,18 +316,20 @@ public class ArtifactStore {
     };
   }
 
-  private <A, R> R collectArtifacts(Row row, @Nullable ArtifactRange range, int limit,
+  private <A, R> R collectArtifacts(Iterator<StructuredRow> iterator, @Nullable ArtifactRange range, int limit,
                                     Collector<ArtifactDetail, A, R> collector) {
 
-    ArtifactKey artifactKey = ArtifactKey.parse(row.getRow());
-
     // Includes artifacts with version matching the one from the given range
-    return row.getColumns().entrySet().stream()
-      .map(e -> Maps.immutableEntry(new ArtifactVersion(Bytes.toString(e.getKey())), e.getValue()))
+    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
+      .map(row -> Maps.immutableEntry(
+        new ArtifactVersion(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD)), row))
       .filter(e -> range == null || range.versionIsInRange(e.getKey()))
       .limit(limit)
       .map(e -> {
-        ArtifactData data = GSON.fromJson(Bytes.toString(e.getValue()), ArtifactData.class);
+        StructuredRow row = e.getValue();
+        ArtifactKey artifactKey = ArtifactKey.fromRow(row);
+        ArtifactData data = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD),
+                                          ArtifactData.class);
         ArtifactMeta filteredArtifactMeta = filterPlugins(data.meta);
         ArtifactId artifactId = new ArtifactId(artifactKey.name, e.getKey(),
                                                artifactKey.namespace.equals(NamespaceId.SYSTEM.getNamespace()) ?
@@ -362,16 +355,22 @@ public class ArtifactStore {
                                            String artifactName,
                                            int limit,
                                            ArtifactSortOrder order) throws ArtifactNotFoundException, IOException {
-    return Transactionals.execute(transactional, context -> {
-      ArtifactKey artifactKey = new ArtifactKey(namespace.getNamespace(), artifactName);
-      Row row = getMetaTable(context).get(artifactKey.getRowKey());
-      List<ArtifactDetail> artifacts = getArtifacts(row, limit, order, null);
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      FieldFactory fieldFactory = table.getFieldFactory();
+      Collection<Field<?>> keys = Arrays.asList(fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD,
+                                                                               namespace.getNamespace()),
+                                                fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD, artifactName));
 
-      if (artifacts.isEmpty()) {
-        throw new ArtifactNotFoundException(namespace, artifactName);
+      try (CloseableIterator<StructuredRow> iterator =
+             table.scan(Range.singleton(keys), Integer.MAX_VALUE)) {
+        List<ArtifactDetail> artifacts = getArtifacts(iterator, limit, order, null);
+        if (artifacts.isEmpty()) {
+          throw new ArtifactNotFoundException(namespace, artifactName);
+        }
+
+        return artifacts;
       }
-
-      return artifacts;
     }, ArtifactNotFoundException.class, IOException.class);
   }
 
@@ -384,13 +383,14 @@ public class ArtifactStore {
    * @throws IOException if there was an exception reading the artifact information from the metastore
    */
   public ArtifactDetail getArtifact(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
-    ArtifactData artifactData = Transactionals.execute(transactional, context -> {
-      ArtifactCell artifactCell = new ArtifactCell(artifactId);
-      byte[] value = getMetaTable(context).get(artifactCell.rowkey, artifactCell.column);
-      if (value == null) {
+    ArtifactData artifactData = TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      ArtifactCell artifactCell = new ArtifactCell(artifactId, table.getFieldFactory());
+      Optional<StructuredRow> row = table.read(artifactCell.keys);
+      if (!row.isPresent()) {
         throw new ArtifactNotFoundException(artifactId.toEntityId());
       }
-      return GSON.fromJson(Bytes.toString(value), ArtifactData.class);
+      return GSON.fromJson(row.get().getString(StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD), ArtifactData.class);
     }, IOException.class, ArtifactNotFoundException.class);
 
     try {
@@ -412,23 +412,27 @@ public class ArtifactStore {
    * @return an unmodifiable map of artifact to a list of all application classes in that artifact.
    *         The map will never be null. If there are no application classes, an empty map will be returned.
    */
-  public SortedMap<ArtifactDescriptor, List<ApplicationClass>> getApplicationClasses(final NamespaceId namespace) {
-    return Transactionals.execute(transactional, context -> {
+  public SortedMap<ArtifactDescriptor, List<ApplicationClass>> getApplicationClasses(NamespaceId namespace) {
+    return TransactionRunners.run(transactionRunner, context -> {
       SortedMap<ArtifactDescriptor, List<ApplicationClass>> result = Maps.newTreeMap();
-      try (Scanner scanner = getMetaTable(context).scan(scanAppClasses(namespace))) {
-        Row row;
-        while ((row = scanner.next()) != null) {
-          // columns are {artifact-name}:{artifact-version}. vals are serialized AppData
-          for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
-            ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
-            AppData appData = GSON.fromJson(Bytes.toString(column.getValue()), AppData.class);
-            ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-              artifactColumn.artifactId.toArtifactId(),
-              Locations.getLocationFromAbsolutePath(locationFactory, appData.getArtifactLocationPath()));
-            List<ApplicationClass> existingAppClasses = result.computeIfAbsent(artifactDescriptor,
-                                                                               k -> new ArrayList<>());
-            existingAppClasses.add(appData.appClass);
-          }
+      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+      Collection<Field<?>> keys = Collections.singleton(
+        table.getFieldFactory().createStringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD,
+                                                  namespace.getNamespace()));
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(keys), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          Id.Artifact artifactId = Id.Artifact.from(
+            Id.Namespace.from(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD)),
+            row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD),
+            row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD));
+          AppData appData = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.APP_DATA_FIELD), AppData.class);
+          ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
+            artifactId.toArtifactId(),
+            Locations.getLocationFromAbsolutePath(locationFactory, appData.getArtifactLocationPath()));
+          List<ApplicationClass> existingAppClasses = result.computeIfAbsent(artifactDescriptor,
+                                                                             k -> new ArrayList<>());
+          existingAppClasses.add(appData.appClass);
         }
       }
       return Collections.unmodifiableSortedMap(result);
@@ -447,16 +451,25 @@ public class ArtifactStore {
    */
   public SortedMap<ArtifactDescriptor, ApplicationClass> getApplicationClasses(final NamespaceId namespace,
                                                                                final String className) {
-    return Transactionals.execute(transactional, context -> {
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+      FieldFactory fieldFactory = table.getFieldFactory();
+
       SortedMap<ArtifactDescriptor, ApplicationClass> result = Maps.newTreeMap();
-      Row row = getMetaTable(context).get(new AppClassKey(namespace, className).getRowKey());
-      if (!row.isEmpty()) {
-        // columns are {artifact-name}:{artifact-version}. vals are serialized AppData
-        for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
-          ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
-          AppData appData = GSON.fromJson(Bytes.toString(column.getValue()), AppData.class);
+      Collection<Field<?>> keys =
+        Arrays.asList(fieldFactory.createStringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD,
+                                                     namespace.getNamespace()),
+                      fieldFactory.createStringField(StoreDefinition.ArtifactStore.CLASS_NAME_FIELD, className));
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(keys), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          Id.Artifact artifactId =
+            Id.Artifact.from(Id.Namespace.from(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD)),
+                                                    row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD),
+                                                    row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD));
+          AppData appData = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.APP_DATA_FIELD), AppData.class);
           ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-            artifactColumn.artifactId.toArtifactId(),
+            artifactId.toArtifactId(),
             Locations.getLocationFromAbsolutePath(locationFactory, appData.getArtifactLocationPath()));
           result.put(artifactDescriptor, appData.appClass);
         }
@@ -500,21 +513,34 @@ public class ArtifactStore {
                                                                           @Nullable String type)
     throws ArtifactNotFoundException, IOException {
 
-    return Transactionals.execute(transactional, context -> {
-      Table metaTable = getMetaTable(context);
-      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = getPluginsInArtifact(
-        metaTable, parentArtifactId, input -> (type == null || type.equals(input.getType())) && isAllowed(input));
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+        getPluginsInArtifact(artifactDataTable, parentArtifactId,
+                             input -> (type == null || type.equals(input.getType())) && isAllowed(input));
 
-      List<Scan> scans = Arrays.asList(
-        scanPlugins(parentArtifactId, type),
-        scanUniversalPlugin(namespace.getNamespace(), type),
-        scanUniversalPlugin(NamespaceId.SYSTEM.getNamespace(), type)
+      // Scan plugins
+      StructuredTable pluginTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      try (CloseableIterator<StructuredRow> iterator =
+             pluginTable.scan(createPluginScanRange(parentArtifactId, type,
+                                                    pluginTable.getFieldFactory()), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          addPluginsToMap(namespace, parentArtifactId, plugins, row);
+        }
+      }
+
+      // Scan universal plugins
+      StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+      List<Range> ranges = Arrays.asList(
+        createUniversalPluginScanRange(namespace.getNamespace(), type, uniPluginTable.getFieldFactory()),
+        createUniversalPluginScanRange(NamespaceId.SYSTEM.getNamespace(), type, uniPluginTable.getFieldFactory())
       );
 
-      for (Scan scan : scans) {
-        try (Scanner scanner = metaTable.scan(scan)) {
-          Row row;
-          while ((row = scanner.next()) != null) {
+      for (Range range : ranges) {
+        try (CloseableIterator<StructuredRow> iterator = uniPluginTable.scan(range, Integer.MAX_VALUE)) {
+          while (iterator.hasNext()) {
+            StructuredRow row = iterator.next();
             addPluginsToMap(namespace, parentArtifactId, plugins, row);
           }
         }
@@ -572,9 +598,9 @@ public class ArtifactStore {
     @Nullable final Predicate<co.cask.cdap.proto.id.ArtifactId> pluginRange, int limit, ArtifactSortOrder order)
     throws IOException, ArtifactNotFoundException, PluginNotExistsException {
 
-    SortedMap<ArtifactDescriptor, PluginClass> result = Transactionals.execute(transactional, context -> {
-      Table metaTable = getMetaTable(context);
-      List<ArtifactDetail> parentArtifactDetails = getArtifacts(metaTable, parentArtifactRange,
+    SortedMap<ArtifactDescriptor, PluginClass> result = TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      List<ArtifactDetail> parentArtifactDetails = getArtifacts(artifactDataTable, parentArtifactRange,
                                                                 Integer.MAX_VALUE, null);
 
       if (parentArtifactDetails.isEmpty()) {
@@ -600,19 +626,22 @@ public class ArtifactStore {
       }
 
       // Add all plugins that extends from the given set of parents
+      StructuredTable pluginTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
       PluginKey pluginKey = new PluginKey(parentArtifactRange.getNamespace(),
-                                          parentArtifactRange.getName(), type, name);
-      Row row = metaTable.get(pluginKey.getRowKey());
-      if (!row.isEmpty()) {
-        addPluginsInRangeToMap(namespace, parentArtifacts, row.getColumns(), plugins, pluginRange, limit);
+                                          parentArtifactRange.getName(), type, name, pluginTable.getFieldFactory());
+      try (CloseableIterator<StructuredRow> iterator =
+             pluginTable.scan(Range.singleton(pluginKey.keys), Integer.MAX_VALUE)) {
+        addPluginsInRangeToMap(namespace, parentArtifacts, iterator, plugins, pluginRange, limit);
       }
 
       // Add all universal plugins
+      StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
       for (String ns : Arrays.asList(namespace.getNamespace(), NamespaceId.SYSTEM.getNamespace())) {
-        UniversalPluginKey universalPluginKey = new UniversalPluginKey(ns, type, name);
-        row = metaTable.get(universalPluginKey.getRowKey());
-        if (!row.isEmpty()) {
-          addPluginsInRangeToMap(namespace, parentArtifacts, row.getColumns(), plugins, pluginRange, limit);
+        UniversalPluginKey universalPluginKey = new UniversalPluginKey(ns, type, name,
+                                                                       uniPluginTable.getFieldFactory());
+        try (CloseableIterator<StructuredRow> iterator =
+               uniPluginTable.scan(Range.singleton(universalPluginKey.keys), Integer.MAX_VALUE)) {
+          addPluginsInRangeToMap(namespace, parentArtifacts, iterator, plugins, pluginRange, limit);
         }
       }
 
@@ -626,33 +655,39 @@ public class ArtifactStore {
   }
 
   /**
-     * Update artifact properties using an update function. Functions will receive an immutable map.
-     *
-     * @param artifactId the id of the artifact to add
-     * @param updateFunction the function used to update existing properties
-     * @throws ArtifactNotFoundException if the artifact does not exist
-     * @throws IOException if there was an exception writing the properties to the metastore
-     */
-  public void updateArtifactProperties(final Id.Artifact artifactId,
-                                       final Function<Map<String, String>, Map<String, String>> updateFunction)
+   * Update artifact properties using an update function. Functions will receive an immutable map.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param updateFunction the function used to update existing properties
+   * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws IOException if there was an exception writing the properties to the metastore
+   */
+  public void updateArtifactProperties(Id.Artifact artifactId,
+                                       Function<Map<String, String>, Map<String, String>> updateFunction)
     throws ArtifactNotFoundException, IOException {
 
-    Transactionals.execute(transactional, context -> {
-      ArtifactCell artifactCell = new ArtifactCell(artifactId);
-      Table metaTable = getMetaTable(context);
-      byte[] existingMetaBytes = metaTable.get(artifactCell.rowkey, artifactCell.column);
-      if (existingMetaBytes == null) {
+    TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      ArtifactCell artifactCell = new ArtifactCell(artifactId, artifactDataTable.getFieldFactory());
+      Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
+      if (!optional.isPresent()) {
         throw new ArtifactNotFoundException(artifactId.toEntityId());
       }
 
-      ArtifactData old = GSON.fromJson(Bytes.toString(existingMetaBytes), ArtifactData.class);
+      ArtifactData old = GSON.fromJson(optional.get().getString(StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD),
+                                       ArtifactData.class);
       ArtifactMeta updatedMeta = new ArtifactMeta(old.meta.getClasses(), old.meta.getUsableBy(),
                                                   updateFunction.apply(old.meta.getProperties()));
       ArtifactData updatedData =
         new ArtifactData(Locations.getLocationFromAbsolutePath(locationFactory, old.getLocationPath()),
                          updatedMeta);
       // write artifact metadata
-      metaTable.put(artifactCell.rowkey, artifactCell.column, Bytes.toBytes(GSON.toJson(updatedData)));
+      List<Field<?>> fields =
+        Stream.concat(artifactCell.keys.stream(),
+                      Stream.of(artifactDataTable.getFieldFactory().createStringField(
+                        StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD, GSON.toJson(updatedData))))
+          .collect(Collectors.toList());
+      artifactDataTable.upsert(fields);
     }, ArtifactNotFoundException.class, IOException.class);
   }
 
@@ -664,22 +699,20 @@ public class ArtifactStore {
    * @param artifactMeta the metadata for the artifact
    * @param artifactContent the file containing the content of the artifact
    * @return detail about the newly added artifact
-   * @throws WriteConflictException if the artifact is already currently being written
    * @throws ArtifactAlreadyExistsException if a non-snapshot version of the artifact already exists
    * @throws IOException if there was an exception persisting the artifact contents to the filesystem,
    *                     of persisting the artifact metadata to the metastore
    */
-  public ArtifactDetail write(final Id.Artifact artifactId,
-                              final ArtifactMeta artifactMeta,
-                              File artifactContent,
-                              EntityImpersonator entityImpersonator)
-    throws WriteConflictException, ArtifactAlreadyExistsException, IOException {
+  public ArtifactDetail write(
+    Id.Artifact artifactId, ArtifactMeta artifactMeta,
+    File artifactContent, EntityImpersonator entityImpersonator) throws ArtifactAlreadyExistsException, IOException {
 
     // if we're not a snapshot version, check that the artifact doesn't exist already.
-    final ArtifactCell artifactCell = new ArtifactCell(artifactId);
     if (!artifactId.getVersion().isSnapshot()) {
-      Transactionals.execute(transactional, context -> {
-        if (getMetaTable(context).get(artifactCell.rowkey, artifactCell.column) != null) {
+      TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+        ArtifactCell artifactCell = new ArtifactCell(artifactId, table.getFieldFactory());
+        if (table.read(artifactCell.keys).isPresent()) {
           throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
         }
       }, ArtifactAlreadyExistsException.class, IOException.class);
@@ -695,13 +728,14 @@ public class ArtifactStore {
 
     // now try and write the metadata for the artifact
     try {
-      transactional.execute(context -> {
+      transactionRunner.run(context -> {
         // we have to check that the metadata doesn't exist again since somebody else may have written
         // the artifact while we were copying the artifact to the filesystem.
-        Table metaTable = getMetaTable(context);
-        byte[] existingMetaBytes = metaTable.get(artifactCell.rowkey, artifactCell.column);
+        StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+        ArtifactCell artifactCell = new ArtifactCell(artifactId, artifactDataTable.getFieldFactory());
+        Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
         boolean isSnapshot = artifactId.getVersion().isSnapshot();
-        if (existingMetaBytes != null && !isSnapshot) {
+        if (optional.isPresent() && !isSnapshot) {
           // non-snapshot artifacts are immutable. If there is existing metadata, stop here.
           throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
         }
@@ -710,20 +744,21 @@ public class ArtifactStore {
         // cleanup existing metadata if it exists and this is a snapshot
         // if we are overwriting a previous snapshot, need to clean up the old snapshot data
         // this means cleaning up the old jar, and deleting plugin and app rows.
-        if (existingMetaBytes != null) {
-          deleteMeta(metaTable, artifactId, existingMetaBytes);
+        if (optional.isPresent()) {
+          deleteMeta(context, artifactId,
+                     GSON.fromJson(optional.get().getString(StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD),
+                                   ArtifactData.class));
         }
         // write artifact metadata
-        writeMeta(metaTable, artifactId, data);
+        writeMeta(context, artifactId, data);
       });
 
       return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), destination), artifactMeta);
-    } catch (TransactionConflictException e) {
+    } catch (TransactionException e) {
       destination.delete();
-      throw new WriteConflictException(artifactId);
-    } catch (TransactionFailureException e) {
-      destination.delete();
-      throw Transactionals.propagate(e, ArtifactAlreadyExistsException.class, IOException.class);
+      // TODO: CDAP-14672 define TransactionConflictException for the SPI
+      // should throw WriteConflictException(artifactId) on transaction conflict
+      throw TransactionRunners.propagate(e, ArtifactAlreadyExistsException.class, IOException.class);
     }
   }
 
@@ -735,7 +770,7 @@ public class ArtifactStore {
 
   private Location copyFile(Id.Artifact artifactId, File artifactContent) throws IOException {
     Location fileDirectory = namespacePathLocator.get(artifactId.getNamespace().toEntityId())
-                                                      .append(ARTIFACTS_PATH).append(artifactId.getName());
+      .append(ARTIFACTS_PATH).append(artifactId.getName());
     Location destination = fileDirectory.append(artifactId.getVersion().getVersion()).getTempFile(".jar");
     Locations.mkdirsIfNotExists(fileDirectory);
     // write the file contents
@@ -754,15 +789,17 @@ public class ArtifactStore {
   public void delete(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
 
     // delete everything in a transaction
-    Transactionals.execute(transactional, context -> {
+    TransactionRunners.run(transactionRunner, context -> {
       // first look up details to get plugins and apps in the artifact
-      ArtifactCell artifactCell = new ArtifactCell(artifactId);
-      Table metaTable = getMetaTable(context);
-      byte[] detailBytes = metaTable.get(artifactCell.rowkey, artifactCell.column);
-      if (detailBytes == null) {
+      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      ArtifactCell artifactCell = new ArtifactCell(artifactId, artifactDataTable.getFieldFactory());
+      Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
+      if (!optional.isPresent()) {
         throw new ArtifactNotFoundException(artifactId.toEntityId());
       }
-      deleteMeta(metaTable, artifactId, detailBytes);
+      deleteMeta(context, artifactId,
+                 GSON.fromJson(optional.get().getString(StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD),
+                               ArtifactData.class));
     }, IOException.class, ArtifactNotFoundException.class);
   }
 
@@ -777,56 +814,68 @@ public class ArtifactStore {
     final Id.Namespace namespaceId = Id.Namespace.fromEntityId(namespace);
     namespacePathLocator.get(namespace).append(ARTIFACTS_PATH).delete(true);
 
-    Transactionals.execute(transactional, context -> {
+    TransactionRunners.run(transactionRunner, context -> {
       // delete all rows about artifacts in the namespace
-      Table metaTable = getMetaTable(context);
-      Row row;
-      try (Scanner scanner = metaTable.scan(scanArtifacts(namespace))) {
-        while ((row = scanner.next()) != null) {
-          metaTable.delete(row.getRow());
+      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      try (CloseableIterator<StructuredRow> iterator =
+             artifactDataTable.scan(createArtifactScanRange(namespace, artifactDataTable.getFieldFactory()),
+                                    Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          artifactDataTable.delete(row.getPrimaryKeys());
         }
       }
 
       // delete all rows about artifacts in the namespace and the plugins they have access to
-      Scan pluginsScan = new Scan(
-        Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, namespace.getNamespace())),
-        Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, namespace.getNamespace()))
-      );
-      try (Scanner scanner = metaTable.scan(pluginsScan)) {
-        while ((row = scanner.next()) != null) {
-          metaTable.delete(row.getRow());
+      StructuredTable pluginDataTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      Collection<Field<?>> pluginKey =
+        Collections.singleton(
+          pluginDataTable.getFieldFactory().createStringField(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD,
+                                                              namespace.getNamespace()));
+      try (CloseableIterator<StructuredRow> iterator =
+             pluginDataTable.scan(Range.singleton(pluginKey), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          pluginDataTable.delete(row.getPrimaryKeys());
         }
       }
 
       // delete all rows about universal plugins
-      try (Scanner scanner = metaTable.scan(scanUniversalPlugin(namespace.getNamespace(), null))) {
-        while ((row = scanner.next()) != null) {
-          metaTable.delete(row.getRow());
+      StructuredTable univPluginsDataTable  = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+      try (CloseableIterator<StructuredRow> iterator =
+             univPluginsDataTable.scan(createUniversalPluginScanRange(namespace.getNamespace(), null,
+                                                                      univPluginsDataTable.getFieldFactory()),
+                                       Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          univPluginsDataTable.delete(row.getPrimaryKeys());
         }
       }
 
       // delete app classes in this namespace
-      try (Scanner scanner = metaTable.scan(scanAppClasses(namespace))) {
-        while ((row = scanner.next()) != null) {
-          metaTable.delete(row.getRow());
+      StructuredTable appClassTable = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+      try (CloseableIterator<StructuredRow> iterator =
+             appClassTable.scan(scanAppClasses(namespace, appClassTable.getFieldFactory()), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+          appClassTable.delete(row.getPrimaryKeys());
         }
       }
 
       // delete plugins in this namespace from system artifacts
       // for example, if there was an artifact in this namespace that extends a system artifact
-      Scan systemPluginsScan = new Scan(
-        Bytes.toBytes(String.format("%s:%s:", PLUGIN_PREFIX, Id.Namespace.SYSTEM.getId())),
-        Bytes.toBytes(String.format("%s:%s;", PLUGIN_PREFIX, Id.Namespace.SYSTEM.getId()))
-      );
-      try (Scanner scanner = metaTable.scan(systemPluginsScan)) {
-        while ((row = scanner.next()) != null) {
-          for (Map.Entry<byte[], byte[]> columnVal : row.getColumns().entrySet()) {
-            // the column is the id of the artifact the plugin is from
-            ArtifactColumn column = ArtifactColumn.parse(columnVal.getKey());
-            // if the plugin artifact is in the namespace we're deleting, delete this column.
-            if (column.artifactId.getNamespace().equals(namespaceId)) {
-              metaTable.delete(row.getRow(), column.getColumn());
-            }
+      Collection<Field<?>> systemPluginKey =
+        Collections.singleton(pluginDataTable.getFieldFactory().createStringField(
+          StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD, Id.Namespace.SYSTEM.getId()));
+      try (CloseableIterator<StructuredRow> iterator =
+             pluginDataTable.scan(Range.singleton(systemPluginKey), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          StructuredRow row = iterator.next();
+
+          // if the plugin artifact is in the namespace we're deleting, delete this column.
+          if (namespaceId.getId().equals(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD))) {
+            pluginDataTable.delete(concatFields(PluginKey.fromRow(row, pluginDataTable.getFieldFactory()),
+                                                ArtifactCell.fromRow(row, pluginDataTable.getFieldFactory())));
           }
         }
       }
@@ -834,79 +883,117 @@ public class ArtifactStore {
   }
 
   // write a new artifact snapshot and clean up the old snapshot data
-  private void writeMeta(Table table, Id.Artifact artifactId, ArtifactData data) throws IOException {
-    ArtifactCell artifactCell = new ArtifactCell(artifactId);
-    table.put(artifactCell.rowkey, artifactCell.column, Bytes.toBytes(GSON.toJson(data)));
+  private void writeMeta(StructuredTableContext context, Id.Artifact artifactId,
+                         ArtifactData data) throws NotFoundException, IOException {
+    StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+    ArtifactCell artifactCell = new ArtifactCell(artifactId, artifactDataTable.getFieldFactory());
+    artifactDataTable.upsert(
+      concatFields(artifactCell.keys,
+                   Collections.singleton(artifactDataTable.getFieldFactory().createStringField(
+                     StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD, GSON.toJson(data)))));
 
     // column for plugin meta and app meta. {artifact-name}:{artifact-version}
     // does not need to contain namespace because namespace is in the rowkey
-    byte[] artifactColumn = new ArtifactColumn(artifactId).getColumn();
+    ArtifactCell artifactColumn = new ArtifactCell(artifactId, artifactDataTable.getFieldFactory());
 
     ArtifactClasses classes = data.meta.getClasses();
     Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
+
     // write pluginClass metadata
+    StructuredTable pluginTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+    FieldFactory pluginFieldFactory = pluginTable.getFieldFactory();
     for (PluginClass pluginClass : classes.getPlugins()) {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
         PluginKey pluginKey = new PluginKey(artifactRange.getNamespace(),
-                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
+                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName(),
+                                            pluginFieldFactory);
 
-        byte[] pluginDataBytes = Bytes.toBytes(
+        Field<String> pluginDataField = pluginFieldFactory.createStringField(
+          StoreDefinition.ArtifactStore.PLUGIN_DATA_FIELD,
           GSON.toJson(new PluginData(pluginClass, artifactLocation, artifactRange)));
-        table.put(pluginKey.getRowKey(), artifactColumn, pluginDataBytes);
+        pluginTable.upsert(concatFields(pluginKey.keys, artifactColumn.keys,
+                                        Collections.singleton(pluginDataField)));
       }
 
       // If the artifact is deployed without any parent, add a special row to indicate that it can be used
       // by any other artifact in the same namespace.
       if (data.meta.getUsableBy().isEmpty()) {
+        StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
         // Write a special entry for plugin that doesn't have parent, which means any artifact can use it
         UniversalPluginKey pluginKey = new UniversalPluginKey(artifactId.getNamespace().getId(),
-                                                              pluginClass.getType(), pluginClass.getName());
-        byte[] pluginDataBytes = Bytes.toBytes(GSON.toJson(new PluginData(pluginClass, artifactLocation, null)));
-        table.put(pluginKey.getRowKey(), artifactColumn, pluginDataBytes);
+                                                              pluginClass.getType(), pluginClass.getName(),
+                                                              uniPluginTable.getFieldFactory());
+        Field<String> pluginDataField =
+          pluginFieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_DATA_FIELD,
+                                               GSON.toJson(new PluginData(pluginClass, artifactLocation, null)));
+        uniPluginTable
+          .upsert(concatFields(pluginKey.keys, artifactColumn.keys, Collections.singleton(pluginDataField)));
       }
     }
 
     // write appClass metadata
+    StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
     for (ApplicationClass appClass : classes.getApps()) {
       // a:{namespace}:{classname}
-      AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace().toEntityId(), appClass.getClassName());
-      byte[] appDataBytes = Bytes.toBytes(GSON.toJson(new AppData(appClass, artifactLocation)));
-      table.put(appClassKey.getRowKey(), artifactColumn, appDataBytes);
+      AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace().toEntityId(), appClass.getClassName(),
+                                                table.getFieldFactory());
+      Field<String> appDataField = table.getFieldFactory().createStringField
+        (StoreDefinition.ArtifactStore.APP_DATA_FIELD, GSON.toJson(new AppData(appClass, artifactLocation)));
+      table.upsert(concatFields(appClassKey.keys, artifactColumn.keys, Collections.singleton(appDataField)));
     }
   }
 
-  private void deleteMeta(Table table, Id.Artifact artifactId, byte[] oldData) throws IOException {
+  private Collection<Field<?>> concatFields(Collection<Field<?>> fields1, Collection<Field<?>> fields2) {
+    List<Field<?>> allFields = new ArrayList<>(fields1);
+    allFields.addAll(fields2);
+    return allFields;
+  }
+
+  private Collection<Field<?>> concatFields(Collection<Field<?>> fields1, Collection<Field<?>> fields2,
+                                            Collection<Field<?>> fields3) {
+    List<Field<?>> allFields = new ArrayList<>(fields1);
+    allFields.addAll(fields2);
+    allFields.addAll(fields3);
+    return allFields;
+  }
+
+  private void deleteMeta(StructuredTableContext context, Id.Artifact artifactId, ArtifactData oldMeta)
+    throws IOException, NotFoundException {
     // delete old artifact data
-    ArtifactCell artifactCell = new ArtifactCell(artifactId);
-    table.delete(artifactCell.rowkey, artifactCell.column);
+    StructuredTable artifactTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+    StructuredTable appClassTable = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+    StructuredTable pluginDataTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+    StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+    ArtifactCell artifactCell = new ArtifactCell(artifactId, artifactTable.getFieldFactory());
+    artifactTable.delete(artifactCell.keys);
 
     // delete old plugins
-    final ArtifactData oldMeta = GSON.fromJson(Bytes.toString(oldData), ArtifactData.class);
-    byte[] artifactColumn = new ArtifactColumn(artifactId).getColumn();
-
     for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
       // delete metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
         // p:{namespace}:{type}:{name}
         PluginKey pluginKey = new PluginKey(artifactRange.getNamespace(),
-                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName());
-        table.delete(pluginKey.getRowKey(), artifactColumn);
+                                            artifactRange.getName(), pluginClass.getType(), pluginClass.getName(),
+                                            pluginDataTable.getFieldFactory());
+        deleteAllPlugins(pluginDataTable, pluginKey);
       }
 
       // Delete the universal plugin row
       if (oldMeta.meta.getUsableBy().isEmpty()) {
         UniversalPluginKey pluginKey = new UniversalPluginKey(artifactId.getNamespace().getId(),
-                                                              pluginClass.getType(), pluginClass.getName());
-        table.delete(pluginKey.getRowKey(), artifactColumn);
+                                                              pluginClass.getType(), pluginClass.getName(),
+                                                              uniPluginTable.getFieldFactory());
+        deleteAllUniversalPlugins(uniPluginTable, pluginKey);
       }
     }
 
     // delete old appclass metadata
     for (ApplicationClass appClass : oldMeta.meta.getClasses().getApps()) {
-      AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace().toEntityId(), appClass.getClassName());
-      table.delete(appClassKey.getRowKey(), artifactColumn);
+      AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace().toEntityId(), appClass.getClassName(),
+                                                appClassTable.getFieldFactory());
+      deleteAllAppClasses(appClassTable, appClassKey);
     }
 
     // delete the old jar file
@@ -927,20 +1014,56 @@ public class ArtifactStore {
     }
   }
 
-  private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(Table table, Id.Artifact artifactId,
+  private void deleteAllPlugins(StructuredTable pluginDataTable,
+                                PluginKey pluginKey) throws IOException {
+    try (CloseableIterator<StructuredRow> iterator =
+           pluginDataTable.scan(Range.singleton(pluginKey.keys), Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        pluginDataTable.delete(concatFields(pluginKey.keys,
+                                            ArtifactCell.fromRow(row, pluginDataTable.getFieldFactory())));
+      }
+    }
+  }
+
+  private void deleteAllUniversalPlugins(
+    StructuredTable univPluginDataTable, UniversalPluginKey pluginKey) throws IOException {
+    try (CloseableIterator<StructuredRow> iterator =
+           univPluginDataTable.scan(Range.singleton(pluginKey.keys), Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        univPluginDataTable.delete(concatFields(pluginKey.keys,
+                                                ArtifactCell.fromRow(row, univPluginDataTable.getFieldFactory())));
+      }
+    }
+  }
+
+  private void deleteAllAppClasses(StructuredTable appClassTable, AppClassKey appClassKey) throws IOException {
+    try (CloseableIterator<StructuredRow> iterator =
+           appClassTable.scan(Range.singleton(appClassKey.keys), Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        appClassTable.delete(concatFields(appClassKey.keys,
+                                          ArtifactCell.fromRow(row, appClassTable.getFieldFactory())));
+      }
+    }
+  }
+
+  private SortedMap<ArtifactDescriptor, Set<PluginClass>> getPluginsInArtifact(StructuredTable artifactDataTable,
+                                                                               Id.Artifact artifactId,
                                                                                Predicate<PluginClass> filter)
-    throws ArtifactNotFoundException {
+    throws ArtifactNotFoundException, IOException {
     SortedMap<ArtifactDescriptor, Set<PluginClass>> result = new TreeMap<>();
 
     // Make sure the artifact exists
-    ArtifactCell artifactCell = new ArtifactCell(artifactId);
-    byte[] artifactDataBytes = table.get(artifactCell.rowkey, artifactCell.column);
-    if (artifactDataBytes == null) {
+    ArtifactCell artifactCell = new ArtifactCell(artifactId, artifactDataTable.getFieldFactory());
+    Optional<StructuredRow> row = artifactDataTable.read(artifactCell.keys);
+    if (!row.isPresent()) {
       throw new ArtifactNotFoundException(artifactId.toEntityId());
     }
-
     // include any plugin classes that are inside the artifact itself and is accepted by the filter
-    ArtifactData artifactData = GSON.fromJson(Bytes.toString(artifactDataBytes), ArtifactData.class);
+    ArtifactData artifactData = GSON.fromJson(row.get().getString(StoreDefinition.ArtifactStore.ARTIFACT_DATA_FIELD),
+                                              ArtifactData.class);
     Set<PluginClass> plugins = artifactData.meta.getClasses().getPlugins().stream()
       .filter(filter).collect(Collectors.toCollection(LinkedHashSet::new));
 
@@ -952,22 +1075,19 @@ public class ArtifactStore {
     return result;
   }
 
-  // this method examines all plugins in the given row and checks if they extend the given parent artifact
+  // this method examines the plugin in the given row and checks if they extend the given parent artifact
   // and are from an artifact in the given namespace.
   // if so, information about the plugin artifact and the plugin details are added to the given map.
   private void addPluginsToMap(NamespaceId namespace, Id.Artifact parentArtifactId,
                                SortedMap<ArtifactDescriptor, Set<PluginClass>> map,
-                               Row row) throws IOException {
-    // column is the artifact namespace, name, and version. value is the serialized PluginData
-    for (Map.Entry<byte[], byte[]> column : row.getColumns().entrySet()) {
-      ImmutablePair<ArtifactDescriptor, PluginClass> pluginEntry = getPluginEntry(namespace, parentArtifactId, column);
-      if (pluginEntry != null && isAllowed(pluginEntry.getSecond())) {
-        ArtifactDescriptor artifactDescriptor = pluginEntry.getFirst();
-        if (!map.containsKey(artifactDescriptor)) {
-          map.put(artifactDescriptor, Sets.<PluginClass>newHashSet());
-        }
-        map.get(artifactDescriptor).add(pluginEntry.getSecond());
+                               StructuredRow row) {
+    ImmutablePair<ArtifactDescriptor, PluginClass> pluginEntry = getPluginEntry(namespace, parentArtifactId, row);
+    if (pluginEntry != null && isAllowed(pluginEntry.getSecond())) {
+      ArtifactDescriptor artifactDescriptor = pluginEntry.getFirst();
+      if (!map.containsKey(artifactDescriptor)) {
+        map.put(artifactDescriptor, new HashSet<>());
       }
+      map.get(artifactDescriptor).add(pluginEntry.getSecond());
     }
   }
 
@@ -976,23 +1096,26 @@ public class ArtifactStore {
    * extends the given parent artifact. If the plugin's artifact is not in the given namespace, or it does not
    * extend the given parent artifact, return null.
    */
-  private ImmutablePair<ArtifactDescriptor, PluginClass> getPluginEntry(NamespaceId namespace,
-                                                                        Id.Artifact parentArtifactId,
-                                                                        Map.Entry<byte[], byte[]> column) {
+  private ImmutablePair<ArtifactDescriptor, PluginClass> getPluginEntry(
+    NamespaceId namespace, Id.Artifact parentArtifactId, StructuredRow row) {
     // column is the artifact namespace, name, and version. value is the serialized PluginData
-    ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
-    Id.Namespace artifactNamespace = artifactColumn.artifactId.getNamespace();
+    Id.Namespace artifactNamespace =
+      Id.Namespace.from(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD));
+    Id.Artifact artifactId =
+      Id.Artifact.from(artifactNamespace, row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD),
+                       row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD));
     // filter out plugins whose artifacts are not in the system namespace and not in this namespace
     if (!Id.Namespace.SYSTEM.equals(artifactNamespace) &&
       !artifactNamespace.equals(Id.Namespace.fromEntityId(namespace))) {
       return null;
     }
-    PluginData pluginData = GSON.fromJson(Bytes.toString(column.getValue()), PluginData.class);
+    PluginData pluginData = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.PLUGIN_DATA_FIELD),
+                                          PluginData.class);
 
     // filter out plugins that don't extend this version of the parent artifact
     if (pluginData.isUsableBy(parentArtifactId.toEntityId())) {
       ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(
-        artifactColumn.artifactId.toArtifactId(),
+        artifactId.toArtifactId(),
         Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath()));
       return ImmutablePair.of(artifactDescriptor, pluginData.pluginClass);
     }
@@ -1000,7 +1123,7 @@ public class ArtifactStore {
   }
 
   private void addPluginsInRangeToMap(final NamespaceId namespace, List<Id.Artifact> parentArtifacts,
-                                      Map<byte[], byte[]> columns,
+                                      Iterator<StructuredRow> iterator,
                                       SortedMap<ArtifactDescriptor, PluginClass> plugins,
                                       @Nullable Predicate<co.cask.cdap.proto.id.ArtifactId> range,
                                       int limit) {
@@ -1010,21 +1133,27 @@ public class ArtifactStore {
       ? range
       : input -> NamespaceId.SYSTEM.equals(input.getParent()) || input.getParent().equals(namespace);
 
-    for (Map.Entry<byte[], byte[]> column : columns.entrySet()) {
+    while (iterator.hasNext()) {
+      StructuredRow row = iterator.next();
       // column is the artifact namespace, name, and version. value is the serialized PluginData
-      ArtifactColumn artifactColumn = ArtifactColumn.parse(column.getKey());
+      Id.Namespace artifactNamespace =
+        Id.Namespace.from(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD));
+      Id.Artifact artifactId =
+        Id.Artifact.from(artifactNamespace, row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD),
+                         row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD));
 
-      if (!range.test(artifactColumn.artifactId.toEntityId())) {
+      if (!range.test(artifactId.toEntityId())) {
         continue;
       }
-      PluginData pluginData = GSON.fromJson(Bytes.toString(column.getValue()), PluginData.class);
+      PluginData pluginData = GSON.fromJson(row.getString(StoreDefinition.ArtifactStore.PLUGIN_DATA_FIELD),
+                                            PluginData.class);
 
       // filter out plugins that don't extend this version of the parent artifact
       for (Id.Artifact parentArtifactId : parentArtifacts) {
         if (pluginData.isUsableBy(parentArtifactId.toEntityId()) && isAllowed(pluginData.pluginClass)) {
           plugins.put(new ArtifactDescriptor(
-            artifactColumn.artifactId.toArtifactId(),
-            Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath())),
+                        artifactId.toArtifactId(),
+                        Locations.getLocationFromAbsolutePath(locationFactory, pluginData.getArtifactLocationPath())),
                       pluginData.pluginClass);
           break;
         }
@@ -1035,26 +1164,38 @@ public class ArtifactStore {
     }
   }
 
-  private Scan scanArtifacts(NamespaceId namespace) {
-    byte[] startRow = Bytes.toBytes(String.format("%s:%s:", ARTIFACT_PREFIX, namespace.getNamespace()));
-    return new Scan(startRow, Bytes.stopKeyForPrefix(startRow));
+  private Range createArtifactScanRange(NamespaceId namespace, FieldFactory fieldFactory) {
+    return Range.singleton(
+      Collections.singleton(fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD,
+                                                           namespace.getNamespace())));
   }
 
-  private Scan scanPlugins(Id.Artifact parentArtifactId, @Nullable String type) {
-    byte[] startRow = Bytes.toBytes(Joiner.on(":").skipNulls().join(PLUGIN_PREFIX,
-                                                                    parentArtifactId.getNamespace().getId(),
-                                                                    parentArtifactId.getName(), type) + ":");
-    return new Scan(startRow, Bytes.stopKeyForPrefix(startRow));
+  private Range createPluginScanRange(Id.Artifact parentArtifactId, @Nullable String type, FieldFactory fieldFactory) {
+    List<Field<?>> keys = new ArrayList<>();
+    keys.add(fieldFactory.createStringField(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD,
+                                            parentArtifactId.getNamespace().getId()));
+    keys.add(fieldFactory.createStringField(StoreDefinition.ArtifactStore.PARENT_NAME_FIELD,
+                                            parentArtifactId.getName()));
+    if (type != null) {
+      keys.add(fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_TYPE_FIELD, type));
+    }
+    return Range.singleton(keys);
   }
 
-  private Scan scanUniversalPlugin(String namespace, @Nullable String type) {
-    byte[] startRow = Bytes.toBytes(Joiner.on(":").skipNulls().join(UNIVERSAL_PLUGIN_PREFIX, namespace, type) + ":");
-    return new Scan(startRow, Bytes.stopKeyForPrefix(startRow));
+  private Range createUniversalPluginScanRange(String namespace, @Nullable String type, FieldFactory fieldFactory) {
+    List<Field<?>> keys = new ArrayList<>();
+    keys.add(fieldFactory.createStringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD, namespace));
+    if (type != null) {
+      keys.add(fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_TYPE_FIELD, type));
+    }
+    return Range.singleton(keys);
   }
 
-  private Scan scanAppClasses(NamespaceId namespace) {
-    byte[] startRow = Bytes.toBytes(String.format("%s:%s:", APPCLASS_PREFIX, namespace.getNamespace()));
-    return new Scan(startRow, Bytes.stopKeyForPrefix(startRow));
+  private Range scanAppClasses(NamespaceId namespace, FieldFactory fieldFactory) {
+    Collection<Field<?>> keys =
+      Collections.singleton(fieldFactory.createStringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD,
+                                                           namespace.getNamespace()));
+    return Range.singleton(keys);
   }
 
   /**
@@ -1089,75 +1230,52 @@ public class ArtifactStore {
   }
 
   private static class AppClassKey {
-    private final NamespaceId namespace;
-    private final String className;
+    private final Collection<Field<?>> keys;
 
-    AppClassKey(NamespaceId namespace, String className) {
-      this.namespace = namespace;
-      this.className = className;
-    }
-
-    private byte[] getRowKey() {
-      return Bytes.toBytes(Joiner.on(':').join(APPCLASS_PREFIX, namespace.getNamespace(), className));
-    }
-  }
-
-  private static class PluginKey {
-    private final String parentArtifactNamespace;
-    private final String parentArtifactName;
-    private final String type;
-    private final String name;
-
-    private PluginKey(String parentArtifactNamespace, String parentArtifactName, String type, String name) {
-      this.parentArtifactNamespace = parentArtifactNamespace;
-      this.parentArtifactName = parentArtifactName;
-      this.type = type;
-      this.name = name;
-    }
-
-    // p:system:etlbatch:sink:table
-    private byte[] getRowKey() {
-      return Bytes.toBytes(
-        Joiner.on(':').join(PLUGIN_PREFIX, parentArtifactNamespace, parentArtifactName, type, name));
-    }
-  }
-
-  private static final class UniversalPluginKey {
-    private final String namespace;
-    private final String type;
-    private final String name;
-
-    private UniversalPluginKey(String namespace, String type, String name) {
-      this.namespace = namespace;
-      this.type = type;
-      this.name = name;
-    }
-
-    byte[] getRowKey() {
-      return Bytes.toBytes(
-        Joiner.on(":").join(UNIVERSAL_PLUGIN_PREFIX, namespace, type, name)
+    AppClassKey(NamespaceId namespace, String className, FieldFactory fieldFactory) {
+      this.keys = Arrays.asList(
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD, namespace.getNamespace()),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.CLASS_NAME_FIELD, className)
       );
     }
   }
 
-  private static class ArtifactColumn {
-    private final Id.Artifact artifactId;
+  private static class PluginKey {
+    private final Collection<Field<?>> keys;
 
-    private ArtifactColumn(Id.Artifact artifactId) {
-      this.artifactId = artifactId;
+    private PluginKey(String parentArtifactNamespace, String parentArtifactName, String type, String name,
+                      FieldFactory fieldFactory) {
+      this.keys = Arrays.asList(
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD, parentArtifactNamespace),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PARENT_NAME_FIELD, parentArtifactName),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_TYPE_FIELD, type),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_NAME_FIELD, name)
+      );
     }
 
-    private byte[] getColumn() {
-      return Bytes.toBytes(String.format("%s:%s:%s",
-                                         artifactId.getNamespace().getId(), artifactId.getName(),
-                                         artifactId.getVersion().getVersion()));
+    private static Collection<Field<?>> fromRow(StructuredRow row, FieldFactory fieldFactory) {
+      return Arrays.asList(
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD)),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PARENT_NAME_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.PARENT_NAME_FIELD)),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_TYPE_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.PLUGIN_TYPE_FIELD)),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_NAME_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.PLUGIN_NAME_FIELD))
+      );
     }
+  }
 
-    private static ArtifactColumn parse(byte[] columnBytes) {
-      String columnStr = Bytes.toString(columnBytes);
-      Iterator<String> parts = Splitter.on(':').limit(3).split(columnStr).iterator();
-      Id.Namespace namespace = Id.Namespace.from(parts.next());
-      return new ArtifactColumn(Id.Artifact.from(namespace, parts.next(), parts.next()));
+  private static final class UniversalPluginKey {
+    Collection<Field<?>> keys;
+
+    private UniversalPluginKey(String namespace, String type, String name, FieldFactory fieldFactory) {
+      this.keys = Arrays.asList(
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD, namespace),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_TYPE_FIELD, type),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.PLUGIN_NAME_FIELD, name)
+      );
     }
   }
 
@@ -1171,27 +1289,35 @@ public class ArtifactStore {
       this.name = name;
     }
 
-    private byte[] getRowKey() {
-      return Bytes.toBytes(Joiner.on(':').join(ARTIFACT_PREFIX, namespace, name));
-    }
-
-    private static ArtifactKey parse(byte[] rowkey) {
-      String key = Bytes.toString(rowkey);
-      Iterator<String> parts = Splitter.on(':').limit(4).split(key).iterator();
-      // first part is the artifact prefix
-      parts.next();
-      // next is namespace, then name
-      return new ArtifactKey(parts.next(), parts.next());
+    private static ArtifactKey fromRow(StructuredRow row) {
+      return new ArtifactKey(row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD),
+                             row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD));
     }
   }
 
   private static class ArtifactCell {
-    private final byte[] rowkey;
-    private final byte[] column;
+    private final Collection<Field<?>> keys;
 
-    private ArtifactCell(Id.Artifact artifactId) {
-      rowkey = new ArtifactKey(artifactId.getNamespace().getId(), artifactId.getName()).getRowKey();
-      column = Bytes.toBytes(artifactId.getVersion().getVersion());
+    private ArtifactCell(Id.Artifact artifactId, FieldFactory fieldFactory) {
+      this.keys = Arrays.asList(
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD,
+                                       artifactId.getNamespace().getId()),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD,
+                                       artifactId.getName()),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD,
+                                       artifactId.getVersion().getVersion())
+      );
+    }
+
+    private static Collection<Field<?>> fromRow(StructuredRow row, FieldFactory fieldFactory) {
+      return Arrays.asList(
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD)),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.ARTIFACT_NAME_FIELD)),
+        fieldFactory.createStringField(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD,
+                                       row.getString(StoreDefinition.ArtifactStore.ARTIFACT_VER_FIELD))
+      );
     }
   }
 

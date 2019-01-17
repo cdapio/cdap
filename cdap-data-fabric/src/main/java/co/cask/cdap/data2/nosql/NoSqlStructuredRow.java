@@ -21,11 +21,16 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -35,10 +40,12 @@ public final class NoSqlStructuredRow implements StructuredRow {
   private final Row row;
   private final StructuredTableSchema tableSchema;
   private final Map<String, Object> keyFields;
+  private final Collection<Field<?>> keys;
 
   NoSqlStructuredRow(Row row, StructuredTableSchema tableSchema) {
     this.row = row;
     this.tableSchema = tableSchema;
+    this.keys = new ArrayList<>();
     this.keyFields = extractKeys();
   }
 
@@ -72,6 +79,11 @@ public final class NoSqlStructuredRow implements StructuredRow {
     return get(fieldName);
   }
 
+  @Override
+  public Collection<Field<?>> getPrimaryKeys() {
+    return keys;
+  }
+
   @Nullable
   @SuppressWarnings("unchecked")
   private <T> T get(String fieldName) throws InvalidFieldException {
@@ -91,6 +103,7 @@ public final class NoSqlStructuredRow implements StructuredRow {
   }
 
   private Map<String, Object> extractKeys() {
+    FieldFactory fieldFactory = new FieldFactory(tableSchema);
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
     MDSKey.Splitter splitter = new MDSKey(row.getRow()).split();
     // extract the first part since we always have the table name as the prefix
@@ -100,13 +113,19 @@ public final class NoSqlStructuredRow implements StructuredRow {
       FieldType.Type type = tableSchema.getType(key);
       switch (Objects.requireNonNull(type)) {
         case INTEGER:
-          builder.put(key, splitter.getInt());
+          int intVal = splitter.getInt();
+          builder.put(key, intVal);
+          keys.add(fieldFactory.createIntField(key, intVal));
           break;
         case LONG:
-          builder.put(key, splitter.getLong());
+          long longVal = splitter.getLong();
+          builder.put(key, longVal);
+          keys.add(fieldFactory.createLongField(key, longVal));
           break;
         case STRING:
-          builder.put(key, splitter.getString());
+          String stringVal = splitter.getString();
+          keys.add(fieldFactory.createStringField(key, stringVal));
+          builder.put(key, stringVal);
           break;
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
