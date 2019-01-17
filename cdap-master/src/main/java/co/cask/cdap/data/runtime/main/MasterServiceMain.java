@@ -72,7 +72,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
@@ -569,7 +569,7 @@ public class MasterServiceMain extends DaemonMain {
       new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreServerModule().getDistributedModules(),
       new OperationalStatsModule(),
       new AbstractModule() {
         @Override

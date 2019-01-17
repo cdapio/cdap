@@ -956,6 +956,8 @@ public final class Constants {
       public static final String EXTENSIONS_DIR = "security.store.extensions.dir";
       /**Secure store extension property prefix*/
       public static final String PROPERTY_PREFIX = "security.store.system.properties.";
+      /** Secure store service*/
+      public static final String SECURE_STORE_SERVICE = "appfabric";
     }
 
     /**

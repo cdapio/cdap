@@ -61,7 +61,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
@@ -289,7 +289,7 @@ public class DistributedWorkflowProgramRunnerTest {
       new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreServerModule().getDistributedModules(),
       new OperationalStatsModule(),
       new AbstractModule() {
         @Override

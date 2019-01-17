@@ -43,7 +43,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
@@ -133,7 +133,7 @@ public class ContextManager {
       new KafkaClientModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreServerModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new MessagingClientModule(),
       new AbstractModule() {

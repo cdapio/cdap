@@ -96,7 +96,7 @@ import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -234,7 +234,7 @@ public class TestBase {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
-      new SecureStoreModules().getInMemoryModules(),
+      new SecureStoreServerModule().getInMemoryModules(),
       new MetadataReaderWriterModules().getInMemoryModules(),
       new MetadataServiceModule(),
       new AbstractModule() {

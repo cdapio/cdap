@@ -73,7 +73,7 @@ import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.DefaultOwnerStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -219,7 +219,7 @@ public class UpgradeTool {
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreServerModule().getDistributedModules(),
       new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),

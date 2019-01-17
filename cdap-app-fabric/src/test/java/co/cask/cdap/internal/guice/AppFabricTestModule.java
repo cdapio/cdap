@@ -42,7 +42,7 @@ import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
@@ -101,7 +101,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new MetadataServiceModule());
     install(new AuthorizationModule());
     install(new AuthorizationEnforcementModule().getStandaloneModules());
-    install(new SecureStoreModules().getInMemoryModules());
+    install(new SecureStoreServerModule().getInMemoryModules());
     install(new MetadataReaderWriterModules().getInMemoryModules());
     install(new MessagingServerRuntimeModule().getInMemoryModules());
     install(new MockProvisionerModule());

@@ -30,7 +30,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.common.http.HttpRequest;
@@ -87,7 +87,7 @@ public class SecureStoreTest {
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, new Configuration(), sConf),
-      new SecureStoreModules().getInMemoryModules(),
+      new SecureStoreServerModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthenticationContextModules().getNoOpModule(),
       new AbstractModule() {

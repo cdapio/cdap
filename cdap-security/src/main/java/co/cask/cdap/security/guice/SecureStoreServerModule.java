@@ -62,7 +62,7 @@ import com.google.inject.name.Names;
  * ext   - Extension based secure store is supported in standalone and distributed mode.
  *
  */
-public class SecureStoreModules extends RuntimeModule {
+public class SecureStoreServerModule extends RuntimeModule {
   public static final String DELEGATE_SECURE_STORE_SERVICE = "delegateSecureStoreService";
 
   @Override

@@ -50,7 +50,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.RemotePrivilegesManager;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreClientModule;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
@@ -117,7 +117,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new MetadataServiceModule(),
       new AuditModule().getDistributedModules(),
       new EntityVerifierModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreClientModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {

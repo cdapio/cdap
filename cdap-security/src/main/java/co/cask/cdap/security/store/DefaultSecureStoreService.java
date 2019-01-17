@@ -25,7 +25,7 @@ import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -49,7 +49,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
   @Inject
   DefaultSecureStoreService(AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
-                            @Named(SecureStoreModules.DELEGATE_SECURE_STORE_SERVICE)
+                            @Named(SecureStoreServerModule.DELEGATE_SECURE_STORE_SERVICE)
                               SecureStoreService secureStoreService) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;

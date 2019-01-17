@@ -57,7 +57,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreClientModule;
 import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
@@ -150,7 +150,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new MessagingClientModule());
     modules.add(new AuditModule().getDistributedModules());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
-    modules.add(new SecureStoreModules().getDistributedModules());
+    modules.add(new SecureStoreClientModule());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
     modules.add(new AbstractModule() {
       @Override

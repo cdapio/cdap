@@ -63,7 +63,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
-import co.cask.cdap.security.guice.SecureStoreModules;
+import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -364,7 +364,7 @@ public class JobQueueDebugger extends AbstractIdleService {
       new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
-      new SecureStoreModules().getDistributedModules(),
+      new SecureStoreServerModule().getDistributedModules(),
       new MessagingClientModule(),
       new AbstractModule() {
         @Override
