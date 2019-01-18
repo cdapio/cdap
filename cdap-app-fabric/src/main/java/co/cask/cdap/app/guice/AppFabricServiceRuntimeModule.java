@@ -51,7 +51,6 @@ import co.cask.cdap.gateway.handlers.ProfileHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ProvisionerHttpHandler;
 import co.cask.cdap.gateway.handlers.RouteConfigHttpHandler;
-import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.UpgradeHttpHandler;
 import co.cask.cdap.gateway.handlers.UsageHandler;
@@ -117,6 +116,7 @@ import co.cask.cdap.security.impersonation.DefaultUGIProvider;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.security.store.SecureStoreHandler;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -322,12 +322,14 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.services.names"));
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
 
                                Multibinder<String> handlerHookNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.PREVIEW_HTTP);
+                               servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
                              }
                            });
   }

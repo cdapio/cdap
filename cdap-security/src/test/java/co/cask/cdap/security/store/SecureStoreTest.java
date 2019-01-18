@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.security;
+package co.cask.cdap.security.store;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -24,7 +24,6 @@ import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.gateway.handlers.SecureStoreHandler;
 import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;

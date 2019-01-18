@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package co.cask.cdap.security.store;
 
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
@@ -23,19 +23,27 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
-import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
+import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -43,18 +51,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * Exposes REST APIs for {@link co.cask.cdap.api.security.store.SecureStore} and
- * {@link co.cask.cdap.api.security.store.SecureStoreManager}.
+ * Exposes REST APIs for {@link SecureStore} and
+ * {@link SecureStoreManager}.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}/securekeys")
-public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
+public class SecureStoreHandler extends AbstractHttpHandler {
+  private static final Type REQUEST_TYPE = new TypeToken<SecureKeyCreateRequest>() { }.getType();
   private static final Gson GSON = new Gson();
 
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
 
   @Inject
-  SecureStoreHandler(SecureStore secureStore, SecureStoreManager secureStoreManager) {
+  public SecureStoreHandler(SecureStore secureStore, SecureStoreManager secureStoreManager) {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
   }
@@ -65,11 +74,11 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void create(FullHttpRequest httpRequest, HttpResponder httpResponder,
                      @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws Exception {
-
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    SecureKeyCreateRequest secureKeyCreateRequest = parseBody(httpRequest, SecureKeyCreateRequest.class);
-
-    if (secureKeyCreateRequest == null) {
+    SecureKeyCreateRequest secureKeyCreateRequest;
+    try {
+      secureKeyCreateRequest = parseBody(httpRequest);
+    } catch (IOException e) {
       SecureKeyCreateRequest dummy = new SecureKeyCreateRequest("<description>", "<data>",
                                                                 ImmutableMap.of("key", "value"));
       throw new BadRequestException("Unable to parse the request. The request body should be of the following format." +
@@ -109,8 +118,19 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/")
   @GET
-  public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
-    throws Exception {
+  public void list(HttpRequest httpRequest, HttpResponder httpResponder,
+                   @PathParam("namespace-id") String namespace) throws Exception {
     httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.listSecureData(namespace)));
+  }
+
+  private SecureKeyCreateRequest parseBody(FullHttpRequest request) throws IOException {
+    ByteBuf content = request.content();
+    if (!content.isReadable()) {
+      throw new IOException("Unable to read contents of the request.");
+    }
+
+    try (Reader reader = new InputStreamReader(new ByteBufInputStream(content), StandardCharsets.UTF_8)) {
+      return GSON.fromJson(reader, REQUEST_TYPE);
+    }
   }
 }
