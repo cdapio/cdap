@@ -2122,11 +2122,21 @@
   </property>
 
   <property>
-    <name>metrics.data.table.retention.resolution.1.seconds</name>
+    <name>metrics.minimum.resolution.seconds</name>
+    <value>1</value>
+    <description>
+      Minimum metrics resolution in seconds, this value should be less than 60 seconds, otherwise the minimum metrics
+      resolution will be 60 seconds.
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.data.table.retention.minimum.resolution.seconds</name>
     <value>7200</value>
     <description>
-      Retention resolution in seconds of the 1-second resolution table;
-      default retention period is 2 hours
+      Retention resolution in seconds of the minimum resolution table;
+      default retention period is 2 hours, this retention will not be applied if the
+      minimum resolution is greater than or equal to 60.
     </description>
   </property>
 

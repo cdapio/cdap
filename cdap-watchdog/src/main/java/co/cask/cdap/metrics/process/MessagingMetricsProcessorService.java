@@ -32,7 +32,6 @@ import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.DatumReader;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.MessageFetcher;
@@ -90,8 +89,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final BlockingDeque<MetricValues> metricsFromAllTopics;
   private final ConcurrentMap<TopicIdMetaKey, TopicProcessMeta> topicProcessMetaMap;
   private final AtomicBoolean persistingFlag;
-  // maximum number of milliseconds to sleep between each run of fetching & processing new metrics
-  private final int metricsProcessIntervalMillis;
+  // maximum number of milliseconds to sleep between each run of fetching & processing new metrics, the max sleep time
+  // is 1 min
+  private final long metricsProcessIntervalMillis;
   private final List<ProcessMetricsThread> processMetricsThreads;
   private final String processMetricName;
   private final String metricsPrefixForDelayMetrics;
@@ -112,7 +112,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    @Assisted MetricsContext metricsContext,
                                    @Assisted Integer instanceId) {
     this(cConf, metricDatasetFactory, messagingService,
-         schemaGenerator, readerFactory, metricStore, topicNumbers, metricsContext, 1000, instanceId);
+         schemaGenerator, readerFactory, metricStore, topicNumbers, metricsContext,
+         TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION)), instanceId);
   }
 
   @VisibleForTesting
@@ -124,7 +125,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    MetricStore metricStore,
                                    Set<Integer> topicNumbers,
                                    MetricsContext metricsContext,
-                                   int metricsProcessIntervalMillis,
+                                   long metricsProcessIntervalMillis,
                                    int instanceId) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsPrefixForDelayMetrics = String.format("metrics.processor.%s", instanceId);
@@ -151,7 +152,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.metricsFromAllTopics = new LinkedBlockingDeque<>(queueSize);
     this.topicProcessMetaMap = new ConcurrentHashMap<>();
     this.persistingFlag = new AtomicBoolean();
-    this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
+    // the max sleep time will be 1 min
+    this.metricsProcessIntervalMillis = metricsProcessIntervalMillis < Constants.Metrics.PROCESS_INTERVAL_MILLIS ?
+      metricsProcessIntervalMillis : Constants.Metrics.PROCESS_INTERVAL_MILLIS;
     this.processMetricName = String.format("metrics.%s.process.count", instanceId);
   }
 

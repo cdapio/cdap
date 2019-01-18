@@ -66,20 +66,10 @@ public class AggregatedMetricsCollectionServiceTest {
   public void testPublish() throws InterruptedException {
     final BlockingQueue<MetricValues> published = new LinkedBlockingQueue<>();
 
-    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
+    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService(1000L) {
       @Override
       protected void publish(Iterator<MetricValues> metrics) {
         Iterators.addAll(published, metrics);
-      }
-
-      @Override
-      protected long getInitialDelayMillis() {
-        return 1000L;
-      }
-
-      @Override
-      protected long getPeriodMillis() {
-        return 1000L;
       }
     };
 
@@ -155,7 +145,7 @@ public class AggregatedMetricsCollectionServiceTest {
   @Test
   public void testServiceShutdown() throws InterruptedException, TimeoutException, ExecutionException {
     final CountDownLatch latch = new CountDownLatch(1);
-    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService() {
+    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService(1000L) {
       @Override
       protected void publish(Iterator<MetricValues> metrics) {
         while (isRunning()) {

@@ -500,7 +500,7 @@ public class UpgradeTool {
 
     // metrics data
     DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
-    DefaultMetricDatasetFactory.setupDatasets(factory);
+    DefaultMetricDatasetFactory.setupDatasets(cConf, factory);
 
     // Usage registry
     UsageDataset.setupDatasets(datasetFramework);
