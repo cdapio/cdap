@@ -87,6 +87,7 @@ public class DataprocProvisioner implements Provisioner {
     }
 
     systemLabels = Collections.unmodifiableMap(labels);
+    LOG.info("Dataproc provisioner initialized with system labels {}", systemLabels);
   }
 
   /**

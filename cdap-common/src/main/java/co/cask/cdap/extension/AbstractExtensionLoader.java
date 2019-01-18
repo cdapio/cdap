@@ -16,6 +16,7 @@
 
 package co.cask.cdap.extension;
 
+import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -158,6 +159,26 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
    */
   protected abstract Set<EXTENSION_TYPE> getSupportedTypesForProvider(EXTENSION extension);
 
+  /**
+   * Creates a {@link FilterClassLoader.Filter} to decide what classes and resources from the parent classloader is
+   * available to the extension. By default, it permits all classes and resources.
+   *
+   * @return a {@link FilterClassLoader.Filter} instance
+   */
+  protected FilterClassLoader.Filter getExtensionParentClassLoaderFilter() {
+    return new FilterClassLoader.Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return true;
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return true;
+      }
+    };
+  }
+
   private void putEntriesIfAbsent(Map<EXTENSION_TYPE, EXTENSION> result, Map<EXTENSION_TYPE, EXTENSION> entries) {
     for (Map.Entry<EXTENSION_TYPE, EXTENSION> entry : entries.entrySet()) {
       if (!result.containsKey(entry.getKey())) {
@@ -273,7 +294,20 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
   /**
    * @return parent classloader for extensions
    */
-  protected ClassLoader getExtensionParentClassLoader() {
-    return getClass().getClassLoader();
+  private ClassLoader getExtensionParentClassLoader() {
+    FilterClassLoader.Filter filter = getExtensionParentClassLoaderFilter();
+
+    // SLF4j resources are always coming from parent.
+    return new FilterClassLoader(getClass().getClassLoader(), new FilterClassLoader.Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return resource.startsWith("org/slf4j") || filter.acceptResource(resource);
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return packageName.startsWith("org.slf4j") || filter.acceptPackage(packageName);
+      }
+    });
   }
 }
