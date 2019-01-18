@@ -69,13 +69,13 @@ public class NoopAdmin implements Admin {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) throws Exception {
     // no-op
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void delete(String namespace, String name) throws Exception {
     // no-op
   }
 

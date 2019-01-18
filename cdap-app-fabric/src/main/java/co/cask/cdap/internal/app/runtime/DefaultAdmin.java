@@ -67,14 +67,14 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data,
-                            String description, Map<String, String> properties) throws Exception {
-    secureStoreManager.putSecureData(namespace, name, data, description, properties);
+  public void put(String namespace, String name, String data,
+                  String description, Map<String, String> properties) throws Exception {
+    secureStoreManager.put(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
-    secureStoreManager.deleteSecureData(namespace, name);
+  public void delete(String namespace, String name) throws Exception {
+    secureStoreManager.delete(namespace, name);
   }
 
   @Override

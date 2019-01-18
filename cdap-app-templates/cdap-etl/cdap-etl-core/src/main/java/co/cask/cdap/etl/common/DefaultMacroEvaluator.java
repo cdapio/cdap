@@ -20,12 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -70,7 +66,7 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
         throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
       }
       try {
-        return Bytes.toString(secureStore.getSecureData(namespace, arguments[0]).get());
+        return Bytes.toString(secureStore.get(namespace, arguments[0]).get());
       } catch (Exception e) {
         throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
       }

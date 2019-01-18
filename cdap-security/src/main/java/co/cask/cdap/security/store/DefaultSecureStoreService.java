@@ -17,6 +17,7 @@
 package co.cask.cdap.security.store;
 
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -35,7 +36,8 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,12 +68,11 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
    *
    */
   @Override
-  public final Map<String, String> listSecureData(final String namespace) throws Exception {
+  public final List<SecureStoreMetadata> list(final String namespace) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Map<String, String> metadatas = new HashMap<>(secureStoreService.listSecureData(namespace));
-    metadatas.keySet().retainAll(AuthorizationUtil.isVisible(metadatas.keySet(), authorizationEnforcer, principal,
-                                                             input -> new SecureKeyId(namespace, input), null));
-    return metadatas;
+    List<SecureStoreMetadata> metadatas = new ArrayList<>(secureStoreService.list(namespace));
+    return AuthorizationUtil.isVisible(metadatas, authorizationEnforcer, principal,
+                                       input -> new SecureKeyId(namespace, input.getName()), null);
   }
 
   /**
@@ -85,11 +86,11 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
    * @throws UnauthorizedException If the user does not have READ permissions on the secure key.
    */
   @Override
-  public final SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public final SecureStoreData get(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     authorizationEnforcer.enforce(secureKeyId, principal, Action.READ);
-    return secureStoreService.getSecureData(namespace, name);
+    return secureStoreService.get(namespace, name);
   }
 
   /**
@@ -101,8 +102,8 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
    * @throws IOException If there was a problem storing the key to underlying provider.
    */
   @Override
-  public final synchronized void putSecureData(String namespace, String name, String value, String description,
-                                               Map<String, String> properties) throws Exception {
+  public final synchronized void put(String namespace, String name, String value, String description,
+                                     Map<String, String> properties) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(namespace);
     SecureKeyId secureKeyId = namespaceId.secureKey(name);
@@ -113,7 +114,7 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
                                       "securely.");
     }
 
-    secureStoreService.putSecureData(namespace, name, value, description, properties);
+    secureStoreService.put(namespace, name, value, description, properties);
   }
 
   /**
@@ -125,11 +126,11 @@ public class DefaultSecureStoreService extends AbstractIdleService implements Se
    * @throws IOException If there was a problem deleting it from the underlying provider.
    */
   @Override
-  public final void deleteSecureData(String namespace, String name) throws Exception {
+  public final void delete(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
     authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
-    secureStoreService.deleteSecureData(namespace, name);
+    secureStoreService.delete(namespace, name);
   }
 
   @Override

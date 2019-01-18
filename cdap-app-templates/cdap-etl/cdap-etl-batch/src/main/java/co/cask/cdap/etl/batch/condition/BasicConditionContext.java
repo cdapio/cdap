@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch.condition;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.workflow.NodeValue;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -109,24 +110,24 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
-    return context.listSecureData(namespace);
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
+    return context.list(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    return context.getSecureData(namespace, name);
+  public SecureStoreData get(String namespace, String name) throws Exception {
+    return context.get(namespace, name);
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
-    context.getAdmin().putSecureData(namespace, name, data, description, properties);
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) throws Exception {
+    context.getAdmin().put(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
-    context.getAdmin().deleteSecureData(namespace, name);
+  public void delete(String namespace, String name) throws Exception {
+    context.getAdmin().delete(namespace, name);
   }
 
   @Override

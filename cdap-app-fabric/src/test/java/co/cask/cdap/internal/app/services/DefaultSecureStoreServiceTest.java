@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -61,7 +62,7 @@ import org.junit.rules.TemporaryFolder;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -150,8 +151,8 @@ public class DefaultSecureStoreServiceTest {
     final SecureKeyId secureKeyId1 = NamespaceId.DEFAULT.secureKey(KEY1);
     SecurityRequestContext.setUserId(ALICE.getName());
     try {
-      secureStoreManager.putSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
-                                       Collections.<String, String>emptyMap());
+      secureStoreManager.put(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
+                             Collections.<String, String>emptyMap());
       Assert.fail("Alice should not be able to store a key since she does not have WRITE privileges on the namespace");
     } catch (UnauthorizedException expected) {
       // expected
@@ -160,18 +161,18 @@ public class DefaultSecureStoreServiceTest {
     // Grant ALICE admin access to the secure key
     grantAndAssertSuccess(secureKeyId1, ALICE, EnumSet.of(Action.ADMIN));
     // Write should succeed
-    secureStoreManager.putSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
-                                     Collections.<String, String>emptyMap());
+    secureStoreManager.put(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
+                           Collections.<String, String>emptyMap());
     // Listing should return the value just written
-    Map<String, String> secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
-    Assert.assertEquals(1, secureKeyListEntries.size());
-    Assert.assertTrue(secureKeyListEntries.containsKey(KEY1));
-    Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(KEY1));
+    List<SecureStoreMetadata> metadatas = secureStore.list(NamespaceId.DEFAULT.getNamespace());
+    Assert.assertEquals(1, metadatas.size());
+    Assert.assertEquals(KEY1, metadatas.get(0).getName());
+    Assert.assertEquals(DESCRIPTION1, metadatas.get(0).getDescription());
     revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
 
     // Should not be able to list the keys since ALICE does not have privilege on the secure key
     try {
-      secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
+      secureStore.list(NamespaceId.DEFAULT.getNamespace());
     } catch (UnauthorizedException e) {
       // expected
     }
@@ -180,14 +181,14 @@ public class DefaultSecureStoreServiceTest {
     SecurityRequestContext.setUserId(BOB.getName());
     grantAndAssertSuccess(NamespaceId.DEFAULT, BOB, EnumSet.of(Action.READ));
     grantAndAssertSuccess(secureKeyId1, BOB, EnumSet.of(Action.READ));
-    Assert.assertEquals(VALUE1, new String(secureStore.getSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1).get(),
+    Assert.assertEquals(VALUE1, new String(secureStore.get(NamespaceId.DEFAULT.getNamespace(), KEY1).get(),
                                            Charsets.UTF_8));
-    secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
-    Assert.assertEquals(1, secureKeyListEntries.size());
+    metadatas = secureStore.list(NamespaceId.DEFAULT.getNamespace());
+    Assert.assertEquals(1, metadatas.size());
 
     // BOB should not be able to delete the key
     try {
-      secureStoreManager.deleteSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1);
+      secureStoreManager.delete(NamespaceId.DEFAULT.getNamespace(), KEY1);
       Assert.fail("Bob should not be able to delete a key since he does not have ADMIN privileges on the key");
     } catch (UnauthorizedException expected) {
       // expected
@@ -195,8 +196,8 @@ public class DefaultSecureStoreServiceTest {
 
     // Grant Bob ADMIN access and he should be able to delete the key
     grantAndAssertSuccess(secureKeyId1, BOB, ImmutableSet.of(Action.ADMIN));
-    secureStoreManager.deleteSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1);
-    Assert.assertEquals(0, secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace()).size());
+    secureStoreManager.delete(NamespaceId.DEFAULT.getNamespace(), KEY1);
+    Assert.assertEquals(0, secureStore.list(NamespaceId.DEFAULT.getNamespace()).size());
     Predicate<Privilege> secureKeyIdFilter = new Predicate<Privilege>() {
       @Override
       public boolean apply(Privilege input) {

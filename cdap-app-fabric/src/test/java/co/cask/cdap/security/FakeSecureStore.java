@@ -24,6 +24,7 @@ import co.cask.cdap.api.security.store.SecureStoreMetadata;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,18 +39,16 @@ public class FakeSecureStore implements SecureStore {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
     Map<String, SecureStoreData> namespaceData = values.get(namespace);
     if (namespaceData == null) {
       throw new Exception("namespace " + namespace + " does not exist");
     }
-    // this is an odd API... why doesn't it return Map<String, SecureStoreData>?
-    return namespaceData.entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, val -> Bytes.toString(val.getValue().get())));
+    return namespaceData.values().stream().map(SecureStoreData::getMetadata).collect(Collectors.toList());
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData get(String namespace, String name) throws Exception {
     Map<String, SecureStoreData> namespaceData = values.get(namespace);
     if (namespaceData == null) {
       throw new Exception("namespace " + namespace + " does not exist");

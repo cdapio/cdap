@@ -43,7 +43,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -114,8 +113,8 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
   // Unfortunately KeyProvider does not specify
   // the underlying cause except in the message, so we can not throw a more specific exception.
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     if (provider.getMetadata(keyName) != null) {
@@ -144,7 +143,7 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
    * the underlying cause except in the message, so we can not throw a more specific exception.
    */
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void delete(String namespace, String name) throws Exception {
     checkNamespaceExists(namespace);
     try {
       provider.deleteKey(getKeyName(namespace, name));
@@ -168,7 +167,7 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
   // Unfortunately KeyProvider does not specify the underlying cause except in the message, so we can not throw a
   // more specific exception.
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
     checkNamespaceExists(namespace);
     String prefix = namespace + NAME_SEPARATOR;
     List<String> keysInNamespace = new ArrayList<>();
@@ -188,10 +187,12 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
       throw new ConcurrentModificationException("A key was deleted while listing was in progress. Please try again.");
     }
 
-    Map<String, String> secureStoreMetadatas = new HashMap<>(metadatas.length);
+    List<SecureStoreMetadata> secureStoreMetadatas = new ArrayList<>(metadatas.length);
     for (int i = 0; i < metadatas.length; i++) {
       KeyProvider.Metadata metadata = metadatas[i];
-      secureStoreMetadatas.put(keysInNamespace.get(i).substring(prefix.length()), metadata.getDescription());
+      secureStoreMetadatas.add(new SecureStoreMetadata(keysInNamespace.get(i).substring(prefix.length()),
+                                                       metadata.getDescription(),
+                                                       metadata.getCreated().getTime(), metadata.getAttributes()));
     }
     return secureStoreMetadatas;
   }
@@ -208,7 +209,7 @@ public class KMSSecureStoreService extends AbstractIdleService implements Secure
   // Unfortunately KeyProvider does not specify the underlying cause except in the message, so we can not throw a
   // more specific exception.
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData get(String namespace, String name) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     KeyProvider.Metadata metadata = provider.getMetadata(keyName);

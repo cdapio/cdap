@@ -18,7 +18,9 @@ package co.cask.cdap.security.guice.preview;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,23 +35,23 @@ public class PreviewSecureStore implements SecureStore, SecureStoreManager {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
-    return delegate.listSecureData(namespace);
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
+    return delegate.list(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    return delegate.getSecureData(namespace, name);
+  public SecureStoreData get(String namespace, String name) throws Exception {
+    return delegate.get(namespace, name);
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) throws Exception {
     //TODO put data in in-mempry map
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void delete(String namespace, String name) throws Exception {
     // TODO delete the data from in-memory map if its present otherwise it would be no-op since we do not want to
     // delegate it
   }

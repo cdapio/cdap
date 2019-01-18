@@ -17,9 +17,11 @@
 package co.cask.cdap.security.store;
 
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,23 +34,23 @@ public class DummySecureStoreService extends AbstractIdleService implements Secu
     "\"security.store.provider\" property in cdap-site.xml.";
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws IOException {
+  public List<SecureStoreMetadata> list(String namespace) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws IOException {
+  public SecureStoreData get(String namespace, String name) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws IOException {
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws IOException {
+  public void delete(String namespace, String name) throws IOException {
     throw new UnsupportedOperationException(SECURE_STORE_SETUP);
   }
 

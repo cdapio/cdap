@@ -76,8 +76,8 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
                                       " \n" + GSON.toJson(dummy));
     }
 
-    secureStoreManager.putSecureData(namespace, name, secureKeyCreateRequest.getData(),
-                                     secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
+    secureStoreManager.put(namespace, name, secureKeyCreateRequest.getData(),
+                           secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -85,7 +85,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws Exception {
-    secureStoreManager.deleteSecureData(namespace, name);
+    secureStoreManager.delete(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -94,7 +94,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                   @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.getSecureData(namespace, name).get(),
+    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.get(namespace, name).get(),
                                 new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8"));
   }
 
@@ -103,7 +103,7 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
                           @PathParam("namespace-id") String namespace,
                           @PathParam("key-name") String name) throws Exception {
-    SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
+    SecureStoreData secureStoreData = secureStore.get(namespace, name);
     httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStoreData.getMetadata()));
   }
 
@@ -111,6 +111,6 @@ public class SecureStoreHandler extends AbstractAppFabricHttpHandler {
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace)
     throws Exception {
-    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.listSecureData(namespace)));
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.list(namespace)));
   }
 }

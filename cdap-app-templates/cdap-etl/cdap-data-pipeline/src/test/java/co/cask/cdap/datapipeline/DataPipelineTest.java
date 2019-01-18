@@ -2627,10 +2627,10 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     // place dataset names into secure storage
-    getSecureStoreManager().putSecureData("default", prefix + "source", prefix + "MockSecureSourceDataset",
-                                          "secure source dataset name", new HashMap<>());
-    getSecureStoreManager().putSecureData("default", prefix + "sink", prefix + "MockSecureSinkDataset",
-                                          "secure dataset name", new HashMap<>());
+    getSecureStoreManager().put("default", prefix + "source", prefix + "MockSecureSourceDataset",
+                                "secure source dataset name", new HashMap<>());
+    getSecureStoreManager().put("default", prefix + "sink", prefix + "MockSecureSinkDataset",
+                                "secure dataset name", new HashMap<>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("App-" + engine);

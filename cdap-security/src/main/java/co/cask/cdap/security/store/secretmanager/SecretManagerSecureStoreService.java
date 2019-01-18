@@ -40,7 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -85,18 +86,18 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
     validate(namespace);
-    Map<String, String> map = new HashMap<>();
+    List<SecureStoreMetadata> metadataList = new ArrayList<>();
     for (SecretMetadata metadata : secretManager.list(namespace)) {
-      map.put(metadata.getName(), metadata.getDescription());
+      metadataList.add(new SecureStoreMetadata(metadata.getName(), metadata.getDescription(),
+                                               metadata.getCreationTimeMs(), metadata.getProperties()));
     }
-
-    return map;
+    return metadataList;
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData get(String namespace, String name) throws Exception {
     validate(namespace);
     try {
       Secret secret = secretManager.get(namespace, name);
@@ -110,7 +111,7 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
+  public void put(String namespace, String name, String data, String description,
                             Map<String, String> properties) throws Exception {
     validate(namespace);
     secretManager.store(namespace, new Secret(data.getBytes(StandardCharsets.UTF_8),
@@ -119,7 +120,7 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void delete(String namespace, String name) throws Exception {
     validate(namespace);
     try {
       secretManager.delete(namespace, name);

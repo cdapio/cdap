@@ -134,23 +134,23 @@ public class MockActionContext implements ActionContext {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) {
+  public Map<String, String> list(String namespace) {
     return null;
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) {
+  public SecureStoreData get(String namespace, String name) {
     return null;
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) {
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) {
     // no-op; unused
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) {
+  public void delete(String namespace, String name) {
     // no-op; unused
   }
 

@@ -28,6 +28,7 @@ import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationContext;
@@ -37,6 +38,7 @@ import com.google.inject.assistedinject.Assisted;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -149,14 +151,14 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
-    delegateAdmin.putSecureData(namespace, name, data, description, properties);
+  public void put(String namespace, String name, String data, String description,
+                  Map<String, String> properties) throws Exception {
+    delegateAdmin.put(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
-    delegateAdmin.deleteSecureData(namespace, name);
+  public void delete(String namespace, String name) throws Exception {
+    delegateAdmin.delete(namespace, name);
   }
 
 
@@ -192,13 +194,13 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
-    return delegateSecureStore.listSecureData(namespace);
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
+    return delegateSecureStore.list(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    return delegateSecureStore.getSecureData(namespace, name);
+  public SecureStoreData get(String namespace, String name) throws Exception {
+    return delegateSecureStore.get(namespace, name);
   }
 
   @Override
