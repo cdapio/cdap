@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ public class ProvisionerMacroEvaluator implements MacroEvaluator {
       throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
     }
     try {
-      return Bytes.toString(secureStore.getSecureData(namespace, arguments[0]).get());
+      return Bytes.toString(secureStore.get(namespace, arguments[0]).get());
     } catch (Exception e) {
       throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
     }

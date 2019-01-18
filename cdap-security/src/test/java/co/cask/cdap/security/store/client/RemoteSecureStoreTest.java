@@ -39,7 +39,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Tests for {@link RemoteSecureStore}.
@@ -93,27 +93,27 @@ public class RemoteSecureStoreTest {
                                                           "value".getBytes(StandardCharsets.UTF_8));
 
     // test put and get
-    remoteSecureStore.putSecureData(NAMESPACE1, "key", "value", "description", ImmutableMap.of("prop1", "value1"));
-    SecureStoreData actual = remoteSecureStore.getSecureData(NAMESPACE1, "key");
+    remoteSecureStore.put(NAMESPACE1, "key", "value", "description", ImmutableMap.of("prop1", "value1"));
+    SecureStoreData actual = remoteSecureStore.get(NAMESPACE1, "key");
     Assert.assertEquals(secureStoreMetadata.getName(), actual.getMetadata().getName());
     Assert.assertArrayEquals(secureStoreData.get(), actual.get());
     Assert.assertEquals(secureStoreMetadata.getDescription(), actual.getMetadata().getDescription());
     Assert.assertEquals(secureStoreMetadata.getProperties().size(), actual.getMetadata().getProperties().size());
 
     // test list
-    Map<String, String> secureData = remoteSecureStore.listSecureData(NAMESPACE1);
+    List<SecureStoreMetadata> secureData = remoteSecureStore.list(NAMESPACE1);
     Assert.assertEquals(1, secureData.size());
-    Map.Entry<String, String> entry = secureData.entrySet().iterator().next();
-    Assert.assertEquals("key", entry.getKey());
-    Assert.assertEquals("description", entry.getValue());
+    SecureStoreMetadata metadata = secureData.get(0);
+    Assert.assertEquals("key", metadata.getName());
+    Assert.assertEquals("description", metadata.getDescription());
 
     // test delete
-    remoteSecureStore.deleteSecureData(NAMESPACE1, "key");
-    Assert.assertEquals(0, remoteSecureStore.listSecureData(NAMESPACE1).size());
+    remoteSecureStore.delete(NAMESPACE1, "key");
+    Assert.assertEquals(0, remoteSecureStore.list(NAMESPACE1).size());
   }
 
   @Test(expected = SecureKeyNotFoundException.class)
   public void testKeyNotFound() throws Exception {
-    remoteSecureStore.getSecureData(NAMESPACE1, "nonexistingkey");
+    remoteSecureStore.get(NAMESPACE1, "nonexistingkey");
   }
 }

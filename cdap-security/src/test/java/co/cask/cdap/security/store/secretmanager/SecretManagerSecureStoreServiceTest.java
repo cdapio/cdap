@@ -17,6 +17,7 @@
 package co.cask.cdap.security.store.secretmanager;
 
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.SecureKeyNotFoundException;
 import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -27,7 +28,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,12 +70,12 @@ public class SecretManagerSecureStoreServiceTest {
     properties.put("prop1", "value1");
 
     // put key value to secure store
-    secureStoreService.putSecureData(NAMESPACE1, key1, value1, description1, properties);
-    secureStoreService.putSecureData(NAMESPACE1, key2, value2, description2, properties);
+    secureStoreService.put(NAMESPACE1, key1, value1, description1, properties);
+    secureStoreService.put(NAMESPACE1, key2, value2, description2, properties);
 
     // get key value from secure store
-    SecureStoreData ns1Key1 = secureStoreService.getSecureData(NAMESPACE1, key1);
-    SecureStoreData ns1Key2 = secureStoreService.getSecureData(NAMESPACE1, key2);
+    SecureStoreData ns1Key1 = secureStoreService.get(NAMESPACE1, key1);
+    SecureStoreData ns1Key2 = secureStoreService.get(NAMESPACE1, key2);
 
     Assert.assertEquals(key1, ns1Key1.getMetadata().getName());
     Assert.assertArrayEquals(value1.getBytes(StandardCharsets.UTF_8), ns1Key1.get());
@@ -86,21 +89,23 @@ public class SecretManagerSecureStoreServiceTest {
 
     // list key value from secure store
     int i = 1;
-    for (Map.Entry<String, String> entry : secureStoreService.listSecureData(NAMESPACE1).entrySet()) {
-      Assert.assertEquals("key" + i, entry.getKey());
-      Assert.assertEquals("description" + i, entry.getValue());
+    List<SecureStoreMetadata> metadatas = secureStoreService.list(NAMESPACE1);
+    metadatas.sort(Comparator.comparing(SecureStoreMetadata::getName));
+    for (SecureStoreMetadata metadata : metadatas) {
+      Assert.assertEquals("key" + i, metadata.getName());
+      Assert.assertEquals("description" + i, metadata.getDescription());
       i++;
     }
 
     // delete key value from secure store
-    secureStoreService.deleteSecureData(NAMESPACE1, key1);
-    secureStoreService.deleteSecureData(NAMESPACE1, key2);
+    secureStoreService.delete(NAMESPACE1, key1);
+    secureStoreService.delete(NAMESPACE1, key2);
 
-    Assert.assertEquals(0, secureStoreService.listSecureData(NAMESPACE1).size());
+    Assert.assertEquals(0, secureStoreService.list(NAMESPACE1).size());
   }
 
   @Test(expected = SecureKeyNotFoundException.class)
   public void testKeyNotFound() throws Exception {
-    secureStoreService.getSecureData(NAMESPACE1, "nonexistingkey");
+    secureStoreService.get(NAMESPACE1, "nonexistingkey");
   }
 }

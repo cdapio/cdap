@@ -19,33 +19,31 @@ package co.cask.cdap.api.security.store;
 import co.cask.cdap.api.annotation.Beta;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Provides read access to the secure store.
- * For write access use {@link SecureStoreManager}
+ * For write access use {@link SecureStoreManager}.
  */
 @Beta
 public interface SecureStore {
 
   /**
-   * List of all the entries in the secure store.
-   * @param namespace The namespace that this key belongs to.
-   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store.
-   * @throws IOException If there was a problem reading from the keystore.
-   * @throws Exception If the specified namespace does not exist.
+   * List of metadata stored in the secure store.
+   * @param namespace The namespace that this key belongs to
+   * @return A list of {@link SecureStoreMetadata} objects representing the data stored in the store
+   * @throws IOException If there was a problem reading from the keystore
+   * @throws Exception If the specified namespace does not exist
    */
-  // TODO CDAP-13648 change this api to return list of SecureStoreMetadata. Also change names of the methods to list,
-  // get as `SecureData` in method names are redundant
-  Map<String, String> listSecureData(String namespace) throws Exception;
+  List<SecureStoreMetadata> list(String namespace) throws Exception;
 
   /**
    * Returns the data stored in the secure store.
-   * @param namespace The namespace that this key belongs to.
-   * @param name Name of the data element.
-   * @return An object representing the securely stored data associated with the name.
-   * @throws IOException If there was a problem reading from the store.
-   * @throws Exception if the specified namespace or name does not exist.
+   * @param namespace The namespace that this key belongs to
+   * @param name Name of the data element
+   * @return An object representing the securely stored data associated with the name
+   * @throws IOException If there was a problem reading from the store
+   * @throws Exception if the specified namespace or name does not exist
    */
-  SecureStoreData getSecureData(String namespace, String name) throws Exception;
+  SecureStoreData get(String namespace, String name) throws Exception;
 }

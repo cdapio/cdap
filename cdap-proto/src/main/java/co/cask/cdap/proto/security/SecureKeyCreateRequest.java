@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.proto.security;
 
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Request for creating a new entry in the secure store
@@ -27,12 +28,13 @@ public class SecureKeyCreateRequest {
   private final String data;
   private final Map<String, String> properties;
 
-  public SecureKeyCreateRequest(String description, String data, Map<String, String> properties) {
+  public SecureKeyCreateRequest(@Nullable String description, String data, Map<String, String> properties) {
     this.description = description;
     this.data = data;
     this.properties = properties;
   }
 
+  @Nullable
   public String getDescription() {
     return description;
   }
@@ -42,15 +44,13 @@ public class SecureKeyCreateRequest {
   }
 
   public Map<String, String> getProperties() {
-    return properties == null ? Collections.<String, String>emptyMap() : properties;
+    return properties == null ? Collections.emptyMap() : properties;
   }
 
   @Override
   public String toString() {
     return "SecureKeyCreateRequest{" +
       "description='" + description + '\'' +
-      ", data='" + data + '\'' +
-      ", properties=" + properties +
       '}';
   }
 }

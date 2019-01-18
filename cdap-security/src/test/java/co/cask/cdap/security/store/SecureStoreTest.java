@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.store;
 
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -55,6 +56,8 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 public class SecureStoreTest {
@@ -63,7 +66,7 @@ public class SecureStoreTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LIST_TYPE = new TypeToken<List<SecureStoreMetadata>>() { }.getType();
   private static final String KEY = "key1";
   private static final String DESCRIPTION = "This is Key1";
   private static final String DATA = "Secret1";
@@ -141,7 +144,7 @@ public class SecureStoreTest {
     // Test empty list
     HttpResponse response = list();
     Assert.assertEquals(200, response.getResponseCode());
-    Map<String, String> keys = GSON.fromJson(response.getResponseBodyAsString(), MAP_TYPE);
+    List<SecureStoreMetadata> keys = GSON.fromJson(response.getResponseBodyAsString(), LIST_TYPE);
     Assert.assertTrue(keys.isEmpty());
 
     // One element
@@ -150,9 +153,9 @@ public class SecureStoreTest {
     Assert.assertEquals(200, response.getResponseCode());
     response = list();
     Assert.assertEquals(200, response.getResponseCode());
-    keys = GSON.fromJson(response.getResponseBodyAsString(), MAP_TYPE);
+    keys = GSON.fromJson(response.getResponseBodyAsString(), LIST_TYPE);
     Assert.assertEquals(1, keys.size());
-    Assert.assertEquals(DESCRIPTION, keys.get(KEY));
+    Assert.assertEquals(DESCRIPTION, keys.get(0).getDescription());
 
     // Two elements
     secureKeyCreateRequest = new SecureKeyCreateRequest(DESCRIPTION2, DATA2, PROPERTIES2);
@@ -160,10 +163,11 @@ public class SecureStoreTest {
     Assert.assertEquals(200, response.getResponseCode());
     response = list();
     Assert.assertEquals(200, response.getResponseCode());
-    keys = GSON.fromJson(response.getResponseBodyAsString(), MAP_TYPE);
+    keys = GSON.fromJson(response.getResponseBodyAsString(), LIST_TYPE);
     Assert.assertEquals(2, keys.size());
-    Assert.assertEquals(DESCRIPTION, keys.get(KEY));
-    Assert.assertEquals(DESCRIPTION2, keys.get(KEY2));
+    keys.sort(Comparator.comparing(SecureStoreMetadata::getName));
+    Assert.assertEquals(DESCRIPTION, keys.get(0).getDescription());
+    Assert.assertEquals(DESCRIPTION2, keys.get(1).getDescription());
 
 
     // After deleting an element
@@ -171,9 +175,9 @@ public class SecureStoreTest {
     Assert.assertEquals(200, response.getResponseCode());
     response = list();
     Assert.assertEquals(200, response.getResponseCode());
-    keys = GSON.fromJson(response.getResponseBodyAsString(), MAP_TYPE);
+    keys = GSON.fromJson(response.getResponseBodyAsString(), LIST_TYPE);
     Assert.assertEquals(1, keys.size());
-    Assert.assertEquals(DESCRIPTION2, keys.get(KEY2));
+    Assert.assertEquals(DESCRIPTION2, keys.get(0).getDescription());
   }
 
   public HttpResponse create(String key, SecureKeyCreateRequest keyCreateRequest) throws Exception {

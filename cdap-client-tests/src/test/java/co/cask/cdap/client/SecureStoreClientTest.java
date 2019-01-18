@@ -33,6 +33,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -104,7 +105,7 @@ public class SecureStoreClientTest extends AbstractClientTest {
   @Test
   public void testSecureKeys() throws Exception {
     // no secure keys to begin with
-    Map<String, String> secureKeys = client.listKeys(NamespaceId.DEFAULT);
+    List<SecureStoreMetadata> secureKeys = client.listKeys(NamespaceId.DEFAULT);
     Assert.assertTrue(secureKeys.isEmpty());
 
     // create a key

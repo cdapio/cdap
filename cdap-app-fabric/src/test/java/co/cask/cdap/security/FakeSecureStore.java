@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.api.security.store.SecureStoreMetadata;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,18 +39,16 @@ public class FakeSecureStore implements SecureStore {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
     Map<String, SecureStoreData> namespaceData = values.get(namespace);
     if (namespaceData == null) {
       throw new Exception("namespace " + namespace + " does not exist");
     }
-    // this is an odd API... why doesn't it return Map<String, SecureStoreData>?
-    return namespaceData.entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, val -> Bytes.toString(val.getValue().get())));
+    return namespaceData.values().stream().map(SecureStoreData::getMetadata).collect(Collectors.toList());
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData get(String namespace, String name) throws Exception {
     Map<String, SecureStoreData> namespaceData = values.get(namespace);
     if (namespaceData == null) {
       throw new Exception("namespace " + namespace + " does not exist");
@@ -84,7 +83,8 @@ public class FakeSecureStore implements SecureStore {
     }
 
     public Builder putValue(String namespace, String name, String data) {
-      SecureStoreMetadata meta = SecureStoreMetadata.of(name, "desc", Collections.emptyMap());
+      SecureStoreMetadata meta = new SecureStoreMetadata(name, "desc", System.currentTimeMillis(),
+                                                         Collections.emptyMap());
       return putValue(namespace, name, new SecureStoreData(meta, Bytes.toBytes(data)));
     }
 

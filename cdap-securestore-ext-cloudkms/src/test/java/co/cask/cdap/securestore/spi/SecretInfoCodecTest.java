@@ -48,4 +48,23 @@ public class SecretInfoCodecTest {
     Assert.assertEquals(secretInfo.getDescription(), decodedSecretInfo.getDescription());
     Assert.assertEquals(secretInfo.getProperties().size(), decodedSecretInfo.getProperties().size());
   }
+
+  @Test
+  public void encodeDecodeSecretInfoWithNull() throws Exception {
+    SecretInfoCodec encoderDecoder = new SecretInfoCodec();
+    String secretData = "secretData";
+    long creationTime = System.currentTimeMillis();
+    Map<String, String> properties = new HashMap<>();
+    SecretInfo secretInfo = new SecretInfo("secretName", null, secretData.getBytes(StandardCharsets.UTF_8),
+                                           creationTime, properties);
+    byte[] encodedSecretInfo = encoderDecoder.encode(secretInfo);
+    SecretInfo decodedSecretInfo = encoderDecoder.decode(encodedSecretInfo);
+
+    Assert.assertArrayEquals(secretInfo.getSecretData(), decodedSecretInfo.getSecretData());
+    Assert.assertEquals(secretInfo.getName(), decodedSecretInfo.getName());
+    Assert.assertEquals(secretInfo.getDescription(), decodedSecretInfo.getDescription());
+    Assert.assertEquals(secretInfo.getCreationTimeMs(), decodedSecretInfo.getCreationTimeMs());
+    Assert.assertEquals(secretInfo.getDescription(), decodedSecretInfo.getDescription());
+    Assert.assertEquals(secretInfo.getProperties().size(), decodedSecretInfo.getProperties().size());
+  }
 }

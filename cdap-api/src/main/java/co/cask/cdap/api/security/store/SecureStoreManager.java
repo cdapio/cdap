@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 
 import java.io.IOException;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Provides write access to the secure store.
@@ -30,23 +31,23 @@ public interface SecureStoreManager {
 
   /**
    * Stores an element in the secure store.
-   * @param namespace The namespace that this key belongs to.
-   * @param name This is the identifier that will be used to retrieve this element.
+   * @param namespace The namespace that this key belongs to
+   * @param name This is the identifier that will be used to retrieve this element
    * @param data The sensitive data that has to be securely stored
-   * @param description User provided description of the entry.
-   * @param properties associated with this element.
-   * @throws IOException If the attempt to store the element failed.
-   * @throws Exception If the specified namespace does not exist.
+   * @param description User provided description of the entry
+   * @param properties associated with this element
+   * @throws IOException If the attempt to store the element failed
+   * @throws Exception If the specified namespace does not exist
    */
-  void putSecureData(String namespace, String name, String data, String description, Map<String, String> properties)
-    throws Exception;
+  void put(String namespace, String name, String data, @Nullable String description,
+           Map<String, String> properties) throws Exception;
 
   /**
    * Deletes the element with the given name.
-   * @param namespace The namespace that this key belongs to.
-   * @param name of the element to delete.
-   * @throws IOException If the store is not initialized or if the key could not be removed.
-   * @throws Exception If the specified namespace or name does not exist.
+   * @param namespace The namespace that this key belongs to
+   * @param name of the element to delete
+   * @throws IOException If the store is not initialized or if the key could not be removed
+   * @throws Exception If the specified namespace or name does not exist
    */
-  void deleteSecureData(String namespace, String name) throws Exception;
+  void delete(String namespace, String name) throws Exception;
 }

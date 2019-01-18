@@ -36,7 +36,8 @@ public class SecretInfoCodec implements Encoder<SecretInfo>, Decoder<SecretInfo>
   public SecretInfo decode(byte[] data) throws IOException {
     try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data))) {
       String name = dis.readUTF();
-      String description = dis.readUTF();
+      boolean descriptionExists = dis.readBoolean();
+      String description = descriptionExists ? dis.readUTF() : null;
       long creationTimeMs = dis.readLong();
 
       Map<String, String> properties = new HashMap<>();
@@ -56,7 +57,10 @@ public class SecretInfoCodec implements Encoder<SecretInfo>, Decoder<SecretInfo>
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(bos)) {
       dos.writeUTF(secretInfo.getName());
-      dos.writeUTF(secretInfo.getDescription());
+      dos.writeBoolean(secretInfo.getDescription() != null);
+      if (secretInfo.getDescription() != null) {
+        dos.writeUTF(secretInfo.getDescription());
+      }
       dos.writeLong(secretInfo.getCreationTimeMs());
 
       Map<String, String> properties = secretInfo.getProperties();

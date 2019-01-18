@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents metadata for the sensitive data to be stored.
@@ -38,7 +39,8 @@ public class SecretMetadata {
    * @param creationTimeMs creation time of the secret in milli seconds
    * @param properties properties of the secret
    */
-  public SecretMetadata(String name, String description, long creationTimeMs, Map<String, String> properties) {
+  public SecretMetadata(String name, @Nullable String description, long creationTimeMs,
+                        Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.creationTimeMs = creationTimeMs;
@@ -55,6 +57,7 @@ public class SecretMetadata {
   /**
    * @return description of the secret
    */
+  @Nullable
   public String getDescription() {
     return description;
   }
