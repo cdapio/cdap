@@ -19,10 +19,29 @@
       padding-top: 5px;
     }
   }
+
+  .composite-box {
+    display: flex;
+    .composite-label {
+      padding-right: 10px;
+    }
+
+    .toggle-switch {
+      .switch-button {
+        height: 22px;
+      }
+    }
+
+    .action-button-group {
+      padding-left: 15px;
+    }
+  }
+
   .filter-item-box {
-    height: calc(100% - 90px);
+    height: calc(100% - 115px);
     overflow-y: auto;
     padding-right: 5px;
+    padding-top: 10px;
     .add-filter-box {
       display: flex;
       flex-direction: row-reverse;

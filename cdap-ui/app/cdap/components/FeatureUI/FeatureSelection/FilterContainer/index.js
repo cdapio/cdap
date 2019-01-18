@@ -1,11 +1,14 @@
 /* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button, ButtonGroup } from 'reactstrap';
 import FilterItem from '../FilterItem/index';
 import './FilterContainer.scss';
 import { cloneDeep } from "lodash";
+import ToggleSwitch from 'components/ToggleSwitch';
 
-// import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
+
+
+
 
 class FilterContainer extends Component {
   filterTypeList = [{ id: 1, name: 'TopN' }, { id: 2, name: 'LowN' }, { id: 3, name: 'Range' }]
@@ -18,6 +21,8 @@ class FilterContainer extends Component {
     this.state = {
       orderbyOpen: false,
       selectedOrderbyColumn: { id: -1, name: 'Select' },
+      selectedCompositeOption:"OR",
+      isSelectCompositeOption: false,
       orderByCOlumnList: cloneDeep(this.filterColumnList),
       filterItemList: [this.getFilterItemVO()],
       minLimitValue: "0",
@@ -37,6 +42,16 @@ class FilterContainer extends Component {
 
   orderbyColumnChange = (item) => {
     this.setState({ selectedOrderbyColumn: item });
+  }
+
+  compositeOptionChange = (option) =>{
+    this.setState({selectedCompositeOption:option});
+  }
+
+  switchChange = () =>{
+    const switchActiveStatus = !this.state.isSelectCompositeOption;
+    this.setState({selectedCompositeOption:"OR"});
+    this.setState({isSelectCompositeOption: switchActiveStatus});
   }
 
   addFilterItem = () => {
@@ -172,6 +187,7 @@ class FilterContainer extends Component {
     this.props.applyFilter(this.state);
   }
 
+
   render() {
     let filterItems = (
       <div>
@@ -210,6 +226,22 @@ class FilterContainer extends Component {
             </DropdownMenu>
           </Dropdown>
 
+        </div>
+        <div className="composite-box">
+        <label className="composite-label">Composite </label>
+          <ToggleSwitch className="toggle-switch"
+            isOn={this.state.isSelectCompositeOption}
+            onToggle={this.switchChange.bind(this)} ></ToggleSwitch>
+          <ButtonGroup className="action-button-group">
+            <Button onClick={() => this.compositeOptionChange("OR")}
+              active={this.state.selectedCompositeOption === "OR"}
+              disabled={!this.state.isSelectCompositeOption}
+              >OR</Button>
+            <Button onClick={() => this.compositeOptionChange("AND")}
+              active={this.state.selectedCompositeOption === "AND"}
+              disabled={!this.state.isSelectCompositeOption}
+              >AND</Button>
+          </ButtonGroup>
         </div>
         <div className="filter-item-box">
           {filterItems}

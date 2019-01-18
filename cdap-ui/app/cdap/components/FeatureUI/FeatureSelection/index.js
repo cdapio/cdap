@@ -104,7 +104,7 @@ class FeatureSelection extends Component {
       startPosition: value.minLimitValue.trim() == "" ? 0 : Number(value.minLimitValue.trim()),
       endPosition: value.maxLimitValue.trim() == "" ? 0 : Number(value.maxLimitValue.trim()),
       isComposite: true,
-      compositeType: "OR",
+      compositeType: value.selectedCompositeOption,
       filterList: filtersList
     };
     if (value.selectedOrderbyColumn.id != -1) {
