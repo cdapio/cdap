@@ -3439,6 +3439,14 @@
   </property>
 
   <property>
+    <name>security.store.extensions.dir</name>
+    <value>/opt/cdap/master/ext/securestores</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for secure store extensions
+    </description>
+  </property>
+
+  <property>
     <name>security.store.file.path</name>
     <value>${local.data.dir}/store</value>
     <description>
@@ -3450,7 +3458,11 @@
     <name>security.store.provider</name>
     <value>none</value>
     <description>
-      Backend provider for the secure store; use 'none' if no secure store
+      Backend provider for the secure store; values can be 'none' if no secure store, 'kms' for hadoop kms based store
+      or name of the secure store extension.
+      If the provider is set to 'file' then the user must provide the password to be used to access the keystore.
+      The password can be set using 'security.store.file.password' property in cdap-security.xml.
+      KMS based provider is supported for Apache Hadoop 2.6.0 and above versions.
     </description>
   </property>
 

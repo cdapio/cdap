@@ -16,9 +16,7 @@
 
 package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -30,6 +28,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -77,8 +76,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * class to two interfaces and we need the instance to be shared between them.
  */
 @Singleton
-public class FileSecureStore implements SecureStore, SecureStoreManager {
-  private static final Logger LOG = LoggerFactory.getLogger(FileSecureStore.class);
+public class FileSecureStoreService extends AbstractIdleService implements SecureStoreService {
+  private static final Logger LOG = LoggerFactory.getLogger(FileSecureStoreService.class);
   private static final String SCHEME_NAME = "jceks";
   /** Separator between the namespace name and the key name */
   private static final String NAME_SEPARATOR = ":";
@@ -91,7 +90,7 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
   private final KeyStore keyStore;
 
   @Inject
-  public FileSecureStore(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
+  public FileSecureStoreService(CConfiguration cConf, SConfiguration sConf, NamespaceQueryAdmin namespaceQueryAdmin)
     throws IOException {
     // Get the path to the keystore file
     String pathString = cConf.get(Constants.Security.Store.FILE_PATH);
@@ -412,5 +411,15 @@ public class FileSecureStore implements SecureStore, SecureStoreManager {
 
   private static String getKeyName(final String namespace, final String name) {
     return namespace + NAME_SEPARATOR + name;
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // no-op
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    // no-op
   }
 }

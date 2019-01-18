@@ -445,6 +445,12 @@
           <version>${project.version}</version>
           <scope>provided</scope>
         </dependency>
+        <dependency>
+          <groupId>co.cask.cdap</groupId>
+          <artifactId>cdap-securestore-ext-cloudkms</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
       </dependencies>
 
       <build>
@@ -636,6 +642,14 @@
                       <includes>
                         <include>*.jar</include>
                         <include>*.json</include>
+                      </includes>
+                    </resource>
+                    <!-- copy secure store extensions -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>
+                      <targetPath>ext/securestores/cloudkms</targetPath>
+                      <includes>
+                        <include>*.jar</include>
                       </includes>
                     </resource>
                   </resources>
