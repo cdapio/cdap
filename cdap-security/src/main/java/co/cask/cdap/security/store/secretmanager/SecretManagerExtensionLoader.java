@@ -37,23 +37,19 @@ class SecretManagerExtensionLoader extends AbstractExtensionLoader<String, Secre
     return Collections.singleton(secretManager.getName());
   }
 
-  // filter all non-spi classes to provide isolation from CDAP's classes.
   @Override
-  protected ClassLoader getExtensionParentClassLoader() {
-    return new FilterClassLoader(super.getExtensionParentClassLoader(), new FilterClassLoader.Filter() {
+  protected FilterClassLoader.Filter getExtensionParentClassLoaderFilter() {
+    // Only allow spi classes.
+    return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        // we need to allow spi classes and slf4j classes from parent classloader. This is because secret manager spi
-        // depends on slf4j and implementation will have this dependency in provided scope.
-        return resource.startsWith("co/cask/cdap/securestore/spi") || resource.startsWith("org/slf4j");
+        return resource.startsWith("co/cask/cdap/securestore/spi");
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        // we need to allow spi classes and slf4j classes from parent classloader. This is because secret manager spi
-        // depends on slf4j and implementation will have this dependency in provided scope.
-        return packageName.startsWith("co.cask.cdap.securestore.spi") || packageName.startsWith("org.slf4j");
+        return packageName.startsWith("co.cask.cdap.securestore.spi");
       }
-    });
+    };
   }
 }

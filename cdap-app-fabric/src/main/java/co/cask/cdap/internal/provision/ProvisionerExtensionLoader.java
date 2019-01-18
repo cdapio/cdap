@@ -44,11 +44,11 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
     return Collections.singleton(provisioner.getSpec().getName());
   }
 
-  // filter all non-spi classes to provide isolation from CDAP's classes. For example, dataproc provisioner uses
-  // a different guava than CDAP's guava.
   @Override
-  protected ClassLoader getExtensionParentClassLoader() {
-    return new FilterClassLoader(super.getExtensionParentClassLoader(), new FilterClassLoader.Filter() {
+  protected FilterClassLoader.Filter getExtensionParentClassLoaderFilter() {
+    // filter all non-spi classes to provide isolation from CDAP's classes. For example, dataproc provisioner uses
+    // a different guava than CDAP's guava.
+    return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
         return resource.startsWith("co/cask/cdap/runtime/spi");
@@ -56,9 +56,9 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return packageName.startsWith("co/cask/cdap/runtime/spi");
+        return packageName.startsWith("co.cask.cdap.runtime.spi");
       }
-    });
+    };
   }
 
   @Override
