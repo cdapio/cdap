@@ -23,11 +23,11 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
-import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 

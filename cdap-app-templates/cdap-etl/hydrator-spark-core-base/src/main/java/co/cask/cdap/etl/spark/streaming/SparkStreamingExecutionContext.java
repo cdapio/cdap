@@ -26,9 +26,9 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.NoLookupProvider;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 

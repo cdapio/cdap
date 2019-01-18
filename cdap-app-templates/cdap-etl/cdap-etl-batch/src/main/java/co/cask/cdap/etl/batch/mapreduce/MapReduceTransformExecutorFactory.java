@@ -62,7 +62,7 @@ import co.cask.cdap.etl.common.TrackedMultiOutputTransform;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.preview.LimitingTransform;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;

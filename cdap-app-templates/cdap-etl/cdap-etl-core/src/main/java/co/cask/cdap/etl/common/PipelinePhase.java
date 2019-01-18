@@ -22,8 +22,8 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.planner.Dag;
-import co.cask.cdap.etl.spec.PluginSpec;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.base.Joiner;
 
 import java.util.Collection;

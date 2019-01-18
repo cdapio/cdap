@@ -23,7 +23,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.List;
 import java.util.Map;

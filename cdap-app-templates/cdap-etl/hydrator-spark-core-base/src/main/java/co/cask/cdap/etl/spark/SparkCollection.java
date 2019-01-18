@@ -21,7 +21,7 @@ import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.StageStatisticsCollector;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 

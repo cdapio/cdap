@@ -19,8 +19,8 @@ package co.cask.cdap.etl.spark.streaming;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.StageStatisticsCollector;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
-import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.Externalizable;
 import java.io.IOException;

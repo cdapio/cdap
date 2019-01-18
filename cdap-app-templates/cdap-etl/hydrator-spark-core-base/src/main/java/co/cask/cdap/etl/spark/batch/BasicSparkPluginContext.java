@@ -22,7 +22,7 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.spark.SparkConf;
 
 import java.util.List;

@@ -33,7 +33,7 @@ import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;

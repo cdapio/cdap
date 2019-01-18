@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,9 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
-package co.cask.cdap.etl.spec;
+package co.cask.cdap.etl.proto.v2.spec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.proto.Connection;
@@ -30,7 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Specification for a pipeline. The application should get this from the {@link PipelineSpecGenerator} in order
+ * Specification for a pipeline. The application should get this from the PipelineSpecGenerator in order
  * to ensure that the spec is validated and created correctly.
  *
  * This is like an {@link ETLConfig} but its stages contain additional information calculated at configure time of

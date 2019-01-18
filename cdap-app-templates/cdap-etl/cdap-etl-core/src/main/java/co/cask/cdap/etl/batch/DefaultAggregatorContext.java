@@ -18,13 +18,9 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 
 /**
  * Batch Aggregator Context.

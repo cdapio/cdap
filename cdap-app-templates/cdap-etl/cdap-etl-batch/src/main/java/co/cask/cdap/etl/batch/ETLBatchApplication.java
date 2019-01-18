@@ -18,25 +18,19 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
-import co.cask.cdap.etl.spec.PipelineSpecGenerator;
-import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
-import org.apache.avro.mapreduce.AvroKeyInputFormat;
-import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
 import java.util.HashMap;
 import java.util.Set;

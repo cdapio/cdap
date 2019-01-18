@@ -18,8 +18,8 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.proto.Connection;
-import co.cask.cdap.etl.spec.PipelineSpec;
-import co.cask.cdap.etl.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.spec.PipelineSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;

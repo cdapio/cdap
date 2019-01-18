@@ -23,8 +23,8 @@ import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.NoLookupProvider;
-import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.List;
 import java.util.Map;

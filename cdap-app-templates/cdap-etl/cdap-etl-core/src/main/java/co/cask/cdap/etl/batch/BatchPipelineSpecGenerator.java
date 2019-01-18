@@ -22,8 +22,8 @@ import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
-import co.cask.cdap.etl.spec.PluginSpec;
 
 import java.util.Set;
 
