@@ -118,6 +118,7 @@ public final class Constants {
     public static final String MASTER_SERVICES_BIND_ADDRESS = "master.services.bind.address";
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
     public static final String PREVIEW_HTTP = "preview";
+    public static final String SECURE_STORE_SERVICE = "secure.store.service";
   }
 
   /**
