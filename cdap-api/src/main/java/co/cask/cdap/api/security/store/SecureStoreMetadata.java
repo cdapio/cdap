@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents the metadata for the data stored in the Secure Store.
@@ -31,16 +32,11 @@ public final class SecureStoreMetadata {
   private final long createdEpochMs;
   private final Map<String, String> properties;
 
-  public SecureStoreMetadata(String name, String description, long created, Map<String, String> properties) {
+  public SecureStoreMetadata(String name, @Nullable String description, long created, Map<String, String> properties) {
     this.name = name;
     this.description = description;
     this.createdEpochMs = created;
-    this.properties = properties;
-  }
-
-  public static SecureStoreMetadata of(String name, String description, Map<String, String> properties) {
-    return new SecureStoreMetadata(name, description, System.currentTimeMillis(),
-                                   Collections.unmodifiableMap(new HashMap<>(properties)));
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**
@@ -64,6 +60,7 @@ public final class SecureStoreMetadata {
     return properties;
   }
 
+  @Nullable
   public String getDescription() {
     return description;
   }
@@ -74,7 +71,6 @@ public final class SecureStoreMetadata {
       "name='" + name + '\'' +
       ", description='" + description + '\'' +
       ", createdEpochMs=" + createdEpochMs +
-      ", properties=" + properties +
       '}';
   }
 

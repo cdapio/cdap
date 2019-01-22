@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,7 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Provides ways to get/set Secure keys.
@@ -150,7 +150,7 @@ public class SecureStoreClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    * @throws NamespaceNotFoundException if the given namespace is not found
    */
-  public Map<String, String> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
+  public List<SecureStoreMetadata> listKeys(NamespaceId namespaceId) throws IOException, UnauthenticatedException,
     NamespaceNotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(namespaceId, SECURE_KEYS);
     HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
@@ -158,7 +158,7 @@ public class SecureStoreClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NamespaceNotFoundException(namespaceId);
     }
-    return ObjectResponse.fromJsonBody(response, new TypeToken<Map<String, String>>() { }).getResponseObject();
+    return ObjectResponse.fromJsonBody(response, new TypeToken<List<SecureStoreMetadata>>() { }).getResponseObject();
   }
 
   private static String getSecureKeyPath(SecureKeyId secureKeyId) {

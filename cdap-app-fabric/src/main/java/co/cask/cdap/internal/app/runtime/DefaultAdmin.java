@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,14 +67,14 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data,
-                            String description, Map<String, String> properties) throws Exception {
-    secureStoreManager.putSecureData(namespace, name, data, description, properties);
+  public void put(String namespace, String name, String data,
+                  @Nullable String description, Map<String, String> properties) throws Exception {
+    secureStoreManager.put(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
-    secureStoreManager.deleteSecureData(namespace, name);
+  public void delete(String namespace, String name) throws Exception {
+    secureStoreManager.delete(namespace, name);
   }
 
   @Override

@@ -19,6 +19,7 @@ package co.cask.cdap.securestore.gcp.cloudkms;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Class used to serialize and deserialize the secret and associated metadata. Used by {@link SecretInfoCodec}.
@@ -33,7 +34,7 @@ public final class SecretInfo {
   /**
    * Creates SecretInfo instance with provided name, description, secretData, creationTimeMs and properties.
    */
-  public SecretInfo(String name, String description, byte[] secretData, long creationTimeMs,
+  public SecretInfo(String name, @Nullable String description, byte[] secretData, long creationTimeMs,
                     Map<String, String> properties) {
     this.name = name;
     this.description = description;
@@ -52,6 +53,7 @@ public final class SecretInfo {
   /**
    * Returns description of the secret
    */
+  @Nullable
   public String getDescription() {
     return description;
   }

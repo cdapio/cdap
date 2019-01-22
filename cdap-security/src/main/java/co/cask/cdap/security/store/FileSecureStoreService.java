@@ -50,12 +50,15 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.annotation.Nullable;
 import javax.crypto.spec.SecretKeySpec;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -118,11 +121,11 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
    * or if there was problem persisting the keystore.
    */
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
+  public void put(String namespace, String name, String data, @Nullable String description,
+                  Map<String, String> properties) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
-    SecureStoreMetadata meta = SecureStoreMetadata.of(name, description, properties);
+    SecureStoreMetadata meta = new SecureStoreMetadata(name, description, System.currentTimeMillis(), properties);
     SecureStoreData secureStoreData = new SecureStoreData(meta, data.getBytes(Charsets.UTF_8));
     writeLock.lock();
     try {
@@ -153,7 +156,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
    * or if there was a problem persisting the keystore after deleting the element.
    */
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void delete(String namespace, String name) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     Key key = null;
@@ -188,21 +191,21 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
    * @throws IOException If there was a problem reading from the keystore.
    */
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
     checkNamespaceExists(namespace);
     readLock.lock();
     try {
       Enumeration<String> aliases = keyStore.aliases();
-      Map<String, String> data = new HashMap<>();
+      List<SecureStoreMetadata> metadataList = new ArrayList<>();
       String prefix = namespace + NAME_SEPARATOR;
       while (aliases.hasMoreElements()) {
         String alias = aliases.nextElement();
         // Filter out elements not in this namespace.
         if (alias.startsWith(prefix)) {
-          data.put(alias.substring(prefix.length()), getSecureStoreMetadata(alias).getDescription());
+          metadataList.add(getSecureStoreMetadata(alias));
         }
       }
-      return data;
+      return metadataList;
     } catch (KeyStoreException e) {
       throw new IOException("Failed to get the list of elements from the secure store.", e);
     } finally {
@@ -220,7 +223,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
    * @throws IOException If there was a problem reading from the store.
    */
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData get(String namespace, String name) throws Exception {
     checkNamespaceExists(namespace);
     String keyName = getKeyName(namespace, name);
     readLock.lock();
@@ -370,7 +373,10 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
       // Writing the metadata
       SecureStoreMetadata meta = data.getMetadata();
       dos.writeUTF(meta.getName());
-      dos.writeUTF(meta.getDescription());
+      dos.writeBoolean(meta.getDescription() != null);
+      if (meta.getDescription() != null) {
+        dos.writeUTF(meta.getDescription());
+      }
       dos.writeLong(meta.getLastModifiedTime());
 
       Map<String, String> properties = meta.getProperties();
@@ -392,7 +398,8 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
     DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
     String name = dis.readUTF();
-    String description = dis.readUTF();
+    boolean descriptionExists = dis.readBoolean();
+    String description = descriptionExists ? dis.readUTF() : null;
     long lastModified = dis.readLong();
 
     Map<String, String> properties = new HashMap<>();

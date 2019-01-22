@@ -39,14 +39,16 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * The client side implementation of {@link SecureStore} and {@link SecureStoreManager} which uses rest apis to get
  * sensitive data. This class is meant to be used internally and should not be exposed to end user.
  */
 public class RemoteSecureStore implements SecureStoreManager, SecureStore {
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type LIST_TYPE = new TypeToken<List<SecureStoreMetadata>>() { }.getType();
   private static final Gson GSON = new Gson();
   private final RemoteClient remoteClient;
 
@@ -58,15 +60,15 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET, createPath(namespace)).build();
     HttpResponse response = remoteClient.execute(request);
     handleResponse(response, namespace, "", "Error occurred while listing keys");
-    return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_TYPE);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+  public SecureStoreData get(String namespace, String name) throws Exception {
     // 1. Get metadata of the secure key
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.GET,
                                                       createPath(namespace, name) + "/metadata").build();
@@ -86,8 +88,8 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
+  public void put(String namespace, String name, String data, @Nullable String description,
+                  Map<String, String> properties) throws Exception {
     SecureKeyCreateRequest createRequest = new SecureKeyCreateRequest(description, data, properties);
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.PUT, createPath(namespace, name))
       .withBody(GSON.toJson(createRequest)).build();
@@ -96,7 +98,7 @@ public class RemoteSecureStore implements SecureStoreManager, SecureStore {
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
+  public void delete(String namespace, String name) throws Exception {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.DELETE, createPath(namespace, name)).build();
     HttpResponse response = remoteClient.execute(request);
     handleResponse(response, namespace, name, String.format("Error occurred while deleting key %s:%s",

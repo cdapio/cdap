@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
@@ -134,23 +135,23 @@ public class MockActionContext implements ActionContext {
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) {
+  public List<SecureStoreMetadata> list(String namespace) {
     return null;
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) {
+  public SecureStoreData get(String namespace, String name) {
     return null;
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) {
+  public void put(String namespace, String name, String data, @Nullable String description,
+                  Map<String, String> properties) {
     // no-op; unused
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) {
+  public void delete(String namespace, String name) {
     // no-op; unused
   }
 

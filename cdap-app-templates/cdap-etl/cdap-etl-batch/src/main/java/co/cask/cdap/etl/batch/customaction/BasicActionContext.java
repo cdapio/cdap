@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch.customaction;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
 import co.cask.cdap.etl.common.AbstractStageContext;
@@ -27,6 +28,7 @@ import org.apache.tephra.TransactionFailureException;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation for the {@link ActionContext}.
@@ -51,24 +53,24 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
-    return context.listSecureData(namespace);
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
+    return context.list(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    return context.getSecureData(namespace, name);
+  public SecureStoreData get(String namespace, String name) throws Exception {
+    return context.get(namespace, name);
   }
 
   @Override
-  public void putSecureData(String namespace, String name, String data, String description,
-                            Map<String, String> properties) throws Exception {
-    context.getAdmin().putSecureData(namespace, name, data, description, properties);
+  public void put(String namespace, String name, String data, @Nullable String description,
+                  Map<String, String> properties) throws Exception {
+    context.getAdmin().put(namespace, name, data, description, properties);
   }
 
   @Override
-  public void deleteSecureData(String namespace, String name) throws Exception {
-    context.getAdmin().deleteSecureData(namespace, name);
+  public void delete(String namespace, String name) throws Exception {
+    context.getAdmin().delete(namespace, name);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.security.store.SecureStore;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -70,7 +66,7 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
         throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
       }
       try {
-        return Bytes.toString(secureStore.getSecureData(namespace, arguments[0]).get());
+        return Bytes.toString(secureStore.get(namespace, arguments[0]).get());
       } catch (Exception e) {
         throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
       }

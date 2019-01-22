@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
@@ -765,12 +766,12 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public Map<String, String> listSecureData(String namespace) throws Exception {
+    public List<SecureStoreMetadata> list(String namespace) throws Exception {
       return null;
     }
 
     @Override
-    public SecureStoreData getSecureData(String namespace, String name) throws Exception {
+    public SecureStoreData get(String namespace, String name) throws Exception {
       return null;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
+import co.cask.cdap.api.security.store.SecureStoreMetadata;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import org.apache.tephra.TransactionFailureException;
@@ -55,6 +56,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -287,13 +289,13 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public Map<String, String> listSecureData(String namespace) throws Exception {
-    return delegate.listSecureData(namespace);
+  public List<SecureStoreMetadata> list(String namespace) throws Exception {
+    return delegate.list(namespace);
   }
 
   @Override
-  public SecureStoreData getSecureData(String namespace, String name) throws Exception {
-    return delegate.getSecureData(namespace, name);
+  public SecureStoreData get(String namespace, String name) throws Exception {
+    return delegate.get(namespace, name);
   }
 
   @Override

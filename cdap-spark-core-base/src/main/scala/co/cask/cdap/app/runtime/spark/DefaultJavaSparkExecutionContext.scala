@@ -33,8 +33,7 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo
-import co.cask.cdap.api.security.store.SecureStore
-import co.cask.cdap.api.security.store.SecureStoreData
+import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData, SecureStoreMetadata}
 import co.cask.cdap.api.spark.JavaSparkExecutionContext
 import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.SparkSpecification
@@ -131,13 +130,13 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def getTriggeringScheduleInfo: TriggeringScheduleInfo = sec.getTriggeringScheduleInfo.getOrElse(null)
 
   @throws[IOException]
-  override def listSecureData(namespace: String): util.Map[String, String] = {
-    return sec.getSecureStore.listSecureData(namespace)
+  override def list(namespace: String): util.List[SecureStoreMetadata] = {
+    return sec.getSecureStore.list(namespace)
   }
 
   @throws[IOException]
-  override def getSecureData(namespace: String, name: String): SecureStoreData = {
-    return sec.getSecureStore.getSecureData(namespace, name)
+  override def get(namespace: String, name: String): SecureStoreData = {
+    return sec.getSecureStore.get(namespace, name)
   }
 
   /**

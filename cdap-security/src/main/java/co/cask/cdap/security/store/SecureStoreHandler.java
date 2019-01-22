@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -85,8 +86,13 @@ public class SecureStoreHandler extends AbstractHttpHandler {
                                       " \n" + GSON.toJson(dummy));
     }
 
-    secureStoreManager.putSecureData(namespace, name, secureKeyCreateRequest.getData(),
-                                     secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
+    if (Strings.isNullOrEmpty(secureKeyCreateRequest.getData()) || secureKeyCreateRequest.getData().trim().isEmpty()) {
+      throw new BadRequestException("The data field must not be null or empty. The data will be stored securely " +
+                                      "under provided key name.");
+    }
+
+    secureStoreManager.put(namespace, name, secureKeyCreateRequest.getData(),
+                           secureKeyCreateRequest.getDescription(), secureKeyCreateRequest.getProperties());
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -94,7 +100,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   @DELETE
   public void delete(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                      @PathParam("key-name") String name) throws Exception {
-    secureStoreManager.deleteSecureData(namespace, name);
+    secureStoreManager.delete(namespace, name);
     httpResponder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -103,7 +109,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   public void get(HttpRequest httpRequest, HttpResponder httpResponder, @PathParam("namespace-id") String namespace,
                   @PathParam("key-name") String name) throws Exception {
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.getSecureData(namespace, name).get(),
+    httpResponder.sendByteArray(HttpResponseStatus.OK, secureStore.get(namespace, name).get(),
                                 new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain;charset=utf-8"));
   }
 
@@ -112,7 +118,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   public void getMetadata(HttpRequest httpRequest, HttpResponder httpResponder,
                           @PathParam("namespace-id") String namespace,
                           @PathParam("key-name") String name) throws Exception {
-    SecureStoreData secureStoreData = secureStore.getSecureData(namespace, name);
+    SecureStoreData secureStoreData = secureStore.get(namespace, name);
     httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStoreData.getMetadata()));
   }
 
@@ -120,7 +126,7 @@ public class SecureStoreHandler extends AbstractHttpHandler {
   @GET
   public void list(HttpRequest httpRequest, HttpResponder httpResponder,
                    @PathParam("namespace-id") String namespace) throws Exception {
-    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.listSecureData(namespace)));
+    httpResponder.sendJson(HttpResponseStatus.OK, GSON.toJson(secureStore.list(namespace)));
   }
 
   private SecureKeyCreateRequest parseBody(FullHttpRequest request) throws IOException {
