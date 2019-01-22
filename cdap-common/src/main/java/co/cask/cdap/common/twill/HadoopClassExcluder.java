@@ -17,28 +17,44 @@
 package co.cask.cdap.common.twill;
 
 import org.apache.twill.api.ClassAcceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Exclude hadoop classes
  */
 public class HadoopClassExcluder extends ClassAcceptor {
+  private static final Logger LOG = LoggerFactory.getLogger(HadoopClassExcluder.class);
+  private final Set<URL> added = new HashSet<>();
 
   @Override
   public boolean accept(String className, URL classUrl, URL classPathUrl) {
     // exclude hadoop but not hbase and hive packages
     if (className.startsWith("org.apache.hadoop.")) {
       if (className.startsWith("org.apache.hadoop.hive.")) {
+        if (added.add(classPathUrl)) {
+          LOG.error("added classpath url {} because of class {}", classPathUrl, className);
+        }
         return true;
       } else if (className.startsWith("org.apache.hadoop.hbase.")) {
         // exclude tracing dependencies of classes that have dependencies on commons-logging implementation classes
         // so that commons-logging jar is not packaged (this is required so that slf4j is used for log collection)
-        return !(className.startsWith("org.apache.hadoop.hbase.http.log.LogLevel")
+        boolean answer = !(className.startsWith("org.apache.hadoop.hbase.http.log.LogLevel")
           || className.startsWith("org.apache.hadoop.hbase.http.HttpRequestLog"));
+        if (answer && added.add(classPathUrl)) {
+          LOG.error("added classpath url {} because of class {}", classPathUrl, className);
+        }
+        return answer;
       } else {
         return false;
       }
+    }
+    if (added.add(classPathUrl)) {
+      LOG.error("added classpath url {} because of class {}", classPathUrl, className);
     }
     return true;
   }
