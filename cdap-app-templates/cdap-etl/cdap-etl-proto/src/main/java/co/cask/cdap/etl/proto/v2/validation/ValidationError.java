@@ -31,8 +31,9 @@ public class ValidationError {
    */
   public enum Type {
     ERROR,
+    STAGE_ERROR,
     INVALID_FIELD,
-    MISSING_ARTIFACT
+    PLUGIN_NOT_FOUND
   }
 
   public ValidationError(String message) {
@@ -42,6 +43,14 @@ public class ValidationError {
   public ValidationError(Type type, String message) {
     this.type = type;
     this.message = message;
+  }
+
+  public Type getType() {
+    return type;
+  }
+
+  public String getMessage() {
+    return message;
   }
 
   @Override

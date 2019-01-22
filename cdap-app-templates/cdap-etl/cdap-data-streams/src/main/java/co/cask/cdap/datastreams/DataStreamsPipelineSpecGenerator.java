@@ -22,6 +22,7 @@ import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.macro.TimeParser;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
 
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class DataStreamsPipelineSpecGenerator<T extends PluginConfigurer & Datas
   }
 
   @Override
-  public DataStreamsPipelineSpec generateSpec(DataStreamsConfig config) {
+  public DataStreamsPipelineSpec generateSpec(DataStreamsConfig config) throws InvalidPipelineException {
     long batchIntervalMillis;
     try {
       batchIntervalMillis = TimeParser.parseDuration(config.getBatchInterval());

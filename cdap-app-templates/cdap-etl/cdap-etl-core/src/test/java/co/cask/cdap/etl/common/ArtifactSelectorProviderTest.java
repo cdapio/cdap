@@ -24,7 +24,8 @@ import org.junit.Test;
  *
  */
 public class ArtifactSelectorProviderTest {
-  private static final ArtifactSelectorProvider PROVIDER = new ArtifactSelectorProvider("testType", "testName");
+  private static final ArtifactSelectorProvider PROVIDER = new ArtifactSelectorProvider();
+
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidName() {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig(ArtifactScope.USER.name(), "abc?d", "1.0.0");

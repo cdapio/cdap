@@ -17,15 +17,34 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.service.StudioService;
+import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.action.Action;
+import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.mock.action.FileMoveAction;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
+import co.cask.cdap.etl.mock.transform.SleepTransform;
+import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
+import co.cask.cdap.etl.proto.v2.validation.InvalidConfigPropertyError;
+import co.cask.cdap.etl.proto.v2.validation.PluginNotFoundError;
+import co.cask.cdap.etl.proto.v2.validation.StageSchema;
+import co.cask.cdap.etl.proto.v2.validation.StageValidationError;
+import co.cask.cdap.etl.proto.v2.validation.StageValidationRequest;
+import co.cask.cdap.etl.proto.v2.validation.StageValidationResponse;
+import co.cask.cdap.etl.proto.v2.validation.ValidationError;
+import co.cask.cdap.etl.proto.v2.validation.ValidationErrorSerDe;
 import co.cask.cdap.etl.spark.Compat;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -38,6 +57,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -47,6 +67,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -55,7 +78,10 @@ import java.util.concurrent.TimeoutException;
  * Tests for the data pipeline service.
  */
 public class DataPipelineServiceTest extends HydratorTestBase {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(ValidationError.class, new ValidationErrorSerDe())
+    .create();
   private static ServiceManager serviceManager;
   private static URI serviceURI;
 
@@ -85,7 +111,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   }
 
   @Test
-  public void testValidateBadPipelineArtifact() throws IOException {
+  public void testValidatePipelineBadPipelineArtifact() throws IOException {
     ETLBatchConfig config = ETLBatchConfig.builder()
       .addStage(new ETLStage("src", MockSource.getPlugin("dummy1")))
       .addStage(new ETLStage("sink", MockSink.getPlugin("dummy2")))
@@ -105,7 +131,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   }
 
   @Test
-  public void testValidateChecksNamespaceExistence() throws IOException {
+  public void testValidatePipelineChecksNamespaceExistence() throws IOException {
     ETLBatchConfig config = ETLBatchConfig.builder()
       .addStage(new ETLStage("src", MockSource.getPlugin("dummy1")))
       .addStage(new ETLStage("sink", MockSink.getPlugin("dummy2")))
@@ -120,5 +146,124 @@ public class DataPipelineServiceTest extends HydratorTestBase {
       .build();
     HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(404, response.getResponseCode());
+  }
+
+  @Test
+  public void testValidateStagePluginNotFound() throws Exception {
+    String name = MockSource.NAME;
+    String type = BatchSource.PLUGIN_TYPE;
+    ArtifactSelectorConfig requestedArtifact = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
+                                                                          batchMocksArtifactId.getArtifact() + "-ghost",
+                                                                          batchMocksArtifactId.getVersion());
+
+    String stageName = "src";
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(name, type, Collections.emptyMap(), requestedArtifact));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
+
+    ArtifactSelectorConfig expectedSuggestion = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
+                                                                           batchMocksArtifactId.getArtifact(),
+                                                                           batchMocksArtifactId.getVersion());
+    PluginNotFoundError error = new PluginNotFoundError(stageName, type, name, requestedArtifact, expectedSuggestion);
+    StageValidationResponse expected = new StageValidationResponse(Collections.singletonList(error));
+    Assert.assertEquals(expected, actual);
+  }
+
+  // test that InvalidConfigPropertyExceptions are captured as InvalidConfigPropertyErrors
+  @Test
+  public void testValidateStageSingleInvalidConfigProperty() throws Exception {
+    // StringValueFilterTransform will be configured to filter records where field x has value 'y'
+    // it will be invalid because the type of field x will be an int instead of the required string
+    String stageName = "tx";
+    Map<String, String> properties = new HashMap<>();
+    properties.put("field", "x");
+    properties.put("value", "y");
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
+                                                           properties));
+
+    Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
+    StageValidationRequest requestBody =
+      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)));
+    StageValidationResponse actual = sendRequest(requestBody);
+
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(1, actual.getErrors().size());
+    ValidationError error = actual.getErrors().iterator().next();
+    Assert.assertTrue(error instanceof InvalidConfigPropertyError);
+    Assert.assertEquals("field", ((InvalidConfigPropertyError) error).getProperty());
+    Assert.assertEquals(stageName, ((InvalidConfigPropertyError) error).getStage());
+  }
+
+  // test that multiple exceptions set in an InvalidStageException are captured as errors
+  @Test
+  public void testValidateStageMultipleErrors() throws Exception {
+    // configure an invalid regex and a set the source and destination to the same value, which should generate 2 errors
+    String stageName = "stg";
+    Map<String, String> properties = new HashMap<>();
+    properties.put("filterRegex", "[");
+    properties.put("sourceFileset", "files");
+    properties.put("destinationFileset", "files");
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(FileMoveAction.NAME, Action.PLUGIN_TYPE, properties));
+
+    StageValidationRequest request = new StageValidationRequest(stage, Collections.emptyList());
+    StageValidationResponse actual = sendRequest(request);
+
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(2, actual.getErrors().size());
+
+    ValidationError error1 = actual.getErrors().get(0);
+    ValidationError error2 = actual.getErrors().get(1);
+
+    Assert.assertTrue(error1 instanceof InvalidConfigPropertyError);
+    Assert.assertEquals("filterRegex", ((InvalidConfigPropertyError) error1).getProperty());
+    Assert.assertEquals(stageName, ((InvalidConfigPropertyError) error1).getStage());
+
+    Assert.assertTrue(error2 instanceof StageValidationError);
+    Assert.assertEquals(stageName, ((StageValidationError) error2).getStage());
+  }
+
+  // tests that exceptions thrown by configurePipeline that are not InvalidStageExceptions are
+  // captured as a StageValidationError.
+  @Test
+  public void testValidateStageOtherExceptionsCaptured() throws Exception {
+    // SleepTransform throws an IllegalArgumentException if the sleep time is less than 1
+    String stageName = "tx";
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(SleepTransform.NAME, Transform.PLUGIN_TYPE,
+                                                           Collections.singletonMap("millis", "-1")));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
+
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(1, actual.getErrors().size());
+    ValidationError error = actual.getErrors().iterator().next();
+    Assert.assertTrue(error instanceof StageValidationError);
+    Assert.assertEquals(stageName, ((StageValidationError) error).getStage());
+  }
+
+
+  // tests that plugins that cannot be instantiated due to missing required properties are captured
+  @Test
+  public void testValidateStageMissingRequiredProperty() throws Exception {
+    String stageName = "tx";
+    // string filter requires the field name and the value
+    ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
+                                                           Collections.emptyMap()));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
+
+    Assert.assertNull(actual.getSpec());
+    Assert.assertEquals(1, actual.getErrors().size());
+    ValidationError error = actual.getErrors().iterator().next();
+    Assert.assertTrue(error instanceof StageValidationError);
+    Assert.assertEquals(stageName, ((StageValidationError) error).getStage());
+  }
+
+  private StageValidationResponse sendRequest(StageValidationRequest requestBody) throws IOException {
+    URL validatePipelineURL = serviceURI
+      .resolve(String.format("v1/contexts/%s/validations/stage", NamespaceId.DEFAULT.getNamespace()))
+      .toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, validatePipelineURL)
+      .withBody(GSON.toJson(requestBody))
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(200, response.getResponseCode());
+    return GSON.fromJson(response.getResponseBodyAsString(), StageValidationResponse.class);
   }
 }

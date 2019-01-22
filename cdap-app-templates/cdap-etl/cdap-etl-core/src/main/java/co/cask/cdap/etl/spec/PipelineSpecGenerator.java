@@ -32,6 +32,8 @@ import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.condition.Condition;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
 import co.cask.cdap.etl.common.ArtifactSelectorProvider;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
@@ -44,6 +46,10 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.proto.v2.spec.PipelineSpec;
 import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.validation.InvalidConfigPropertyError;
+import co.cask.cdap.etl.proto.v2.validation.PluginNotFoundError;
+import co.cask.cdap.etl.proto.v2.validation.StageValidationError;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
@@ -100,8 +106,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
    * All inputs into a stage have the same schema.
    *
    * @param config user provided ETL config
+   * @throws InvalidPipelineException if the pipeline is invalid
    */
-  public abstract P generateSpec(C config);
+  public abstract P generateSpec(C config) throws InvalidPipelineException;
 
   /**
    * Performs most of the validation and configuration needed by a pipeline.
@@ -109,8 +116,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
    *
    * @param config user provided ETL config
    * @param specBuilder builder for creating a pipeline spec.
+   * @throws InvalidPipelineException if the pipeline is invalid
    */
-  protected void configureStages(ETLConfig config, PipelineSpec.Builder specBuilder) {
+  protected void configureStages(ETLConfig config, PipelineSpec.Builder specBuilder) throws InvalidPipelineException {
     // validate the config and determine the order we should configure the stages in.
     ValidatedPipeline validatedPipeline = validateConfig(config);
     List<ETLStage> traversalOrder = validatedPipeline.getTraversalOrder();
@@ -244,15 +252,15 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
    * @return the spec for the stage
    */
   private ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
-                                         DefaultPipelineConfigurer<T> pluginConfigurer) {
+                                         DefaultPipelineConfigurer<T> pluginConfigurer)
+    throws InvalidPipelineException {
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
 
-    PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
+    StageSpec.Builder specBuilder = configureStage(stageName, stagePlugin, pluginConfigurer);
     DefaultStageConfigurer stageConfigurer = pluginConfigurer.getStageConfigurer();
-    Map<String, StageSpec.Port> outputSchemas = new HashMap<>();
-    Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
-    if (pluginSpec.getType().equals(SplitterTransform.PLUGIN_TYPE)) {
+    String pluginType = stage.getPlugin().getType();
+    if (pluginType.equals(SplitterTransform.PLUGIN_TYPE)) {
       Map<String, Schema> outputPortSchemas = stageConfigurer.getOutputPortSchemas();
       for (Map.Entry<String, String> outputEntry : validatedPipeline.getOutputPorts(stageName).entrySet()) {
         String outputStage = outputEntry.getKey();
@@ -261,7 +269,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
           throw new IllegalArgumentException(String.format("Connection from Splitter '%s' to '%s' must specify a port.",
                                                            stageName, outputStage));
         }
-        outputSchemas.put(outputStage, new StageSpec.Port(outputPort, outputPortSchemas.get(outputPort)));
+        specBuilder.addOutput(outputStage, outputPort, outputPortSchemas.get(outputPort));
       }
     } else {
       Schema outputSchema = stageConfigurer.getOutputSchema();
@@ -269,9 +277,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
       // different input schemas. picking the first non-null schema, or null if they're all null
       // this isn't perfect, as we should really be checking all non-action input schemas and validating that they're
       // all the same
-      if (Condition.PLUGIN_TYPE.equals(pluginSpec.getType())) {
+      if (Condition.PLUGIN_TYPE.equals(pluginType)) {
         outputSchema = null;
-        for (Schema schema : inputSchemas.values()) {
+        for (Schema schema : stageConfigurer.getInputSchemas().values()) {
           if (schema != null) {
             // this check isn't perfect, as we should still error if 2 transforms are inputs,
             // one has null schema and another has non-null schema.
@@ -285,14 +293,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
       }
 
       for (String outputStage : validatedPipeline.getOutputs(stageName)) {
-        outputSchemas.put(outputStage, new StageSpec.Port(null, outputSchema));
+        specBuilder.addOutput(outputStage, null, outputSchema);
       }
     }
 
-    StageSpec stageSpec = StageSpec.builder(stageName, pluginSpec)
-      .addInputSchemas(inputSchemas)
-      .addOutputPortSchemas(outputSchemas)
-      .setErrorSchema(stageConfigurer.getErrorSchema())
+    StageSpec stageSpec = specBuilder
       .setProcessTimingEnabled(validatedPipeline.isProcessTimingEnabled())
       .setStageLoggingEnabled(validatedPipeline.isStageLoggingEnabled())
       .build();
@@ -303,28 +308,35 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
   /**
    * Configures a plugin and returns the spec for it.
    *
-   * @param pluginId the unique plugin id
+   * @param stageName the unique plugin id
    * @param etlPlugin user provided configuration for the plugin
-   * @param pipelineConfigurer default pipeline configurere to configure the plugin
+   * @param pipelineConfigurer default pipeline configurer to configure the plugin
    * @return the spec for the plugin
+   * @throws InvalidPipelineException if the plugin threw an exception during configuration
    */
-  protected PluginSpec configurePlugin(String pluginId, ETLPlugin etlPlugin,
-                                       DefaultPipelineConfigurer<T> pipelineConfigurer) {
+  public StageSpec.Builder configureStage(String stageName, ETLPlugin etlPlugin,
+                                          DefaultPipelineConfigurer<T> pipelineConfigurer)
+    throws InvalidPipelineException {
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
-      new ArtifactSelectorProvider(etlPlugin.getType(), etlPlugin.getName())
-        .getPluginSelector(etlPlugin.getArtifactConfig()));
+      new ArtifactSelectorProvider().getPluginSelector(etlPlugin.getArtifactConfig()));
     String type = etlPlugin.getType();
-    Object plugin = configurer.usePlugin(etlPlugin.getType(),
-                                         etlPlugin.getName(),
-                                         pluginId,
-                                         etlPlugin.getPluginProperties(),
-                                         pluginSelector);
 
-    if (plugin == null) {
-      throw new IllegalArgumentException(
-        String.format("No plugin of type %s and name %s could be found for stage %s.",
-                      etlPlugin.getType(), etlPlugin.getName(), pluginId));
+    Object plugin;
+    try {
+      plugin = configurer.usePlugin(etlPlugin.getType(),
+                                    etlPlugin.getName(),
+                                    stageName,
+                                    etlPlugin.getPluginProperties(),
+                                    pluginSelector);
+    } catch (Exception e) {
+      throw new InvalidPipelineException(new StageValidationError(e.getMessage(), stageName));
     }
+    if (plugin == null) {
+      throw new InvalidPipelineException(new PluginNotFoundError(stageName, type, etlPlugin.getName(),
+                                                                 etlPlugin.getArtifactConfig(),
+                                                                 pluginSelector.getSuggestion()));
+    }
+
     try {
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
@@ -336,13 +348,39 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
         PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
         singlePlugin.configurePipeline(pipelineConfigurer);
       }
+    } catch (InvalidConfigPropertyException e) {
+      throw new InvalidPipelineException(new InvalidConfigPropertyError(stageName, e), e);
+    } catch (InvalidStageException e) {
+      if (e.getReasons().isEmpty()) {
+        throw new InvalidPipelineException(new StageValidationError(e.getMessage(), stageName), e);
+      }
+      List<StageValidationError> errors = new ArrayList<>(e.getReasons().size());
+      for (InvalidStageException reason : e.getReasons()) {
+        if (reason instanceof InvalidConfigPropertyException) {
+          errors.add(new InvalidConfigPropertyError(stageName, (InvalidConfigPropertyException) reason));
+        } else {
+          errors.add(new StageValidationError(reason.getMessage(), stageName));
+        }
+      }
+      throw new InvalidPipelineException(errors, e);
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Error configuring stage '%s': %s", pluginId, e.getMessage()), e);
+      throw new InvalidPipelineException(new StageValidationError(
+        String.format("Error configuring stage '%s': %s", stageName, e.getMessage()), stageName), e);
     }
-    return new PluginSpec(etlPlugin.getType(),
-                          etlPlugin.getName(),
-                          etlPlugin.getProperties(),
-                          pluginSelector.getSelectedArtifact());
+
+    PluginSpec pluginSpec = new PluginSpec(etlPlugin.getType(), etlPlugin.getName(), etlPlugin.getProperties(),
+                                           pluginSelector.getSelectedArtifact());
+    DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    StageSpec.Builder specBuilder = StageSpec.builder(stageName, pluginSpec)
+      .addInputSchemas(pipelineConfigurer.getStageConfigurer().getInputSchemas())
+      .setErrorSchema(stageConfigurer.getErrorSchema());
+
+    if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
+      specBuilder.setPortSchemas(stageConfigurer.getOutputPortSchemas());
+    } else {
+      specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
+    }
+    return specBuilder;
   }
 
   /**

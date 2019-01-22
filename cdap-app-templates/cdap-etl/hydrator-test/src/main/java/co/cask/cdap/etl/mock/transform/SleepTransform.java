@@ -40,8 +40,9 @@ import javax.annotation.Nullable;
  * Sleeps for a configurable amount of time before emitting the input. This is used to test the time spent metric.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("Sleep")
+@Name(SleepTransform.NAME)
 public class SleepTransform extends Transform<StructuredRecord, StructuredRecord> {
+  public static final String NAME = "Sleep";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
 

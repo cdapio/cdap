@@ -50,9 +50,14 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
   private final Map<String, String> properties;
 
   public DefaultPipelineConfigurer(C configurer, String stageName, Engine engine) {
+    this(configurer, stageName, engine, new DefaultStageConfigurer());
+  }
+
+  public DefaultPipelineConfigurer(C configurer, String stageName, Engine engine,
+                                   DefaultStageConfigurer stageConfigurer) {
     this.configurer = configurer;
     this.stageName = stageName;
-    this.stageConfigurer = new DefaultStageConfigurer();
+    this.stageConfigurer = stageConfigurer;
     this.engine = engine;
     this.properties = new HashMap<>();
   }

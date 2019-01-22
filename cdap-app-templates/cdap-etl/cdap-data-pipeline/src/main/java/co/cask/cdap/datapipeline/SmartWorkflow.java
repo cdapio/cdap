@@ -85,6 +85,7 @@ import co.cask.cdap.etl.proto.v2.PluginPropertyMapping;
 import co.cask.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -166,11 +167,15 @@ public class SmartWorkflow extends AbstractWorkflow {
     // workflow needs to run. If a plugin has a requirement that will not be available during that run, CDAP can fail
     // the run early, before provisioning is performed.
     // If plugins were registered only at the application level, CDAP would not be able to fail the run early.
-    spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
-                                            ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                            ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-                                                            AlertPublisher.PLUGIN_TYPE),
-                                            config.getEngine()).generateSpec(config);
+    try {
+      spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
+                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
+                                                              AlertPublisher.PLUGIN_TYPE),
+                                              config.getEngine()).generateSpec(config);
+    } catch (InvalidPipelineException e) {
+      throw new IllegalArgumentException(String.format("Failed to configure pipeline: %s", e.getMessage()), e);
+    }
 
     stageSpecs = new HashMap<>();
     useSpark = config.getEngine() == Engine.SPARK;

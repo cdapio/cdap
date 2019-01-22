@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactId;
 
 import java.util.Map;
 import java.util.SortedMap;
+import javax.annotation.Nullable;
 
 /**
  * Represents a class for selecting a plugin.
@@ -33,8 +34,9 @@ public class PluginSelector {
    *
    * @param plugins the set of available plugins. The {@link ArtifactId} is sorted in ascending order of plugin JAR
    *        name followed by the plugin version.
-   * @return a {@link java.util.Map.Entry} for the selected plugin
+   * @return a {@link java.util.Map.Entry} for the selected plugin, or null if nothing is selected
    */
+  @Nullable
   public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
     return plugins.tailMap(plugins.lastKey()).entrySet().iterator().next();
   }

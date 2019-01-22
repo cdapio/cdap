@@ -23,7 +23,9 @@ import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
 
 import java.util.Set;
 
@@ -43,14 +45,14 @@ public class BatchPipelineSpecGenerator<T extends PluginConfigurer & DatasetConf
   }
 
   @Override
-  public BatchPipelineSpec generateSpec(ETLBatchConfig config) {
+  public BatchPipelineSpec generateSpec(ETLBatchConfig config) throws InvalidPipelineException {
     BatchPipelineSpec.Builder specBuilder = BatchPipelineSpec.builder();
 
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();
       DefaultPipelineConfigurer<T> pipelineConfigurer = new DefaultPipelineConfigurer<>(configurer, name, engine);
-      PluginSpec pluginSpec = configurePlugin(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer);
-      specBuilder.addAction(new ActionSpec(name, pluginSpec));
+      StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer).build();
+      specBuilder.addAction(new ActionSpec(name, spec.getPlugin()));
     }
 
     configureStages(config, specBuilder);

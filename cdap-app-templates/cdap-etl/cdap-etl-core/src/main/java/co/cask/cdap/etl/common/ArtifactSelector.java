@@ -35,36 +35,17 @@ import javax.annotation.Nullable;
 public class ArtifactSelector extends PluginSelector {
   private final ArtifactScope scope;
   private final String name;
-  private final String errMsg;
   private final ArtifactVersionRange range;
 
-  public ArtifactSelector(String pluginType,
-                          String pluginName,
-                          @Nullable ArtifactScope scope,
+  public ArtifactSelector(@Nullable ArtifactScope scope,
                           @Nullable String name,
                           @Nullable ArtifactVersionRange range) {
     this.scope = scope;
     this.name = name;
     this.range = range;
-    StringBuilder msg = new StringBuilder("Could not find an artifact that matches");
-    if (scope != null) {
-      msg.append(" scope ");
-      msg.append(scope.name());
-    }
-    if (name != null) {
-      msg.append(" name ");
-      msg.append(name);
-    }
-    if (range != null) {
-      msg.append(range.getVersionString());
-    }
-    msg.append(" for plugin of type ");
-    msg.append(pluginType);
-    msg.append(" and name ");
-    msg.append(pluginName);
-    errMsg = msg.toString();
   }
 
+  @Nullable
   @Override
   public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
     NavigableMap<ArtifactId, PluginClass> pluginMap;
@@ -84,6 +65,6 @@ public class ArtifactSelector extends PluginSelector {
       }
     }
 
-    throw new IllegalArgumentException(errMsg);
+    return null;
   }
 }

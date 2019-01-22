@@ -24,6 +24,8 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
+import co.cask.cdap.etl.mock.action.FileMoveAction;
 import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.alert.NullAlertTransform;
 import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
@@ -80,7 +82,7 @@ public class HydratorTestBase extends TestBase {
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS,
     StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
-    MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
+    MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
     MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
@@ -98,6 +100,8 @@ public class HydratorTestBase extends TestBase {
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS
   );
+  protected static ArtifactId batchMocksArtifactId;
+  protected static ArtifactId streamingMocksArtifactId;
 
   public HydratorTestBase() {
   }
@@ -109,10 +113,12 @@ public class HydratorTestBase extends TestBase {
                    Action.class.getPackage().getName(),
                    Condition.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
+                   InvalidStageException.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
+    batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0");
     // add plugins artifact
-    addPluginArtifact(new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
+    addPluginArtifact(batchMocksArtifactId,
                       artifactId,
                       BATCH_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.batch.MockSource.class,
@@ -123,7 +129,7 @@ public class HydratorTestBase extends TestBase {
                       FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,
                       StringValueFilterCompute.class, NodeStatesAction.class, LookupTransform.class,
                       NullFieldSplitterTransform.class, NullAlertTransform.class,
-                      IncapableSource.class, IncapableSink.class);
+                      IncapableSource.class, IncapableSink.class, FileMoveAction.class);
   }
 
   protected static void setupStreamingArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
@@ -132,11 +138,13 @@ public class HydratorTestBase extends TestBase {
                    StreamingSource.class.getPackage().getName(),
                    Transform.class.getPackage().getName(),
                    SparkCompute.class.getPackage().getName(),
+                   InvalidStageException.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
 
 
+    streamingMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0");
     // add plugins artifact
-    addPluginArtifact(new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
+    addPluginArtifact(streamingMocksArtifactId,
                       artifactId,
                       STREAMING_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.spark.streaming.MockSource.class,

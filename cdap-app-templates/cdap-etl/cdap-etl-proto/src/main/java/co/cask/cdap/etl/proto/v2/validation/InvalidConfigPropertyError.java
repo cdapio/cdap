@@ -17,20 +17,27 @@
 
 package co.cask.cdap.etl.proto.v2.validation;
 
-
-import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 
 import java.util.Objects;
 
 /**
- * An error that occurred due to the plugin artifact for a stage not being found.
+ * An error that occurred due to an invalid configuration setting for a specific field in a specific pipeline stage.
  */
-public class MissingArtifactError extends StageValidationError {
-  private final ArtifactSelectorConfig suggestedArtifact;
+public class InvalidConfigPropertyError extends StageValidationError {
+  private final String property;
 
-  public MissingArtifactError(String message, String stage, ArtifactSelectorConfig suggestedArtifact) {
+  public InvalidConfigPropertyError(String stage, InvalidConfigPropertyException cause) {
+    this(cause.getMessage(), stage, cause.getProperty());
+  }
+
+  public InvalidConfigPropertyError(String message, String stage, String property) {
     super(Type.INVALID_FIELD, message, stage);
-    this.suggestedArtifact = suggestedArtifact;
+    this.property = property;
+  }
+
+  public String getProperty() {
+    return property;
   }
 
   @Override
@@ -44,12 +51,12 @@ public class MissingArtifactError extends StageValidationError {
     if (!super.equals(o)) {
       return false;
     }
-    MissingArtifactError that = (MissingArtifactError) o;
-    return Objects.equals(suggestedArtifact, that.suggestedArtifact);
+    InvalidConfigPropertyError that = (InvalidConfigPropertyError) o;
+    return Objects.equals(property, that.property);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), suggestedArtifact);
+    return Objects.hash(super.hashCode(), property);
   }
 }
