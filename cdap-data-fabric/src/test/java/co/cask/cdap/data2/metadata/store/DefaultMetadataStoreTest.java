@@ -28,6 +28,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
@@ -60,7 +61,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -232,7 +232,7 @@ public class DefaultMetadataStoreTest {
   public void testSystemMetadata() {
     MetadataEntity entity = NamespaceId.DEFAULT.app("appX").workflow("wtf").toMetadataEntity();
     store.replaceMetadata(MetadataScope.SYSTEM,
-                          new co.cask.cdap.data2.metadata.dataset.Metadata(
+                          new MetadataDataset.Record(
                             entity,
                             ImmutableMap.of("a", "b", "x", "y"),
                             ImmutableSet.of("tag1", "tag2")),
@@ -244,7 +244,7 @@ public class DefaultMetadataStoreTest {
     Assert.assertEquals(1, results.size());
 
     store.replaceMetadata(MetadataScope.SYSTEM,
-                          new co.cask.cdap.data2.metadata.dataset.Metadata(
+                          new MetadataDataset.Record(
                             entity,
                             ImmutableMap.of("a", "b", "x", "y"),
                             ImmutableSet.of("tag1", "tag2")),

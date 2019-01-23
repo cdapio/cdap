@@ -18,7 +18,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.data2.metadata.dataset.Metadata;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import com.google.common.collect.ImmutableSet;
@@ -33,7 +33,7 @@ import java.util.Set;
 public class NoOpMetadataStore implements MetadataStore {
 
   @Override
-  public void replaceMetadata(MetadataScope scope, Metadata metadata,
+  public void replaceMetadata(MetadataScope scope, MetadataDataset.Record metadata,
                               Set<String> propertiesToKeep, Set<String> propertiesToPreserve) {
     // NO-OP
   }

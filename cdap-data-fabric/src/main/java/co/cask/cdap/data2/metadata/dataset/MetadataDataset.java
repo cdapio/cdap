@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
@@ -54,12 +53,11 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -174,7 +172,7 @@ import javax.annotation.Nullable;
  * The row key for history is similar to the index row key except it is prefixed by 'h' instead of 'v' and it
  * contains an inverted timestamp at the end instead of the metadata key-value.
  * The timestamp corresponds to the time of the write.
- * The value is stored in the 'h' column and is a {@link Metadata} object.
+ * The value is stored in the 'h' column and is a {@link Record} object.
  * This will give a snapshot of all properties and tags for that entity at the time of that write.
  * For example, for 'owner'='foo' set on a mapreduce program, the history row key will be:
  *
@@ -187,7 +185,6 @@ public class MetadataDataset extends AbstractDataset {
    * Type name
    */
   public static final String TYPE = "metadataDataset";
-  private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
     .create();
@@ -253,7 +250,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    */
-  public MetadataChange setProperty(MetadataEntity metadataEntity, String key, String value) {
+  public Change setProperty(MetadataEntity metadataEntity, String key, String value) {
     return setMetadata(new MetadataEntry(metadataEntity, key, value));
   }
 
@@ -262,17 +259,17 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the metadataEntity to which properties needs to be added
    * @param properties the propeties to add (note if the property key exist and new value is different it will be
    * overwritten)
-   * @return {@link MetadataChange} representing the change in metadata for the metadataEntity
+   * @return {@link Change} representing the change in metadata for the metadataEntity
    */
-  public MetadataChange setProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
-    Metadata previousMetadata, finalMetadata;
+  public Change setProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+    Record previousMetadata, finalMetadata;
     Iterator<Map.Entry<String, String>> iterator = properties.entrySet().iterator();
     // properties can have none, one or more than one entry to be updated
     if (iterator.hasNext()) {
       // if there is at least one entry then we need to process that entry to update metadata and at that point we want
       // to store what was the previousMetadata before we called setMetadata
       Map.Entry<String, String> first = iterator.next();
-      MetadataChange metadataChange = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
+      Change metadataChange = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
       // metadata before setMetadata was applied
       previousMetadata = metadataChange.getExisting();
       // metadata after setMetadata was applied
@@ -288,7 +285,7 @@ public class MetadataDataset extends AbstractDataset {
       Map.Entry<String, String> next = iterator.next();
       finalMetadata = setMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getLatest();
     }
-    return new MetadataChange(previousMetadata, finalMetadata);
+    return new Change(previousMetadata, finalMetadata);
   }
 
   /**
@@ -296,13 +293,13 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the metadataEntity to which the tag needs to be added
    * @param tagsToAdd the tags to add
    */
-  public MetadataChange addTags(MetadataEntity metadataEntity, Set<String> tagsToAdd) {
+  public Change addTags(MetadataEntity metadataEntity, Set<String> tagsToAdd) {
     return setMetadata(new MetadataEntry(metadataEntity, MetadataConstants.TAGS_KEY,
                                          Joiner.on(TAGS_SEPARATOR).join(tagsToAdd)));
   }
 
   @VisibleForTesting
-  MetadataChange addTags(MetadataEntity entity, String ... tags) {
+  Change addTags(MetadataEntity entity, String ... tags) {
     return addTags(entity, Sets.newHashSet(tags));
   }
 
@@ -330,9 +327,9 @@ public class MetadataDataset extends AbstractDataset {
    * Retrieves the metadata for the specified {@link MetadataEntity}.
    *
    * @param metadataEntity the specified {@link MetadataEntity}
-   * @return {@link MetadataRecord} representing the metadata for the specified {@link MetadataEntity}
+   * @return {@link Record} representing the metadata for the specified {@link MetadataEntity}
    */
-  public Metadata getMetadata(MetadataEntity metadataEntity) {
+  public Record getMetadata(MetadataEntity metadataEntity) {
     MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
@@ -353,7 +350,7 @@ public class MetadataDataset extends AbstractDataset {
     // safe to remove since splitTags above copies to new HashSet
     // now we are only left with properties
     metadata.remove(MetadataConstants.TAGS_KEY);
-    return new Metadata(metadataEntity, metadata, tags);
+    return new Record(metadataEntity, metadata, tags);
   }
 
   /**
@@ -392,12 +389,12 @@ public class MetadataDataset extends AbstractDataset {
     return new MetadataEntry(metadataEntity, key, Bytes.toString(value));
   }
 
-  private Metadata getMetadata(MetadataEntity metadataEntity, Map<String, String> metadata) {
+  private Record getMetadata(MetadataEntity metadataEntity, Map<String, String> metadata) {
     Map<String, String> properties = new HashMap<>(metadata);
     Set<String> tags = properties.containsKey(MetadataConstants.TAGS_KEY)
       ? splitTags(properties.get(MetadataConstants.TAGS_KEY)) : Collections.emptySet();
     properties.remove(MetadataConstants.TAGS_KEY);
-    return new Metadata(metadataEntity, properties, tags);
+    return new Record(metadataEntity, properties, tags);
   }
 
   private static Set<String> splitTags(@Nullable String tags) {
@@ -413,7 +410,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} from which to remove the specified keys
    * @param keys the keys to remove
    */
-  public MetadataChange removeProperties(MetadataEntity metadataEntity, Set<String> keys) {
+  public Change removeProperties(MetadataEntity metadataEntity, Set<String> keys) {
     return removeMetadata(metadataEntity, keys);
   }
 
@@ -427,32 +424,32 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} from which to remove the specified tags
    * @param tagsToRemove the tags to remove
    */
-  public MetadataChange removeTags(MetadataEntity metadataEntity, Set<String> tagsToRemove) {
+  public Change removeTags(MetadataEntity metadataEntity, Set<String> tagsToRemove) {
     Set<String> existingTags = getTags(metadataEntity);
     if (existingTags.isEmpty()) {
       // nothing to remove
-      Metadata emptyMetadata = new Metadata(metadataEntity, Collections.emptyMap(), Collections.emptySet());
-      return new MetadataChange(emptyMetadata, emptyMetadata);
+      Record emptyMetadata = new Record(metadataEntity, Collections.emptyMap(), Collections.emptySet());
+      return new Change(emptyMetadata, emptyMetadata);
     }
 
     existingTags.removeAll(tagsToRemove);
 
     // call remove metadata for tags, which will delete all the existing indexes for tags of this metadataEntity
-    MetadataChange metadataChange = removeTags(metadataEntity);
+    Change metadataChange = removeTags(metadataEntity);
     // check if tags are all deleted before set Tags, if tags are all deleted, a null value will be set to the
     // metadataEntity,
     // which will give a NPE later when search.
     if (!existingTags.isEmpty()) {
-      MetadataChange metadataChangesOnAdd = addTags(metadataEntity, existingTags);
-      return new MetadataChange(metadataChange.getExisting(), metadataChangesOnAdd.getLatest());
+      Change metadataChangesOnAdd = addTags(metadataEntity, existingTags);
+      return new Change(metadataChange.getExisting(), metadataChangesOnAdd.getLatest());
     }
-    return new MetadataChange(metadataChange.getExisting(), new Metadata(metadataEntity,
-                                                                    metadataChange.getExisting().getProperties(),
-                                                                    Collections.emptySet()));
+    return new Change(metadataChange.getExisting(), new Record(metadataEntity,
+                                                               metadataChange.getExisting().getProperties(),
+                                                               Collections.emptySet()));
   }
 
   @VisibleForTesting
-  MetadataChange removeTags(MetadataEntity entity, String ... tags) {
+  Change removeTags(MetadataEntity entity, String ... tags) {
     return removeTags(entity, Sets.newHashSet(tags));
   }
 
@@ -461,7 +458,7 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param metadataEntity the {@link MetadataEntity} for which to remove the properties
    */
-  public MetadataChange removeProperties(MetadataEntity metadataEntity) {
+  public Change removeProperties(MetadataEntity metadataEntity) {
     return removeMetadata(metadataEntity, input -> !MetadataConstants.TAGS_KEY.equals(input));
   }
 
@@ -470,7 +467,7 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param metadataEntity the {@link MetadataEntity} for which to remove the tags
    */
-  public MetadataChange removeTags(MetadataEntity metadataEntity) {
+  public Change removeTags(MetadataEntity metadataEntity) {
     return removeMetadata(metadataEntity, MetadataConstants.TAGS_KEY::equals);
   }
 
@@ -479,7 +476,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which keys are to be removed
    * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
-  private MetadataChange removeMetadata(MetadataEntity metadataEntity, Predicate<String> filter) {
+  private Change removeMetadata(MetadataEntity metadataEntity, Predicate<String> filter) {
     MDSKey mdsKey = MetadataKey.createValueRowKey(metadataEntity, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
@@ -515,17 +512,17 @@ public class MetadataDataset extends AbstractDataset {
       currentMetadata.remove(deletedMetadataKey);
     }
 
-    Metadata changedMetadata = getMetadata(metadataEntity, currentMetadata);
+    Record changedMetadata = getMetadata(metadataEntity, currentMetadata);
     writeHistory(changedMetadata);
-    return new MetadataChange(getMetadata(metadataEntity, existingMetadata), changedMetadata);
+    return new Change(getMetadata(metadataEntity, existingMetadata), changedMetadata);
   }
 
   /**
    * Removes all keys for the given metadata
    * @param metadataEntity whose metadata needs to be removed
-   * @return {@link MetadataChange} the metadata before and after deletion
+   * @return {@link Change} the metadata before and after deletion
    */
-  public MetadataChange removeMetadata(MetadataEntity metadataEntity) {
+  public Change removeMetadata(MetadataEntity metadataEntity) {
     return removeMetadata(metadataEntity, input -> true);
   }
 
@@ -534,7 +531,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntity the {@link MetadataEntity} for which the specified metadata keys are to be removed
    * @param keys the keys to remove from the metadata of the specified {@link MetadataEntity}
    */
-  private MetadataChange removeMetadata(MetadataEntity metadataEntity, Set<String> keys) {
+  private Change removeMetadata(MetadataEntity metadataEntity, Set<String> keys) {
     return removeMetadata(metadataEntity, keys::contains);
   }
 
@@ -563,24 +560,24 @@ public class MetadataDataset extends AbstractDataset {
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  public Set<Metadata> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis) {
-    ImmutableSet.Builder<Metadata> builder = ImmutableSet.builder();
+  public Set<Record> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis) {
+    ImmutableSet.Builder<Record> builder = ImmutableSet.builder();
     for (MetadataEntity namespacedEntityId : metadataEntitys) {
       builder.add(getSnapshotBeforeTime(namespacedEntityId, timeMillis));
     }
     return builder.build();
   }
 
-  private Metadata getSnapshotBeforeTime(MetadataEntity metadataEntity, long timeMillis) {
+  private Record getSnapshotBeforeTime(MetadataEntity metadataEntity, long timeMillis) {
     byte[] scanStartKey = MetadataHistoryKey.getMDSScanStartKey(metadataEntity, timeMillis).getKey();
     byte[] scanEndKey = MetadataHistoryKey.getMDSScanStopKey(metadataEntity).getKey();
     // TODO: add limit to scan, we need only one row
     try (Scanner scanner = indexedTable.scan(scanStartKey, scanEndKey)) {
       Row next = scanner.next();
       if (next != null) {
-        return GSON.fromJson(next.getString(HISTORY_COLUMN), Metadata.class);
+        return GSON.fromJson(next.getString(HISTORY_COLUMN), Record.class);
       } else {
-        return new Metadata(metadataEntity);
+        return new Record(metadataEntity);
       }
     }
   }
@@ -591,7 +588,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntitys entities for which metadata is required
    * @return map of entitiyId to set of metadata for that entity
    */
-  public Set<Metadata> getMetadata(Set<? extends MetadataEntity> metadataEntitys) {
+  public Set<Record> getMetadata(Set<? extends MetadataEntity> metadataEntitys) {
     if (metadataEntitys.isEmpty()) {
       return Collections.emptySet();
     }
@@ -620,7 +617,7 @@ public class MetadataDataset extends AbstractDataset {
     }
 
     // Create metadata objects for each entity from grouped rows
-    Set<Metadata> metadataSet = new HashSet<>();
+    Set<Record> metadataSet = new HashSet<>();
     for (Map.Entry<MetadataEntity, Collection<MetadataEntry>> entry : metadataMap.asMap().entrySet()) {
       Map<String, String> properties = new HashMap<>();
       Set<String> tags = Collections.emptySet();
@@ -631,7 +628,7 @@ public class MetadataDataset extends AbstractDataset {
           properties.put(metadataEntry.getKey(), metadataEntry.getValue());
         }
       }
-      metadataSet.add(new Metadata(entry.getKey(), properties, tags));
+      metadataSet.add(new Record(entry.getKey(), properties, tags));
     }
     return metadataSet;
   }
@@ -756,7 +753,6 @@ public class MetadataDataset extends AbstractDataset {
       // stop key should always be the stop key for the namespace, regardless of what the cursor is
       byte[] stopKey = Bytes.stopKeyForPrefix(namespaceStartKey);
 
-
       // A cursor is the first element of the a chunk of ordered results. Since its always the first element,
       // we want to add a key as a cursor, if upon dividing the current number of results by the chunk size,
       // the remainder is 1. However, this is not true, when the chunk size is 1, since in that case, the
@@ -851,8 +847,7 @@ public class MetadataDataset extends AbstractDataset {
     return searchTerms;
   }
 
-  @VisibleForTesting
-  void writeValue(MetadataEntry entry) {
+  private void writeValue(MetadataEntry entry) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MetadataKey.createValueRowKey(entry.getMetadataEntity(), key);
     Put put = new Put(mdsValueKey.getKey());
@@ -867,7 +862,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param indexers {@link Set<String>} of {@link Indexer indexers} for this {@link MetadataEntry}
    * @param metadataEntry {@link MetadataEntry} for which indexes are to be stored
    */
-  void storeIndexes(MetadataEntry metadataEntry, Set<Indexer> indexers) {
+  private void storeIndexes(MetadataEntry metadataEntry, Set<Indexer> indexers) {
     // Delete existing indexes for metadataEntity-key
     deleteIndexes(metadataEntry.getMetadataEntity(), metadataEntry.getKey());
 
@@ -880,7 +875,7 @@ public class MetadataDataset extends AbstractDataset {
         if (index.isEmpty()) {
           continue;
         }
-        
+
         // store one value for within namespace search and one for cross namespace search
         String lowercaseIndex = index.toLowerCase();
         MDSKey mdsIndexKey = MetadataKey.createIndexRowKey(metadataEntry.getMetadataEntity(),
@@ -924,69 +919,24 @@ public class MetadataDataset extends AbstractDataset {
    * Snapshots the metadata for the given metadataEntity at the given time.
    * @param metadata which needs to be snapshot
    */
-  private void writeHistory(Metadata metadata) {
+  private void writeHistory(Record metadata) {
     writeHistory(metadata, System.currentTimeMillis());
   }
 
-  private void writeHistory(Metadata metadata, long time) {
+  private void writeHistory(Record metadata, long time) {
     byte[] row = MetadataHistoryKey.getMDSKey(metadata.getMetadataEntity(), time).getKey();
     indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
-  }
-
-  /**
-   * Rebuilds all the indexes in the {@link MetadataDataset} in batches.
-   *
-   * @param startRowKey the key of the row to start the scan for the current batch with
-   * @param limit the batch size
-   * @return the row key of the last row scanned in the current batch, {@code null} if there are no more rows to scan.
-   */
-  @Nullable
-  public byte[] rebuildIndexes(@Nullable byte[] startRowKey, int limit) {
-    Set<MetadataEntity> previouslySeenEntities = new HashSet<>();
-    // Now rebuild indexes for all values in the metadata dataset
-    byte[] valueRowPrefix = MetadataKey.getValueRowPrefix();
-    // If startRow is null, start at the beginning, else start at the provided start row
-    startRowKey = startRowKey == null ? valueRowPrefix : startRowKey;
-    // stopRowKey will always be the last row key with the valueRowPrefix
-    byte[] stopRowKey = Bytes.stopKeyForPrefix(valueRowPrefix);
-    Row row;
-    try (Scanner scanner = indexedTable.scan(startRowKey, stopRowKey)) {
-      while ((limit > 0) && (row = scanner.next()) != null) {
-        byte[] rowKey = row.getRow();
-        MetadataEntity metadataEntity = MetadataKey.extractMetadataEntityFromKey(rowKey);
-        String metadataKey = MetadataKey.extractMetadataKey(rowKey);
-        boolean isNewEntity = previouslySeenEntities.add(metadataEntity);
-        Set<Indexer> indexers = getIndexersForKey(metadataKey, isNewEntity);
-        MetadataEntry metadataEntry = getMetadata(metadataEntity, metadataKey);
-        if (metadataEntry == null) {
-          LOG.warn("Found null metadata entry for a known metadata key {} for entity {} which has an index stored. " +
-                     "Ignoring.", metadataKey, metadataEntity);
-          continue;
-        }
-        // we also want to index all the entity with its type so in addition to the indexers determined by the key add
-        // the type indexer
-        indexers.add(new MetadataEntityTypeIndexer());
-        // storeIndexes deletes old indexes
-        storeIndexes(metadataEntry, indexers);
-        limit--;
-      }
-      Row startRowForNextBatch = scanner.next();
-      if (startRowForNextBatch == null) {
-        return null;
-      }
-      return startRowForNextBatch.getRow();
-    }
   }
 
   /**
    * Add new key-value pair as metadata
    *
    * @param metadataEntry The value of the metadata to be saved
-   * @return {@link MetadataChange} representing the metadata before the change and after
+   * @return {@link Change} representing the metadata before the change and after
    */
-  private MetadataChange setMetadata(MetadataEntry metadataEntry) {
+  private Change setMetadata(MetadataEntry metadataEntry) {
     // get existing metadata
-    Metadata existingMetadata = getMetadata(metadataEntry.getMetadataEntity());
+    Record existingMetadata = getMetadata(metadataEntry.getMetadataEntity());
     // existingMetadata is a Metadata object containing key-value properties and list of tags. We need to determine if
     // we are writing this entity for the first time in our metadata store as there is some special indexes which we
     // generate for the entity itself and this does not need to be regenerated for every metadata record for a
@@ -999,8 +949,8 @@ public class MetadataDataset extends AbstractDataset {
     // can be made to check if the new metadata being written is properties or tags as in case of properties we will
     // not need include new entity indexes but keep the code cleaner we avoid that conditional check here.
     Set<Indexer> indexersForKey = getIndexersForKey(metadataEntry.getKey(), existingMetadata.getProperties().isEmpty());
-    Metadata updatedMetadata = writeWithHistory(existingMetadata, metadataEntry, indexersForKey);
-    return new MetadataChange(existingMetadata, updatedMetadata);
+    Record updatedMetadata = writeWithHistory(existingMetadata, metadataEntry, indexersForKey);
+    return new Change(existingMetadata, updatedMetadata);
   }
 
   /**
@@ -1008,10 +958,10 @@ public class MetadataDataset extends AbstractDataset {
    * @param existing the existing metadata to which the metadata is being written
    * @param entry the new metadata entry
    * @param indexers the indexers to use for this entry
-   * @return {@link} the updated {@link Metadata}
+   * @return {@link} the updated {@link Record}
    */
-  private Metadata writeWithHistory(Metadata existing, MetadataEntry entry, Set<Indexer> indexers) {
-    Metadata updatedMetadata;
+  private Record writeWithHistory(Record existing, MetadataEntry entry, Set<Indexer> indexers) {
+    Record updatedMetadata;
     MetadataEntry entryToWrite;
     // Metadata consists of properties and tags. Properties are normal key-value pair and tag is a set of comma
     // separated value whose key is fixes to TAGS_KEY
@@ -1025,13 +975,13 @@ public class MetadataDataset extends AbstractDataset {
       // the new metadata entry with updated tags
       entryToWrite = new MetadataEntry(entry.getMetadataEntity(), entry.getKey(),
                                        Joiner.on(TAGS_SEPARATOR).join(updatedTags));
-      updatedMetadata = new Metadata(existing.getMetadataEntity(), existing.getProperties(), updatedTags);
+      updatedMetadata = new Record(existing.getMetadataEntity(), existing.getProperties(), updatedTags);
     } else {
       // for  properties  key-value pair we just write new value
       entryToWrite = entry;
       HashMap<String, String> updatedProperties = new HashMap<>(existing.getProperties());
       updatedProperties.put(entry.getKey(), entry.getValue());
-      updatedMetadata = new Metadata(existing.getMetadataEntity(), updatedProperties, existing.getTags());
+      updatedMetadata = new Record(existing.getMetadataEntity(), updatedProperties, existing.getTags());
     }
     writeValue(entryToWrite);
     // store indexes for the tags being added
@@ -1047,19 +997,19 @@ public class MetadataDataset extends AbstractDataset {
    * @param isNewEntity whether to include indexers which should be used only if this is the first
    * time a metadata record is being stored for the given metadata entity
    */
-    private Set<Indexer> getIndexersForKey(String key, boolean isNewEntity) {
-      Set<Indexer> indexers = new HashSet<>();
-      // for known keys in system scope, return appropriate indexers
-      if (MetadataScope.SYSTEM == scope && SYSTEM_METADATA_KEY_TO_INDEXERS.containsKey(key)) {
-        indexers.addAll(SYSTEM_METADATA_KEY_TO_INDEXERS.get(key));
-      } else {
-        indexers.addAll(DEFAULT_INDEXERS);
-      }
-      if (isNewEntity) {
-        indexers.add(new MetadataEntityTypeIndexer());
-      }
-      return indexers;
+  private Set<Indexer> getIndexersForKey(String key, boolean isNewEntity) {
+    Set<Indexer> indexers = new HashSet<>();
+    // for known keys in system scope, return appropriate indexers
+    if (MetadataScope.SYSTEM == scope && SYSTEM_METADATA_KEY_TO_INDEXERS.containsKey(key)) {
+      indexers.addAll(SYSTEM_METADATA_KEY_TO_INDEXERS.get(key));
+    } else {
+      indexers.addAll(DEFAULT_INDEXERS);
     }
+    if (isNewEntity) {
+      indexers.add(new MetadataEntityTypeIndexer());
+    }
+    return indexers;
+  }
 
   /**
    * Deletes a row if the value in the index column is non-null. This is necessary because at least in the
@@ -1198,4 +1148,125 @@ public class MetadataDataset extends AbstractDataset {
 
   }
 
+  /**
+   * Represents the complete metadata of a {@link MetadataEntity} including its properties and tags.
+   */
+  public static class Record {
+    private final MetadataEntity metadataEntity;
+    private final Map<String, String> properties;
+    private final Set<String> tags;
+
+
+    public Record(MetadataEntity metadataEntity) {
+      this(metadataEntity, Collections.emptyMap(), Collections.emptySet());
+    }
+
+    /**
+     * Returns an empty {@link Record}
+     */
+    public Record(NamespacedEntityId namespacedEntityId) {
+      this(namespacedEntityId.toMetadataEntity());
+    }
+
+    public Record(NamespacedEntityId namespacedEntityId, Map<String, String> properties, Set<String> tags) {
+      this(namespacedEntityId.toMetadataEntity(), properties, tags);
+    }
+
+    public Record(MetadataEntity metadataEntity, Map<String, String> properties, Set<String> tags) {
+      if (metadataEntity == null || properties == null || tags == null) {
+        throw new IllegalArgumentException("Valid and non-null metadata entity, properties and tags must be provided.");
+      }
+      this.metadataEntity = metadataEntity;
+      this.properties = new HashMap<>(properties);
+      this.tags = new HashSet<>(tags);
+    }
+
+    public MetadataEntity getMetadataEntity() {
+      return metadataEntity;
+    }
+
+    /**
+     * @return {@link NamespacedEntityId} to which the {@link Record} belongs if it is a known cdap entity type for
+     * example datasets, applications etc. Custom resources likes fields etc cannot be converted into cdap
+     * {@link NamespacedEntityId} and calling this for {@link Record} associated with such resources will fail with
+     * a {@link IllegalArgumentException}.
+     * @throws IllegalArgumentException if the {@link Record} belong to a custom cdap resource and not a known cdap
+     * entity.
+     */
+    public NamespacedEntityId getEntityId() {
+      return EntityId.fromMetadataEntity(metadataEntity);
+    }
+
+    public Map<String, String> getProperties() {
+      return properties;
+    }
+
+    public Set<String> getTags() {
+      return tags;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      Record that = (Record) o;
+
+      return Objects.equals(metadataEntity, that.metadataEntity) &&
+        Objects.equals(properties, that.properties) &&
+        Objects.equals(tags, that.tags);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(metadataEntity, properties, tags);
+    }
+
+    @Override
+    public String toString() {
+      return "MetaRecord{" +
+        "metadataEntity=" + metadataEntity +
+        ", properties=" + properties +
+        ", tags=" + tags +
+        '}';
+    }
+  }
+
+  /**
+   * Represents the change in Metadata
+   */
+  public static class Change {
+    private final Record existing;
+    private final Record latest;
+
+    Change(Record existing, Record latest) {
+      this.existing = existing;
+      this.latest = latest;
+    }
+
+    /**
+     * @return Metadata before the operation
+     */
+    public Record getExisting() {
+      return existing;
+    }
+
+    /**
+     * @return Metadata after the operation
+     */
+    public Record getLatest() {
+      return latest;
+    }
+
+    /**
+     * @return Properties which were deleted during the operation
+     */
+    public Map<String, String> getDeletedProperties() {
+      return Maps.difference(existing.getProperties(), latest.getProperties()).entriesOnlyOnLeft();
+    }
+  }
 }

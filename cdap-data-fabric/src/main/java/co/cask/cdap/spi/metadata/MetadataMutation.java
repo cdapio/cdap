@@ -17,14 +17,17 @@
 package co.cask.cdap.spi.metadata;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataScope;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * A operation that changes metadata.
  */
-public class MetadataMutation {
+public abstract class MetadataMutation {
   protected final Type type;
   protected final MetadataEntity entity;
 
@@ -48,6 +51,14 @@ public class MetadataMutation {
 
   /**
    * Create or replace the metadata for an entity.
+   *
+   * For any scope that appears in the new Metadata, all existing metadata
+   * is replaced according to the given directives. If a scope does not
+   * occur in the Metadata, existing metadata in that scope will not be changed.
+   *
+   * Note that the typical use for this is the creation (or recreation) of an
+   * entity, when all the entity's system metadata are defined for the first
+   * time, or redefined.
    */
   public static class Create extends MetadataMutation {
     private final Metadata metadata;
@@ -65,6 +76,25 @@ public class MetadataMutation {
 
     public Map<ScopedNameOfKind, MetadataDirective> getDirectives() {
       return directives;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Create create = (Create) o;
+      return Objects.equals(entity, create.entity) &&
+        Objects.equals(metadata, create.metadata) &&
+        Objects.equals(directives, create.directives);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(entity, metadata, directives);
     }
 
     @Override
@@ -86,6 +116,24 @@ public class MetadataMutation {
     }
 
     @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Drop drop = (Drop) o;
+      return Objects.equals(entity, drop.entity);
+    }
+
+    @Override
+    public int hashCode() {
+      // the type is the same for all Drops, but include it here so that the hashCode is different from the entity's.
+      return Objects.hash(type, entity.hashCode());
+    }
+
+    @Override
     public String toString() {
       return "Drop{" +
         "entity=" + getEntity() +
@@ -99,13 +147,31 @@ public class MetadataMutation {
   public static class Update extends MetadataMutation {
     private final Metadata updates;
 
-    public Update(Type type, MetadataEntity entity, Metadata updates) {
-      super(type, entity);
+    public Update(MetadataEntity entity, Metadata updates) {
+      super(Type.UPDATE, entity);
       this.updates = updates;
     }
 
     public Metadata getUpdates() {
       return updates;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Update update = (Update) o;
+      return Objects.equals(entity, update.entity) &&
+        Objects.equals(updates, update.updates);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(entity, updates);
     }
 
     @Override
@@ -121,10 +187,49 @@ public class MetadataMutation {
    * Remove metadata for an entity.
    */
   public static class Remove extends MetadataMutation {
+    private final Set<MetadataScope> scopes;
+    private final Set<MetadataKind> kinds;
     private final Set<ScopedNameOfKind> removals;
 
-    public Remove(Type type, MetadataEntity entity, Set<ScopedNameOfKind> removals) {
-      super(type, entity);
+    /**
+     * Remove all metadata for an entity.
+     */
+    public Remove(MetadataEntity entity) {
+      this(entity, null, null, null);
+    }
+
+    /**
+     * Remove a selected set of metadata for an entity.
+     */
+    public Remove(MetadataEntity entity, Set<ScopedNameOfKind> removals) {
+      this(entity, null, null, removals);
+    }
+
+    /**
+     * Remove all metadata in a given scope for an entity.
+     */
+    public Remove(MetadataEntity entity, MetadataScope scope) {
+      this(entity, scope, null, null);
+    }
+
+    /**
+     * Remove all metadata of a given kind for an entity.
+     */
+    public Remove(MetadataEntity entity, MetadataKind kind) {
+      this(entity, null, kind, null);
+    }
+
+    /**
+     * Remove all metadata of a given kind in a given scope for an entity.
+     */
+    public Remove(MetadataEntity entity, MetadataScope scope, MetadataKind kind) {
+      this(entity, scope, kind, null);
+    }
+
+    private Remove(MetadataEntity entity, MetadataScope scope, MetadataKind kind, Set<ScopedNameOfKind> removals) {
+      super(Type.REMOVE, entity);
+      this.scopes = scope == null ? MetadataScope.ALL : Collections.singleton(scope);
+      this.kinds = kind == null ? MetadataKind.ALL : Collections.singleton(kind);
       this.removals = removals;
     }
 
@@ -132,11 +237,41 @@ public class MetadataMutation {
       return removals;
     }
 
+    public Set<MetadataScope> getScopes() {
+      return scopes;
+    }
+
+    public Set<MetadataKind> getKinds() {
+      return kinds;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      Remove remove = (Remove) o;
+      return Objects.equals(entity, remove.entity) &&
+        Objects.equals(scopes, remove.scopes) &&
+        Objects.equals(kinds, remove.kinds) &&
+        Objects.equals(removals, remove.removals);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(entity, scopes, kinds, removals);
+    }
+
     @Override
     public String toString() {
       return "Remove{" +
-        "entity=" + getEntity() +
-        "removals=" + getRemovals() +
+        "entity=" + entity +
+        ", scopes=" + scopes +
+        ", kinds=" + kinds +
+        ", removals=" + removals +
         '}';
     }
   }

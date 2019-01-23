@@ -16,7 +16,15 @@
 
 package co.cask.cdap.spi.metadata;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Distinguishes different kinds of meta datum, e.g., tag or property.
  */
-public enum MetadataKind { TAG, PROPERTY }
+public enum MetadataKind {
+  TAG,
+  PROPERTY;
+
+  public static final Set<MetadataKind> ALL = EnumSet.allOf(MetadataKind.class);
+}
