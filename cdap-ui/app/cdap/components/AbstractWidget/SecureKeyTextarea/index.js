@@ -38,7 +38,7 @@ export default class SecureKeyTextarea extends Component {
     customEntryText: '',
   };
 
-  componentWillMount() {
+  componentDidMount() {
     const namespace = objectQuery(this.props, 'extraConfig', 'namespace') || getCurrentNamespace();
 
     if (namespace === SYSTEM_NAMESPACE) {
@@ -49,9 +49,7 @@ export default class SecureKeyTextarea extends Component {
       namespace,
     };
 
-    MySecureKeyApi.list(params).subscribe((res) => {
-      const keys = Object.keys(res);
-
+    MySecureKeyApi.list(params).subscribe((keys) => {
       this.setState({
         secureKeys: keys,
       });
@@ -132,11 +130,11 @@ export default class SecureKeyTextarea extends Component {
           {this.state.secureKeys.map((key) => {
             return (
               <div
-                key={key}
+                key={key.name}
                 className="secure-key-row"
-                onClick={this.onSecureKeySelect.bind(this, key)}
+                onClick={this.onSecureKeySelect.bind(this, key.name)}
               >
-                {key}
+                {key.name}
               </div>
             );
           })}
