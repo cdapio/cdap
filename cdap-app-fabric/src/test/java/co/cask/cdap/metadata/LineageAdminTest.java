@@ -123,17 +123,17 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                       toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
-    metadataStore.setProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
+    metadataStore.addProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
                                 run1AppMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(), run1AppMeta.getTags());
-    metadataStore.setProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
+    metadataStore.addProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getTags());
-    metadataStore.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
+    metadataStore.addProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getTags());
-    metadataStore.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
+    metadataStore.addProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getTags());
 
@@ -557,17 +557,17 @@ public class LineageAdminTest extends AppFabricTestBase {
                                                       toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
-    metadataStore.setProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
+    metadataStore.addProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
                                 run1AppMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(), run1AppMeta.getTags());
-    metadataStore.setProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
+    metadataStore.addProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getTags());
-    metadataStore.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
+    metadataStore.addProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getTags());
-    metadataStore.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
+    metadataStore.addProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getTags());
 

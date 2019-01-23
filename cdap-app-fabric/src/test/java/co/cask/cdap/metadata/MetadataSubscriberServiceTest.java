@@ -593,7 +593,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
     // need to put metadata on workflow since we currently only set or delete workflow metadata
-    mds.setProperties(MetadataScope.SYSTEM, workflowId.toMetadataEntity(),
+    mds.addProperties(MetadataScope.SYSTEM, workflowId.toMetadataEntity(),
                       Collections.singletonMap("profile", ProfileId.NATIVE.getScopedName()));
     Assert.assertEquals(ProfileId.NATIVE.getScopedName(),
                         mds.getProperties(workflowId.toMetadataEntity()).get("profile"));

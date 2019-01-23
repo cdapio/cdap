@@ -305,22 +305,22 @@ public class DefaultMetadataStoreTest {
     Set<String> userTags = ImmutableSet.of("tag1", "tag2");
     Set<String> streamUserTags = ImmutableSet.of("tag3", "tag4");
     Set<String> sysTags = ImmutableSet.of("sysTag1");
-    store.setProperties(MetadataScope.USER, service1.toMetadataEntity(), userProps);
-    store.setProperties(MetadataScope.SYSTEM, service1.toMetadataEntity(), systemProps);
+    store.addProperties(MetadataScope.USER, service1.toMetadataEntity(), userProps);
+    store.addProperties(MetadataScope.SYSTEM, service1.toMetadataEntity(), systemProps);
     store.addTags(MetadataScope.USER, service1.toMetadataEntity(), userTags);
     store.addTags(MetadataScope.SYSTEM, service1.toMetadataEntity(), sysTags);
     store.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserTags);
     store.removeTags(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserTags);
-    store.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), userProps);
+    store.addProperties(MetadataScope.USER, dataset2.toMetadataEntity(), userProps);
     store.removeProperties(MetadataScope.USER, dataset2.toMetadataEntity(),
                            ImmutableSet.of("key1", "key2", "multiword"));
 
     Map<String, String> streamUserProps = ImmutableMap.of("sKey1", "sValue1 sValue2",
                                                           "Key1", "Value1");
-    store.setProperties(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserProps);
+    store.addProperties(MetadataScope.USER, dataset2.toMetadataEntity(), streamUserProps);
 
     Map<String, String> datasetUserProps = ImmutableMap.of("sKey1", "sValuee1 sValuee2");
-    store.setProperties(MetadataScope.USER, dataset1.toMetadataEntity(), datasetUserProps);
+    store.addProperties(MetadataScope.USER, dataset1.toMetadataEntity(), datasetUserProps);
 
     // Test score and metadata match
     MetadataSearchResponse response = search("ns1", "value1 multiword:av2");
@@ -373,25 +373,25 @@ public class DefaultMetadataStoreTest {
     MetadataEntity ns2app1 = ns2.app("a1").toMetadataEntity();
     MetadataEntity ns2app2 = ns2.app("a2").toMetadataEntity();
 
-    store.setProperty(MetadataScope.USER, ns1app1, "k1", "v1");
+    store.addProperty(MetadataScope.USER, ns1app1, "k1", "v1");
     store.addTags(MetadataScope.USER, ns1app1, Collections.singleton("v1"));
     Metadata meta = new Metadata(Collections.singletonMap("k1", "v1"), Collections.singleton("v1"));
     MetadataSearchResultRecord ns1app1Record =
       new MetadataSearchResultRecord(ns1app1, Collections.singletonMap(MetadataScope.USER, meta));
 
-    store.setProperty(MetadataScope.USER, ns1app2, "k1", "v1");
-    store.setProperty(MetadataScope.USER, ns1app2, "k2", "v2");
+    store.addProperty(MetadataScope.USER, ns1app2, "k1", "v1");
+    store.addProperty(MetadataScope.USER, ns1app2, "k2", "v2");
     meta = new Metadata(ImmutableMap.of("k1", "v1", "k2", "v2"), Collections.emptySet());
     MetadataSearchResultRecord ns1app2Record =
       new MetadataSearchResultRecord(ns1app2, Collections.singletonMap(MetadataScope.USER, meta));
 
-    store.setProperty(MetadataScope.USER, ns1app3, "k1", "v1");
-    store.setProperty(MetadataScope.USER, ns1app3, "k3", "v3");
+    store.addProperty(MetadataScope.USER, ns1app3, "k1", "v1");
+    store.addProperty(MetadataScope.USER, ns1app3, "k3", "v3");
     meta = new Metadata(ImmutableMap.of("k1", "v1", "k3", "v3"), Collections.emptySet());
     MetadataSearchResultRecord ns1app3Record =
       new MetadataSearchResultRecord(ns1app3, Collections.singletonMap(MetadataScope.USER, meta));
 
-    store.setProperties(MetadataScope.USER, ImmutableMap.of(
+    store.addProperties(MetadataScope.USER, ImmutableMap.of(
       ns2app1, ImmutableMap.of("k1", "v1", "k2", "v2"),
       ns2app2, ImmutableMap.of("k1", "v1")));
     store.addTags(MetadataScope.USER, ns2app2, ImmutableSet.of("v2", "v3"));
@@ -621,7 +621,7 @@ public class DefaultMetadataStoreTest {
 
   private void generateMetadataUpdates() {
     store.addTags(MetadataScope.USER, dataset.toMetadataEntity(), datasetTags);
-    store.setProperties(MetadataScope.USER, app.toMetadataEntity(), appProperties);
+    store.addProperties(MetadataScope.USER, app.toMetadataEntity(), appProperties);
     store.addTags(MetadataScope.USER, app.toMetadataEntity(), appTags);
     store.addTags(MetadataScope.USER, service.toMetadataEntity(), tags);
     store.removeTags(MetadataScope.USER, service.toMetadataEntity());

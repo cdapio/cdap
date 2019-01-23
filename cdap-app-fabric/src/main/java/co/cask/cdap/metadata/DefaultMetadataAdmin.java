@@ -58,7 +58,7 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
     throws InvalidMetadataException {
     validateProperties(metadataEntity, properties);
-    metadataStore.setProperties(MetadataScope.USER, metadataEntity, properties);
+    metadataStore.addProperties(MetadataScope.USER, metadataEntity, properties);
   }
 
   @Override
