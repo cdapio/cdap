@@ -82,6 +82,7 @@ public class MasterTwillApplication implements TwillApplication {
     .put(Constants.Service.METRICS_PROCESSOR, "metrics.processor.")
     .put(Constants.Service.METRICS, "metrics.")
     .put(Constants.Service.EXPLORE_HTTP_USER_SERVICE, "explore.executor.")
+    .put(Constants.Service.PREVIEW_HTTP, "preview.")
     .build();
 
   private final CConfiguration cConf;
@@ -156,7 +157,9 @@ public class MasterTwillApplication implements TwillApplication {
             addTransactionService(
               addMetricsProcessor (
                 addMetricsService(
-                  TwillSpecification.Builder.with().setName(NAME).withRunnable()
+                  addPreviewService(
+                    TwillSpecification.Builder.with().setName(NAME).withRunnable()
+                  )
                 )
               )
             )
@@ -211,6 +214,15 @@ public class MasterTwillApplication implements TwillApplication {
     return addResources(Constants.Service.TRANSACTION,
                         builder.add(new TransactionServiceTwillRunnable(Constants.Service.TRANSACTION,
                                                                         CCONF_NAME, HCONF_NAME), resourceSpec));
+  }
+
+  private Builder.RunnableSetter addPreviewService(Builder.MoreRunnable builder) {
+    ResourceSpecification resourceSpec = createResourceSpecification(Constants.Preview.NUM_CORES,
+                                                                     Constants.Preview.MEMORY_MB,
+                                                                     Constants.Service.PREVIEW_HTTP);
+    return addResources(Constants.Service.PREVIEW_HTTP,
+                        builder.add(new PreviewTwillRunnable(Constants.Service.PREVIEW_HTTP,
+                                                             CCONF_NAME, HCONF_NAME), resourceSpec));
   }
 
   private Builder.RunnableSetter addDatasetOpExecutor(Builder.MoreRunnable builder) {

@@ -321,7 +321,10 @@ public final class Constants {
      * Guice named bindings.
      */
     public static final String ADDRESS = "preview.bind.address";
-
+    public static final String NUM_CORES = "preview.num.cores";
+    public static final String MEMORY_MB = "preview.memory.mb";
+    public static final String NUM_INSTANCES = "preview.num.instances";
+    public static final String MAX_INSTANCES = "preview.max.instances";
     public static final String PREVIEW_CACHE_SIZE = "preview.cache.size";
   }
 

@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.preview;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -32,6 +33,10 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
+import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.PreferencesService;
@@ -40,6 +45,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.preview.PreviewDataModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -60,11 +66,15 @@ import co.cask.cdap.security.guice.preview.PreviewSecureStoreModule;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
+import co.cask.http.HandlerHook;
+import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -117,7 +127,8 @@ public class DefaultPreviewManager implements PreviewManager {
                         PreferencesService preferencesService, SecureStore secureStore,
                         TransactionSystemClient transactionSystemClient, ArtifactRepository artifactRepository,
                         ArtifactStore artifactStore, AuthorizerInstantiator authorizerInstantiator,
-                        PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer) {
+                        PrivilegesManager privilegesManager, AuthorizationEnforcer authorizationEnforcer,
+                        MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
