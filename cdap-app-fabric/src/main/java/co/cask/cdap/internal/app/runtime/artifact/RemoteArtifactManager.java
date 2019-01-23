@@ -45,6 +45,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Implementation for {@link co.cask.cdap.api.artifact.ArtifactManager}
@@ -129,9 +130,16 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   }
 
   @Override
-  protected Location getArtifactLocation(ArtifactInfo artifactInfo) throws IOException {
-    String namespace = ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ?
-      NamespaceId.SYSTEM.getNamespace() : namespaceId.getEntityName();
+  protected Location getArtifactLocation(ArtifactInfo artifactInfo,
+                                         @Nullable String artifactNamespace) throws IOException {
+    String namespace;
+    if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
+      namespace = NamespaceId.SYSTEM.getNamespace();
+    } else if (artifactNamespace != null) {
+      namespace = artifactNamespace;
+    } else {
+      namespace = namespaceId.getNamespace();
+    }
 
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(

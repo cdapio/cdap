@@ -32,6 +32,7 @@ import org.apache.twill.filesystem.Location;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * An implementation of {@link ArtifactManager} that talks to {@link ArtifactRepository} directly.
@@ -79,8 +80,16 @@ public final class LocalArtifactManager extends AbstractArtifactManager {
   }
 
   @Override
-  protected Location getArtifactLocation(ArtifactInfo artifactInfo) throws IOException {
-    NamespaceId namespace = ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ? NamespaceId.SYSTEM : namespaceId;
+  protected Location getArtifactLocation(ArtifactInfo artifactInfo,
+                                         @Nullable String artifactNamespace) throws IOException {
+    NamespaceId namespace;
+    if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
+      namespace = NamespaceId.SYSTEM;
+    } else if (artifactNamespace != null) {
+      namespace = new NamespaceId(artifactNamespace);
+    } else {
+      namespace = namespaceId;
+    }
     ArtifactId artifactId = namespace.artifact(artifactInfo.getName(), artifactInfo.getVersion());
 
     return Retries.callWithRetries(() -> {

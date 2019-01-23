@@ -57,10 +57,12 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
    * Returns the {@link Location} of the give artifact.
    *
    * @param artifactInfo information of the artifact
+   * @param namespace artifact namespace, or null if the program namespace should not be used
    * @return the {@link Location} of the artifact
    * @throws IOException if failed to locate the {@link Location} of the artifact
    */
-  protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo) throws IOException;
+  protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo,
+                                                  @Nullable String namespace) throws IOException;
 
   /**
    * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied
@@ -76,8 +78,14 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
   @Override
   public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
                                                 @Nullable ClassLoader parentClassLoader) throws IOException {
+    return createClassLoader(null, artifactInfo, parentClassLoader);
+  }
+
+  @Override
+  public CloseableClassLoader createClassLoader(@Nullable String namespace, ArtifactInfo artifactInfo,
+                                                @Nullable ClassLoader parentClassLoader) throws IOException {
     File unpackedDir = DirUtils.createTempDir(tmpDir);
-    BundleJarUtil.unJar(getArtifactLocation(artifactInfo), unpackedDir);
+    BundleJarUtil.unJar(getArtifactLocation(artifactInfo, namespace), unpackedDir);
     DirectoryClassLoader directoryClassLoader =
       new DirectoryClassLoader(unpackedDir,
                                parentClassLoader == null ? bootstrapClassLoader : parentClassLoader, "lib");

@@ -19,6 +19,7 @@ package co.cask.cdap.admin;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
@@ -61,6 +62,7 @@ import org.junit.Assert;
 import scala.Tuple2;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +112,6 @@ public class AdminApp extends AbstractApplication {
       Admin admin = getContext().getAdmin();
       if (!admin.namespaceExists(namespace)) {
         responder.sendError(404, String.format("namespace '%s' not found.", namespace));
-        return;
       }
     }
 
@@ -123,10 +124,12 @@ public class AdminApp extends AbstractApplication {
         responder.sendError(404, String.format("namespace '%s' not found.", namespace));
         return;
       }
-      List<ArtifactSummary> summaries = getContext().listArtifacts(namespace).stream()
-        .map(info -> ((ArtifactSummary) info))
-        .collect(Collectors.toList());
-      responder.sendJson(summaries);
+      List<ArtifactSummary> response = new ArrayList<>();
+      for (ArtifactInfo artifactInfo : getContext().listArtifacts(namespace)) {
+        getContext().createClassLoader(namespace, artifactInfo, getClass().getClassLoader());
+        response.add(artifactInfo);
+      }
+      responder.sendJson(response);
     }
   }
 
