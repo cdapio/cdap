@@ -2539,6 +2539,39 @@
     </description>
   </property>
 
+  <!-- Preview Configuration -->
+  <property>
+    <name>preview.memory.mb</name>
+    <value>${master.service.memory.mb}</value>
+    <description>
+      Memory in megabytes for each preview service instance
+    </description>
+  </property>
+
+  <property>
+    <name>preview.num.cores</name>
+    <value>${master.service.num.cores}</value>
+    <description>
+      Number of virtual cores for the preview service
+    </description>
+  </property>
+
+  <property>
+    <name>preview.num.instances</name>
+    <value>1</value>
+    <description>
+      Number of instances for the preview service
+    </description>
+  </property>
+
+  <property>
+    <name>preview.max.instances</name>
+    <value>${master.service.max.instances}</value>
+    <description>
+      Maximum number of instances for the preview service
+    </description>
+  </property>
+
   <!-- Runtime Configuration -->
 
   <property>
