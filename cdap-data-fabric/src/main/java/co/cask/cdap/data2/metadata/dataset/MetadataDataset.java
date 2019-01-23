@@ -1243,7 +1243,7 @@ public class MetadataDataset extends AbstractDataset {
     private final Record existing;
     private final Record latest;
 
-    Change(Record existing, Record latest) {
+    public Change(Record existing, Record latest) {
       this.existing = existing;
       this.latest = latest;
     }
