@@ -20,6 +20,7 @@ import co.cask.cdap.admin.AdminAppTestRun;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.TestSuite;
 import co.cask.cdap.mapreduce.service.MapReduceServiceIntegrationTestRun;
+import co.cask.cdap.service.DynamicPluginServiceTestRun;
 import co.cask.cdap.service.FileUploadServiceTestRun;
 import co.cask.cdap.service.ServiceArtifactTestRun;
 import co.cask.cdap.service.ServiceLifeCycleTestRun;
@@ -44,6 +45,7 @@ import org.junit.runners.Suite;
 @RunWith(TestSuite.class)
 @Suite.SuiteClasses({
   AdminAppTestRun.class,
+  DynamicPluginServiceTestRun.class,
   FileUploadServiceTestRun.class,
   MapReduceServiceIntegrationTestRun.class,
   MessagingAppTestRun.class,

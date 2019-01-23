@@ -159,6 +159,11 @@ public class SparkHttpServiceServer extends AbstractServiceHttpServer<SparkHttpS
         }
 
         @Override
+        public void releaseCallResources() {
+          // no-op
+        }
+
+        @Override
         public Transactional getTransactional() {
           return context;
         }

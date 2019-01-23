@@ -43,6 +43,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
@@ -85,7 +86,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            SecureStore secureStore, SecureStoreManager secureStoreManager,
                            MessagingService messagingService,
                            ArtifactManager artifactManager, MetadataReader metadataReader,
-                           MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin) {
+                           MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
+                           PluginFinder pluginFinder) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -94,7 +96,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
     this.contextFactory = createContextFactory(program, programOptions, instanceId, this.instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                               messagingService, artifactManager, metadataReader, metadataPublisher);
+                                               messagingService, artifactManager, metadataReader, metadataPublisher,
+                                               pluginFinder);
     this.context = contextFactory.create(null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -147,12 +150,13 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               MessagingService messagingService,
                                                               ArtifactManager artifactManager,
                                                               MetadataReader metadataReader,
-                                                              MetadataPublisher metadataPublisher) {
+                                                              MetadataPublisher metadataPublisher,
+                                                              PluginFinder pluginFinder) {
     return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
-                                               namespaceQueryAdmin);
+                                               namespaceQueryAdmin, pluginFinder);
   }
 
   /**
@@ -221,6 +225,11 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
             return Transactionals.execute(context, (TxCallable<T>) datasetContext -> callable.call(), Exception.class);
           }
           return context.execute(callable);
+        }
+
+        @Override
+        public void releaseCallResources() {
+          context.releaseCallResources();
         }
 
         @Override

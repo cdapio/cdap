@@ -21,9 +21,11 @@ import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataWriter;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 
@@ -48,4 +50,18 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
    * @return instance id of this handler.
    */
   int getInstanceId();
+
+  /**
+   * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime that were not registered
+   * at configure time. Plugins registered by the dynamic configurer live in their own scope and will not
+   * conflict with any plugins that were registered by the service when it was configured. Plugins registered by
+   * the returned configurer will also not be available through {@link #newPluginInstance(String)} or
+   * {@link #newPluginInstance(String, MacroEvaluator)}.
+   *
+   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
+   * then to be forgotten.
+   *
+   * @return an dynamic plugin configurer that must be closed
+   */
+  PluginConfigurer createPluginConfigurer();
 }

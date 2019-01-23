@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.http.HttpServiceContext;
@@ -30,15 +31,28 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -51,11 +65,17 @@ import javax.annotation.Nullable;
  * spec provided when this class is instantiated
  */
 public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext {
+  private static final Logger LOG = LoggerFactory.getLogger(BasicHttpServiceContext.class);
 
+  private final CConfiguration cConf;
+  private final NamespaceId namespaceId;
+  private final ArtifactId artifactId;
   private final HttpServiceHandlerSpecification spec;
   private final int instanceId;
   private final AtomicInteger instanceCount;
   private final ArtifactManager artifactManager;
+  private final PluginFinder pluginFinder;
+  private final Collection<Closeable> closeables;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
@@ -82,16 +102,22 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  MessagingService messagingService,
                                  ArtifactManager artifactManager, MetadataReader metadataReader,
                                  MetadataPublisher metadataPublisher,
-                                 NamespaceQueryAdmin namespaceQueryAdmin) {
+                                 NamespaceQueryAdmin namespaceQueryAdmin,
+                                 PluginFinder pluginFinder) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
           namespaceQueryAdmin);
+    this.cConf = cConf;
+    this.namespaceId = program.getId().getNamespaceId();
+    this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.artifactManager = artifactManager;
+    this.pluginFinder = pluginFinder;
+    this.closeables = new ArrayList<>();
   }
 
   public static Map<String, String> createMetricsTags(@Nullable HttpServiceHandlerSpecification spec, int instanceId) {
@@ -124,6 +150,26 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   }
 
   @Override
+  public PluginConfigurer createPluginConfigurer() {
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    try {
+      File pluginsDir = Files.createTempDirectory(tmpDir.toPath(), "plugins").toFile();
+      PluginInstantiator instantiator = new PluginInstantiator(cConf, getProgram().getClassLoader(), pluginsDir);
+      closeables.add(() -> {
+        try {
+          instantiator.close();
+        } finally {
+          DirUtils.deleteDirectoryContents(pluginsDir, true);
+        }
+      });
+      return new DefaultPluginConfigurer(artifactId, namespaceId, instantiator, pluginFinder);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
   public List<ArtifactInfo> listArtifacts() throws IOException {
     return artifactManager.listArtifacts();
   }
@@ -143,5 +189,19 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
                                                 @Nullable ClassLoader parentClassLoader) throws IOException {
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
+  }
+
+  /**
+   * Releases resources that were created for an endpoint call but are no longer needed for future calls.
+   */
+  public void releaseCallResources() {
+    for (Closeable closeable : closeables) {
+      try {
+        closeable.close();
+      } catch (IOException e) {
+        LOG.warn("Error while cleaning up service resources.", e);
+      }
+    }
+    closeables.clear();
   }
 }

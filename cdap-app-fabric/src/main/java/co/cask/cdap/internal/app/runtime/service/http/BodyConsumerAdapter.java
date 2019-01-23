@@ -100,6 +100,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     try {
       BodyConsumerAdapter.this.responder.execute();
     } finally {
+      taskExecutor.releaseCallResources();
       if (!this.responder.hasContentProducer()) {
         contextReleaser.cancel();
       }
@@ -156,6 +157,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
       try {
         responder.execute(false);
       } finally {
+        taskExecutor.releaseCallResources();
         if (!responder.hasContentProducer()) {
           contextReleaser.cancel();
         }
