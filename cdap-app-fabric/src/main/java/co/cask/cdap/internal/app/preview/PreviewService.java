@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 import javax.annotation.Nullable;
 
+/**
+ * Preview service using the common netty http framework.
+ */
 public class PreviewService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewService.class);
 
