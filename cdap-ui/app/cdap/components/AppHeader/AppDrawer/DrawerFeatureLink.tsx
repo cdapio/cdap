@@ -16,6 +16,7 @@
 import * as React from 'react';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ListItemText from '@material-ui/core/ListItemText';
+import ListItem from '@material-ui/core/ListItem';
 import ListItemLink from 'components/AppHeader/ListItemLink';
 import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
@@ -25,6 +26,11 @@ import {
   appDrawerListItemStyles,
 } from 'components/AppHeader/AppDrawer/AppDrawer';
 import classnames from 'classnames';
+import isEmpty from 'lodash/isEmpty';
+import Collapse from '@material-ui/core/Collapse';
+import IconSVG from 'components/IconSVG';
+import If from 'components/If';
+
 const colorVariables = require('styles/variables.scss');
 
 const styles = (theme) => {
@@ -33,6 +39,13 @@ const styles = (theme) => {
     listItem: appDrawerListItemStyles,
     nestListPadding: {
       paddingLeft: theme.spacing.unit * 5,
+    },
+    listItemWithSubmenu: {
+      cursor: 'pointer',
+      ...appDrawerListItemStyles,
+    },
+    featureIconSize: {
+      fontSize: '1.3rem',
     },
     activeListItem: {
       backgroundColor: colorVariables.bluegrey06,
@@ -46,19 +59,41 @@ interface IDrawerFeatureLinkProps extends WithStyles<typeof styles> {
   componentDidNavigate?: () => void;
   featureFlag: boolean;
   featureName: string;
+  featureSVGIconName?: string;
   featureUrl: string;
   isAngular?: boolean;
   isActive?: boolean;
   subMenu?: IDrawerFeatureLinkProps[];
   'data-cy'?: string;
 }
+interface IDrawerFeatureLinkState {
+  submenuOpen: boolean;
+}
 
-class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
+class DrawerFeatureLink extends React.PureComponent<
+  IDrawerFeatureLinkProps,
+  IDrawerFeatureLinkState
+> {
+  public state: IDrawerFeatureLinkState = {
+    submenuOpen: true,
+  };
+
+  private toggleSubmenuOpen = () => {
+    this.setState({
+      submenuOpen: !this.state.submenuOpen,
+    });
+  };
+
+  private renderCaretForSubmenu = () => {
+    return <IconSVG name={this.state.submenuOpen ? 'icon-caret-up' : 'icon-caret-down'} />;
+  };
+
   private renderListItem(
     {
       componentDidNavigate,
       featureFlag,
       featureName,
+      featureSVGIconName,
       featureUrl,
       isAngular,
       isActive,
@@ -88,6 +123,9 @@ class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
         onClick={componentDidNavigate}
         data-cy={rest['data-cy']}
       >
+        <If condition={typeof featureSVGIconName === 'string'}>
+          <IconSVG className={classes.featureIconSize} name={featureSVGIconName} />
+        </If>
         <ListItemText
           disableTypography
           classes={{ root: classes.listItemText }}
@@ -97,24 +135,38 @@ class DrawerFeatureLink extends React.PureComponent<IDrawerFeatureLinkProps> {
     );
   }
   private renderSubMenu() {
-    const { subMenu = [] } = this.props;
+    const { subMenu = [], featureName, classes, featureSVGIconName } = this.props;
     if (!subMenu.length) {
       return null;
     }
 
     return (
-      <List disablePadding>
-        {subMenu.map((menu, i) => (
-          <React.Fragment key={i}> {this.renderListItem(menu, true)}</React.Fragment>
-        ))}
-      </List>
+      <React.Fragment>
+        <ListItem onClick={this.toggleSubmenuOpen} className={classes.listItemWithSubmenu}>
+          <If condition={typeof featureSVGIconName === 'string'}>
+            <IconSVG className={classes.featureIconSize} name={featureSVGIconName} />
+          </If>
+          <ListItemText
+            disableTypography
+            classes={{ root: classes.listItemText }}
+            primary={featureName}
+          />
+          {this.renderCaretForSubmenu()}
+        </ListItem>
+        <Collapse in={this.state.submenuOpen} timeout="auto" unmountOnExit>
+          <List disablePadding>
+            {subMenu.map((menu, i) => (
+              <React.Fragment key={i}> {this.renderListItem(menu, true)}</React.Fragment>
+            ))}
+          </List>
+        </Collapse>
+      </React.Fragment>
     );
   }
   public render() {
     return (
       <React.Fragment>
-        {this.renderListItem(this.props)}
-        {this.renderSubMenu()}
+        {isEmpty(this.props.subMenu) ? this.renderListItem(this.props) : this.renderSubMenu()}
       </React.Fragment>
     );
   }

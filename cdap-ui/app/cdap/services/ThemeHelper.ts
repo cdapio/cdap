@@ -138,6 +138,7 @@ interface IFeatureNames {
   hub: string;
   metadata: string;
   pipelines: string;
+  pipelinesList: string;
   pipelineStudio: string;
   reports: string;
   rulesEngine: string;
@@ -212,7 +213,8 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         entities: 'Entities',
         hub: 'Hub',
         metadata: 'Metadata',
-        pipelines: 'Pipelines',
+        pipelines: 'Pipeline',
+        pipelinesList: 'List',
         pipelineStudio: 'Studio',
         reports: 'Reports',
         rulesEngine: 'Rules',
