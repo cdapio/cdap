@@ -157,9 +157,9 @@ public class MasterTwillApplication implements TwillApplication {
             addTransactionService(
               addMetricsProcessor (
                 addMetricsService(
-                  //addPreviewService(
+                  addPreviewService(
                     TwillSpecification.Builder.with().setName(NAME).withRunnable()
-                  //)
+                  )
                 )
               )
             )

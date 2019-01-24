@@ -77,7 +77,7 @@ public class PreviewService extends AbstractIdleService {
     LOG.info("Started Preview HTTP Service...");
     // Register the service
     cancelDiscovery = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.METRICS, httpService.getBindAddress())));
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.PREVIEW_HTTP, httpService.getBindAddress())));
     LOG.info("Preview Service started successfully on {}", httpService.getBindAddress());
   }
 
