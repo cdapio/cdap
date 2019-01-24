@@ -65,6 +65,7 @@ public class DataFabricDistributedModule extends AbstractModule {
       }
     }));
     install(new TransactionExecutorModule());
+    install(new StorageModule());
   }
 
   /**

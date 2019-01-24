@@ -16,6 +16,8 @@
 
 package co.cask.cdap.spi.data.table.field;
 
+import javax.annotation.Nullable;
+
 /**
  * Convenience methods to work on {@link Field} and {@link FieldType}.
  */
@@ -58,6 +60,61 @@ public final class Fields {
    */
   public static FieldType doubleType(String name) {
     return new FieldType(name, FieldType.Type.DOUBLE);
+  }
+
+  /**
+   * Create a field with integer value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type integer
+   */
+  public static Field<Integer> intField(String name, @Nullable Integer value) {
+    return new Field<>(new FieldType(name, FieldType.Type.INTEGER), value);
+  }
+
+  /**
+   * Create a field with long value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type long
+   */
+  public static Field<Long> longField(String name, @Nullable Long value) {
+    return new Field<>(new FieldType(name, FieldType.Type.LONG), value);
+  }
+
+  /**
+   * Create a field with string value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type string
+   */
+  public static Field<String> stringField(String name, @Nullable String value) {
+    return new Field<>(new FieldType(name, FieldType.Type.STRING), value);
+  }
+
+  /**
+   * Create a field with float value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type float
+   */
+  public static Field<Float> floatField(String name, @Nullable Float value) {
+    return new Field<>(new FieldType(name, FieldType.Type.FLOAT), value);
+  }
+
+  /**
+   * Create a field with double value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type double
+   */
+  public static Field<Double> doubleField(String name, @Nullable Double value) {
+    return new Field<>(new FieldType(name, FieldType.Type.DOUBLE), value);
   }
 
   /**

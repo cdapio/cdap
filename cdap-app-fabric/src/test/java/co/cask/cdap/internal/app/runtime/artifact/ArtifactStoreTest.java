@@ -34,9 +34,7 @@ import co.cask.cdap.api.plugin.Requirements;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
@@ -48,8 +46,6 @@ import co.cask.cdap.security.impersonation.DefaultImpersonator;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -59,7 +55,6 @@ import com.google.common.io.CharStreams;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -69,6 +64,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -82,6 +79,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -89,20 +87,12 @@ import java.util.stream.Collectors;
  */
 // suppressing warnings for Bytes.toBytes() when we know the result is not null
 @SuppressWarnings("ConstantConditions")
-public class ArtifactStoreTest {
+public abstract class ArtifactStoreTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static ArtifactStore artifactStore;
-
-  @BeforeClass
-  public static void setup() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    // any plugin which requires transaction will be excluded
-    cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
-    artifactStore = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactStore.class);
-  }
+  protected static ArtifactStore artifactStore;
 
   @After
   public void cleanup() throws IOException {
@@ -1237,42 +1227,52 @@ public class ArtifactStoreTest {
     // start up a bunch of threads that will try and write the same artifact at the same time
     // only one of them should be able to write it
     int numThreads = 20;
-    final Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "abc", "1.0.0");
-    final List<String> successfulWriters = Collections.synchronizedList(Lists.<String>newArrayList());
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "abc", "1.0.0");
+    List<String> successfulWriters = Collections.synchronizedList(Lists.newArrayList());
 
     // use a barrier so they all try and write at the same time
     final CyclicBarrier barrier = new CyclicBarrier(numThreads);
-    final CountDownLatch latch = new CountDownLatch(numThreads);
     ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+    List<Future> futures = new ArrayList<>();
+
     for (int i = 0; i < numThreads; i++) {
       final String writer = String.valueOf(i);
-      executorService.execute(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            barrier.await();
-            ArtifactMeta meta = new ArtifactMeta(
-              ArtifactClasses.builder()
-                .addPlugin(new PluginClass("plugin-type", "plugin" + writer, "", "classname", "cfg",
-                  ImmutableMap.<String, PluginPropertyField>of()))
-                .build()
-            );
-            writeArtifact(artifactId, meta, writer);
-            successfulWriters.add(writer);
-          } catch (InterruptedException | BrokenBarrierException | IOException e) {
-            // something went wrong, fail the test
-            throw new RuntimeException(e);
-          } catch (ArtifactAlreadyExistsException | WriteConflictException e) {
-            // these are ok, all but one thread should see this
-          } finally {
-            latch.countDown();
+      // if we use latch and call execute(), even if the thread throws the RuntimeException, the test will not fail
+      futures.add(executorService.submit(() -> {
+        try {
+          barrier.await();
+          ArtifactMeta meta = new ArtifactMeta(
+            ArtifactClasses.builder()
+              .addPlugin(new PluginClass("plugin-type", "plugin" + writer, "", "classname", "cfg",
+                ImmutableMap.of()))
+              .build()
+          );
+          writeArtifact(artifactId, meta, writer);
+          successfulWriters.add(writer);
+        } catch (InterruptedException | BrokenBarrierException e) {
+          // something went wrong, fail the test
+          throw new RuntimeException(e);
+        } catch (ArtifactAlreadyExistsException | WriteConflictException e) {
+          // these are ok, all but one thread should see this
+        } catch (IOException e) {
+          // ArtifactAlreadyExistsException and WriteConflictException are ok, but IOException we need to check if
+          // SQL write fails due to concurrent update, currently our spi does not define if a transaction fails due to
+          // conflict or not.
+          // TODO: move IOException to the first catch block when CDAP-14672 is finished.
+          if (e.getCause() instanceof SQLException && e.getCause().getMessage().contains("concurrent update")) {
+            // this is ok
+            return;
           }
+          // otherwise throw
+          throw new RuntimeException(e);
         }
-      });
+      }));
     }
 
-    // wait for all writers to finish
-    latch.await();
+    for (Future future : futures) {
+      future.get();
+    }
+
     // only one writer should have been able to write
     Assert.assertEquals(1, successfulWriters.size());
     String successfulWriter = successfulWriters.get(0);
@@ -1299,12 +1299,7 @@ public class ArtifactStoreTest {
     Assert.assertEquals(properties, detail.getMeta().getProperties());
 
     // update one key and add a new key
-    artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
-      @Override
-      public Map<String, String> apply(Map<String, String> input) {
-        return ImmutableMap.of("k3", "v3");
-      }
-    });
+    artifactStore.updateArtifactProperties(artifactId, input -> ImmutableMap.of("k3", "v3"));
     properties = ImmutableMap.of("k3", "v3");
     detail = artifactStore.getArtifact(artifactId);
     Assert.assertEquals(properties, detail.getMeta().getProperties());

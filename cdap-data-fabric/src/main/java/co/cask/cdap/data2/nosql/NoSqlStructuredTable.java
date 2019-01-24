@@ -29,8 +29,8 @@ import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.field.Field;
-import co.cask.cdap.spi.data.table.field.FieldFactory;
 import co.cask.cdap.spi.data.table.field.FieldType;
+import co.cask.cdap.spi.data.table.field.FieldValidator;
 import co.cask.cdap.spi.data.table.field.Range;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -50,15 +50,15 @@ public final class NoSqlStructuredTable implements StructuredTable {
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTable.class);
   private final Table table;
   private final StructuredTableSchema schema;
-  private final FieldFactory fieldFactory;
+  private final FieldValidator fieldValidator;
   // this key prefix will be used for any row in this table
   private final MDSKey keyPrefix;
 
   public NoSqlStructuredTable(Table table, StructuredTableSchema schema) {
     this.table = table;
     this.schema = schema;
-    this.fieldFactory = new FieldFactory(schema);
     this.keyPrefix = new MDSKey.Builder().add(schema.getTableId().getName()).build();
+    this.fieldValidator = new FieldValidator(schema);
   }
 
   @Override
@@ -111,12 +111,6 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
-  public FieldFactory getFieldFactory() {
-    return fieldFactory;
-  }
-
-
-  @Override
   public void close() throws IOException {
     table.close();
   }
@@ -149,6 +143,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
     schema.validatePrimaryKeys(keys.stream().map(Field::getName).collect(Collectors.toList()), allowPrefix);
     MDSKey.Builder mdsKey = new MDSKey.Builder(keyPrefix);
     for (Field<?> key : keys) {
+      fieldValidator.validateField(key);
       addKey(mdsKey, key, schema.getType(key.getName()));
     }
     return mdsKey.build().getKey();
@@ -204,6 +199,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
     int i = 0;
     for (Field<?> field : fields) {
+      fieldValidator.validateField(field);
       if (schema.isPrimaryKeyColumn(field.getName())) {
         addKey(key, field, schema.getType(field.getName()));
       } else {

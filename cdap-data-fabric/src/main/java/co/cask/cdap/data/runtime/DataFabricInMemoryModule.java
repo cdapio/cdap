@@ -46,5 +46,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
       }
     }));
     install(new TransactionExecutorModule());
+    install(new StorageModule());
   }
 }

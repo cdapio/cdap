@@ -99,6 +99,8 @@ import co.cask.cdap.security.authorization.InvalidAuthorizerException;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
@@ -346,6 +348,8 @@ public class TestBase {
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
+
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   private static TestManager getTestManager() {

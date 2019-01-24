@@ -28,7 +28,7 @@ import java.util.LinkedHashSet;
  * the table schema, 2. the field is not a primary key or an index, but it is used as one, 3. the field is part of
  * schema but its value is incompatible with what is in the schema.
  */
-public class InvalidFieldException extends Exception {
+public class InvalidFieldException extends RuntimeException {
   private final Collection<String> fieldNames;
   private final StructuredTableId tableId;
 

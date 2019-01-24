@@ -23,6 +23,7 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -75,6 +76,8 @@ import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.security.store.SecureStoreService;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -258,6 +261,8 @@ public class StandaloneMain {
     operationalStatsService.startAndWait();
 
     secureStoreService.startAndWait();
+
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?

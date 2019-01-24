@@ -726,6 +726,14 @@
   </property>
 
   <property>
+    <name>data.storage.implementation</name>
+    <value>nosql</value>
+    <description>
+      The database implementation CDAP will use.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.bind.address</name>
     <value>0.0.0.0</value>
     <description>
