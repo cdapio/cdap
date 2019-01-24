@@ -16,6 +16,9 @@
 
 package co.cask.cdap.data.runtime.main;
 
+import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -32,7 +35,10 @@ import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.preview.PreviewService;
+import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
@@ -42,6 +48,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.guice.SecureStoreClientModule;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
@@ -112,11 +119,18 @@ public class PreviewTwillRunnable extends AbstractMasterTwillRunnable {
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new PreviewHttpModule().getDistributedModules(),
+      new SecureStoreClientModule(),
+      new AuthorizationModule(),
+      new ProvisionerModule(),
+      new TwillModule(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           bind(UGIProvider.class).to(RemoteUGIProvider.class).in(Scopes.SINGLETON);
+          // TODO (CDAP-14677): find a better way to inject metadata publisher
+          bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
         }
       }
     );
