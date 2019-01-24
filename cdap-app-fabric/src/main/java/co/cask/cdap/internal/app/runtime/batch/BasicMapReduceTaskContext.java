@@ -316,7 +316,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
       if (taskId != null) {
         String taskMetricsPreference =
           programOptions.getUserArguments().asMap().get(SystemArguments.METRICS_CONTEXT_TASK_INCLUDED);
-        boolean taskLevelPreference = taskMetricsPreference == null ? true : Boolean.valueOf(taskMetricsPreference);
+        boolean taskLevelPreference = taskMetricsPreference == null ? false : Boolean.valueOf(taskMetricsPreference);
         if (taskLevelPreference) {
           tags.put(Constants.Metrics.Tag.INSTANCE_ID, taskId);
         }
