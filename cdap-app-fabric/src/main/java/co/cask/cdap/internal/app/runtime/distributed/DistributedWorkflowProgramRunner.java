@@ -121,6 +121,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
 
     WorkflowSpecification spec = program.getApplicationSpecification().getWorkflows().get(program.getName());
     List<ClassAcceptor> acceptors = new ArrayList<>();
+    acceptors.add(launchConfig.getClassAcceptor());
 
     // Only interested in MapReduce and Spark nodes.
     // This is because CUSTOM_ACTION types are running inside the driver
