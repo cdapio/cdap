@@ -72,6 +72,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -829,22 +830,47 @@ public class MetadataDataset extends AbstractDataset {
   private Iterable<SearchTerm> getSearchTerms(SearchRequest searchRequest) {
     Optional<NamespaceId> namespace = searchRequest.getNamespaceId();
     Set<EntityScope> entityScopes = searchRequest.getEntityScopes();
-    String searchQuery = searchRequest.getQuery();
     List<SearchTerm> searchTerms = new LinkedList<>();
+    Consumer<String> termAdder = determineSearchFields(namespace, entityScopes, searchTerms);
+    String searchQuery = searchRequest.getQuery();
     for (String term : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
-      if (entityScopes.contains(EntityScope.USER)) {
-        SearchTerm cleanedTerm = namespace.map(namespaceId -> SearchTerm.from(namespaceId, term))
-          .orElseGet(() -> SearchTerm.from(term));
-        searchTerms.add(cleanedTerm);
-      }
-      // for non-system namespaces, also add the system namespace, so entities from system namespace are surfaced
-      // in the search results as well
-      if (namespace.isPresent() && !NamespaceId.SYSTEM.equals(namespace.get()) &&
-        entityScopes.contains(EntityScope.SYSTEM)) {
-        searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
-      }
+      termAdder.accept(term);
     }
     return searchTerms;
+  }
+
+  @VisibleForTesting
+  @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+  static Consumer<String> determineSearchFields(Optional<NamespaceId> namespace,
+                                                Set<EntityScope> entityScopes, List<SearchTerm> searchTerms) {
+    if (!namespace.isPresent()) {
+      // we can't really represent "any namespace but system", so we just search for any occurrence of the term
+      if (entityScopes.contains(EntityScope.USER)) {
+        return term -> searchTerms.add(SearchTerm.from(term));
+      }
+      if (entityScopes.contains(EntityScope.SYSTEM)) {
+        return term -> searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
+      }
+    // namespace is present
+    } else if (namespace.get().equals(NamespaceId.SYSTEM)) {
+      if (entityScopes.contains(EntityScope.SYSTEM)) {
+        return term -> searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
+      }
+    // namespace is a user namespace
+    } else if (entityScopes.contains(EntityScope.USER)) {
+      if (entityScopes.contains(EntityScope.SYSTEM)) {
+        return term -> {
+          searchTerms.add(SearchTerm.from(namespace.get(), term));
+          searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
+        };
+      }
+      return term -> searchTerms.add(SearchTerm.from(namespace.get(), term));
+    // namespace is a user namespace and scope does not contain user
+    } else if (entityScopes.contains(EntityScope.SYSTEM)) {
+      return term -> searchTerms.add(SearchTerm.from(NamespaceId.SYSTEM, term));
+    }
+    // no search terms - entityScopes is empty, namespace system and scope user, etc...
+    return term -> { };
   }
 
   private void writeValue(MetadataEntry entry) {
