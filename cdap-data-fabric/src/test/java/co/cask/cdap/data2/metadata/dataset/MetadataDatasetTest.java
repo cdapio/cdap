@@ -59,7 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Test class for {@link MetadataDataset} class.
@@ -119,22 +118,25 @@ public class MetadataDatasetTest {
     // Set some properties
     txnl.execute(() -> {
       dataset.setProperty(app1, "akey1", "avalue1");
-      MetadataChange metadataChange = dataset.setProperties(program1, Collections.emptyMap());
-      Assert.assertEquals(metadataChange.getExisting(), new Metadata(program1, Collections.emptyMap(),
-                                                                     Collections.emptySet()));
-      Assert.assertEquals(metadataChange.getLatest(), new Metadata(program1, Collections.emptyMap(),
-                                                                   Collections.emptySet()));
+      MetadataDataset.Change metadataChange = dataset.setProperties(program1, Collections.emptyMap());
+      Assert.assertEquals(metadataChange.getExisting(), new MetadataDataset.Record(program1, Collections.emptyMap(),
+                                                                                   Collections.emptySet()));
+      Assert.assertEquals(metadataChange.getLatest(), new MetadataDataset.Record(program1, Collections.emptyMap(),
+                                                                                 Collections.emptySet()));
       metadataChange = dataset.setProperty(program1, "fkey1", "fvalue1");
       // assert the metadata change which happens on setting property for the first time
-      Assert.assertEquals(new Metadata(program1), metadataChange.getExisting());
-      Assert.assertEquals(new Metadata(program1, ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
+      Assert.assertEquals(new MetadataDataset.Record(program1), metadataChange.getExisting());
+      Assert.assertEquals(new MetadataDataset.Record(program1,
+                                                     ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
                           metadataChange.getLatest());
       metadataChange = dataset.setProperty(program1, "fK", "fV");
       // assert the metadata change which happens when setting property with existing property
-      Assert.assertEquals(new Metadata(program1, ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
+      Assert.assertEquals(new MetadataDataset.Record(program1,
+                                                     ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
                           metadataChange.getExisting());
-      Assert.assertEquals(new Metadata(program1, ImmutableMap.of("fkey1", "fvalue1", "fK", "fV"),
-                                       Collections.emptySet()),
+      Assert.assertEquals(new MetadataDataset.Record(program1,
+                                                     ImmutableMap.of("fkey1", "fvalue1", "fK", "fV"),
+                                                     Collections.emptySet()),
                           metadataChange.getLatest());
       dataset.setProperty(dataset1, "dkey1", "dvalue1");
       dataset.setProperty(dataset2, "skey1", "svalue1");
@@ -229,21 +231,21 @@ public class MetadataDatasetTest {
     });
     txnl.execute(() -> {
       dataset.addTags(app1, "tag1", "tag2", "tag3");
-      MetadataChange metadataChange = dataset.addTags(program1, Collections.emptySet());
-      Assert.assertEquals(metadataChange.getExisting(), new Metadata(program1, Collections.emptyMap(),
-                                                                     Collections.emptySet()));
-      Assert.assertEquals(metadataChange.getLatest(), new Metadata(program1, Collections.emptyMap(),
-                                                                   Collections.emptySet()));
+      MetadataDataset.Change metadataChange = dataset.addTags(program1, Collections.emptySet());
+      Assert.assertEquals(metadataChange.getExisting(), new MetadataDataset.Record(program1, Collections.emptyMap(),
+                                                                                   Collections.emptySet()));
+      Assert.assertEquals(metadataChange.getLatest(), new MetadataDataset.Record(program1, Collections.emptyMap(),
+                                                                                 Collections.emptySet()));
       metadataChange = dataset.addTags(program1, "tag1");
       // assert the metadata change which happens on setting tag for the first time
-      Assert.assertEquals(new Metadata(program1), metadataChange.getExisting());
-      Assert.assertEquals(new Metadata(program1, Collections.emptyMap(), ImmutableSet.of("tag1")),
+      Assert.assertEquals(new MetadataDataset.Record(program1), metadataChange.getExisting());
+      Assert.assertEquals(new MetadataDataset.Record(program1, Collections.emptyMap(), ImmutableSet.of("tag1")),
                           metadataChange.getLatest());
       metadataChange = dataset.addTags(program1, "tag2");
       // assert the metadata change which happens on setting tag when a tag exists
-      Assert.assertEquals(new Metadata(program1, Collections.emptyMap(), ImmutableSet.of("tag1")),
+      Assert.assertEquals(new MetadataDataset.Record(program1, Collections.emptyMap(), ImmutableSet.of("tag1")),
                           metadataChange.getExisting());
-      Assert.assertEquals(new Metadata(program1, Collections.emptyMap(), ImmutableSet.of("tag1", "tag2")),
+      Assert.assertEquals(new MetadataDataset.Record(program1, Collections.emptyMap(), ImmutableSet.of("tag1", "tag2")),
                           metadataChange.getLatest());
       dataset.addTags(dataset1, "tag3", "tag2");
       dataset.addTags(dataset2, "tag2");
@@ -686,6 +688,15 @@ public class MetadataDatasetTest {
       results = dataset.search(request).getResults();
       // the result should not contain user entities
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+
+      // TODO (CDAP-14778): uncomment this after bug is fixed
+      // request = new SearchRequest(NamespaceId.SYSTEM, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+      //                            SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
+      //                            false, EnumSet.of(EntityScope.SYSTEM));
+      // results = dataset.search(request).getResults();
+      // the result should not contain user entities
+      // Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+
       request = new SearchRequest(ns1, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
                                   SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
                                   false, EnumSet.allOf(EntityScope.class));
@@ -754,26 +765,27 @@ public class MetadataDatasetTest {
 
   @Test
   public void testMultiGet() throws Exception {
-    final Map<MetadataEntity, Metadata> allMetadata = new HashMap<>();
-    allMetadata.put(program1, new Metadata(program1,
-                                           ImmutableMap.of("key1", "value1", "key2", "value2"),
-                                           ImmutableSet.of("tag1", "tag2", "tag3")));
-    allMetadata.put(dataset1, new Metadata(dataset1,
-                                           ImmutableMap.of("key10", "value10", "key11", "value11"),
-                                           ImmutableSet.of()));
-    allMetadata.put(app1, new Metadata(app1,
-                                       ImmutableMap.of("key20", "value20", "key21", "value21"),
-                                       ImmutableSet.of()));
-    allMetadata.put(dataset2, new Metadata(dataset2,
-                                           ImmutableMap.of("key30", "value30", "key31", "value31", "key32", "value32"),
-                                           ImmutableSet.of()));
-    allMetadata.put(artifact1, new Metadata(artifact1,
-                                            ImmutableMap.of("key40", "value41"),
-                                            ImmutableSet.of()));
+    final Map<MetadataEntity, MetadataDataset.Record> allMetadata = new HashMap<>();
+    allMetadata.put(program1, new MetadataDataset.Record(program1,
+                                                         ImmutableMap.of("key1", "value1", "key2", "value2"),
+                                                         ImmutableSet.of("tag1", "tag2", "tag3")));
+    allMetadata.put(dataset1, new MetadataDataset.Record(dataset1,
+                                                         ImmutableMap.of("key10", "value10", "key11", "value11"),
+                                                         ImmutableSet.of()));
+    allMetadata.put(app1, new MetadataDataset.Record(app1,
+                                                     ImmutableMap.of("key20", "value20", "key21", "value21"),
+                                                     ImmutableSet.of()));
+    allMetadata.put(dataset2, new MetadataDataset.Record(dataset2,
+                                                         ImmutableMap.of("key30", "value30", "key31", "value31",
+                                                                         "key32", "value32"),
+                                                         ImmutableSet.of()));
+    allMetadata.put(artifact1, new MetadataDataset.Record(artifact1,
+                                                          ImmutableMap.of("key40", "value41"),
+                                                          ImmutableSet.of()));
 
     txnl.execute(() -> {
-      for (Map.Entry<MetadataEntity, Metadata> entry : allMetadata.entrySet()) {
-        Metadata metadata = entry.getValue();
+      for (Map.Entry<MetadataEntity, MetadataDataset.Record> entry : allMetadata.entrySet()) {
+        MetadataDataset.Record metadata = entry.getValue();
         for (Map.Entry<String, String> props : metadata.getProperties().entrySet()) {
           dataset.setProperty(metadata.getMetadataEntity(), props.getKey(), props.getValue());
         }
@@ -783,15 +795,15 @@ public class MetadataDatasetTest {
     });
 
     txnl.execute(() -> {
-      ImmutableSet<Metadata> expected =
-        ImmutableSet.<Metadata>builder()
+      ImmutableSet<MetadataDataset.Record> expected =
+        ImmutableSet.<MetadataDataset.Record>builder()
           .add(allMetadata.get(program1))
           .add(allMetadata.get(app1))
           .build();
       Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(program1, app1)));
 
       expected =
-        ImmutableSet.<Metadata>builder()
+        ImmutableSet.<MetadataDataset.Record>builder()
           .add(allMetadata.get(dataset2))
           .add(allMetadata.get(dataset1))
           .add(allMetadata.get(artifact1))
@@ -799,7 +811,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(dataset2, dataset1, artifact1)));
 
       expected =
-        ImmutableSet.<Metadata>builder()
+        ImmutableSet.<MetadataDataset.Record>builder()
           .add(allMetadata.get(artifact1))
           .build();
       Assert.assertEquals(expected, dataset.getMetadata(ImmutableSet.of(artifact1)));
@@ -851,70 +863,6 @@ public class MetadataDatasetTest {
     doTestHistory(dataset, app1, "a_");
     doTestHistory(dataset, dataset1, "d_");
     doTestHistory(dataset, dataset2, "s_");
-  }
-
-  @Test
-  public void testIndexRebuilding() throws Exception {
-    final MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testIndexRebuilding"));
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
-    txnl.execute(() -> {
-      Indexer indexer = new ReversingIndexer();
-      dataset.writeValue(new MetadataEntry(program1, "flowKey", "flowValue"));
-      dataset.storeIndexes(new MetadataEntry(program1, "flowKey", "flowValue"), Collections.singleton(indexer));
-      dataset.writeValue(new MetadataEntry(dataset1, "datasetKey", "datasetValue"));
-      dataset.storeIndexes(new MetadataEntry(dataset1, "datasetKey", "datasetValue"), Collections.singleton(indexer));
-    });
-    final String namespaceId = program1.getValue(MetadataEntity.NAMESPACE);
-    final Set<EntityTypeSimpleName> targetTypes = Collections.singleton(EntityTypeSimpleName.ALL);
-    txnl.execute(() -> {
-      List<MetadataEntry> searchResults = searchByDefaultIndex(dataset, namespaceId, "flowValue", targetTypes);
-      Assert.assertTrue(searchResults.isEmpty());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
-      Assert.assertTrue(searchResults.isEmpty());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetValue", targetTypes);
-      Assert.assertTrue(searchResults.isEmpty());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
-      Assert.assertTrue(searchResults.isEmpty());
-    });
-    final AtomicReference<byte[]> startRowKeyForNextBatch = new AtomicReference<>();
-    txnl.execute(() -> {
-      // Re-build indexes. Now the default indexer should be used
-      startRowKeyForNextBatch.set(dataset.rebuildIndexes(null, 1));
-      Assert.assertNotNull(startRowKeyForNextBatch.get());
-    });
-    txnl.execute(() -> {
-      List<MetadataEntry> flowSearchResults = searchByDefaultIndex(dataset, namespaceId, "flowValue", targetTypes);
-      List<MetadataEntry> dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetValue", targetTypes);
-      if (!flowSearchResults.isEmpty()) {
-        Assert.assertEquals(1, flowSearchResults.size());
-        flowSearchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
-        Assert.assertEquals(1, flowSearchResults.size());
-        Assert.assertTrue(dsSearchResults.isEmpty());
-        dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
-        Assert.assertTrue(dsSearchResults.isEmpty());
-      } else {
-        flowSearchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
-        Assert.assertTrue(flowSearchResults.isEmpty());
-        Assert.assertEquals(1, dsSearchResults.size());
-        dsSearchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
-        Assert.assertEquals(1, dsSearchResults.size());
-      }
-    });
-    txnl.execute(() -> {
-      startRowKeyForNextBatch.set(dataset.rebuildIndexes(startRowKeyForNextBatch.get(), 1));
-      Assert.assertNull(startRowKeyForNextBatch.get());
-    });
-    txnl.execute(() -> {
-      List<MetadataEntry> searchResults = searchByDefaultIndex(dataset, namespaceId, "flowValue", targetTypes);
-      Assert.assertEquals(1, searchResults.size());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "flowKey:flow*", targetTypes);
-      Assert.assertEquals(1, searchResults.size());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetValue", targetTypes);
-      Assert.assertEquals(1, searchResults.size());
-      searchResults = searchByDefaultIndex(dataset, namespaceId, "datasetKey:dataset*", targetTypes);
-      Assert.assertEquals(1, searchResults.size());
-    });
   }
 
   @Test
@@ -1221,10 +1169,10 @@ public class MetadataDatasetTest {
     TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
 
     // Metadata change history keyed by time in millis the change was made
-    final Map<Long, Metadata> expected = new HashMap<>();
+    final Map<Long, MetadataDataset.Record> expected = new HashMap<>();
     // No history for targetId at the beginning
     txnl.execute(() -> {
-      Metadata completeRecord = new Metadata(targetId);
+      MetadataDataset.Record completeRecord = new MetadataDataset.Record(targetId);
       expected.put(System.currentTimeMillis(), completeRecord);
       // Get history for targetId, should be empty
       Assert.assertEquals(ImmutableSet.of(completeRecord),
@@ -1232,15 +1180,16 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
 
     // Since the key to expected map is time in millis, sleep for a millisecond to make sure the key is distinct
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add first record
-    final Metadata completeRecord =
-      new Metadata(targetId, toProps(prefix, "k1", "v1"), toTags(prefix, "t1", "t2"));
+    final MetadataDataset.Record completeRecord =
+      new MetadataDataset.Record(targetId, toProps(prefix, "k1", "v1"), toTags(prefix, "t1", "t2"));
     txnl.execute(() -> addMetadataHistory(dataset, completeRecord));
     txnl.execute(() -> {
       long time = System.currentTimeMillis();
@@ -1251,7 +1200,8 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -1262,8 +1212,8 @@ public class MetadataDatasetTest {
     });
     // Save the complete metadata record at this point
     txnl.execute(() -> {
-      Metadata completeRecord1 = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2"),
-                                              toTags(prefix, "t1", "t2", "t3"));
+      MetadataDataset.Record completeRecord1 =
+        new MetadataDataset.Record(targetId, toProps(prefix, "k1", "v1", "k2", "v2"), toTags(prefix, "t1", "t2", "t3"));
       long time = System.currentTimeMillis();
       expected.put(time, completeRecord1);
       // Assert the history record with the change
@@ -1272,7 +1222,8 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -1283,8 +1234,9 @@ public class MetadataDatasetTest {
     });
     txnl.execute(() -> {
       // Save the complete metadata record at this point
-      Metadata completeRecord12 = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
-                                               toTags(prefix, "t1", "t2", "t3", "t4"));
+      MetadataDataset.Record completeRecord12 = new MetadataDataset.Record(targetId, toProps(prefix, "k1", "v1",
+                                                                                             "k2", "v2", "k3", "v3"),
+                                                                           toTags(prefix, "t1", "t2", "t3", "t4"));
       long time = System.currentTimeMillis();
       expected.put(time, completeRecord12);
       // Assert the history record with the change
@@ -1293,7 +1245,8 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -1304,8 +1257,9 @@ public class MetadataDatasetTest {
     });
     txnl.execute(() -> {
       // Save the complete metadata record at this point
-      Metadata completeRecord13 = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
-                                               toTags(prefix, "t1", "t2", "t3", "t4"));
+      MetadataDataset.Record completeRecord13 = new MetadataDataset.Record(targetId, toProps(prefix, "k1", "v1",
+                                                                                             "k2", "v2", "k3", "v3"),
+                                                                           toTags(prefix, "t1", "t2", "t3", "t4"));
       long time = System.currentTimeMillis();
       expected.put(time, completeRecord13);
       // Assert the history record with the change
@@ -1314,7 +1268,8 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -1326,8 +1281,9 @@ public class MetadataDatasetTest {
     });
     txnl.execute(() -> {
       // Save the complete metadata record at this point
-      Metadata completeRecord14 = new Metadata(targetId, toProps(prefix, "k1", "v1", "k3", "v3"),
-                                               toTags(prefix, "t1", "t3"));
+      MetadataDataset.Record completeRecord14 = new MetadataDataset.Record(targetId,
+                                                                           toProps(prefix, "k1", "v1", "k3", "v3"),
+                                                                           toTags(prefix, "t1", "t3"));
       long time = System.currentTimeMillis();
       expected.put(time, completeRecord14);
       // Assert the history record with the change
@@ -1336,7 +1292,8 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -1347,7 +1304,7 @@ public class MetadataDatasetTest {
     });
     txnl.execute(() -> {
       // Save the complete metadata record at this point
-      Metadata completeRecord15 = new Metadata(targetId);
+      MetadataDataset.Record completeRecord15 = new MetadataDataset.Record(targetId);
       long time = System.currentTimeMillis();
       expected.put(time, completeRecord15);
       // Assert the history record with the change
@@ -1356,7 +1313,8 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -1365,8 +1323,8 @@ public class MetadataDatasetTest {
       dataset.setProperty(targetId, prefix + "k2", "v2");
       dataset.addTags(targetId, prefix + "t2");
     });
-    final Metadata lastCompleteRecord = new Metadata(targetId, toProps(prefix, "k2", "v2"),
-                                                     toTags(prefix, "t2"));
+    final MetadataDataset.Record lastCompleteRecord = new MetadataDataset.Record(targetId, toProps(prefix, "k2", "v2"),
+                                                                                 toTags(prefix, "t2"));
     txnl.execute(() -> {
       // Save the complete metadata record at this point
       long time = System.currentTimeMillis();
@@ -1377,13 +1335,14 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Now assert all history
     txnl.execute(() -> {
-      for (Map.Entry<Long, Metadata> entry : expected.entrySet()) {
+      for (Map.Entry<Long, MetadataDataset.Record> entry : expected.entrySet()) {
         Assert.assertEquals(entry.getValue(),
                             getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), entry.getKey())));
       }
@@ -1393,11 +1352,12 @@ public class MetadataDatasetTest {
       // Also, the metadata itself should be equal to the last recorded snapshot
       Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId),
                                                                  System.currentTimeMillis())),
-                          new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                          new MetadataDataset.Record(targetId,
+                                                     dataset.getProperties(targetId), dataset.getTags(targetId)));
     });
   }
 
-  private void addMetadataHistory(MetadataDataset dataset, Metadata record) {
+  private void addMetadataHistory(MetadataDataset dataset, MetadataDataset.Record record) {
     for (Map.Entry<String, String> entry : record.getProperties().entrySet()) {
       dataset.setProperty(record.getMetadataEntity(), entry.getKey(), entry.getValue());
     }
@@ -1460,22 +1420,5 @@ public class MetadataDatasetTest {
                                              .add(MetadataDatasetDefinition.SCOPE_KEY, scope.name())
                                              .build(),
                                            null);
-  }
-
-  private static final class ReversingIndexer implements Indexer {
-
-    @Override
-    public Set<String> getIndexes(MetadataEntry entry) {
-      return ImmutableSet.of(reverse(entry.getKey()), reverse(entry.getValue()));
-    }
-
-    @Override
-    public SortInfo.SortOrder getSortOrder() {
-      return SortInfo.SortOrder.WEIGHTED;
-    }
-
-    private String reverse(String toReverse) {
-      return new StringBuilder(toReverse).reverse().toString();
-    }
   }
 }

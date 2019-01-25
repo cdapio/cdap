@@ -16,24 +16,36 @@
 
 package co.cask.cdap.spi.metadata;
 
-import co.cask.cdap.api.metadata.MetadataScope;
-
 import java.util.Objects;
 
 /**
- * Identifies a named piece of metadata of a specific kind in a given scope,
- * for example, property "schema" in scope SYSTEM, or tag "finance" in scope USER.
+ * Specifies the sorting of metadata search results.
  */
-public class ScopedNameOfKind extends ScopedName {
-  private final MetadataKind kind;
+public class Sorting {
 
-  public ScopedNameOfKind(MetadataKind kind, MetadataScope scope, String name) {
-    super(scope, name);
-    this.kind = kind;
+  /**
+   * Whether to sort in ascending or descending order.
+   */
+  public enum Order { ASC, DESC }
+
+  private final String key;
+  private final Order order;
+
+  /**
+   * @param key the field to sort by
+   * @param order whether to sort ascending or descending
+   */
+  public Sorting(String key, Order order) {
+    this.key = key;
+    this.order = order;
   }
 
-  public MetadataKind getKind() {
-    return kind;
+  public String getKey() {
+    return key;
+  }
+
+  public Order getOrder() {
+    return order;
   }
 
   @Override
@@ -44,20 +56,21 @@ public class ScopedNameOfKind extends ScopedName {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (!super.equals(o)) {
-      return false;
-    }
-    ScopedNameOfKind that = (ScopedNameOfKind) o;
-    return kind == that.kind;
+    Sorting sorting = (Sorting) o;
+    return Objects.equals(key, sorting.key) &&
+      order == sorting.order;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), kind);
+    return Objects.hash(key, order);
   }
 
   @Override
   public String toString() {
-    return '(' + kind.name().toLowerCase() + ')' + super.toString();
+    return "Sorting{" +
+      "key='" + key + '\'' +
+      ", order=" + order +
+      '}';
   }
 }

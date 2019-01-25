@@ -32,7 +32,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.metadata.dataset.Metadata;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
@@ -352,7 +352,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           MetadataOperation.Create create = (MetadataOperation.Create) operation;
           // all the new metadata is in System scope - no validation
           metadataStore.replaceMetadata(MetadataScope.SYSTEM,
-                                        new Metadata(entity, create.getProperties(), create.getTags()),
+                                        new MetadataDataset.Record(entity, create.getProperties(), create.getTags()),
                                         DESCRIPTION_SET, CREATION_TIME_SET);
           break;
         }
