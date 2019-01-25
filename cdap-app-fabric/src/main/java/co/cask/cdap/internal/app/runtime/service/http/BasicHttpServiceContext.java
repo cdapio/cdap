@@ -134,8 +134,14 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   }
 
   @Override
-  public CloseableClassLoader createClassLoader(final ArtifactInfo artifactInfo,
-                                                @Nullable  final ClassLoader parentClassLoader) throws IOException {
+  public CloseableClassLoader createClassLoader(ArtifactInfo artifactInfo,
+                                                @Nullable ClassLoader parentClassLoader) throws IOException {
     return artifactManager.createClassLoader(artifactInfo, parentClassLoader);
+  }
+
+  @Override
+  public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
+                                                @Nullable ClassLoader parentClassLoader) throws IOException {
+    return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
   }
 }

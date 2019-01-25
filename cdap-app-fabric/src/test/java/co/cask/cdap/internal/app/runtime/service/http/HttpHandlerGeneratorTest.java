@@ -857,6 +857,12 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
+                                                  @Nullable ClassLoader parentClassLoader) throws IOException {
+      return null;
+    }
+
+    @Override
     public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
       return null;
     }
