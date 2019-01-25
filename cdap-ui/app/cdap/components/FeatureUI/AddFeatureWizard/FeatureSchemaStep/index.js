@@ -49,6 +49,12 @@ const mapDispatchToSelectSchemaProps = (dispatch) => {
         payload: schema
       });
     },
+    setSelectedSchemas: (schemas) => {
+      dispatch({
+        type: AddFeatureActions.setSelectedSchemas,
+        payload: schemas
+      });
+    },
     updatePropertyMap: (schema) => {
       dispatch({
         type: AddFeatureActions.updatePropertyMap,

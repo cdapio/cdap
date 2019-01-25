@@ -7,7 +7,7 @@ class AddSchema extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      title: props.title ? props.title : 'Schema',
+      title: props.title ? props.title : 'Add Schema',
       type: props.type ? props.type : 'NEW',
     };
   }
@@ -25,7 +25,6 @@ class AddSchema extends React.Component {
         {
           (this.state.type == 'NEW') ? <i className="fa fa-plus-circle add-operation" onClick={this.onOperation.bind(this,'ADD')}></i>:
           <div>
-            <i className="fa fa-pencil edit-operation" onClick={this.onOperation.bind(this,'EDIT')}></i>
             <i className="fa fa-trash delete-operation" onClick={this.onOperation.bind(this,'REMOVE')}></i>
           </div>
 

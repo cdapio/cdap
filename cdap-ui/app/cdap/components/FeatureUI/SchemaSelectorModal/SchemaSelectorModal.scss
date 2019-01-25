@@ -20,9 +20,41 @@
     height: 100%;
     overflow: hidden;
   }
-  .column-checklist-container {
+  .column-list-container {
     display: flex;
     height: calc(100% - 100px);
+    .list {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      .list-item {
+        display: flex;
+        margin: 3px 20px;
+        min-height: 25px;
+        border-bottom: solid 1px lightgrey;
+        .item-name {
+          width: 60%;
+        }
+        .item-property {
+          padding-left: 10px;
+          width: 40%;
+        }
+      }
+    }
+  }
+  .list-group-item {
+    display: flex;
+    align-items: center;
+    .check-box-label {
+      width: 90%;
+      text-overflow: ellipsis;
+      padding-left: 10px;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+    .select-icon {
+      font-size: 20px;
+    }
   }
   .column-list {
     overflow-y: auto;
@@ -38,7 +70,11 @@
     padding: 5px 10px;
     margin-bottom: -1px;
   }
-
+  .check-box-container {
+    input {
+      margin-right: 10px;
+    }
+  }
   .column-header {
     display: flex;
     font-weight: 500;
@@ -50,26 +86,10 @@
     min-height: 26px;
     margin-bottom: 3px;
   }
-
-  .column-control {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .select-all-container {
-    width: 100%;
-    padding: 10px 20px;
-    margin-bottom: 0px;
-    input {
-      margin-right: 10px;
-    }
-  }
-
   .column-name {
     width: 60%;
     padding-left: 10px;
   }
-
   .column-type {
     width: 40%;
     padding-left: 10px;
