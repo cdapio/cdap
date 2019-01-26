@@ -120,9 +120,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   @Override
   public void run(DatasetContext context) throws Exception {
-    BatchPhaseSpec phaseSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
-                                             BatchPhaseSpec.class);
 
+    BatchPhaseSpec phaseSpec;
     Path configFile = sec.getLocalizationContext().getLocalFile("HydratorSpark.config").toPath();
     try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
       String object = reader.readLine();
@@ -130,6 +129,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       sourceFactory = sourceSinkInfo.getSparkBatchSourceFactory();
       sinkFactory = sourceSinkInfo.getSparkBatchSinkFactory();
       stagePartitions = sourceSinkInfo.getStagePartitions();
+      phaseSpec = sourceSinkInfo.getPhaseSpec();
     }
     datasetContext = context;
     numOfRecordsPreview = phaseSpec.getNumOfRecordsPreview();

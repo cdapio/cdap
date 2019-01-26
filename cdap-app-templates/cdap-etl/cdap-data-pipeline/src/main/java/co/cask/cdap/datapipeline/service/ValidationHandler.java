@@ -113,8 +113,9 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
       stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
     }
-    DefaultPipelineConfigurer<ValidatingConfigurer> pipelineConfigurer =
-      new DefaultPipelineConfigurer<>(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
+    DefaultPipelineConfigurer pipelineConfigurer =
+      new DefaultPipelineConfigurer(validatingConfigurer, validatingConfigurer, stageConfig.getName(),
+                                    Engine.SPARK, stageConfigurer);
 
     try {
       StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), stageConfig.getPlugin(),

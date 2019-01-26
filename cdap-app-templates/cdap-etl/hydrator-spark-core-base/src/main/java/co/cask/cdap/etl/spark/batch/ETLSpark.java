@@ -28,6 +28,7 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
@@ -47,6 +48,8 @@ import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.etl.common.FieldOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
@@ -59,6 +62,8 @@ import co.cask.cdap.etl.common.submit.JoinerContextProvider;
 import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import co.cask.cdap.etl.spec.RuntimePluginDatasetConfigurer;
+import co.cask.cdap.etl.spec.SchemaPropagator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -73,8 +78,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Configures and sets up runs of {@link BatchSparkPipelineDriver}.
@@ -137,7 +145,8 @@ public class ETLSpark extends AbstractSpark {
       sparkConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
     }
 
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(context),
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                          context.getLogicalStartTime(), context,
                                                          context.getNamespace());
     SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
@@ -148,12 +157,25 @@ public class ETLSpark extends AbstractSpark {
                                                                  phaseSpec.isProcessTimingEnabled());
     PipelinePluginInstantiator pluginInstantiator =
       new PipelinePluginInstantiator(pluginContext, context.getMetrics(), phaseSpec, new SingleConnectorFactory());
-    PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
     Admin admin = context.getAdmin();
 
+
     PipelinePhase phase = phaseSpec.getPhase();
+    // for configuring pipeline stages
+    RuntimePluginDatasetConfigurer pluginDatasetConfigurer =
+      new RuntimePluginDatasetConfigurer(context.getAdmin(), context, evaluator);
+    Map<String, DefaultPipelineConfigurer> pluginConfigurers = new HashMap<>(phase.getDag().getNodes().size());
+    for (String stageName : phase.getDag().getNodes()) {
+      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(pluginDatasetConfigurer, pluginDatasetConfigurer,
+                                                                     stageName, Engine.SPARK));
+    }
+    SchemaPropagator schemaPropagator = new SchemaPropagator(pluginConfigurers, phase::getStageOutputs,
+                                                             stageName -> phase.getStage(stageName).getPluginType(),
+                                                             context.getWorkflowToken());
+
     // Collect field operations emitted by various stages in this MapReduce program
     Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    Set<StageSpec> updatedStageSpecs = new HashSet<>(pluginConfigurers.size());
     // go through in topological order so that arguments set by one stage are seen by stages after it
     for (String stageName : phase.getDag().getTopologicalOrder()) {
       StageSpec stageSpec = phase.getStage(stageName);
@@ -162,52 +184,71 @@ public class ETLSpark extends AbstractSpark {
         Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
       boolean isConnectorSink =
         Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSinks().contains(stageName);
+      DefaultPipelineConfigurer pipelineConfigurer = pluginConfigurers.get(stageName);
 
       SubmitterPlugin submitterPlugin = null;
       if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {
 
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        StageSpec updatedSpec = configureStage(stageSpec, pipelineConfigurer, schemaPropagator,
+                                               batchSource::configurePipeline);
+        updatedStageSpecs.add(updatedSpec);
         ContextProvider<SparkBatchSourceContext> contextProvider =
-          dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
+          dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, updatedSpec);
         submitterPlugin = new SubmitterPlugin<>(stageName, context, batchSource, contextProvider,
                                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
         Transform transform = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        StageSpec updatedSpec = configureStage(stageSpec, pipelineConfigurer, schemaPropagator,
+                                               transform::configurePipeline);
+        updatedStageSpecs.add(updatedSpec);
         ContextProvider<SparkBatchSourceContext> contextProvider =
-          dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
+          dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, updatedSpec);
         submitterPlugin = new SubmitterPlugin<>(stageName, context, transform, contextProvider,
                                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        StageSpec updatedSpec = configureStage(stageSpec, pipelineConfigurer, schemaPropagator,
+                                               batchSink::configurePipeline);
+        updatedStageSpecs.add(updatedSpec);
         ContextProvider<SparkBatchSinkContext> contextProvider =
-          dsContext -> new SparkBatchSinkContext(sinkFactory, context, pipelineRuntime, dsContext, stageSpec);
+          dsContext -> new SparkBatchSinkContext(sinkFactory, context, pipelineRuntime, dsContext, updatedSpec);
         submitterPlugin = new SubmitterPlugin<>(stageName, context, batchSink, contextProvider,
                                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
         BatchConfigurable<SparkPluginContext> sparkSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        StageSpec updatedSpec = configureStage(stageSpec, pipelineConfigurer, schemaPropagator,
+                                               sparkSink::configurePipeline);
+        updatedStageSpecs.add(updatedSpec);
         ContextProvider<BasicSparkPluginContext> contextProvider =
-          dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, stageSpec, dsContext, admin);
-        submitterPlugin = new SubmitterPlugin<>(stageName, context, sparkSink, contextProvider);
+          dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, updatedSpec, dsContext, admin);
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, sparkSink, contextProvider, ctx -> { });
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
         BatchAggregator aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        StageSpec updatedSpec = configureStage(stageSpec, pipelineConfigurer, schemaPropagator,
+                                               aggregator::configurePipeline);
+        updatedStageSpecs.add(updatedSpec);
         ContextProvider<DefaultAggregatorContext> contextProvider =
-          new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);
+          new AggregatorContextProvider(pipelineRuntime, updatedSpec, admin);
         submitterPlugin = new SubmitterPlugin<>(stageName, context, aggregator, contextProvider,
                                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
         BatchJoiner joiner = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        StageSpec updatedSpec = configureStage(stageSpec, pipelineConfigurer, schemaPropagator,
+                                               joiner::configurePipeline);
+        updatedStageSpecs.add(updatedSpec);
         ContextProvider<DefaultJoinerContext> contextProvider =
-          new JoinerContextProvider(pipelineRuntime, stageSpec, admin);
+          new JoinerContextProvider(pipelineRuntime, updatedSpec, admin);
         submitterPlugin = new SubmitterPlugin<>(stageName, context, joiner, contextProvider, sparkJoinerContext -> {
           stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
           stageOperations.put(stageName, sparkJoinerContext.getFieldOperations());
@@ -220,12 +261,16 @@ public class ETLSpark extends AbstractSpark {
       }
     }
 
+    // create a new BatchPhaseSpec based on updated stage specs
+    PipelinePhase updatedPhase = new PipelinePhase(updatedStageSpecs, phase.getDag());
+    BatchPhaseSpec updatedPhaseSpec = new BatchPhaseSpec(phaseSpec, updatedPhase);
     File configFile = File.createTempFile("HydratorSpark", ".config");
     cleanupFiles.add(configFile);
     try (Writer writer = Files.newBufferedWriter(configFile.toPath(), StandardCharsets.UTF_8)) {
       SparkBatchSourceSinkFactoryInfo sourceSinkInfo = new SparkBatchSourceSinkFactoryInfo(sourceFactory,
                                                                                            sinkFactory,
-                                                                                           stagePartitions);
+                                                                                           stagePartitions,
+                                                                                           updatedPhaseSpec);
       writer.write(GSON.toJson(sourceSinkInfo));
     }
 
@@ -240,6 +285,29 @@ public class ETLSpark extends AbstractSpark {
       // Put the collected field operations in workflow token
       token.put(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN, GSON.toJson(stageOperations));
     }
+  }
+
+  private StageSpec configureStage(StageSpec currentSpec, DefaultPipelineConfigurer pipelineConfigurer,
+                                   SchemaPropagator schemaPropagator,
+                                   Consumer<DefaultPipelineConfigurer> configureConsumer) {
+    configureConsumer.accept(pipelineConfigurer);
+
+    DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    StageSpec.Builder updatedSpec = StageSpec.builder(currentSpec)
+      .setErrorSchema(stageConfigurer.getErrorSchema())
+      .addInputSchemas(stageConfigurer.getInputSchemas());
+    Map<String, Schema> outputPortSchemas = stageConfigurer.getOutputPortSchemas();
+    for (Map.Entry<String, StageSpec.Port> entry: currentSpec.getOutputPorts().entrySet()) {
+      String port = entry.getValue().getPort();
+      if (port == null) {
+        updatedSpec.addOutput(stageConfigurer.getOutputSchema(), entry.getKey());
+      } else {
+        updatedSpec.addOutput(entry.getKey(), port, outputPortSchemas.get(port));
+      }
+    }
+    StageSpec updated = updatedSpec.build();
+    schemaPropagator.propagateSchema(updated);
+    return updated;
   }
 
   @Override

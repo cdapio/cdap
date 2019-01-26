@@ -19,19 +19,24 @@ import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.spec.RuntimePluginDatasetConfigurer;
+import co.cask.cdap.etl.spec.SchemaPropagator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -80,12 +85,20 @@ public class PipelineAction extends AbstractCustomAction {
                                                             phaseSpec.isStageLoggingEnabled(),
                                                             phaseSpec.isProcessTimingEnabled());
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
-    Action action =
-      pluginContext.newPluginInstance(stageSpec.getName(),
-                                      new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
-                                                                context.getLogicalStartTime(),
-                                                                context,
-                                                                context.getNamespace()));
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
+                                                              context.getLogicalStartTime(),
+                                                              context,
+                                                              context.getNamespace());
+    Action action = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
+
+    // call configurePipeline to perform any validation that couldn't before due to macros
+    RuntimePluginDatasetConfigurer pluginDatasetConfigurer =
+      new RuntimePluginDatasetConfigurer(context.getAdmin(), context, macroEvaluator);
+    DefaultPipelineConfigurer pipelineConfigurer =
+      new DefaultPipelineConfigurer(pluginDatasetConfigurer, pluginDatasetConfigurer,
+                                    stageSpec.getName(), Engine.MAPREDUCE);
+    action.configurePipeline(pipelineConfigurer);
+
     ActionContext actionContext = new BasicActionContext(context, pipelineRuntime, stageSpec);
     if (!context.getDataTracer(stageSpec.getName()).isEnabled()) {
       action.run(actionContext);

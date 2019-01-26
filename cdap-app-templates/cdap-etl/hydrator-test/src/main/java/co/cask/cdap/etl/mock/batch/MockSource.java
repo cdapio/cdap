@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.batch;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
@@ -86,6 +87,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   public static class Config extends PluginConfig {
     private String tableName;
 
+    @Macro
     @Nullable
     private String schema;
 
@@ -218,7 +220,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
-    properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
+    properties.put("schema", new PluginPropertyField("schema", "", "string", false, true));
     properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
     return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
   }

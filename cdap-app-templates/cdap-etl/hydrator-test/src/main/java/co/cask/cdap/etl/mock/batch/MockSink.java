@@ -23,7 +23,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 
 /**
  * Mock sink that writes records to a Table and has a utility method for getting all records written.
@@ -71,6 +71,9 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public static class Config extends PluginConfig {
     @Macro
     private String tableName;
+
+    @Nullable
+    private String schema;
   }
 
   @Override
@@ -83,8 +86,11 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
-    if (!context.datasetExists(config.tableName)) {
-      context.createDataset(config.tableName, "table", DatasetProperties.EMPTY);
+    if (config.schema != null) {
+      Schema expectedSchema = Schema.parseJson(config.schema);
+      if (!expectedSchema.equals(context.getInputSchema())) {
+        throw new IllegalArgumentException("Input schema does not match expected schema.");
+      }
     }
     context.addOutput(Output.ofDataset(config.tableName));
   }
@@ -110,6 +116,13 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public static ETLPlugin getPlugin(String tableName) {
     Map<String, String> properties = new HashMap<>();
     properties.put("tableName", tableName);
+    return new ETLPlugin("Mock", BatchSink.PLUGIN_TYPE, properties, null);
+  }
+
+  public static ETLPlugin getPlugin(String tableName, Schema expectedSchema) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("tableName", tableName);
+    properties.put("schema", expectedSchema.toString());
     return new ETLPlugin("Mock", BatchSink.PLUGIN_TYPE, properties, null);
   }
 
@@ -155,6 +168,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, true));
+    properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
     return new PluginClass(BatchSink.PLUGIN_TYPE, "Mock", "", MockSink.class.getName(), "config", properties);
   }
 }

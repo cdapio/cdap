@@ -17,7 +17,6 @@
 
 package co.cask.cdap.etl.proto.v2.spec;
 
-import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.proto.v2.ETLStage;
@@ -138,6 +137,18 @@ public class StageSpec implements Serializable {
       ", stageLoggingEnabled=" + stageLoggingEnabled +
       ", processTimingEnabled=" + processTimingEnabled +
       '}';
+  }
+
+  public static Builder builder(StageSpec existing) {
+    Builder builder = new Builder(existing.getName(), existing.getPlugin())
+      .addInputSchemas(existing.getInputSchemas())
+      .setErrorSchema(existing.getErrorSchema())
+      .setStageLoggingEnabled(existing.isStageLoggingEnabled())
+      .setProcessTimingEnabled(existing.isProcessTimingEnabled());
+    for (Map.Entry<String, StageSpec.Port> entry : existing.getOutputPorts().entrySet()) {
+      builder.addOutput(entry.getKey(), entry.getValue().getPort(), entry.getValue().getSchema());
+    }
+    return builder;
   }
 
   public static Builder builder(String name, PluginSpec plugin) {

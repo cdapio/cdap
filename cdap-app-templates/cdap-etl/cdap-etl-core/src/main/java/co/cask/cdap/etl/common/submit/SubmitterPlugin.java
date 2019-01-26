@@ -22,6 +22,8 @@ import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
+
 /**
  * Runs SubmitterLifecycle methods within a transaction.
  *
@@ -34,17 +36,12 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
   private final Transactional transactional;
   private final SubmitterLifecycle<T> delegate;
   private final ContextProvider<U> contextProvider;
-  private final PrepareAction<U> prepareAction;
+  private final Consumer<U> prepareAction;
 
   public SubmitterPlugin(String stageName, Transactional transactional,
                          SubmitterLifecycle<T> delegate,
-                         ContextProvider<U> contextProvider) {
-    this(stageName, transactional, delegate, contextProvider, x -> { });
-  }
-  public SubmitterPlugin(String stageName, Transactional transactional,
-                         SubmitterLifecycle<T> delegate,
                          ContextProvider<U> contextProvider,
-                         PrepareAction<U> prepareAction) {
+                         Consumer<U> prepareAction) {
     this.stageName = stageName;
     this.transactional = transactional;
     this.delegate = delegate;
@@ -53,7 +50,7 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
   }
 
   @Override
-  public void onFinish(final boolean succeeded) {
+  public void onFinish(boolean succeeded) {
     try {
       transactional.execute(datasetContext -> {
         T context = contextProvider.getContext(datasetContext);
@@ -69,17 +66,7 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
     transactional.execute(datasetContext -> {
       U context = contextProvider.getContext(datasetContext);
       delegate.prepareRun(context);
-      prepareAction.act(context);
+      prepareAction.accept(context);
     });
-  }
-
-  /**
-   * Some additional action to run during preparation
-   *
-   * @param <T> type of context
-   */
-  public interface PrepareAction<T> {
-
-    void act(T context);
   }
 }

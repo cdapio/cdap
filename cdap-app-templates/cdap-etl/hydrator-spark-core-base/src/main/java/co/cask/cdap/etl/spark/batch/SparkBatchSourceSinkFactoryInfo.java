@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.etl.batch.BatchPhaseSpec;
+
 import java.util.Map;
 
 /**
@@ -25,13 +27,16 @@ public class SparkBatchSourceSinkFactoryInfo {
   private final SparkBatchSourceFactory sparkBatchSourceFactory;
   private final SparkBatchSinkFactory sparkBatchSinkFactory;
   private final Map<String, Integer> stagePartitions;
+  private final BatchPhaseSpec phaseSpec;
 
   public SparkBatchSourceSinkFactoryInfo(SparkBatchSourceFactory sparkBatchSourceFactory,
                                          SparkBatchSinkFactory sparkBatchSinkFactory,
-                                         Map<String, Integer> stagePartitions) {
+                                         Map<String, Integer> stagePartitions,
+                                         BatchPhaseSpec phaseSpec) {
     this.sparkBatchSourceFactory = sparkBatchSourceFactory;
     this.sparkBatchSinkFactory = sparkBatchSinkFactory;
     this.stagePartitions = stagePartitions;
+    this.phaseSpec = phaseSpec;
   }
 
   public SparkBatchSourceFactory getSparkBatchSourceFactory() {
@@ -44,5 +49,9 @@ public class SparkBatchSourceSinkFactoryInfo {
 
   public Map<String, Integer> getStagePartitions() {
     return stagePartitions;
+  }
+
+  public BatchPhaseSpec getPhaseSpec() {
+    return phaseSpec;
   }
 }

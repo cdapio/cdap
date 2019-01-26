@@ -89,13 +89,13 @@ public abstract class AbstractStageContext implements StageContext {
   }
 
   @Override
-  public final PluginProperties getPluginProperties(final String pluginId) {
+  public final PluginProperties getPluginProperties(String pluginId) {
     return CALLER.callUnchecked(
       () -> pipelineRuntime.getPluginContext().getPluginProperties(scopePluginId(pluginId)));
   }
 
   @Override
-  public final <T> T newPluginInstance(final String pluginId) throws InstantiationException {
+  public final <T> T newPluginInstance(String pluginId) throws InstantiationException {
     try {
       return CALLER.call(
         () -> pipelineRuntime.getPluginContext().newPluginInstance(scopePluginId(pluginId), macroEvaluator));
@@ -106,7 +106,7 @@ public abstract class AbstractStageContext implements StageContext {
   }
 
   @Override
-  public final <T> Class<T> loadPluginClass(final String pluginId) {
+  public final <T> Class<T> loadPluginClass(String pluginId) {
     return CALLER.callUnchecked(
       () -> pipelineRuntime.getPluginContext().loadPluginClass(scopePluginId(pluginId)));
   }
@@ -160,14 +160,14 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Nullable
   @Override
-  public URL getServiceURL(final String applicationId, final String serviceId) {
+  public URL getServiceURL(String applicationId, String serviceId) {
     return CALLER.callUnchecked(
       () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(applicationId, serviceId));
   }
 
   @Nullable
   @Override
-  public URL getServiceURL(final String serviceId) {
+  public URL getServiceURL(String serviceId) {
     return CALLER.callUnchecked(
       () -> pipelineRuntime.getServiceDiscoverer().getServiceURL(serviceId));
   }

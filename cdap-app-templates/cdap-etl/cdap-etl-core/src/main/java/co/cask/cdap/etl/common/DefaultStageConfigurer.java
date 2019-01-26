@@ -64,7 +64,6 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
     outputPortSchemas.putAll(outputSchemas);
   }
 
-  @Nullable
   @Override
   public Map<String, Schema> getInputSchemas() {
     return inputSchemas;

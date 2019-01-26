@@ -23,12 +23,23 @@ package co.cask.cdap.etl.api;
  * @param <E> type of error records emitted. Usually the same as the input record type
  */
 public abstract class SplitterTransform<T, E>
-  implements MultiOutputTransformation<T, E>, MultiOutputPipelineConfigurable, StageLifecycle<TransformContext> {
+  implements MultiOutputTransformation<T, E>, MultiOutputPipelineConfigurable, StageLifecycle<TransformContext>,
+  SubmitterLifecycle<StageSubmitterContext> {
 
   public static final String PLUGIN_TYPE = "splittertransform";
 
   @Override
   public void configurePipeline(MultiOutputPipelineConfigurer multiOutputPipelineConfigurer) {
+    // no-op
+  }
+
+  @Override
+  public void prepareRun(StageSubmitterContext context) throws Exception {
+    // no-op
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
     // no-op
   }
 

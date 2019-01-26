@@ -40,6 +40,13 @@ public class BatchPhaseSpec {
   private final int numOfRecordsPreview;
   private final boolean isPipelineContainsCondition;
 
+  public BatchPhaseSpec(BatchPhaseSpec existing, PipelinePhase updated) {
+    this(existing.getPhaseName(), updated, existing.getResources(), existing.getDriverResources(),
+         existing.getClientResources(), existing.isStageLoggingEnabled, existing.isProcessTimingEnabled,
+         existing.getConnectorDatasets(), existing.getNumOfRecordsPreview(), existing.getPipelineProperties(),
+         existing.isPipelineContainsCondition);
+  }
+
   public BatchPhaseSpec(String phaseName, PipelinePhase phase,
                         Resources resources, Resources driverResources, Resources clientResources,
                         boolean isStageLoggingEnabled, boolean isProcessTimingEnabled,

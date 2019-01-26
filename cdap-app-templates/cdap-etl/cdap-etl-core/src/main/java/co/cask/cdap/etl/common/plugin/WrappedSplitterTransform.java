@@ -19,6 +19,7 @@ package co.cask.cdap.etl.common.plugin;
 import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.api.MultiOutputPipelineConfigurer;
 import co.cask.cdap.etl.api.SplitterTransform;
+import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.TransformContext;
 
 import java.util.concurrent.Callable;
@@ -77,5 +78,21 @@ public class WrappedSplitterTransform<T, E> extends SplitterTransform<T, E> {
     } finally {
       operationTimer.reset();
     }
+  }
+
+  @Override
+  public void prepareRun(StageSubmitterContext context) throws Exception {
+    caller.call((Callable<Void>) () -> {
+      transform.prepareRun(context);
+      return null;
+    });
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
+    caller.callUnchecked((Callable<Void>) () -> {
+      transform.onRunFinish(succeeded, context);
+      return null;
+    });
   }
 }

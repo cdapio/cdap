@@ -23,23 +23,29 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.AbstractCondition;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.api.condition.ConditionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.spec.RuntimePluginDatasetConfigurer;
+import co.cask.cdap.etl.spec.SchemaPropagator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -91,6 +97,15 @@ public class PipelineCondition extends AbstractCondition {
 
     try {
       Condition condition = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
+
+      // call configurePipeline to perform any validation that couldn't before due to macros
+      RuntimePluginDatasetConfigurer pluginDatasetConfigurer =
+        new RuntimePluginDatasetConfigurer(getContext().getAdmin(), pluginContext, macroEvaluator);
+      DefaultPipelineConfigurer pipelineConfigurer =
+        new DefaultPipelineConfigurer(pluginDatasetConfigurer, pluginDatasetConfigurer,
+                                      stageSpec.getName(), Engine.MAPREDUCE);
+      condition.configurePipeline(pipelineConfigurer);
+
       PipelineRuntime pipelineRuntime = new PipelineRuntime(input, metrics);
       ConditionContext conditionContext = new BasicConditionContext(input, pipelineRuntime, stageSpec);
       boolean result = condition.apply(conditionContext);
@@ -102,6 +117,11 @@ public class PipelineCondition extends AbstractCondition {
       for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
         token.put(entry.getKey(), entry.getValue());
       }
+
+      // propagate schema through the condition for the next phases
+      SchemaPropagator schemaPropagator =
+        new SchemaPropagator(Collections.emptyMap(), x -> new HashSet<>(), x -> Condition.PLUGIN_TYPE, token);
+      schemaPropagator.propagateSchema(stageSpec);
 
       return result;
     } catch (Exception e) {

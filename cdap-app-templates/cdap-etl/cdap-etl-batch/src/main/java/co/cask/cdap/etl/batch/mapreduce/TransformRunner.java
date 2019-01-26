@@ -42,6 +42,7 @@ import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -69,8 +70,9 @@ public class TransformRunner<KEY, VALUE> {
     Configuration hConf = jobContext.getConfiguration();
 
     // figure out whether we are writing to a single output or to multiple outputs
-    Map<String, String> properties = context.getSpecification().getProperties();
-    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    TaskInputOutputContext hadoopContext = context.getHadoopContext();
+    BatchPhaseSpec phaseSpec = GSON.fromJson(hadoopContext.getConfiguration().get(Constants.PIPELINEID),
+                                             BatchPhaseSpec.class);
     this.outputWriter = getSinkWriter(context, phaseSpec.getPhase(), hConf);
 
     // instantiate and initialize all transformations and setup the TransformExecutor

@@ -38,24 +38,25 @@ import javax.annotation.Nullable;
  * Configurer for a pipeline, that delegates all operations to a PluginConfigurer, except it prefixes plugin ids
  * to provide isolation for each etl stage. For example, a source can use a plugin with id 'jdbcdriver' and
  * a sink can also use a plugin with id 'jdbcdriver' without clobbering each other.
- *
- * @param <C> type of the platform configurer
  */
-public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfigurer>
-  implements PipelineConfigurer, MultiInputPipelineConfigurer, MultiOutputPipelineConfigurer {
+public class DefaultPipelineConfigurer implements PipelineConfigurer, MultiInputPipelineConfigurer,
+  MultiOutputPipelineConfigurer {
   private final Engine engine;
-  private final C configurer;
+  private final PluginConfigurer pluginConfigurer;
+  private final DatasetConfigurer datasetConfigurer;
   private final String stageName;
   private final DefaultStageConfigurer stageConfigurer;
   private final Map<String, String> properties;
 
-  public DefaultPipelineConfigurer(C configurer, String stageName, Engine engine) {
-    this(configurer, stageName, engine, new DefaultStageConfigurer());
+  public DefaultPipelineConfigurer(PluginConfigurer pluginConfigurer, DatasetConfigurer datasetConfigurer,
+                                   String stageName, Engine engine) {
+    this(pluginConfigurer, datasetConfigurer, stageName, engine, new DefaultStageConfigurer());
   }
 
-  public DefaultPipelineConfigurer(C configurer, String stageName, Engine engine,
-                                   DefaultStageConfigurer stageConfigurer) {
-    this.configurer = configurer;
+  public DefaultPipelineConfigurer(PluginConfigurer pluginConfigurer, DatasetConfigurer datasetConfigurer,
+                                   String stageName, Engine engine, DefaultStageConfigurer stageConfigurer) {
+    this.pluginConfigurer = pluginConfigurer;
+    this.datasetConfigurer = datasetConfigurer;
     this.stageName = stageName;
     this.stageConfigurer = stageConfigurer;
     this.engine = engine;
@@ -64,59 +65,59 @@ public class DefaultPipelineConfigurer<C extends PluginConfigurer & DatasetConfi
 
   @Override
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
-    configurer.addDatasetModule(moduleName, moduleClass);
+    datasetConfigurer.addDatasetModule(moduleName, moduleClass);
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
-    configurer.addDatasetType(datasetClass);
+    datasetConfigurer.addDatasetType(datasetClass);
   }
 
   @Override
   public void createDataset(String datasetName, String typeName, DatasetProperties properties) {
-    configurer.createDataset(datasetName, typeName, properties);
+    datasetConfigurer.createDataset(datasetName, typeName, properties);
   }
 
   @Override
   public void createDataset(String datasetName, String typeName) {
-    configurer.createDataset(datasetName, typeName);
+    datasetConfigurer.createDataset(datasetName, typeName);
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass, DatasetProperties props) {
-    configurer.createDataset(datasetName, datasetClass, props);
+    datasetConfigurer.createDataset(datasetName, datasetClass, props);
   }
 
   @Override
   public void createDataset(String datasetName, Class<? extends Dataset> datasetClass) {
-    configurer.createDataset(datasetName, datasetClass);
+    datasetConfigurer.createDataset(datasetName, datasetClass);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
-    return configurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
+    return pluginConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    return configurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+    return pluginConfigurer.usePlugin(pluginType, pluginName, getPluginId(pluginId), properties, selector);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties properties) {
-    return configurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
+    return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    return configurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
+    return pluginConfigurer.usePluginClass(pluginType, pluginName, getPluginId(pluginId), properties, selector);
   }
   
   private String getPluginId(String childPluginId) {
