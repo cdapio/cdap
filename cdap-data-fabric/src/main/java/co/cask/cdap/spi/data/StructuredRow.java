@@ -64,6 +64,14 @@ public interface StructuredRow {
   Double getDouble(String fieldName) throws InvalidFieldException;
 
   /**
+   * @return the value of the field named fieldName as byte[], or null if the field value is not defined
+   * @throws InvalidFieldException if the fieldName is not part of the table schema,
+   * or is of incompatible type.
+   */
+  @Nullable
+  byte[] getBytes(String fieldName) throws InvalidFieldException;
+
+  /**
    * @return the primary keys of this row
    */
   Collection<Field<?>> getPrimaryKeys();

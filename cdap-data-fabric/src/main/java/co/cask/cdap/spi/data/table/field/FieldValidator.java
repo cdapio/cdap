@@ -40,7 +40,10 @@ public final class FieldValidator {
     String fieldName = field.getName();
     FieldType.Type expected = tableSchema.getType(fieldName);
     FieldType.Type actual = field.getFieldType();
-    if (expected == null || !expected.equals(actual)) {
+    if (expected == null) {
+      throw new InvalidFieldException(tableSchema.getTableId(), fieldName);
+    }
+    if (!expected.equals(actual)) {
       throw new InvalidFieldException(tableSchema.getTableId(), fieldName, expected, actual);
     }
 

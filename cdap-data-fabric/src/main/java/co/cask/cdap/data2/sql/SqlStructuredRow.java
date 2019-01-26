@@ -84,6 +84,13 @@ public class SqlStructuredRow implements StructuredRow {
     return (Double) columns.get(fieldName);
   }
 
+  @Nullable
+  @Override
+  public byte[] getBytes(String fieldName) throws InvalidFieldException {
+    validateField(fieldName, ImmutableSet.of(FieldType.Type.BYTES));
+    return (byte[]) columns.get(fieldName);
+  }
+
   @Override
   public Collection<Field<?>> getPrimaryKeys() {
     return keys;
@@ -103,6 +110,9 @@ public class SqlStructuredRow implements StructuredRow {
           break;
         case STRING:
           result.add(Fields.stringField(key, (String) columns.get(key)));
+          break;
+        case BYTES:
+          result.add(Fields.bytesField(key, (byte[]) columns.get(key)));
           break;
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
