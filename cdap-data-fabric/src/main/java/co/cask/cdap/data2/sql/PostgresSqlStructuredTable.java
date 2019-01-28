@@ -25,6 +25,7 @@ import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import co.cask.cdap.spi.data.table.field.FieldValidator;
+import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import com.google.common.base.Joiner;
 import org.slf4j.Logger;
@@ -39,6 +40,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -69,22 +71,11 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     LOG.trace("Table {}: Write fields {}", tableSchema.getTableId(), fields);
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(tableSchema.getPrimaryKeys())) {
-      throw new InvalidFieldException(tableSchema.getTableId(), fieldNames,
+      throw new InvalidFieldException(tableSchema.getTableId(), fields,
                                       String.format("Given fields %s do not contain all the " +
                                                       "primary keys %s", fieldNames, tableSchema.getPrimaryKeys()));
     }
-    String sqlQuery = getWriteSqlQuery(fields);
-    try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
-      int index = 1;
-      for (Field<?> field : fields) {
-        setField(statement, field, index);
-        index++;
-      }
-      statement.executeUpdate();
-    } catch (SQLException e) {
-      throw new IOException(String.format("Failed to write to table %s with fields %s",
-                                          tableSchema.getTableId().getName(), fields), e);
-    }
+    upsertInternal(fields);
   }
 
   @Override
@@ -96,7 +87,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
                                       Collection<String> columns) throws InvalidFieldException, IOException {
     if (columns == null || columns.isEmpty()) {
-      throw new InvalidFieldException(tableSchema.getTableId(), columns, "No columns are specified in reading");
+      throw new IllegalArgumentException("No columns are specified to read");
     }
 
     // always have the primary key fields included in the columns
@@ -108,10 +99,8 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException {
     LOG.trace("Table {}: Scan range {} with limit {}", tableSchema.getTableId(), keyRange, limit);
-    tableSchema.validatePrimaryKeys(keyRange.getBegin().stream().map(Field::getName).collect(Collectors.toList()),
-                                    true);
-    tableSchema.validatePrimaryKeys(keyRange.getEnd().stream().map(Field::getName).collect(Collectors.toList()),
-                                    true);
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
     String scanQuery = getScanQuery(keyRange, limit);
 
     // We don't close the statement here because once it is closed, the result set is also closed.
@@ -130,6 +119,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
           index++;
         }
       }
+      LOG.trace("SQL statement: {}", statement);
       ResultSet resultSet = statement.executeQuery();
       return new ResultSetIterator(statement, resultSet, tableSchema);
     } catch (SQLException e) {
@@ -139,9 +129,100 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: CompareAndSwap with keys {}, oldValue {}, newValue {}", tableSchema.getTableId(), keys,
+              oldValue, newValue);
+    fieldValidator.validatePrimaryKeys(keys, false);
+    fieldValidator.validateField(oldValue);
+    if (oldValue.getFieldType() != newValue.getFieldType()) {
+      throw new IllegalArgumentException(
+        String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
+                      oldValue.getFieldType(), newValue.getFieldType()));
+    }
+    if (!oldValue.getName().equals(newValue.getName())) {
+      throw new IllegalArgumentException(
+        String.format("Trying to compare and swap different fields. Old Value = %s, New Value = %s",
+                      oldValue, newValue));
+    }
+    if (tableSchema.isPrimaryKeyColumn(oldValue.getName())) {
+      throw new IllegalArgumentException("Cannot use compare and swap on a primary key field");
+    }
+
+    // First compare
+    String readQuery = getReadQuery(keys, Collections.singleton(oldValue.getName()), true);
+    try (PreparedStatement statement = connection.prepareStatement(readQuery)) {
+      int index = 1;
+      for (Field<?> key : keys) {
+        setField(statement, key, index);
+        index++;
+      }
+      LOG.trace("SQL statement: {}", statement);
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (resultSet.next()) {
+          // Compare the value in the DB to oldValue
+          Object colValue = resultSet.getObject(1);
+          Field<?> dbValue = createField(oldValue.getName(), oldValue.getFieldType(), colValue);
+          if (!oldValue.equals(dbValue)) {
+            return false;
+          }
+        } else {
+          // There is no data for the field in the DB, hence oldValue should be null to continue
+          if (oldValue.getValue() != null) {
+            return false;
+          }
+        }
+      }
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to read from table %s with keys %s",
+                                          tableSchema.getTableId().getName(), keys), e);
+    }
+
+    // Then write
+    Collection<Field<?>> fields = new HashSet<>(keys);
+    fields.add(newValue);
+    upsertInternal(fields);
+
+    return true;
+  }
+
+  @Override
+  public void increment(Collection<Field<?>> keys, String column, long amount)
+    throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Increment with keys {}, column {}, amount {}", tableSchema.getTableId(), keys, column, amount);
+    FieldType.Type colType = tableSchema.getType(column);
+    if (colType == null) {
+      throw new InvalidFieldException(tableSchema.getTableId(), column);
+    } else if (colType != FieldType.Type.LONG) {
+      throw new IllegalArgumentException(
+        String.format("Trying to increment a column of type %s. Only %s column type can be incremented",
+                      colType, FieldType.Type.LONG));
+    }
+    if (tableSchema.isPrimaryKeyColumn(column)) {
+      throw new IllegalArgumentException("Cannot use increment on a primary key field");
+    }
+    fieldValidator.validatePrimaryKeys(keys, false);
+
+    String sql = getIncrementStatement(keys, column);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      statement.setLong(1, amount);
+      int index = 2;
+      for (Field<?> key : keys) {
+        setField(statement, key, index);
+        index++;
+      }
+      LOG.trace("SQL statement: {}", statement);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to increment column %s of table %s with increment value %d",
+                                          column, tableSchema.getTableId().getName(), amount), e);
+    }
+  }
+
+  @Override
   public void delete(Collection<Field<?>> keys) throws InvalidFieldException, IOException {
     LOG.trace("Table {}: Delete with keys {}", tableSchema.getTableId(), keys);
-    tableSchema.validatePrimaryKeys(keys.stream().map(Field::getName).collect(Collectors.toList()), false);
+    fieldValidator.validatePrimaryKeys(keys, false);
     String sqlQuery = getDeleteQuery(keys);
     try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
       int index = 1;
@@ -149,6 +230,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
         setField(statement, key, index);
         index++;
       }
+      LOG.trace("SQL statement: {}", statement);
       statement.executeUpdate();
     } catch (SQLException e) {
       throw new IOException(String.format("Failed to delete the row from table %s with fields %s",
@@ -165,6 +247,22 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     }
   }
 
+  private void upsertInternal(Collection<Field<?>> fields) throws IOException {
+    String sqlQuery = getWriteSqlQuery(fields);
+    try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
+      int index = 1;
+      for (Field<?> field : fields) {
+        setField(statement, field, index);
+        index++;
+      }
+      LOG.trace("SQL statement: {}", statement);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to write to table %s with fields %s",
+                                          tableSchema.getTableId().getName(), fields), e);
+    }
+  }
+
   /**
    * Read a row from the table. Null columns mean read from all columns.
    *
@@ -175,14 +273,15 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   private Optional<StructuredRow> readRow(
     Collection<Field<?>> keys, @Nullable Collection<String> columns) throws InvalidFieldException, IOException {
     LOG.trace("Table {}: Read with keys {} and columns {}", tableSchema.getTableId(), keys, columns);
-    tableSchema.validatePrimaryKeys(keys.stream().map(Field::getName).collect(Collectors.toList()), false);
-    String readQuery = getReadQuery(keys, columns);
+    fieldValidator.validatePrimaryKeys(keys, false);
+    String readQuery = getReadQuery(keys, columns, false);
     try (PreparedStatement statement = connection.prepareStatement(readQuery);) {
       int index = 1;
       for (Field<?> key : keys) {
         setField(statement, key, index);
         index++;
       }
+      LOG.trace("SQL statement: {}", statement);
       try (ResultSet resultSet = statement.executeQuery()) {
         if (!resultSet.next()) {
           return Optional.empty();
@@ -289,10 +388,10 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     return insertPart.toString() + valuePart.toString() + conflictPart.toString() + updatePart.toString();
   }
 
-  private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns) {
+  private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns, boolean forUpdate) {
     String prefix = "SELECT " + (columns == null || columns.isEmpty() ? "*" : Joiner.on(",").join(columns)) +
       " FROM " + tableSchema.getTableId().getName() + " WHERE ";
-    return combineWithEqualClause(prefix, keys);
+    return combineWithEqualClause(prefix, keys, forUpdate ? " FOR UPDATE " : "");
   }
 
   /**
@@ -340,15 +439,40 @@ public class PostgresSqlStructuredTable implements StructuredTable {
 
   private String getDeleteQuery(Collection<Field<?>> keys) {
     String prefix = "DELETE FROM " + tableSchema.getTableId().getName() + " WHERE ";
-    return combineWithEqualClause(prefix, keys);
+    return combineWithEqualClause(prefix, keys, "");
   }
 
-  private String combineWithEqualClause(String prefix, Collection<Field<?>> keys) {
-    StringJoiner joiner = new StringJoiner(" AND ", prefix, ";");
+  private String getIncrementStatement(Collection<Field<?>> keys, String column) {
+    String prefix = String.format("UPDATE %s SET %s = %s + ? WHERE ",
+                                  tableSchema.getTableId().getName(), column, column);
+    return combineWithEqualClause(prefix, keys, "");
+  }
+
+  private String combineWithEqualClause(String prefix, Collection<Field<?>> keys, String suffix) {
+    StringJoiner joiner = new StringJoiner(" AND ", prefix, suffix + ";");
     for (Field<?> key : keys) {
       joiner.add(key.getName() + "=?");
     }
     return joiner.toString();
+  }
+
+  private Field<?> createField(String name, FieldType.Type type, Object value) {
+    switch (type) {
+      case BYTES:
+        return Fields.bytesField(name, (byte[]) value);
+      case LONG:
+        return Fields.longField(name, (Long) value);
+      case INTEGER:
+        return Fields.intField(name, (Integer) value);
+      case DOUBLE:
+        return Fields.doubleField(name, (Double) value);
+      case FLOAT:
+        return Fields.floatField(name, (Float) value);
+      case STRING:
+        return Fields.stringField(name, (String) value);
+        default:
+          throw new IllegalStateException("Unknown field type " + type);
+    }
   }
 
   private static final class ResultSetIterator extends AbstractCloseableIterator<StructuredRow> {
