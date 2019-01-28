@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * Base Batch Context.
@@ -67,66 +66,40 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    return CALLER.callUnchecked(new Callable<T>() {
-      @Override
-      public T call() {
-        return datasetContext.getDataset(name);
-      }
-    });
+    return CALLER.callUnchecked(() -> datasetContext.getDataset(name));
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
     throws DatasetInstantiationException {
-    return CALLER.callUnchecked(new Callable<T>() {
-      @Override
-      public T call() {
-        return datasetContext.getDataset(namespace, name);
-      }
-    });
+    return CALLER.callUnchecked(() -> datasetContext.getDataset(namespace, name));
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return CALLER.callUnchecked(new Callable<T>() {
-      @Override
-      public T call() {
-        return datasetContext.getDataset(name, arguments);
-      }
-    });
+    return CALLER.callUnchecked(() -> datasetContext.getDataset(name, arguments));
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return CALLER.callUnchecked(new Callable<T>() {
-      @Override
-      public T call() {
-        return datasetContext.getDataset(namespace, name, arguments);
-      }
-    });
+    return CALLER.callUnchecked(() -> datasetContext.getDataset(namespace, name, arguments));
   }
 
   @Override
   public void releaseDataset(final Dataset dataset) {
-    CALLER.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        datasetContext.releaseDataset(dataset);
-        return null;
-      }
+    CALLER.callUnchecked(() -> {
+      datasetContext.releaseDataset(dataset);
+      return null;
     });
   }
 
   @Override
   public void discardDataset(final Dataset dataset) {
-    CALLER.callUnchecked(new Callable<Void>() {
-      @Override
-      public Void call() {
-        datasetContext.discardDataset(dataset);
-        return null;
-      }
+    CALLER.callUnchecked(() -> {
+      datasetContext.discardDataset(dataset);
+      return null;
     });
   }
 

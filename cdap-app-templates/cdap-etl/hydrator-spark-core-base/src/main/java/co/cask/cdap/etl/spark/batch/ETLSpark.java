@@ -20,7 +20,6 @@ import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
@@ -29,7 +28,6 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
@@ -124,7 +122,7 @@ public class ETLSpark extends AbstractSpark {
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void initialize() throws Exception {
-    final SparkClientContext context = getContext();
+    SparkClientContext context = getContext();
     cleanupFiles = new ArrayList<>();
     List<Finisher> finishers = new ArrayList<>();
 
@@ -142,23 +140,23 @@ public class ETLSpark extends AbstractSpark {
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(context),
                                                          context.getLogicalStartTime(), context,
                                                          context.getNamespace());
-    final SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
-    final SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
-    final Map<String, Integer> stagePartitions = new HashMap<>();
+    SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
+    SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
+    Map<String, Integer> stagePartitions = new HashMap<>();
     PluginContext pluginContext = new SparkPipelinePluginContext(context, context.getMetrics(),
                                                                  phaseSpec.isStageLoggingEnabled(),
                                                                  phaseSpec.isProcessTimingEnabled());
     PipelinePluginInstantiator pluginInstantiator =
       new PipelinePluginInstantiator(pluginContext, context.getMetrics(), phaseSpec, new SingleConnectorFactory());
-    final PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
-    final Admin admin = context.getAdmin();
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
+    Admin admin = context.getAdmin();
 
     PipelinePhase phase = phaseSpec.getPhase();
     // Collect field operations emitted by various stages in this MapReduce program
-    final Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
     // go through in topological order so that arguments set by one stage are seen by stages after it
-    for (final String stageName : phase.getDag().getTopologicalOrder()) {
-      final StageSpec stageSpec = phase.getStage(stageName);
+    for (String stageName : phase.getDag().getTopologicalOrder()) {
+      StageSpec stageSpec = phase.getStage(stageName);
       String pluginType = stageSpec.getPluginType();
       boolean isConnectorSource =
         Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
@@ -169,95 +167,51 @@ public class ETLSpark extends AbstractSpark {
       if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {
 
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(stageName, evaluator);
-        ContextProvider<BatchSourceContext> contextProvider =
-          new ContextProvider<BatchSourceContext>() {
-            @Override
-            public BatchSourceContext getContext(DatasetContext datasetContext) {
-              return new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, datasetContext, stageSpec);
-            }
-          };
-        submitterPlugin = new SubmitterPlugin(stageName, context, batchSource, contextProvider,
-                new SubmitterPlugin.PrepareAction<SparkBatchSourceContext>() {
-          @Override
-          public void act(SparkBatchSourceContext context) {
-            stageOperations.put(stageName, context.getFieldOperations());
-          }
-        });
+        ContextProvider<SparkBatchSourceContext> contextProvider =
+          dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, batchSource, contextProvider,
+                                                ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
         Transform transform = pluginInstantiator.newPluginInstance(stageName, evaluator);
-        ContextProvider<StageSubmitterContext> contextProvider =
-          new ContextProvider<StageSubmitterContext>() {
-            @Override
-            public StageSubmitterContext getContext(DatasetContext datasetContext) {
-              return new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, datasetContext, stageSpec);
-            }
-          };
-        submitterPlugin = new SubmitterPlugin(stageName, context, transform, contextProvider,
-                new SubmitterPlugin.PrepareAction<SparkBatchSourceContext>() {
-          @Override
-          public void act(SparkBatchSourceContext context) {
-            stageOperations.put(stageName, context.getFieldOperations());
-          }
-        });
+        ContextProvider<SparkBatchSourceContext> contextProvider =
+          dsContext -> new SparkBatchSourceContext(sourceFactory, context, pipelineRuntime, dsContext, stageSpec);
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, transform, contextProvider,
+                                                ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
-        ContextProvider<BatchSinkContext> contextProvider = new ContextProvider<BatchSinkContext>() {
-          @Override
-          public BatchSinkContext getContext(DatasetContext datasetContext) {
-            return new SparkBatchSinkContext(sinkFactory, context, pipelineRuntime, datasetContext, stageSpec);
-          }
-        };
-        submitterPlugin = new SubmitterPlugin(stageName, context, batchSink, contextProvider,
-                new SubmitterPlugin.PrepareAction<SparkBatchSinkContext>() {
-          @Override
-          public void act(SparkBatchSinkContext context) {
-            stageOperations.put(stageName, context.getFieldOperations());
-          }
-        });
+        ContextProvider<SparkBatchSinkContext> contextProvider =
+          dsContext -> new SparkBatchSinkContext(sinkFactory, context, pipelineRuntime, dsContext, stageSpec);
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, batchSink, contextProvider,
+                                                ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
         BatchConfigurable<SparkPluginContext> sparkSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
-        ContextProvider<SparkPluginContext> contextProvider =
-          new ContextProvider<SparkPluginContext>() {
-            @Override
-            public SparkPluginContext getContext(DatasetContext datasetContext) {
-              return new BasicSparkPluginContext(context, pipelineRuntime, stageSpec, datasetContext, admin);
-            }
-          };
-        submitterPlugin = new SubmitterPlugin(stageName, context, sparkSink, contextProvider);
+        ContextProvider<BasicSparkPluginContext> contextProvider =
+          dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, stageSpec, dsContext, admin);
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, sparkSink, contextProvider);
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
         BatchAggregator aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultAggregatorContext> contextProvider =
           new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);
-        submitterPlugin = new SubmitterPlugin(stageName, context, aggregator, contextProvider,
-                new SubmitterPlugin.PrepareAction<DefaultAggregatorContext>() {
-          @Override
-          public void act(DefaultAggregatorContext context) {
-            stageOperations.put(stageName, context.getFieldOperations());
-          }
-        });
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, aggregator, contextProvider,
+                                                ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
         BatchJoiner joiner = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultJoinerContext> contextProvider =
           new JoinerContextProvider(pipelineRuntime, stageSpec, admin);
-        submitterPlugin = new SubmitterPlugin<>(
-          stageName, context, joiner, contextProvider,
-          new SubmitterPlugin.PrepareAction<DefaultJoinerContext>() {
-            @Override
-            public void act(DefaultJoinerContext sparkJoinerContext) {
-              stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
-              stageOperations.put(stageName, sparkJoinerContext.getFieldOperations());
-            }
-          });
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, joiner, contextProvider, sparkJoinerContext -> {
+          stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
+          stageOperations.put(stageName, sparkJoinerContext.getFieldOperations());
+        });
 
       }
       if (submitterPlugin != null) {
