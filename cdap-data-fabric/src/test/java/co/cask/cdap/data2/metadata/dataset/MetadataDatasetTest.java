@@ -41,6 +41,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
@@ -57,6 +58,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -660,6 +662,45 @@ public class MetadataDatasetTest {
   }
 
   @Test
+  public void testDetermineSearchFields() {
+    String term = "a";
+    String myns = "myns";
+    Optional<NamespaceId> noNs = Optional.empty();
+    Optional<NamespaceId> userNs = Optional.of(new NamespaceId(myns));
+    Optional<NamespaceId> systemNs = Optional.of(NamespaceId.SYSTEM);
+    Set<EntityScope> noScopes = Collections.emptySet();
+    Set<EntityScope> userScope = Collections.singleton(EntityScope.USER);
+    Set<EntityScope> systemScope = Collections.singleton(EntityScope.SYSTEM);
+    Set<EntityScope> allScopes = EnumSet.allOf(EntityScope.class);
+    MetadataDataset.SearchTerm a = MetadataDataset.SearchTerm.from(term);
+    MetadataDataset.SearchTerm userA = MetadataDataset.SearchTerm.from(userNs.get(), term);
+    MetadataDataset.SearchTerm systemA = MetadataDataset.SearchTerm.from(NamespaceId.SYSTEM, term);
+
+    List<Triple<Optional<NamespaceId>, Set<EntityScope>, Set<MetadataDataset.SearchTerm>>> cases =
+      ImmutableList.<Triple<Optional<NamespaceId>, Set<EntityScope>, Set<MetadataDataset.SearchTerm>>>builder()
+        .add(Triple.of(noNs,     noScopes,    ImmutableSet.of()))
+        .add(Triple.of(noNs,     userScope,   ImmutableSet.of(a))) // this should really be "any ns other than system"
+        .add(Triple.of(noNs,     systemScope, ImmutableSet.of(systemA)))
+        .add(Triple.of(noNs,     allScopes,   ImmutableSet.of(a)))
+        .add(Triple.of(userNs,   noScopes,    ImmutableSet.of()))
+        .add(Triple.of(userNs,   userScope,   ImmutableSet.of(userA)))
+        .add(Triple.of(userNs,   systemScope, ImmutableSet.of(systemA)))
+        .add(Triple.of(userNs,   allScopes,   ImmutableSet.of(userA, systemA)))
+        .add(Triple.of(systemNs, noScopes,    ImmutableSet.of()))
+        .add(Triple.of(systemNs, userScope,   ImmutableSet.of()))
+        .add(Triple.of(systemNs, systemScope, ImmutableSet.of(systemA)))
+        .add(Triple.of(systemNs, allScopes,   ImmutableSet.of(systemA)))
+      .build();
+    for (Triple<Optional<NamespaceId>, Set<EntityScope>, Set<MetadataDataset.SearchTerm>> case1 : cases) {
+      List<MetadataDataset.SearchTerm> terms = new ArrayList<>();
+      Set<MetadataDataset.SearchTerm> expected = case1.getRight();
+      MetadataDataset.determineSearchFields(case1.getLeft(), case1.getMiddle(), terms).accept(term);
+      Assert.assertEquals(expected.size(), terms.size());
+      Assert.assertEquals(expected, ImmutableSet.copyOf(terms));
+    }
+  }
+
+  @Test
   public void testSearchDifferentEntityScope() throws InterruptedException, TransactionFailureException {
     MetadataEntity sysArtifact = NamespaceId.SYSTEM.artifact("artifact", "1.0").toMetadataEntity();
     MetadataEntity nsArtifact = new ArtifactId("ns1", "artifact", "1.0").toMetadataEntity();
@@ -689,13 +730,12 @@ public class MetadataDatasetTest {
       // the result should not contain user entities
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
 
-      // TODO (CDAP-14778): uncomment this after bug is fixed
-      // request = new SearchRequest(NamespaceId.SYSTEM, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
-      //                            SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
-      //                            false, EnumSet.of(EntityScope.SYSTEM));
-      // results = dataset.search(request).getResults();
-      // the result should not contain user entities
-      // Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
+      request = new SearchRequest(NamespaceId.SYSTEM, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+                                  SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
+                                  false, EnumSet.of(EntityScope.SYSTEM));
+       results = dataset.search(request).getResults();
+       // the result should not contain user entities
+       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
 
       request = new SearchRequest(ns1, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
                                   SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
