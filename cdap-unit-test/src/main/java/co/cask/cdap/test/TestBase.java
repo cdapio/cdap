@@ -73,8 +73,6 @@ import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
-import co.cask.cdap.metrics.guice.MetricsHandlerModule;
-import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ScheduleDetail;
@@ -170,7 +168,6 @@ public class TestBase {
   private static CConfiguration cConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
-  private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static Scheduler scheduler;
@@ -245,8 +242,6 @@ public class TestBase {
           bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
         }
       },
-      // todo: do we need handler?
-      new MetricsHandlerModule(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
@@ -286,8 +281,6 @@ public class TestBase {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    metricsQueryService = injector.getInstance(MetricsQueryService.class);
-    metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
     programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
@@ -473,7 +466,6 @@ public class TestBase {
     if (programScheduler instanceof Service) {
       ((Service) programScheduler).stopAndWait();
     }
-    metricsQueryService.stopAndWait();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     if (scheduler instanceof Service) {

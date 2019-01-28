@@ -29,6 +29,7 @@ import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.logging.service.LogQueryService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -103,6 +104,7 @@ public abstract class GatewayTestBase {
   private static Injector injector;
   private static AppFabricServer appFabricServer;
   private static NettyRouter router;
+  private static LogQueryService logQueryService;
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static TransactionManager txService;
@@ -179,6 +181,8 @@ public abstract class GatewayTestBase {
     datasetService.startAndWait();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    logQueryService = injector.getInstance(LogQueryService.class);
+    logQueryService.startAndWait();
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     metricsQueryService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -204,6 +208,7 @@ public abstract class GatewayTestBase {
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     metricsQueryService.stopAndWait();
+    logQueryService.stopAndWait();
     router.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();

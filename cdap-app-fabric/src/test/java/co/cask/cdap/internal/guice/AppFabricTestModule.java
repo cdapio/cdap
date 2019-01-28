@@ -35,6 +35,7 @@ import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.MockProvisionerModule;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
+import co.cask.cdap.logging.guice.LogQueryServerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
@@ -93,6 +94,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new NonCustomLocationUnitTestModule());
     install(new LocalLogAppenderModule());
     install(new LogReaderRuntimeModules().getInMemoryModules());
+    install(new LogQueryServerModule());
     install(new MetricsHandlerModule());
     install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());

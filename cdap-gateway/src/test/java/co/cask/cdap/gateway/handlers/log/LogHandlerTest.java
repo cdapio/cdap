@@ -16,18 +16,48 @@
 
 package co.cask.cdap.gateway.handlers.log;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.gateway.handlers.metrics.MetricsSuiteTestBase;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.guice.NamespaceAdminTestModule;
+import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
+import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
+import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import co.cask.cdap.logging.gateway.handlers.LogData;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
+import co.cask.cdap.logging.guice.LogQueryServerModule;
 import co.cask.cdap.logging.read.LogOffset;
+import co.cask.cdap.logging.read.LogReader;
+import co.cask.cdap.logging.service.LogQueryService;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.security.auth.context.AuthenticationContextModules;
+import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
+import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
+import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -36,35 +66,111 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
+import org.apache.tephra.TransactionManager;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test LogHandler.
  */
-public class LogHandlerTestRun extends MetricsSuiteTestBase {
+public class LogHandlerTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final Type LIST_LOGLINE_TYPE = new TypeToken<List<LogLine>>() { }.getType();
   private static final Type LIST_LOGDATA_OFFSET_TYPE = new TypeToken<List<LogDataOffset>>() { }.getType();
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(LogOffset.class, new LogOffsetAdapter()).create();
   private static final String[] FORMATS = new String[] { "text", "json" };
 
+  private static TransactionManager transactionManager;
+  private static DatasetOpExecutor dsOpService;
+  private static DatasetService datasetService;
+
   private static MockLogReader mockLogReader;
+  private static LogQueryService logQueryService;
+  private static DiscoveryServiceClient discoveryServiceClient;
 
   @BeforeClass
   public static void setup() throws Exception {
-    mockLogReader = (MockLogReader) logReader;
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.LogQuery.ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
+
+    Injector injector = Guice.createInjector(Modules.override(
+      new ConfigModule(cConf),
+      new NonCustomLocationUnitTestModule(),
+      new InMemoryDiscoveryModule(),
+      new LogQueryServerModule(),
+      new DataFabricModules().getInMemoryModules(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
+      new ExploreClientModule(),
+      new NamespaceAdminTestModule(),
+      new AuthorizationTestModule(),
+      new AuthorizationEnforcementModule().getInMemoryModules(),
+      new AuthenticationContextModules().getMasterModule()
+    ).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
+        bind(Store.class).to(DefaultStore.class);
+        bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+        bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
+        // TODO (CDAP-14677): find a better way to inject metadata publisher
+        bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
+      }
+    }));
+
+    transactionManager = injector.getInstance(TransactionManager.class);
+    transactionManager.startAndWait();
+
+    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService.startAndWait();
+
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
+
+    logQueryService = injector.getInstance(LogQueryService.class);
+    logQueryService.startAndWait();
+
+    mockLogReader = (MockLogReader) injector.getInstance(LogReader.class);
     mockLogReader.generateLogs();
+
+    discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    logQueryService.stopAndWait();
+
+    datasetService.stopAndWait();
+    dsOpService.stopAndWait();
+    transactionManager.stopAndWait();
   }
 
   @Test
@@ -246,16 +352,15 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
   }
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
-                                String endPoint, int expectedStatusCode) throws Exception {
+                                String endPoint, int expectedStatusCode) throws IOException {
     String path = String.format("apps/%s/%s/%s/runs/%s/logs/%s?max=1000", appId, programType, programName, runId,
                                 endPoint);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespaceId));
-    Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
-    if (response.getStatusLine().getStatusCode() == HttpResponseStatus.NOT_FOUND.code()) {
+    Assert.assertEquals(expectedStatusCode, response.getResponseCode());
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       return ImmutableList.of();
     }
-    String out = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(out, LIST_LOGLINE_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGLINE_TYPE);
   }
 
   @Test
@@ -323,9 +428,8 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
     String logsUrl = String.format("apps/%s/%s/%s/runs/%s/logs/next?format=json",
                             "testTemplate1", "workflows", "testWorkflow1", runRecord.getPid());
     HttpResponse response = doGet(getVersionedAPIPath(logsUrl, MockLogReader.TEST_NAMESPACE));
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
-    String out = EntityUtils.toString(response.getEntity());
-    List<LogDataOffset> logDataOffsetList = GSON.fromJson(out, LIST_LOGDATA_OFFSET_TYPE);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    List<LogDataOffset> logDataOffsetList = GSON.fromJson(response.getResponseBodyAsString(), LIST_LOGDATA_OFFSET_TYPE);
     Assert.assertEquals(logDataOffsetList.size(), 15);
     Assert.assertTrue(logDataOffsetList.get(0).getLog().getNativeMethod());
     Assert.assertFalse(logDataOffsetList.get(1).getLog().getNativeMethod());
@@ -334,17 +438,17 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
 
   private List<LogLine> getLogs(String namespaceId, String appId, String programType, String programName, String runId,
-                                String endPoint) throws Exception {
-    return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpResponseStatus.OK.code());
+                                String endPoint) throws IOException {
+    return getLogs(namespaceId, appId, programType, programName, runId, endPoint, HttpURLConnection.HTTP_OK);
   }
 
   @Test
-  public void testNonExistenceRunLogs() throws Exception {
+  public void testNonExistenceRunLogs() throws IOException {
     getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
-            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "next", HttpResponseStatus.NOT_FOUND.code());
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "next", HttpURLConnection.HTTP_NOT_FOUND);
 
     getLogs(MockLogReader.TEST_NAMESPACE, MockLogReader.SOME_WORKFLOW_APP.getApplication(), "workflows",
-            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpResponseStatus.NOT_FOUND.code());
+            MockLogReader.SOME_WORKFLOW, RunIds.generate().getId(), "prev", HttpURLConnection.HTTP_NOT_FOUND);
   }
 
   @Test
@@ -463,7 +567,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       String prevUrl = String.format("/%s/system/services/%s/logs/next?max=10&format=%s",
                                      Constants.Gateway.API_VERSION_3_TOKEN, serviceName, format);
       HttpResponse response = doGet(prevUrl);
-      Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     }
   }
 
@@ -472,7 +576,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       String prevUrl = String.format("/%s/system/services/%s/logs/prev?max=10&format=%s",
                                      Constants.Gateway.API_VERSION_3_TOKEN, serviceName, format);
       HttpResponse response = doGet(prevUrl);
-      Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
     }
   }
 
@@ -539,7 +643,7 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
       logsUrl = String.format("apps/%s/%s/%s/logs?start=%s&stop=%s&format=%s",
                               appId, entityType, entityId, 350, 300, format);
       response = doGet(getVersionedAPIPath(logsUrl, namespace));
-      Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.code(), response.getStatusLine().getStatusCode());
+      Assert.assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
     }
   }
 
@@ -634,13 +738,12 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
    * @param expectedEvents number of expected logs events
    * @param expectedStartValue expected value in the log message
    * @param suppress log fields to suppress
-   * @throws IOException
    */
   private void verifyLogs(HttpResponse response, String entityId, String format, int stepSize,
                           boolean fullLogs, boolean escapeChoice, int expectedEvents, int expectedStartValue,
-                          List<String> suppress) throws IOException {
-    Assert.assertEquals(HttpResponseStatus.OK.code(), response.getStatusLine().getStatusCode());
-    String out = EntityUtils.toString(response.getEntity());
+                          List<String> suppress) {
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    String out = response.getResponseBodyAsString();
     List<String> logMessages = new ArrayList<>();
     boolean escape;
     // based on the format choose the appropriate GSON deserialization type
@@ -710,5 +813,29 @@ public class LogHandlerTestRun extends MetricsSuiteTestBase {
 
   private String getSuppressStr(List<String> suppress) {
     return Joiner.on("&suppress=").join(suppress);
+  }
+
+  /**
+   * Given a non-versioned API path, returns its corresponding versioned API path with v3 and default namespace.
+   *
+   * @param nonVersionedApiPath API path without version
+   * @param namespace the namespace
+   */
+  private static String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
+    String version = Constants.Gateway.API_VERSION_3_TOKEN;
+    return String.format("/%s/namespaces/%s/%s", version, namespace, nonVersionedApiPath);
+  }
+
+  /**
+   * Performs a get call on the given path from the log query server.
+   */
+  private HttpResponse doGet(String path) throws IOException {
+    Discoverable discoverable = new RandomEndpointStrategy(
+      () -> discoveryServiceClient.discover(Constants.Service.LOG_QUERY)).pick(10, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+
+    InetSocketAddress addr = discoverable.getSocketAddress();
+    URL url = new URL("http", addr.getHostName(), addr.getPort(), path);
+    return HttpRequests.execute(HttpRequest.get(url).build());
   }
 }

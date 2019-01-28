@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,9 +35,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.internal.app.store.DefaultStore;
-import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -53,7 +51,6 @@ import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -107,7 +104,6 @@ public abstract class MetricsSuiteTestBase {
   private static DatasetService datasetService;
 
   protected static MetricStore metricStore;
-  protected static LogReader logReader;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -158,7 +154,6 @@ public abstract class MetricsSuiteTestBase {
     ).with(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(LogReader.class).to(MockLogReader.class).in(Scopes.SINGLETON);
         bind(Store.class).to(DefaultStore.class);
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
@@ -181,8 +176,6 @@ public abstract class MetricsSuiteTestBase {
 
     collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
-
-    logReader = injector.getInstance(LogReader.class);
 
     // initialize the dataset instantiator
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -242,17 +235,6 @@ public abstract class MetricsSuiteTestBase {
       post.setHeader(AUTH_HEADER);
     }
     return client.execute(post);
-  }
-
-  /**
-   * Given a non-versioned API path, returns its corresponding versioned API path with v3 and default namespace.
-   *
-   * @param nonVersionedApiPath API path without version
-   * @param namespace the namespace
-   */
-  public static String getVersionedAPIPath(String nonVersionedApiPath, String namespace) {
-    String version = Constants.Gateway.API_VERSION_3_TOKEN;
-    return String.format("/%s/namespaces/%s/%s", version, namespace, nonVersionedApiPath);
   }
 
   protected static Map<String, String> getServiceContext(String namespaceId, String appName, String serviceName,
