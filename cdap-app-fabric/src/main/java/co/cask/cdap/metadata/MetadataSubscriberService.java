@@ -372,7 +372,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
               hasTags = put.getTags() != null && !put.getTags().isEmpty();
             }
             if (hasProperties) {
-              metadataStore.setProperties(put.getScope(), entity, put.getProperties());
+              metadataStore.addProperties(put.getScope(), entity, put.getProperties());
             }
             if (hasTags) {
               metadataStore.addTags(put.getScope(), entity, put.getTags());

@@ -119,19 +119,19 @@ public class MetadataDatasetTest {
     });
     // Set some properties
     txnl.execute(() -> {
-      dataset.setProperty(app1, "akey1", "avalue1");
-      MetadataDataset.Change metadataChange = dataset.setProperties(program1, Collections.emptyMap());
+      dataset.addProperty(app1, "akey1", "avalue1");
+      MetadataDataset.Change metadataChange = dataset.addProperties(program1, Collections.emptyMap());
       Assert.assertEquals(metadataChange.getExisting(), new MetadataDataset.Record(program1, Collections.emptyMap(),
                                                                                    Collections.emptySet()));
       Assert.assertEquals(metadataChange.getLatest(), new MetadataDataset.Record(program1, Collections.emptyMap(),
                                                                                  Collections.emptySet()));
-      metadataChange = dataset.setProperty(program1, "fkey1", "fvalue1");
+      metadataChange = dataset.addProperty(program1, "fkey1", "fvalue1");
       // assert the metadata change which happens on setting property for the first time
       Assert.assertEquals(new MetadataDataset.Record(program1), metadataChange.getExisting());
       Assert.assertEquals(new MetadataDataset.Record(program1,
                                                      ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
                           metadataChange.getLatest());
-      metadataChange = dataset.setProperty(program1, "fK", "fV");
+      metadataChange = dataset.addProperty(program1, "fK", "fV");
       // assert the metadata change which happens when setting property with existing property
       Assert.assertEquals(new MetadataDataset.Record(program1,
                                                      ImmutableMap.of("fkey1", "fvalue1"), Collections.emptySet()),
@@ -140,14 +140,14 @@ public class MetadataDatasetTest {
                                                      ImmutableMap.of("fkey1", "fvalue1", "fK", "fV"),
                                                      Collections.emptySet()),
                           metadataChange.getLatest());
-      dataset.setProperty(dataset1, "dkey1", "dvalue1");
-      dataset.setProperty(dataset2, "skey1", "svalue1");
-      dataset.setProperty(dataset2, "skey2", "svalue2");
-      dataset.setProperty(artifact1, "rkey1", "rvalue1");
-      dataset.setProperty(artifact1, "rkey2", "rvalue2");
-      dataset.setProperty(fileEntity, "fkey2", "fvalue2");
-      dataset.setProperty(partitionFileEntity, "pfkey2", "pfvalue2");
-      dataset.setProperty(jarEntity, "jkey2", "jvalue2");
+      dataset.addProperty(dataset1, "dkey1", "dvalue1");
+      dataset.addProperty(dataset2, "skey1", "svalue1");
+      dataset.addProperty(dataset2, "skey2", "svalue2");
+      dataset.addProperty(artifact1, "rkey1", "rvalue1");
+      dataset.addProperty(artifact1, "rkey2", "rvalue2");
+      dataset.addProperty(fileEntity, "fkey2", "fvalue2");
+      dataset.addProperty(partitionFileEntity, "pfkey2", "pfvalue2");
+      dataset.addProperty(jarEntity, "jkey2", "jvalue2");
     });
     // verify
     txnl.execute(() -> {
@@ -194,7 +194,7 @@ public class MetadataDatasetTest {
       Assert.assertEquals(expected, result);
     });
     // reset a property
-    txnl.execute(() -> dataset.setProperty(dataset2, "skey1", "sv1"));
+    txnl.execute(() -> dataset.addProperty(dataset2, "skey1", "sv1"));
     txnl.execute(() -> Assert.assertEquals(ImmutableMap.of("skey1", "sv1", "skey2", "svalue2"),
                                            dataset.getProperties(dataset2)));
     // cleanup
@@ -443,8 +443,8 @@ public class MetadataDatasetTest {
     final MetadataEntry myFieldEntry1 = new MetadataEntry(myField1, "testKey1", "testValue1");
     final MetadataEntry myFieldEntry2 = new MetadataEntry(myField2, "testKey2", "testValue2");
     txnl.execute(() -> {
-      dataset.setProperty(myField1, "testKey1", "testValue1");
-      dataset.setProperty(myField2, "testKey2", "testValue2");
+      dataset.addProperty(myField1, "testKey1", "testValue1");
+      dataset.addProperty(myField2, "testKey2", "testValue2");
     });
 
     // Search for it based on value
@@ -472,9 +472,9 @@ public class MetadataDatasetTest {
     final MetadataEntry multiWordEntry = new MetadataEntry(program1, "multiword", multiWordValue);
 
     txnl.execute(() -> {
-      dataset.setProperty(program1, "key1", "value1");
-      dataset.setProperty(program1, "key2", "value2");
-      dataset.setProperty(program1, "multiword", multiWordValue);
+      dataset.addProperty(program1, "key1", "value1");
+      dataset.addProperty(program1, "key2", "value2");
+      dataset.addProperty(program1, "multiword", multiWordValue);
     });
 
     // Search for it based on value
@@ -509,7 +509,7 @@ public class MetadataDatasetTest {
 
     });
     // Search based on value
-    txnl.execute(() -> dataset.setProperty(program1, "key3", "value1"));
+    txnl.execute(() -> dataset.addProperty(program1, "key3", "value1"));
     txnl.execute(() -> {
       List<MetadataEntry> results =
         searchByDefaultIndex("ns1", "value1", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
@@ -520,7 +520,7 @@ public class MetadataDatasetTest {
     });
 
     // Search based on value prefix
-    txnl.execute(() -> dataset.setProperty(dataset2, "key21", "value21"));
+    txnl.execute(() -> dataset.addProperty(dataset2, "key21", "value21"));
     txnl.execute(() -> {
       List<MetadataEntry> results =
         searchByDefaultIndex("ns1", "value2*", ImmutableSet.of(EntityTypeSimpleName.ALL));
@@ -546,12 +546,12 @@ public class MetadataDatasetTest {
 
     txnl.execute(() -> {
       // Add some properties to program1
-      dataset.setProperty(program1, "key1", "value1");
-      dataset.setProperty(program1, "key2", "value2");
+      dataset.addProperty(program1, "key1", "value1");
+      dataset.addProperty(program1, "key2", "value2");
       // add a multi word value
-      dataset.setProperty(program1, multiWordKey, multiWordValue);
-      dataset.setProperty(dataset2, "sKey1", "sValue1");
-      dataset.setProperty(dataset2, "Key1", "Value1");
+      dataset.addProperty(program1, multiWordKey, multiWordValue);
+      dataset.addProperty(dataset2, "sKey1", "sValue1");
+      dataset.addProperty(dataset2, "Key1", "Value1");
     });
 
     txnl.execute(() -> {
@@ -616,9 +616,9 @@ public class MetadataDatasetTest {
     final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
 
     txnl.execute(() -> {
-      dataset.setProperty(program1, multiWordKey, multiWordValue);
-      dataset.setProperty(sysArtifact, multiWordKey, multiWordValue);
-      dataset.setProperty(ns2Artifact, multiWordKey, multiWordValue);
+      dataset.addProperty(program1, multiWordKey, multiWordValue);
+      dataset.addProperty(sysArtifact, multiWordKey, multiWordValue);
+      dataset.addProperty(ns2Artifact, multiWordKey, multiWordValue);
     });
     // perform the exact same multiword search in the 'ns1' namespace. It should return the system artifact along with
     // matched entities in the 'ns1' namespace
@@ -708,8 +708,8 @@ public class MetadataDatasetTest {
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
 
     txnl.execute(() -> {
-      dataset.setProperty(nsArtifact, multiWordKey, multiWordValue);
-      dataset.setProperty(sysArtifact, multiWordKey, multiWordValue);
+      dataset.addProperty(nsArtifact, multiWordKey, multiWordValue);
+      dataset.addProperty(sysArtifact, multiWordKey, multiWordValue);
     });
 
     MetadataEntry systemArtifactEntry = new MetadataEntry(sysArtifact, multiWordKey, multiWordValue);
@@ -755,8 +755,8 @@ public class MetadataDatasetTest {
   @Test
   public void testUpdateSearch() throws Exception {
     txnl.execute(() -> {
-      dataset.setProperty(program1, "key1", "value1");
-      dataset.setProperty(program1, "key2", "value2");
+      dataset.addProperty(program1, "key1", "value1");
+      dataset.addProperty(program1, "key2", "value2");
       dataset.addTags(program1, "tag1", "tag2");
     });
     txnl.execute(() -> {
@@ -773,7 +773,7 @@ public class MetadataDatasetTest {
 
     // Update key1
     txnl.execute(() -> {
-      dataset.setProperty(program1, "key1", "value3");
+      dataset.addProperty(program1, "key1", "value3");
       dataset.removeProperties(program1, "key2");
       dataset.removeTags(program1, "tag2");
     });
@@ -827,7 +827,7 @@ public class MetadataDatasetTest {
       for (Map.Entry<MetadataEntity, MetadataDataset.Record> entry : allMetadata.entrySet()) {
         MetadataDataset.Record metadata = entry.getValue();
         for (Map.Entry<String, String> props : metadata.getProperties().entrySet()) {
-          dataset.setProperty(metadata.getMetadataEntity(), props.getKey(), props.getValue());
+          dataset.addProperty(metadata.getMetadataEntity(), props.getKey(), props.getValue());
         }
         dataset.addTags(metadata.getMetadataEntity(),
                         metadata.getTags().toArray(new String[0]));
@@ -864,12 +864,12 @@ public class MetadataDatasetTest {
   @Test
   public void testDelete() throws Exception {
     txnl.execute(() -> {
-      dataset.setProperty(program1, "key1", "value1");
-      dataset.setProperty(program1, "key2", "value2");
+      dataset.addProperty(program1, "key1", "value1");
+      dataset.addProperty(program1, "key2", "value2");
       dataset.addTags(program1, "tag1", "tag2");
 
-      dataset.setProperty(app1, "key10", "value10");
-      dataset.setProperty(app1, "key12", "value12");
+      dataset.addProperty(app1, "key10", "value10");
+      dataset.addProperty(app1, "key12", "value12");
       dataset.addTags(app1, "tag11", "tag12");
     });
 
@@ -916,10 +916,10 @@ public class MetadataDatasetTest {
     final String name = "dataset1";
     final long creationTime = System.currentTimeMillis();
     txnl.execute(() -> {
-      dataset.setProperty(program1, "key", value);
-      dataset.setProperty(program1, AbstractSystemMetadataWriter.SCHEMA_KEY, schema);
-      dataset.setProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, name);
-      dataset.setProperty(dataset1, AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(creationTime));
+      dataset.addProperty(program1, "key", value);
+      dataset.addProperty(program1, AbstractSystemMetadataWriter.SCHEMA_KEY, schema);
+      dataset.addProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, name);
+      dataset.addProperty(dataset1, AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(creationTime));
     });
     final String namespaceId = program1.getValue(MetadataEntity.NAMESPACE);
     txnl.execute(() -> {
@@ -966,9 +966,9 @@ public class MetadataDatasetTest {
     MetadataEntity ns1App = new NamespaceId("ns1").app("a").toMetadataEntity();
     MetadataEntity ns2App = new NamespaceId("ns2").app("a").toMetadataEntity();
     txnl.execute(() -> {
-      dataset.setProperty(ns1App, "k1", "v1");
-      dataset.setProperty(ns1App, "k2", "v2");
-      dataset.setProperty(ns2App, "k1", "v1");
+      dataset.addProperty(ns1App, "k1", "v1");
+      dataset.addProperty(ns1App, "k2", "v2");
+      dataset.addProperty(ns2App, "k1", "v1");
     });
 
     SearchRequest request1 = new SearchRequest(null, "v1", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
@@ -1005,11 +1005,11 @@ public class MetadataDatasetTest {
     ApplicationId ns2app2 = new NamespaceId("ns2").app("a2");
     String key = AbstractSystemMetadataWriter.ENTITY_NAME_KEY;
     txnl.execute(() -> {
-      dataset.setProperty(ns1app1.toMetadataEntity(), key, ns1app1.getApplication());
-      dataset.setProperty(ns1app2.toMetadataEntity(), key, ns1app2.getApplication());
-      dataset.setProperty(ns1app3.toMetadataEntity(), key, ns1app3.getApplication());
-      dataset.setProperty(ns2app1.toMetadataEntity(), key, ns2app1.getApplication());
-      dataset.setProperty(ns2app2.toMetadataEntity(), key, ns2app2.getApplication());
+      dataset.addProperty(ns1app1.toMetadataEntity(), key, ns1app1.getApplication());
+      dataset.addProperty(ns1app2.toMetadataEntity(), key, ns1app2.getApplication());
+      dataset.addProperty(ns1app3.toMetadataEntity(), key, ns1app3.getApplication());
+      dataset.addProperty(ns2app1.toMetadataEntity(), key, ns2app1.getApplication());
+      dataset.addProperty(ns2app2.toMetadataEntity(), key, ns2app2.getApplication());
     });
 
     MetadataEntry ns1app1Entry = new MetadataEntry(ns1app1.toMetadataEntity(), key, ns1app1.getApplication());
@@ -1067,8 +1067,8 @@ public class MetadataDatasetTest {
     MetadataEntity ns1App = new NamespaceId("ns1").app(appName).toMetadataEntity();
     MetadataEntity ns2App = new NamespaceId("ns2").app(appName).toMetadataEntity();
     txnl.execute(() -> {
-      dataset.setProperty(ns2App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
-      dataset.setProperty(ns1App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+      dataset.addProperty(ns2App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+      dataset.addProperty(ns1App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
     });
 
     SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
@@ -1092,9 +1092,9 @@ public class MetadataDatasetTest {
     String dsName = "name21 name22";
     String appName = "name31 name32 name33";
     txnl.execute(() -> {
-      dataset.setProperty(program1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, flowName);
-      dataset.setProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, dsName);
-      dataset.setProperty(app1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+      dataset.addProperty(program1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, flowName);
+      dataset.addProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, dsName);
+      dataset.addProperty(app1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
     });
     NamespaceId namespaceId = new NamespaceId(program1.getValue(MetadataEntity.NAMESPACE));
     EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
@@ -1247,7 +1247,7 @@ public class MetadataDatasetTest {
 
     txnl.execute(() -> {
       // Add a new property and a tag
-      dataset.setProperty(targetId, prefix + "k2", "v2");
+      dataset.addProperty(targetId, prefix + "k2", "v2");
       dataset.addTags(targetId, prefix + "t3");
     });
     // Save the complete metadata record at this point
@@ -1269,7 +1269,7 @@ public class MetadataDatasetTest {
 
     txnl.execute(() -> {
       // Add another property and a tag
-      dataset.setProperty(targetId, prefix + "k3", "v3");
+      dataset.addProperty(targetId, prefix + "k3", "v3");
       dataset.addTags(targetId, prefix + "t4");
     });
     txnl.execute(() -> {
@@ -1292,7 +1292,7 @@ public class MetadataDatasetTest {
 
     txnl.execute(() -> {
       // Add the same property and tag as second time
-      dataset.setProperty(targetId, prefix + "k2", "v2");
+      dataset.addProperty(targetId, prefix + "k2", "v2");
       dataset.addTags(targetId, prefix + "t3");
     });
     txnl.execute(() -> {
@@ -1360,7 +1360,7 @@ public class MetadataDatasetTest {
 
     // Add one more property and a tag
     txnl.execute(() -> {
-      dataset.setProperty(targetId, prefix + "k2", "v2");
+      dataset.addProperty(targetId, prefix + "k2", "v2");
       dataset.addTags(targetId, prefix + "t2");
     });
     final MetadataDataset.Record lastCompleteRecord = new MetadataDataset.Record(targetId, toProps(prefix, "k2", "v2"),
@@ -1399,7 +1399,7 @@ public class MetadataDatasetTest {
 
   private void addMetadataHistory(MetadataDataset dataset, MetadataDataset.Record record) {
     for (Map.Entry<String, String> entry : record.getProperties().entrySet()) {
-      dataset.setProperty(record.getMetadataEntity(), entry.getKey(), entry.getValue());
+      dataset.addProperty(record.getMetadataEntity(), entry.getKey(), entry.getValue());
     }
     //noinspection ToArrayCallWithZeroLengthArrayArgument
     dataset.addTags(record.getMetadataEntity(), record.getTags().toArray(new String[0]));

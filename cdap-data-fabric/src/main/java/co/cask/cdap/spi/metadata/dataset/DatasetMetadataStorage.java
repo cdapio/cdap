@@ -204,7 +204,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
         after = change.getLatest();
       }
       if (!propertiesToAdd.isEmpty()) {
-        MetadataDataset.Change change = dataset.setProperties(entity, propertiesToAdd);
+        MetadataDataset.Change change = dataset.addProperties(entity, propertiesToAdd);
         before = before != null ? before : change.getExisting();
         after = change.getLatest();
       }
@@ -283,7 +283,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
       after = dataset.removeProperties(entity, propertiesToRemove).getLatest();
     }
     if (!propertiesToAdd.isEmpty()) {
-      after = dataset.setProperties(entity, propertiesToAdd).getLatest();
+      after = dataset.addProperties(entity, propertiesToAdd).getLatest();
     }
     return new MetadataDataset.Change(before, after);
   }

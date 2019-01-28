@@ -39,18 +39,18 @@ public class NoOpMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void setProperties(MetadataScope scope, MetadataEntity metadataEntity,
+  public void addProperties(MetadataScope scope, MetadataEntity metadataEntity,
                             Map<String, String> properties) {
     // NO-OP
   }
 
   @Override
-  public void setProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate) {
+  public void addProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate) {
     // NO-OP
   }
 
   @Override
-  public void setProperty(MetadataScope scope, MetadataEntity metadataEntity, String key, String value) {
+  public void addProperty(MetadataScope scope, MetadataEntity metadataEntity, String key, String value) {
     // NO-OP
   }
 

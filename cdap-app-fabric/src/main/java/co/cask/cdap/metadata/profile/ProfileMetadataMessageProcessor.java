@@ -118,7 +118,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) {
     Map<MetadataEntity, Map<String, String>> toUpdate = new HashMap<>();
     collectProfileMetadata(entityId, message, toUpdate);
-    metadataStore.setProperties(MetadataScope.SYSTEM, toUpdate);
+    metadataStore.addProperties(MetadataScope.SYSTEM, toUpdate);
   }
 
   private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
