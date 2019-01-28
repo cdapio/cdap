@@ -19,7 +19,7 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.data2.metadata.dataset.Metadata;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
@@ -45,13 +45,13 @@ public interface MetadataStore {
    * left unchanged even if the new properties contain a new value.
    *
    * @param scope the {@link MetadataScope} to add/update the properties in
-   * @param metadata the new metadata, including the entity, properties and tags
+   * @param metadata the record of the new metadata, including the entity, properties and tags
    * @param propertiesToKeep the names of properties that should be kept even if the
    *                         new metadata does not contain them
    * @param propertiesToPreserve the names of properties to leave unchanged even if
    *                             the new metadata contains no or new values for them
    */
-  void replaceMetadata(MetadataScope scope, Metadata metadata,
+  void replaceMetadata(MetadataScope scope, MetadataDataset.Record metadata,
                        Set<String> propertiesToKeep, Set<String> propertiesToPreserve);
 
   /**

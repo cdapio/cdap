@@ -16,13 +16,8 @@
 
 package co.cask.cdap.spi.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
-
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * The Storage Provider API for Metadata.
@@ -43,22 +38,21 @@ public interface MetadataStorage {
    * @param mutations the mutations to perform
    * @return the changes effected by each of the mutations
    */
-  Collection<MetadataChange> batch(Collection<MetadataMutation> mutations) throws IOException;
+  Collection<MetadataChange> batch(Collection<? extends MetadataMutation> mutations) throws IOException;
 
   /**
    * Retrieve the metadata for an entity.
    *
-   * @param entity the entity
-   * @param scope the scope for which to retrieve metadata, or null to indicate all scopes
-   * @param kind the kind of metadata to retrieve, or null to retrieve all kinds
-   * @param selection a set of scoped tags and properties to retrieve, or null to retrieve all
-   *
+   * @param read the read operation to perform
    * @return the metadata for the entity, never null.
    */
-  Metadata read(MetadataEntity entity,
-                @Nullable MetadataScope scope,
-                @Nullable MetadataKind kind,
-                @Nullable Set<ScopedNameOfKind> selection) throws IOException;
+  Metadata read(Read read) throws IOException;
 
-  // TODO (CDAP-14584): add search to the interface
+  /**
+   * Search the metadata and return matching entities.
+   *
+   * @param request the search request
+   * @return the result of the search, never null.
+   */
+  SearchResponse search(SearchRequest request) throws IOException;
 }

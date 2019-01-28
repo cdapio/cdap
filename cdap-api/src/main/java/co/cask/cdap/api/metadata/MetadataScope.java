@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,16 @@ package co.cask.cdap.api.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Represents the scope of metadata for a metadata entity.
  */
 @Beta
 public enum MetadataScope {
   USER,
-  SYSTEM
+  SYSTEM;
+
+  public static final Set<MetadataScope> ALL = EnumSet.allOf(MetadataScope.class);
 }

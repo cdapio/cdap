@@ -106,6 +106,7 @@ public class DefaultStoreTest {
   @Before
   public void before() throws Exception {
     store.clear();
+    nsStore.delete(new NamespaceId("default"));
     NamespacePathLocator namespacePathLocator =
       AppFabricTestHelper.getInjector().getInstance(NamespacePathLocator.class);
     namespacePathLocator.get(NamespaceId.DEFAULT).delete(true);
