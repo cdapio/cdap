@@ -212,7 +212,8 @@ public class BaseHiveExploreServiceTest {
     NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId).build();
     namespaceAdmin.create(namespaceMeta);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
-      exploreService.createNamespace(namespaceMeta);
+      QueryHandle handle = exploreService.createNamespace(namespaceMeta);
+      waitForCompletionStatus(handle, 50, TimeUnit.MILLISECONDS, 40);
     }
   }
 
@@ -222,7 +223,8 @@ public class BaseHiveExploreServiceTest {
   protected static void deleteNamespace(NamespaceId namespaceId) throws Exception {
     namespacePathLocator.get(namespaceId).delete(true);
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
-      exploreService.deleteNamespace(namespaceId);
+      QueryHandle handle = exploreService.deleteNamespace(namespaceId);
+      waitForCompletionStatus(handle, 50, TimeUnit.MILLISECONDS, 40);
     }
     namespaceAdmin.delete(namespaceId);
   }
