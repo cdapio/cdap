@@ -366,8 +366,8 @@ public class MapReduceTransformExecutorFactory<T> {
       WritableConversion<JOIN_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(joinKeyClassName);
       WritableConversion<INPUT_RECORD, OUT_VALUE> inputConversion =
         WritableConversions.getConversion(joinInputClassName);
-      this.keyConversion = keyConversion == null ? new CastConversion<JOIN_KEY, OUT_KEY>() : keyConversion;
-      this.inputConversion = inputConversion == null ? new CastConversion<INPUT_RECORD, OUT_VALUE>() : inputConversion;
+      this.keyConversion = keyConversion == null ? new CastConversion<>() : keyConversion;
+      this.inputConversion = inputConversion == null ? new CastConversion<>() : inputConversion;
     }
 
     @Override
@@ -403,9 +403,8 @@ public class MapReduceTransformExecutorFactory<T> {
       WritableConversion<JOIN_KEY, REDUCE_KEY> keyConversion = WritableConversions.getConversion(joinKeyClassName);
       WritableConversion<INPUT_RECORD, REDUCE_VALUE> inputConversion =
         WritableConversions.getConversion(joinInputClassName);
-      this.keyConversion = keyConversion == null ? new CastConversion<JOIN_KEY, REDUCE_KEY>() : keyConversion;
-      this.inputConversion = inputConversion == null ?
-        new CastConversion<INPUT_RECORD, REDUCE_VALUE>() : inputConversion;
+      this.keyConversion = keyConversion == null ? new CastConversion<>() : keyConversion;
+      this.inputConversion = inputConversion == null ? new CastConversion<>() : inputConversion;
       this.numOfInputs = numOfInputs;
     }
 
@@ -456,8 +455,8 @@ public class MapReduceTransformExecutorFactory<T> {
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
       // if the conversion is null, it means the user is using a Writable already
-      this.keyConversion = keyConversion == null ? new CastConversion<GROUP_KEY, OUT_KEY>() : keyConversion;
-      this.valConversion = valConversion == null ? new CastConversion<GROUP_VAL, OUT_VAL>() : valConversion;
+      this.keyConversion = keyConversion == null ? new CastConversion<>() : keyConversion;
+      this.valConversion = valConversion == null ? new CastConversion<>() : valConversion;
     }
 
     @Override
@@ -495,8 +494,8 @@ public class MapReduceTransformExecutorFactory<T> {
       this.aggregator = aggregator;
       WritableConversion<GROUP_KEY, REDUCE_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, REDUCE_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
-      this.keyConversion = keyConversion == null ? new CastConversion<GROUP_KEY, REDUCE_KEY>() : keyConversion;
-      this.valConversion = valConversion == null ? new CastConversion<GROUP_VAL, REDUCE_VAL>() : valConversion;
+      this.keyConversion = keyConversion == null ? new CastConversion<>() : keyConversion;
+      this.valConversion = valConversion == null ? new CastConversion<>() : valConversion;
     }
 
     @Override

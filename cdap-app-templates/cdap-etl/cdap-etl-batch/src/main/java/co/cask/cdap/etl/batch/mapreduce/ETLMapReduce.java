@@ -78,7 +78,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,15 +92,15 @@ import java.util.Set;
  */
 public class ETLMapReduce extends AbstractMapReduce {
   public static final String NAME = ETLMapReduce.class.getSimpleName();
-  public static final String MAP_KEY_CLASS = "cdap.etl.map.key.class";
-  public static final String MAP_VAL_CLASS = "cdap.etl.map.val.class";
+  static final String MAP_KEY_CLASS = "cdap.etl.map.key.class";
+  static final String MAP_VAL_CLASS = "cdap.etl.map.val.class";
   static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
   static final String INPUT_ALIAS_KEY = "cdap.etl.source.alias.key";
   static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
   static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type INPUT_ALIAS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
-  static final Type CONNECTOR_DATASETS_TYPE = new TypeToken<HashSet<String>>() { }.getType();
+  private static final Type CONNECTOR_DATASETS_TYPE = new TypeToken<HashSet<String>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Logger PIPELINE_LOG = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                               Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
@@ -121,10 +120,6 @@ public class ETLMapReduce extends AbstractMapReduce {
   private final BatchPhaseSpec phaseSpec;
 
   private final Set<String> connectorDatasets;
-
-  public ETLMapReduce(BatchPhaseSpec phaseSpec) {
-    this(phaseSpec, new HashSet<String>());
-  }
 
   public ETLMapReduce(BatchPhaseSpec phaseSpec, Set<String> connectorDatasets) {
     this.phaseSpec = phaseSpec;
@@ -173,7 +168,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   @TransactionPolicy(TransactionControl.EXPLICIT)
   public void initialize() throws Exception {
-    final MapReduceContext context = getContext();
+    MapReduceContext context = getContext();
     Map<String, String> properties = context.getSpecification().getProperties();
     if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
@@ -181,8 +176,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, mrMetrics);
     List<Finisher> finishers = new ArrayList<>();
 
-    final Job job = context.getHadoopJob();
-    final Configuration hConf = job.getConfiguration();
+    Job job = context.getHadoopJob();
+    Configuration hConf = job.getConfiguration();
     hConf.setBoolean("mapreduce.map.speculative", false);
     hConf.setBoolean("mapreduce.reduce.speculative", false);
 
@@ -199,7 +194,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       hConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
     }
 
-    final PipelinePhase phase = phaseSpec.getPhase();
+    PipelinePhase phase = phaseSpec.getPhase();
     PipelinePluginInstantiator pluginInstantiator =
       new PipelinePluginInstantiator(context, mrMetrics, phaseSpec, new MultiConnectorFactory());
 
@@ -224,13 +219,13 @@ public class ETLMapReduce extends AbstractMapReduce {
       job.setReducerClass(ETLReducer.class);
     }
 
-    final Map<String, SinkOutput> sinkOutputs = new HashMap<>();
-    final Map<String, String> inputAliasToStage = new HashMap<>();
+    Map<String, SinkOutput> sinkOutputs = new HashMap<>();
+    Map<String, String> inputAliasToStage = new HashMap<>();
     // Collect field operations emitted by various stages in this MapReduce program
-    final Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
     // call prepareRun on each stage in order so that any arguments set by a stage will be visible to subsequent stages
-    for (final String stageName : phase.getDag().getTopologicalOrder()) {
-      final StageSpec stageSpec = phase.getStage(stageName);
+    for (String stageName : phase.getDag().getTopologicalOrder()) {
+      StageSpec stageSpec = phase.getStage(stageName);
       String pluginType = stageSpec.getPluginType();
       boolean isConnectorSource =
         Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
@@ -243,17 +238,12 @@ public class ETLMapReduce extends AbstractMapReduce {
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<MapReduceBatchContext> contextProvider =
           new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
-        submitterPlugin = new SubmitterPlugin<>(
-          stageName, context, batchSource, contextProvider,
-          new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
-            @Override
-            public void act(MapReduceBatchContext sourceContext) {
-              for (String inputAlias : sourceContext.getInputNames()) {
-                inputAliasToStage.put(inputAlias, stageName);
-              }
-              stageOperations.put(stageName, sourceContext.getFieldOperations());
-            }
-          });
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, batchSource, contextProvider, sourceContext -> {
+          for (String inputAlias : sourceContext.getInputNames()) {
+            inputAliasToStage.put(inputAlias, stageName);
+          }
+          stageOperations.put(stageName, sourceContext.getFieldOperations());
+        });
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) ||
         AlertPublisher.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
@@ -261,91 +251,70 @@ public class ETLMapReduce extends AbstractMapReduce {
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<MapReduceBatchContext> contextProvider =
           new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
-        submitterPlugin = new SubmitterPlugin<>(
-          stageName, context, batchSink, contextProvider,
-          new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
-            @Override
-            public void act(MapReduceBatchContext sinkContext) {
-              sinkOutputs.put(stageName, new SinkOutput(sinkContext.getOutputNames()));
-              stageOperations.put(stageName, sinkContext.getFieldOperations());
-            }
-          });
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, batchSink, contextProvider, sinkContext -> {
+          sinkOutputs.put(stageName, new SinkOutput(sinkContext.getOutputNames()));
+          stageOperations.put(stageName, sinkContext.getFieldOperations());
+        });
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
         Transform<?, ?> transform = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<MapReduceBatchContext> contextProvider =
           new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
-        submitterPlugin = new SubmitterPlugin<>(
-                stageName, context, transform, contextProvider,
-                new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
-                  @Override
-                  public void act(MapReduceBatchContext context) {
-                    stageOperations.put(stageName, context.getFieldOperations());
-                  }
-            });
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, transform, contextProvider,
+                                                ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
-        final BatchAggregator<?, ?, ?> aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        BatchAggregator<?, ?, ?> aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultAggregatorContext> contextProvider =
           new AggregatorContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
-        submitterPlugin = new SubmitterPlugin<>(
-          stageName, context, aggregator, contextProvider,
-          new SubmitterPlugin.PrepareAction<DefaultAggregatorContext>() {
-            @Override
-            public void act(DefaultAggregatorContext aggregatorContext) {
-              if (aggregatorContext.getNumPartitions() != null) {
-                job.setNumReduceTasks(aggregatorContext.getNumPartitions());
-              }
-              Class<?> outputKeyClass = aggregatorContext.getGroupKeyClass();
-              Class<?> outputValClass = aggregatorContext.getGroupValueClass();
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, aggregator, contextProvider, aggregatorContext -> {
+          if (aggregatorContext.getNumPartitions() != null) {
+            job.setNumReduceTasks(aggregatorContext.getNumPartitions());
+          }
+          Class<?> outputKeyClass = aggregatorContext.getGroupKeyClass();
+          Class<?> outputValClass = aggregatorContext.getGroupValueClass();
 
-              if (outputKeyClass == null) {
-                outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
-              }
-              if (outputValClass == null) {
-                outputValClass = TypeChecker.getGroupValueClass(aggregator);
-              }
-              hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
-              hConf.set(MAP_VAL_CLASS, outputValClass.getName());
-              job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
-              job.setMapOutputValueClass(getOutputValClass(stageName, outputValClass));
-              stageOperations.put(stageName, aggregatorContext.getFieldOperations());
-            }
-          });
+          if (outputKeyClass == null) {
+            outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
+          }
+          if (outputValClass == null) {
+            outputValClass = TypeChecker.getGroupValueClass(aggregator);
+          }
+          hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
+          hConf.set(MAP_VAL_CLASS, outputValClass.getName());
+          job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
+          job.setMapOutputValueClass(getOutputValClass(stageName, outputValClass));
+          stageOperations.put(stageName, aggregatorContext.getFieldOperations());
+        });
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
-        final BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultJoinerContext> contextProvider =
           new JoinerContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
-        submitterPlugin = new SubmitterPlugin<>(
-          stageName, context, batchJoiner, contextProvider,
-          new SubmitterPlugin.PrepareAction<DefaultJoinerContext>() {
-            @Override
-            public void act(DefaultJoinerContext joinerContext) {
-              if (joinerContext.getNumPartitions() != null) {
-                job.setNumReduceTasks(joinerContext.getNumPartitions());
-              }
-              Class<?> outputKeyClass = joinerContext.getJoinKeyClass();
-              Class<?> inputRecordClass = joinerContext.getJoinInputRecordClass();
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, batchJoiner, contextProvider, joinerContext -> {
+          if (joinerContext.getNumPartitions() != null) {
+            job.setNumReduceTasks(joinerContext.getNumPartitions());
+          }
+          Class<?> outputKeyClass = joinerContext.getJoinKeyClass();
+          Class<?> inputRecordClass = joinerContext.getJoinInputRecordClass();
 
-              if (outputKeyClass == null) {
-                outputKeyClass = TypeChecker.getJoinKeyClass(batchJoiner);
-              }
-              if (inputRecordClass == null) {
-                inputRecordClass = TypeChecker.getJoinInputRecordClass(batchJoiner);
-              }
-              hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
-              hConf.set(MAP_VAL_CLASS, inputRecordClass.getName());
-              job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
-              getOutputValClass(stageName, inputRecordClass);
-              // for joiner plugin map output is tagged with stageName
-              job.setMapOutputValueClass(TaggedWritable.class);
-              stageOperations.put(stageName, joinerContext.getFieldOperations());
-            }
-          });
+          if (outputKeyClass == null) {
+            outputKeyClass = TypeChecker.getJoinKeyClass(batchJoiner);
+          }
+          if (inputRecordClass == null) {
+            inputRecordClass = TypeChecker.getJoinInputRecordClass(batchJoiner);
+          }
+          hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
+          hConf.set(MAP_VAL_CLASS, inputRecordClass.getName());
+          job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
+          getOutputValClass(stageName, inputRecordClass);
+          // for joiner plugin map output is tagged with stageName
+          job.setMapOutputValueClass(TaggedWritable.class);
+          stageOperations.put(stageName, joinerContext.getFieldOperations());
+        });
       }
       if (submitterPlugin != null) {
         submitterPlugin.prepareRun();
@@ -460,7 +429,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
 
     @Override
-    public void map(Object key, Object value, Mapper.Context context) throws IOException, InterruptedException {
+    public void map(Object key, Object value, Mapper.Context context) {
       try {
         transformRunner.transform(key, value);
       } catch (StageFailureException e) {
@@ -498,7 +467,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
 
     @Override
-    protected void reduce(Object key, Iterable values, Context context) throws IOException, InterruptedException {
+    protected void reduce(Object key, Iterable values, Context context) {
       try {
         transformRunner.transform(key, values.iterator());
       } catch (StageFailureException e) {

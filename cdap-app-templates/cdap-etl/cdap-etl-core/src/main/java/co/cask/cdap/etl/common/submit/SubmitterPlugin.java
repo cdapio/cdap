@@ -17,8 +17,6 @@
 package co.cask.cdap.etl.common.submit;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.api.SubmitterLifecycle;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
@@ -41,12 +39,7 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
   public SubmitterPlugin(String stageName, Transactional transactional,
                          SubmitterLifecycle<T> delegate,
                          ContextProvider<U> contextProvider) {
-    this(stageName, transactional, delegate, contextProvider, new PrepareAction<U>() {
-      @Override
-      public void act(U context) {
-        // no-op
-      }
-    });
+    this(stageName, transactional, delegate, contextProvider, x -> { });
   }
   public SubmitterPlugin(String stageName, Transactional transactional,
                          SubmitterLifecycle<T> delegate,
@@ -62,12 +55,9 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
   @Override
   public void onFinish(final boolean succeeded) {
     try {
-      transactional.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext datasetContext) throws Exception {
-          T context = contextProvider.getContext(datasetContext);
-          delegate.onRunFinish(succeeded, context);
-        }
+      transactional.execute(datasetContext -> {
+        T context = contextProvider.getContext(datasetContext);
+        delegate.onRunFinish(succeeded, context);
       });
     } catch (TransactionFailureException e) {
       LOG.warn("Error calling onRunFinish on stage {}", stageName);
@@ -76,13 +66,10 @@ public class SubmitterPlugin<T, U extends T> implements Preparer, Finisher {
 
   @Override
   public void prepareRun() throws TransactionFailureException {
-    transactional.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext datasetContext) throws Exception {
-        U context = contextProvider.getContext(datasetContext);
-        delegate.prepareRun(context);
-        prepareAction.act(context);
-      }
+    transactional.execute(datasetContext -> {
+      U context = contextProvider.getContext(datasetContext);
+      delegate.prepareRun(context);
+      prepareAction.act(context);
     });
   }
 
