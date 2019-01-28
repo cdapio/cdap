@@ -33,7 +33,8 @@ public final class FieldType {
     LONG,
     FLOAT,
     DOUBLE,
-    STRING
+    STRING,
+    BYTES
   }
 
   static final Set<Type> PRIMARY_KEY_TYPES = ImmutableSet.of(Type.INTEGER, Type.LONG, Type.STRING);

@@ -234,6 +234,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
       case STRING:
         key.add((String) field.getValue());
         return;
+      case BYTES:
+        key.add((byte[]) field.getValue());
+        return;
       default:
         throw new InvalidFieldException(schema.getTableId(), field.getName());
     }
@@ -255,6 +258,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
         return Bytes.toBytes((Double) field.getValue());
       case STRING:
         return Bytes.toBytes((String) field.getValue());
+      case BYTES:
+        return (byte[]) field.getValue();
       default:
         throw new InvalidFieldException(schema.getTableId(), field.getName());
     }

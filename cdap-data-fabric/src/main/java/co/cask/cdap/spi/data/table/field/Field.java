@@ -16,6 +16,8 @@
 
 package co.cask.cdap.spi.data.table.field;
 
+import co.cask.cdap.api.common.Bytes;
+
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -64,12 +66,20 @@ public final class Field<T> {
       return false;
     }
     Field field = (Field) o;
-    return Objects.equals(fieldType, field.fieldType) &&
-      Objects.equals(value, field.value);
+    if (!Objects.equals(fieldType, field.fieldType)) {
+      return false;
+    }
+    if (fieldType.getType() == FieldType.Type.BYTES) {
+      return Bytes.equals((byte[]) value, (byte[]) field.getValue());
+    }
+    return Objects.equals(value, field.value);
   }
 
   @Override
   public int hashCode() {
+    if (fieldType.getType() == FieldType.Type.BYTES) {
+      return Objects.hash(fieldType, Bytes.hashCode((byte[]) value));
+    }
     return Objects.hash(fieldType, value);
   }
 
@@ -78,7 +88,8 @@ public final class Field<T> {
     return "Field{" +
       "name='" + fieldType.getName() + '\'' +
       ", type='" + fieldType.getType() + '\'' +
-      ", value='" + value + '\'' +
+      ", value='" +
+      (fieldType.getType() == FieldType.Type.BYTES ? Bytes.toStringBinary((byte[]) value) : value) + '\'' +
       '}';
   }
 }
