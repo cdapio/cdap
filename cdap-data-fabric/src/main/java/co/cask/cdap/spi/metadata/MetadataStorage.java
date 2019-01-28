@@ -17,7 +17,7 @@
 package co.cask.cdap.spi.metadata;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.List;
 
 /**
  * The Storage Provider API for Metadata.
@@ -35,10 +35,10 @@ public interface MetadataStorage {
   /**
    * Apply a batch of mutations to the metadata state.
    *
-   * @param mutations the mutations to perform
-   * @return the changes effected by each of the mutations
+   * @param mutations the mutations to perform. They are applied in the order given by the list.
+   * @return the changes effected by each of the mutations, in the same order as the batch of mutations.
    */
-  Collection<MetadataChange> batch(Collection<? extends MetadataMutation> mutations) throws IOException;
+  List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException;
 
   /**
    * Retrieve the metadata for an entity.

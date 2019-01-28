@@ -43,7 +43,6 @@ import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutor;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -100,8 +99,9 @@ public class DatasetMetadataStorage implements MetadataStorage {
   }
 
   @Override
-  public Collection<MetadataChange> batch(Collection<? extends MetadataMutation> mutations) {
-    return execute(context -> mutations.stream().map(mutation -> apply(context, mutation)).collect(Collectors.toSet()));
+  public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) {
+    return execute(context -> mutations.stream()
+      .map(mutation -> apply(context, mutation)).collect(Collectors.toList()));
   }
 
   private MetadataChange remove(MetadataDatasetContext context, MetadataMutation.Remove remove) {
@@ -152,7 +152,8 @@ public class DatasetMetadataStorage implements MetadataStorage {
                                                MetadataScope scope, MetadataEntity entity,
                                                Set<String> tagsToRemove, Set<String> propertiesToRemove) {
     MetadataDataset dataset = context.getDataset(scope);
-    MetadataDataset.Record before = null, after = null;
+    MetadataDataset.Record before = null;
+    MetadataDataset.Record after = null;
     if (tagsToRemove.isEmpty() && propertiesToRemove.isEmpty()) {
       before = dataset.getMetadata(entity);
       after = before;
@@ -238,7 +239,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
                                                 Set<String> newTags, Map<String, String> newProperties,
                                                 Map<ScopedNameOfKind, MetadataDirective> directives) {
     MetadataDataset dataset = context.getDataset(scope);
-    final MetadataDataset.Record before = dataset.getMetadata(entity);
+    MetadataDataset.Record before = dataset.getMetadata(entity);
     if (newTags.isEmpty() && newProperties.isEmpty()) {
       // this scope remains unchanged
       return new MetadataDataset.Change(before, before);
@@ -295,8 +296,8 @@ public class DatasetMetadataStorage implements MetadataStorage {
   private Metadata read(MetadataDatasetContext context, Read read) {
     MetadataDataset.Record userMetadata = readScope(context, MetadataScope.USER, read);
     MetadataDataset.Record systemMetadata = readScope(context, MetadataScope.SYSTEM, read);
-    return union(new Metadata(USER, userMetadata.getTags(), userMetadata.getProperties()),
-                 new Metadata(SYSTEM, systemMetadata.getTags(), systemMetadata.getProperties()));
+    return mergeDisjointMetadata(new Metadata(USER, userMetadata.getTags(), userMetadata.getProperties()),
+                                 new Metadata(SYSTEM, systemMetadata.getTags(), systemMetadata.getProperties()));
   }
 
   private MetadataDataset.Record readScope(MetadataDatasetContext context,
@@ -397,7 +398,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
       Metadata metadata = null;
       for (Map.Entry<MetadataScope, co.cask.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
         Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(), entry.getValue().getProperties());
-        metadata = metadata == null ? toAdd : union(metadata, toAdd);
+        metadata = metadata == null ? toAdd : mergeDisjointMetadata(metadata, toAdd);
       }
       results.add(new MetadataRecord(record.getMetadataEntity(), metadata));
     });
@@ -414,17 +415,22 @@ public class DatasetMetadataStorage implements MetadataStorage {
                                        userChange.getExisting().getProperties());
     Metadata sysBefore = new Metadata(SYSTEM, sysChange.getExisting().getTags(),
                                       sysChange.getExisting().getProperties());
-    Metadata before = union(userBefore, sysBefore);
+    Metadata before = mergeDisjointMetadata(userBefore, sysBefore);
 
     Metadata userAfter = new Metadata(USER, userChange.getLatest().getTags(), userChange.getLatest().getProperties());
     Metadata sysAfter = new Metadata(SYSTEM, sysChange.getLatest().getTags(), sysChange.getLatest().getProperties());
-    Metadata after = union(userAfter, sysAfter);
+    Metadata after = mergeDisjointMetadata(userAfter, sysAfter);
 
     return new MetadataChange(entity, before, after);
   }
 
-  private static Metadata union(Metadata meta, Metadata other) {
+  /**
+   * Helper method to merge disjoint metadata objects. This is used to merge the metadata fro (up to) two
+   * metadata records returned by the datasets (one per scope) into a single Metadata object.
+   */
+  private static Metadata mergeDisjointMetadata(Metadata meta, Metadata other) {
     return new Metadata(Sets.union(meta.getTags(), other.getTags()),
+                        // this will not conflict because the two metadata are mutually disjoint
                         ImmutableMap.<ScopedName, String>builder()
                           .putAll(meta.getProperties())
                           .putAll(other.getProperties()).build());

@@ -371,7 +371,7 @@ public abstract class MetadataStorageTest {
 
     mds.batch(ImmutableList.of(app1Record, app2Record, program1Record, dataset1Record, dataset2Record, file1Record)
                 .stream().map(record -> new Update(record.getEntity(), record.getMetadata()))
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toList()));
 
     // Try to search on all tags
     assertResults(mds, SearchRequest.of("tags:*").addNamespace(ns1).build(),
