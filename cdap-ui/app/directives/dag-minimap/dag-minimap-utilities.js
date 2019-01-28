@@ -22,6 +22,7 @@ class DAGMinimapUtilities {
       nodeWidth: 200,
       nodeHeight: 100,
       conditionNode: 105,
+      padding: 5
     };
     this.MIN_SCALE = 0.5;
   }
@@ -48,8 +49,18 @@ class DAGMinimapUtilities {
       maxY = maxY === null ? y : Math.max(maxY, y);
     });
 
-    const width = Math.abs(maxX + this.SIZE.nodeWidth - minX);
-    const height = Math.abs(maxY + this.SIZE.nodeHeight - minY);
+    let width = 0;
+    let height = 0;
+
+    if (
+      minX !== null &&
+      maxX !== null &&
+      minY !== null &&
+      maxY !== null
+    ) {
+      width = Math.abs(maxX + this.SIZE.nodeWidth - minX);
+      height = Math.abs(maxY + this.SIZE.nodeHeight - minY);
+    }
 
     const widthScale = this.SIZE.width / width;
     const heightScale = this.SIZE.height / height;
@@ -72,6 +83,8 @@ class DAGMinimapUtilities {
       scale,
       minX,
       minY,
+      width,
+      height,
       xOffset,
       yOffset,
     };
@@ -109,6 +122,65 @@ class DAGMinimapUtilities {
       width,
       left,
       top,
+    };
+  }
+
+  /**
+   * Function that will give information about the viewport indicator for minimap
+   *
+   * @param graphMetadata result from getGraphMetadata function
+   * @param dagContainerSize diagram-container getBoundClientRect result (viewport size)
+   * @param canvasScale the scale of the actual graph canvas (dag-container)
+   * @param canvasPanning the top and left of dag-container
+   *
+   * Returns the height, width, top, and left property of the viewport for the minimap. The top and left will
+   * correlate to the top left point of the viewport.
+   */
+  getViewportBox(graphMetadata, dagContainerSize, canvasScale, canvasPanning) {
+    if (!graphMetadata || !dagContainerSize) { return; }
+
+    const {
+      scale,
+      minX,
+      minY,
+      xOffset,
+      yOffset,
+    } = graphMetadata;
+
+    // on empty dag
+    if (minX === null || minY === null) {
+      const padding = 2 * this.SIZE.padding;
+
+      return {
+        height: this.SIZE.height + padding,
+        width: this.SIZE.width + padding,
+        top: -this.SIZE.padding,
+        left: -this.SIZE.padding,
+      };
+    }
+
+    const scaleRatio = scale / canvasScale;
+
+    let height = dagContainerSize.height * scaleRatio;
+    let width = dagContainerSize.width * scaleRatio;
+
+    const canvasPanningY = canvasPanning.top;
+    const canvasPanningX = canvasPanning.left;
+
+    const nodeOffsetY = (canvasScale * minY) + ((1 - canvasScale) / 2 * dagContainerSize.height);
+    const nodeOffsetX = (canvasScale * minX) + ((1 - canvasScale) / 2 * dagContainerSize.width);
+
+    let top = (canvasPanningY + nodeOffsetY) * scaleRatio;
+    top = -top + yOffset;
+
+    let left = (canvasPanningX + nodeOffsetX) * scaleRatio;
+    left = -left + xOffset;
+
+    return {
+      height,
+      width,
+      top,
+      left,
     };
   }
 }
