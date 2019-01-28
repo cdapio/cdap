@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -151,11 +152,13 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
       if (contentProducer != null) {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
-                              bodyProducerFactory.create(contentProducer, taskExecutor),
+                              new ReleasingBodyProducer(bodyProducerFactory.create(contentProducer, taskExecutor),
+                                                        taskExecutor),
                               headers);
       } else {
         responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()),
                               bufferedResponse.getContentBuffer(), headers);
+        taskExecutor.releaseCallResources();
       }
       emitMetrics(bufferedResponse.getStatus());
     } finally {
@@ -230,6 +233,47 @@ public class DelayedHttpServiceResponder extends AbstractHttpServiceResponder im
 
     public HttpHeaders getHeaders() {
       return headers;
+    }
+  }
+
+  /**
+   * Wrapper around a delegate BodyProducer that releases resources after it is finished.
+   */
+  private static class ReleasingBodyProducer extends BodyProducer {
+    private final BodyProducer delegate;
+    private final ServiceTaskExecutor taskExecutor;
+
+    ReleasingBodyProducer(BodyProducer delegate, ServiceTaskExecutor taskExecutor) {
+      this.delegate = delegate;
+      this.taskExecutor = taskExecutor;
+    }
+
+    @Override
+    public long getContentLength() {
+      return delegate.getContentLength();
+    }
+
+    @Override
+    public ByteBuf nextChunk() throws Exception {
+      return delegate.nextChunk();
+    }
+
+    @Override
+    public void finished() throws Exception {
+      try {
+        delegate.finished();
+      } finally {
+        taskExecutor.releaseCallResources();
+      }
+    }
+
+    @Override
+    public void handleError(@Nullable Throwable cause) {
+      try {
+        delegate.handleError(cause);
+      } finally {
+        taskExecutor.releaseCallResources();
+      }
     }
   }
 }

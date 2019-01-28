@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
@@ -75,6 +76,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataReader metadataReader;
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final PluginFinder pluginFinder;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -84,7 +86,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               MessagingService messagingService,
                               ArtifactManagerFactory artifactManagerFactory,
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                              NamespaceQueryAdmin namespaceQueryAdmin) {
+                              NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -98,6 +100,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.pluginFinder = pluginFinder;
   }
 
   @Override
@@ -139,7 +142,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
-                                                          metadataPublisher, namespaceQueryAdmin);
+                                                          metadataPublisher, namespaceQueryAdmin, pluginFinder);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),

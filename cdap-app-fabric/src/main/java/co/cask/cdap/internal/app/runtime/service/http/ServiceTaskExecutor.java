@@ -46,6 +46,11 @@ public interface ServiceTaskExecutor {
   <T> T execute(Callable<T> callable, boolean transactional) throws Exception;
 
   /**
+   * Release resources that are no longer needed after an endpoint has been executed.
+   */
+  void releaseCallResources();
+
+  /**
    * Returns a {@link Transactional} used by this task executor for executing transactional tasks directly.
    */
   Transactional getTransactional();

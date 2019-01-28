@@ -36,6 +36,7 @@ import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStoreData;
@@ -625,6 +626,11 @@ public class HttpHandlerGeneratorTest {
         }
 
         @Override
+        public void releaseCallResources() {
+          // no-op
+        }
+
+        @Override
         public Transactional getTransactional() {
           return context;
         }
@@ -660,6 +666,11 @@ public class HttpHandlerGeneratorTest {
     @Override
     public int getInstanceId() {
       return 1;
+    }
+
+    @Override
+    public PluginConfigurer createPluginConfigurer() {
+      return null;
     }
 
     @Override
