@@ -15,10 +15,11 @@
  */
 
 class DAGMinimapCtrl {
-  constructor(DAGPlusPlusNodesStore, DAGMinimapUtilities, $scope, $window, $timeout) {
+  constructor(DAGPlusPlusNodesStore, DAGMinimapUtilities, $scope, $window, $timeout, DAGPlusPlusNodesActionsFactory) {
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.DAGMinimapUtilities = DAGMinimapUtilities;
     this.$timeout = $timeout;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
 
     this.state = {
       nodes: [],
@@ -33,12 +34,76 @@ class DAGMinimapCtrl {
     const windowElem = angular.element($window);
     windowElem.on('resize', debouncedUpdateContainerSize);
 
+    this.viewportTimeout = $timeout(this.handleViewportDrag.bind(this));
+
     $scope.$on('$destroy', () => {
       windowElem.off('resize', debouncedUpdateContainerSize);
 
       if (this.containerSizeTimeout) {
         this.$timeout.cancel(this.containerSizeTimeout);
       }
+      if (this.viewportTimeout) {
+        this.$timeout.cancel(this.viewportTimeout);
+      }
+    });
+  }
+
+  handleViewportDrag() {
+    this.viewportElem = document.getElementById('viewport-container');
+
+    this.viewportElem.addEventListener('mousedown', this.dragStart.bind(this));
+    this.viewportElem.addEventListener('mousemove', this.drag.bind(this));
+    this.viewportElem.addEventListener('mouseup', this.dragEnd.bind(this));
+  }
+
+  dragStart(e) {
+    if (e.which !== 1) { return; } // should only apply for left mouse click
+
+    this.viewportRect = this.viewportElem.getBoundingClientRect();
+    this.active = true;
+    this.viewportDragHandler(e);
+  }
+
+  dragEnd() {
+    this.active = false;
+  }
+
+  drag(e) {
+    if (!this.active) { return; }
+    e.preventDefault();
+    this.viewportDragHandler(e);
+  }
+
+  viewportDragHandler(e) {
+    const posX = e.clientX - this.viewportRect.x;
+    const posY = e.clientY - this.viewportRect.y;
+
+    // if drag goes out of the boundary of the minimap
+    if (
+      posX <= 0 ||
+      posY <= 0 ||
+      posX >= this.viewportRect.width ||
+      posY >= this.viewportRect.height
+    ) {
+      this.dragEnd();
+      return;
+    }
+
+    const viewportPosition = this.DAGMinimapUtilities.getViewportLocation(
+      posX,
+      posY,
+      this.graphMetadata,
+      this.canvasScale
+    );
+
+    this.DAGPlusPlusNodesActionsFactory.setCanvasPanning({
+      top: viewportPosition.y,
+      left: viewportPosition.x,
+    });
+
+    this.panning({
+      top: viewportPosition.y,
+      left: viewportPosition.x,
     });
   }
 
