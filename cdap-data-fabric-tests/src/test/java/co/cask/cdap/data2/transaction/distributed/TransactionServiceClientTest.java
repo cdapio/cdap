@@ -37,6 +37,8 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -137,6 +139,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
+          bind(MetadataStorage.class).to(NoopMetadataStorage.class);
           bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),

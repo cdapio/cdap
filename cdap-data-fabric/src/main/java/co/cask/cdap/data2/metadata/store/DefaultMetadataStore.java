@@ -21,7 +21,6 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.InstanceNotFoundException;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
@@ -48,7 +47,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -111,27 +109,6 @@ public class DefaultMetadataStore implements MetadataStore {
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.dsFramework = dsFramework;
-  }
-
-  /**
-   * Don't use this for anything other than unit tests. Deletes and re-creates the underlying datasets.
-   *
-   * @throws Exception if there was an error deleting and re-creating the underlying datasets
-   */
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  @VisibleForTesting
-  void deleteDatasets() throws Exception {
-    datasetCache.invalidate();
-    try {
-      dsFramework.deleteInstance(V2_BUSINESS_METADATA_INSTANCE_ID);
-    } catch (InstanceNotFoundException e) {
-      // it's ok if it doesn't exist, we wanted to delete it anyway
-    }
-    try {
-      dsFramework.deleteInstance(V2_SYSTEM_METADATA_INSTANCE_ID);
-    } catch (InstanceNotFoundException e) {
-      // it's ok if it doesn't exist, we wanted to delete it anyway
-    }
   }
 
   @SuppressWarnings("unused")

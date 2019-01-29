@@ -203,11 +203,11 @@ public interface MetadataStore {
    * {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to get the snapshot in
-   * @param metadataEntitys entity ids
+   * @param metadataEntities entity ids
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntitys,
+  Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, Set<MetadataEntity> metadataEntities,
                                             long timeMillis);
 
 }
