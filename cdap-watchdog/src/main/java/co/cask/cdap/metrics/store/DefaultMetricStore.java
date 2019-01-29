@@ -44,7 +44,6 @@ import co.cask.cdap.data2.dataset2.lib.cube.AggregationAlias;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
-import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.metrics.process.TopicIdMetaKey;
@@ -199,7 +198,7 @@ public class DefaultMetricStore implements MetricStore {
 
   @Inject
   DefaultMetricStore(MetricDatasetFactory dsFactory, CConfiguration cConf) {
-    int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION);
+    int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
     int[] resolutions = minimumResolution < 60 ?
       new int[] {minimumResolution, 60, 3600, TOTALS_RESOLUTION} : new int[] {60, 3600, TOTALS_RESOLUTION};
     long minRetentionSecs = cConf.getLong(Constants.Metrics.RETENTION_SECONDS + Constants.Metrics.MINUTE_RESOLUTION +

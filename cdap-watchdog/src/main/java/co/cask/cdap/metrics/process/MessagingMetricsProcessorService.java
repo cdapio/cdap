@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -113,7 +113,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    @Assisted Integer instanceId) {
     this(cConf, metricDatasetFactory, messagingService,
          schemaGenerator, readerFactory, metricStore, topicNumbers, metricsContext,
-         TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION)), instanceId);
+         TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)), instanceId);
   }
 
   @VisibleForTesting

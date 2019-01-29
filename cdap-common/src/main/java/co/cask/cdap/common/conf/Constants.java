@@ -567,7 +567,7 @@ public final class Constants {
     public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
     public static final String TIME_SERIES_TABLE_ROLL_TIME = "metrics.data.table.ts.rollTime";
 
-    public static final String METRICS_MINIMUM_RESOLUTION = "metrics.minimum.resolution.seconds";
+    public static final String METRICS_MINIMUM_RESOLUTION_SECONDS = "metrics.minimum.resolution.seconds";
     public static final String MINIMUM_RESOLUTION_RETENTION_SECONDS =
       "metrics.data.table.retention.minimum.resolution.seconds";
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
