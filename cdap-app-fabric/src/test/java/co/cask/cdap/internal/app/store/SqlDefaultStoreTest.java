@@ -34,6 +34,7 @@ import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
@@ -41,13 +42,15 @@ import javax.sql.DataSource;
 
 public class SqlDefaultStoreTest extends DefaultStoreTest {
 
+  private static EmbeddedPostgres pg;
+
   @BeforeClass
   public static void beforeClass() throws IOException, AlreadyExistsException {
     Injector injector = AppFabricTestHelper.getInjector();
     // TODO(CDAP-14770): change this when migrating DefaultStore
     store = injector.getInstance(DefaultStore.class);
 
-    EmbeddedPostgres pg = EmbeddedPostgres.start();
+    pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
@@ -59,6 +62,11 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
       injector.getInstance(CConfiguration.class), injector.getInstance(Impersonator.class),
       injector.getInstance(AuthorizationEnforcer.class), injector.getInstance(AuthenticationContext.class));
     StoreDefinition.NamespaceStore.createTables(structuredTableAdmin);
+  }
+
+  @AfterClass
+  public static void afterClass() throws IOException {
+    pg.close();
   }
 
 }

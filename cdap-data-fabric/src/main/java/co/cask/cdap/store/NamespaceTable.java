@@ -39,14 +39,14 @@ import javax.annotation.Nullable;
  * Dataset for namespace metadata. It does not wrap its operations in a transaction.
  * It is up to the caller to decide what operations belong in a transaction.
  */
-public final class NamespaceMDSTable {
+public final class NamespaceTable {
   private static final Gson GSON = new Gson();
   private static final String SMALLEST_POSSIBLE_STRING = "";
 
   private StructuredTable table;
 
-  NamespaceMDSTable(StructuredTableContext context) throws NotFoundException {
-    this.table = context.getTable(StoreDefinition.NamespaceStore.NAMESPACE_MDS_TABLE);
+  NamespaceTable(StructuredTableContext context) throws NotFoundException {
+    this.table = context.getTable(StoreDefinition.NamespaceStore.NAMESPACE_TABLE);
   }
 
 

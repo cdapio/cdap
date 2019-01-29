@@ -40,8 +40,8 @@ public class DefaultNamespaceStore implements NamespaceStore {
     this.transactionRunner = transactionRunner;
   }
 
-  private NamespaceMDSTable getNamespaceMDS(StructuredTableContext context) throws NotFoundException {
-    return new NamespaceMDSTable(context);
+  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws NotFoundException {
+    return new NamespaceTable(context);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
   public NamespaceMeta create(final NamespaceMeta metadata) {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
     return TransactionRunners.run(transactionRunner, context -> {
-      NamespaceMDSTable mds = getNamespaceMDS(context);
+      NamespaceTable mds = getNamespaceTable(context);
       NamespaceMeta existing = mds.get(metadata.getNamespaceId());
       if (existing != null) {
         return existing;
@@ -63,7 +63,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
   public void update(final NamespaceMeta metadata) {
     Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
     TransactionRunners.run(transactionRunner, context -> {
-      NamespaceMDSTable mds = getNamespaceMDS(context);
+      NamespaceTable mds = getNamespaceTable(context);
       NamespaceMeta existing = mds.get(metadata.getNamespaceId());
       if (existing != null) {
         mds.create(metadata);
@@ -76,7 +76,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
   public NamespaceMeta get(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     return TransactionRunners.run(transactionRunner, context -> {
-      return getNamespaceMDS(context).get(id);
+      return getNamespaceTable(context).get(id);
     });
   }
 
@@ -85,7 +85,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
   public NamespaceMeta delete(final NamespaceId id) {
     Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
     return TransactionRunners.run(transactionRunner, context -> {
-      NamespaceMDSTable mds = getNamespaceMDS(context);
+      NamespaceTable mds = getNamespaceTable(context);
       NamespaceMeta existing = mds.get(id);
       if (existing != null) {
         mds.delete(id);
@@ -97,7 +97,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
   @Override
   public List<NamespaceMeta> list() {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getNamespaceMDS(context).list();
+      return getNamespaceTable(context).list();
     });
   }
 }

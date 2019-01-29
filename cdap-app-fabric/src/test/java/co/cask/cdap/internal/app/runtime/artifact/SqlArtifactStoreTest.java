@@ -32,11 +32,16 @@ import com.google.common.base.Joiner;
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
 import javax.sql.DataSource;
 
 public class SqlArtifactStoreTest extends ArtifactStoreTest {
+
+  private static EmbeddedPostgres pg;
+
   @BeforeClass
   public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
@@ -44,7 +49,7 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     Injector injector = AppFabricTestHelper.getInjector(cConf);
 
-    EmbeddedPostgres pg = EmbeddedPostgres.start();
+    pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
@@ -54,5 +59,10 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
                                       injector.getInstance(Impersonator.class),
                                       transactionRunner);
     StoreDefinition.ArtifactStore.createTables(structuredTableAdmin);
+  }
+
+  @AfterClass
+  public static void afterClass() throws IOException {
+    pg.close();
   }
 }

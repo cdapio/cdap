@@ -49,7 +49,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceMDSTable;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -81,7 +81,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
   private final MetadataStore metadataStore;
-  private final DefaultNamespaceStore defaultNamespaceStore;
+  private final NamespaceStore defaultNamespaceStore;
   private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesDataset preferencesDataset;

@@ -43,7 +43,7 @@ public final class StoreDefinition {
     if (tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
-    if (tableAdmin.getSpecification(NamespaceStore.NAMESPACE_MDS_TABLE) == null) {
+    if (tableAdmin.getSpecification(NamespaceStore.NAMESPACE_TABLE) == null) {
       NamespaceStore.createTables(tableAdmin);
     }
   }
@@ -52,21 +52,21 @@ public final class StoreDefinition {
    * Namespace store schema
    */
   public static final class NamespaceStore {
-    public static final StructuredTableId NAMESPACE_MDS_TABLE = new StructuredTableId("namespace_mds");
+    public static final StructuredTableId NAMESPACE_TABLE = new StructuredTableId("namespace_table");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String NAMESPACE_METADATA_FIELD = "namespace_metadata";
 
-    public static final StructuredTableSpecification NAMESPACE_MDS_SPEC =
+    public static final StructuredTableSpecification NAMESPACE_TABLE_SPEC =
       new StructuredTableSpecification.Builder()
-        .withId(NAMESPACE_MDS_TABLE)
+        .withId(NAMESPACE_TABLE)
         .withFields(Fields.stringType(NAMESPACE_FIELD),
                     Fields.stringType(NAMESPACE_METADATA_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
-      tableAdmin.create(NAMESPACE_MDS_SPEC);
+      tableAdmin.create(NAMESPACE_TABLE_SPEC);
     }
   }
 
