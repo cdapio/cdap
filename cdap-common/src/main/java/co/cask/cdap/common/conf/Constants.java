@@ -101,6 +101,7 @@ public final class Constants {
     public static final String TRANSACTION_HTTP = "transaction.http";
     public static final String METRICS = "metrics";
     public static final String LOGSAVER = "log.saver";
+    public static final String LOG_QUERY = "log.query";
     public static final String GATEWAY = "gateway";
     public static final String MASTER_SERVICES = "master.services";
     public static final String METRICS_PROCESSOR = "metrics.processor";
@@ -735,6 +736,14 @@ public final class Constants {
     public static final String ADDRESS = "metrics.processor.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
+  }
+
+  /**
+   * Configurations for log query service.
+   */
+  public static final class LogQuery {
+    public static final String ADDRESS = "log.query.server.bind.address";
+    public static final String PORT = "log.query.server.bind.port";
   }
 
   /**

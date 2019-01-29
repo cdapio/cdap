@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,7 +58,7 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.METRICS_PROCESSOR)
       .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
-                        Constants.MetricsProcessor.METRICS_PROCESSOR_STATUS_HANDLER)))
+                                                                Constants.Service.METRICS_PROCESSOR)))
       .setHost(cConf.get(Constants.MetricsProcessor.ADDRESS))
       .build();
   }

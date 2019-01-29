@@ -1615,6 +1615,22 @@
   </property>
 
   <property>
+    <name>log.query.server.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Log query HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>log.query.server.bind.port</name>
+    <value>0</value>
+    <description>
+      Log query HTTP service bind port
+    </description>
+  </property>
+
+  <property>
     <name>log.saver.container.memory.mb</name>
     <value>${master.service.memory.mb}</value>
     <description>

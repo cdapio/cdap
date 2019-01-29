@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,9 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
+import co.cask.cdap.logging.guice.LogQueryServerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
+import co.cask.cdap.logging.service.LogQueryService;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
@@ -89,6 +91,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
 
   @Override
   public void addServices(List<? super Service> services) {
+    services.add(injector.getInstance(LogQueryService.class));
     services.add(injector.getInstance(MetricsQueryService.class));
   }
 
@@ -108,6 +111,8 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new KafkaLogAppenderModule(),
       new LogReaderRuntimeModules().getDistributedModules(),
       new MetricsHandlerModule(),
+      // Log query is running in the same process as the metrics query
+      new LogQueryServerModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new AuditModule().getDistributedModules(),

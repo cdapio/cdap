@@ -60,7 +60,6 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataSubscriberService;
-import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramHistory;
 import co.cask.cdap.proto.DatasetMeta;
@@ -188,7 +187,6 @@ public abstract class AppFabricTestBase {
   private static MessagingService messagingService;
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
-  private static MetricsQueryService metricsService;
   private static MetricsCollectionService metricsCollectionService;
   private static DatasetOpExecutor dsOpService;
   private static DatasetService datasetService;
@@ -250,8 +248,6 @@ public abstract class AppFabricTestBase {
     txClient = injector.getInstance(TransactionSystemClient.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    metricsService = injector.getInstance(MetricsQueryService.class);
-    metricsService.startAndWait();
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     metadataService = injector.getInstance(MetadataService.class);
@@ -283,7 +279,6 @@ public abstract class AppFabricTestBase {
     deleteNamespaces();
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
-    metricsService.stopAndWait();
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();

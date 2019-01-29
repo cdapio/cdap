@@ -23,7 +23,6 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -57,7 +56,9 @@ import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
+import co.cask.cdap.logging.guice.LogQueryServerModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
+import co.cask.cdap.logging.service.LogQueryService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -115,6 +116,7 @@ public class StandaloneMain {
   private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
+  private final LogQueryService logQueryService;
   private final AppFabricServer appFabricServer;
   private final ServiceStore serviceStore;
   private final MetricsCollectionService metricsCollectionService;
@@ -150,6 +152,7 @@ public class StandaloneMain {
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
+    logQueryService = injector.getInstance(LogQueryService.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -243,6 +246,7 @@ public class StandaloneMain {
     }
 
     metricsQueryService.startAndWait();
+    logQueryService.startAndWait();
     router.startAndWait();
 
     if (userInterfaceService != null) {
@@ -303,6 +307,8 @@ public class StandaloneMain {
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
+
+      logQueryService.stopAndWait();
 
       metricsCollectionService.stopAndWait();
       metricsQueryService.stopAndWait();
@@ -448,6 +454,7 @@ public class StandaloneMain {
     cConf.set(Constants.Metrics.ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
+    cConf.set(Constants.LogQuery.ADDRESS, localhost);
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
     cConf.set(Constants.Preview.ADDRESS, localhost);
@@ -458,6 +465,7 @@ public class StandaloneMain {
       new ZKClientModule(),
       new KafkaClientModule(),
       new MetricsHandlerModule(),
+      new LogQueryServerModule(),
       new InMemoryDiscoveryModule(),
       new LocalLocationModule(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),

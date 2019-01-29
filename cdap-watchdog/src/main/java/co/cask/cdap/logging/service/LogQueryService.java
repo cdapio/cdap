@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,6 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -39,34 +38,37 @@ import org.apache.twill.discovery.DiscoveryService;
 import java.util.Set;
 
 /**
- * LogSaver Service; currently only used for PingHandler, so that service can be discovered during CDAP-startup.
+ * Provides the HTTP server for querying logs.
  */
-public class LogSaverStatusService extends AbstractIdleService {
+public class LogQueryService extends AbstractIdleService {
+
   private final DiscoveryService discoveryService;
-  private final NettyHttpService httpService;
+  private final NettyHttpService httpServer;
   private Cancellable cancellable;
 
   @Inject
-  public LogSaverStatusService(CConfiguration cConf, DiscoveryService discoveryService,
-                               @Named(Constants.LogSaver.LOG_SAVER_STATUS_HANDLER) Set<HttpHandler> handlers,
-                               MetricsCollectionService metricsCollectionService) {
+  LogQueryService(CConfiguration cConf, @Named(Constants.Service.LOG_QUERY) Set<HttpHandler> handlers,
+                  DiscoveryService discoveryService, MetricsCollectionService metricsCollectionService) {
     this.discoveryService = discoveryService;
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOGSAVER)
+    this.httpServer = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_QUERY)
       .setHttpHandlers(handlers)
-      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService, Constants.Service.LOGSAVER)))
-      .setHost(cConf.get(Constants.LogSaver.ADDRESS))
+      .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
+                                                                Constants.Service.LOG_QUERY)))
+      .setHost(cConf.get(Constants.LogQuery.ADDRESS))
+      .setPort(cConf.getInt(Constants.LogQuery.PORT))
       .build();
+
   }
 
   @Override
   protected void startUp() throws Exception {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                        Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.LOGSAVER));
-    httpService.start();
-
+                                                                       Constants.Service.LOG_QUERY));
+    httpServer.start();
     cancellable = discoveryService.register(
-      ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOGSAVER, httpService.getBindAddress())));
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOG_QUERY, httpServer.getBindAddress())));
+
   }
 
   @Override
@@ -76,14 +78,7 @@ public class LogSaverStatusService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      httpService.stop();
+      httpServer.stop();
     }
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-      .add("bindAddress", httpService.getBindAddress())
-      .toString();
   }
 }
