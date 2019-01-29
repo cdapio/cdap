@@ -37,6 +37,8 @@ import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.security.impersonation.OwnerStore;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
@@ -58,6 +60,7 @@ public class DataSetsModules extends RuntimeModule {
         bind(DatasetDefinitionRegistryFactory.class)
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
+        bind(MetadataStorage.class).to(NoopMetadataStorage.class);
         bind(MetadataStore.class).to(NoOpMetadataStore.class);
         expose(MetadataStore.class);
 

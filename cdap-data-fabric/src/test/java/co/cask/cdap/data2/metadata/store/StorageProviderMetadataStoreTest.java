@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,11 @@ import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
@@ -34,9 +37,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- * Tests for {@link DefaultMetadataStore} (which calls MetadataDataset directly).
+ * Tests for the {@link MetadataStore} that delegates to the metadata storage provider.
  */
-public class DefaultMetadataStoreTest extends AbstractMetadataStoreTest {
+public class StorageProviderMetadataStoreTest extends AbstractMetadataStoreTest {
 
   private static TransactionManager txManager;
 
@@ -49,7 +52,8 @@ public class DefaultMetadataStoreTest extends AbstractMetadataStoreTest {
         @Override
         protected void configure() {
           // Need the distributed metadata store.
-          bind(MetadataStore.class).to(DefaultMetadataStore.class);
+          bind(MetadataStore.class).to(StorageProviderMetadataStore.class);
+          bind(MetadataStorage.class).to(DatasetMetadataStorage.class).in(Scopes.SINGLETON);
         }
       }),
       new LocalLocationModule(),
