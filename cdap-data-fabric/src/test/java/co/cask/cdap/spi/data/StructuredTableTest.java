@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.data;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
@@ -51,6 +52,7 @@ public abstract class StructuredTableTest {
   private static final String COL1 = "col1";
   private static final String COL2 = "col2";
   private static final String COL3 = "col3";
+  private static final String COL4 = "col4";
   private static final String VAL = "val";
 
   static {
@@ -59,7 +61,7 @@ public abstract class StructuredTableTest {
        specification = new StructuredTableSpecification.Builder()
         .withId(SIMPLE_TABLE)
         .withFields(Fields.intType(KEY), Fields.stringType(COL1), Fields.longType(KEY2),
-                    Fields.doubleType(COL2), Fields.floatType(COL3))
+                    Fields.doubleType(COL2), Fields.floatType(COL3), Fields.bytesType(COL4))
         .withPrimaryKeys(KEY, KEY2)
         .build();
     } catch (InvalidFieldException e) {
@@ -174,7 +176,8 @@ public abstract class StructuredTableTest {
                                             Fields.longField(KEY2, (long) i),
                                             Fields.stringField(COL1, VAL + i + suffix),
                                             Fields.doubleField(COL2, (double) i),
-                                            Fields.floatField(COL3, (float) i));
+                                            Fields.floatField(COL3, (float) i),
+                                            Fields.bytesField(COL4, Bytes.toBytes("bytes-" + i)));
       expected.add(fields);
 
       getTransactionRunner().run(context -> {
@@ -194,7 +197,7 @@ public abstract class StructuredTableTest {
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
-        rowRef.set(table.read(ImmutableList.of(key, key2), ImmutableList.of(COL1, COL2, COL3)));
+        rowRef.set(table.read(ImmutableList.of(key, key2), ImmutableList.of(COL1, COL2, COL3, COL4)));
       });
 
       Optional<StructuredRow> row = rowRef.get();
@@ -203,7 +206,8 @@ public abstract class StructuredTableTest {
                                                   Fields.longField(KEY2, structuredRow.getLong(KEY2)),
                                                   Fields.stringField(COL1, structuredRow.getString(COL1)),
                                                   Fields.doubleField(COL2, structuredRow.getDouble(COL2)),
-                                                  Fields.floatField(COL3, structuredRow.getFloat(COL3)))));
+                                                  Fields.floatField(COL3, structuredRow.getFloat(COL3)),
+                                                  Fields.bytesField(COL4, structuredRow.getBytes(COL4)))));
     }
     return actual;
   }
@@ -231,7 +235,8 @@ public abstract class StructuredTableTest {
                                    Fields.longField(KEY2, row.getLong(KEY2)),
                                    Fields.stringField(COL1, row.getString(COL1)),
                                    Fields.doubleField(COL2, row.getDouble(COL2)),
-                                   Fields.floatField(COL3, row.getFloat(COL3))));
+                                   Fields.floatField(COL3, row.getFloat(COL3)),
+                                   Fields.bytesField(COL4, row.getBytes(COL4))));
         }
       }
     });

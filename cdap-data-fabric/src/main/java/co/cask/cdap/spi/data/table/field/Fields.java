@@ -63,6 +63,13 @@ public final class Fields {
   }
 
   /**
+   * @return the FieldType of BYTES with the given name
+   */
+  public static FieldType bytesType(String name) {
+    return new FieldType(name, FieldType.Type.BYTES);
+  }
+
+  /**
    * Create a field with integer value.
    *
    * @param name name of the field
@@ -115,6 +122,17 @@ public final class Fields {
    */
   public static Field<Double> doubleField(String name, @Nullable Double value) {
     return new Field<>(new FieldType(name, FieldType.Type.DOUBLE), value);
+  }
+
+  /**
+   * Create a field with byte[] value.
+   *
+   * @param name name of the field
+   * @param value value of the field
+   * @return a field with type BYTES
+   */
+  public static Field<byte[]> bytesField(String name, @Nullable byte[] value) {
+    return new Field<>(new FieldType(name, FieldType.Type.BYTES), value);
   }
 
   /**

@@ -120,6 +120,9 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
       case FLOAT:
         sqlType = "real";
         break;
+      case BYTES:
+        sqlType = "bytea";
+        break;
       default:
         // this should never happen since all the fields are from the specification and validated there
         throw new IllegalStateException(

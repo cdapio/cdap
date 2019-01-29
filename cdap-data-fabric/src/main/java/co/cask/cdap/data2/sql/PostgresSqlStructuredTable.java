@@ -247,6 +247,13 @@ public class PostgresSqlStructuredTable implements StructuredTable {
           statement.setString(parameterIndex, (String) value);
         }
         break;
+      case BYTES:
+        if (value == null) {
+          statement.setNull(parameterIndex, Types.LONGVARBINARY);
+        } else {
+          statement.setBytes(parameterIndex, (byte[]) value);
+        }
+        break;
       default:
         // this should not happen since we validate the field before setting
         throw new InvalidFieldException(tableSchema.getTableId(), field.getName());

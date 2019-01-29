@@ -78,6 +78,12 @@ public final class NoSqlStructuredRow implements StructuredRow {
     return get(fieldName);
   }
 
+  @Nullable
+  @Override
+  public byte[] getBytes(String fieldName) throws InvalidFieldException {
+    return get(fieldName);
+  }
+
   @Override
   public Collection<Field<?>> getPrimaryKeys() {
     return keys;
@@ -125,6 +131,11 @@ public final class NoSqlStructuredRow implements StructuredRow {
           keys.add(Fields.stringField(key, stringVal));
           builder.put(key, stringVal);
           break;
+        case BYTES:
+          byte[] bytesVal = splitter.getBytes();
+          keys.add(Fields.bytesField(key, bytesVal));
+          builder.put(key, bytesVal);
+          break;
         default:
           // this should never happen since all the keys are from the table schema and should never contain other types
           throw new IllegalStateException(
@@ -147,6 +158,8 @@ public final class NoSqlStructuredRow implements StructuredRow {
         return (T) row.getDouble(fieldName);
       case STRING:
         return (T) row.getString(fieldName);
+      case BYTES:
+        return (T) row.get(fieldName);
       default:
         throw new InvalidFieldException(tableSchema.getTableId(), fieldName);
     }
