@@ -246,34 +246,38 @@ public class MetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Sets a metadata property for the specified {@link MetadataEntity}.
-   * @param metadataEntity the metadata entity for whch the property needs to be updated
+   * Adds a metadata property for the specified {@link MetadataEntity}.
+   * Overwrites the property if it already exists.
+   *
+   * @param metadataEntity the metadata entity for which the property needs to be updated
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    */
-  public Change setProperty(MetadataEntity metadataEntity, String key, String value) {
-    return setMetadata(new MetadataEntry(metadataEntity, key, value));
+  public Change addProperty(MetadataEntity metadataEntity, String key, String value) {
+    return addMetadata(new MetadataEntry(metadataEntity, key, value));
   }
 
   /**
-   * Adds the given properties the given metadataEntity
+   * Adds the given properties the given metadataEntity.
+   * Overwrites properties that already exist.
+   *
    * @param metadataEntity the metadataEntity to which properties needs to be added
-   * @param properties the propeties to add (note if the property key exist and new value is different it will be
+   * @param properties the properties to add (note if the property key exist and new value is different it will be
    * overwritten)
    * @return {@link Change} representing the change in metadata for the metadataEntity
    */
-  public Change setProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
+  public Change addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
     Record previousMetadata, finalMetadata;
     Iterator<Map.Entry<String, String>> iterator = properties.entrySet().iterator();
     // properties can have none, one or more than one entry to be updated
     if (iterator.hasNext()) {
       // if there is at least one entry then we need to process that entry to update metadata and at that point we want
-      // to store what was the previousMetadata before we called setMetadata
+      // to store what was the previousMetadata before we called addMetadata
       Map.Entry<String, String> first = iterator.next();
-      Change metadataChange = setMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
-      // metadata before setMetadata was applied
+      Change metadataChange = addMetadata(new MetadataEntry(metadataEntity, first.getKey(), first.getValue()));
+      // metadata before addMetadata was applied
       previousMetadata = metadataChange.getExisting();
-      // metadata after setMetadata was applied
+      // metadata after addMetadata was applied
       finalMetadata = metadataChange.getLatest();
     } else {
       // if properties was empty then we do need to the existing metadata as it is and also the final state is
@@ -284,7 +288,7 @@ public class MetadataDataset extends AbstractDataset {
     // if there are more key-value properties then process them updating the final metadata state
     while (iterator.hasNext()) {
       Map.Entry<String, String> next = iterator.next();
-      finalMetadata = setMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getLatest();
+      finalMetadata = addMetadata(new MetadataEntry(metadataEntity, next.getKey(), next.getValue())).getLatest();
     }
     return new Change(previousMetadata, finalMetadata);
   }
@@ -295,7 +299,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param tagsToAdd the tags to add
    */
   public Change addTags(MetadataEntity metadataEntity, Set<String> tagsToAdd) {
-    return setMetadata(new MetadataEntry(metadataEntity, MetadataConstants.TAGS_KEY,
+    return addMetadata(new MetadataEntry(metadataEntity, MetadataConstants.TAGS_KEY,
                                          Joiner.on(TAGS_SEPARATOR).join(tagsToAdd)));
   }
 
@@ -960,7 +964,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntry The value of the metadata to be saved
    * @return {@link Change} representing the metadata before the change and after
    */
-  private Change setMetadata(MetadataEntry metadataEntry) {
+  private Change addMetadata(MetadataEntry metadataEntry) {
     // get existing metadata
     Record existingMetadata = getMetadata(metadataEntry.getMetadataEntity());
     // existingMetadata is a Metadata object containing key-value properties and list of tags. We need to determine if
@@ -1269,7 +1273,7 @@ public class MetadataDataset extends AbstractDataset {
     private final Record existing;
     private final Record latest;
 
-    Change(Record existing, Record latest) {
+    public Change(Record existing, Record latest) {
       this.existing = existing;
       this.latest = latest;
     }

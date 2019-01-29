@@ -61,7 +61,7 @@ public interface MetadataStore {
    * @param metadataEntity the {@link MetadataEntity} to add the properties to
    * @param properties the properties to add/update
    */
-  void setProperties(MetadataScope scope, MetadataEntity metadataEntity, Map<String, String> properties);
+  void addProperties(MetadataScope scope, MetadataEntity metadataEntity, Map<String, String> properties);
 
   /**
    * Adds/updates properties for each specified {@link MetadataEntity} in the specified {@link MetadataScope}.
@@ -69,17 +69,17 @@ public interface MetadataStore {
    * @param scope the {@link MetadataScope} to add/update the properties in
    * @param toUpdate the properties to add/update, for each entity in the map
    */
-  void setProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate);
+  void addProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate);
 
   /**
-   * Sets the specified property for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
+   * Adds the specified property for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.
    *
    * @param scope the {@link MetadataScope} to set/update the property in
    * @param metadataEntity the {@link MetadataEntity} to set the property for
    * @param key the property key
    * @param value the property value
    */
-  void setProperty(MetadataScope scope, MetadataEntity metadataEntity, String key, String value);
+  void addProperty(MetadataScope scope, MetadataEntity metadataEntity, String key, String value);
 
   /**
    * Adds tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}.

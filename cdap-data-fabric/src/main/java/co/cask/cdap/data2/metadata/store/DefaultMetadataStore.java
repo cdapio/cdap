@@ -178,7 +178,7 @@ public class DefaultMetadataStore implements MetadataStore {
         changed = mds.removeProperties(entity, propertiesToDelete);
       }
       if (!propertiesToSet.isEmpty()) {
-        changed = mds.setProperties(entity, propertiesToSet);
+        changed = mds.addProperties(entity, propertiesToSet);
       }
       previous.set(existing);
       addedTags.set(tagsToAdd);
@@ -208,9 +208,9 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void setProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
+  public void addProperties(final MetadataScope scope, final MetadataEntity metadataEntity,
                             final Map<String, String> properties) {
-    MetadataDataset.Change metadataChange = execute(mds -> mds.setProperties(metadataEntity, properties), scope);
+    MetadataDataset.Change metadataChange = execute(mds -> mds.addProperties(metadataEntity, properties), scope);
     publishAudit(scope, metadataEntity, properties, metadataChange);
   }
 
@@ -242,13 +242,13 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void setProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate) {
+  public void addProperties(MetadataScope scope, Map<MetadataEntity, Map<String, String>> toUpdate) {
     Map<MetadataEntity, ImmutablePair<Map<String, String>, MetadataDataset.Change>> changeLog = execute(mds -> {
       Map<MetadataEntity, ImmutablePair<Map<String, String>, MetadataDataset.Change>> changes = new HashMap<>();
       for (Map.Entry<MetadataEntity, Map<String, String>> entry : toUpdate.entrySet()) {
         MetadataEntity metadataEntity = entry.getKey();
         Map<String, String> properties = entry.getValue();
-        MetadataDataset.Change metadataChange = mds.setProperties(metadataEntity, properties);
+        MetadataDataset.Change metadataChange = mds.addProperties(metadataEntity, properties);
         changes.put(metadataEntity, ImmutablePair.of(properties, metadataChange));
       }
       return changes;
@@ -260,9 +260,9 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public void setProperty(final MetadataScope scope, final MetadataEntity metadataEntity, final String key,
+  public void addProperty(final MetadataScope scope, final MetadataEntity metadataEntity, final String key,
                           final String value) {
-    MetadataDataset.Change change = execute(mds -> mds.setProperty(metadataEntity, key, value), scope);
+    MetadataDataset.Change change = execute(mds -> mds.addProperty(metadataEntity, key, value), scope);
     publishAudit(new MetadataRecord(metadataEntity, scope, change.getExisting().getProperties(),
                                     change.getExisting().getTags()),
                  new MetadataRecord(metadataEntity, scope, ImmutableMap.of(key, value), EMPTY_TAGS),
