@@ -1,17 +1,19 @@
 import React, { Component } from 'react';
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,ListGroup, ListGroupItem, InputGroup, Input} from 'reactstrap';
 import './CorrelationContainer.scss';
-import { isNil } from 'lodash';
+import { isNil, cloneDeep } from 'lodash';
 import propTypes from 'prop-types';
 import CorrelationItem from '../CorrelationItem';
 
 
 class CorrelationContainer extends Component {
   algolist = [{ id: 1, name: "pearson" }, { id: 2, name: "spearman" }];
-  correlationItems = [{id:1, enable: false, name: "TopN", minValue: "", maxValue: "", doubleView: false, hasRangeError:false },
-  {id:2, enable: false, name: "LowN", minValue: "", maxValue: "", doubleView: false, hasRangeError:false },
-  {id:3, enable: false, name: "Range", minValue: "", maxValue: "", doubleView: true, hasRangeError:false }
+  correlationItems = [{ id: 1, enable: false, name: "TopN", minValue: "", maxValue: "", doubleView: false, hasRangeError: false },
+  { id: 2, enable: false, name: "LowN", minValue: "", maxValue: "", doubleView: false, hasRangeError: false },
+  { id: 3, enable: false, name: "Range", minValue: "", maxValue: "", doubleView: true, hasRangeError: false }
   ]
+
+  lastSelectedFeature =  undefined;
 
   constructor(props) {
     super(props);
@@ -19,8 +21,12 @@ class CorrelationContainer extends Component {
       algolist: this.algolist,
       openAlgoDropdown: false,
       selectedAlgo: { id: -1, name: 'Select' },
-      items:this.correlationItems
+      openFeatureDropdown: false,
+      selectedFeature: undefined,
+      items: this.correlationItems,
+      featureNames: cloneDeep(props.featureNames)
     };
+
   }
 
 
@@ -32,6 +38,16 @@ class CorrelationContainer extends Component {
 
   algoTypeChange = (item) => {
     this.setState({ selectedAlgo: item });
+  }
+
+  toggleFeatureDropDown = () => {
+    this.setState(prevState => ({
+      openFeatureDropdown: !prevState.openFeatureDropdown
+    }));
+  }
+
+  featureTypeChange = (item) => {
+    this.setState({ selectedFeature: item });
   }
 
   changeItem = (value, index) => {
@@ -50,7 +66,7 @@ class CorrelationContainer extends Component {
       item['maxValue'] = value.maxValue.trim();
     }
 
-    if (item.doubleView  && item.minValue != '' && item.maxValue != '') {
+    if (item.doubleView && item.minValue != '' && item.maxValue != '') {
       const min = Number(item.minValue);
       const max = Number(item.maxValue);
       if (isNaN(item.minValue) || isNaN(item.maxValue) || max <= min) {
@@ -66,9 +82,30 @@ class CorrelationContainer extends Component {
 
   }
 
+  onFeatrureClick(item) {
+    if (this.lastSelectedFeature) {
+      this.lastSelectedFeature.selected = false;
+    }
+    item.selected = true;
+    this.lastSelectedFeature = item;
+    this.setState({ selectedFeature: item });
+  }
+
+  onFeatureSearch = (evt) => {
+    let value = "";
+    if (!isNil(evt)) {
+      value = evt.target.value.trim();
+    }
+    this.setState({featureNames: this.props.featureNames.filter((item)=> item.name.includes(value))});
+  }
+
   applyCorrelation = () => {
     if (!isNil(this.props.applyCorrelation)) {
-      this.props.applyCorrelation(this.state.selectedAlgo);
+      const result = {
+        coefficientType: this.state.selectedAlgo,
+        selectedfeatures: this.state.selectedFeature
+      }
+      this.props.applyCorrelation(result);
     }
   }
 
@@ -77,7 +114,7 @@ class CorrelationContainer extends Component {
     let corelationItem = (
       <div className="correlation-item-box">
         {
-          this.state.items.map((item,index) => {
+          this.state.items.map((item, index) => {
             return (<CorrelationItem
               itemVO={item}
               itemIndex={index}
@@ -112,9 +149,33 @@ class CorrelationContainer extends Component {
             </DropdownMenu>
           </Dropdown>
         </div>
+        <div className="feature-box">
+        <div>
+          <label className="feature-label">Select Feature: </label>
+          <InputGroup className="search-group">
+              <Input className="search-input" placeholder="search generated feature" onChange={this.onFeatureSearch.bind(this)} />
+              <i className = "search-icon fa fa-search"></i>
+            </InputGroup>
+        </div>
+
+          <ListGroup>
+            {
+              this.state.featureNames.map((item) => {
+                return (<ListGroupItem active={item.selected} key={item.id}
+                  onClick={() => this.onFeatrureClick(item)}>
+                  <label className='feature-box-item'>{item.name} title={item.name}</label>
+                    {
+                      item.selected && <i class="fa fa-check select-icon"></i>
+                    }
+                </ListGroupItem>);
+              })
+            }
+          </ListGroup>
+
+        </div>
         {
-            corelationItem
-          }
+          //corelationItem
+        }
         <div className="control-box">
           <button className="feature-button" onClick={this.applyCorrelation}>Apply</button>
         </div>

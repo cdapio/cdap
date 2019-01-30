@@ -15,8 +15,7 @@ class GridContainer extends Component {
     }
 
     onSelectionChanged = (data) => {
-      alert("I am an alert box!");
-      console.log(data);
+      this.props.selectionChange(data.api.getSelectedRows());
     }
 
     render() {
