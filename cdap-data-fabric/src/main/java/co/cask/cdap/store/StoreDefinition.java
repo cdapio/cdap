@@ -17,13 +17,14 @@
 package co.cask.cdap.store;
 
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Fields;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A class which contains all the store definition, the table name the store will use, the schema of the table should
@@ -44,6 +45,15 @@ public final class StoreDefinition {
     if (tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
+  }
+
+  // CDAP-14832 Temporary registry to auto-create tables
+  public static final Map<StructuredTableId, StructuredTableSpecification> TABLE_REGISTRY = new ConcurrentHashMap<>();
+  static {
+    TABLE_REGISTRY.put(ArtifactStore.ARTIFACT_DATA_TABLE, ArtifactStore.ARTIFACT_DATA_SPEC);
+    TABLE_REGISTRY.put(ArtifactStore.APP_DATA_TABLE, ArtifactStore.APP_DATA_SPEC);
+    TABLE_REGISTRY.put(ArtifactStore.PLUGIN_DATA_TABLE, ArtifactStore.PLUGIN_DATA_SPEC);
+    TABLE_REGISTRY.put(ArtifactStore.UNIV_PLUGIN_DATA_TABLE, ArtifactStore.UNIV_PLUGIN_DATA_SPEC);
   }
 
   /**

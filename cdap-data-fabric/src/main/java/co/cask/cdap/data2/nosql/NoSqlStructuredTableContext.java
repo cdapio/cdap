@@ -18,6 +18,7 @@ package co.cask.cdap.data2.nosql;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTable;
@@ -27,6 +28,9 @@ import co.cask.cdap.spi.data.StructuredTableInstantiationException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import co.cask.cdap.store.StoreDefinition;
+
+import java.io.IOException;
 
 /**
  * The nosql context to get the table.
@@ -46,7 +50,19 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
     try {
       StructuredTableSpecification specification = tableAdmin.getSpecification(tableId);
       if (specification == null) {
-        throw new NotFoundException(tableId);
+        // CDAP-14832 Temporarily auto-create the tables
+        specification = StoreDefinition.TABLE_REGISTRY.get(tableId);
+        if (specification == null) {
+          throw new NotFoundException(tableId);
+        }
+        try {
+          tableAdmin.create(specification);
+        } catch (IOException e) {
+          throw new StructuredTableInstantiationException(tableId,
+                                                          String.format("Error instantiating table %s", tableId), e);
+        } catch (AlreadyExistsException e) {
+          // Ignore AlreadyExistsException
+        }
       }
       return new NoSqlStructuredTable(datasetContext.getDataset(NamespaceId.SYSTEM.getNamespace(),
                                                                 NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME),
