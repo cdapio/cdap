@@ -43,6 +43,7 @@ public class NamespaceAdminModule extends RuntimeModule {
 
         expose(NamespaceAdmin.class);
         expose(NamespaceQueryAdmin.class);
+        expose(NamespaceResourceDeleter.class);
       }
     };
   }

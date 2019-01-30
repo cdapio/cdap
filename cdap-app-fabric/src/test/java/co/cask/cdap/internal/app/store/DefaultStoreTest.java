@@ -42,6 +42,7 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.Specifications;
+import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.BasicThrowable;
@@ -89,28 +90,22 @@ import java.util.stream.Collectors;
 /**
  * Tests for {@link DefaultStore}.
  */
-public class DefaultStoreTest {
+public abstract class DefaultStoreTest {
+  protected static DefaultStore store;
+  protected static DefaultNamespaceStore nsStore;
+  protected static NamespaceAdmin nsAdmin;
   private static final Gson GSON = new Gson();
-  private static DefaultStore store;
-  private static DefaultNamespaceStore nsStore;
 
   private int sourceId;
-
-  @BeforeClass
-  public static void beforeClass() {
-    Injector injector = AppFabricTestHelper.getInjector();
-    store = injector.getInstance(DefaultStore.class);
-    nsStore = injector.getInstance(DefaultNamespaceStore.class);
-  }
 
   @Before
   public void before() throws Exception {
     store.clear();
+    nsStore.delete(new NamespaceId("default"));
     NamespacePathLocator namespacePathLocator =
       AppFabricTestHelper.getInjector().getInstance(NamespacePathLocator.class);
     namespacePathLocator.get(NamespaceId.DEFAULT).delete(true);
-    NamespaceAdmin admin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
-    admin.create(NamespaceMeta.DEFAULT);
+    nsAdmin.create(NamespaceMeta.DEFAULT);
   }
 
   private void setStartAndRunning(ProgramRunId id, ArtifactId artifactId) {
