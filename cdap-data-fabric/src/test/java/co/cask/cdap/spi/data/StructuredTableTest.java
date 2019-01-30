@@ -319,6 +319,56 @@ public abstract class StructuredTableTest {
     });
   }
 
+  @Test
+  public void testDeleteAll() throws Exception {
+    int max = 10;
+    List<Collection<Field<?>>> expected = writeSimpleStructuredRows(max, "");
+    Assert.assertEquals(max, expected.size());
+
+    // Delete 6-8 (both inclusive) using the first and second keys
+    expected.subList(6, 9).clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Arrays.asList(Fields.intField(KEY, 6), Fields.longField(KEY2, 6L)),
+                                 Range.Bound.INCLUSIVE,
+                                 Arrays.asList(Fields.intField(KEY, 8), Fields.longField(KEY2, 8L)),
+                                 Range.Bound.INCLUSIVE);
+      table.deleteAll(range);
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Delete 2-5 (end exclusive) using the first key only
+    expected.subList(2, 5).clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Collections.singletonList(Fields.intField(KEY, 2)), Range.Bound.INCLUSIVE,
+                                 Collections.singletonList(Fields.intField(KEY, 5)), Range.Bound.EXCLUSIVE);
+      table.deleteAll(range);
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Use a range outside the element list, nothing should get deleted
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Range range = Range.create(Collections.singletonList(Fields.intField(KEY, max + 1)), Range.Bound.INCLUSIVE,
+                                 Collections.singletonList(Fields.intField(KEY, max + 5)), Range.Bound.EXCLUSIVE);
+      table.deleteAll(range);
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+
+    // Delete all the remaining
+    expected.clear();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.deleteAll(Range.all());
+    });
+    // Verify the deletion
+    Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
+  }
+
   private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {
     List<Collection<Field<?>>> expected = new ArrayList<>(max);
     for (int i = 0; i < max; i++) {

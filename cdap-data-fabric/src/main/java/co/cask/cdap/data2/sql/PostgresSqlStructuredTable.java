@@ -239,6 +239,34 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public void deleteAll(Range keyRange) throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: DeleteAll with range {}", tableSchema.getTableId(), keyRange);
+    fieldValidator.validatePrimaryKeys(keyRange.getBegin(), true);
+    fieldValidator.validatePrimaryKeys(keyRange.getEnd(), true);
+    String sql = getDeleteAllStatement(keyRange);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      int index = 1;
+      if (keyRange.getBegin() != null) {
+        for (Field<?> key : keyRange.getBegin()) {
+          setField(statement, key, index);
+          index++;
+        }
+      }
+      if (keyRange.getEnd() != null) {
+        for (Field<?> key : keyRange.getEnd()) {
+          setField(statement, key, index);
+          index++;
+        }
+      }
+      LOG.trace("SQL statement: {}", statement);
+      statement.executeUpdate();
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to delete the rows from table %s with range %s",
+                                          tableSchema.getTableId().getName(), keyRange), e);
+    }
+  }
+
+  @Override
   public void close() throws IOException {
     try {
       connection.close();
@@ -410,13 +438,17 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     }
 
     queryString.append(" WHERE ");
-    appendScanBound(queryString, range.getBegin(), range.getBeginBound().equals(Range.Bound.INCLUSIVE) ? ">=" : ">");
-    if (!range.getBegin().isEmpty() && !range.getEnd().isEmpty()) {
-      queryString.append(" AND ");
-    }
-    appendScanBound(queryString, range.getEnd(), range.getEndBound().equals(Range.Bound.INCLUSIVE) ? "<=" : "<");
+    appendRange(queryString, range);
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
+  }
+
+  private void appendRange(StringBuilder statement, Range range) {
+    appendScanBound(statement, range.getBegin(), range.getBeginBound().equals(Range.Bound.INCLUSIVE) ? ">=" : ">");
+    if (!range.getBegin().isEmpty() && !range.getEnd().isEmpty()) {
+      statement.append(" AND ");
+    }
+    appendScanBound(statement, range.getEnd(), range.getEndBound().equals(Range.Bound.INCLUSIVE) ? "<=" : "<");
   }
 
   private void appendScanBound(StringBuilder sb,
@@ -440,6 +472,16 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   private String getDeleteQuery(Collection<Field<?>> keys) {
     String prefix = "DELETE FROM " + tableSchema.getTableId().getName() + " WHERE ";
     return combineWithEqualClause(prefix, keys, "");
+  }
+
+  private String getDeleteAllStatement(Range range) {
+    StringBuilder statement = new StringBuilder("DELETE FROM ").append(tableSchema.getTableId().getName());
+
+    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+      statement.append(" WHERE ");
+      appendRange(statement, range);
+    }
+    return statement.toString();
   }
 
   private String getIncrementStatement(Collection<Field<?>> keys, String column) {
