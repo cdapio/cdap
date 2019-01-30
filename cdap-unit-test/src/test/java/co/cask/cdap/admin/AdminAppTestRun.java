@@ -16,6 +16,7 @@
 
 package co.cask.cdap.admin;
 
+import co.cask.cdap.api.NamespaceSummary;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.FileSet;
@@ -249,13 +250,22 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
       Assert.assertNull(getDataset("nn").get());
 
       // test Admin.namespaceExists()
-      HttpRequest request = HttpRequest.get(serviceURI.resolve("namespaces/y/plugins").toURL()).build();
+      HttpRequest request = HttpRequest.get(serviceURI.resolve("namespaces/y").toURL()).build();
       response = HttpRequests.execute(request);
       Assert.assertEquals(404, response.getResponseCode());
 
+      // test Admin.getNamespaceSummary()
+      NamespaceMeta namespaceXMeta = new NamespaceMeta.Builder().setName(namespaceX).setGeneration(10L).build();
+      getNamespaceAdmin().create(namespaceXMeta);
+      request = HttpRequest.get(serviceURI.resolve("namespaces/" + namespaceX).toURL()).build();
+      response = HttpRequests.execute(request);
+      NamespaceSummary namespaceSummary = GSON.fromJson(response.getResponseBodyAsString(), NamespaceSummary.class);
+      NamespaceSummary expectedX = new NamespaceSummary(namespaceXMeta.getName(), namespaceXMeta.getDescription(),
+                                                        namespaceXMeta.getGeneration());
+      Assert.assertEquals(expectedX, namespaceSummary);
+
       // test ArtifactManager.listArtifacts()
       ArtifactId pluginArtifactId = new NamespaceId(namespaceX).artifact("r1", "1.0.0");
-      getNamespaceAdmin().create(new NamespaceMeta.Builder().setName(namespaceX).build());
 
       // add a plugin artifact to namespace X
       addPluginArtifact(pluginArtifactId, ADMIN_APP_ARTIFACT, DummyPlugin.class);
@@ -275,7 +285,9 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
 
     } finally {
       serviceManager.stop();
-      getNamespaceAdmin().delete(new NamespaceId(namespaceX));
+      if (getNamespaceAdmin().exists(new NamespaceId(namespaceX))) {
+        getNamespaceAdmin().delete(new NamespaceId(namespaceX));
+      }
     }
   }
 
