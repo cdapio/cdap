@@ -17,6 +17,7 @@
 package co.cask.cdap.store;
 
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
@@ -42,31 +43,6 @@ public final class StoreDefinition {
   public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
     if (tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
-    }
-    if (tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
-      NamespaceStore.createTables(tableAdmin);
-    }
-  }
-
-  /**
-   * Namespace store schema
-   */
-  public static final class NamespaceStore {
-    public static final StructuredTableId NAMESPACES = new StructuredTableId("namespaces");
-
-    public static final String NAMESPACE_FIELD = "namespace";
-    public static final String NAMESPACE_METADATA_FIELD = "namespace_metadata";
-
-    public static final StructuredTableSpecification NAMESPACE_TABLE_SPEC =
-      new StructuredTableSpecification.Builder()
-        .withId(NAMESPACES)
-        .withFields(Fields.stringType(NAMESPACE_FIELD),
-                    Fields.stringType(NAMESPACE_METADATA_FIELD))
-        .withPrimaryKeys(NAMESPACE_FIELD)
-        .build();
-
-    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
-      tableAdmin.create(NAMESPACE_TABLE_SPEC);
     }
   }
 

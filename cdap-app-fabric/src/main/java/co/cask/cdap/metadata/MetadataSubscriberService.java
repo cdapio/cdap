@@ -61,7 +61,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -100,7 +99,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MetadataStore metadataStore; // TODO: Refactor metadataStore to run within existing transaction
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
-  private final TransactionRunner transactionRunner;
 
   private DatasetId lineageDatasetId = LineageDataset.LINEAGE_DATASET_ID;
   private DatasetId fieldLineageDatasetId = FieldLineageDataset.FIELD_LINEAGE_DATASET_ID;
@@ -110,8 +108,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             DatasetFramework datasetFramework, TransactionSystemClient txClient,
                             MetricsCollectionService metricsCollectionService,
-                            MetadataStore metadataStore,
-                            TransactionRunner transactionRunner) {
+                            MetadataStore metadataStore) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
@@ -138,7 +135,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
-    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -203,8 +199,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(
-              cConf, datasetContext, datasetFramework, metadataStore, transactionRunner);
+            return new ProfileMetadataMessageProcessor(cConf, datasetContext, datasetFramework, metadataStore);
           default:
             return null;
         }
