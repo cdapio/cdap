@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -65,7 +65,7 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
   MessagingMetricsCollectionService(CConfiguration cConf,
                                     MessagingService messagingService,
                                     DatumWriter<MetricValues> recordWriter) {
-    super(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION));
+    super(TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)));
 
     String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
     int totalTopicNum = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);

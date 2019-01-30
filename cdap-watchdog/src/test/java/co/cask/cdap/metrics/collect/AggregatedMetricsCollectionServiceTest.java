@@ -31,11 +31,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Testing the basic properties of the {@link AggregatedMetricsCollectionService}.
@@ -140,37 +137,6 @@ public class AggregatedMetricsCollectionServiceTest {
     } finally {
       service.stopAndWait();
     }
-  }
-
-  @Test
-  public void testServiceShutdown() throws InterruptedException, TimeoutException, ExecutionException {
-    final CountDownLatch latch = new CountDownLatch(1);
-    AggregatedMetricsCollectionService service = new AggregatedMetricsCollectionService(1000L) {
-      @Override
-      protected void publish(Iterator<MetricValues> metrics) {
-        while (isRunning()) {
-          try {
-            latch.countDown();
-            TimeUnit.MINUTES.sleep(1);
-          } catch (InterruptedException e) {
-            // Ignore the interrupt for testing.
-            // The isRunning() should return false if the interrupt is due to service shutdown
-          }
-        }
-      }
-
-      @Override
-      protected long getInitialDelayMillis() {
-        return 0L;
-      }
-    };
-
-    service.startAndWait();
-    // Make sure the publish has been called
-    Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
-
-    // Issue a stop on the service. It should interrupt the publish sleep and return quickly.
-    service.stop().get(5, TimeUnit.SECONDS);
   }
 
   private void verifyCounterMetricsValue(BlockingQueue<MetricValues> published,

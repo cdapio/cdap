@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,12 +29,14 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -52,12 +54,12 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
   private final LoadingCache<Map<String, String>, LoadingCache<String, AggregatedMetricsEmitter>> emitters;
   // maximum number of milliseconds to sleep between each publish
   private final long publishIntervalInMillis;
-  private Thread runThread;
+  private final CountDownLatch shutdownLatch;
 
   public AggregatedMetricsCollectionService(long publishIntervalInMillis) {
     // the longest sleep time will be 1 min
-    this.publishIntervalInMillis = publishIntervalInMillis < Constants.Metrics.PROCESS_INTERVAL_MILLIS ?
-      publishIntervalInMillis : Constants.Metrics.PROCESS_INTERVAL_MILLIS;
+    this.publishIntervalInMillis = Math.min(publishIntervalInMillis, Constants.Metrics.PROCESS_INTERVAL_MILLIS);
+    this.shutdownLatch = new CountDownLatch(1);
     this.collectors = CacheBuilder.newBuilder()
       .expireAfterAccess(CACHE_EXPIRE_MINUTES, TimeUnit.MINUTES)
       .build(createCollectorLoader());
@@ -103,26 +105,25 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
   @Override
   protected void startUp() throws Exception {
-    runThread = Thread.currentThread();
+    // No-op
   }
 
   @Override
   protected final void run() {
     long sleepMillis = getInitialDelayMillis();
     while (isRunning()) {
-      try {
-        TimeUnit.MILLISECONDS.sleep(sleepMillis);
-        long startTime = System.currentTimeMillis();
-        publishMetrics(startTime);
-        sleepMillis = Math.max(0, publishIntervalInMillis - (System.currentTimeMillis() - startTime));
-      } catch (InterruptedException e) {
-        // Expected when stop is called.
+      if (Uninterruptibles.awaitUninterruptibly(shutdownLatch, sleepMillis, TimeUnit.MILLISECONDS)) {
+        // If the shutdown latch is triggered, it means triggerShutdown has been called, hence break the loop
         break;
       }
+
+      long startTime = System.currentTimeMillis();
+      publishMetrics(startTime);
+      sleepMillis = Math.max(0, publishIntervalInMillis - (System.currentTimeMillis() - startTime));
     }
   }
 
-  private void publishMetrics(long currentTimeMillis) throws InterruptedException {
+  private void publishMetrics(long currentTimeMillis) {
     long timestamp = TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis);
 
     LOG.trace("Start log collection for timestamp {}", timestamp);
@@ -130,8 +131,6 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
     Iterator<MetricValues> metrics = getMetrics(timestamp);
     try {
       publish(metrics);
-    } catch (InterruptedException e) {
-      throw e;
     } catch (Throwable t) {
       LOG.error("Failed in publishing metrics for timestamp {}.", timestamp, t);
     }
@@ -169,9 +168,7 @@ public abstract class AggregatedMetricsCollectionService extends AbstractExecuti
 
   @Override
   protected void triggerShutdown() {
-    if (runThread != null) {
-      runThread.interrupt();
-    }
+    shutdownLatch.countDown();
   }
 
   private Iterator<MetricValues> getMetrics(final long timestamp) {
