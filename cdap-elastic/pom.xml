@@ -160,6 +160,7 @@
         <artifactId>elasticsearch-maven-plugin</artifactId>
         <version>6.9</version>
         <configuration>
+          <skip>${skipTests}</skip>
           <version>${elasticsearch.version}</version>
           <clusterName>test</clusterName>
           <transportPort>${elasticTransportPort}</transportPort>
