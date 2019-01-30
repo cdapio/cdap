@@ -39,13 +39,18 @@ public final class StoreDefinition {
    *
    * @param tableAdmin the table admin to create the table
    */
-  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
-    if (tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
+  public static void createAllTables(StructuredTableAdmin tableAdmin, boolean overWrite)
+    throws IOException, AlreadyExistsException {
+    if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
-    if (tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
+    if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
       NamespaceStore.createTables(tableAdmin);
     }
+  }
+
+  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
+    createAllTables(tableAdmin, false);
   }
 
   /**
