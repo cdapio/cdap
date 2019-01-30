@@ -235,11 +235,6 @@ public abstract class AppFabricTestBase {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-
-    // Create the tables required for unit test. This needs to happen before the app fabric server is started
-    // since bootstrap service will attempt to write to tables.
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
-
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
@@ -263,6 +258,9 @@ public abstract class AppFabricTestBase {
     datasetClient = new DatasetClient(getClientConfig(discoveryClient, Constants.Service.DATASET_MANAGER));
     metadataClient = new MetadataClient(getClientConfig(discoveryClient, Constants.Service.METADATA_SERVICE));
     metricStore = injector.getInstance(MetricStore.class);
+
+    // create the tables required for unit test
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     Scheduler programScheduler = injector.getInstance(Scheduler.class);
     // Wait for the scheduler to be functional.

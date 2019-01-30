@@ -47,9 +47,7 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.store.NamespaceMDS;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -81,15 +79,14 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
   private final MetadataStore metadataStore;
-  private final NamespaceStore defaultNamespaceStore;
+  private final NamespaceMDS namespaceMDS;
   private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesDataset preferencesDataset;
 
   public ProfileMetadataMessageProcessor(CConfiguration cConf, DatasetContext datasetContext,
-                                         DatasetFramework datasetFramework, MetadataStore metadataStore,
-                                         TransactionRunner transactionRunner) {
-    defaultNamespaceStore = new DefaultNamespaceStore(transactionRunner);
+                                         DatasetFramework datasetFramework, MetadataStore metadataStore) {
+    namespaceMDS = NamespaceMDS.getNamespaceMDS(datasetContext, datasetFramework);
     appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
     scheduleDataset = Schedulers.getScheduleStore(datasetContext, datasetFramework);
     preferencesDataset = PreferencesDataset.get(datasetContext, datasetFramework);
@@ -128,14 +125,14 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                                       Map<MetadataEntity, Map<String, String>> updates) {
     switch (entityId.getEntityType()) {
       case INSTANCE:
-        for (NamespaceMeta meta : defaultNamespaceStore.list()) {
+        for (NamespaceMeta meta : namespaceMDS.list()) {
           collectProfileMetadata(meta.getNamespaceId(), message, updates);
         }
         break;
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
         // make sure namespace exists before updating
-        if (defaultNamespaceStore.get(namespaceId) == null) {
+        if (namespaceMDS.get(namespaceId) == null) {
           LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
                       "updated. Ignoring the message {}", namespaceId, message);
           return;

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
@@ -25,9 +24,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.store.NamespaceStore;
-import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -59,7 +56,7 @@ public class StorageProviderNamespaceAdminTest {
   private static DatasetService datasetService;
 
   @BeforeClass
-  public static void setup() throws IOException, AlreadyExistsException {
+  public static void setup() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
@@ -80,7 +77,6 @@ public class StorageProviderNamespaceAdminTest {
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     // we don't use namespace admin here but the store because namespaceadmin will try to create the
     // home directory for namespace which we don't want. We just want to store the namespace meta in store
     // to look up during the delete.
