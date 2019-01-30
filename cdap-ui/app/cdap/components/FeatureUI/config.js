@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-export const REMOTE_IP = "http://192.168.110.103:11015";
+export const REMOTE_IP = "http://192.168.156.36:11015";
 const SERVICE_PORT = "11015";
 
 export const SERVER_IP = (window.location.hostname == "localhost") ? REMOTE_IP : (window.location.protocol + "//" + window.location.hostname + ":" + SERVICE_PORT);
@@ -33,6 +33,7 @@ export const EDIT_PIPELINE = "EDIT_PIPELINE";
 export const DELETE_PIPELINE = "DELETE_PIPELINE";
 export const GET_PIPE_LINE_DATA = "GET_PIPE_LINE_DATA";
 export const GET_PIPE_LINE_FILTERED = "GET_PIPE_LINE_FILTERED";
+export const GET_FEATURE_CORRELAION = "GET_FEATURE_CORRELAION";
 
 
 export const IS_OFFLINE = false;
