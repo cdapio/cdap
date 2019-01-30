@@ -23,6 +23,9 @@ var request = require('request'),
 
 var log = log4js.getLogger('default');
 var hash = require('object-hash');
+/* jshint ignore:start */
+var parser = require('./config/parser.js');
+/* jshint ignore:end */
 
 /**
  * Default Poll Interval used by the backend.
@@ -32,6 +35,7 @@ var hash = require('object-hash');
  * in their request.
  */
 var POLL_INTERVAL = 10 * 1000;
+var urlHelper = require('./url-helper');
 
 /**
  * Aggregator
@@ -55,7 +59,22 @@ function Aggregator(conn) {
   // as send from the backend. The FE has to guarantee that the
   // the resource id is unique within a websocket connection.
   this.polledResources = {};
+
+  this.cdapConfig = null;
+  this.populateCdapConfig();
 }
+
+/* jshint ignore:start */
+Aggregator.prototype.populateCdapConfig = async function() {
+  try {
+    this.cdapConfig = await parser.extractConfig('cdap');
+  } catch (e) {
+    log.error(
+      "[ERROR]: Unable to parse CDAP config. CDAP UI Proxy won't be able to serve any request to the client"
+    );
+  }
+};
+/* jshint ignore:end */
 
 /**
  * Checks if the 'id' received from the client is already registered -- This
@@ -299,10 +318,13 @@ function emitResponse(resource, error, response, body) {
       }
     }
 
+    let newResource = Object.assign({}, resource, {
+      url: urlHelper.deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
+    });
     this.connection.write(
       JSON.stringify(
         {
-          resource: resource,
+          resource: newResource,
           error: error,
           warning: error.toString(),
           statusCode: response && response.statusCode,
@@ -334,11 +356,14 @@ function emitResponse(resource, error, response, body) {
         this.polledResources[resource.id].response = responseHash;
       }
     }
-    log.debug('[RESPONSE]: (id: ' + resource.id + ', url: ' + resource.url + ')');
+    let newResource = Object.assign({}, resource, {
+      url: urlHelper.deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
+    });
+    log.debug('[RESPONSE]: (id: ' + newResource.id + ', url: ' + newResource.url + ')');
     this.connection.write(
       JSON.stringify(
         {
-          resource: resource,
+          resource: newResource,
           statusCode: response.statusCode,
           response: body,
         },
@@ -356,7 +381,11 @@ function onSocketData(message) {
   try {
     message = JSON.parse(message);
     var r = message.resource;
-
+    r.url = urlHelper.constructUrl(
+      this.cdapConfig,
+      r.url,
+      r.requestOrigin || urlHelper.REQUEST_ORIGIN_ROUTER
+    );
     switch (message.action) {
       case 'template-config':
         log.debug(
@@ -379,7 +408,7 @@ function onSocketData(message) {
         r.startTs = Date.now();
         log.debug('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
         request(r, emitResponse.bind(this, r)).on('error', function(err) {
-          log.error(err);
+          log.error('[ERROR]: (url: ' + r.url + ') ' + err.message);
         });
         break;
       case 'poll-stop':

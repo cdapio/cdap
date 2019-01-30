@@ -439,10 +439,10 @@ function LogViewerController($scope, $window, LogViewerStore, myLogsApi, LOGVIEW
 
     // Generate backend path
     let startTime = Math.floor(vm.startTimeMs/1000);
-    let path = `/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}&escape=false`;
-    path = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: path}));
+    let path = `/v3/namespaces/${vm.namespaceId}/apps/${vm.appId}/${vm.programType}/${vm.programId}/runs/${vm.runId}/logs?start=${startTime}&escape=false`;
+    path = encodeURIComponent(path);
 
-    let url = `/downloadLogs?backendUrl=${path}&type=${type}`;
+    let url = `/downloadLogs?backendPath=${path}&type=${type}`;
 
     if (type === 'download') {
       // Generate filename

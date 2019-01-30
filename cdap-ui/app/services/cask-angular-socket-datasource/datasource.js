@@ -59,6 +59,9 @@ var socketDataSource = angular.module(PKG.name+'.services');
     this.defaultPollInterval = 10;
 
     this.$get = function($rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, MyPromise, uuid, EventPipe) {
+      var CDAP_API_VERSION = 'v3';
+      // FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
+      const REQUEST_ORIGIN_ROUTER = 'ROUTER';
 
       var instances = {}; // keyed by scopeid
 
@@ -235,6 +238,11 @@ var socketDataSource = angular.module(PKG.name+'.services');
             generatedResource.headers = resource.headers;
           }
 
+          let apiVersion = resource.apiVersion || CDAP_API_VERSION;
+          if (!resource.requestOrigin || resource.requestOrigin === REQUEST_ORIGIN_ROUTER) {
+            resource.url = `/${apiVersion}${resource.url}`;
+          }
+
           generatedResource.url = buildUrl(resource.url, resource.params || {});
           generatedResource.id = uuid.v4();
           self.bindings[generatedResource.id] = {
@@ -349,6 +357,10 @@ var socketDataSource = angular.module(PKG.name+'.services');
             generatedResource.headers['Content-Type'] = resource.contentType;
           }
 
+          let apiVersion = resource.apiVersion || CDAP_API_VERSION;
+          if (!resource.requestOrigin || resource.requestOrigin === REQUEST_ORIGIN_ROUTER) {
+            resource.url = `/${apiVersion}${resource.url}`;
+          }
           generatedResource.url = buildUrl(resource.url, resource.params || {});
           generatedResource.id = uuid.v4();
           self.bindings[generatedResource.id] = {

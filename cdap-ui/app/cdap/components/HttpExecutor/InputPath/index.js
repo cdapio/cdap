@@ -43,21 +43,13 @@ const mapDispatch = (dispatch) => {
 };
 
 function InputPathView({ value, onChange }) {
-  let url = [
-    window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
-    window.CDAP_CONFIG.cdap.routerServerUrl,
-    ':',
-    window.CDAP_CONFIG.sslEnabled
-      ? window.CDAP_CONFIG.cdap.routerSSLServerPort
-      : window.CDAP_CONFIG.cdap.routerServerPort,
-    '/v3/',
-  ].join('');
-
   return (
     <div className="input-path-container">
       <div className="input-group">
         <div className="input-group-prepend">
-          <div className="input-group-text">{url}</div>
+          <div className="input-group-text">
+            {`\${router-protocol}://\${router-host}:\${router-port}/v3/`}
+          </div>
         </div>
         <input
           type="text"

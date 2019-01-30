@@ -24,6 +24,9 @@ $status-code-color: #dedede;
 .http-executor {
   .request-section {
     padding: 15px 10px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-gap: 8px;
 
     .input-path-container,
     .method-selector-container {
@@ -39,9 +42,6 @@ $status-code-color: #dedede;
       vertical-align: top;
     }
 
-    .input-path-container {
-      width: calc(100% - 100px);
-    }
   }
 
   .request-metadata {
@@ -73,6 +73,9 @@ $status-code-color: #dedede;
 
       textarea {
         min-height: 150px;
+      }
+      .key-value-pair-preference {
+        margin-right: 0;
       }
     }
   }

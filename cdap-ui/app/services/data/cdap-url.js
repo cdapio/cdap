@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myCdapUrl', function myCdapUrl($stateParams, $log, MY_CONFIG) {
+  .factory('myCdapUrl', function myCdapUrl($stateParams) {
 
     function constructUrl(resource) {
 
@@ -38,18 +38,9 @@ angular.module(PKG.name + '.services')
       }
 
       // further sugar for building absolute url
-      if(resource._cdapPath || resource._cdapPathV2) {
-        url = [
-          MY_CONFIG.sslEnabled? 'https://': 'http://',
-          MY_CONFIG.cdap.routerServerUrl,
-          ':',
-          MY_CONFIG.sslEnabled? MY_CONFIG.cdap.routerSSLServerPort: MY_CONFIG.cdap.routerServerPort,
-          resource._cdapPathV2 ? '/v2' : '/v3',
-          resource._cdapPath || resource._cdapPathV2
-        ].join('');
-
+      if(resource._cdapPath) {
+        url = resource._cdapPath;
         delete resource._cdapPath;
-        delete resource._cdapPathV2;
       }
 
 

@@ -190,6 +190,7 @@ if (isModeProduction(mode)) {
       },
     }),
     new UglifyJsPlugin({
+      sourceMap: true,
       uglifyOptions: {
         ie8: false,
         compress: {

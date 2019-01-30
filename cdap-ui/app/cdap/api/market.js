@@ -18,16 +18,22 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import { apiCreatorAbsPath } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = `${window.CDAP_CONFIG.marketUrl}`;
+const basepath = window.CDAP_CONFIG.marketUrl;
+// FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
+const REQUEST_TYPE_MARKET = 'MARKET';
+const requestOptions = {
+  requestOrigin: REQUEST_TYPE_MARKET,
+};
 
 export const MyMarketApi = {
-  list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/packages.json`),
-  getCategories: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `${basepath}/categories.json`),
+  list: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `/packages.json`, requestOptions),
+  getCategories: apiCreatorAbsPath(dataSrc, 'GET', 'REQUEST', `/categories.json`, requestOptions),
   get: apiCreatorAbsPath(
     dataSrc,
     'GET',
     'REQUEST',
-    `${basepath}/packages/:packageName/:version/spec.json`
+    `/packages/:packageName/:version/spec.json`,
+    requestOptions
   ),
   getCategoryIcon: (category) => {
     return `${basepath}/categories/${category}/icon.png`;
@@ -39,6 +45,7 @@ export const MyMarketApi = {
     dataSrc,
     'GET',
     'REQUEST',
-    `${basepath}/packages/:entityName/:entityVersion/:filename`
+    `/packages/:entityName/:entityVersion/:filename`,
+    requestOptions
   ),
 };

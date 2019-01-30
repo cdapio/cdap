@@ -22,7 +22,7 @@ import myExploreApi from 'api/explore';
 import isObject from 'lodash/isObject';
 import uuidV4 from 'uuid/v4';
 import 'whatwg-fetch';
-import { contructUrl, insertAt, removeAt, humanReadableDate } from 'services/helpers';
+import { insertAt, removeAt, humanReadableDate } from 'services/helpers';
 import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 require('./ExploreModal.scss');
 import NamespaceStore from 'services/NamespaceStore';
@@ -208,9 +208,9 @@ export default class ExploreModal extends Component {
   }
 
   getDownloadUrl(query) {
-    let path = `/data/explore/queries/${query.query_handle}/download`;
-    path = encodeURIComponent(contructUrl({ path }));
-    let url = `/downloadLogs?backendUrl=${path}&type=download&method=POST&filename=${
+    let path = `/v3/data/explore/queries/${query.query_handle}/download`;
+    path = encodeURIComponent(path);
+    let url = `/downloadLogs?backendPath=${path}&type=download&method=POST&filename=${
       query.query_handle
     }.csv`;
     return url;

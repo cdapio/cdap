@@ -512,10 +512,10 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   vm.getDownloadUrl = (type = 'download') => {
 
     // Generate backend path
-    let path = `/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs?&escape=false`;
-    path = encodeURIComponent(myCdapUrl.constructUrl({_cdapPath: path}));
+    let path = `/v3/namespaces/${vm.namespaceId}/previews/${vm.previewId}/logs?&escape=false`;
+    path = encodeURIComponent(path);
 
-    let url = `/downloadLogs?backendUrl=${path}&type=${type}`;
+    let url = `/downloadLogs?backendPath=${path}&type=${type}`;
 
     if (type === 'download') {
       // Generate filename

@@ -20,7 +20,6 @@ import React, { Component } from 'react';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
 import OneStepDeployActions from 'services/WizardStores/OneStepDeploy/OneStepDeployActions';
 import NamespaceStore from 'services/NamespaceStore';
-import { constructCdapUrl } from 'services/cdap-url-builder';
 import 'whatwg-fetch';
 import { Observable } from 'rxjs/Observable';
 import OneStepDeployWizard from 'components/CaskWizards/OneStepDeploy';
@@ -67,8 +66,6 @@ export default class OneStepDeployApp extends Component {
   }
 
   publishApp() {
-    const marketBasepath = `${window.CDAP_CONFIG.marketUrl}`;
-
     const { name, version } = this.props.input.package;
 
     let jarName;
@@ -83,14 +80,12 @@ export default class OneStepDeployApp extends Component {
       }
     });
 
-    let marketPath = `${marketBasepath}/packages/${name}/${version}/${jarName}`;
+    let marketPath = `/packages/${name}/${version}/${jarName}`;
     marketPath = encodeURIComponent(marketPath);
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let cdapPath = constructCdapUrl({
-      _cdapPath: `/namespaces/${namespace}/apps`,
-    });
+    let cdapPath = `/v3/namespaces/${namespace}/apps`;
     cdapPath = encodeURIComponent(cdapPath);
 
     let headers = {
