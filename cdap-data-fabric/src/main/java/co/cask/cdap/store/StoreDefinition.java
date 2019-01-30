@@ -43,7 +43,7 @@ public final class StoreDefinition {
     if (tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
-    if (tableAdmin.getSpecification(NamespaceStore.NAMESPACE_TABLE) == null) {
+    if (tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
       NamespaceStore.createTables(tableAdmin);
     }
   }
@@ -52,14 +52,14 @@ public final class StoreDefinition {
    * Namespace store schema
    */
   public static final class NamespaceStore {
-    public static final StructuredTableId NAMESPACE_TABLE = new StructuredTableId("namespace_table");
+    public static final StructuredTableId NAMESPACES = new StructuredTableId("namespaces");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String NAMESPACE_METADATA_FIELD = "namespace_metadata";
 
     public static final StructuredTableSpecification NAMESPACE_TABLE_SPEC =
       new StructuredTableSpecification.Builder()
-        .withId(NAMESPACE_TABLE)
+        .withId(NAMESPACES)
         .withFields(Fields.stringType(NAMESPACE_FIELD),
                     Fields.stringType(NAMESPACE_METADATA_FIELD))
         .withPrimaryKeys(NAMESPACE_FIELD)
