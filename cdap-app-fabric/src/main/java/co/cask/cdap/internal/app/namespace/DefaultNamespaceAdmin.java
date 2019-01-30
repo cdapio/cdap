@@ -85,14 +85,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final String masterShortUserName;
 
   @Inject
-  DefaultNamespaceAdmin(NamespaceStore nsStore,
-                        Store store,
-                        DatasetFramework dsFramework,
-                        Provider<NamespaceResourceDeleter> resourceDeleter,
-                        Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
-                        CConfiguration cConf,
-                        Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                        AuthenticationContext authenticationContext) {
+  @VisibleForTesting
+  public DefaultNamespaceAdmin(NamespaceStore nsStore,
+                               Store store,
+                               DatasetFramework dsFramework,
+                               Provider<NamespaceResourceDeleter> resourceDeleter,
+                               Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
+                               CConfiguration cConf,
+                               Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                               AuthenticationContext authenticationContext) {
     this.resourceDeleter = resourceDeleter;
     this.nsStore = nsStore;
     this.store = store;
