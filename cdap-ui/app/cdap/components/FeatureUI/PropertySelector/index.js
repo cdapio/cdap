@@ -16,7 +16,6 @@ import {
   AccordionItemBody,
 } from 'react-accessible-accordion';
 
-// Demo styles, see 'Styles' section below for some notes on use.
 import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
 import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase } from '../util';
@@ -203,9 +202,10 @@ class PropertySelector extends React.Component {
     return (
       <div className="property-step-container">
         <div className="property-container">
+        <div className = "config-selector-header">Property</div>
           <Accordion onChange={this.onAccordionChange.bind(this)}>
             {
-              Array.from(updatedPropMap.keys()).map(property => {
+              Array.from(updatedPropMap.keys()).map((property, index) => {
                 let isMandatory = false;
                 let subParams = updatedPropMap.get(property);
                 let description;
@@ -214,16 +214,18 @@ class PropertySelector extends React.Component {
                   description = subParams[0].description;
                 }
                 return (
-                  <AccordionItem key={property}>
-                    <AccordionItemTitle>
-                      {toCamelCase(property)}
-                      {
-                        isMandatory && <i className = "fa fa-asterisk mandatory"></i>
-                      }
-                      {
-                      description &&
-                      <InfoTip id = {property+ '_InfoTip'} description = {description}/>
-                      }
+                  <AccordionItem key={property} expanded = {index == 0? true: false}>
+                  <AccordionItemTitle>
+                      <div className = "title-items">
+                        {
+                        description && <InfoTip id = {property+ '_InfoTip'} description = {description}/>
+                        }
+                        {
+                          isMandatory && <i className = "fa fa-asterisk mandatory"></i>
+                        }
+                        <div className ="heading" title = {toCamelCase(property)}>{toCamelCase(property)}</div>
+                      </div>
+                      <div className="accordion__arrow" role="presentation" />
                     </AccordionItemTitle>
 
                     <AccordionItemBody>
@@ -246,7 +248,7 @@ class PropertySelector extends React.Component {
           </Accordion>
         </div>
         <div className="schema-container">
-          <div className = "column-selector-header">{"Select columns for : " + toCamelCase(this.currentProperty.paramName)
+          <div className = "config-selector-header">{"Select columns for : " + toCamelCase(this.currentProperty.paramName)
               + (isEmpty(this.currentProperty.subParams)?"": (" (" + toCamelCase(this.currentSubProperty) + ")"))}</div>
           <div className="schema-filter-container">
             <label>Column Type</label>

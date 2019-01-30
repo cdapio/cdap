@@ -8,7 +8,15 @@
   .property-container {
     width: 30%;
     overflow: auto;
-
+    box-shadow: 2px 3px 3px 1px #888888;
+  }
+  .config-selector-header {
+    margin-bottom: 5px;
+    padding: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333333;
+    background: #eeeeee;
   }
   .schema-container {
     padding-left: 20px;
@@ -16,13 +24,6 @@
     display: flex;
     flex-direction: column;
     width: 70%;
-    .column-selector-header {
-      margin-bottom: 10px;
-      font-size: 16px;
-      font-weight: 500;
-      color: #333333;
-      background: #eeeeee;
-    }
     .schema-filter-container {
       display: flex;
       justify-content: space-between;
@@ -71,26 +72,51 @@
 }
 
 .accordion__title {
-  padding: 5px 20px;
-  text-overflow: ellipsis;
+  padding: 10px;
   overflow: hidden;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  .title-items {
+    display: flex;
+    align-items: center;
+    .info-tip {
+      padding: 0 5px 0 0;
+    }
+    .heading {
+      width: 140px;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      font-size: 14px;
+      overflow: hidden;
+    }
+  }
+}
+
+.spacer {
+  flex: 1 1 auto;
 }
 
 .accordion__body {
   padding: 5px 10px;
 }
-
+.accordion__arrow {
+  width: 24px;
+  height: 12px;
+  position: relative;
+  float: right;
+}
 .list-header {
   font-size: 12px;
   font-weight: 500;
-  background-color: #cedaff;
+  background-color: #e1e1e1;
   margin: 0px -5px;
   padding: 4px 10px;
 }
 
 .list-header:hover {
-  background-color: #97b0ff;
+  background-color: #c2c2c2;
 }
 
 .list-header-selected {
@@ -99,5 +125,13 @@
   color: white;
   margin: 0px -5px;
   padding: 4px 10px;
-  background-color: #749af7;
+  background-color: #999999;
+  &:after {
+    content: "\F111";
+    font-family: "FontAwesome";
+    font-size: 14px;
+    float: right;
+    color: white;
+    text-shadow: 0px 2px 3px #483463;
+  }
 }
