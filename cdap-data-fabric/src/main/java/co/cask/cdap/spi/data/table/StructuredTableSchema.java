@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spi.data.table;
 
-import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
 import java.util.ArrayList;
@@ -83,31 +82,5 @@ public class StructuredTableSchema {
   @Nullable
   public FieldType.Type getType(String fieldName) {
     return fields.get(fieldName);
-  }
-
-  /**
-   * Validate if the given keys are prefix or complete primary keys.
-   *
-   * @param keys the keys to validate
-   * @param allowPrefix boolean to indicate whether the given collection keys can be a prefix of the primary keys
-   * @throws InvalidFieldException if the given keys have extra key which is not in primary key, or are not in correct
-   * order of the primary keys or are not complete keys if allowPrefix is set to false.
-   */
-  public void validatePrimaryKeys(List<String> keys, boolean allowPrefix) throws InvalidFieldException {
-    if (keys.size() > primaryKeys.size()) {
-      throw new InvalidFieldException(tableId, keys, String.format("Given keys %s contain more fields than the" +
-                                                                     " primary keys %s", keys, primaryKeys));
-    }
-
-    if (!allowPrefix && keys.size() < primaryKeys.size()) {
-      throw new InvalidFieldException(tableId, keys,
-                                      String.format("Given keys %s do not contain all the primary keys %s", keys,
-                                                    primaryKeys));
-    }
-
-    if (Collections.indexOfSubList(primaryKeys, keys) == -1) {
-      throw new InvalidFieldException(tableId, keys, String.format("Given keys %s are not the prefix of " +
-                                                                     "the primary keys %s", keys, primaryKeys));
-    }
   }
 }

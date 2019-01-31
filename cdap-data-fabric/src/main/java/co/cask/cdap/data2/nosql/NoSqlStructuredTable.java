@@ -69,16 +69,21 @@ public final class NoSqlStructuredTable implements StructuredTable {
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys) throws InvalidFieldException {
-    return readRow(keys, null);
+    LOG.trace("Table {}: Read with keys {}", schema.getTableId(), keys);
+    Row row = table.get(convertKeyToBytes(keys, false));
+    return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
   }
 
   @Override
   public Optional<StructuredRow> read(Collection<Field<?>> keys,
                                       Collection<String> columns) throws InvalidFieldException {
+    LOG.trace("Table {}: Read with keys {} and columns {}", schema.getTableId(), keys, columns);
     if (columns == null || columns.isEmpty()) {
-      throw new InvalidFieldException(schema.getTableId(), columns, "No columns are specified in reading.");
+      throw new IllegalArgumentException("No columns are specified to read");
     }
-    return readRow(keys, columns);
+    Row row = table.get(convertKeyToBytes(keys, false),
+                        convertColumnsToBytes(columns));
+    return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
   }
 
   @Override
@@ -105,6 +110,48 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue) {
+    LOG.trace("Table {}: CompareAndSwap with keys {}, oldValue {}, newValue {}", schema.getTableId(), keys,
+              oldValue, newValue);
+    fieldValidator.validateField(oldValue);
+    if (oldValue.getFieldType() != newValue.getFieldType()) {
+      throw new IllegalArgumentException(
+        String.format("Field types of oldValue (%s) and newValue (%s) are not the same",
+                      oldValue.getFieldType(), newValue.getFieldType()));
+    }
+    if (!oldValue.getName().equals(newValue.getName())) {
+      throw new IllegalArgumentException(
+        String.format("Trying to compare and swap different fields. Old Value = %s, New Value = %s",
+                      oldValue, newValue));
+    }
+    if (schema.isPrimaryKeyColumn(oldValue.getName())) {
+      throw new IllegalArgumentException("Cannot use compare and swap on a primary key field");
+    }
+
+    return table.compareAndSwap(convertKeyToBytes(keys, false), Bytes.toBytes(oldValue.getName()),
+                                fieldToBytes(oldValue, oldValue.getFieldType()),
+                                fieldToBytes(newValue, newValue.getFieldType()));
+  }
+
+  @Override
+  public void increment(Collection<Field<?>> keys, String column, long amount) {
+    LOG.trace("Table {}: Increment with keys {}, column {}, amount {}", schema.getTableId(), keys, column, amount);
+    FieldType.Type colType = schema.getType(column);
+    if (colType == null) {
+      throw new InvalidFieldException(schema.getTableId(), column);
+    } else if (colType != FieldType.Type.LONG) {
+      throw new IllegalArgumentException(
+        String.format("Trying to increment a column of type %s. Only %s column type can be incremented",
+                      colType, FieldType.Type.LONG));
+    }
+    if (schema.isPrimaryKeyColumn(column)) {
+      throw new IllegalArgumentException("Cannot use increment on a primary key field");
+    }
+
+    table.increment(convertKeyToBytes(keys, false), Bytes.toBytes(column), amount);
+  }
+
+  @Override
   public void delete(Collection<Field<?>> keys) throws InvalidFieldException {
     LOG.trace("Table {}: Delete with keys {}", schema.getTableId(), keys);
     table.delete(convertKeyToBytes(keys, false));
@@ -113,21 +160,6 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public void close() throws IOException {
     table.close();
-  }
-
-  /**
-   * Read a row from the table. Null columns mean read from all columns.
-   *
-   * @param keys key of the row
-   * @param columns columns to read, null means read from all
-   * @return an optional containing the row or empty optional if the row does not exist
-   */
-  private Optional<StructuredRow> readRow(Collection<Field<?>> keys,
-                                          @Nullable Collection<String> columns) throws InvalidFieldException {
-    LOG.trace("Table {}: Read with keys {} and columns {}", schema.getTableId(), keys, columns);
-    Row row = table.get(convertKeyToBytes(keys, false),
-                        convertColumnsToBytes(columns));
-    return row.isEmpty() ? Optional.empty() : Optional.of(new NoSqlStructuredRow(row, schema));
   }
 
   /**
@@ -140,10 +172,9 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * @throws InvalidFieldException if the key are not prefix or complete primary keys
    */
   private byte[] convertKeyToBytes(Collection<Field<?>> keys, boolean allowPrefix) throws InvalidFieldException {
-    schema.validatePrimaryKeys(keys.stream().map(Field::getName).collect(Collectors.toList()), allowPrefix);
+    fieldValidator.validatePrimaryKeys(keys, allowPrefix);
     MDSKey.Builder mdsKey = new MDSKey.Builder(keyPrefix);
     for (Field<?> key : keys) {
-      fieldValidator.validateField(key);
       addKey(mdsKey, key, schema.getType(key.getName()));
     }
     return mdsKey.build().getKey();
@@ -186,7 +217,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
   private Put convertFieldsToBytes(Collection<Field<?>> fields) throws InvalidFieldException {
     Set<String> fieldNames = fields.stream().map(Field::getName).collect(Collectors.toSet());
     if (!fieldNames.containsAll(schema.getPrimaryKeys())) {
-      throw new InvalidFieldException(schema.getTableId(), fieldNames,
+      throw new InvalidFieldException(schema.getTableId(), fields,
                                       String.format("Given fields %s does not contain all the " +
                                                       "primary keys %s", fieldNames, schema.getPrimaryKeys()));
     }

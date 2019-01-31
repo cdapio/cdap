@@ -17,11 +17,12 @@
 package co.cask.cdap.spi.data;
 
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.FieldType;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 /**
  * Exception thrown when a field is invalid. The field is invalid on the following conditions: 1. it is not part of
@@ -40,10 +41,10 @@ public class InvalidFieldException extends RuntimeException {
    * @param fields the fields which do not satisfy the schema
    * @param message the error message
    */
-  public InvalidFieldException(StructuredTableId tableId, Collection<String> fields, String message) {
+  public InvalidFieldException(StructuredTableId tableId, Collection<Field<?>> fields, String message) {
     super(message);
     this.tableId = tableId;
-    this.fieldNames = Collections.unmodifiableCollection(new LinkedHashSet<>(fields));
+    this.fieldNames = fields.stream().map(Field::getName).collect(Collectors.toList());
   }
 
   /**

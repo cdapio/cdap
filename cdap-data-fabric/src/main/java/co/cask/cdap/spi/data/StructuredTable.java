@@ -85,6 +85,36 @@ public interface StructuredTable extends Closeable {
   CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
 
   /**
+   * Atomically compare and swap the value of a column in a row if the expected value matches.
+   * To match a non-existent value, the value of the expected field should be null.
+   *
+   * @param keys the primary key of row
+   * @param oldValue the expected value in the table. The field cannot be part of the primary key
+   * @param newValue the new value to write if the expected value matches
+   * @return true if the compare and swap was successful, false otherwise
+   * @throws InvalidFieldException if any of the keys/fields are not part of table schema,
+   *                               or their types do not match the schema
+   * @throws IOException if there is an error reading or writing to the table
+   * @throws IllegalArgumentException if the field name or the type of the oldValue and newValue do not match
+   */
+  boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue)
+    throws InvalidFieldException, IOException, IllegalArgumentException;
+
+  /**
+   * Atomically increment a column of type LONG in a row.
+   *
+   * @param keys the primary key of row
+   * @param column the column name to increment, cannot be part of the primary key
+   * @param amount the amount of increment
+   * @throws InvalidFieldException if any of the keys/column are not part of table schema,
+   *    *                          or their types do not match the schema
+   * @throws IOException if there is an error reading or writing to the table
+   * @throws IllegalArgumentException if the column type is not LONG
+   */
+  void increment(Collection<Field<?>> keys, String column, long amount)
+    throws InvalidFieldException, IOException, IllegalArgumentException;
+
+  /**
    * Delete a single row from the table.
    *
    * @param keys the primary key of the row to delete
