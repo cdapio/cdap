@@ -26,7 +26,8 @@ class GridHeader extends Component {
         </div>
         <div className="header-control">
           <button className = "feature-button left-margin" onClick={this.props.backnavigation}>Back</button>
-          <button className = "feature-button left-margin" onClick={this.navigateToParentWindow}>Save</button>
+          <button className = "feature-button left-margin" onClick={this.props.save}
+            disabled={!this.props.enableSave}>Save</button>
         </div>
       </div>
     );
