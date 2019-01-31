@@ -166,19 +166,6 @@ function timeSinceCreated(timeInSeconds, shortForm) {
   return `${humanReadableDuration(timeInSeconds, shortForm)} ago`;
 }
 
-function contructUrl({ path }) {
-  return [
-    window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
-    window.CDAP_CONFIG.cdap.routerServerUrl,
-    ':',
-    window.CDAP_CONFIG.sslEnabled
-      ? window.CDAP_CONFIG.cdap.routerSSLServerPort
-      : window.CDAP_CONFIG.cdap.routerServerPort,
-    '/v3',
-    path,
-  ].join('');
-}
-
 function convertBytesToHumanReadable(bytes, type, includeSpace) {
   if (!bytes || typeof bytes !== 'number') {
     return bytes;
@@ -405,7 +392,6 @@ export {
   insertAt,
   removeAt,
   humanReadableDate,
-  contructUrl,
   getIcon,
   preventPropagation,
   requiredFieldsCompleted,

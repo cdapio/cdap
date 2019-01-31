@@ -16,6 +16,7 @@
  */
 
 /* global require, module, process, __dirname */
+var urlhelper = require('./url-helper');
 
 module.exports = {
   getApp: function() {
@@ -193,9 +194,6 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
 
       authorization: req.headers.authorization,
       cdap: {
-        routerServerUrl: cdapConfig['router.server.address'],
-        routerServerPort: cdapConfig['router.server.port'],
-        routerSSLServerPort: cdapConfig['router.ssl.server.port'],
         standaloneWebsiteSDKDownload:
           uiSettings['standalone.website.sdk.download'] === 'true' || false,
         uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
@@ -204,7 +202,6 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         previewEnabled: cdapConfig['enable.preview'] === 'true',
       },
       marketUrl: cdapConfig['market.base.url'],
-      sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
       securityEnabled: authAddress.enabled,
       isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV,
@@ -239,28 +236,6 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     res.send(`window.CDAP_UI_THEME = ${JSON.stringify(uiThemeConfig)};`);
   });
 
-  app.post('/downloadQuery', function(req, res) {
-    var url = req.body.backendUrl;
-
-    log.info('Download Query Start: ', req.body.queryHandle);
-
-    request({
-      method: 'POST',
-      url: url,
-      rejectUnauthorized: false,
-      requestCert: true,
-      agent: false,
-      headers: req.headers,
-    })
-      .on('error', function(e) {
-        log.error('Error request: ', e);
-      })
-      .pipe(res)
-      .on('error', function(e) {
-        log.error('Error downloading query: ', e);
-      });
-  });
-
   /**
    * This is used to stream content from Market directly to CDAP
    * ie. download app from market, and publish to CDAP
@@ -277,6 +252,8 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       sourceMethod = req.query.sourceMethod || 'GET',
       targetMethod = req.query.targetMethod || 'POST';
 
+    sourceLink = urlhelper.constructUrl(cdapConfig, sourceLink, urlhelper.REQUEST_ORIGIN_MARKET);
+    targetLink = urlhelper.constructUrl(cdapConfig, targetLink);
     var forwardRequestObject = {
       url: targetLink,
       method: targetMethod,
@@ -298,7 +275,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   });
 
   app.get('/downloadLogs', function(req, res) {
-    var url = decodeURIComponent(req.query.backendUrl);
+    var url = urlhelper.constructUrl(cdapConfig, decodeURIComponent(req.query.backendPath));
     var method = req.query.method || 'GET';
     log.info('Download Logs Start: ', url);
     var customHeaders;
@@ -728,47 +705,6 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       },
     ]
   );
-
-  app.get('/ui-config-old.js', function(req, res) {
-    var path = __dirname + '/config/cdap-ui-config.json';
-
-    var fileConfig = {};
-
-    fileConfig = fs.readFileSync(path, 'utf8');
-    res.header({
-      'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate',
-    });
-    res.send(
-      'angular.module("' + pkg.name + '.config")' + '.constant("UI_CONFIG",' + fileConfig + ');'
-    );
-  });
-  app.get('/config-old.js', function(req, res) {
-    var data = JSON.stringify({
-      // the following will be available in angular via the "MY_CONFIG" injectable
-
-      authorization: req.headers.authorization,
-      cdap: {
-        routerServerUrl: cdapConfig['router.server.address'],
-        routerServerPort: cdapConfig['router.server.port'],
-        routerSSLServerPort: cdapConfig['router.ssl.server.port'],
-      },
-      hydrator: {
-        previewEnabled: cdapConfig['enable.alpha.preview'] === 'true',
-      },
-      sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
-      securityEnabled: authAddress.enabled,
-      isEnterprise: isModeProduction(),
-    });
-
-    res.header({
-      'Content-Type': 'text/javascript',
-      'Cache-Control': 'no-store, must-revalidate',
-    });
-    res.send(
-      'angular.module("' + pkg.name + '.config", [])' + '.constant("MY_CONFIG",' + data + ');'
-    );
-  });
 
   app.all(
     ['/oldcdap', '/oldcdap*'],

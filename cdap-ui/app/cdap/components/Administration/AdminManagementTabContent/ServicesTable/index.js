@@ -21,7 +21,6 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import Datasource from 'services/datasource';
 import LoadingSVG from 'components/LoadingSVG';
 import { MyServiceProviderApi } from 'api/serviceproviders';
 import TextboxOnValium from 'components/TextboxOnValium';
@@ -250,11 +249,9 @@ export default class ServicesTable extends Component {
       <table className="table-sm">
         <tbody>
           {services.map((service, i) => {
-            let logUrl = Datasource.constructUrl({
-              _cdapPath: `/system/services/${service.name}/logs`,
-            });
+            let logUrl = `/v3/system/services/${service.name}/logs`;
 
-            logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}`;
+            logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
 
             return (
               <tr key={service.name}>

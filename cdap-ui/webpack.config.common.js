@@ -138,6 +138,7 @@ var rules = [
 if (isModeProduction(mode)) {
   plugins.push(
     new UglifyJsPlugin({
+      sourceMap: true,
       uglifyOptions: {
         ie8: false,
         compress: {

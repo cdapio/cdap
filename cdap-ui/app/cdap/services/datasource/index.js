@@ -32,6 +32,10 @@ import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/debounceTime';
 
+var CDAP_API_VERSION = 'v3';
+// FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
+const REQUEST_ORIGIN_ROUTER = 'ROUTER';
+
 export default class Datasource {
   constructor(genericResponseHandlers = [() => true]) {
     let socketData = Socket.getObservable();
@@ -92,11 +96,18 @@ export default class Datasource {
       generatedResource.headers['Content-Type'] = resource.contentType;
     }
     if (!resource.url) {
-      resource.url = Datasource.constructUrl(resource);
+      resource.url = resource._cdapPath;
+      delete resource._cdapPath;
     }
-
+    let apiVersion = resource.apiVersion || CDAP_API_VERSION;
+    if (!resource.requestOrigin || resource.requestOrigin === REQUEST_ORIGIN_ROUTER) {
+      resource.url = `/${apiVersion}${resource.url}`;
+    }
     generatedResource.url = this.buildUrl(resource.url, resource.params);
 
+    if (resource.requestOrigin) {
+      generatedResource.requestOrigin = resource.requestOrigin;
+    }
     let subject = new Subject();
 
     this.bindings[generatedResource.id] = {
@@ -133,11 +144,20 @@ export default class Datasource {
     }
 
     if (!resource.url) {
-      resource.url = Datasource.constructUrl(resource);
+      resource.url = resource._cdapPath;
+      delete resource._cdapPath;
+    }
+
+    let apiVersion = resource.apiVersion || CDAP_API_VERSION;
+    if (!resource.requestOrigin || resource.requestOrigin === REQUEST_ORIGIN_ROUTER) {
+      resource.url = `/${apiVersion}${resource.url}`;
     }
 
     generatedResource.url = this.buildUrl(resource.url, resource.params);
 
+    if (resource.requestOrigin) {
+      generatedResource.requestOrigin = resource.requestOrigin;
+    }
     let subject = new Subject();
 
     let observable = Observable.create((obs) => {
@@ -201,28 +221,6 @@ export default class Datasource {
     }
     this.bindings = {};
   }
-
-  static constructUrl = (resource) => {
-    let url;
-
-    // further sugar for building absolute url
-    if (resource._cdapPath) {
-      url = [
-        window.CDAP_CONFIG.sslEnabled ? 'https://' : 'http://',
-        window.CDAP_CONFIG.cdap.routerServerUrl,
-        ':',
-        window.CDAP_CONFIG.sslEnabled
-          ? window.CDAP_CONFIG.cdap.routerSSLServerPort
-          : window.CDAP_CONFIG.cdap.routerServerPort,
-        '/v3',
-        resource._cdapPath,
-      ].join('');
-
-      delete resource._cdapPath;
-    }
-
-    return url;
-  };
 
   buildUrl(url, params = {}) {
     if (!params) {
