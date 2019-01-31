@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -51,10 +52,18 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.spi.data.table.field.Range;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Ticker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
@@ -73,6 +82,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +114,7 @@ import javax.annotation.Nullable;
  * Workflow node state is updated whenever program state is updated
  * and we notice that the program belongs to a workflow.
  */
-public class AppMetadataStore extends MetadataStoreDataset {
+public class AppMetadataStore {
 
   public static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
 
@@ -155,25 +165,25 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static long lastUpgradeCompletedCheck;
 
   private final CConfiguration cConf;
+  private final StructuredTable applicationSpecificationTable;
 
   /**
    * Static method for creating an instance of {@link AppMetadataStore}.
    */
-  public static AppMetadataStore create(CConfiguration cConf,
+  public static AppMetadataStore create(CConfiguration cConf, StructuredTableContext context,
                                         DatasetContext datasetContext,
                                         DatasetFramework datasetFramework) {
     try {
-      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, APP_META_INSTANCE_ID,
-                                                    Table.class.getName(), DatasetProperties.EMPTY);
-      return new AppMetadataStore(table, cConf);
+      return new AppMetadataStore(context, cConf);
     } catch (DatasetManagementException | IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public AppMetadataStore(Table table, CConfiguration cConf) {
-    super(table);
+  public AppMetadataStore(StructuredTableContext context, CConfiguration cConf) throws NotFoundException {
     this.cConf = cConf;
+    this.applicationSpecificationTable =
+      context.getTable(StoreDefinition.AppMetadataStore.APPLICATION_SPECIFICATIONS);
   }
 
   @Override
@@ -196,73 +206,73 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
-  public ApplicationMeta getApplication(ApplicationId appId) {
-    return getFirst(new MDSKey.Builder().add(TYPE_APP_META,
-                                             appId.getNamespace(),
-                                             appId.getApplication(),
-                                             appId.getVersion()).build(),
-                    ApplicationMeta.class);
+  public ApplicationMeta getApplication(ApplicationId appId) throws IOException {
+    return getApplication(appId.getNamespace(), appId.getApplication(), appId.getVersion());
   }
 
   @Nullable
-  public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) {
-    return getApplication(new ApplicationId(namespaceId, appId, versionId));
+  public ApplicationMeta getApplication(String namespaceId, String appId, String versionId) throws IOException {
+    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
+    Optional<StructuredRow> row = applicationSpecificationTable.read(fields);
+    if (!row.isPresent()) {
+      return null;
+    }
+    return GSON.fromJson(
+      row.get().getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD), ApplicationMeta.class);
   }
 
-  public List<ApplicationMeta> getAllApplications(String namespaceId) {
-    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build(), ApplicationMeta.class);
+  public List<ApplicationMeta> getAllApplications(String namespaceId) throws IOException {
+    return getApplicationMetasFromIterator(
+      applicationSpecificationTable.scan(getNamespaceRange(namespaceId), Integer.MAX_VALUE));
   }
 
-  public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) {
-    return list(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(), ApplicationMeta.class);
+  public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
+    return getApplicationMetasFromIterator(
+      applicationSpecificationTable.scan(getNamespaceAndApplicationRange(namespaceId, appId), Integer.MAX_VALUE));
   }
 
-  public List<ApplicationId> getAllAppVersionsAppIds(String namespaceId, String appId) {
+  public List<ApplicationId> getAllAppVersionsAppIds(String namespaceId, String appId) throws IOException {
     List<ApplicationId> appIds = new ArrayList<>();
-    for (MDSKey key : listKV(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId).build(),
-                             ApplicationMeta.class).keySet()) {
-      MDSKey.Splitter splitter = key.split();
-      splitter.skipBytes(); // skip recordType
-      splitter.skipBytes(); // skip namespaceId
-      splitter.skipBytes(); // skip appId
-      String versionId = splitter.hasRemaining() ? splitter.getString() : ApplicationId.DEFAULT_VERSION;
-      appIds.add(new NamespaceId(namespaceId).app(appId, versionId));
-    }
-    return appIds;
+    Iterator<StructuredRow> iterator =
+      applicationSpecificationTable.scan(getNamespaceAndApplicationRange(namespaceId, appId), Integer.MAX_VALUE);
+   while(iterator.hasNext()) {
+     StructuredRow row = iterator.next();
+     appIds.add(
+       new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
+         .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
+              row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD)));
+   }
+   return appIds;
   }
 
-  public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds) {
-    Map<MDSKey, ApplicationId> keysAppMap = new HashMap<>();
-    for (ApplicationId appId: appIds) {
-      keysAppMap.put(getApplicationKeyBuilder(TYPE_APP_META, appId).build(), appId);
-    }
-
-    Map<MDSKey, ApplicationMeta> metas = getKV(keysAppMap.keySet(), ApplicationMeta.class);
+  public Map<ApplicationId, ApplicationMeta> getApplicationsForAppIds(Collection<ApplicationId> appIds)
+    throws IOException {
     Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
-    for (MDSKey key : metas.keySet()) {
-      result.put(keysAppMap.get(key), metas.get(key));
+    for (ApplicationId appId: appIds) {
+      result.put(appId, getApplication(appId));
     }
     return result;
   }
 
-  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
-    write(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build(),
-          new ApplicationMeta(appId, spec));
+  public void writeApplication(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
+    throws IOException {
+    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(new ApplicationMeta(appId, spec)));
   }
 
-  public void deleteApplication(String namespaceId, String appId, String versionId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build());
+  public void deleteApplication(String namespaceId, String appId, String versionId) throws IOException {
+    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
+    applicationSpecificationTable.delete(fields);
   }
 
-  public void deleteApplications(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_APP_META, namespaceId).build());
+  public void deleteApplications(String namespaceId) throws IOException {
+    applicationSpecificationTable.deleteAll(getNamespaceRange(namespaceId));
   }
 
   // todo: do we need appId? may be use from appSpec?
-  public void updateAppSpec(String namespaceId, String appId, String versionId, ApplicationSpecification spec) {
+  public void updateAppSpec(String namespaceId, String appId, String versionId, ApplicationSpecification spec)
+  throws IOException {
     LOG.trace("App spec to be updated: id: {}: spec: {}", appId, GSON.toJson(spec));
-    MDSKey key = new MDSKey.Builder().add(TYPE_APP_META, namespaceId, appId, versionId).build();
-    ApplicationMeta existing = getFirst(key, ApplicationMeta.class);
+    ApplicationMeta existing = getApplication(namespaceId, appId, versionId);
     ApplicationMeta updated;
 
     if (existing == null) {
@@ -273,7 +283,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     updated = ApplicationMeta.updateSpec(existing, spec);
     LOG.trace("Application exists in mds: id: {}, spec: {}", existing);
-    write(key, updated);
+    writeApplicationSerialized(namespaceId, appId, versionId, GSON.toJson(updated));
   }
 
   /**
@@ -1534,6 +1544,43 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .add(getInvertedTsKeyPart(startTs))
       .add(runId.getRun())
       .build();
+  }
+
+  private List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId, String versionId) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, versionId));
+    return fields;
+  }
+
+  private Range getNamespaceRange(String namespaceId) {
+    return Range.singleton(
+      ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId)));
+  }
+
+  private Range getNamespaceAndApplicationRange(String namespaceId, String applicationId) {
+    return Range.singleton(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId),
+        Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, applicationId)));
+  }
+
+  private List<ApplicationMeta> getApplicationMetasFromIterator(Iterator<StructuredRow> iterator) {
+    List<ApplicationMeta> applicationMetas = new ArrayList<>();
+    while (iterator.hasNext()) {
+      applicationMetas.add(
+        GSON.fromJson(iterator.next().getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD),
+                      ApplicationMeta.class));
+    }
+    return applicationMetas;
+  }
+
+  private void writeApplicationSerialized(String namespaceId, String appId, String versionId, String serialized)
+    throws IOException {
+    List<Field<?>> fields = getApplicationPrimaryKeys(namespaceId, appId, versionId);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD, serialized));
+    applicationSpecificationTable.upsert(fields);
   }
 
   private static class AppVersionPredicate implements Predicate<MDSKey> {
