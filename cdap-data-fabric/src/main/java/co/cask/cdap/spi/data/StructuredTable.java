@@ -123,4 +123,14 @@ public interface StructuredTable extends Closeable {
    * @throws IOException if there is an error deleting from the table
    */
   void delete(Collection<Field<?>> keys) throws InvalidFieldException, IOException;
+
+  /**
+   * Delete a range of rows from the table.
+   *
+   * @param keyRange key range of the rows to delete
+   * @throws InvalidFieldException if any of the keys are not part of table schema,
+   *                               or their types do not match the schema
+   * @throws IOException if there is an error reading or deleting from the table
+   */
+  void deleteAll(Range keyRange) throws InvalidFieldException, IOException;
 }

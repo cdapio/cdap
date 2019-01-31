@@ -89,24 +89,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
   @Override
   public CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException {
     LOG.trace("Table {}: Scan range {} with limit {}", schema.getTableId(), keyRange, limit);
-    // the method will always prepend the table name as prefix
-    byte[] begin = convertKeyToBytes(keyRange.getBegin(), true);
-    byte[] end = convertKeyToBytes(keyRange.getEnd(), true);
-
-    // Table.scan() start key is inclusive by default, and if it is EXCLUSTIVE, we want to ensure the start keys are
-    // not empty so that we do not scan from the start of some other table
-    if (!keyRange.getBegin().isEmpty() && keyRange.getBeginBound() == Range.Bound.EXCLUSIVE) {
-      begin = Bytes.stopKeyForPrefix(begin);
-    }
-
-    // Table.scan() stop key is exclusive by default, so when the end keys are not specifies, we will need to scan to
-    // the end of table, which will be the default table prefix + 1.
-    if (keyRange.getEnd().isEmpty() || keyRange.getEndBound() == Range.Bound.INCLUSIVE) {
-      end = Bytes.stopKeyForPrefix(end);
-    }
-
-    Scanner scanner = table.scan(begin, end);
-    return new LimitIterator(new ScannerIterator(scanner, schema), limit);
+    return new LimitIterator(new ScannerIterator(getScanner(keyRange), schema), limit);
   }
 
   @Override
@@ -155,6 +138,17 @@ public final class NoSqlStructuredTable implements StructuredTable {
   public void delete(Collection<Field<?>> keys) throws InvalidFieldException {
     LOG.trace("Table {}: Delete with keys {}", schema.getTableId(), keys);
     table.delete(convertKeyToBytes(keys, false));
+  }
+
+  @Override
+  public void deleteAll(Range keyRange) throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: DeleteAll with range {}", schema.getTableId(), keyRange);
+    try (Scanner scanner = getScanner(keyRange)) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        table.delete(row.getRow());
+      }
+    }
   }
 
   @Override
@@ -294,6 +288,26 @@ public final class NoSqlStructuredTable implements StructuredTable {
       default:
         throw new InvalidFieldException(schema.getTableId(), field.getName());
     }
+  }
+
+  private Scanner getScanner(Range keyRange) {
+    // the method will always prepend the table name as prefix
+    byte[] begin = convertKeyToBytes(keyRange.getBegin(), true);
+    byte[] end = convertKeyToBytes(keyRange.getEnd(), true);
+
+    // Table.scan() start key is inclusive by default, and if it is EXCLUSTIVE, we want to ensure the start keys are
+    // not empty so that we do not scan from the start of some other table
+    if (!keyRange.getBegin().isEmpty() && keyRange.getBeginBound() == Range.Bound.EXCLUSIVE) {
+      begin = Bytes.stopKeyForPrefix(begin);
+    }
+
+    // Table.scan() stop key is exclusive by default, so when the end keys are not specifies, we will need to scan to
+    // the end of table, which will be the default table prefix + 1.
+    if (keyRange.getEnd().isEmpty() || keyRange.getEndBound() == Range.Bound.INCLUSIVE) {
+      end = Bytes.stopKeyForPrefix(end);
+    }
+
+    return table.scan(begin, end);
   }
 
   /**

@@ -20,7 +20,6 @@ import co.cask.cdap.spi.data.InvalidFieldException;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * Represents a range of fields.
@@ -104,6 +103,15 @@ public final class Range {
    */
   public static Range singleton(Collection<Field<?>> singleton) {
     return new Range(singleton, Bound.INCLUSIVE, singleton, Bound.INCLUSIVE);
+  }
+
+  /**
+   * Create a range that matches all the elements.
+   *
+   * @return a range object
+   */
+  public static Range all() {
+    return new Range(Collections.emptySet(), Bound.INCLUSIVE, Collections.emptySet(), Bound.INCLUSIVE);
   }
 
   /**
