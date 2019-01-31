@@ -112,6 +112,18 @@ public class IndexedTable extends AbstractDataset implements Table {
   public static final String INDEX_COLUMNS_CONF_KEY = "columnsToIndex";
 
   /**
+   * Configuration that specifies that the index columns will be specified at runtime, rather than at configure time.
+   * Using this property, a single index table can shared across multiple logical tables.
+   */
+  public static final String DYNAMIC_INDEXING = "dynamicIndexing";
+
+  /**
+   * Configuration that specifies the prefix to use to distinguish indexed rows of different tables when dynamic
+   * indexing is enabled.
+   */
+  public static final String DYNAMIC_INDEXING_PREFIX = "dynamicIndexingPrefix";
+
+  /**
    * Column key used to store the existence of a row in the secondary index.
    */
   private static final byte[] IDX_COL = {'r'};
@@ -123,6 +135,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   private Table table, index;
   // the secondary index column
   private SortedSet<byte[]> indexedColumns;
+  private final byte[] keyPrefix;
 
   /**
    * Configuration time constructor.
@@ -138,6 +151,25 @@ public class IndexedTable extends AbstractDataset implements Table {
     this.index = index;
     this.indexedColumns = columnsToIndex;
     this.hasColumnWithDelimiter = hasDelimiterByte(columnsToIndex);
+    this.keyPrefix = Bytes.EMPTY_BYTE_ARRAY;
+  }
+
+  /**
+   * Configuration time constructor.
+   *
+   * @param name the name of the table
+   * @param table table to use as the table
+   * @param index table to use as the index
+   * @param columnsToIndex the names of the data columns to index
+   * @param keyPrefix the dynamic indexing prefix. See {@link IndexedTable#DYNAMIC_INDEXING_PREFIX}
+   */
+  public IndexedTable(String name, Table table, Table index, SortedSet<byte[]> columnsToIndex, byte[] keyPrefix) {
+    super(name, table, index);
+    this.table = table;
+    this.index = index;
+    this.indexedColumns = columnsToIndex;
+    this.hasColumnWithDelimiter = hasDelimiterByte(columnsToIndex);
+    this.keyPrefix = keyPrefix;
   }
 
   /**
@@ -219,7 +251,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   @ReadOnly
   public Scanner readByIndex(byte[] column, byte[] value) {
     assertIndexedColumn(column);
-    byte[] rowKeyPrefix = Bytes.concat(column, KEY_DELIMITER, value, KEY_DELIMITER);
+    byte[] rowKeyPrefix = Bytes.concat(keyPrefix, column, KEY_DELIMITER, value, KEY_DELIMITER);
     byte[] stopRow = Bytes.stopKeyForPrefix(rowKeyPrefix);
     Scanner indexScan = index.scan(rowKeyPrefix, stopRow);
     return new IndexScanner(indexScan, column, value);
@@ -243,10 +275,10 @@ public class IndexedTable extends AbstractDataset implements Table {
     assertIndexedColumn(column);
     // KEY_DELIMITER is not used at the end of the rowKeys, because they are used for a range scan,
     // instead of a fixed-match lookup
-    byte[] startRow = startValue == null ? Bytes.concat(column, KEY_DELIMITER) :
-      Bytes.concat(column, KEY_DELIMITER, startValue);
-    byte[] stopRow = endValue == null ? Bytes.stopKeyForPrefix(Bytes.concat(column, KEY_DELIMITER)) :
-      Bytes.concat(column, KEY_DELIMITER, endValue);
+    byte[] startRow = startValue == null ? Bytes.concat(keyPrefix, column, KEY_DELIMITER) :
+      Bytes.concat(keyPrefix, column, KEY_DELIMITER, startValue);
+    byte[] stopRow = endValue == null ? Bytes.stopKeyForPrefix(Bytes.concat(keyPrefix, column, KEY_DELIMITER)) :
+      Bytes.concat(keyPrefix, column, KEY_DELIMITER, endValue);
     Scanner indexScan = index.scan(startRow, stopRow);
     return new IndexRangeScanner(indexScan, column, startValue, endValue);
   }
@@ -301,7 +333,7 @@ public class IndexedTable extends AbstractDataset implements Table {
   }
 
   private byte[] createIndexKey(byte[] row, byte[] column, byte[] value) {
-    return Bytes.concat(column, KEY_DELIMITER, value, KEY_DELIMITER, row);
+    return Bytes.concat(keyPrefix, column, KEY_DELIMITER, value, KEY_DELIMITER, row);
   }
 
   @WriteOnly
@@ -657,7 +689,7 @@ public class IndexedTable extends AbstractDataset implements Table {
           continue;
         }
         byte[] columnValue = Arrays.copyOfRange(indexRow.getRow(),
-                                                column.length + 1,
+                                                keyPrefix.length + column.length + 1,
                                                 indexRow.getRow().length - rowkey.length - 1);
         // Verify that datarow matches the expected row key to avoid issues with column name or value
         // containing the delimiter used. This is a sufficient check, as long as columns don't contain the null byte.

@@ -19,10 +19,10 @@ package co.cask.cdap.data2.nosql;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractCloseableIterator;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.spi.data.InvalidFieldException;
 import co.cask.cdap.spi.data.StructuredRow;
@@ -38,23 +38,23 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * Nosql structured table implementation. This table will prepend the table name as the prefix for each row key.
  */
 public final class NoSqlStructuredTable implements StructuredTable {
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTable.class);
-  private final Table table;
+  private final IndexedTable table;
   private final StructuredTableSchema schema;
   private final FieldValidator fieldValidator;
   // this key prefix will be used for any row in this table
   private final MDSKey keyPrefix;
 
-  public NoSqlStructuredTable(Table table, StructuredTableSchema schema) {
+  public NoSqlStructuredTable(IndexedTable table, StructuredTableSchema schema) {
     this.table = table;
     this.schema = schema;
     this.keyPrefix = new MDSKey.Builder().add(schema.getTableId().getName()).build();
@@ -93,6 +93,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException {
+    LOG.trace("Table {}: Scan index {}", schema.getTableId(), index);
+    fieldValidator.validateField(index);
+    if (!schema.isIndexColumn(index.getName())) {
+      throw new InvalidFieldException(schema.getTableId(), index.getName(), "is not an indexed column");
+    }
+    Scanner scanner = table.readByIndex(convertColumnsToBytes(Collections.singleton(index.getName()))[0],
+                                        fieldToBytes(index));
+    return new ScannerIterator(scanner, schema);
+  }
+
+  @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue) {
     LOG.trace("Table {}: CompareAndSwap with keys {}, oldValue {}, newValue {}", schema.getTableId(), keys,
               oldValue, newValue);
@@ -112,8 +124,8 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
 
     return table.compareAndSwap(convertKeyToBytes(keys, false), Bytes.toBytes(oldValue.getName()),
-                                fieldToBytes(oldValue, oldValue.getFieldType()),
-                                fieldToBytes(newValue, newValue.getFieldType()));
+                                fieldToBytes(oldValue),
+                                fieldToBytes(newValue));
   }
 
   @Override
@@ -178,16 +190,10 @@ public final class NoSqlStructuredTable implements StructuredTable {
    * Convert the columns to corresponding byte array, each column has to be part of the schema.
    *
    * @param columns columns to convert
-   * @return the converted byte array, null if read for all columns
+   * @return the converted byte array
    * @throws InvalidFieldException some column is not part of the schema
    */
-  @Nullable
-  private byte[][] convertColumnsToBytes(@Nullable Collection<String> columns) throws InvalidFieldException {
-    // Empty columns means to read all columns. The corresponding parameter for Table is null
-    if (columns == null) {
-      return null;
-    }
-
+  private byte[][] convertColumnsToBytes(Collection<String> columns) throws InvalidFieldException {
     byte[][] bytes = new byte[columns.size()][];
     int i = 0;
     for (String column : columns) {
@@ -232,7 +238,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
           throw new InvalidFieldException(schema.getTableId(), field.getName());
         }
         columns[i] = Bytes.toBytes(field.getName());
-        values[i] = fieldToBytes(field, schema.getType(field.getName()));
+        values[i] = fieldToBytes(field);
         i++;
       }
     }
@@ -267,12 +273,12 @@ public final class NoSqlStructuredTable implements StructuredTable {
     }
   }
 
-  private byte[] fieldToBytes(Field<?> field, FieldType.Type type) throws InvalidFieldException {
+  private byte[] fieldToBytes(Field<?> field) throws InvalidFieldException {
     if (field.getValue() == null) {
       return null;
     }
 
-    switch (type) {
+    switch (field.getFieldType()) {
       case INTEGER:
         return Bytes.toBytes((Integer) field.getValue());
       case LONG:

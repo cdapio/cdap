@@ -60,7 +60,9 @@ public class SqlTransactionRunner implements TransactionRunner {
         connection.rollback();
         throw new TransactionException("Failed to execute the sql queries.", e);
       } catch (SQLException sql) {
-        throw new TransactionException("Failed to rollback a transaction.", sql);
+        TransactionException ex = new TransactionException("Failed to rollback a transaction.", sql);
+        ex.addSuppressed(e);
+        throw ex;
       }
     } finally {
       try {

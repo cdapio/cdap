@@ -19,7 +19,7 @@ package co.cask.cdap.data2.nosql;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -51,7 +51,8 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
     try {
       DatasetId datasetInstanceId = NamespaceId.SYSTEM.dataset(ENTITY_TABLE_NAME);
       if (!datasetFramework.hasInstance(datasetInstanceId)) {
-        datasetFramework.addInstance(Table.class.getName(), datasetInstanceId, DatasetProperties.EMPTY);
+        datasetFramework.addInstance(IndexedTable.class.getName(), datasetInstanceId,
+                                     DatasetProperties.builder().add(IndexedTable.DYNAMIC_INDEXING, "true").build());
       }
       DatasetAdmin admin = datasetFramework.getAdmin(datasetInstanceId, null);
       if (admin == null) {
