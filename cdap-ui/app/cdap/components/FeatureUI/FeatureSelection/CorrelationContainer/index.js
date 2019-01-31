@@ -3,7 +3,7 @@ import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, ListGroup, ListGr
 import './CorrelationContainer.scss';
 import { isNil, cloneDeep } from 'lodash';
 import propTypes from 'prop-types';
-import CorrelationItem from '../CorrelationItem';
+// import CorrelationItem from '../CorrelationItem';
 
 
 class CorrelationContainer extends Component {
@@ -21,10 +21,10 @@ class CorrelationContainer extends Component {
       algolist: this.algolist,
       openAlgoDropdown: false,
       selectedAlgo: { id: -1, name: 'Select' },
-      openFeatureDropdown: false,
       selectedFeature: undefined,
       items: this.correlationItems,
-      featureNames: cloneDeep(props.featureNames)
+      featureNames: cloneDeep(props.featureNames),
+      activeApplyBtn: false
     };
 
   }
@@ -38,17 +38,20 @@ class CorrelationContainer extends Component {
 
   algoTypeChange = (item) => {
     this.setState({ selectedAlgo: item });
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    });
   }
 
-  toggleFeatureDropDown = () => {
-    this.setState(prevState => ({
-      openFeatureDropdown: !prevState.openFeatureDropdown
-    }));
-  }
+  // toggleFeatureDropDown = () => {
+  //   this.setState(prevState => ({
+  //     openFeatureDropdown: !prevState.openFeatureDropdown
+  //   }));
+  // }
 
-  featureTypeChange = (item) => {
-    this.setState({ selectedFeature: item });
-  }
+  // featureTypeChange = (item) => {
+  //   this.setState({ selectedFeature: item });
+  // }
 
   changeItem = (value, index) => {
     const itemList = [...this.state.items];
@@ -89,6 +92,10 @@ class CorrelationContainer extends Component {
     item.selected = true;
     this.lastSelectedFeature = item;
     this.setState({ selectedFeature: item });
+
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    });
   }
 
   onFeatureSearch = (evt) => {
@@ -99,32 +106,47 @@ class CorrelationContainer extends Component {
     this.setState({ featureNames: this.props.featureNames.filter((item) => item.name.includes(value)) });
   }
 
+  updateApplyBtnStatus = () => {
+    let isValidFilterItems = true;
+
+    if (this.state.selectedAlgo.id == -1) {
+      isValidFilterItems = false;
+    }
+
+    if (isNil(this.state.selectedFeature)) {
+      isValidFilterItems = false;
+    }
+
+    this.setState({ activeApplyBtn: isValidFilterItems });
+  }
+
+
   applyCorrelation = () => {
     if (!isNil(this.props.applyCorrelation)) {
       const result = {
         coefficientType: this.state.selectedAlgo,
         selectedfeatures: this.state.selectedFeature
-      }
+      };
       this.props.applyCorrelation(result);
     }
   }
 
 
   render() {
-    let corelationItem = (
-      <div className="correlation-item-box">
-        {
-          this.state.items.map((item, index) => {
-            return (<CorrelationItem
-              itemVO={item}
-              itemIndex={index}
-              changeItem={this.changeItem.bind(this)}
-              key={'fi_' + item.id}>
-            </CorrelationItem>);
-          })
-        }
-      </div>
-    );
+    // let corelationItem = (
+    //   <div className="correlation-item-box">
+    //     {
+    //       this.state.items.map((item, index) => {
+    //         return (<CorrelationItem
+    //           itemVO={item}
+    //           itemIndex={index}
+    //           changeItem={this.changeItem.bind(this)}
+    //           key={'fi_' + item.id}>
+    //         </CorrelationItem>);
+    //       })
+    //     }
+    //   </div>
+    // );
 
 
 
@@ -159,27 +181,27 @@ class CorrelationContainer extends Component {
               </InputGroup>
             </div>
 
-            <ListGroup>
-              {
-                this.state.featureNames.map((item) => {
-                  return (<ListGroupItem active={item.selected} key={item.id}
-                    onClick={() => this.onFeatrureClick(item)}>
-                    <label className='feature-box-item'>{item.name} title={item.name}</label>
-                    {
-                      item.selected && <i class="fa fa-check select-icon"></i>
-                    }
-                  </ListGroupItem>);
-                })
-              }
-            </ListGroup>
+          <ListGroup>
+            {
+              this.state.featureNames.map((item) => {
+                return (<ListGroupItem active={item.selected} key={item.id}
+                  onClick={() => this.onFeatrureClick(item)}>
+                  <label className='feature-box-item'>{item.name} title={item.name}</label>
+                  {
+                    item.selected && <i className="fa fa-check select-icon"></i>
+                  }
+                </ListGroupItem>);
+              })
+            }
+          </ListGroup>
 
           </div>
         </div>
         {
-          //corelationItem
+          // corelationItem
         }
         <div className="control-box">
-          <button className="feature-button" onClick={this.applyCorrelation}>Apply</button>
+          <button className="feature-button" onClick={this.applyCorrelation} disabled={!this.state.activeApplyBtn}>Apply</button>
         </div>
       </div>
     );
@@ -190,5 +212,6 @@ export default CorrelationContainer;
 
 CorrelationContainer.propTypes = {
   applyCorrelation: propTypes.func,
+  featureNames: propTypes.array
 };
 
