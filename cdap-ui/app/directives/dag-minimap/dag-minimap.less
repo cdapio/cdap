@@ -32,6 +32,7 @@
   border-radius: 4px;
   background-color: @grey-06;
   padding: @minimap-padding;
+  overflow: hidden;
 
   .nodes-container {
     position: relative;
@@ -79,6 +80,17 @@
     &.condition {
       background-color: @condition-plugin-color;
     }
+  }
 
+  .viewport-container {
+    position: absolute;
+    top: @minimap-padding;
+    left: @minimap-padding;
+  }
+
+  .viewport-box {
+    position: absolute;
+    background-color: rgba(255, 213, 0, 0.3);
+    border: 2px solid @yellow-01;
   }
 }
