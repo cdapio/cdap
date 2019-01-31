@@ -30,4 +30,5 @@ public enum MetadataScope {
   SYSTEM;
 
   public static final Set<MetadataScope> ALL = EnumSet.allOf(MetadataScope.class);
+  public static final Set<MetadataScope> NONE = EnumSet.noneOf(MetadataScope.class);
 }

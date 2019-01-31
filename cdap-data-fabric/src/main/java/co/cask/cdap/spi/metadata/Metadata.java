@@ -113,6 +113,13 @@ public final class Metadata {
       .collect(Collectors.toMap(entry -> entry.getKey().getName(), Map.Entry::getValue));
   }
 
+  /**
+   * @return whether this metadata has any tags or properties
+   */
+  public boolean isEmpty() {
+    return tags.isEmpty() && properties.isEmpty();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

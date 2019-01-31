@@ -95,19 +95,14 @@ public class SearchHelper {
     this.dsFramework = dsFramework;
   }
 
-  public SearchHelper(Transactional transactional, DatasetFramework dsFramework) {
-    this.transactional = transactional;
-    this.dsFramework = dsFramework;
-  }
-
   <T> T execute(TransactionExecutor.Function<MetadataDatasetContext, T> func) {
     return Transactionals.execute(transactional, context -> {
       return func.apply(scope -> getMetadataDataset(context, dsFramework, scope));
     });
   }
 
-  public static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
-                                                   MetadataScope scope) {
+  private static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
+                                                    MetadataScope scope) {
     try {
       return DatasetsUtil.getOrCreateDataset(
         context, dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),

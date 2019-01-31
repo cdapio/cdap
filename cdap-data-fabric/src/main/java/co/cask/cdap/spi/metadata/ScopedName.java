@@ -62,4 +62,13 @@ public class ScopedName {
   public String toString() {
     return scope.name() + ':' + name;
   }
+
+  public static ScopedName fromString(String s) {
+    String[] parts = s.split(":", 2);
+    if (parts.length != 2) {
+      throw new IllegalArgumentException(String.format("Cannot parse '%s' as a ScopedName", s));
+    }
+    MetadataScope scope = MetadataScope.valueOf(parts[0]);
+    return new ScopedName(scope, parts[1]);
+  }
 }

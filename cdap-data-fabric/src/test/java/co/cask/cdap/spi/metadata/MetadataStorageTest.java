@@ -36,7 +36,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,8 +59,8 @@ public abstract class MetadataStorageTest {
   protected abstract MetadataStorage getMetadataStorage();
 
   @After
-  public void ensureCleanUp() throws IOException {
-    assertEmpty(getMetadataStorage(), SearchRequest.of("*").build());
+  public void ensureCleanUp() throws Exception {
+    assertEmpty(getMetadataStorage(), SearchRequest.of("*").setShowHidden(true).build());
   }
 
   // TODO (CDAP-14806): Add more tests for custom entities; refactor some of these tests to use custom entities.
@@ -475,8 +474,8 @@ public abstract class MetadataStorageTest {
     MetadataEntity myField2 = MetadataEntity.builder(myDs).appendAsType("field", "myField2").build();
     MetadataRecord record1 = new MetadataRecord(myField1, new Metadata(USER, props("testKey1", "testValue1")));
     MetadataRecord record2 = new MetadataRecord(myField2, new Metadata(USER, props("testKey2", "testValue2")));
-    mds.apply(new Update(myField1, record1.getMetadata()));
-    mds.apply(new Update(myField2, record2.getMetadata()));
+
+    mds.batch(batch(new Update(myField1, record1.getMetadata()), new Update(myField2, record2.getMetadata())));
 
     // Search for it based on value
     assertResults(mds, SearchRequest.of("field:myField1").build(), record1);
@@ -486,7 +485,7 @@ public abstract class MetadataStorageTest {
     assertResults(mds, SearchRequest.of("field*").build(), record1, record2);
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(myField1), new Drop(myField2)));
+    mds.batch(batch(new Drop(myField1), new Drop(myField2)));
   }
 
   @Test
@@ -507,6 +506,7 @@ public abstract class MetadataStorageTest {
     // Search for it based on value
     assertResults(mds, SearchRequest.of("value1").build(), programRecord);
     assertResults(mds, SearchRequest.of("  aV1   ").addType(TYPE_PROGRAM).build(), programRecord);
+    assertEmpty(mds, SearchRequest.of("  aV1   ").addType(TYPE_ARTIFACT).build());
 
     // Search for it based split patterns to make sure nothing is matched
     assertEmpty(mds, SearchRequest.of("-").build());
@@ -542,7 +542,7 @@ public abstract class MetadataStorageTest {
     assertEmpty(mds, SearchRequest.of("value2*").addNamespace("ns12").build());
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(program), new Drop(dataset)));
+    mds.batch(batch(new Drop(program), new Drop(dataset)));
   }
 
   @Test
@@ -562,8 +562,8 @@ public abstract class MetadataStorageTest {
       new Metadata(ImmutableSet.of(), ImmutableMap.of(new ScopedName(SYSTEM, "sKey1"), "sValue1",
                                                       new ScopedName(USER, "Key1"), "Value1")));
 
-    mds.apply(new Update(program, programRecord.getMetadata()));
-    mds.apply(new Update(dataset, datasetRecord.getMetadata()));
+    mds.batch(batch(new Update(program, programRecord.getMetadata()),
+                    new Update(dataset, datasetRecord.getMetadata())));
 
     // Search for it based on key and value
     assertResults(mds, SearchRequest.of("key1:value1").addType(TYPE_PROGRAM).build(), programRecord);
@@ -597,7 +597,7 @@ public abstract class MetadataStorageTest {
     assertResults(mds, SearchRequest.of("  valu*  sVal*  ").build(), programRecord, datasetRecord);
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(program), new Drop(dataset)));
+    mds.batch(batch(new Drop(program), new Drop(dataset)));
   }
 
   @Test
@@ -617,7 +617,7 @@ public abstract class MetadataStorageTest {
 
     mds.apply(new Update(program, new Metadata(USER, props("key1", "value3"))));
     mds.apply(new Remove(program, ImmutableSet.of(new ScopedNameOfKind(PROPERTY, USER, "key2"),
-                                                   new ScopedNameOfKind(TAG, USER, "tag2"))));
+                                                  new ScopedNameOfKind(TAG, USER, "tag2"))));
     programRecord = new MetadataRecord(program, new Metadata(USER, tags("tag1"), props("key1", "value3")));
 
     // Searching for value1 should be empty
@@ -659,9 +659,7 @@ public abstract class MetadataStorageTest {
     MetadataRecord artifactRecord = new MetadataRecord(artifact, meta);
     MetadataRecord sysArtifactRecord = new MetadataRecord(sysArtifact, meta);
 
-    mds.apply(new Update(program, meta));
-    mds.apply(new Update(artifact, meta));
-    mds.apply(new Update(sysArtifact, meta));
+    mds.batch(batch(new Update(program, meta), new Update(artifact, meta), new Update(sysArtifact, meta)));
 
     // perform the exact same multiword search in the 'ns1' namespace. It should return the system artifact along with
     // matched entities in the 'ns1' namespace
@@ -696,7 +694,11 @@ public abstract class MetadataStorageTest {
                   sysArtifactRecord);
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(program), new Drop(artifact), new Drop(sysArtifact)));
+    mds.batch(batch(new Drop(program), new Drop(artifact), new Drop(sysArtifact)));
+  }
+
+  private List<? extends MetadataMutation> batch(MetadataMutation ... mutations) {
+    return ImmutableList.copyOf(mutations);
   }
 
   @Test
@@ -715,8 +717,7 @@ public abstract class MetadataStorageTest {
     MetadataRecord artifactRecord = new MetadataRecord(artifact, meta);
     MetadataRecord sysArtifactRecord = new MetadataRecord(sysArtifact, meta);
 
-    mds.apply(new Update(artifact, meta));
-    mds.apply(new Update(sysArtifact, meta));
+    mds.batch(batch(new Update(artifact, meta), new Update(sysArtifact, meta)));
 
     // searching only user namespace should not return system entity
     assertResults(mds, SearchRequest.of("aV5").addNamespace(ns1).build(), artifactRecord);
@@ -729,7 +730,7 @@ public abstract class MetadataStorageTest {
                   artifactRecord, sysArtifactRecord);
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(artifact), new Drop(sysArtifact)));
+    mds.batch(batch(new Drop(artifact), new Drop(sysArtifact)));
   }
 
   @Test
@@ -769,7 +770,7 @@ public abstract class MetadataStorageTest {
                   record13, record22);
 
     // clean up
-    mds.batch(ImmutableList.of(
+    mds.batch(batch(
       new Drop(ns1app1), new Drop(ns1app2), new Drop(ns1app3), new Drop(ns2app1), new Drop(ns2app2)));
   }
 
@@ -785,15 +786,15 @@ public abstract class MetadataStorageTest {
     MetadataRecord app1Record = new MetadataRecord(ns1app, new Metadata(USER, props("k1", "v1", "k2", "v2")));
     MetadataRecord app2Record = new MetadataRecord(ns2app, new Metadata(USER, props("k1", "v1")));
 
-    mds.apply(new Update(ns1app, app1Record.getMetadata()));
-    mds.apply(new Update(ns2app, app2Record.getMetadata()));
+    mds.batch(batch(new Update(ns1app, app1Record.getMetadata()),
+                    new Update(ns2app, app2Record.getMetadata())));
 
     assertResults(mds, SearchRequest.of("v1").build(), app1Record, app2Record);
     assertResults(mds, SearchRequest.of("v2").build(), app1Record);
     assertResults(mds, SearchRequest.of("*").build(), app1Record, app2Record);
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(ns1app), new Drop(ns2app)));
+    mds.batch(batch(new Drop(ns1app), new Drop(ns2app)));
   }
 
   @Test
@@ -808,14 +809,14 @@ public abstract class MetadataStorageTest {
     MetadataRecord app1Record = new MetadataRecord(ns1App, meta);
     MetadataRecord app2Record = new MetadataRecord(ns2App, meta);
 
-    mds.apply(new Update(ns1App, meta));
-    mds.apply(new Update(ns2App, meta));
+    mds.batch(batch(new Update(ns1App, meta),
+                    new Update(ns2App, meta)));
 
     assertInOrder(mds, SearchRequest.of("*").setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
                   app1Record, app2Record);
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(ns1App), new Drop(ns2App)));
+    mds.batch(batch(new Drop(ns1App), new Drop(ns2App)));
   }
 
   @Test
@@ -829,179 +830,133 @@ public abstract class MetadataStorageTest {
     MetadataEntity dataset = nsId.dataset("dataset").toMetadataEntity();
     MetadataEntity hidden = nsId.dataset("_auditLog").toMetadataEntity();
 
-    mds.apply(new Update(service, new Metadata(USER, tags("tag", "tag1"))));
-    mds.apply(new Update(worker, new Metadata(USER, tags("tag2", "tag3 tag4"))));
-    mds.apply(new Update(dataset, new Metadata(USER, tags("tag5 tag6", "tag7 tag8"))));
-    mds.apply(new Update(hidden, new Metadata(USER, tags("tag9", "tag10", "tag11", "tag12", "tag13"))));
-
     MetadataRecord serviceRecord = new MetadataRecord(service, new Metadata(USER, tags("tag", "tag1")));
-    MetadataRecord streamRecord = new MetadataRecord(worker, new Metadata(USER, tags("tag2", "tag3 tag4")));
+    MetadataRecord workerRecord = new MetadataRecord(worker, new Metadata(USER, tags("tag2", "tag3 tag4")));
     MetadataRecord datasetRecord = new MetadataRecord(dataset, new Metadata(USER, tags("tag5 tag6", "tag7 tag8")));
     MetadataRecord hiddenRecord = new MetadataRecord(hidden, new Metadata(USER, tags("tag9", "tag10", "tag11",
                                                                                      "tag12", "tag13")));
-    // relevance order for searchQuery "tag*" is trackerDataset, dataset, stream, program
-    // (this depends on how many tags got matched with the search query)
-    // hidden entity should not be returned
+    mds.batch(batch(new Update(service, serviceRecord.getMetadata()),
+                    new Update(worker, workerRecord.getMetadata()),
+                    new Update(dataset, datasetRecord.getMetadata()),
+                    new Update(hidden, hiddenRecord.getMetadata())));
+
+    // assert that search returns all records and determine the order of relevance )it varies by implementation)
+    SearchResponse response = mds.search(
+      SearchRequest.of("tag*").addNamespace(ns).setShowHidden(true).setLimit(Integer.MAX_VALUE).build());
+    List<MetadataRecord> results = response.getResults();
+    List<MetadataRecord> noHidden = results.stream()
+      .filter(record -> !record.equals(hiddenRecord)).collect(Collectors.toList());
+    Assert.assertEquals(ImmutableSet.of(serviceRecord, workerRecord, datasetRecord, hiddenRecord),
+                        ImmutableSet.copyOf(results));
+
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setLimit(Integer.MAX_VALUE).build(),
-                  datasetRecord, streamRecord, serviceRecord);
+                  noHidden.get(0), noHidden.get(1), noHidden.get(2));
 
     // hidden entity should now be returned since showHidden is true
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setShowHidden(true).build(),
-                  hiddenRecord, datasetRecord, streamRecord, serviceRecord);
+                  results.get(0), results.get(1), results.get(2), results.get(3));
 
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setLimit(2).setCursorRequested(true).build(),
-                  datasetRecord, streamRecord);
+                  noHidden.get(0), noHidden.get(1));
 
     // skipping hidden entity should not affect the offset
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setOffset(1).setLimit(2).build(),
-                  streamRecord, serviceRecord);
+                  noHidden.get(1), noHidden.get(2));
 
     // if showHidden is true, the hidden entity should affect the offset
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setOffset(1).setLimit(3).setShowHidden(true).build(),
-                  datasetRecord, streamRecord, serviceRecord);
+                  results.get(1), results.get(2), results.get(3));
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setOffset(2).setLimit(2).build(),
-                  serviceRecord);
+                  noHidden.get(2));
     assertEmpty(mds, SearchRequest.of("tag*").addNamespace(ns).setOffset(4).setLimit(2).build());
     assertResults(mds, SearchRequest.of("tag*").addNamespace(ns).setOffset(1).build(),
-                  streamRecord, serviceRecord);
+                  noHidden.get(1), noHidden.get(2));
 
     // clean up
-    mds.batch(ImmutableList.of(new Drop(service), new Drop(worker), new Drop(dataset), new Drop(hidden)));
-  }
-
-  @Test
-  public void testCrossNamespacePagination() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-
-    NamespaceId ns1Id = new NamespaceId("ns1");
-    NamespaceId ns2Id = new NamespaceId("ns2");
-
-    MetadataEntity ns1app1 = ns1Id.app("a1").toMetadataEntity();
-    MetadataEntity ns1app2 = ns1Id.app("a2").toMetadataEntity();
-    MetadataEntity ns1app3 = ns1Id.app("a3").toMetadataEntity();
-    MetadataEntity ns2app1 = ns2Id.app("a1").toMetadataEntity();
-    MetadataEntity ns2app2 = ns2Id.app("a2").toMetadataEntity();
-
-    mds.apply(new Update(ns1app1, new Metadata(USER, tags("v1"))));
-    mds.apply(new Update(ns1app2, new Metadata(USER, tags("v1"))));
-    mds.apply(new Update(ns1app3, new Metadata(USER, tags("v1"))));
-    mds.apply(new Update(ns2app1, new Metadata(USER, tags("v1"))));
-    mds.apply(new Update(ns2app2, new Metadata(USER, tags("v1"))));
-
-    MetadataRecord record11 = new MetadataRecord(ns1app1, new Metadata(USER, tags("v1")));
-    MetadataRecord record12 = new MetadataRecord(ns1app2, new Metadata(USER, tags("v1")));
-    MetadataRecord record13 = new MetadataRecord(ns1app3, new Metadata(USER, tags("v1")));
-    MetadataRecord record21 = new MetadataRecord(ns2app1, new Metadata(USER, tags("v1")));
-    MetadataRecord record22 = new MetadataRecord(ns2app2, new Metadata(USER, tags("v1")));
-
-    SearchResponse response =
-      assertResults(mds, SearchRequest.of("*").setLimit(Integer.MAX_VALUE).setCursorRequested(true).build(),
-                   record11, record12, record13, record21, record22);
-
-    // iterate over results to find the order in which they are returned
-    Iterator<MetadataRecord> resultIter = response.getResults().iterator();
-    MetadataRecord[] results = {
-      resultIter.next(), resultIter.next(), resultIter.next(), resultIter.next(), resultIter.next() };
-
-    // get 4 results (guaranteed to have at least one from each namespace), offset 1
-    assertResults(mds, SearchRequest.of("*").setCursorRequested(true).setOffset(1).setLimit(4).build(),
-                  results[1], results[2], results[3], results[4]);
-
-    // get the first four
-    assertResults(mds, SearchRequest.of("*").setCursorRequested(true).setOffset(0).setLimit(4).build(),
-                  results[0], results[1], results[2], results[3]);
-
-    // get middle 3
-    assertResults(mds, SearchRequest.of("*").setCursorRequested(true).setOffset(1).setLimit(3).build(),
-                  results[1], results[2], results[3], results[3]);
-
-    // clean up
-    mds.batch(ImmutableList.of(
-      new Drop(ns1app1), new Drop(ns1app2), new Drop(ns1app3), new Drop(ns2app1), new Drop(ns2app2)));
+    mds.batch(batch(new Drop(service), new Drop(worker), new Drop(dataset), new Drop(hidden)));
   }
 
   @Test
   public void testPaginationWithSorting() throws Exception {
 
-    final String ns1 = "ns1";
-    final String programName = "name11";
-    final String datasetName = "name21 name22";
-    final String appName = "name31 name32 name33";
-    final NamespaceId ns1Id = new NamespaceId(ns1);
+    final String ns = "ns1";
+    final String programName = "prog";
+    final String datasetName = "ds";
+    final String appName = "app";
+    final NamespaceId ns1Id = new NamespaceId(ns);
     final ApplicationId app1Id = ns1Id.app("app");
     final MetadataEntity app = app1Id.toMetadataEntity();
     final MetadataEntity program = app1Id.worker(programName).toMetadataEntity();
-    final MetadataEntity dataset = ns1Id.dataset("ds").toMetadataEntity();
+    final MetadataEntity dataset = ns1Id.dataset(datasetName).toMetadataEntity();
 
     MetadataRecord appRecord =
-      new MetadataRecord(app, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, appName)));
+      new MetadataRecord(app, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, appName, "k", "name1")));
     MetadataRecord datasetRecord =
-      new MetadataRecord(dataset, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, datasetName)));
+      new MetadataRecord(dataset, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, datasetName, "kk", "name2")));
     MetadataRecord programRecord =
-      new MetadataRecord(program, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, programName)));
+      new MetadataRecord(program, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, programName, "kkk", "name3")));
 
     MetadataStorage mds = getMetadataStorage();
-    mds.apply(new Update(app, appRecord.getMetadata()));
-    mds.apply(new Update(dataset, datasetRecord.getMetadata()));
-    mds.apply(new Update(program, programRecord.getMetadata()));
+    mds.batch(batch(new Update(app, appRecord.getMetadata()),
+                    new Update(dataset, datasetRecord.getMetadata()),
+                    new Update(program, programRecord.getMetadata())));
 
-    assertResults(mds, SearchRequest.of("name*").addNamespace(ns1).setLimit(3).build(),
+    assertResults(mds, SearchRequest.of("name*").addNamespace(ns).setLimit(3).build(),
                   appRecord, datasetRecord, programRecord);
 
     // ascending sort by name. offset and limit should be respected.
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(2)
+    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2)
                     .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                  programRecord, datasetRecord);
-    // return 2 with offset 1 in ascending order
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setOffset(1).setLimit(2)
-                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                  datasetRecord, appRecord);
-    // first 2 in descending order
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(2)
-                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.DESC)).build(),
                   appRecord, datasetRecord);
-    // third one in descending order
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setOffset(2).setLimit(1)
+    // return 2 with offset 1 in ascending order
+    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setOffset(1).setLimit(2)
+                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
+                  datasetRecord, programRecord);
+    // first 2 in descending order
+    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2)
                     .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.DESC)).build(),
-                  programRecord);
+                  programRecord, datasetRecord);
+    // third one in descending order
+    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setOffset(2).setLimit(1)
+                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.DESC)).build(),
+                  appRecord);
     // test cursors
     SearchResponse response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(1).setCursorRequested(true)
+      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(1).setCursorRequested(true)
                       .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                    programRecord);
+                    appRecord);
     Assert.assertNotNull(response.getCursor());
     response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(1).setCursorRequested(true)
+      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(1).setCursorRequested(true)
                       .setCursor(response.getCursor()).setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
                       .build(),
                     datasetRecord);
     Assert.assertNotNull(response.getCursor());
     response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(1).setCursorRequested(true)
+      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(1).setCursorRequested(true)
                       .setCursor(response.getCursor()).setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
                       .build(),
-                    appRecord);
+                    programRecord);
     Assert.assertNull(response.getCursor());
 
     // test cursors with page size 2
     response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(2).setCursorRequested(true)
+      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2).setCursorRequested(true)
                       .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                    programRecord, datasetRecord);
+                    appRecord, datasetRecord);
     Assert.assertNotNull(response.getCursor());
     Assert.assertEquals(3, response.getTotalResults());
     response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns1).setLimit(2).setCursorRequested(true)
+      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2).setCursorRequested(true)
                       .setCursor(response.getCursor()).setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
                       .build(),
-                    appRecord);
+                    programRecord);
     Assert.assertNull(response.getCursor());
     // TODO (CDAP-14584) expect 3 here after this bug is fixed
     // Assert.assertEquals(3, response.getTotalResults());
 
     // clean up
-    mds.batch(ImmutableList.of(
-      new Drop(app), new Drop(dataset), new Drop(program)));
+    mds.batch(batch(new Drop(app), new Drop(dataset), new Drop(program)));
   }
 
   private void verifyMetadataSelection(MetadataStorage mds, MetadataEntity entity, Metadata metadata,
@@ -1052,8 +1007,9 @@ public abstract class MetadataStorageTest {
   }
 
 
-  private static void assertEmpty(MetadataStorage mds, SearchRequest request) throws IOException {
-    Assert.assertTrue(mds.search(request).getResults().isEmpty());
+  private void assertEmpty(MetadataStorage mds, SearchRequest request) throws IOException {
+    List<MetadataRecord> results = mds.search(request).getResults();
+    Assert.assertTrue(results.isEmpty());
   }
 
   protected static SearchResponse assertInOrder(MetadataStorage mds, SearchRequest request,
@@ -1080,24 +1036,24 @@ public abstract class MetadataStorageTest {
                           .putAll(other.getProperties()).build());
   }
 
-  protected static Set<String> tags(String... elements) {
+  @SafeVarargs
+  protected static <T> Set<T> tags(T... elements) {
     return ImmutableSet.copyOf(elements);
   }
 
-  protected static Map<String, String> props() {
+  protected static <K, V> Map<K, V> props() {
     return ImmutableMap.of();
   }
-  protected static Map<String, String> props(String k, String v) {
+  protected static <K, V> Map<K, V> props(K k, V v) {
     return ImmutableMap.of(k, v);
   }
-  protected static Map<String, String> props(String k1, String v1, String k2, String v2) {
+  protected static <K, V> Map<K, V> props(K k1, V v1, K k2, V v2) {
     return ImmutableMap.of(k1, v1, k2, v2);
   }
-  protected static Map<String, String> props(String k1, String v1, String k2, String v2, String k3, String v3) {
+  protected static <K, V> Map<K, V>  props(K k1, V v1, K k2, V v2, K k3, V v3) {
     return ImmutableMap.of(k1, v1, k2, v2, k3, v3);
   }
-  protected static Map<String, String> props(String k1, String v1, String k2, String v2, String k3, String v3,
-                                             String k4, String v4) {
+  protected static <K, V> Map<K, V>  props(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
     return ImmutableMap.of(k1, v1, k2, v2, k3, v3, k4, v4);
   }
 }

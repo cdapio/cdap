@@ -38,6 +38,7 @@ import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.spi.metadata.MetadataStorageTest;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
+import co.cask.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -52,6 +53,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -152,4 +154,58 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     // clean up
     mds.batch(ImmutableList.of(new Drop(service1), new Drop(dataset1), new Drop(dataset2)));
   }
+
+  // this test is specific to teh DatasetMetadataStorage, because of the specific way it tests pagination:
+  // it requests offsets that are not a multiple of the page size, which is not supported in all implementations.
+  @Test
+  public void testCrossNamespacePagination() throws IOException {
+    MetadataStorage mds = getMetadataStorage();
+
+    NamespaceId ns1Id = new NamespaceId("ns1");
+    NamespaceId ns2Id = new NamespaceId("ns2");
+
+    MetadataEntity ns1app1 = ns1Id.app("a1").toMetadataEntity();
+    MetadataEntity ns1app2 = ns1Id.app("a2").toMetadataEntity();
+    MetadataEntity ns1app3 = ns1Id.app("a3").toMetadataEntity();
+    MetadataEntity ns2app1 = ns2Id.app("a1").toMetadataEntity();
+    MetadataEntity ns2app2 = ns2Id.app("a2").toMetadataEntity();
+
+    mds.batch(ImmutableList.of(new Update(ns1app1, new Metadata(USER, tags("v1"))),
+                               new Update(ns1app2, new Metadata(USER, tags("v1"))),
+                               new Update(ns1app3, new Metadata(USER, tags("v1"))),
+                               new Update(ns2app1, new Metadata(USER, tags("v1"))),
+                               new Update(ns2app2, new Metadata(USER, tags("v1")))));
+
+    MetadataRecord record11 = new MetadataRecord(ns1app1, new Metadata(USER, tags("v1")));
+    MetadataRecord record12 = new MetadataRecord(ns1app2, new Metadata(USER, tags("v1")));
+    MetadataRecord record13 = new MetadataRecord(ns1app3, new Metadata(USER, tags("v1")));
+    MetadataRecord record21 = new MetadataRecord(ns2app1, new Metadata(USER, tags("v1")));
+    MetadataRecord record22 = new MetadataRecord(ns2app2, new Metadata(USER, tags("v1")));
+
+    SearchResponse response =
+      assertResults(mds, SearchRequest.of("*").setLimit(Integer.MAX_VALUE).setCursorRequested(true).build(),
+                    record11, record12, record13, record21, record22);
+
+    // iterate over results to find the order in which they are returned
+    Iterator<MetadataRecord> resultIter = response.getResults().iterator();
+    MetadataRecord[] results = {
+      resultIter.next(), resultIter.next(), resultIter.next(), resultIter.next(), resultIter.next() };
+
+    // get 4 results (guaranteed to have at least one from each namespace), offset 1
+    assertResults(mds, SearchRequest.of("*").setCursorRequested(true).setOffset(1).setLimit(4).build(),
+                  results[1], results[2], results[3], results[4]);
+
+    // get the first four
+    assertResults(mds, SearchRequest.of("*").setCursorRequested(true).setOffset(0).setLimit(4).build(),
+                  results[0], results[1], results[2], results[3]);
+
+    // get middle 3
+    assertResults(mds, SearchRequest.of("*").setCursorRequested(true).setOffset(1).setLimit(3).build(),
+                  results[1], results[2], results[3], results[3]);
+
+    // clean up
+    mds.batch(ImmutableList.of(
+      new Drop(ns1app1), new Drop(ns1app2), new Drop(ns1app3), new Drop(ns2app1), new Drop(ns2app2)));
+  }
+
 }
