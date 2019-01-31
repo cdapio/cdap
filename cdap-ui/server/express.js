@@ -30,7 +30,7 @@ module.exports = {
       .spread(makeApp);
   },
 };
-var pkg = require('../package.json');
+
 var path = require('path');
 var express = require('express'),
   cookieParser = require('cookie-parser'),
