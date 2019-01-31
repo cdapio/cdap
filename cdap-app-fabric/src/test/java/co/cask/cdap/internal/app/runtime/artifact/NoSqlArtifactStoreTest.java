@@ -21,9 +21,6 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.nosql.NoSqlStructuredTableAdmin;
-import co.cask.cdap.data2.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
@@ -31,7 +28,6 @@ import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.inject.Injector;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.BeforeClass;
 
@@ -42,13 +38,10 @@ public class NoSqlArtifactStoreTest extends ArtifactStoreTest {
     CConfiguration cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
-    artifactStore = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactStore.class);
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
     Injector injector = AppFabricTestHelper.getInjector(cConf);
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    StructuredTableAdmin structuredTableAdmin = new NoSqlStructuredTableAdmin(datasetFramework);
-    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
-
-    TransactionRunner transactionRunner = new NoSqlTransactionRunner(datasetFramework, txClient);
+    StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     artifactStore = new ArtifactStore(cConf,
                                       injector.getInstance(NamespacePathLocator.class),
                                       injector.getInstance(LocationFactory.class),

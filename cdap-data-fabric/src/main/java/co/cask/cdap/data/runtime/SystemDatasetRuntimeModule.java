@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -34,6 +35,9 @@ import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModule;
@@ -50,6 +54,7 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 
 /**
  * Provides guice bindings for {@link DatasetModule} that are by default available in the system.
@@ -71,6 +76,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         mapBinder.addBinding("orderedTable-memory").toInstance(new InMemoryTableModule());
         mapBinder.addBinding("metricsTable-memory").toInstance(new InMemoryMetricsTableModule());
         bindDefaultModules(mapBinder);
+
+        bind(String.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
+        bind(DatasetDefinition.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(InMemoryTableDefinition.class);
       }
     };
   }
@@ -86,6 +96,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         mapBinder.addBinding("orderedTable-leveldb").toInstance(new LevelDBTableModule());
         mapBinder.addBinding("metricsTable-leveldb").toInstance(new LevelDBMetricsTableModule());
         bindDefaultModules(mapBinder);
+
+        bind(String.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
+        bind(DatasetDefinition.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(LevelDBTableDefinition.class);
       }
     };
   }
@@ -127,6 +142,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class).in(Singleton.class);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
+
+        bind(String.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
+        bind(DatasetDefinition.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(HBaseTableDefinition.class);
       }
     };
   }

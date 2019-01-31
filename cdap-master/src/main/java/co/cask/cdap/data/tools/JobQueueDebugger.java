@@ -44,8 +44,6 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
@@ -369,7 +367,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
           bind(Store.class).annotatedWith(Names.named("defaultStore")).to(DefaultStore.class).in(Singleton.class);
 
           // This is needed because the LocalApplicationManager

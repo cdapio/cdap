@@ -43,4 +43,8 @@ public final class StructuredTableSpecificationRegistry {
   public static void removeSpecification(StructuredTableId tableId) {
     specMap.remove(tableId);
   }
+
+  public static boolean isEmpty() {
+    return specMap.isEmpty();
+  }
 }

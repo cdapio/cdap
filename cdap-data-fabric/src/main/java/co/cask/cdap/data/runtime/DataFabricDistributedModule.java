@@ -53,7 +53,7 @@ public class DataFabricDistributedModule extends AbstractModule {
   @Override
   public void configure() {
     bind(ThriftClientProvider.class).toProvider(ThriftClientProviderSupplier.class);
-    bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class);
+    bind(HBaseTableUtil.class).toProvider(HBaseTableUtilFactory.class).in(Scopes.SINGLETON);
 
     // bind transactions
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);

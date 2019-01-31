@@ -18,9 +18,7 @@ package co.cask.cdap.data2.nosql;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTable;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;
 import co.cask.cdap.spi.data.TableNotFoundException;
@@ -32,28 +30,27 @@ import co.cask.cdap.spi.data.table.StructuredTableSpecification;
  * The nosql context to get the table.
  */
 public class NoSqlStructuredTableContext implements StructuredTableContext {
+  private final NoSqlStructuredTableAdmin tableAdmin;
   private final DatasetContext datasetContext;
-  private final StructuredTableAdmin tableAdmin;
 
-  public NoSqlStructuredTableContext(DatasetContext datasetContext, StructuredTableAdmin tableAdmin) {
-    this.datasetContext = datasetContext;
+  NoSqlStructuredTableContext(NoSqlStructuredTableAdmin tableAdmin, DatasetContext datasetContext) {
     this.tableAdmin = tableAdmin;
+    this.datasetContext = datasetContext;
   }
 
   @Override
-  public StructuredTable getTable(
-    StructuredTableId tableId) throws StructuredTableInstantiationException, TableNotFoundException {
+  public StructuredTable getTable(StructuredTableId tableId)
+    throws StructuredTableInstantiationException, TableNotFoundException {
     try {
       StructuredTableSpecification specification = tableAdmin.getSpecification(tableId);
       if (specification == null) {
         throw new TableNotFoundException(tableId);
       }
-      return new NoSqlStructuredTable(datasetContext.getDataset(NamespaceId.SYSTEM.getNamespace(),
-                                                                NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME),
+      return new NoSqlStructuredTable(datasetContext.getDataset(NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME),
                                       new StructuredTableSchema(specification));
     } catch (DatasetInstantiationException e) {
-      throw new StructuredTableInstantiationException(tableId,
-                                                      String.format("Error instantiating table %s", tableId), e);
+      throw new StructuredTableInstantiationException(
+        tableId, String.format("Error instantiating table %s", tableId), e);
     }
   }
 }

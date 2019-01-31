@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableTest;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
@@ -30,8 +29,6 @@ import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -74,10 +71,8 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     Configuration txConf = HBaseConfiguration.create();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
-    TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
-    noSqlTableAdmin = new NoSqlStructuredTableAdmin(dsFrameworkUtil.getFramework());
-    transactionRunner = new NoSqlTransactionRunner(dsFrameworkUtil.getFramework(),
-                                                   new TransactionSystemClientAdapter(txClient));
+    noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableAdmin.class);
+    transactionRunner = dsFrameworkUtil.getInjector().getInstance(NoSqlTransactionRunner.class);
   }
 
   @AfterClass
