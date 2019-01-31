@@ -38,7 +38,7 @@ class FeatureTable extends React.Component {
               <td className="center-align">
                 {
                   this.isViewable(item) &&
-                  <button onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
+                  <button className = "feature-button-invert" onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
                 }
 
               </td>

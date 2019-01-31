@@ -215,7 +215,7 @@ class PropertySelector extends React.Component {
                 }
                 return (
                   <AccordionItem key={property} expanded = {index == 0? true: false}>
-                  <AccordionItemTitle>
+                  <AccordionItemTitle className = {index == this.currentPropertyIndex? "accordion__title selected": "accordion__title"}>
                       <div className = "title-items">
                         {
                         description && <InfoTip id = {property+ '_InfoTip'} description = {description}/>
@@ -266,6 +266,7 @@ class PropertySelector extends React.Component {
                 }
               </DropdownMenu>
             </Dropdown>
+            <div className = "spacer"></div>
             <InputGroup>
               <Input placeholder="search" onChange={this.onFilterKeyChange.bind(this)} />
               <i className = "search-icon fa fa-search"></i>

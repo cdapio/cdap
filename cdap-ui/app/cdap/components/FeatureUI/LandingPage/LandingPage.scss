@@ -47,10 +47,29 @@
   color: #666666;
 }
 
+.feature-button-invert {
+  background-color: white;
+  border-color: #0275d8;
+  padding: 5px 10px;
+  border-radius: 3px;
+  color: #0275d8;
+}
+
+.feature-button-invert:disabled,
+.feature-button-invert[disabled] {
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
+
 .mandatory {
   font-size: 8px !important;
   padding-bottom: 5px;
   padding-left: 1px;
   color: #d15668;
   line-height: 1 !important;
+}
+
+.spacer {
+  flex: 1 1 auto;
 }

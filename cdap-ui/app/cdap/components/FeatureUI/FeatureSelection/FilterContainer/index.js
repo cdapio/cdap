@@ -21,7 +21,7 @@ class FilterContainer extends Component {
     this.state = {
       orderbyOpen: false,
       selectedOrderbyColumn: { id: -1, name: 'Select' },
-      selectedCompositeOption:"OR",
+      selectedCompositeOption: "OR",
       isSelectCompositeOption: false,
       orderByCOlumnList: cloneDeep(this.filterColumnList),
       filterItemList: [this.getFilterItemVO()],
@@ -44,14 +44,14 @@ class FilterContainer extends Component {
     this.setState({ selectedOrderbyColumn: item });
   }
 
-  compositeOptionChange = (option) =>{
-    this.setState({selectedCompositeOption:option});
+  compositeOptionChange = (option) => {
+    this.setState({ selectedCompositeOption: option });
   }
 
-  switchChange = () =>{
+  switchChange = () => {
     const switchActiveStatus = !this.state.isSelectCompositeOption;
-    this.setState({selectedCompositeOption:"OR"});
-    this.setState({isSelectCompositeOption: switchActiveStatus});
+    this.setState({ selectedCompositeOption: "OR" });
+    this.setState({ isSelectCompositeOption: switchActiveStatus });
   }
 
   addFilterItem = () => {
@@ -207,49 +207,51 @@ class FilterContainer extends Component {
 
     return (
       <div className="filter-container">
-        <div className="orderby-box">
-          <label className="orderby-label">Orderby: </label>
-          <Dropdown isOpen={this.state.orderbyOpen} toggle={this.toggleOrderbyDropDown}>
-            <DropdownToggle caret>
-              {this.state.selectedOrderbyColumn.name}
-            </DropdownToggle>
-            <DropdownMenu>
-              {
-                this.state.orderByCOlumnList.map((column) => {
-                  return (
-                    <DropdownItem onClick={this.orderbyColumnChange.bind(this, column)}
-                      key={'orderby_' + column.id.toString()}
-                    >{column.name}</DropdownItem>
-                  );
-                })
-              }
-            </DropdownMenu>
-          </Dropdown>
+        <div className="filter-content">
 
-        </div>
-        <div className="composite-box">
-        <label className="composite-label">Composite </label>
-          <ToggleSwitch className="toggle-switch"
-            isOn={this.state.isSelectCompositeOption}
-            onToggle={this.switchChange.bind(this)} ></ToggleSwitch>
-          <ButtonGroup className="action-button-group">
-            <Button onClick={() => this.compositeOptionChange("OR")}
-              active={this.state.selectedCompositeOption === "OR"}
-              disabled={!this.state.isSelectCompositeOption}
+          <div className="orderby-box">
+            <label className="orderby-label">Orderby: </label>
+            <Dropdown isOpen={this.state.orderbyOpen} toggle={this.toggleOrderbyDropDown}>
+              <DropdownToggle caret>
+                {this.state.selectedOrderbyColumn.name}
+              </DropdownToggle>
+              <DropdownMenu>
+                {
+                  this.state.orderByCOlumnList.map((column) => {
+                    return (
+                      <DropdownItem onClick={this.orderbyColumnChange.bind(this, column)}
+                        key={'orderby_' + column.id.toString()}
+                      >{column.name}</DropdownItem>
+                    );
+                  })
+                }
+              </DropdownMenu>
+            </Dropdown>
+
+          </div>
+          <div className="composite-box">
+            <label className="composite-label">Composite </label>
+            <ToggleSwitch className="toggle-switch"
+              isOn={this.state.isSelectCompositeOption}
+              onToggle={this.switchChange.bind(this)} ></ToggleSwitch>
+            <ButtonGroup className="action-button-group">
+              <Button onClick={() => this.compositeOptionChange("OR")}
+                active={this.state.selectedCompositeOption === "OR"}
+                disabled={!this.state.isSelectCompositeOption}
               >OR</Button>
-            <Button onClick={() => this.compositeOptionChange("AND")}
-              active={this.state.selectedCompositeOption === "AND"}
-              disabled={!this.state.isSelectCompositeOption}
+              <Button onClick={() => this.compositeOptionChange("AND")}
+                active={this.state.selectedCompositeOption === "AND"}
+                disabled={!this.state.isSelectCompositeOption}
               >AND</Button>
-          </ButtonGroup>
-        </div>
-        <div className="filter-item-box">
-          {filterItems}
-          <div className="add-filter-box">
-            <i className="fa fa-plus-circle action-icon" aria-hidden="true" onClick={this.addFilterItem}></i>
+            </ButtonGroup>
+          </div>
+          <div className="filter-item-box">
+            {filterItems}
+            <div className="add-filter-box">
+              <button className="feature-button-invert" onClick={this.addFilterItem}>+ Add</button>
+            </div>
           </div>
         </div>
-
         <div className="limit-box">
           <label className="limit-label">Limit Within*:   </label>
           <input className="limit-input" type="number" min="0" value={this.state.minLimitValue}
@@ -257,7 +259,8 @@ class FilterContainer extends Component {
           <label className="value-seperator">-</label>
           <input className="limit-input" type="number" min="0" value={this.state.maxLimitValue}
             onChange={this.maxLimitChanged}></input>
-          <button className="feature-button apply-btn" onClick={this.applyFilter} disabled={!this.state.activeApplyBtn}>Apply</button>
+          <div className = "spacer"></div>
+          <button className="feature-button" onClick={this.applyFilter} disabled={!this.state.activeApplyBtn}>Apply</button>
         </div>
         {
           this.state.hasLimitError ?
