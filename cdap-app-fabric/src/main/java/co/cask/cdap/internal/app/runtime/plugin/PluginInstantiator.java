@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.InvalidPluginConfigException;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -215,6 +216,7 @@ public class PluginInstantiator implements Closeable {
    * @return a new plugin instance with macros substituted
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
+   * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
    */
   public <T> T newInstance(Plugin plugin) throws IOException, ClassNotFoundException, InvalidMacroException {
     return newInstance(plugin, null);
@@ -230,6 +232,7 @@ public class PluginInstantiator implements Closeable {
    * @return a new plugin instance with macros substituted
    * @throws IOException if failed to expand the plugin jar to create the plugin ClassLoader
    * @throws ClassNotFoundException if failed to load the given plugin class
+   * @throws InvalidPluginConfigException if the PluginConfig could not be created from the plugin properties
    */
   public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
     throws IOException, ClassNotFoundException, InvalidMacroException {

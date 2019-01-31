@@ -61,8 +61,9 @@ import javax.annotation.Nullable;
  * Mock source that can be used to write a list of records in a Table and reads them out in a pipeline run.
  */
 @Plugin(type = BatchSource.PLUGIN_TYPE)
-@Name("Mock")
+@Name(MockSource.NAME)
 public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
+  public static final String NAME = "Mock";
 
   private static final Logger LOG = LoggerFactory.getLogger(MockSource.class);
 

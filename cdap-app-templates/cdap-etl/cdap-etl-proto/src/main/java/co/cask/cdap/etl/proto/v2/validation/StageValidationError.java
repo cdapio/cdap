@@ -25,9 +25,18 @@ import java.util.Objects;
 public class StageValidationError extends ValidationError {
   protected final String stage;
 
-  public StageValidationError(Type type, String message, String stage) {
+  public StageValidationError(String message, String stage) {
+    super(Type.STAGE_ERROR, message);
+    this.stage = stage;
+  }
+
+  protected StageValidationError(Type type, String message, String stage) {
     super(type, message);
     this.stage = stage;
+  }
+
+  public String getStage() {
+    return stage;
   }
 
   @Override

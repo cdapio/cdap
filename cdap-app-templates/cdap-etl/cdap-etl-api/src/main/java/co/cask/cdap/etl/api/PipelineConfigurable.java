@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
 
 /**
  * Allows the stage to configure pipeline.
@@ -25,10 +26,25 @@ import co.cask.cdap.api.annotation.Beta;
 public interface PipelineConfigurable {
 
   /**
-   * Configure an ETL pipeline, adding datasets and streams that the stage needs.
+   * Configure an ETL pipeline, registering datasets and plugins that the stage needs.
+   * Validation should be performed in this method, throwing a {@link InvalidStageException} if there are any invalid
+   * config properties, or if the input schema is not compatible. Output schema should also be set.
+   * This method is called many times during the lifecycle of a pipeline so it should not generate any side effects.
    *
-   * @param pipelineConfigurer the configurer used to add required datasets and streams
-   * @throws IllegalArgumentException if the given config is invalid
+   * When the pipeline is being constructed, this is called in order to validate the pipeline and
+   * propagate schema. Any datasets registered at this time will be ignored. Config properties that contain macros
+   * will not have been evaluated yet.
+   *
+   * When the pipeline is deployed, this is called in order to validate the pipeline and create any datasets that
+   * are registered. Config properties that contain macros will not have been evaluated yet.
+   *
+   * When the pipeline is run, this is called when preparing the run in order to validate the pipeline. Config
+   * properties that contain macros will be evaluated at this point. Since schema may be affected by macro evaluation,
+   * schema propagation is performed again. Macro evaluation may also have affected which datasets are registered,
+   * so any registered datasets that do not already exist are also created at this point.
+   *
+   * @param pipelineConfigurer the configurer used to register required datasets and plugins
+   * @throws InvalidStageException if the pipeline stage is invalid
    */
-  void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException;
+  void configurePipeline(PipelineConfigurer pipelineConfigurer);
 }

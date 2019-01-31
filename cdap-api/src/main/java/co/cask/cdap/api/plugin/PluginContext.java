@@ -33,6 +33,7 @@ public interface PluginContext {
    * @return the {@link PluginProperties}.
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   PluginProperties getPluginProperties(String pluginId);
 
@@ -47,6 +48,7 @@ public interface PluginContext {
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
    * @throws InvalidMacroException if there is an exception during macro evaluation
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) throws InvalidMacroException;
 
@@ -58,6 +60,7 @@ public interface PluginContext {
    * @return the resulting plugin {@link Class}.
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   <T> Class<T> loadPluginClass(String pluginId);
 
@@ -74,6 +77,7 @@ public interface PluginContext {
    * @throws InstantiationException if failed create a new instance
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   <T> T newPluginInstance(String pluginId) throws InstantiationException;
 
@@ -94,6 +98,7 @@ public interface PluginContext {
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
    * @throws InvalidMacroException if there is an exception during macro evaluation
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException,
     InvalidMacroException;

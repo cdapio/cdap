@@ -69,7 +69,7 @@ public class PipelinePhase implements Iterable<StageSpec> {
    */
   public Set<StageSpec> getStagesOfType(String pluginType) {
     Set<StageSpec> stagesOfType = stagesByType.get(pluginType);
-    return Collections.unmodifiableSet(stagesOfType == null ? new HashSet<StageSpec>() : stagesOfType);
+    return Collections.unmodifiableSet(stagesOfType == null ? new HashSet<>() : stagesOfType);
   }
 
   public Set<StageSpec> getStagesOfType(String... pluginTypes) {
@@ -90,12 +90,12 @@ public class PipelinePhase implements Iterable<StageSpec> {
 
   public Set<String> getStageInputs(String stage) {
     Set<String> inputs = dag == null ? null : dag.getNodeInputs(stage);
-    return Collections.unmodifiableSet(inputs == null ? new HashSet<String>() : inputs);
+    return Collections.unmodifiableSet(inputs == null ? new HashSet<>() : inputs);
   }
 
   public Set<String> getStageOutputs(String stage) {
     Set<String> outputs = dag == null ? null : dag.getNodeOutputs(stage);
-    return Collections.unmodifiableSet(outputs == null ? new HashSet<String>() : outputs);
+    return Collections.unmodifiableSet(outputs == null ? new HashSet<>() : outputs);
   }
 
   public Set<String> getPluginTypes() {
@@ -103,11 +103,11 @@ public class PipelinePhase implements Iterable<StageSpec> {
   }
 
   public Set<String> getSources() {
-    return dag == null ? new HashSet<String>() : dag.getSources();
+    return dag == null ? new HashSet<>() : dag.getSources();
   }
 
   public Set<String> getSinks() {
-    return dag == null ? new HashSet<String>() : dag.getSinks();
+    return dag == null ? new HashSet<>() : dag.getSinks();
   }
 
   public int size() {
@@ -195,8 +195,7 @@ public class PipelinePhase implements Iterable<StageSpec> {
       }
       PluginSpec pluginSpec = stageSpec.getPlugin();
       ArtifactVersion version = pluginSpec.getArtifact().getVersion();
-      ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getType(), pluginSpec.getName(),
-                                                               pluginSpec.getArtifact().getScope(),
+      ArtifactSelector artifactSelector = new ArtifactSelector(pluginSpec.getArtifact().getScope(),
                                                                pluginSpec.getArtifact().getName(),
                                                                new ArtifactVersionRange(version, true, version, true));
       pluginConfigurer.usePluginClass(pluginSpec.getType(), pluginSpec.getName(), stageSpec.getName(),

@@ -38,14 +38,6 @@ public class ArtifactSelectorProvider {
       .or(CharMatcher.is('.'))
       .or(CharMatcher.is('-'));
 
-  private final String pluginType;
-  private final String pluginName;
-
-  public ArtifactSelectorProvider(String pluginType, String pluginName) {
-    this.pluginType = pluginType;
-    this.pluginName = pluginName;
-  }
-
   /**
    * @return the plugin selector for this plugin. If artifact settings have been given, the selector will try to
    *         match the specified artifact settings using an {@link ArtifactSelector}.
@@ -84,6 +76,6 @@ public class ArtifactSelectorProvider {
 
     String scope = config.getScope();
     ArtifactScope artifactScope = scope == null ? null : ArtifactScope.valueOf(scope.toUpperCase());
-    return new ArtifactSelector(pluginType, pluginName, artifactScope, name, range);
+    return new ArtifactSelector(artifactScope, name, range);
   }
 }

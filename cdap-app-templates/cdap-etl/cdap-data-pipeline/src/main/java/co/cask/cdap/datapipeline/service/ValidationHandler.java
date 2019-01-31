@@ -25,12 +25,25 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
+import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.DefaultStageConfigurer;
+import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
+import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.proto.v2.spec.PipelineSpec;
 import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.proto.v2.validation.StageSchema;
 import co.cask.cdap.etl.proto.v2.validation.StageValidationRequest;
+import co.cask.cdap.etl.proto.v2.validation.StageValidationResponse;
+import co.cask.cdap.etl.proto.v2.validation.ValidationError;
+import co.cask.cdap.etl.proto.v2.validation.ValidationErrorSerDe;
+import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
+import co.cask.cdap.etl.validation.ValidatingConfigurer;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.artifact.AppRequest;
 import com.google.gson.Gson;
@@ -54,6 +67,7 @@ import javax.ws.rs.PathParam;
 public class ValidationHandler extends AbstractHttpServiceHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(ValidationError.class, new ValidationErrorSerDe())
     .create();
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
   private static final String ARTIFACT_BATCH_NAME = "cdap-data-pipeline";
@@ -81,8 +95,30 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
       return;
     }
 
-    // TODO: (CDAP-14686) implement real logic
-    responder.sendJson(getDummyStageSpec());
+    ETLStage stageConfig = validationRequest.getStage();
+    ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(getContext().createPluginConfigurer());
+    // Batch or Streaming doesn't matter for a single stage.
+    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec, ValidatingConfigurer> pipelineSpecGenerator =
+      new BatchPipelineSpecGenerator<>(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
+                                       Engine.SPARK);
+
+    DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer();
+    for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
+      stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
+    }
+    DefaultPipelineConfigurer<ValidatingConfigurer> pipelineConfigurer =
+      new DefaultPipelineConfigurer<>(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
+
+    try {
+      StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), stageConfig.getPlugin(),
+                                                            pipelineConfigurer).build();
+      responder.sendString(GSON.toJson(new StageValidationResponse(spec)));
+    } catch (InvalidPipelineException e) {
+      responder.sendString(GSON.toJson(new StageValidationResponse(e.getErrors())));
+    } catch (Exception e) {
+      responder.sendString(GSON.toJson(
+        new StageValidationResponse(Collections.singletonList(new ValidationError(e.getMessage())))));
+    }
   }
 
   @POST

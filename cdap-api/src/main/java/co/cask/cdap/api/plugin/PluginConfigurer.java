@@ -35,6 +35,7 @@ public interface PluginConfigurer {
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
    * @throws IllegalArgumentException if the pluginId has been used already
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
   default <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
@@ -54,6 +55,7 @@ public interface PluginConfigurer {
    * @param <T> type of the plugin class
    * @return A new instance of the plugin class or {@code null} if no plugin was found
    * @throws IllegalArgumentException if the pluginId has been used already
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
   <T> T usePlugin(String pluginType, String pluginName,
@@ -71,6 +73,7 @@ public interface PluginConfigurer {
    * @param <T> type of the plugin class
    * @return A {@link Class} for the plugin class or {@code null} if no plugin was found
    * @throws IllegalArgumentException if the pluginId has been used already
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
   default <T> Class<T> usePluginClass(String pluginType, String pluginName,
@@ -91,6 +94,7 @@ public interface PluginConfigurer {
    * @param <T> type of the plugin class
    * @return A {@link Class} for the plugin class or {@code null} if no plugin was found
    * @throws IllegalArgumentException if the pluginId has been used already
+   * @throws InvalidPluginConfigException if the plugin config could not be created from the given properties
    */
   @Nullable
   <T> Class<T> usePluginClass(String pluginType, String pluginName,

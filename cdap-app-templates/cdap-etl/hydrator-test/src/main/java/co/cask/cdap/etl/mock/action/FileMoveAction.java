@@ -17,17 +17,24 @@
 package co.cask.cdap.etl.mock.action;
 
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
+import co.cask.cdap.etl.api.validation.InvalidStageException;
 import org.apache.twill.filesystem.Location;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -36,9 +43,9 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = Action.PLUGIN_TYPE)
 @Name(FileMoveAction.NAME)
-@Description("Action that moves files from one fileset into another, optionally filtering files that match a regex.")
 public class FileMoveAction extends Action {
   public static final String NAME = "FileMove";
+  public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf conf;
 
   public FileMoveAction(Conf conf) {
@@ -48,7 +55,18 @@ public class FileMoveAction extends Action {
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     pipelineConfigurer.createDataset(conf.destinationFileset, FileSet.class);
-    Pattern.compile(conf.filterRegex);
+    List<InvalidStageException> errors = new ArrayList<>();
+    try {
+      Pattern.compile(conf.filterRegex);
+    } catch (Exception e) {
+      errors.add(new InvalidConfigPropertyException(e.getMessage(), "filterRegex"));
+    }
+    if (conf.sourceFileset.equals(conf.destinationFileset)) {
+      errors.add(new InvalidStageException("source and destination filesets must be different"));
+    }
+    if (!errors.isEmpty()) {
+      throw new InvalidStageException(errors);
+    }
   }
 
   @Override
@@ -75,20 +93,25 @@ public class FileMoveAction extends Action {
    * Conf for the token writer.
    */
   public static class Conf extends PluginConfig {
-    @Description("The fileset to delete files from.")
     private String sourceFileset;
 
-    @Description("The path to the files to delete")
     private String destinationFileset;
 
     @Nullable
-    @Description("Filter any files whose name matches this regex. Defaults to '^\\.', which will filter any files " +
-      "that begin with a period.")
     private String filterRegex;
 
     // set defaults for properties in a no-argument constructor.
     public Conf() {
       filterRegex = "^\\.";
     }
+  }
+
+  private static PluginClass getPluginClass() {
+    Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("sourceFileset", new PluginPropertyField("sourceFileset", "", "string", true, false));
+    properties.put("destinationFileset", new PluginPropertyField("destinationFileset", "", "string", true, false));
+    properties.put("filterRegex", new PluginPropertyField("filterRegex", "", "string", false, false));
+    return new PluginClass(Action.PLUGIN_TYPE, NAME, "", FileMoveAction.class.getName(),
+                           "conf", properties);
   }
 }

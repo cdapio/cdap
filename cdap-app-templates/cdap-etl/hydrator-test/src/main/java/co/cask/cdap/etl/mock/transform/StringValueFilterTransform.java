@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
@@ -29,6 +30,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.api.validation.InvalidConfigPropertyException;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -39,8 +41,9 @@ import java.util.Map;
  * For example, can filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
-@Name("StringValueFilter")
+@Name(StringValueFilterTransform.NAME)
 public class StringValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
+  public static final String NAME = "StringValueFilter";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
   private String filterField;
@@ -51,8 +54,22 @@ public class StringValueFilterTransform extends Transform<StructuredRecord, Stru
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    Schema inputSchema = stageConfigurer.getInputSchema();
+    if (inputSchema != null && !config.containsMacro("field")) {
+      Schema.Field field = inputSchema.getField(config.field);
+      if (field == null) {
+        throw new InvalidConfigPropertyException(
+          String.format("'%s' is not a field in the input schema.", config.field), "field");
+      }
+      Schema fieldSchema = field.getSchema();
+      Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
+      if (fieldType != Schema.Type.STRING) {
+        throw new InvalidConfigPropertyException(
+          String.format("'%s' is of type '%s' instead of a string.", config.field, fieldType), "field");
+      }
+    }
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
   }
 

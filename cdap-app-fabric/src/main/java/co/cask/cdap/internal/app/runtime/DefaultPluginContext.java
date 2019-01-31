@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.InvalidPluginConfigException;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -91,6 +92,8 @@ public class DefaultPluginContext implements PluginContext {
         throw new UnsupportedOperationException("Plugin is not supported");
       }
       return pluginInstantiator.newInstance(plugin, evaluator);
+    } catch (InvalidPluginConfigException e) {
+      throw e;
     } catch (ClassNotFoundException e) {
       // Shouldn't happen, unless there is bug in file localization
       throw new IllegalArgumentException("Plugin class not found", e);

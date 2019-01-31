@@ -51,8 +51,9 @@ import java.util.UUID;
  * Mock sink that writes records to a Table and has a utility method for getting all records written.
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
-@Name("Mock")
+@Name(MockSink.NAME)
 public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
+  public static final String NAME = "Mock";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");

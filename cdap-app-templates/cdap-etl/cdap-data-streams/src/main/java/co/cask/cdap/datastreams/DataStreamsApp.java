@@ -23,6 +23,7 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 
@@ -37,12 +38,15 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
     DataStreamsConfig config = getConfig();
     setDescription(Objects.firstNonNull(config.getDescription(), "Data Streams Application"));
 
-    DataStreamsPipelineSpec spec = new DataStreamsPipelineSpecGenerator<>(getConfigurer(),
-                                                                          ImmutableSet.of(StreamingSource.PLUGIN_TYPE),
-                                                                          ImmutableSet.of(BatchSink.PLUGIN_TYPE,
-                                                                                          SparkSink.PLUGIN_TYPE,
-                                                                                          AlertPublisher.PLUGIN_TYPE))
-      .generateSpec(config);
+    DataStreamsPipelineSpec spec;
+    try {
+      spec = new DataStreamsPipelineSpecGenerator<>(getConfigurer(),
+                                                    ImmutableSet.of(StreamingSource.PLUGIN_TYPE),
+                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
+                                                                    AlertPublisher.PLUGIN_TYPE)).generateSpec(config);
+    } catch (InvalidPipelineException e) {
+      throw new IllegalArgumentException(String.format("Failed to configure pipeline: %s", e.getMessage()), e);
+    }
     addSpark(new DataStreamsSparkLauncher(spec));
 
     if (!config.checkpointsDisabled()) {

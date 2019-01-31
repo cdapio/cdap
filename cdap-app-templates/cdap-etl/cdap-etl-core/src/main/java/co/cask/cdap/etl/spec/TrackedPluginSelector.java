@@ -19,9 +19,11 @@ package co.cask.cdap.etl.spec;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 
 import java.util.Map;
 import java.util.SortedMap;
+import javax.annotation.Nullable;
 
 /**
  * Wrapper around {@link PluginSelector} that delegates to another selector but tracks which artifact it chose.
@@ -29,19 +31,32 @@ import java.util.SortedMap;
 public class TrackedPluginSelector extends PluginSelector {
   private final PluginSelector delegate;
   private ArtifactId selectedArtifact;
+  private ArtifactSelectorConfig suggestion;
 
   public TrackedPluginSelector(PluginSelector delegate) {
     this.delegate = delegate;
   }
 
+  @Nullable
   @Override
   public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
+    ArtifactId latestArtifact = plugins.tailMap(plugins.lastKey()).entrySet().iterator().next().getKey();
+    suggestion = new ArtifactSelectorConfig(latestArtifact.getScope().name(), latestArtifact.getName(),
+                                            latestArtifact.getVersion().getVersion());
+
     Map.Entry<ArtifactId, PluginClass> selected = delegate.select(plugins);
-    selectedArtifact = selected.getKey();
+    selectedArtifact = selected == null ? null : selected.getKey();
     return selected;
   }
 
   public ArtifactId getSelectedArtifact() {
     return selectedArtifact;
+  }
+
+  /**
+   * @return a suggested artifact if none was selected
+   */
+  public ArtifactSelectorConfig getSuggestion() {
+    return suggestion;
   }
 }

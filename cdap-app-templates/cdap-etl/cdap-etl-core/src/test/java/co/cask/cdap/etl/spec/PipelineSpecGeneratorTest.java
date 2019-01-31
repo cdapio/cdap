@@ -44,6 +44,7 @@ import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.proto.v2.spec.PipelineSpec;
 import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.validation.InvalidPipelineException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
@@ -105,7 +106,7 @@ public class PipelineSpecGeneratorTest {
 
 
   @Test(expected = IllegalArgumentException.class)
-  public void testUniqueStageNames() {
+  public void testUniqueStageNames() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -118,7 +119,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConnectionWithMissingStage() {
+  public void testConnectionWithMissingStage() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -130,7 +131,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConnectionIntoSource() {
+  public void testConnectionIntoSource() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -143,7 +144,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConnectionOutOfSink() {
+  public void testConnectionOutOfSink() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .addStage(new ETLStage("source", MOCK_SOURCE))
       .addStage(new ETLStage("sink", MOCK_SINK))
@@ -155,7 +156,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testUnreachableStage() {
+  public void testUnreachableStage() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -168,7 +169,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testDeadEndStage() {
+  public void testDeadEndStage() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -181,7 +182,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testCycle() {
+  public void testCycle() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -197,7 +198,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testGenerateSpec() {
+  public void testGenerateSpec() throws InvalidPipelineException {
     /*
      *           ---- t1 ------------
      *           |            |      |
@@ -233,7 +234,7 @@ public class PipelineSpecGeneratorTest {
     PipelineSpec expected = BatchPipelineSpec.builder()
       .addStage(
         StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
-          .addOutputSchema(SCHEMA_A, "t1", "t2", "sink2")
+          .addOutput(SCHEMA_A, "t1", "t2", "sink2")
           .build())
       .addStage(
         StageSpec.builder("sink1", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
@@ -248,19 +249,19 @@ public class PipelineSpecGeneratorTest {
       .addStage(
         StageSpec.builder("t1", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
-          .addOutputSchema(SCHEMA_A, "t2", "t3", "sink2")
+          .addOutput(SCHEMA_A, "t2", "t3", "sink2")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("t2", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
           .addInputSchemas(ImmutableMap.of("source", SCHEMA_A, "t1", SCHEMA_A))
-          .addOutputSchema(SCHEMA_A, "t3", "sink2")
+          .addOutput(SCHEMA_A, "t3", "sink2")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("t3", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
           .addInputSchemas(ImmutableMap.of("t1", SCHEMA_A, "t2", SCHEMA_A))
-          .addOutputSchema(SCHEMA_B, "sink1")
+          .addOutput(SCHEMA_B, "sink1")
           .setErrorSchema(SCHEMA_A)
           .build())
       .addConnections(etlConfig.getConnections())
@@ -273,7 +274,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testDifferentInputSchemasForAction() {
+  public void testDifferentInputSchemasForAction() throws InvalidPipelineException {
     /*
      *           ---- transformA ---- sinkA ----
      *           |                             |
@@ -302,30 +303,30 @@ public class PipelineSpecGeneratorTest {
     PipelineSpec expected = BatchPipelineSpec.builder()
       .addStage(
         StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
-          .addOutputSchema(SCHEMA_A, "tA", "tB")
+          .addOutput(SCHEMA_A, "tA", "tB")
           .build())
       .addStage(
         StageSpec.builder("sinkA", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("tA", SCHEMA_A)
-          .addOutputSchema(null, "action")
+          .addOutput(null, "action")
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("sinkB", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("tB", SCHEMA_B)
-          .addOutputSchema(null, "action")
+          .addOutput(null, "action")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("tA", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
-          .addOutputSchema(SCHEMA_A, "sinkA")
+          .addOutput(SCHEMA_A, "sinkA")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("tB", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
-          .addOutputSchema(SCHEMA_B, "sinkB")
+          .addOutput(SCHEMA_B, "sinkB")
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
@@ -344,7 +345,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testSingleAction() {
+  public void testSingleAction() throws InvalidPipelineException {
     ETLBatchConfig config = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("action", MOCK_ACTION))
@@ -365,7 +366,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testOutputPorts() {
+  public void testOutputPorts() throws InvalidPipelineException {
     /*
      *
      *                    |portA --> sinkA
@@ -393,14 +394,14 @@ public class PipelineSpecGeneratorTest {
     PipelineSpec expected = BatchPipelineSpec.builder()
       .addStage(
         StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", EMPTY_MAP, ARTIFACT_ID))
-          .addOutputSchema(SCHEMA_A, "split")
+          .addOutput(SCHEMA_A, "split")
           .build())
       .addStage(
         StageSpec.builder("split", new PluginSpec(SplitterTransform.PLUGIN_TYPE, "mocksplit", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
-          .addOutputPortSchema("sinkA", "portA", SCHEMA_A)
-          .addOutputPortSchema("sinkB", "portB", SCHEMA_B)
-          .addOutputPortSchema("sinkC", "portC", null)
+          .addOutput("sinkA", "portA", SCHEMA_A)
+          .addOutput("sinkB", "portB", SCHEMA_B)
+          .addOutput("sinkC", "portC", null)
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
@@ -429,7 +430,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testConditionSchemaPropagation() {
+  public void testConditionSchemaPropagation() throws InvalidPipelineException {
     /*
      * source --> condition --> sink
      */
@@ -445,12 +446,12 @@ public class PipelineSpecGeneratorTest {
     PipelineSpec expected = BatchPipelineSpec.builder()
       .addStage(
         StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", EMPTY_MAP, ARTIFACT_ID))
-          .addOutputSchema(SCHEMA_A, "cond")
+          .addOutput(SCHEMA_A, "cond")
           .build())
       .addStage(
         StageSpec.builder("cond", new PluginSpec(Condition.PLUGIN_TYPE, "mockcondition", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
-          .addOutputPortSchema("sink", null, SCHEMA_A)
+          .addOutput("sink", null, SCHEMA_A)
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
@@ -470,7 +471,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConflictingInputSchemasCondition() {
+  public void testConflictingInputSchemasCondition() throws InvalidPipelineException {
     /*
      *           ---- transformA ----
      *           |                  |
@@ -497,7 +498,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConflictingInputSchemas() {
+  public void testConflictingInputSchemas() throws InvalidPipelineException {
     /*
      *           ---- transformA ----
      *           |                  |
@@ -522,7 +523,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConflictingInputErrorSchemas() {
+  public void testConflictingInputErrorSchemas() throws InvalidPipelineException {
     /*
      *           ---- transformA
      *           |        |
@@ -549,7 +550,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testBadErrorTransformInput() {
+  public void testBadErrorTransformInput() throws InvalidPipelineException {
     /*
      * source --> joiner --> error --> sink
      */
@@ -567,7 +568,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testConflictingPipelineProperties() {
+  public void testConflictingPipelineProperties() throws InvalidPipelineException {
     // populate some mock plugins.
     MockPluginConfigurer pluginConfigurer = new MockPluginConfigurer();
     Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
@@ -591,7 +592,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testPipelineProperties() {
+  public void testPipelineProperties() throws InvalidPipelineException {
     // populate some mock plugins.
     MockPluginConfigurer pluginConfigurer = new MockPluginConfigurer();
     Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
@@ -621,7 +622,7 @@ public class PipelineSpecGeneratorTest {
       // plus the ones from the plugins
       .setProperties(ImmutableMap.of("prop1", "val1", "prop2", "val2", "prop3", "val3"))
       .addStage(StageSpec.builder("a1", new PluginSpec(Action.PLUGIN_TYPE, "action1", empty, ARTIFACT_ID))
-                  .addOutputSchema(null, "a2")
+                  .addOutput(null, "a2")
                   .build())
       .addStage(StageSpec.builder("a2", new PluginSpec(Action.PLUGIN_TYPE, "action2", empty, ARTIFACT_ID))
                   .addInputSchema("a1", null)
@@ -634,7 +635,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testSimpleConditionConnectionWithNoBranchInfo() {
+  public void testSimpleConditionConnectionWithNoBranchInfo() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -649,7 +650,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testSimpleConditionConnectionWithMultipleTrueBranches() {
+  public void testSimpleConditionConnectionWithMultipleTrueBranches() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -668,7 +669,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testNestedConditionConnectionWithNoBranchInfo() {
+  public void testNestedConditionConnectionWithNoBranchInfo() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -685,7 +686,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testNestedConditionConnectionWithMultipleTrueBranches() {
+  public void testNestedConditionConnectionWithMultipleTrueBranches() throws InvalidPipelineException {
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
       .setTimeSchedule("* * * * *")
       .addStage(new ETLStage("source", MOCK_SOURCE))
@@ -711,7 +712,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testSimpleConditionWithCrossConnection() {
+  public void testSimpleConditionWithCrossConnection() throws InvalidPipelineException {
 
     //  source1--condition-----t1-----sink
     //                                  |
@@ -733,7 +734,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testNestedConditionWithCrossConnection() {
+  public void testNestedConditionWithCrossConnection() throws InvalidPipelineException {
     //
     //                                anothersource-------------
     //                                                          |
@@ -769,7 +770,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testSimpleValidCondition() {
+  public void testSimpleValidCondition() throws InvalidPipelineException {
 
     //  source--condition-----t1-----sink
 
@@ -787,7 +788,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
-  public void testNestedValidCondition() {
+  public void testNestedValidCondition() throws InvalidPipelineException {
 
     //  source--condition1-----t1-----condition2------t11------sink1
     //             |                      |                     |
@@ -819,7 +820,7 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testTwoConditionsGoingToSameStage() {
+  public void testTwoConditionsGoingToSameStage() throws InvalidPipelineException {
 
     //  source--condition1-----t1-----condition2------t11------sink1
     //             |                      |                     |

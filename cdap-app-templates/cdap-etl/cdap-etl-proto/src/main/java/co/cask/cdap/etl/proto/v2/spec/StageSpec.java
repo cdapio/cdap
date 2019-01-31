@@ -17,17 +17,16 @@
 
 package co.cask.cdap.etl.proto.v2.spec;
 
+import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import com.google.common.collect.ImmutableSet;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -42,28 +41,24 @@ public class StageSpec implements Serializable {
   private final PluginSpec plugin;
   private final Map<String, Schema> inputSchemas;
   private final Map<String, Port> outputPorts;
+  private final Map<String, Schema> portSchemas;
   private final Schema outputSchema;
   private final Schema errorSchema;
   private final boolean stageLoggingEnabled;
   private final boolean processTimingEnabled;
-  // here for backwards compatible with UI
-  private final Set<String> inputs;
-  private final Set<String> outputs;
 
-  private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas,
-                    Map<String, Port> outputPorts, Schema errorSchema,
+  private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas, @Nullable Schema outputSchema,
+                    Schema errorSchema, Map<String, Schema> portSchemas, Map<String, Port> outputPorts,
                     boolean stageLoggingEnabled, boolean processTimingEnabled) {
     this.name = name;
     this.plugin = plugin;
     this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
-    this.outputPorts = Collections.unmodifiableMap(outputPorts);
-    this.outputSchema = plugin.getType().equals(SplitterTransform.PLUGIN_TYPE) || outputPorts.isEmpty() ?
-      null : outputPorts.values().iterator().next().schema;
     this.errorSchema = errorSchema;
-    this.inputs = ImmutableSet.copyOf(inputSchemas.keySet());
-    this.outputs = ImmutableSet.copyOf(outputPorts.keySet());
     this.stageLoggingEnabled = stageLoggingEnabled;
     this.processTimingEnabled = processTimingEnabled;
+    this.outputSchema = outputSchema;
+    this.outputPorts = Collections.unmodifiableMap(outputPorts);
+    this.portSchemas = Collections.unmodifiableMap(portSchemas);
   }
 
   public String getName() {
@@ -82,6 +77,7 @@ public class StageSpec implements Serializable {
     return inputSchemas;
   }
 
+  @Nullable
   public Schema getOutputSchema() {
     return outputSchema;
   }
@@ -90,16 +86,9 @@ public class StageSpec implements Serializable {
     return outputPorts;
   }
 
+  @Nullable
   public Schema getErrorSchema() {
     return errorSchema;
-  }
-
-  public Set<String> getInputs() {
-    return inputs;
-  }
-
-  public Set<String> getOutputs() {
-    return outputs;
   }
 
   public boolean isStageLoggingEnabled() {
@@ -127,8 +116,6 @@ public class StageSpec implements Serializable {
       Objects.equals(outputPorts, that.outputPorts) &&
       Objects.equals(outputSchema, that.outputSchema) &&
       Objects.equals(errorSchema, that.errorSchema) &&
-      Objects.equals(inputs, that.inputs) &&
-      Objects.equals(outputs, that.outputs) &&
       stageLoggingEnabled == that.stageLoggingEnabled &&
       processTimingEnabled == that.processTimingEnabled;
   }
@@ -136,7 +123,7 @@ public class StageSpec implements Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(name, plugin, inputSchemas, outputPorts,
-                        outputSchema, errorSchema, inputs, outputs, stageLoggingEnabled, processTimingEnabled);
+                        outputSchema, errorSchema, stageLoggingEnabled, processTimingEnabled);
   }
 
   @Override
@@ -150,8 +137,6 @@ public class StageSpec implements Serializable {
       ", errorSchema=" + errorSchema +
       ", stageLoggingEnabled=" + stageLoggingEnabled +
       ", processTimingEnabled=" + processTimingEnabled +
-      ", inputs=" + inputs +
-      ", outputs=" + outputs +
       '}';
   }
 
@@ -165,8 +150,11 @@ public class StageSpec implements Serializable {
   public static class Builder {
     private final String name;
     private final PluginSpec plugin;
+    private final boolean isSplitter;
     private Map<String, Schema> inputSchemas;
-    private Map<String, Port> outputPortSchemas;
+    private Map<String, Schema> portSchemas;
+    private Map<String, Port> outputs;
+    private Schema outputSchema;
     private Schema errorSchema;
     private boolean stageLoggingEnabled;
     private boolean processTimingEnabled;
@@ -175,9 +163,11 @@ public class StageSpec implements Serializable {
       this.name = name;
       this.plugin = plugin;
       this.inputSchemas = new HashMap<>();
-      this.outputPortSchemas = new HashMap<>();
+      this.portSchemas = new HashMap<>();
+      this.outputs = new HashMap<>();
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
+      this.isSplitter = plugin.getType().equals(SplitterTransform.PLUGIN_TYPE);
     }
 
     public Builder addInputSchema(String stageName, Schema schema) {
@@ -190,24 +180,36 @@ public class StageSpec implements Serializable {
       return this;
     }
 
-    public Builder addOutputSchema(@Nullable Schema outputSchema, String... stages) {
+    public Builder addOutput(@Nullable Schema outputSchema, String... stages) {
       for (String stage : stages) {
-        outputPortSchemas.put(stage, new Port(null, outputSchema));
+        addOutput(stage, null, outputSchema);
       }
       return this;
     }
 
-    public Builder addOutputPortSchema(String outputStageName, String port, @Nullable Schema outputSchema) {
-      this.outputPortSchemas.put(outputStageName, new Port(port, outputSchema));
+    public Builder addOutput(String outputStageName, @Nullable String port, @Nullable Schema outputSchema) {
+      this.outputs.put(outputStageName, new Port(port, outputSchema));
+      if (!isSplitter) {
+        this.outputSchema = outputSchema;
+      }
+      if (port != null) {
+        this.portSchemas.put(port, outputSchema);
+      }
       return this;
     }
 
-    public Builder addOutputPortSchemas(Map<String, Port> outputStages) {
-      this.outputPortSchemas.putAll(outputStages);
+    public Builder setOutputSchema(@Nullable Schema outputSchema) {
+      this.outputSchema = outputSchema;
       return this;
     }
 
-    public Builder setErrorSchema(Schema errorSchema) {
+    public Builder setPortSchemas(Map<String, Schema> portSchemas) {
+      this.portSchemas.clear();
+      this.portSchemas.putAll(portSchemas);
+      return this;
+    }
+
+    public Builder setErrorSchema(@Nullable Schema errorSchema) {
       this.errorSchema = errorSchema;
       return this;
     }
@@ -223,7 +225,7 @@ public class StageSpec implements Serializable {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, inputSchemas, outputPortSchemas, errorSchema,
+      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, portSchemas, outputs,
                            stageLoggingEnabled, processTimingEnabled);
     }
 
