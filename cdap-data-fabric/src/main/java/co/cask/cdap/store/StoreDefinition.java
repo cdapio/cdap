@@ -117,6 +117,7 @@ public final class StoreDefinition {
   public static final class AppMetadataStore {
     public static final StructuredTableId APPLICATION_SPECIFICATIONS = new StructuredTableId("application_specs");
     public static final StructuredTableId WORKFLOW_NODE_STATES = new StructuredTableId("workflow_node_states");
+    public static final StructuredTableId RUN_RECORDS = new StructuredTableId("run_records");
 
     public static final String NAMESPACE_FIELD = "namespace";
     public static final String APPLICATION_FIELD = "application";
@@ -127,6 +128,10 @@ public final class StoreDefinition {
     public static final String RUN_FIELD = "run";
     public static final String NODE_ID = "node_id";
     public static final String NODE_STATE_DATA = "node_state_data";
+    public static final String RUN_STATUS = "run_status";
+    public static final String RUN_START_TIME = "run_start_time";
+    public static final String RUN_ID = "run_id";
+    public static final String RUN_RECORD_DATA = "run_record_data";
 
 
     public static final StructuredTableSpecification APPLICATION_SPECIFICATIONS_TABLE_SPEC =
@@ -152,6 +157,23 @@ public final class StoreDefinition {
                     Fields.stringType(NODE_STATE_DATA))
         .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD,
                          RUN_FIELD, NODE_ID)
+        .build();
+
+    public static final StructuredTableSpecification RUN_RECORDS_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(RUN_RECORDS)
+        .withFields(Fields.stringType(RUN_STATUS),
+                    Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(PROGRAM_TYPE_FIELD),
+                    Fields.stringType(PROGRAM_FIELD),
+                    Fields.stringType(RUN_FIELD),
+                    Fields.longType(RUN_START_TIME),
+                    Fields.stringType(RUN_ID),
+                    Fields.stringType(RUN_RECORD_DATA))
+        .withPrimaryKeys(RUN_STATUS, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD,
+                         PROGRAM_FIELD, RUN_FIELD, RUN_START_TIME, RUN_ID)
         .build();
 
   }
