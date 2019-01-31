@@ -179,6 +179,7 @@ public abstract class GatewayTestBase {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);

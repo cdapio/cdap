@@ -228,6 +228,8 @@ public class StandaloneMain {
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
+    // This needs to happen before any dataset instantiators are started
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     serviceStore.startAndWait();
 
     remoteExecutionTwillRunnerService.start();
@@ -265,8 +267,6 @@ public class StandaloneMain {
     operationalStatsService.startAndWait();
 
     secureStoreService.startAndWait();
-
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?

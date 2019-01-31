@@ -323,6 +323,7 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
                                          ImmutableSet.of(Action.ADMIN));
     }
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
       // only create the default namespace on first test. if multiple tests are run in the same JVM,
@@ -342,7 +343,6 @@ public class TestBase {
     provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
 
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   private static TestManager getTestManager() {

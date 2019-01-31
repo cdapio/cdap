@@ -49,6 +49,8 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
@@ -94,6 +96,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final MetricsQueryHelper metricsQueryHelper;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final LevelDBTableService levelDBTableService;
+  private final StructuredTableAdmin structuredTableAdmin;
 
   private volatile PreviewStatus status;
   private volatile boolean killedByTimer;
@@ -111,7 +114,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        NamespaceAdmin namespaceAdmin, ProgramStore programStore,
                        MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper,
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
-                       LevelDBTableService levelDBTableService) {
+                       LevelDBTableService levelDBTableService,
+                       StructuredTableAdmin structuredTableAdmin) throws Exception {
     this.messagingService = messagingService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
@@ -127,6 +131,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.metricsQueryHelper = metricsQueryHelper;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.levelDBTableService = levelDBTableService;
+    this.structuredTableAdmin = structuredTableAdmin;
   }
 
   @Override
@@ -252,6 +257,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       ((Service) messagingService).startAndWait();
     }
     datasetService.startAndWait();
+    // TODO: CDAP-14838 Ensure preivew has it's own copy of the schema mapping.
+    StoreDefinition.createAllTables(structuredTableAdmin, true);
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
