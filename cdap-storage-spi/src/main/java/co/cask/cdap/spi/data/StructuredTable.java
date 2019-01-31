@@ -85,6 +85,18 @@ public interface StructuredTable extends Closeable {
   CloseableIterator<StructuredRow> scan(Range keyRange, int limit) throws InvalidFieldException, IOException;
 
   /**
+   * Read a set of rows from the table matching the index.
+   * The rows returned will be sorted on the primary key order.
+   *
+   * @param index the index value
+   * @return a {@link CloseableIterator} of rows
+   * @throws InvalidFieldException if the field is not part of the table schema, or is not an indexed column,
+   *                               or the type does not match the schema
+   * @throws IOException if there is an error scanning the table
+   */
+  CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException;
+
+  /**
    * Atomically compare and swap the value of a column in a row if the expected value matches.
    * To match a non-existent value, the value of the expected field should be null.
    *

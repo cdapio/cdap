@@ -19,6 +19,7 @@ package co.cask.cdap.data2.nosql.dataset;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 
@@ -49,17 +50,7 @@ class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
 
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
-    if (entityTable == null) {
-      try {
-        entityTable = datasetAccesor.getTableDataset(name);
-        txContext.addTransactionAware((TransactionAware) entityTable);
-      } catch (IOException e) {
-        throw new DatasetInstantiationException("Cannot instantiate entity table", e);
-      }
-    }
-    //noinspection unchecked
-    return (T) entityTable;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -69,7 +60,17 @@ class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
 
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
-    throw new UnsupportedOperationException();
+    // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
+    if (entityTable == null) {
+      try {
+        entityTable = datasetAccesor.getTableDataset(name, arguments);
+        txContext.addTransactionAware((TransactionAware) entityTable);
+      } catch (IOException e) {
+        throw new DatasetInstantiationException("Cannot instantiate entity table", e);
+      }
+    }
+    //noinspection unchecked
+    return (T) entityTable;
   }
 
   @Override

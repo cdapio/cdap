@@ -37,9 +37,17 @@ public final class FieldType {
     BYTES
   }
 
-  static final Set<Type> PRIMARY_KEY_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
-                                                                                    Type.STRING));
+  /**
+   * Valid field types that can be part of a primary key.
+   */
+  public static final Set<Type> PRIMARY_KEY_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
+                                                                                           Type.STRING));
 
+  /**
+   * Valid field types that can be defined as an index.
+   */
+  public static final Set<Type> INDEX_COLUMN_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
+                                                                                            Type.STRING));
   private final String name;
   private final Type type;
 

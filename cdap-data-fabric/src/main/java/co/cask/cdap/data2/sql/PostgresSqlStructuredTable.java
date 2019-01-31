@@ -130,6 +130,28 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public CloseableIterator<StructuredRow> scan(Field<?> index) throws InvalidFieldException, IOException {
+    LOG.trace("Table {}: Scan index {}", tableSchema.getTableId(), index);
+    fieldValidator.validateField(index);
+    if (!tableSchema.isIndexColumn(index.getName())) {
+      throw new InvalidFieldException(tableSchema.getTableId(), index.getName(), "is not an indexed column");
+    }
+
+    String sql = getReadQuery(Collections.singleton(index), null, false);
+    // We don't close the statement here because once it is closed, the result set is also closed.
+    try {
+      PreparedStatement statement = connection.prepareStatement(sql);
+      setField(statement, index, 1);
+      LOG.trace("SQL statement: {}", statement);
+      ResultSet resultSet = statement.executeQuery();
+      return new ResultSetIterator(statement, resultSet, tableSchema);
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to scan from table %s with index %s",
+                                          tableSchema.getTableId().getName(), index), e);
+    }
+  }
+
+  @Override
   public boolean compareAndSwap(Collection<Field<?>> keys, Field<?> oldValue, Field<?> newValue)
     throws InvalidFieldException, IOException {
     LOG.trace("Table {}: CompareAndSwap with keys {}, oldValue {}, newValue {}", tableSchema.getTableId(), keys,
@@ -420,7 +442,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns, boolean forUpdate) {
     StringBuilder queryString =
       new StringBuilder("SELECT ")
-        .append(columns == null || columns.isEmpty() ? "*" : Joiner.on(",").join(columns))
+        .append(columns == null ? "*" : Joiner.on(",").join(columns))
         .append(" FROM ")
         .append(tableSchema.getTableId().getName())
         .append(" WHERE ").append(getEqualsClause(keys))
