@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.pipeline.kafka;
 
+import co.cask.cdap.logging.pipeline.LogPipelineConfig;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Set;
@@ -23,23 +24,18 @@ import java.util.Set;
 /**
  * A class to hold configurations for a {@link KafkaLogProcessorPipeline}.
  */
-public final class KafkaPipelineConfig {
+public final class KafkaPipelineConfig extends LogPipelineConfig {
 
   private final String topic;
   private final Set<Integer> partitions;
-  private final long maxBufferSize;
-  private final long eventDelayMillis;
   private final int kafkaFetchBufferSize;
-  private final long checkpointIntervalMillis;
 
   public KafkaPipelineConfig(String topic, Set<Integer> partitions, long maxBufferSize,
                              long eventDelayMillis, int kafkaFetchBufferSize, long checkpointIntervalMillis) {
+    super(maxBufferSize, eventDelayMillis, checkpointIntervalMillis);
     this.topic = topic;
     this.partitions = ImmutableSet.copyOf(partitions);
-    this.maxBufferSize = maxBufferSize;
-    this.eventDelayMillis = eventDelayMillis;
     this.kafkaFetchBufferSize = kafkaFetchBufferSize;
-    this.checkpointIntervalMillis = checkpointIntervalMillis;
   }
 
   String getTopic() {
@@ -50,20 +46,8 @@ public final class KafkaPipelineConfig {
     return partitions;
   }
 
-  long getMaxBufferSize() {
-    return maxBufferSize;
-  }
-
-  long getEventDelayMillis() {
-    return eventDelayMillis;
-  }
-
   int getKafkaFetchBufferSize() {
     return kafkaFetchBufferSize;
-  }
-
-  long getCheckpointIntervalMillis() {
-    return checkpointIntervalMillis;
   }
 
   @Override
@@ -71,10 +55,10 @@ public final class KafkaPipelineConfig {
     return "KafkaPipelineConfig{" +
       "topic='" + topic + '\'' +
       ", partitions=" + partitions +
-      ", maxBufferSize=" + maxBufferSize +
-      ", eventDelayMillis=" + eventDelayMillis +
+      ", maxBufferSize=" + getMaxBufferSize() +
+      ", eventDelayMillis=" + getEventDelayMillis() +
       ", kafkaFetchBufferSize=" + kafkaFetchBufferSize +
-      ", checkpointIntervalMillis=" + checkpointIntervalMillis +
+      ", checkpointIntervalMillis=" + getCheckpointIntervalMillis() +
       '}';
   }
 }

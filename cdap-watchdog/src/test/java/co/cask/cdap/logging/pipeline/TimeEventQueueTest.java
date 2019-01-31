@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.pipeline;
 
+import co.cask.cdap.logging.pipeline.queue.TimeEventQueue;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;

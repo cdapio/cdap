@@ -18,13 +18,14 @@ package co.cask.cdap.logging.pipeline.kafka;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
-import co.cask.cdap.logging.pipeline.TimeEventQueue;
+import co.cask.cdap.logging.pipeline.queue.AppendedEventMetadata;
+import co.cask.cdap.logging.pipeline.queue.CheckpointMetadata;
+import co.cask.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
@@ -71,20 +72,20 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
 
   private static final int KAFKA_SO_TIMEOUT = 3000;
-  private static final double MIN_FREE_FACTOR = 0.5d;
 
   private final String name;
   private final LogProcessorPipelineContext context;
-  private final CheckpointManager checkpointManager;
-  private final BrokerService brokerService;
+  private final CheckpointManager<Checkpoint> checkpointManager;
   private final Int2LongMap offsets;
   private final Int2ObjectMap<MutableCheckpoint> checkpoints;
   private final LoggingEventSerializer serializer;
   private final KafkaPipelineConfig config;
-  private final TimeEventQueue<ILoggingEvent, OffsetTime> eventQueue;
-  private final Map<BrokerInfo, KafkaSimpleConsumer> kafkaConsumers;
+  private final TimeEventQueueProcessor<OffsetTime> eventQueueProcessor;
   private final MetricsContext metricsContext;
+
+  private final BrokerService brokerService;
   private final KafkaOffsetResolver offsetResolver;
+  private final Map<BrokerInfo, KafkaSimpleConsumer> kafkaConsumers;
 
   private ExecutorService fetchExecutor;
   private volatile Thread runThread;
@@ -92,20 +93,20 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private long lastCheckpointTime;
   private int unSyncedEvents;
 
-  public KafkaLogProcessorPipeline(LogProcessorPipelineContext context,
-                                   CheckpointManager checkpointManager, BrokerService brokerService,
-                                   KafkaPipelineConfig config) {
+  public KafkaLogProcessorPipeline(LogProcessorPipelineContext context, CheckpointManager<Checkpoint> checkpointManager,
+                                   BrokerService brokerService, KafkaPipelineConfig config) {
     this.name = context.getName();
     this.context = context;
     this.checkpointManager = checkpointManager;
-    this.brokerService = brokerService;
     this.config = config;
     this.offsets = new Int2LongOpenHashMap();
     this.checkpoints = new Int2ObjectOpenHashMap<>();
-    this.eventQueue = new TimeEventQueue<>(config.getPartitions());
+    this.eventQueueProcessor = new TimeEventQueueProcessor<>(name, context, config, config.getPartitions());
     this.serializer = new LoggingEventSerializer();
-    this.kafkaConsumers = new HashMap<>();
     this.metricsContext = context;
+
+    this.kafkaConsumers = new HashMap<>();
+    this.brokerService = brokerService;
     this.offsetResolver = new KafkaOffsetResolver(brokerService, config);
   }
 
@@ -163,16 +164,12 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         }
 
         long now = System.currentTimeMillis();
-        unSyncedEvents += appendEvents(now, false);
         long nextCheckpointDelay = trySyncAndPersistCheckpoints(now);
 
         // If nothing has been processed (e.g. empty fetch from Kafka, fail to append anything to appender),
         // Sleep until the earliest event in the buffer is time to be written out.
         if (!hasMessageProcessed) {
           long sleepMillis = config.getEventDelayMillis();
-          if (!eventQueue.isEmpty()) {
-            sleepMillis += eventQueue.first().getTimeStamp() - now;
-          }
           sleepMillis = Math.min(sleepMillis, nextCheckpointDelay);
           if (sleepMillis > 0) {
             TimeUnit.MILLISECONDS.sleep(sleepMillis);
@@ -290,32 +287,62 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     boolean processed = false;
     for (MessageAndOffset message : messages) {
-      if (eventQueue.getEventSize() >= config.getMaxBufferSize()) {
-        // Log a message. If this happen too often, it indicates that more memory is needed for the log processing
-        OUTAGE_LOG.info("Maximum queue size {} reached for pipeline {}.", config.getMaxBufferSize(), name);
-        // If nothing has been appended (due to error), we break the loop so that no need event will be appended
-        // Since the offset is not updated, the same set of messages will be fetched again in next iteration.
-        int eventsAppended = appendEvents(System.currentTimeMillis(), true);
-        if (eventsAppended <= 0) {
+      try {
+        ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
+        AppendedEventMetadata<OffsetTime> metadata = eventQueueProcessor
+          .appendAndEnqueue(loggingEvent, message.message().payloadSize(), partition,
+                            new OffsetTime(message.nextOffset(), loggingEvent.getTimeStamp()));
+
+        // If queue is full, do not enqueue events.
+        if (metadata.getEventsAppended() < 0) {
           break;
         }
-        unSyncedEvents += eventsAppended;
-      }
 
-      try {
+        processed = true;
+        // nothing was appended so just continue
+        if (metadata.getEventsAppended() == 0) {
+          continue;
+        }
+
+        unSyncedEvents += metadata.getEventsAppended();
+
+        for (Map.Entry<Integer, CheckpointMetadata<OffsetTime>> entry : metadata.getCheckpointMetadata().entrySet()) {
+          MutableCheckpoint checkpoint = checkpoints.get(entry.getKey());
+          CheckpointMetadata<OffsetTime> checkpointMetadata = entry.getValue();
+          // Update checkpoints
+          OffsetTime offsetTime = checkpointMetadata.getNextOffset();
+          if (checkpoint == null) {
+            checkpoint = new MutableCheckpoint(offsetTime.getOffset(), offsetTime.getEventTime(),
+                                               checkpointMetadata.getMaxEventTime());
+            checkpoints.put(entry.getKey(), checkpoint);
+          } else {
+            checkpoint
+              .setNextOffset(offsetTime.getOffset())
+              .setNextEvenTime(offsetTime.getEventTime())
+              .setMaxEventTime(checkpointMetadata.getMaxEventTime());
+          }
+        }
+
+        // For each partition, if there is no more event in the event queue, update the checkpoint nextOffset
+        for (Int2LongMap.Entry entry : offsets.int2LongEntrySet()) {
+          if (metadata.getCheckpointMetadata().get(entry.getIntKey()).isPartitionEmpty()) {
+            MutableCheckpoint checkpoint = checkpoints.get(partition);
+            long offset = entry.getLongValue();
+            // If the process offset is larger than the offset in the checkpoint and the queue is empty for that partition,
+            // it means everything before the process offset must had been written to the appender.
+            if (checkpoint != null && offset > checkpoint.getNextOffset()) {
+              checkpoint.setNextOffset(offset);
+            }
+          }
+        }
+
         metricsContext.increment("kafka.bytes.read", message.message().payloadSize());
-        ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
-        // Use the message payload size as the size estimate of the logging event
-        // Although it's not the same as the in memory object size, it should be just a constant factor, hence
-        // it is proportional to the actual object size.
-        eventQueue.add(loggingEvent, loggingEvent.getTimeStamp(), message.message().payloadSize(), partition,
-                       new OffsetTime(message.nextOffset(), loggingEvent.getTimeStamp()));
       } catch (IOException e) {
         // This shouldn't happen. In case it happens (e.g. someone published some garbage), just skip the message.
         LOG.trace("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
                   topic, partition, message.offset(), e);
       }
-      processed = true;
+
       offsets.put(partition, message.nextOffset());
     }
 
@@ -334,101 +361,6 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     }
 
     return fetchFutures;
-  }
-
-  /**
-   * Appends buffered events to appender. If the {@code force} parameter is {@code false}, buffered events
-   * that are older than the buffer milliseconds will be appended and removed from the buffer.
-   * If {@code force} is {@code true}, then at least {@code maxQueueSize * MIN_FREE_FACTOR} events will be appended
-   * and removed, regardless of the event time.
-   *
-   * @return number of events appended to the appender
-   */
-  private int appendEvents(long currentTimeMillis, boolean forced) {
-    long minEventTime = currentTimeMillis - config.getEventDelayMillis();
-    long maxRetainSize = forced ? (long) (config.getMaxBufferSize() * MIN_FREE_FACTOR) : Long.MAX_VALUE;
-
-    TimeEventQueue.EventIterator<ILoggingEvent, OffsetTime> iterator = eventQueue.iterator();
-
-    int eventsAppended = 0;
-    long minDelay = Long.MAX_VALUE;
-    long maxDelay = -1;
-
-    while (iterator.hasNext()) {
-      ILoggingEvent event = iterator.next();
-
-      // If not forced to reduce the event queue size and the current event timestamp is still within the
-      // buffering time, no need to iterate anymore
-      if (eventQueue.getEventSize() <= maxRetainSize && event.getTimeStamp() >= minEventTime) {
-        break;
-      }
-
-      // update delay
-      long delay = System.currentTimeMillis() - event.getTimeStamp();
-      minDelay = delay < minDelay ? delay : minDelay;
-      maxDelay = delay > maxDelay ? delay : maxDelay;
-
-      try {
-        // Otherwise, append the event
-        ch.qos.logback.classic.Logger effectiveLogger = context.getEffectiveLogger(event.getLoggerName());
-        if (event.getLevel().isGreaterOrEqual(effectiveLogger.getEffectiveLevel())) {
-          effectiveLogger.callAppenders(event);
-        }
-      } catch (Exception e) {
-        OUTAGE_LOG.warn("Failed to append log event in pipeline {}. Will be retried.", name, e);
-        break;
-      }
-
-      // Updates the Kafka offset before removing the current event
-      int partition = iterator.getPartition();
-      MutableCheckpoint checkpoint = checkpoints.get(partition);
-      // Get the smallest offset and corresponding timestamp from the event queue
-      OffsetTime offsetTime = eventQueue.getSmallestOffset(partition);
-      if (checkpoint == null) {
-        checkpoint = new MutableCheckpoint(offsetTime.getOffset(), offsetTime.getEventTime(), event.getTimeStamp());
-        checkpoints.put(partition, checkpoint);
-      } else {
-        checkpoint
-          .setNextOffset(offsetTime.getOffset())
-          .setNextEvenTime(offsetTime.getEventTime())
-          .setMaxEventTime(event.getTimeStamp());
-      }
-
-      iterator.remove();
-      eventsAppended++;
-    }
-
-    // For each partition, if there is no more event in the event queue, update the checkpoint nextOffset
-    for (Int2LongMap.Entry entry : offsets.int2LongEntrySet()) {
-      int partition = entry.getIntKey();
-      if (eventQueue.isEmpty(partition)) {
-        MutableCheckpoint checkpoint = checkpoints.get(partition);
-        long offset = entry.getLongValue();
-        // If the process offset is larger than the offset in the checkpoint and the queue is empty for that partition,
-        // it means everything before the process offset must had been written to the appender.
-        if (checkpoint != null && offset > checkpoint.getNextOffset()) {
-          checkpoint.setNextOffset(offset);
-        }
-      }
-    }
-    if (eventsAppended > 0) {
-      // events were appended from iterator
-      metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_MIN_DELAY, minDelay);
-      metricsContext.gauge(Constants.Metrics.Name.Log.PROCESS_MAX_DELAY, maxDelay);
-      metricsContext.increment(Constants.Metrics.Name.Log.PROCESS_MESSAGES_COUNT, eventsAppended);
-    }
-
-    // Always try to call flush, even there was no event written. This is needed so that appender get called
-    // periodically even there is no new events being appended to perform housekeeping work.
-    // Failure to flush is ok and it will be retried by the wrapped appender
-    try {
-      metricsContext.gauge("event.queue.size.bytes", eventQueue.getEventSize());
-      context.flush();
-    } catch (IOException e) {
-      OUTAGE_LOG.warn("Failed to flush in pipeline {}. Will be retried.", name, e);
-    }
-
-    return eventsAppended;
   }
 
   /**

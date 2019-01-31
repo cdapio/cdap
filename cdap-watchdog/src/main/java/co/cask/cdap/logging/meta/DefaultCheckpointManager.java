@@ -44,7 +44,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link CheckpointManager} that uses {@link Table} dataset to persist data.
  */
-public final class DefaultCheckpointManager implements CheckpointManager {
+public final class DefaultCheckpointManager implements CheckpointManager<Checkpoint> {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCheckpointManager.class);
 
   private static final byte [] OFFSET_COL_NAME = Bytes.toBytes("nextOffset");

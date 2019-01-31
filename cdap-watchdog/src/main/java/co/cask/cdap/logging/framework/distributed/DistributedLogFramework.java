@@ -50,7 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 /**
- * A {@link ResourceBalancerService} for log processing in distributed mode
+ * A {@link ResourceBalancerService} for log processing in distributed mode.
  */
 public class DistributedLogFramework extends ResourceBalancerService {
 

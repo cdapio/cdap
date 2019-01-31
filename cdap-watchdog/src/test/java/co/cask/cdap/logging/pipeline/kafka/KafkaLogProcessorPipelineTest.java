@@ -626,7 +626,7 @@ public class KafkaLogProcessorPipelineTest {
     }
   }
 
-  private static final class TestCheckpointManager implements CheckpointManager {
+  private static final class TestCheckpointManager implements CheckpointManager<Checkpoint> {
 
     @Override
     public void saveCheckpoints(Map<Integer, ? extends Checkpoint> checkpoints) throws Exception {

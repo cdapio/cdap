@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
  */
-public interface CheckpointManager {
+public interface CheckpointManager<Checkpoint> {
 
   /**
    * Persists the given map of {@link Checkpoint}s.
@@ -30,16 +30,12 @@ public interface CheckpointManager {
   void saveCheckpoints(Map<Integer, ? extends Checkpoint> checkpoints) throws Exception;
 
   /**
-   * Reads the set of {@link Checkpoint}s for the given set of partitions. If there is no checkpoint for the partition,
-   * a {@link Checkpoint} with both {@link Checkpoint#getMaxEventTime()} and
-   * {@link Checkpoint#getNextOffset()} returning {@code -1} will be used.
+   * Reads the set of {@link Checkpoint}s for the given set of partitions.
    */
   Map<Integer, Checkpoint> getCheckpoint(Set<Integer> partitions) throws Exception;
 
   /**
-   * Reads the {@link Checkpoint} for the given partition. If there is no checkpoint for the partition,
-   * a {@link Checkpoint} will be returned with both {@link Checkpoint#getMaxEventTime()} and
-   * {@link Checkpoint#getNextOffset()} returning {@code -1}.
+   * Reads the {@link Checkpoint} for the given partition.
    */
   Checkpoint getCheckpoint(int partition) throws Exception;
 }

@@ -34,7 +34,7 @@ public class CheckpointManagerFactory {
     this.txClient = txClient;
   }
 
-  public CheckpointManager create(String topic, byte[] prefix) {
+  public CheckpointManager<Checkpoint> create(String topic, byte[] prefix) {
     return new DefaultCheckpointManager(datasetFramework, txClient, topic, prefix);
   }
 }

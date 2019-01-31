@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.logging.appender.kafka.StringPartitioner;
 import co.cask.cdap.logging.filter.Filter;
+import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import com.google.inject.Inject;
@@ -36,7 +37,7 @@ public final class DistributedLogReader implements LogReader {
 
   private final KafkaLogReader kafkaLogReader;
   private final FileLogReader fileLogReader;
-  private final CheckpointManager checkpointManager;
+  private final CheckpointManager<Checkpoint> checkpointManager;
   private final StringPartitioner partitioner;
 
   /**

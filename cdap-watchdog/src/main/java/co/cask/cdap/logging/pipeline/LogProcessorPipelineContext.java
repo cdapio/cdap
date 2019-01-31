@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A context object provide to log processor pipeline.
+ * A context object that is provided to log processor pipeline.
  */
 public class LogProcessorPipelineContext implements Flushable, Syncable, MetricsContext {
 
