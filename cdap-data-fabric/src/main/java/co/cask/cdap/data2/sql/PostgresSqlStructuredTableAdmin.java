@@ -23,6 +23,8 @@ import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistry;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.base.Joiner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -30,6 +32,8 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -38,6 +42,7 @@ import javax.sql.DataSource;
  * Sql structured admin to use jdbc connection to create and drop tables.
  */
 public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(PostgresSqlStructuredTableAdmin.class);
   private final DataSource dataSource;
 
   public PostgresSqlStructuredTableAdmin(DataSource dataSource) {
@@ -53,8 +58,17 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
       if (rs.next()) {
         throw new TableAlreadyExistsException(spec.getTableId());
       }
+      // Create table
+      LOG.info("Creating table {}", spec);
       Statement statement = connection.createStatement();
       statement.execute(getCreateStatement(spec));
+
+      // Create indexes
+      for (String indexStatement : getCreateIndexStatements(spec)) {
+        LOG.debug("Create index statement: {}", indexStatement);
+        statement.execute(indexStatement);
+      }
+
       StructuredTableSpecificationRegistry.registerSpecification(spec);
       statement.close();
     } catch (SQLException e) {
@@ -70,10 +84,12 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void drop(StructuredTableId tableId) throws IOException {
+    LOG.info("Dropping table {}", tableId);
     String sqlQuery = getDeleteStatement(tableId.getName());
     try (Connection connection = dataSource.getConnection()) {
       Statement statement = connection.createStatement();
       statement.execute(sqlQuery);
+      // All indexes on a table are dropped when a table is dropped.
       StructuredTableSpecificationRegistry.removeSpecification(tableId);
     } catch (SQLException e) {
       throw new IOException(String.format("Error dropping table %s", tableId), e);
@@ -94,6 +110,15 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     // append primary key
     createStmt.append(", PRIMARY KEY (").append(Joiner.on(",").join(specification.getPrimaryKeys())).append("))");
     return createStmt.toString();
+  }
+
+  private List<String> getCreateIndexStatements(StructuredTableSpecification specification) {
+    String table = specification.getTableId().getName();
+    List<String> statements = new ArrayList<>(specification.getIndexes().size());
+    for (String column : specification.getIndexes()) {
+      statements.add(String.format("CREATE INDEX %s_%s_idx ON %s (%s)", table, column, table, column));
+    }
+    return statements;
   }
 
   private String getDeleteStatement(String tableName) {

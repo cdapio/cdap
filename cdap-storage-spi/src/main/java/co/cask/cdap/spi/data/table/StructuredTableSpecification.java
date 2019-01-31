@@ -151,6 +151,7 @@ public final class StructuredTableSpecification {
 
     /**
      * Set the fields that form the primary keys of the table. A table should have at least one primary key.
+     * See {@link FieldType#PRIMARY_KEY_TYPES} for valid primary key field types.
      * @param primaryKeys list of field names forming the primary keys
      * @return Builder instance
      */
@@ -161,6 +162,7 @@ public final class StructuredTableSpecification {
 
     /**
      * Set the fields that need to be indexed in the table. A table need not define any indexes.
+     * See {@link FieldType#INDEX_COLUMN_TYPES} for valid index field types.
      * @param indexes list of field names for the index
      * @return Builder instance
      */
@@ -221,15 +223,22 @@ public final class StructuredTableSpecification {
           throw new InvalidFieldException(tableId, primaryKey);
         }
         if (!Fields.isPrimaryKeyType(type)) {
-          throw new InvalidFieldException(tableId, primaryKey, "is not defined as primary key column");
+          throw new InvalidFieldException(
+            tableId, primaryKey,
+            String.format("has wrong type for a primary key. Valid types are: %s", FieldType.PRIMARY_KEY_TYPES));
         }
       }
 
-      // Validate that the indexes are part of the fields defined
+      // Validate that the indexes are part of the fields defined and of valid type
       for (String index : indexes) {
         FieldType.Type type = typeMap.get(index);
         if (type == null) {
           throw new InvalidFieldException(tableId, index, "is not defined as an index column");
+        }
+        if (!Fields.isIndexColumnType(type)) {
+          throw new InvalidFieldException(
+            tableId, index,
+            String.format("has wrong type for an index column. Valid types are: %s", FieldType.INDEX_COLUMN_TYPES));
         }
       }
     }

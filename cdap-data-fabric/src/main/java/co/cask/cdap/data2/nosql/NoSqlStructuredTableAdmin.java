@@ -21,6 +21,8 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
@@ -33,7 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.Map;
 
 /**
  * The Nosql admin will use the existing dataset framework to create and drop tables.
@@ -45,22 +47,26 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   static final String ENTITY_TABLE_NAME = "entity.store";
 
-  private final DatasetDefinition tableDefinition;
-  private final DatasetSpecification entityTableSpec;
+  private final DatasetDefinition indexTableDefinition;
+  private final DatasetSpecification indexTableSpec;
 
   @Inject
-  public NoSqlStructuredTableAdmin(@Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
-    this.tableDefinition = tableDefinition;
-    entityTableSpec = tableDefinition.configure(ENTITY_TABLE_NAME, DatasetProperties.EMPTY);
+  public NoSqlStructuredTableAdmin(
+    @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+    //noinspection unchecked - due to the guice binding we know that the tableDefinition is of the right type
+    this.indexTableDefinition = new IndexedTableDefinition("indexedTable", tableDefinition);
+    this.indexTableSpec =
+      indexTableDefinition.configure(ENTITY_TABLE_NAME,
+                                     DatasetProperties.builder().add(IndexedTable.DYNAMIC_INDEXING, "true").build());
   }
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException {
-    LOG.info("Creating table {} in namespace {}", spec.getTableId().getName(), NamespaceId.SYSTEM);
-    DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityTableSpec, null);
-    if (!admin.exists()) {
-      LOG.info("Creating dataset table {} in namespace {}", entityTableSpec.getName(), NamespaceId.SYSTEM);
-      admin.create();
+    LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
+    DatasetAdmin indexTableAdmin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
+    if (!indexTableAdmin.exists()) {
+      LOG.info("Creating dataset indexed table {} in namespace {}", indexTableSpec.getName(), NamespaceId.SYSTEM);
+      indexTableAdmin.create();
     }
     StructuredTableSpecificationRegistry.registerSpecification(spec);
   }
@@ -75,14 +81,14 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
     LOG.info("Dropping table {} in namespace {}", tableId.getName(), NamespaceId.SYSTEM);
     StructuredTableSpecificationRegistry.removeSpecification(tableId);
     if (StructuredTableSpecificationRegistry.isEmpty()) {
-      DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityTableSpec, null);
-      LOG.info("Dropping dataset table {} in namespace {}", entityTableSpec.getName(), NamespaceId.SYSTEM);
+      DatasetAdmin admin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
+      LOG.info("Dropping dataset indexed table {} in namespace {}", indexTableSpec.getName(), NamespaceId.SYSTEM);
       admin.drop();
     }
   }
 
-  <T> T getEntityTable() throws IOException {
+  <T> T getEntityTable(Map<String, String> arguments) throws IOException {
     //noinspection unchecked
-    return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityTableSpec, Collections.emptyMap(), null);
+    return (T) indexTableDefinition.getDataset(SYSTEM_CONTEXT, indexTableSpec, arguments, null);
   }
 }

@@ -118,20 +118,7 @@ public class NoSqlTransactionRunner implements TransactionRunner {
 
     @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-      // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
-      if (NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME.equals(name)) {
-        if (entityTable == null) {
-          try {
-            entityTable = tableAdmin.getEntityTable();
-            txContext.addTransactionAware((TransactionAware) entityTable);
-          } catch (IOException e) {
-            throw new DatasetInstantiationException("Cannot instantiate entity table", e);
-          }
-        }
-        //noinspection unchecked
-        return (T) entityTable;
-      }
-      throw new DatasetInstantiationException("Trying to access dataset other than entity table: " + name);
+      throw new UnsupportedOperationException();
     }
 
     @Override
@@ -146,7 +133,20 @@ public class NoSqlTransactionRunner implements TransactionRunner {
 
     @Override
     public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)  {
-      throw new UnsupportedOperationException();
+      // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
+      if (NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME.equals(name)) {
+        if (entityTable == null) {
+          try {
+            entityTable = tableAdmin.getEntityTable(arguments);
+            txContext.addTransactionAware((TransactionAware) entityTable);
+          } catch (IOException e) {
+            throw new DatasetInstantiationException("Cannot instantiate entity table", e);
+          }
+        }
+        //noinspection unchecked
+        return (T) entityTable;
+      }
+      throw new DatasetInstantiationException("Trying to access dataset other than entity table: " + name);
     }
 
     @Override

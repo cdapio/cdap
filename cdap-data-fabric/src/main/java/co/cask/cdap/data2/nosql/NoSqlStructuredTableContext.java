@@ -18,6 +18,8 @@ package co.cask.cdap.data2.nosql;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;
@@ -25,6 +27,10 @@ import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
+import com.google.common.base.Joiner;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The nosql context to get the table.
@@ -46,7 +52,19 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
       if (specification == null) {
         throw new TableNotFoundException(tableId);
       }
-      return new NoSqlStructuredTable(datasetContext.getDataset(NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME),
+
+      Map<String, String> arguments = new HashMap<>();
+      if (specification.getIndexes().isEmpty()) {
+        // No indexes on the table
+        arguments.put(IndexedTable.INDEX_COLUMNS_CONF_KEY, "");
+        arguments.put(IndexedTable.DYNAMIC_INDEXING_PREFIX, "");
+      } else {
+        arguments.put(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(specification.getIndexes()));
+        arguments.put(IndexedTable.DYNAMIC_INDEXING_PREFIX, tableId.getName());
+      }
+      return new NoSqlStructuredTable(datasetContext.getDataset(NamespaceId.SYSTEM.getNamespace(),
+                                                                NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME,
+                                                                arguments),
                                       new StructuredTableSchema(specification));
     } catch (DatasetInstantiationException e) {
       throw new StructuredTableInstantiationException(
