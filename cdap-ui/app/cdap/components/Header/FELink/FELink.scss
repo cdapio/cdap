@@ -17,6 +17,7 @@
 @import '~styles/variables.scss';
 
 #navbar-fe {
+  cursor: pointer;
   &:hover,
   &:active,
   &.active {

@@ -14,8 +14,6 @@
  * the License.
 */
 import * as React from 'react';
-import NavLinkWrapper from 'components/NavLinkWrapper';
-import { Theme } from 'services/ThemeHelper';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./FELink.scss');
@@ -28,13 +26,9 @@ interface IFELinkProps {
 
 class FELink extends React.PureComponent<IFELinkProps> {
   public render() {
-    if (Theme.showDataPrep === false) {
-      return null;
-    }
 
     const featureName = "Feature Engineering";
     const { namespace } = this.props.context;
-    const feURL = `/ns/${namespace}/featureEngineering`;
 
     return (
       <li
@@ -42,15 +36,16 @@ class FELink extends React.PureComponent<IFELinkProps> {
         className={classnames({
           active: this.isFEActive(),
         })}
-      >
-        <NavLinkWrapper
-          isNativeLink={false}
-          to={feURL}
-        >
-          {featureName}
-        </NavLinkWrapper>
+      onClick = {this.navigateToFeature.bind(this, namespace)}>
+      {featureName}
       </li>
     );
+  }
+
+  protected navigateToFeature = (namespace) => {
+    const feURL = `/ns/${namespace}/featureEngineering`;
+    const fePath = `/cdap${feURL}`;
+    window.location.href = fePath;
   }
 
   protected isFEActive = (location = window.location): boolean => {
