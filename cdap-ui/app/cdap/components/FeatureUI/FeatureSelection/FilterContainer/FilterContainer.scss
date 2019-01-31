@@ -1,6 +1,9 @@
 .filter-container {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   overflow: auto;
   background-color: #eeeeee;
   text-align: left;
@@ -11,32 +14,32 @@
   box-shadow: 1px 3px 3px 0px #bbbbbb;
   z-index: 100;
   border-bottom: 1px solid gray;
-  .orderby-box {
+  .filter-content {
     display: flex;
-    padding-bottom: 10px;
-    .orderby-label {
-      padding-right: 15px;
-      padding-top: 5px;
+    flex-direction: column;
+    .orderby-box {
+      display: flex;
+      padding-bottom: 10px;
+      .orderby-label {
+        padding-right: 15px;
+        padding-top: 5px;
+      }
     }
   }
-
   .composite-box {
     display: flex;
     .composite-label {
       padding-right: 10px;
     }
-
     .toggle-switch {
       .switch-button {
         height: 22px;
       }
     }
-
     .action-button-group {
       padding-left: 15px;
     }
   }
-
   .filter-item-box {
     height: calc(100% - 115px);
     overflow-y: auto;
@@ -44,8 +47,8 @@
     padding-top: 10px;
     .add-filter-box {
       display: flex;
-      flex-direction: row-reverse;
-      padding-right: 10px;
+      flex-direction: row;
+      padding-left: 5px;
       .action-icon {
         padding-left: 10px;
         font-size: 20px;
@@ -60,9 +63,11 @@
 }
 
 .limit-box {
-  display: inline-flex;
+  display: flex;
+  align-content: center;
   width: 100%;
   padding-top: 10px;
+  border-top: 1px solid grey;
   .limit-label {
     padding-right: 10px;
   }
@@ -73,8 +78,5 @@
   .value-seperator {
     padding-left: 5px;
     padding-right: 5px;
-  }
-  .apply-btn {
-    margin-left: 90px;
   }
 }

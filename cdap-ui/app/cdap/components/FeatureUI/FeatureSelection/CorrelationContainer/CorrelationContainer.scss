@@ -11,15 +11,19 @@
   box-shadow: 1px 3px 3px 0px #bbbbbb;
   z-index: 100;
   border-bottom: 1px solid gray;
+  justify-content: space-between;
+  display: flex;
+  flex-direction: column;
+  .correlation-box {
+    border-radius: 10px;
+    box-shadow: 3px 3px 5px #888888;
+    background-color: white;
+  }
   .algo-box {
     display: flex;
     align-items: center;
     width: 100%;
     padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 10px;
-    box-shadow: 3px 3px 5px #888888;
-    background-color: #e3e2e4;
     .algo-label {
       padding-right: 15px;
     }
@@ -31,9 +35,6 @@
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
-    border-radius: 10px;
-    box-shadow: 3px 3px 5px #888888;
-    background-color: #e3e2e4;
     .feature-label {
       padding-right: 15px;
     }
@@ -51,7 +52,8 @@
       padding-right: 30px;
     }
 
-    .list-group{
+    .list-group {
+      margin-top: 5px;
       overflow-y: auto;
     }
 
@@ -67,7 +69,7 @@
       white-space: nowrap;
       overflow: hidden;
       font-size: 12px;
-      margin: 0px
+      margin: 0px;
     }
     .select-icon {
       font-size: 20px;
@@ -93,7 +95,9 @@
     padding-left: 10px;
   }
   .control-box {
+    border-top: 1px solid grey;
     display: flex;
     flex-direction: row-reverse;
+    padding-top: 10px;
   }
 }

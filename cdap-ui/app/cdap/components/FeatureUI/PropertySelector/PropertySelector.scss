@@ -78,6 +78,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  outline: none;
   .title-items {
     display: flex;
     align-items: center;
@@ -113,8 +114,19 @@
   background-color: #e1e1e1;
   margin: 0px -5px;
   padding: 4px 10px;
+  &:after {
+    content: "\F0d7";
+    font-family: "FontAwesome";
+    font-size: 14px;
+    float: right;
+    color: white;
+    text-shadow: 0px 2px 3px #483463;
+  }
 }
 
+.selected {
+  background-color: #5c86e1;
+}
 .list-header:hover {
   background-color: #c2c2c2;
 }
@@ -125,9 +137,9 @@
   color: white;
   margin: 0px -5px;
   padding: 4px 10px;
-  background-color: #999999;
+  background-color: #5c86e1;
   &:after {
-    content: "\F111";
+    content: "\F0d8";
     font-family: "FontAwesome";
     font-size: 14px;
     float: right;

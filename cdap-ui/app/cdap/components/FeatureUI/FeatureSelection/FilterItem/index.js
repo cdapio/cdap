@@ -89,7 +89,7 @@ class FilterItem extends Component {
             </div>
             : null
           }
-          <i className="fa fa-minus-circle text-danger action-icon" aria-hidden="true" onClick={this.props.removeFilterItem}></i>
+          <i className="fa fa-minus-circle action-icon" aria-hidden="true" onClick={this.props.removeFilterItem}></i>
         </div>
         {
           this.props.itemVO.hasRangeError ?

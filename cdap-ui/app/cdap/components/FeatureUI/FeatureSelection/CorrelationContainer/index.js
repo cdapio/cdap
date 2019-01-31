@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem,ListGroup, ListGroupItem, InputGroup, Input} from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, ListGroup, ListGroupItem, InputGroup, Input } from 'reactstrap';
 import './CorrelationContainer.scss';
 import { isNil, cloneDeep } from 'lodash';
 import propTypes from 'prop-types';
@@ -13,7 +13,7 @@ class CorrelationContainer extends Component {
   { id: 3, enable: false, name: "Range", minValue: "", maxValue: "", doubleView: true, hasRangeError: false }
   ]
 
-  lastSelectedFeature =  undefined;
+  lastSelectedFeature = undefined;
 
   constructor(props) {
     super(props);
@@ -96,7 +96,7 @@ class CorrelationContainer extends Component {
     if (!isNil(evt)) {
       value = evt.target.value.trim();
     }
-    this.setState({featureNames: this.props.featureNames.filter((item)=> item.name.includes(value))});
+    this.setState({ featureNames: this.props.featureNames.filter((item) => item.name.includes(value)) });
   }
 
   applyCorrelation = () => {
@@ -130,48 +130,50 @@ class CorrelationContainer extends Component {
 
     return (
       <div className="correlation-container">
-        <div className="algo-box">
-          <label className="algo-label">Algorithm: </label>
-          <Dropdown isOpen={this.state.openAlgoDropdown} toggle={this.toggleAlgoDropDown}>
-            <DropdownToggle caret>
-              {this.state.selectedAlgo.name}
-            </DropdownToggle>
-            <DropdownMenu>
-              {
-                this.state.algolist.map((column) => {
-                  return (
-                    <DropdownItem onClick={this.algoTypeChange.bind(this, column)}
-                      key={'algo_' + column.id.toString()}
-                    >{column.name}</DropdownItem>
-                  );
-                })
-              }
-            </DropdownMenu>
-          </Dropdown>
-        </div>
-        <div className="feature-box">
-        <div>
-          <label className="feature-label">Select Feature: </label>
-          <InputGroup className="search-group">
-              <Input className="search-input" placeholder="search generated feature" onChange={this.onFeatureSearch.bind(this)} />
-              <i className = "search-icon fa fa-search"></i>
-            </InputGroup>
-        </div>
+        <div className = "correlation-box">
+          <div className="algo-box">
+            <label className="algo-label">Algorithm: </label>
+            <Dropdown isOpen={this.state.openAlgoDropdown} toggle={this.toggleAlgoDropDown}>
+              <DropdownToggle caret>
+                {this.state.selectedAlgo.name}
+              </DropdownToggle>
+              <DropdownMenu>
+                {
+                  this.state.algolist.map((column) => {
+                    return (
+                      <DropdownItem onClick={this.algoTypeChange.bind(this, column)}
+                        key={'algo_' + column.id.toString()}
+                      >{column.name}</DropdownItem>
+                    );
+                  })
+                }
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+          <div className="feature-box">
+            <div>
+              <label className="feature-label">Select Feature: </label>
+              <InputGroup className="search-group">
+                <Input className="search-input" placeholder="search generated feature" onChange={this.onFeatureSearch.bind(this)} />
+                <i className="search-icon fa fa-search"></i>
+              </InputGroup>
+            </div>
 
-          <ListGroup>
-            {
-              this.state.featureNames.map((item) => {
-                return (<ListGroupItem active={item.selected} key={item.id}
-                  onClick={() => this.onFeatrureClick(item)}>
-                  <label className='feature-box-item'>{item.name} title={item.name}</label>
+            <ListGroup>
+              {
+                this.state.featureNames.map((item) => {
+                  return (<ListGroupItem active={item.selected} key={item.id}
+                    onClick={() => this.onFeatrureClick(item)}>
+                    <label className='feature-box-item'>{item.name} title={item.name}</label>
                     {
                       item.selected && <i class="fa fa-check select-icon"></i>
                     }
-                </ListGroupItem>);
-              })
-            }
-          </ListGroup>
+                  </ListGroupItem>);
+                })
+              }
+            </ListGroup>
 
+          </div>
         </div>
         {
           //corelationItem
