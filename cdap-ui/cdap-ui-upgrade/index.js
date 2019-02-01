@@ -35,7 +35,6 @@ var folderstozip = [
   '/common_dist/',
   '/dll/',
   '/login_dist/',
-  '/old_dist/',
   '/server/',
   '/templates/',
   '/wrangler_dist/'

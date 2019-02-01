@@ -84,7 +84,6 @@ var rules = [
       /node_modules/,
       /bower_components/,
       /dist/,
-      /old_dist/,
       /cdap_dist/,
       /common_dist/,
       /lib/,
