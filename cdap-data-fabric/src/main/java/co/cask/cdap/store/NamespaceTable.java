@@ -22,6 +22,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
@@ -45,7 +46,7 @@ public final class NamespaceTable {
 
   private StructuredTable table;
 
-  NamespaceTable(StructuredTableContext context) throws NotFoundException {
+  NamespaceTable(StructuredTableContext context) throws TableNotFoundException {
     this.table = context.getTable(StoreDefinition.NamespaceStore.NAMESPACES);
   }
 

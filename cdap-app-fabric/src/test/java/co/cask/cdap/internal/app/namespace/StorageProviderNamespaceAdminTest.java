@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.DefaultNamespacePathLocator;
@@ -59,7 +58,7 @@ public class StorageProviderNamespaceAdminTest {
   private static DatasetService datasetService;
 
   @BeforeClass
-  public static void setup() throws IOException, AlreadyExistsException {
+  public static void setup() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);

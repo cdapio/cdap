@@ -27,7 +27,6 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -43,6 +42,8 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
@@ -83,7 +84,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.Spliterators;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -209,7 +209,7 @@ public class ArtifactStore {
    */
   public List<ArtifactDetail> getArtifacts(final NamespaceId namespace) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       List<ArtifactDetail> artifacts = Lists.newArrayList();
       Range scanRange = createArtifactScanRange(namespace);
       // TODO: CDAP-14636 add scan method without limit
@@ -231,7 +231,7 @@ public class ArtifactStore {
    */
   public List<ArtifactDetail> getArtifacts(ArtifactRange range, int limit, ArtifactSortOrder order) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return getArtifacts(context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE), range, limit, order);
+      return getArtifacts(getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE), range, limit, order);
     });
   }
 
@@ -249,7 +249,7 @@ public class ArtifactStore {
 
   private List<ArtifactDetail> getArtifacts(Iterator<StructuredRow> iterator, int limit,
                                             ArtifactSortOrder order,
-                                            @Nullable ArtifactRange range) throws IOException {
+                                            @Nullable ArtifactRange range) {
     if (!iterator.hasNext()) {
       return Collections.emptyList();
     }
@@ -343,7 +343,7 @@ public class ArtifactStore {
                                            int limit,
                                            ArtifactSortOrder order) throws ArtifactNotFoundException, IOException {
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       Collection<Field<?>> keys =
         Arrays.asList(Fields.stringField(StoreDefinition.ArtifactStore.ARTIFACT_NAMESPACE_FIELD,
                                          namespace.getNamespace()),
@@ -371,7 +371,7 @@ public class ArtifactStore {
    */
   public ArtifactDetail getArtifact(final Id.Artifact artifactId) throws ArtifactNotFoundException, IOException {
     ArtifactData artifactData = TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       ArtifactCell artifactCell = new ArtifactCell(artifactId);
       Optional<StructuredRow> row = table.read(artifactCell.keys);
       if (!row.isPresent()) {
@@ -402,7 +402,7 @@ public class ArtifactStore {
   public SortedMap<ArtifactDescriptor, List<ApplicationClass>> getApplicationClasses(NamespaceId namespace) {
     return TransactionRunners.run(transactionRunner, context -> {
       SortedMap<ArtifactDescriptor, List<ApplicationClass>> result = Maps.newTreeMap();
-      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+      StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.APP_DATA_TABLE);
       Collection<Field<?>> keys = Collections.singleton(
         Fields.stringField(StoreDefinition.ArtifactStore.NAMESPACE_FIELD, namespace.getNamespace()));
       try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(keys), Integer.MAX_VALUE)) {
@@ -431,7 +431,7 @@ public class ArtifactStore {
   public SortedMap<ArtifactDescriptor, ApplicationClass> getApplicationClasses(final NamespaceId namespace,
                                                                                final String className) {
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+      StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.APP_DATA_TABLE);
 
       SortedMap<ArtifactDescriptor, ApplicationClass> result = Maps.newTreeMap();
       Collection<Field<?>> keys = ImmutableList.of(
@@ -484,13 +484,13 @@ public class ArtifactStore {
     throws ArtifactNotFoundException, IOException {
 
     return TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
         getPluginsInArtifact(artifactDataTable, parentArtifactId,
                              input -> (type == null || type.equals(input.getType())) && isAllowed(input));
 
       // Scan plugins
-      StructuredTable pluginTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      StructuredTable pluginTable = getTable(context, StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
       try (CloseableIterator<StructuredRow> iterator =
              pluginTable.scan(createPluginScanRange(parentArtifactId, type), Integer.MAX_VALUE)) {
         while (iterator.hasNext()) {
@@ -500,7 +500,7 @@ public class ArtifactStore {
       }
 
       // Scan universal plugins
-      StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+      StructuredTable uniPluginTable = getTable(context, StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
       List<Range> ranges = Arrays.asList(
         createUniversalPluginScanRange(namespace.getNamespace(), type),
         createUniversalPluginScanRange(NamespaceId.SYSTEM.getNamespace(), type)
@@ -568,7 +568,7 @@ public class ArtifactStore {
     throws IOException, ArtifactNotFoundException, PluginNotExistsException {
 
     SortedMap<ArtifactDescriptor, PluginClass> result = TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       List<ArtifactDetail> parentArtifactDetails = getArtifacts(artifactDataTable, parentArtifactRange,
                                                                 Integer.MAX_VALUE, null);
 
@@ -595,7 +595,7 @@ public class ArtifactStore {
       }
 
       // Add all plugins that extends from the given set of parents
-      StructuredTable pluginTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      StructuredTable pluginTable = getTable(context, StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
       PluginKeyPrefix pluginKey = new PluginKeyPrefix(parentArtifactRange.getNamespace(),
                                                       parentArtifactRange.getName(), type, name);
       try (CloseableIterator<StructuredRow> iterator =
@@ -604,7 +604,7 @@ public class ArtifactStore {
       }
 
       // Add all universal plugins
-      StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+      StructuredTable uniPluginTable = getTable(context, StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
       for (String ns : Arrays.asList(namespace.getNamespace(), NamespaceId.SYSTEM.getNamespace())) {
         UniversalPluginKeyPrefix universalPluginKey = new UniversalPluginKeyPrefix(ns, type, name);
         try (CloseableIterator<StructuredRow> iterator =
@@ -635,7 +635,7 @@ public class ArtifactStore {
     throws ArtifactNotFoundException, IOException {
 
     TransactionRunners.run(transactionRunner, context -> {
-      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       ArtifactCell artifactCell = new ArtifactCell(artifactId);
       Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
       if (!optional.isPresent()) {
@@ -677,7 +677,7 @@ public class ArtifactStore {
     // if we're not a snapshot version, check that the artifact doesn't exist already.
     if (!artifactId.getVersion().isSnapshot()) {
       TransactionRunners.run(transactionRunner, context -> {
-        StructuredTable table = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+        StructuredTable table = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
         ArtifactCell artifactCell = new ArtifactCell(artifactId);
         if (table.read(artifactCell.keys).isPresent()) {
           throw new ArtifactAlreadyExistsException(artifactId.toEntityId());
@@ -698,7 +698,7 @@ public class ArtifactStore {
       transactionRunner.run(context -> {
         // we have to check that the metadata doesn't exist again since somebody else may have written
         // the artifact while we were copying the artifact to the filesystem.
-        StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+        StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
         ArtifactCell artifactCell = new ArtifactCell(artifactId);
         Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
         boolean isSnapshot = artifactId.getVersion().isSnapshot();
@@ -758,7 +758,7 @@ public class ArtifactStore {
     // delete everything in a transaction
     TransactionRunners.run(transactionRunner, context -> {
       // first look up details to get plugins and apps in the artifact
-      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       ArtifactCell artifactCell = new ArtifactCell(artifactId);
       Optional<StructuredRow> optional = artifactDataTable.read(artifactCell.keys);
       if (!optional.isPresent()) {
@@ -783,24 +783,24 @@ public class ArtifactStore {
 
     TransactionRunners.run(transactionRunner, context -> {
       // delete all rows about artifacts in the namespace
-      StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+      StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
       Range artifactScanRange = createArtifactScanRange(namespace);
       deleteRangeFromTable(artifactDataTable, artifactScanRange);
 
       // delete all rows about artifacts in the namespace and the plugins they have access to
-      StructuredTable pluginDataTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+      StructuredTable pluginDataTable = getTable(context, StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
       Collection<Field<?>> pluginKey =
         Collections.singleton(Fields.stringField(StoreDefinition.ArtifactStore.PARENT_NAMESPACE_FIELD,
                                                  namespace.getNamespace()));
       deleteRangeFromTable(pluginDataTable, Range.singleton(pluginKey));
 
       // delete all rows about universal plugins
-      StructuredTable univPluginsDataTable  = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+      StructuredTable univPluginsDataTable  = getTable(context, StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
       deleteRangeFromTable(univPluginsDataTable,
                            createUniversalPluginScanRange(namespace.getNamespace(), null));
 
       // delete app classes in this namespace
-      StructuredTable appClassTable = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+      StructuredTable appClassTable = getTable(context, StoreDefinition.ArtifactStore.APP_DATA_TABLE);
       deleteRangeFromTable(appClassTable, createAppClassRange(namespace));
 
       // delete plugins in this namespace from system artifacts
@@ -845,9 +845,9 @@ public class ArtifactStore {
 
   // write a new artifact snapshot and clean up the old snapshot data
   private void writeMeta(StructuredTableContext context, Id.Artifact artifactId,
-                         ArtifactData data) throws NotFoundException, IOException {
+                         ArtifactData data) throws IOException {
     // write to artifact data table
-    StructuredTable artifactDataTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+    StructuredTable artifactDataTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
     ArtifactCell artifactCell = new ArtifactCell(artifactId);
     artifactDataTable.upsert(
       concatFields(artifactCell.keys, Collections.singleton(
@@ -858,7 +858,7 @@ public class ArtifactStore {
     Location artifactLocation = Locations.getLocationFromAbsolutePath(locationFactory, data.getLocationPath());
 
     // write appClass metadata
-    StructuredTable appTable = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+    StructuredTable appTable = getTable(context, StoreDefinition.ArtifactStore.APP_DATA_TABLE);
     ArtifactCell artifactkeys = new ArtifactCell(artifactId);
     for (ApplicationClass appClass : classes.getApps()) {
       // a:{namespace}:{classname}
@@ -869,7 +869,7 @@ public class ArtifactStore {
     }
 
     // write pluginClass metadata, we loop twice to only access to one table at a time to prevent deadlock
-    StructuredTable pluginTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+    StructuredTable pluginTable = getTable(context, StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
     for (PluginClass pluginClass : classes.getPlugins()) {
       // write metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : data.meta.getUsableBy()) {
@@ -885,7 +885,7 @@ public class ArtifactStore {
     }
 
     // write universal plugin class metadata
-    StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+    StructuredTable uniPluginTable = getTable(context, StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
     for (PluginClass pluginClass : classes.getPlugins()) {
       // If the artifact is deployed without any parent, add a special row to indicate that it can be used
       // by any other artifact in the same namespace.
@@ -916,21 +916,21 @@ public class ArtifactStore {
   }
 
   private void deleteMeta(StructuredTableContext context, Id.Artifact artifactId, ArtifactData oldMeta)
-    throws IOException, NotFoundException {
+    throws IOException {
     // delete old artifact data
-    StructuredTable artifactTable = context.getTable(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
+    StructuredTable artifactTable = getTable(context, StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE);
     ArtifactCell artifactCell = new ArtifactCell(artifactId);
     artifactTable.delete(artifactCell.keys);
 
     // delete old appclass metadata
-    StructuredTable appClassTable = context.getTable(StoreDefinition.ArtifactStore.APP_DATA_TABLE);
+    StructuredTable appClassTable = getTable(context, StoreDefinition.ArtifactStore.APP_DATA_TABLE);
     for (ApplicationClass appClass : oldMeta.meta.getClasses().getApps()) {
       AppClassKey appClassKey = new AppClassKey(artifactId.getNamespace().toEntityId(), appClass.getClassName());
       deleteRangeFromTable(appClassTable, Range.singleton(appClassKey.keys));
     }
 
     // delete old plugins, we loop twice to only access to one table at a time to prevent deadlock
-    StructuredTable pluginDataTable = context.getTable(StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
+    StructuredTable pluginDataTable = getTable(context, StoreDefinition.ArtifactStore.PLUGIN_DATA_TABLE);
     for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
       // delete metadata for each artifact this plugin extends
       for (ArtifactRange artifactRange : oldMeta.meta.getUsableBy()) {
@@ -943,7 +943,7 @@ public class ArtifactStore {
     }
 
     // Delete the universal plugin row
-    StructuredTable uniPluginTable = context.getTable(StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
+    StructuredTable uniPluginTable = getTable(context, StoreDefinition.ArtifactStore.UNIV_PLUGIN_DATA_TABLE);
     for (PluginClass pluginClass : oldMeta.meta.getClasses().getPlugins()) {
       if (oldMeta.meta.getUsableBy().isEmpty()) {
         UniversalPluginKeyPrefix pluginKey = new UniversalPluginKeyPrefix(artifactId.getNamespace().getId(),
@@ -954,18 +954,27 @@ public class ArtifactStore {
 
     // delete the old jar file
     try {
-      new EntityImpersonator(artifactId.toEntityId(), impersonator).impersonate(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          Locations.getLocationFromAbsolutePath(locationFactory, oldMeta.getLocationPath()).delete();
-          return null;
-        }
+      new EntityImpersonator(artifactId.toEntityId(), impersonator).impersonate(() -> {
+        Locations.getLocationFromAbsolutePath(locationFactory, oldMeta.getLocationPath()).delete();
+        return null;
       });
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception e) {
       // this should not happen
       throw Throwables.propagate(e);
+    }
+  }
+
+  private StructuredTable getTable(StructuredTableContext context, StructuredTableId id) {
+    try {
+      return context.getTable(id);
+    } catch (TableNotFoundException e) {
+      // this should not be translated to a NotFoundException, as this type of error is an internal error
+      // and not an entity not found error
+      throw new IllegalStateException(
+        String.format("System table '%s' could not be found. "
+                        + "Please check that your environment is properly set up.", id), e);
     }
   }
 

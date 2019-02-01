@@ -16,10 +16,10 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.base.Preconditions;
@@ -40,7 +40,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
     this.transactionRunner = transactionRunner;
   }
 
-  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws NotFoundException {
+  private NamespaceTable getNamespaceTable(StructuredTableContext context) throws TableNotFoundException {
     return new NamespaceTable(context);
   }
 

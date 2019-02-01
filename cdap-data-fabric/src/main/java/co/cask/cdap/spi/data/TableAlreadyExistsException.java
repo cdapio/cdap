@@ -12,6 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
  */
 
 package co.cask.cdap.spi.data;
@@ -19,19 +20,17 @@ package co.cask.cdap.spi.data;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 
 /**
- * This interface provides methods that instantiate a {@link StructuredTable} during the runtime.
- * of a program.
+ * Thrown when a table already exists when it is not expected to.
  */
-public interface StructuredTableContext {
+public class TableAlreadyExistsException extends Exception {
+  private final StructuredTableId id;
 
-  /**
-   * Get an instance of the specified Dataset.
-   *
-   * @param tableId the table id
-   * @return An instance of the specified table, never null
-   * @throws StructuredTableInstantiationException if the table cannot be instantiated
-   * @throws TableNotFoundException if the table is not found
-   */
-  StructuredTable getTable(StructuredTableId tableId)
-    throws StructuredTableInstantiationException, TableNotFoundException;
+  public TableAlreadyExistsException(StructuredTableId id) {
+    super(String.format("System table '%s' already exists.", id));
+    this.id = id;
+  }
+
+  public StructuredTableId getId() {
+    return id;
+  }
 }

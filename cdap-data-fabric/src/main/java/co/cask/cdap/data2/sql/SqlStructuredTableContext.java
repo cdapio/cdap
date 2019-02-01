@@ -16,11 +16,11 @@
 
 package co.cask.cdap.data2.sql;
 
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;
+import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
@@ -41,10 +41,10 @@ public class SqlStructuredTableContext implements StructuredTableContext {
 
   @Override
   public StructuredTable getTable(
-    StructuredTableId tableId) throws StructuredTableInstantiationException, NotFoundException {
+    StructuredTableId tableId) throws StructuredTableInstantiationException, TableNotFoundException {
     StructuredTableSpecification specification = admin.getSpecification(tableId);
     if (specification == null) {
-      throw new NotFoundException(tableId);
+      throw new TableNotFoundException(tableId);
     }
     return new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification));
   }

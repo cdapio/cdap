@@ -17,10 +17,10 @@
 package co.cask.cdap.spi.data.table.field;
 
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -39,13 +39,13 @@ public class FieldTest {
   }
 
   private Set<Field<?>> generateFieldsSet() {
-    return ImmutableSet.of(
-      Fields.bytesField("bytes", Bytes.toBytes("bytesval")),
-      Fields.stringField("string", "strval"),
-      Fields.doubleField("double", 100.0),
-      Fields.intField("int", 30),
-      Fields.bytesField("double-bytes", Bytes.toBytes(100.0)),
-      Fields.bytesField("long-bytes", Bytes.toBytes(600L))
-    );
+    Set<Field<?>> fields = new HashSet<>();
+    fields.add(Fields.bytesField("bytes", Bytes.toBytes("bytesval")));
+    fields.add(Fields.stringField("string", "strval"));
+    fields.add(Fields.doubleField("double", 100.0));
+    fields.add(Fields.intField("int", 30));
+    fields.add(Fields.bytesField("double-bytes", Bytes.toBytes(100.0)));
+    fields.add(Fields.bytesField("long-bytes", Bytes.toBytes(600L)));
+    return fields;
   }
 }

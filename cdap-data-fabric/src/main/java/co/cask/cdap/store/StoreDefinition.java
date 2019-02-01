@@ -18,6 +18,7 @@ package co.cask.cdap.store;
 
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Fields;
@@ -40,7 +41,7 @@ public final class StoreDefinition {
    * @param tableAdmin the table admin to create the table
    */
   public static void createAllTables(StructuredTableAdmin tableAdmin, boolean overWrite)
-    throws IOException, AlreadyExistsException {
+    throws IOException, TableAlreadyExistsException {
     if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
@@ -49,7 +50,7 @@ public final class StoreDefinition {
     }
   }
 
-  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
+  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
     createAllTables(tableAdmin, false);
   }
 
@@ -70,7 +71,7 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(NAMESPACE_TABLE_SPEC);
     }
   }
@@ -153,7 +154,7 @@ public final class StoreDefinition {
                          ARTIFACT_NAMESPACE_FIELD, ARTIFACT_NAME_FIELD, ARTIFACT_VER_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, AlreadyExistsException {
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(ARTIFACT_DATA_SPEC);
       tableAdmin.create(APP_DATA_SPEC);
       tableAdmin.create(PLUGIN_DATA_SPEC);

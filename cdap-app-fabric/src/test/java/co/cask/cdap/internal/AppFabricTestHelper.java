@@ -30,7 +30,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -66,6 +65,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
@@ -156,7 +156,7 @@ public class AppFabricTestHelper {
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
       try {
         StoreDefinition.createAllTables(tableAdmin);
-      } catch (IOException | AlreadyExistsException e) {
+      } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
       }
     }

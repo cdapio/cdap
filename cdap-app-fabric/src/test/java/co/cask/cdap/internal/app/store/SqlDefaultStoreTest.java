@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
@@ -45,7 +44,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
   private static EmbeddedPostgres pg;
 
   @BeforeClass
-  public static void beforeClass() throws IOException, AlreadyExistsException {
+  public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     // TODO(CDAP-14770): change this when migrating DefaultStore
     store = injector.getInstance(DefaultStore.class);
