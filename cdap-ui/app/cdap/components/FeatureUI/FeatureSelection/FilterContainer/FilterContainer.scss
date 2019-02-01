@@ -17,6 +17,8 @@
   .filter-content {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
     .orderby-box {
       display: flex;
       padding-bottom: 10px;
@@ -42,7 +44,6 @@
   }
   .filter-item-box {
     height: calc(100% - 115px);
-    overflow-y: auto;
     padding-right: 5px;
     padding-top: 10px;
     .add-filter-box {
