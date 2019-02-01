@@ -16,8 +16,8 @@
 
 package co.cask.cdap.data2.sql;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistry;
@@ -45,13 +45,13 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
   }
 
   @Override
-  public void create(StructuredTableSpecification spec) throws IOException, AlreadyExistsException {
+  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
     try (Connection connection = dataSource.getConnection()) {
       DatabaseMetaData metaData = connection.getMetaData();
       ResultSet rs = metaData.getTables(null, null,
                                         spec.getTableId().getName(), null);
       if (rs.next()) {
-        throw new AlreadyExistsException(spec.getTableId());
+        throw new TableAlreadyExistsException(spec.getTableId());
       }
       Statement statement = connection.createStatement();
       statement.execute(getCreateStatement(spec));

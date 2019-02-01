@@ -18,12 +18,12 @@ package co.cask.cdap.data2.nosql;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;
+import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
@@ -42,11 +42,11 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
 
   @Override
   public StructuredTable getTable(
-    StructuredTableId tableId) throws StructuredTableInstantiationException, NotFoundException {
+    StructuredTableId tableId) throws StructuredTableInstantiationException, TableNotFoundException {
     try {
       StructuredTableSpecification specification = tableAdmin.getSpecification(tableId);
       if (specification == null) {
-        throw new NotFoundException(tableId);
+        throw new TableNotFoundException(tableId);
       }
       return new NoSqlStructuredTable(datasetContext.getDataset(NamespaceId.SYSTEM.getNamespace(),
                                                                 NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME),

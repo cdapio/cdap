@@ -23,7 +23,6 @@ import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.store.ServiceStore;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.MasterUtils;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -77,6 +76,7 @@ import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -693,7 +693,7 @@ public class MasterServiceMain extends DaemonMain {
       if (tableAdmin.getSpecification(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
         try {
           StoreDefinition.createAllTables(tableAdmin);
-        } catch (IOException | AlreadyExistsException e) {
+        } catch (IOException | TableAlreadyExistsException e) {
           throw new RuntimeException("Unable to create the system tables.", e);
         }
       }

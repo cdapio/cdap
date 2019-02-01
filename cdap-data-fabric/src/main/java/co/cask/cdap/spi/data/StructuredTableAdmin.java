@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spi.data;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 
@@ -32,9 +31,9 @@ public interface StructuredTableAdmin {
    *
    * @param spec table specification
    * @throws IOException if there is an error creating the table
-   * @throws AlreadyExistsException if the table already exists
+   * @throws TableAlreadyExistsException if the table already exists
    */
-  void create(StructuredTableSpecification spec) throws IOException, AlreadyExistsException;
+  void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException;
 
   /**
    * Get the {@link StructuredTableSpecification} corresponding to the given table id.

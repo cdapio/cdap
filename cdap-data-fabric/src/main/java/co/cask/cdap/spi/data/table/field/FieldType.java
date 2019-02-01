@@ -16,8 +16,8 @@
 
 package co.cask.cdap.spi.data.table.field;
 
-import com.google.common.collect.ImmutableSet;
-
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -37,7 +37,8 @@ public final class FieldType {
     BYTES
   }
 
-  static final Set<Type> PRIMARY_KEY_TYPES = ImmutableSet.of(Type.INTEGER, Type.LONG, Type.STRING);
+  static final Set<Type> PRIMARY_KEY_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.INTEGER, Type.LONG,
+                                                                                    Type.STRING));
 
   private final String name;
   private final Type type;
