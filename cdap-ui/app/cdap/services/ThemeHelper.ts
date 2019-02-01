@@ -206,6 +206,8 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
+      showFooter: true,
+      showHeader: true,
       featureNames: {
         analytics: 'Analytics',
         controlCenter: 'Control Center',
@@ -312,7 +314,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showDashboard: true,
       showReports: true,
       showDataPrep: true,
-      showFeatureEngineering: false,
+      showFeatureEngineering: true,
       showPipelines: true,
       showAnalytics: true,
       showRulesEngine: true,
