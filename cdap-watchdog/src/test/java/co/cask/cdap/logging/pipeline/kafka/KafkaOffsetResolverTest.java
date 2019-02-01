@@ -28,7 +28,6 @@ import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.context.GenericLoggingContext;
-import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
@@ -173,7 +172,7 @@ public class KafkaOffsetResolverTest {
     // Use every event's timestamp as target time and assert that found offset is the next offset of the current offset
     for (int i = 0; i < inOrderEvents.size(); i++) {
       long targetTime = inOrderEvents.get(i).getTimeStamp();
-      long offset = offsetResolver.getStartOffset(new Checkpoint(Long.MAX_VALUE, targetTime, 0), 0);
+      long offset = offsetResolver.getStartOffset(Long.MAX_VALUE, targetTime, 0);
       Assert.assertEquals("Failed to find the expected event with the target time: " + targetTime,
                           i + 1, offset);
     }
@@ -210,7 +209,7 @@ public class KafkaOffsetResolverTest {
   private void assertOffsetResolverResult(KafkaOffsetResolver offsetResolver, List<ILoggingEvent> events,
                                           long targetTime, long baseTime) throws IOException {
     long expectedOffset = findExpectedOffsetByTime(events, targetTime);
-    long offset = offsetResolver.getStartOffset(new Checkpoint(Long.MAX_VALUE, targetTime, 0), 0);
+    long offset = offsetResolver.getStartOffset(Long.MAX_VALUE, targetTime, 0);
     Assert.assertEquals(String.format("Failed to find the expected event with the target time %d when basetime is %d ",
                                       targetTime, baseTime), expectedOffset, offset);
   }
