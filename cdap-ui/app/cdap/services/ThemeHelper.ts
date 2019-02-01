@@ -28,6 +28,7 @@ interface IJsonFeatureNames {
   "control-center"?: string;
   "dashboard"?: string;
   "data-prep"?: string;
+  "feature-engineering"?: string;
   "entities"?: string;
   "hub"?: string;
   "metadata"?: string;
@@ -69,6 +70,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "dashboard"?: boolean;
     "reports"?: boolean;
     "data-prep"?: boolean;
+    "feature-engineering"?: boolean;
     "pipelines"?: boolean;
     "analytics"?: boolean;
     "rules-engine"?: boolean;
@@ -132,6 +134,7 @@ interface IFeatureNames {
   controlCenter: string;
   dashboard: string;
   dataPrep: string;
+  featureEngineering: string;
   entities: string;
   hub: string;
   metadata: string;
@@ -151,6 +154,7 @@ interface IThemeObj {
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
+  showFeatureEngineering?: boolean;
   showPipelines?: boolean;
   showAnalytics?: boolean;
   showRulesEngine?: boolean;
@@ -203,6 +207,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         controlCenter: 'Control Center',
         dashboard: 'Dashboard',
         dataPrep: 'Preparation',
+        featureEngineering: 'Feature Engineering',
         entities: 'Entities',
         hub: 'Hub',
         metadata: 'Metadata',
@@ -263,6 +268,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       if ('data-prep' in contentJson['feature-names']) {
         featureNames.dataPrep = objectQuery(contentJson, 'feature-names', 'data-prep');
       }
+      if ('feature-engineering' in contentJson['feature-names']) {
+        featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'feature-engineering');
+      }
       if ('entities' in contentJson['feature-names']) {
         featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
       }
@@ -294,6 +302,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showDashboard: true,
       showReports: true,
       showDataPrep: true,
+      showFeatureEngineering: false,
       showPipelines: true,
       showAnalytics: true,
       showRulesEngine: true,
@@ -314,6 +323,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('data-prep' in featuresJson && isBoolean(featuresJson['data-prep'])) {
       features.showDataPrep = featuresJson['data-prep'];
+    }
+    if ('feature-engineering' in featuresJson && isBoolean(featuresJson['feature-engineering'])) {
+      features.showFeatureEngineering = featuresJson['feature-engineering'];
     }
     if ('pipelines' in featuresJson && isBoolean(featuresJson.pipelines)) {
       features.showPipelines = featuresJson.pipelines;

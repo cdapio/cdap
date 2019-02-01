@@ -16,6 +16,7 @@
 import * as React from 'react';
 import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
+import { Theme } from 'services/ThemeHelper';
 require('./FELink.scss');
 
 interface IFELinkProps {
@@ -26,7 +27,9 @@ interface IFELinkProps {
 
 class FELink extends React.PureComponent<IFELinkProps> {
   public render() {
-
+    if (Theme.showFeatureEngineering === false) {
+      return null;
+    }
     const featureName = "Feature Engineering";
     const { namespace } = this.props.context;
 
