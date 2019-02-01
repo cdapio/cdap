@@ -154,7 +154,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     testDistributedLogPrev(readRange, LOGGING_CONTEXT_BOTH, 16, 4, "TestDistributedLogReader Log message1 ", 60);
 
     readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
-                                        System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+                              System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
     testDistributedLogPrev(readRange, LOGGING_CONTEXT_BOTH, 16, 4, "TestDistributedLogReader Log message1 ", 60);
 
     testDistributedLogPrev(ReadRange.LATEST, LOGGING_CONTEXT_BOTH, 9, 8, "TestDistributedLogReader Log message1 ", 60);
@@ -179,7 +179,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     testDistributedLogPrev(readRange, LOGGING_CONTEXT_FILE, 7, 6, "TestDistributedLogReader Log message2 ", 40);
 
     readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
-                                        System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+                              System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
 
     testDistributedLogPrev(readRange, LOGGING_CONTEXT_FILE, 7, 6, "TestDistributedLogReader Log message2 ", 40);
 
@@ -206,7 +206,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     testDistributedLogPrev(readRange, LOGGING_CONTEXT_KAFKA, 5, 6, "TestDistributedLogReader Log message3 ", 30);
 
     readRange = new ReadRange(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1),
-                                        System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
+                              System.currentTimeMillis(), LogOffset.INVALID_KAFKA_OFFSET);
 
     testDistributedLogPrev(readRange, LOGGING_CONTEXT_KAFKA, 5, 6, "TestDistributedLogReader Log message3 ", 30);
 
@@ -284,7 +284,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
 
     // Save checkpoint (time of last event)
     CheckpointManagerFactory checkpointManagerFactory = injector.getInstance(CheckpointManagerFactory.class);
-    CheckpointManager checkpointManager =
+    CheckpointManager<Checkpoint> checkpointManager =
       checkpointManagerFactory.create(kafkaTopic, Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
     long checkpointTime = events.get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
     checkpointManager.saveCheckpoints(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),

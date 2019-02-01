@@ -75,7 +75,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
   private final String name;
   private final LogProcessorPipelineContext context;
-  private final CheckpointManager checkpointManager;
+  private final CheckpointManager<Checkpoint> checkpointManager;
   private final Int2LongMap offsets;
   private final Int2ObjectMap<MutableCheckpoint> checkpoints;
   private final LoggingEventSerializer serializer;
@@ -93,7 +93,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   private long lastCheckpointTime;
   private int unSyncedEvents;
 
-  public KafkaLogProcessorPipeline(LogProcessorPipelineContext context, CheckpointManager checkpointManager,
+  public KafkaLogProcessorPipeline(LogProcessorPipelineContext context, CheckpointManager<Checkpoint> checkpointManager,
                                    BrokerService brokerService, KafkaPipelineConfig config) {
     this.name = context.getName();
     this.context = context;
