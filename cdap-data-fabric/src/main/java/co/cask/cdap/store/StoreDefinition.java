@@ -16,7 +16,6 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
