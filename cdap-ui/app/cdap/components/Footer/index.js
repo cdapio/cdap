@@ -20,7 +20,7 @@ import { Theme } from 'services/ThemeHelper';
 require('./Footer.scss');
 
 export default function Footer() {
-  if(Theme.showFooter === false){
+  if (Theme.showFooter === false) {
     return null;
   }
   const footerText = Theme.footerText;

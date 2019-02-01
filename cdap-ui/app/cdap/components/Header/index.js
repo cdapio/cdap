@@ -98,7 +98,7 @@ export default class Header extends Component {
   }
 
   render() {
-    if(Theme.showHeader === false){
+    if (Theme.showHeader === false) {
       return null;
     }
     let administrationURL = '/administration/configuration';
