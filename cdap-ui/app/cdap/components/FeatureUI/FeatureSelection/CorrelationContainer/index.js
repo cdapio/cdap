@@ -131,6 +131,22 @@ class CorrelationContainer extends Component {
     }
   }
 
+  applyClear = () => {
+
+    if (!isNil(this.lastSelectedFeature)) {
+      this.lastSelectedFeature.enable = false;
+    }
+
+    this.setState({ featureNames: this.props.featureNames, selectedAlgo: { id: -1, name: 'Select' }, selectedfeature: undefined });
+
+    setTimeout(() => {
+      this.updateApplyBtnStatus();
+    });
+
+    this.props.onClear();
+
+  }
+
 
   render() {
     // let corelationItem = (
@@ -152,7 +168,7 @@ class CorrelationContainer extends Component {
 
     return (
       <div className="correlation-container">
-        <div className = "correlation-box">
+        <div className="correlation-box">
           <div className="algo-box">
             <label className="algo-label">Algorithm: </label>
             <Dropdown isOpen={this.state.openAlgoDropdown} toggle={this.toggleAlgoDropDown}>
@@ -181,19 +197,19 @@ class CorrelationContainer extends Component {
               </InputGroup>
             </div>
 
-          <ListGroup>
-            {
-              this.state.featureNames.map((item) => {
-                return (<ListGroupItem active={item.selected} key={item.id}
-                  onClick={() => this.onFeatrureClick(item)}>
-                  <label className='feature-box-item'>{item.name} title={item.name}</label>
-                  {
-                    item.selected && <i className="fa fa-check select-icon"></i>
-                  }
-                </ListGroupItem>);
-              })
-            }
-          </ListGroup>
+            <ListGroup>
+              {
+                this.state.featureNames.map((item) => {
+                  return (<ListGroupItem active={item.selected} key={item.id}
+                    onClick={() => this.onFeatrureClick(item)}>
+                    <label className='feature-box-item'>{item.name} title={item.name}</label>
+                    {
+                      item.selected && <i className="fa fa-check select-icon"></i>
+                    }
+                  </ListGroupItem>);
+                })
+              }
+            </ListGroup>
 
           </div>
         </div>
@@ -202,6 +218,7 @@ class CorrelationContainer extends Component {
         }
         <div className="control-box">
           <button className="feature-button" onClick={this.applyCorrelation} disabled={!this.state.activeApplyBtn}>Apply</button>
+          <button className="feature-button clear-button" onClick={this.applyClear} >Clear</button>
         </div>
       </div>
     );
@@ -212,6 +229,7 @@ export default CorrelationContainer;
 
 CorrelationContainer.propTypes = {
   applyCorrelation: propTypes.func,
-  featureNames: propTypes.array
+  featureNames: propTypes.array,
+  onClear: propTypes.func
 };
 

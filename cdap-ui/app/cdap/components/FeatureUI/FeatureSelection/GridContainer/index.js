@@ -6,31 +6,35 @@ import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './GridContainer.scss';
 
 class GridContainer extends Component {
-    constructor(props) {
-      super(props);
-    }
+  defaultColDef = {
+    resizable: true
+  }
+  constructor(props) {
+    super(props);
+  }
 
-    refreshGridColumns = (data) => {
-      console.log(data);
-    }
+  refreshGridColumns = (data) => {
+    console.log(data);
+  }
 
-    onSelectionChanged = (data) => {
-      this.props.selectionChange(data.api.getSelectedRows());
-    }
+  onSelectionChanged = (data) => {
+    this.props.selectionChange(data.api.getSelectedRows());
+  }
 
-    render() {
-        return (
-                <div
-                  className="ag-theme-balham grid-container"    >
-                    <AgGridReact
-                        columnDefs={this.props.gridColums}
-                        rowSelection="multiple"
-                        rowData={this.props.rowData}
-                        onSelectionChanged={this.onSelectionChanged.bind(this)}>
-                    </AgGridReact>
-                </div>
-            );
-    }
+  render() {
+    return (
+      <div
+        className="ag-theme-balham grid-container"    >
+        <AgGridReact
+          columnDefs={this.props.gridColums}
+          defaultColDef={this.defaultColDef}
+          rowSelection="multiple"
+          rowData={this.props.rowData}
+          onSelectionChanged={this.onSelectionChanged.bind(this)}>
+        </AgGridReact>
+      </div>
+    );
+  }
 }
 
 export default GridContainer;

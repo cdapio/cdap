@@ -1,14 +1,18 @@
-.save-pipeline-box {
-  padding-left: 10px;
+.modal-box {
+  width: 385px;
+}
+.pipeline-label {
+  padding-right: 10px;
+}
+.pipeline-name {
+  width: 250px;
+}
 
-  .modal-dialog {
-    width: 385px;
-  }
+.error-box {
+  width: 75%;
+  text-align: left;
+  font-size: x-small;
+  color: red;
+  padding-top: 2px;
 
-  .pipeline-label {
-    padding-right: 10px;
-  }
-  .pipeline-name {
-    width: 250px;
-  }
 }

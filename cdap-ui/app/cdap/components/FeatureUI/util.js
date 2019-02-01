@@ -165,8 +165,8 @@ export function checkResponseError(result) {
   (result.response && result.response.status && result.response.status > 200));
 }
 
-export function getErrorMessage(error) {
-  let errorMessage = "Error in retrieving data";
+export function getErrorMessage(error, defaultMessage) {
+  let errorMessage = isEmpty(defaultMessage)? defaultMessage: "Error in retrieving data";
   if(!isEmpty(error.message)) {
     errorMessage = error.message;
   } else if(error.response && !isEmpty(error.response.message)) {

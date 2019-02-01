@@ -74,21 +74,6 @@
     .select-icon {
       font-size: 20px;
     }
-
-    // .feature-dropdown{
-    //   max-width: 200px;
-    // }
-    // .feature-dropdown-title{
-    //   max-width: 200px;
-    //   overflow: hidden;
-    //   text-overflow: ellipsis;
-    //   white-space: nowrap;
-    // }
-    // .feature-dropdown-menu{
-    //   max-width: 200px;
-    //   max-height: 300px;
-    //   overflow-y: auto;
-    // }
   }
 
   .correlation-item-box {
@@ -99,5 +84,8 @@
     display: flex;
     flex-direction: row-reverse;
     padding-top: 10px;
+    .clear-button {
+      margin-right: 10px;
+    }
   }
 }

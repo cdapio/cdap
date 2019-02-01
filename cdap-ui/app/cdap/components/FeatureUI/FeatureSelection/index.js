@@ -4,10 +4,12 @@ import FilterContainer from './FilterContainer';
 import './FeatureSelection.scss';
 import GridHeader from './GridHeader';
 import GridContainer from './GridContainer';
-import { isNil } from 'lodash';
+import { isNil, cloneDeep } from 'lodash';
 import {
   GET_PIPE_LINE_FILTERED,
-  GET_FEATURE_CORRELAION
+  GET_FEATURE_CORRELAION,
+  GET_PIPE_LINE_DATA,
+  GET_PIPELINE
 } from '../config';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
@@ -19,14 +21,23 @@ import SaveFeatureModal from './SaveFeatureModal';
 
 class FeatureSelection extends Component {
 
+  filterColumnDefs = [];
+  filterGridRows = [];
+  correlationColumnDefs = [];
+  correlationGridRows = [];
 
   constructor(props) {
     super(props);
+    const dataInfo = this.dataParser(this.props.pipeLineData);
     this.state = Object.assign({
       activeTab: "1", selectedFeatures: [],
       openSaveModal: false,
       enableSave:false
-    }, this.dataParser(this.props.pipeLineData));
+    }, dataInfo);
+
+
+    this.storeGridInfo(true, dataInfo.gridColumnDefs, dataInfo.gridRowData);
+    this.storeGridInfo(false, dataInfo.gridColumnDefs, dataInfo.gridRowData);
   }
 
   dataParser = (data) => {
@@ -52,7 +63,7 @@ class FeatureSelection extends Component {
           columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 250, checkboxSelection: true });
         }
         columns.forEach(element => {
-          columDefs.push({ headerName: element.name, field: element.name });
+          columDefs.push({ headerName: element.name, field: element.name , resizable: true});
         });
       }
 
@@ -68,12 +79,24 @@ class FeatureSelection extends Component {
         rowCount++;
       }
     });
+
     return {
       gridColumnDefs: columDefs,
       gridRowData: rowData,
       filterColumns: columns,
       featureNames: featureNames
     };
+  }
+
+  storeGridInfo(isFilter, columDefs, rows) {
+    if(isFilter){
+      this.filterColumnDefs = cloneDeep(columDefs);
+      this.filterGridRows = cloneDeep(rows);
+    }
+    else {
+      this.correlationColumnDefs = cloneDeep(columDefs);
+      this.correlationGridRows = cloneDeep(rows);
+    }
   }
 
   navigateToParentWindow = () => {
@@ -143,6 +166,7 @@ class FeatureSelection extends Component {
             this.handleError(result, GET_PIPE_LINE_FILTERED);
           } else {
             const parsedResult = this.dataParser(result["featureStatsList"]);
+            this.storeGridInfo(true, parsedResult.gridColumnDefs, parsedResult.gridRowData);
             this.setState({ gridRowData: parsedResult.gridRowData });
           }
         },
@@ -154,9 +178,11 @@ class FeatureSelection extends Component {
 
   toggle(tab) {
     if (this.state.activeTab !== tab) {
-      this.setState({
-        activeTab: tab
-      });
+      if(tab == '1'){
+        this.setState({ gridColumnDefs: this.filterColumnDefs, gridRowData: this.filterGridRows, activeTab: tab });
+      }else {
+        this.setState({ gridColumnDefs: this.correlationColumnDefs, gridRowData: this.correlationGridRows, activeTab: tab });
+      }
     }
   }
 
@@ -174,14 +200,18 @@ class FeatureSelection extends Component {
             this.handleError(result, GET_FEATURE_CORRELAION);
           } else {
             const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
-            this.setState({ gridColumnDefs: parsedResult.gridColumnDefs });
-            this.setState({ gridRowData: parsedResult.gridRowData });
+            this.storeGridInfo(false, parsedResult.gridColumnDefs, parsedResult.gridRowData);
+            this.setState({ gridColumnDefs: parsedResult.gridColumnDefs, gridRowData: parsedResult.gridRowData });
           }
         },
         error => {
           this.handleError(error, GET_FEATURE_CORRELAION);
         }
       );
+  }
+
+  clearCorrelation = () => {
+    this.onFeatureSelection(this.props.selectedPipeline);
 
   }
 
@@ -220,6 +250,30 @@ class FeatureSelection extends Component {
     this.setState({openSaveModal:false});
   }
 
+  onFeatureSelection(pipeline, isFilter=false) {
+    this.currentPipeline = pipeline;
+    FEDataServiceApi.pipelineData({
+      namespace: NamespaceStore.getState().selectedNamespace,
+      pipeline: pipeline.pipelineName
+    }).subscribe(
+      result => {
+        if (checkResponseError(result) || isNil(result["featureStatsList"])) {
+          this.handleError(result, GET_PIPE_LINE_DATA);
+        } else {
+          const data = this.dataParser(result["featureStatsList"]);
+          if(!isFilter){
+            this.storeGridInfo(false, data.gridColumnDefs, data.gridRowData);
+            this.setState({gridColumnDefs:data.gridColumnDefs, gridRowData: data.gridRowData });
+          }
+        }
+      },
+      error => {
+        this.handleError(error, GET_PIPELINE);
+      }
+    );
+  }
+
+
   render() {
     return (
       <div className="feature-selection-box">
@@ -254,7 +308,8 @@ class FeatureSelection extends Component {
                 applyFilter={this.applyFilter}></FilterContainer>
             </TabPane>
             <TabPane tabId="2" className="tab-pane">
-              <CorrelationContainer applyCorrelation={this.applyCorrelation} featureNames={this.state.featureNames}></CorrelationContainer>
+              <CorrelationContainer applyCorrelation={this.applyCorrelation} featureNames={this.state.featureNames}
+              onClear={this.clearCorrelation}></CorrelationContainer>
             </TabPane>
           </TabContent>
         </div>

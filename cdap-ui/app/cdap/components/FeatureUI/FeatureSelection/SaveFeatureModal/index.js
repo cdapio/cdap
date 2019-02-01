@@ -4,34 +4,38 @@ import propTypes from 'prop-types';
 import FEDataServiceApi from '../../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
 import { isNil } from 'lodash';
-import { checkResponseError } from '../../util';
+import { checkResponseError,getErrorMessage } from '../../util';
+
 require('./SaveFeatureModal.scss');
-import {
-  GET_FEATURE_CORRELAION
-} from '../../config';
+
 
 class SaveFeatureModal extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       title: 'Save',
-      name:""
+      name: "",
+      hasError:false,
+      errorMessage:""
     };
     this.onOk = this.onOk.bind(this);
     this.onCancel = this.onCancel.bind(this);
   }
 
-  nameChange = (evt)=>{
+  nameChange = (evt) => {
     this.setState({ name: evt.target.value });
   }
 
   onCancel() {
     this.props.onClose('CANCEL');
+    this.setState({name:"", hasError:false, errorMessage:""});
   }
 
   onOk() {
+    this.setState({name:"", hasError:false, errorMessage:""});
     this.savePipeline();
   }
+
 
 
   savePipeline = () => {
@@ -43,8 +47,9 @@ class SaveFeatureModal extends React.Component {
 
       }, this.getSavePipelineRequest(featureGenerationPipelineName)).subscribe(
         result => {
-          if (checkResponseError(result) || isNil(result["featureCorrelationScores"])) {
-            this.handleError(result, GET_FEATURE_CORRELAION);
+          if (checkResponseError(result)) {
+            const message = getErrorMessage(result, "couldn't save pipeline");
+            this.setState({hasError:true, errorMessage:message});
           } else {
             this.props.onClose('OK');
             const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
@@ -53,7 +58,7 @@ class SaveFeatureModal extends React.Component {
           }
         },
         error => {
-          this.handleError(error, GET_FEATURE_CORRELAION);
+          this.setState({hasError:true, errorMessage:getErrorMessage(error, "couldn't save pipeline")});
         }
       );
 
@@ -61,25 +66,30 @@ class SaveFeatureModal extends React.Component {
 
   getSavePipelineRequest(value) {
     return {
-      selectedFeatures: this.props.selectedFeatures.map((item)=>item.featureName),
-      featureEngineeringPipeline:value,
-      featureSelectionPipeline:this.state.name,
+      selectedFeatures: this.props.selectedFeatures.map((item) => item.featureName),
+      featureEngineeringPipeline: value,
+      featureSelectionPipeline: this.state.name,
     };
   }
 
   render() {
     return (
       <div className="save-pipeline-box">
-        <Modal isOpen={this.props.open} zIndex="1090">
+        <Modal isOpen={this.props.open} zIndex="1090" className="modal-box">
           <ModalHeader>{this.state.title}</ModalHeader>
           <ModalBody>
             <div>
               <label className="pipeline-label">Pipeline Name :</label>
               <input className="pipeline-name" value={this.state.name}
-               onChange={this.nameChange}></input>
+                onChange={this.nameChange}></input>
             </div>
           </ModalBody>
           <ModalFooter>
+            {
+              this.state.hasError ?
+                <label className="error-box">{this.state.errorMessage}</label>
+                : null
+            }
             <Button className="btn-margin" color="secondary" onClick={this.onCancel}>Cancel</Button>
             <Button className="btn-margin" color="primary" onClick={this.onOk}
               disabled={this.state.name.trim().length < 1} >OK</Button>
@@ -94,6 +104,6 @@ export default SaveFeatureModal;
 SaveFeatureModal.propTypes = {
   onClose: propTypes.func,
   open: propTypes.bool,
-  selectedPipeline:propTypes.object,
-  selectedFeatures:propTypes.array
+  selectedPipeline: propTypes.object,
+  selectedFeatures: propTypes.array
 };
