@@ -33,6 +33,10 @@
       margin-bottom: 10px;
       padding-right: 10px;
       border-bottom: solid 1px lightgray;
+      label {
+        margin-right: 10px;
+        font-weight: 500;
+      }
       .input-group {
         width: 240px;
         input {
@@ -86,7 +90,7 @@
       padding: 0 5px 0 0;
     }
     .heading {
-      width: 140px;
+      width: 150px;
       font-weight: 500;
       text-overflow: ellipsis;
       font-size: 14px;

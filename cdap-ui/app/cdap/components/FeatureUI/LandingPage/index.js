@@ -565,6 +565,7 @@ class LandingPage extends React.Component {
                     }
                   </DropdownMenu>
                 </Dropdown>
+                <i className="fa fa-refresh refresh-button" onClick = {() => this.getPipelines(this.state.selectedPipelineType)}></i>
               </div>
               <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
             </div>

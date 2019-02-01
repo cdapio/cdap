@@ -10,10 +10,10 @@ class FeatureTable extends React.Component {
       <table className='feature-table'>
         <thead>
           <tr>
-            <th>Pipeline</th>
+            <th>Pipeline Name</th>
             <th>Status</th>
             <th>Last Run Time</th>
-            <th></th>
+            <th>Type</th>
             <th></th>
             <th></th>
           </tr>
@@ -21,7 +21,10 @@ class FeatureTable extends React.Component {
         <tbody>
           {data.map(item => {
             return <tr key={item.pipelineName}>
-              <td>{item.pipelineName}</td>
+              <td>
+                <div className="view-link" onClick={this.onView.bind(this, item)}>
+                  {item.pipelineName}</div>
+              </td>
               <td>
                 <div>
                   <span className={this.getStatusClass(item)}></span>
@@ -30,15 +33,12 @@ class FeatureTable extends React.Component {
               </td>
               <td>{this.getEpochDateString(item.lastStartEpochTime)}</td>
               <td >
-                <div className={(this.isViewable(item)) ? "view-link" : "disable-link"}
-                  onClick={this.onView.bind(this, item)}>
-                  VIEW PIPELINE
-                </div>
+                {item.pipelineType}
               </td>
               <td className="center-align">
                 {
-                  this.isViewable(item) &&
-                  <button className = "feature-button-invert" onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
+                  this.isFeatureAvailable(item) &&
+                  <button className="feature-button-invert" onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
                 }
 
               </td>
@@ -95,7 +95,7 @@ class FeatureTable extends React.Component {
     }
   }
 
-  isViewable(item) {
+  isFeatureAvailable(item) {
     return item && item.status == SUCCEEDED;
   }
 

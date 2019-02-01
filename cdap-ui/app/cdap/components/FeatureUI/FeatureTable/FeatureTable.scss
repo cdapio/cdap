@@ -24,15 +24,15 @@
   }
 
   .view-link {
-    color: #5a84e4;
+    color: #6f7c9d;
     text-decoration: underline;
-    text-align: center;
+    text-align: left;
     cursor: pointer;
   }
 
   .disable-link {
     color: grey;
-    text-align: center;
+    text-align: left;
     pointer-events: none;
   }
 
@@ -45,7 +45,7 @@
   }
 
   .status-success {
-    color: green;
+    color: #00c853;
   }
 
   .status-failed {

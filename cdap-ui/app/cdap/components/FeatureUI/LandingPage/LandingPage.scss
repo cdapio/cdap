@@ -17,12 +17,18 @@
       .type-selector {
         display: flex;
         flex-direction: row;
+        align-items: center;
         .type-label {
           font-size: 16px;
           padding-right: 10px;
           font-weight: 500;
           line-height: 2;
         }
+      }
+      .refresh-button {
+        margin-left: 10px;
+        font-size: 16px;
+        cursor: pointer;
       }
     }
   }
