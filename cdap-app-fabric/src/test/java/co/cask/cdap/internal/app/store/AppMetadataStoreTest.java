@@ -352,8 +352,7 @@ public class AppMetadataStoreTest {
       // Hence number of elements per batch = maxScanTimeMillis
       CountingTicker countingTicker = new CountingTicker(1);
       List<Iterable<RunId>> batches =
-        metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime, maxScanTimeMillis,
-                                                        countingTicker);
+        metadataStoreDataset.getRunningInRangeForStatus("runRecordCompleted", startTime, stopTime);
       Iterable<RunId> runIds = Iterables.concat(batches);
       Iterables.addAll(actual, Iterables.transform(runIds, input -> RunIds.getTime(input, TimeUnit.MILLISECONDS)));
 

@@ -718,9 +718,13 @@ public class DefaultStore implements Store {
 
   @Override
   public Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs) {
-    return Transactionals.execute(transactional, context -> {
-      return getAppMetadataStore(context).getRunningInRange(startTimeInSecs, endTimeInSecs);
-    });
+    Set<RunId> runs = new HashSet<>();
+    runs.addAll(Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getRunningInRangeActive(startTimeInSecs, endTimeInSecs);
+    }));
+    runs.addAll(Transactionals.execute(transactional, context -> {
+      return getAppMetadataStore(context).getRunningInRangeCompleted(startTimeInSecs, endTimeInSecs);
+    }));
   }
 
   @Override
