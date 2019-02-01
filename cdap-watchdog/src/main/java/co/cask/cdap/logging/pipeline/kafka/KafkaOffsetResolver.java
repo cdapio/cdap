@@ -17,7 +17,6 @@
 package co.cask.cdap.logging.pipeline.kafka;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.base.Preconditions;
 import kafka.javaapi.consumer.SimpleConsumer;
@@ -64,9 +63,8 @@ class KafkaOffsetResolver {
    * If they don't, search for the smallest offset of the message with the same log event time
    * as {@code checkpoint.getNextEventTime()}
    *
-   * @param checkpoint A {@link Checkpoint} containing the next offset of a message and its log event timestamp.
-   *                   {@link Checkpoint#getNextOffset()}, {@link Checkpoint#getNextEventTime()}
-   *                   and {@link Checkpoint#getMaxEventTime()} all must return a non-negative long
+   * @param nextOffset the next offset of a message. This value should be non-negative
+   * @param nextEventTime the next log event timestamp. This value should be non-negative
    * @param partition  the partition in the topic for searching matching offset
    * @return the next offset of the message with smallest offset and log event time equal to
    * {@code checkpoint.getNextEventTime()}.
@@ -79,9 +77,9 @@ class KafkaOffsetResolver {
    * @throws UnknownTopicOrPartitionException if the topic or partition is not known by the Kafka server
    * @throws UnknownServerException if the Kafka server responded with error.
    */
-  long getStartOffset(final Checkpoint checkpoint, final int partition) {
+  long getStartOffset(final long nextOffset, final long nextEventTime, final int partition) {
     // This should never happen
-    Preconditions.checkArgument(checkpoint.getNextOffset() > 0, "Invalid checkpoint offset");
+    Preconditions.checkArgument(nextOffset > 0, "Invalid checkpoint offset");
 
     // Get BrokerInfo for constructing SimpleConsumer
     String topic = config.getTopic();
@@ -97,25 +95,25 @@ class KafkaOffsetResolver {
 
     // Check whether the message fetched with the offset in the given checkpoint has the timestamp from
     // checkpoint.getNextOffset() - 1 to get the offset corresponding to the timestamp in checkpoint
-    long offset = checkpoint.getNextOffset() - 1;
+    long offset = nextOffset - 1;
     try {
       long timestamp = getEventTimeByOffset(consumer, partition, offset);
-      if (timestamp == checkpoint.getNextEventTime()) {
-        return checkpoint.getNextOffset();
+      if (timestamp == nextEventTime) {
+        return nextOffset;
       }
       // This can happen in replicated cluster
       LOG.debug("Event timestamp in {}:{} at offset {} is {}. It doesn't match with checkpoint timestamp {}",
-                topic, partition, offset, timestamp, checkpoint.getNextEventTime());
+                topic, partition, offset, timestamp, nextEventTime);
     } catch (NotFoundException | OffsetOutOfRangeException e) {
       // This means we can't find the timestamp. This can happen in replicated cluster
       LOG.debug("Cannot get valid log event in {}:{} at offset {}", topic, partition, offset);
     }
 
     // Find offset that has an event that matches the timestamp
-    long nextOffset = findStartOffset(consumer, partition, checkpoint.getNextEventTime());
-    LOG.debug("Found new nextOffset {} for topic {} partition {} with existing checkpoint {}.",
-              nextOffset, topic, partition, checkpoint);
-    return nextOffset;
+    long startOffset = findStartOffset(consumer, partition, nextEventTime);
+    LOG.debug("Found new nextOffset {} for topic {} partition {} with existing offset {} and event time {}.",
+              startOffset, topic, partition, nextOffset, nextEventTime);
+    return startOffset;
   }
 
   /**

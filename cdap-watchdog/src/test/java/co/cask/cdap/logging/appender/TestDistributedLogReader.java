@@ -31,6 +31,7 @@ import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
+import co.cask.cdap.logging.meta.KafkaOffset;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
@@ -284,11 +285,11 @@ public class TestDistributedLogReader extends KafkaTestBase {
 
     // Save checkpoint (time of last event)
     CheckpointManagerFactory checkpointManagerFactory = injector.getInstance(CheckpointManagerFactory.class);
-    CheckpointManager checkpointManager =
+    CheckpointManager<KafkaOffset> checkpointManager =
       checkpointManagerFactory.create(kafkaTopic, Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
     long checkpointTime = events.get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
-    checkpointManager.saveCheckpoints(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
-                                                      new Checkpoint(numExpectedEvents, checkpointTime,
-                                                                     checkpointTime)));
+    checkpointManager.saveCheckpoints(ImmutableMap.of(
+      stringPartitioner.partition(loggingContext.getLogPartition(), -1),
+      new Checkpoint<>(new KafkaOffset(numExpectedEvents, checkpointTime), checkpointTime)));
   }
 }

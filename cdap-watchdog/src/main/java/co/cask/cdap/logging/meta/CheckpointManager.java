@@ -21,25 +21,24 @@ import java.util.Set;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
+ * @param <Offset> type of the offset
  */
-public interface CheckpointManager {
+public interface CheckpointManager<Offset> {
 
   /**
    * Persists the given map of {@link Checkpoint}s.
    */
-  void saveCheckpoints(Map<Integer, ? extends Checkpoint> checkpoints) throws Exception;
+  void saveCheckpoints(Map<Integer, ? extends Checkpoint<Offset>> checkpoints) throws Exception;
 
   /**
    * Reads the set of {@link Checkpoint}s for the given set of partitions. If there is no checkpoint for the partition,
-   * a {@link Checkpoint} with both {@link Checkpoint#getMaxEventTime()} and
-   * {@link Checkpoint#getNextOffset()} returning {@code -1} will be used.
+   * a {@link Checkpoint} with both {@link Checkpoint#getMaxEventTime()} returning {@code -1} will be used.
    */
-  Map<Integer, Checkpoint> getCheckpoint(Set<Integer> partitions) throws Exception;
+  Map<Integer, Checkpoint<Offset>> getCheckpoint(Set<Integer> partitions) throws Exception;
 
   /**
    * Reads the {@link Checkpoint} for the given partition. If there is no checkpoint for the partition,
-   * a {@link Checkpoint} will be returned with both {@link Checkpoint#getMaxEventTime()} and
-   * {@link Checkpoint#getNextOffset()} returning {@code -1}.
+   * a {@link Checkpoint} will be returned with both {@link Checkpoint#getMaxEventTime()} returning {@code -1}.
    */
-  Checkpoint getCheckpoint(int partition) throws Exception;
+  Checkpoint<Offset> getCheckpoint(int partition) throws Exception;
 }

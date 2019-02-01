@@ -47,6 +47,7 @@ import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
+import co.cask.cdap.logging.meta.KafkaOffset;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.logging.write.LogLocation;
@@ -188,10 +189,10 @@ public class DistributedLogFrameworkTest {
 
     // Check the checkpoint is persisted correctly. Since all messages are processed,
     // the checkpoint should be the same as the message count.
-    Checkpoint checkpoint = injector.getInstance(CheckpointManagerFactory.class)
+    Checkpoint<KafkaOffset> checkpoint = injector.getInstance(CheckpointManagerFactory.class)
       .create(cConf.get(Constants.Logging.KAFKA_TOPIC), Bytes.toBytes(100))
       .getCheckpoint(0);
-    Assert.assertEquals(msgCount, checkpoint.getNextOffset());
+    Assert.assertEquals(msgCount, checkpoint.getOffset().getNextOffset());
   }
 
   private Injector createInjector() throws IOException {

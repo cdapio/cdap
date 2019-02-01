@@ -44,7 +44,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link CheckpointManager} that uses {@link Table} dataset to persist data.
  */
-public final class DefaultCheckpointManager implements CheckpointManager {
+public final class DefaultCheckpointManager implements CheckpointManager<KafkaOffset> {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultCheckpointManager.class);
 
   private static final byte [] OFFSET_COL_NAME = Bytes.toBytes("nextOffset");
@@ -55,7 +55,7 @@ public final class DefaultCheckpointManager implements CheckpointManager {
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
 
-  private Map<Integer, Checkpoint> lastCheckpoint;
+  private Map<Integer, Checkpoint<KafkaOffset>> lastCheckpoint;
 
   @Inject
   DefaultCheckpointManager(DatasetFramework datasetFramework, TransactionSystemClient txClient,
@@ -76,23 +76,23 @@ public final class DefaultCheckpointManager implements CheckpointManager {
   }
 
   @Override
-  public void saveCheckpoints(final Map<Integer, ? extends Checkpoint> checkpoints) throws Exception {
+  public void saveCheckpoints(final Map<Integer, ? extends Checkpoint<KafkaOffset>> checkpoints) throws Exception {
     // if the checkpoints have not changed, we skip writing to table and return.
     if (lastCheckpoint.equals(checkpoints)) {
       return;
     }
 
     lastCheckpoint = Transactionals.execute(transactional, context -> {
-      Map<Integer, Checkpoint> result = new HashMap<>();
+      Map<Integer, Checkpoint<KafkaOffset>> result = new HashMap<>();
 
       Table table = getCheckpointTable(context);
-      for (Map.Entry<Integer, ? extends Checkpoint> entry : checkpoints.entrySet()) {
+      for (Map.Entry<Integer, ? extends Checkpoint<KafkaOffset>> entry : checkpoints.entrySet()) {
         byte[] key = Bytes.add(rowKeyPrefix, Bytes.toBytes(entry.getKey()));
-        Checkpoint checkpoint = entry.getValue();
-        table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getNextOffset()));
-        table.put(key, NEXT_TIME_COL_NAME, Bytes.toBytes(checkpoint.getNextEventTime()));
+        Checkpoint<KafkaOffset> checkpoint = entry.getValue();
+        table.put(key, OFFSET_COL_NAME, Bytes.toBytes(checkpoint.getOffset().getNextOffset()));
+        table.put(key, NEXT_TIME_COL_NAME, Bytes.toBytes(checkpoint.getOffset().getNextEventTime()));
         table.put(key, MAX_TIME_COL_NAME, Bytes.toBytes(checkpoint.getMaxEventTime()));
-        result.put(entry.getKey(), new Checkpoint(checkpoint.getNextOffset(), checkpoint.getNextEventTime(),
+        result.put(entry.getKey(), new Checkpoint<>(checkpoint.getOffset(),
                                                   checkpoint.getMaxEventTime()));
       }
       return result;
@@ -102,10 +102,10 @@ public final class DefaultCheckpointManager implements CheckpointManager {
   }
 
   @Override
-  public Map<Integer, Checkpoint> getCheckpoint(final Set<Integer> partitions) throws Exception {
+  public Map<Integer, Checkpoint<KafkaOffset>> getCheckpoint(final Set<Integer> partitions) throws Exception {
     return Transactionals.execute(transactional, context -> {
       Table table = getCheckpointTable(context);
-      Map<Integer, Checkpoint> checkpoints = new HashMap<>();
+      Map<Integer, Checkpoint<KafkaOffset>> checkpoints = new HashMap<>();
       for (final int partition : partitions) {
         Row result = table.get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
         checkpoints.put(partition, createFromRow(result));
@@ -115,8 +115,8 @@ public final class DefaultCheckpointManager implements CheckpointManager {
   }
 
   @Override
-  public Checkpoint getCheckpoint(final int partition) throws Exception {
-    Checkpoint checkpoint = Transactionals.execute(transactional, context -> {
+  public Checkpoint<KafkaOffset> getCheckpoint(final int partition) throws Exception {
+    Checkpoint<KafkaOffset> checkpoint = Transactionals.execute(transactional, context -> {
       Row result = getCheckpointTable(context).get(Bytes.add(rowKeyPrefix, Bytes.toBytes(partition)));
       return createFromRow(result);
     }, ServiceUnavailableException.class);
@@ -127,13 +127,13 @@ public final class DefaultCheckpointManager implements CheckpointManager {
   /**
    * Create a {@link Checkpoint} from a {@link Row} with backward compatibility
    */
-  private Checkpoint createFromRow(Row row) {
+  private Checkpoint<KafkaOffset> createFromRow(Row row) {
     long maxEventTime = row.getLong(MAX_TIME_COL_NAME, -1);
     // If CDAP is upgraded from an older version with no NEXT_TIME_COL_NAME, use maxEventTime as default, since
     // in both older and current CDAP versions, OFFSET_COL_NAME is the offset to restart consuming from.
     // In older CDAP version MAX_TIME_COL_NAME used to be the log event time of the message fetched by the previous
     // offset of OFFSET_COL_NAME, which is the same as NEXT_TIME_COL_NAME in current version.
-    return new Checkpoint(row.getLong(OFFSET_COL_NAME, -1), row.getLong(NEXT_TIME_COL_NAME, maxEventTime),
-                          maxEventTime);
+    return new Checkpoint<>(new KafkaOffset(row.getLong(OFFSET_COL_NAME, -1),
+                                            row.getLong(NEXT_TIME_COL_NAME, maxEventTime)), maxEventTime);
   }
 }
