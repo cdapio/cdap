@@ -16,19 +16,13 @@
 
 package co.cask.cdap.data2.nosql;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableTest;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;

@@ -26,10 +26,6 @@ import co.cask.cdap.spi.data.table.field.FieldType;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -101,19 +98,25 @@ public abstract class StructuredTableTest {
     Assert.assertEquals(expected, actual);
 
     // scan from (1, 8L) inclusive to (3, 3L) inclusive, should return (2, 2L) and (3, 3L)
+    List<Field<?>> lowerBound = new ArrayList<>(2);
+    lowerBound.add(Fields.intField(KEY, 1));
+    lowerBound.add(Fields.longField(KEY2, 8L));
+    List<Field<?>> upperBound = new ArrayList<>(2);
+    upperBound.add(Fields.intField(KEY, 3));
+    upperBound.add(Fields.longField(KEY2, 3L));
     actual = scanSimpleStructuredRows(
-      Range.create(ImmutableList.of(Fields.intField(KEY, 1),
-                                    Fields.longField(KEY2, 8L)), Range.Bound.INCLUSIVE,
-                   ImmutableList.of(Fields.intField(KEY, 3),
-                                    Fields.longField(KEY2, 3L)), Range.Bound.INCLUSIVE), max);
+      Range.create(lowerBound, Range.Bound.INCLUSIVE, upperBound, Range.Bound.INCLUSIVE), max);
     Assert.assertEquals(expected.subList(2, 4), actual);
 
     // scan from (1, 8L) inclusive to (3, 3L) exclusive, should only return (2, 2L)
+    lowerBound.clear();
+    lowerBound.add(Fields.intField(KEY, 1));
+    lowerBound.add(Fields.longField(KEY2, 8L));
+    upperBound.clear();
+    upperBound.add(Fields.intField(KEY, 3));
+    upperBound.add(Fields.longField(KEY2, 3L));
     actual = scanSimpleStructuredRows(
-      Range.create(ImmutableList.of(Fields.intField(KEY, 1),
-                                    Fields.longField(KEY2, 8L)), Range.Bound.INCLUSIVE,
-                   ImmutableList.of(Fields.intField(KEY, 3),
-                                    Fields.longField(KEY2, 3L)), Range.Bound.EXCLUSIVE), max);
+      Range.create(lowerBound, Range.Bound.INCLUSIVE, upperBound, Range.Bound.EXCLUSIVE), max);
     Assert.assertEquals(expected.subList(2, 3), actual);
   }
 
@@ -191,13 +194,12 @@ public abstract class StructuredTableTest {
     }
     oldValues.put(LONG_COL, Fields.longField(LONG_COL, null));
 
-    Map<String, Field<?>> newValues = ImmutableMap.of(
-      STRING_COL, Fields.stringField(STRING_COL, VAL + 100),
-      DOUBLE_COL, Fields.doubleField(DOUBLE_COL, 100.0),
-      FLOAT_COL, Fields.floatField(FLOAT_COL, 10.0f),
-      BYTES_COL, Fields.bytesField(BYTES_COL, Bytes.toBytes("new-bytes")),
-      LONG_COL, Fields.longField(LONG_COL, 500L)
-    );
+    Map<String, Field<?>> newValues = new HashMap<>();
+    newValues.put(STRING_COL, Fields.stringField(STRING_COL, VAL + 100));
+    newValues.put(DOUBLE_COL, Fields.doubleField(DOUBLE_COL, 100.0));
+    newValues.put(FLOAT_COL, Fields.floatField(FLOAT_COL, 10.0f));
+    newValues.put(BYTES_COL, Fields.bytesField(BYTES_COL, Bytes.toBytes("new-bytes")));
+    newValues.put(LONG_COL, Fields.longField(LONG_COL, 500L));
 
     // Compare and swap an existing row
     Collection<Field<?>> keys = Arrays.asList(oldValues.get(KEY), oldValues.get(KEY2));
@@ -216,9 +218,11 @@ public abstract class StructuredTableTest {
       Assert.assertFalse(result);
     });
 
-    Collection<Field<?>> expected = ImmutableSet.copyOf(Iterables.concat(newValues.values(), keys));
-    List<Collection<Field<?>>> actual = readSimpleStructuredRows(max, ImmutableList.of(LONG_COL));
-    Assert.assertEquals(expected, ImmutableSet.copyOf(actual.get(0)));
+    Collection<Field<?>> expected = new HashSet<>();
+    expected.addAll(newValues.values());
+    expected.addAll(keys);
+    List<Collection<Field<?>>> actual = readSimpleStructuredRows(max, Collections.singletonList(LONG_COL));
+    Assert.assertEquals(expected, new HashSet<>(actual.get(0)));
 
     // Compare and swap on primary key should fail
     getTransactionRunner().run(context -> {
@@ -389,25 +393,36 @@ public abstract class StructuredTableTest {
   }
 
   private List<Collection<Field<?>>> readSimpleStructuredRows(int max) throws Exception {
-    return readSimpleStructuredRows(max, ImmutableList.of());
+    return readSimpleStructuredRows(max, Collections.emptyList());
   }
 
   private List<Collection<Field<?>>> readSimpleStructuredRows(int max, List<String> extraColumns) throws Exception {
-    List<String> columns = new ArrayList<>(ImmutableList.of(STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL));
+    List<String> columns = new ArrayList<>();
+    columns.add(STRING_COL);
+    columns.add(DOUBLE_COL);
+    columns.add(FLOAT_COL);
+    columns.add(BYTES_COL);
     columns.addAll(extraColumns);
 
-    List<String> fields = new ArrayList<>(ImmutableSet.of(KEY, KEY2, STRING_COL, DOUBLE_COL, FLOAT_COL, BYTES_COL));
+    List<String> fields = new ArrayList<>();
+    fields.add(KEY);
+    fields.add(KEY2);
+    fields.add(STRING_COL);
+    fields.add(DOUBLE_COL);
+    fields.add(FLOAT_COL);
+    fields.add(BYTES_COL);
     fields.addAll(extraColumns);
 
     List<Collection<Field<?>>> actual = new ArrayList<>(max);
     for (int i = 0; i < max; i++) {
-      Field<Integer> key = Fields.intField(KEY, i);
-      Field<Long> key2 = Fields.longField(KEY2, (long) i);
-      final AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
+      List<Field<?>> compoundKey = new ArrayList<>(2);
+      compoundKey.add(Fields.intField(KEY, i));
+      compoundKey.add(Fields.longField(KEY2, (long) i));
+      AtomicReference<Optional<StructuredRow>> rowRef = new AtomicReference<>();
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
-        rowRef.set(table.read(ImmutableList.of(key, key2), columns));
+        rowRef.set(table.read(compoundKey, columns));
       });
 
       Optional<StructuredRow> row = rowRef.get();
@@ -451,12 +466,13 @@ public abstract class StructuredTableTest {
 
   private void deleteSimpleStructuredRows(int max) throws Exception {
     for (int i = 0; i < max; i++) {
-      Field<Integer> key = Fields.intField(KEY, i);
-      Field<Long> key2 = Fields.longField(KEY2, (long) i);
+      List<Field<?>> compoundKey = new ArrayList<>(2);
+      compoundKey.add(Fields.intField(KEY, i));
+      compoundKey.add(Fields.longField(KEY2, (long) i));
 
       getTransactionRunner().run(context -> {
         StructuredTable table = context.getTable(SIMPLE_TABLE);
-        table.delete(ImmutableList.of(key, key2));
+        table.delete(compoundKey);
       });
     }
   }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredRow;
