@@ -46,6 +46,17 @@ body {
     margin-top: 50px;
     overflow-y: auto;
     height: calc(100vh - 104px); // Header + footer heights
+    &.no-header {
+      margin-top: 0px;
+      height: calc(100vh - 55px);
+    }
+    &.no-footer {
+      height: calc(100vh - 50px);
+    }
+    &.no-header-footer {
+      margin-top: 0px;
+      height:100vh;
+    }
   }
   .container-fluid {
     padding-bottom: 52px; // footer height

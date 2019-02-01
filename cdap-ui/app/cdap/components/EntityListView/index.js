@@ -43,6 +43,7 @@ import queryString from 'query-string';
 import Helmet from 'react-helmet';
 import {Theme} from 'services/ThemeHelper';
 import Welcome from 'components/EntityListView/Welcome';
+import { getClassNameForHeaderFooter } from '../FeatureUI/util';
 
 import {
   DEFAULT_SEARCH_FILTERS, DEFAULT_SEARCH_SORT,
@@ -346,6 +347,7 @@ export default class EntityListView extends Component {
     }
 
     const featureName = Theme.featureNames.controlCenter;
+    const entityClassName = getClassNameForHeaderFooter();
 
     return (
       <div>
@@ -354,7 +356,7 @@ export default class EntityListView extends Component {
           featureName
         })} />
         <EntityListHeader />
-        <div className="entity-list-view">
+        <div className={`entity-list-view ${entityClassName}`}>
           {
             !isNil(errorContent) ?
               null

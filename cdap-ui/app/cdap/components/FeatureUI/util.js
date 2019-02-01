@@ -2,6 +2,7 @@ import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
+import {Theme} from '../../services/ThemeHelper';
 
 export function toCamelCase(value) {
   return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
@@ -172,4 +173,16 @@ export function getErrorMessage(error) {
     errorMessage = error.response.message;
   }
   return errorMessage;
+}
+
+export function getClassNameForHeaderFooter(){
+  let className = '';
+  if (!Theme.showHeader && !Theme.showfooter) {
+    className =  'no-header-footer'
+  } else if (!Theme.showHeader) {
+    className =  'no-header';
+  } else if (!Theme.showFooter) {
+    className =  'no-footer';
+  }
+  return className;
 }

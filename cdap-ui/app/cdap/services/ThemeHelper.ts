@@ -64,6 +64,8 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "footer-text"?: string;
     "footer-link"?: string;
     "feature-names"?: IJsonFeatureNames;
+    "show-footer"?: boolean;
+    "show-header"?: boolean;
   };
   "features"?: {
     "about-product"?: boolean;
@@ -148,6 +150,8 @@ interface IThemeObj {
   productDescription?: string;
   footerText?: string;
   footerLink?: string;
+  showFooter?: boolean;
+  showHeader?: boolean;
   productLogoNavbar?: string;
   productLogoAbout?: string;
   favicon?: string;
@@ -230,6 +234,12 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('footer-link' in contentJson) {
       content.footerLink = contentJson['footer-link'];
+    }
+    if ('show-footer' in contentJson) {
+      content.showFooter = contentJson['show-footer'];
+    }
+    if ('show-header' in contentJson) {
+      content.showHeader = contentJson['show-header'];
     }
     if ('product-logo-navbar' in contentJson) {
       const productLogoNavbar = window.CDAP_UI_THEME.content['product-logo-navbar'];
