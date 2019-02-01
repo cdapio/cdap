@@ -21,8 +21,6 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.BadRequestException;
@@ -31,16 +29,13 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunCluster;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -61,16 +56,11 @@ import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Ticker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Ranges;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.tephra.TxConstants;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,11 +68,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -90,7 +78,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -123,11 +110,11 @@ public class AppMetadataStore {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type BYTE_TYPE = new TypeToken<byte[]>() { }.getType();
-  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
-  private static final byte[] RUN_COUNT_FIRST_UPGRADE_TIME = Bytes.toBytes("run.count.first.upgrade.time");
+  private static final String APP_VERSION_UPGRADE_KEY = "version.default.store";
+  private static final String RUN_COUNT_FIRST_UPGRADE_TIME = "run.count.first.upgrade.time";
   // this row key will be used to record the progress of upgrade run count since for completed run records we do not
   // modify the row key, so we do not know which row has been counted.
-  private static final byte[] RUN_COUNT_PROGRESS = Bytes.toBytes("run.count.progress");
+  private static final String RUN_COUNT_PROGRESS = "run.count.progress";
 
   private static final String TYPE_APP_META = "appMeta";
 
@@ -169,6 +156,10 @@ public class AppMetadataStore {
   private final StructuredTable applicationSpecificationTable;
   private final StructuredTable workflowNodeStateTable;
   private final StructuredTable runRecordsTable;
+  private final StructuredTable workflowsTable;
+  private final StructuredTable programCountsTable;
+  private final StructuredTable upgradeMetadataTable;
+  private final StructuredTable subscriberStateTable;
 
   /**
    * Static method for creating an instance of {@link AppMetadataStore}.
@@ -191,14 +182,17 @@ public class AppMetadataStore {
       context.getTable(StoreDefinition.AppMetadataStore.WORKFLOW_NODE_STATES);
     this.runRecordsTable =
       context.getTable(StoreDefinition.AppMetadataStore.RUN_RECORDS);
+    this.workflowsTable =
+      context.getTable(StoreDefinition.AppMetadataStore.WORKFLOWS);
+    this.programCountsTable =
+      context.getTable(StoreDefinition.AppMetadataStore.PROGRAM_COUNTS);
+    this.upgradeMetadataTable =
+      context.getTable(StoreDefinition.AppMetadataStore.UPGRADE_METADATA);
+    this.subscriberStateTable =
+      context.getTable(StoreDefinition.AppMetadataStore.SUBSCRIBER_STATE);
   }
 
-  @Override
-  protected <T> byte[] serialize(T value) {
-    return Bytes.toBytes(GSON.toJson(value));
-  }
-
-  @Override
+  /*@Override
   protected <T> T deserialize(MDSKey key, byte[] serialized, Type typeOfT) {
     if (RunRecordMeta.class.equals(typeOfT)) {
       RunRecordMeta meta = GSON.fromJson(Bytes.toString(serialized), RunRecordMeta.class);
@@ -210,7 +204,7 @@ public class AppMetadataStore {
     } else {
       return GSON.fromJson(Bytes.toString(serialized), typeOfT);
     }
-  }
+  }*/
 
   @Nullable
   public ApplicationMeta getApplication(ApplicationId appId) throws IOException {
@@ -422,8 +416,8 @@ public class AppMetadataStore {
       .build();
     writeToStructuredTableWithPrimaryKeys(
       fields, meta, runRecordsTable, StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
-    MDSKey countKey = getProgramKeyBuilder(TYPE_COUNT, programRunId.getParent()).build();
-    increment(countKey, 1L);
+    List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, programRunId.getParent());
+    programCountsTable.increment(countKey, StoreDefinition.AppMetadataStore.COUNTS, 1L);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.PROVISIONING, programRunId);
     return meta;
   }
@@ -860,8 +854,12 @@ public class AppMetadataStore {
     return true;
   }
 
-  public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) {
-    return getRuns(programRunIds, Integer.MAX_VALUE);
+  public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) throws IOException {
+    Map<ProgramRunId, RunRecordMeta> result = new HashMap();
+    for (ProgramRunId runId : programRunIds) {
+      result.put(runId, getRun(runId));
+    }
+    return result;
   }
 
   /**
@@ -876,7 +874,7 @@ public class AppMetadataStore {
     throws IOException {
     Map<ProgramRunId, RunRecordMeta> result = new HashMap<>();
     for (NamespaceId namespaceId : namespaces) {
-      List<Field<?>> prefix = getNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
+      List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
       result.putAll(getProgramRunIdMap(Range.singleton(prefix), filter));
     }
     return result;
@@ -890,7 +888,7 @@ public class AppMetadataStore {
    * @return map of run id to run record meta
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Predicate<RunRecordMeta> filter) throws IOException {
-    List<Field<?>> prefix = getNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null);
+    List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null);
     return getProgramRunIdMap(Range.singleton(prefix), filter);
   }
 
@@ -903,7 +901,7 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) throws IOException {
     // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
-    List<Field<?>> prefix = getNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
+    List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
     return getProgramRunIdMap(Range.singleton(prefix), timePredicate);
   }
@@ -917,7 +915,7 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) throws IOException {
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
-    List<Field<?>> prefix = getApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
+    List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
     return getProgramRunIdMap(Range.singleton(prefix), timePredicate);
   }
 
@@ -930,21 +928,13 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) throws IOException {
     Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
-    List<Field<?>> prefix = getProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
+    List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
     return getProgramRunIdMap(Range.singleton(prefix), timePredicate);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
-    Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
-    for (String type : Arrays.asList(TYPE_RUN_RECORD_ACTIVE, TYPE_RUN_RECORD_COMPLETED)) {
-      resultMap.putAll(getRunsForRunIds(programRunIds, type, limit - resultMap.size()));
-    }
-    return resultMap;
   }
 
   public Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, final ProgramRunStatus status,
                                                   long startTime, long endTime, int limit,
-                                                  @Nullable Predicate<RunRecordMeta> filter) {
+                                                  @Nullable Predicate<RunRecordMeta> filter) throws IOException {
     switch (status) {
       case ALL:
         Map<ProgramRunId, RunRecordMeta> runRecords = new LinkedHashMap<>();
@@ -998,14 +988,14 @@ public class AppMetadataStore {
   }
 
   private RunRecordMeta getCompletedRun(ProgramRunId programRunId) throws IOException {
-    List<Field<?>> completedKey = getProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
+    List<Field<?>> completedKey = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
     return getCompletedRun(completedKey, programRunId.getRun());
   }
 
-  private RunRecordMeta getCompletedRun(List<Field<?>> prefix, final String runid) throws IOException {
+  private RunRecordMeta getCompletedRun(List<Field<?>> prefix, final String runId) throws IOException {
     // Get start time from RunId
-    long programStartSecs = RunIds.getTime(RunIds.fromString(runid), TimeUnit.SECONDS);
-    prefix.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_ID, runid));
+    long programStartSecs = RunIds.getTime(RunIds.fromString(runId), TimeUnit.SECONDS);
+    prefix.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_ID, runId));
     if (programStartSecs > -1) {
       // If start time is found, run a get
       prefix.add(
@@ -1031,30 +1021,8 @@ public class AppMetadataStore {
                                                               final long startTime, final long endTime, int limit,
                                                               Predicate<RunRecordMeta> filter) throws IOException {
     Predicate<RunRecordMeta> valuePredicate = andPredicate(getTimeRangePredicate(startTime, endTime), filter);
-    List<Field<?>> prefix = getProgramPrefix(recordType, programId);
-    return getProgramRunIdMap(Range.singleton(prefix), valuePredicate, limit);
-  }
-
-  private Map<ProgramRunId, RunRecordMeta> getRunsForRunIds(final Set<ProgramRunId> runIds, String recordType,
-                                                            int limit) {
-    Set<List<Field<?>>> keySet = new HashSet<>();
-    Map<ProgramRunId, RunRecordMeta> result = new HashMap();
-    for (ProgramRunId programRunId : runIds) {
-      keySet.add(getProgramPrefix(recordType, programRunId.getParent()));
-    }
-    
-    Predicate<RunRecordMeta> combinedFilter = input -> {
-      ProgramId programId = getProgramID(input.getKey());
-      RunRecordMeta meta = input.getValue();
-      ProgramRunId programRunId = programId.run(meta.getPid());
-      return runIds.contains(programRunId);
-    };
-    for (List<Field<?>> key : keySet) {
-      key
-    }
-
-    Map<MDSKey, RunRecordMeta> returnMap = listKV(keySet, RunRecordMeta.class, limit, combinedFilter);
-    return getProgramRunIdMap(returnMap);
+    List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId);
+    return getProgramRunIdMap(Range.singleton(prefix), valuePredicate, null, limit);
   }
 
   /**
@@ -1066,9 +1034,12 @@ public class AppMetadataStore {
    * @return map with keys as program IDs
    */
   private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(
-    Range range, @Nullable  Predicate<RunRecordMeta> predicate, int limit) throws IOException {
+    Range range, @Nullable Predicate<RunRecordMeta> predicate, @Nullable Predicate<StructuredRow> keyPredicate,
+    int limit) throws IOException {
     Map<ProgramRunId, RunRecordMeta> programRunIdMap = new LinkedHashMap<>();
-    Iterator<StructuredRow> iterator = runRecordsTable.scan(range, Integer.MAX_VALUE);
+    // Only pass in limit if predicates are null, or else we may return fewer than limit items
+    Iterator<StructuredRow> iterator =
+      runRecordsTable.scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE);
     while (iterator.hasNext() && limit > 0) {
       StructuredRow row = iterator.next();
       ProgramId programId =
@@ -1079,7 +1050,7 @@ public class AppMetadataStore {
                    row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
       RunRecordMeta meta =
         GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
-      if (predicate == null || predicate.test(meta)) {
+      if ((predicate == null || predicate.test(meta)) && (keyPredicate == null || keyPredicate.test(row))) {
         programRunIdMap.put(programId.run(meta.getPid()), meta);
         limit--;
       }
@@ -1089,20 +1060,15 @@ public class AppMetadataStore {
 
   private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(
     Range range, @Nullable  Predicate<RunRecordMeta> predicate) throws IOException {
-    return getProgramRunIdMap(range, predicate, Integer.MAX_VALUE);
+    return getProgramRunIdMap(range, predicate, null, Integer.MAX_VALUE);
   }
 
   private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(@Nullable ProgramId programId, ProgramRunStatus status,
                                                              final long startTime, final long endTime, int limit,
-                                                             @Nullable Predicate<RunRecordMeta> filter) {
-    if (programId == null || !programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
-      MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-      return getHistoricalRuns(key, status, startTime, endTime, limit, null, filter);
-    }
-
-    Predicate<MDSKey> keyPredicate = new AppVersionPredicate(ApplicationId.DEFAULT_VERSION);
-    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-    return getHistoricalRuns(key, status, startTime, endTime, limit, keyPredicate, filter);
+                                                             @Nullable Predicate<RunRecordMeta> filter)
+    throws IOException {
+    List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programId);
+    return getHistoricalRuns(prefix, status, startTime, endTime, limit, filter);
   }
 
   /**
@@ -1116,44 +1082,51 @@ public class AppMetadataStore {
    */
   public Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(final Set<NamespaceId> namespaces,
                                                             final long earliestStopTime, final long latestStartTime,
-                                                            final int limit) {
+                                                            final int limit) throws IOException {
     MDSKey keyPrefix = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
-    //return all records in each namespace
-    return namespaces.stream()
-      .flatMap(ns -> getProgramRunIdMap(
-        listKV(new MDSKey.Builder(keyPrefix).add(ns.getNamespace()).build(), null,
-               RunRecordMeta.class, limit, key -> true,
-               // get active runs in a time window with range [earliestStopTime, latestStartTime),
-               // which excludes program run records that stopped before earliestStopTime and
-               // program run records that started after latestStartTime, all remaining records are active
-               // at some point within the time window and will be returned
-               meta -> meta.getStopTs() != null && meta.getStopTs() >= earliestStopTime
-                 && meta.getStartTs() < latestStartTime)).entrySet().stream())
-      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    Map<ProgramRunId, RunRecordMeta> result = new HashMap<>();
+    for (NamespaceId namespaceId : namespaces) {
+      // get active runs in a time window with range [earliestStopTime, latestStartTime),
+      // which excludes program run records that stopped before earliestStopTime and
+      // program run records that started after latestStartTime, all remaining records are active
+      // at some point within the time window and will be returned
+      result.putAll(getProgramRunIdMap(Range.singleton(
+        getRunRecordNamespacePrefix(TYPE_RUN_RECORD_COMPLETED, namespaceId)),
+                                       meta -> meta.getStopTs() != null && meta.getStopTs() >= earliestStopTime
+                                         && meta.getStartTs() < latestStartTime, null, limit));
+    }
+    return result;
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(MDSKey historyKey, ProgramRunStatus status,
+  private Map<ProgramRunId, RunRecordMeta> getHistoricalRuns(List<Field<?>> historyKey, ProgramRunStatus status,
                                                              final long startTime, final long endTime, int limit,
-                                                             @Nullable Predicate<MDSKey> keyFiter,
-                                                             @Nullable Predicate<RunRecordMeta> valueFilter) {
-    MDSKey start = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(endTime)).build();
-    MDSKey stop = new MDSKey.Builder(historyKey).add(getInvertedTsScanKeyPart(startTime)).build();
+                                                             @Nullable Predicate<RunRecordMeta> valueFilter)
+    throws IOException {
+    long lowerBound = getInvertedTsScanKeyPart(endTime);
+    long upperBound = getInvertedTsScanKeyPart(startTime);
+    Predicate<StructuredRow> keyFiter = row -> {
+      long time = row.getLong(StoreDefinition.AppMetadataStore.RUN_START_TIME);
+      return time >= lowerBound && time <= upperBound;
+
+    };
     if (status.equals(ProgramRunStatus.ALL)) {
       //return all records (successful and failed)
-      return getProgramRunIdMap(listKV(start, stop, RunRecordMeta.class, limit, keyFiter,
-                                       valueFilter == null ? x -> true : valueFilter));
+      return getProgramRunIdMap(Range.singleton(historyKey), valueFilter, keyFiter, limit);
     }
 
     if (status.equals(ProgramRunStatus.COMPLETED)) {
-      return getProgramRunIdMap(listKV(start, stop, RunRecordMeta.class, limit, keyFiter,
-                                       andPredicate(getPredicate(ProgramController.State.COMPLETED), valueFilter)));
+      return getProgramRunIdMap(Range.singleton(historyKey),
+                                andPredicate(getPredicate(ProgramController.State.COMPLETED), valueFilter),
+                                keyFiter, limit);
     }
     if (status.equals(ProgramRunStatus.KILLED)) {
-      return getProgramRunIdMap(listKV(start, stop, RunRecordMeta.class, limit, keyFiter,
-                                       andPredicate(getPredicate(ProgramController.State.KILLED), valueFilter)));
+      return getProgramRunIdMap(Range.singleton(historyKey),
+                                andPredicate(getPredicate(ProgramController.State.KILLED), valueFilter),
+                                keyFiter, limit);
     }
-    return getProgramRunIdMap(listKV(start, stop, RunRecordMeta.class, limit, keyFiter,
-                                     andPredicate(getPredicate(ProgramController.State.ERROR), valueFilter)));
+    return getProgramRunIdMap(Range.singleton(historyKey),
+                              andPredicate(getPredicate(ProgramController.State.ERROR), valueFilter),
+                              keyFiter, limit);
   }
 
   private Predicate<RunRecordMeta> getPredicate(final ProgramController.State state) {
@@ -1187,30 +1160,20 @@ public class AppMetadataStore {
   }
 
   public void deleteProgramHistory(String namespaceId, String appId, String versionId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId, appId, versionId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId, appId, versionId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_COUNT, namespaceId, appId, versionId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_UPGRADE_COUNT, namespaceId, appId, versionId).build());
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
+    runRecordsTable.deleteAll(Range.singleton(getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId)));
+    runRecordsTable.deleteAll(Range.singleton(getRunRecordApplicationPrefix(TYPE_RUN_RECORD_COMPLETED, applicationId)));
+    runRecordsTable.deleteAll(Range.singleton(getCountApplicationPrefix(TYPE_COUNT, applicationId)));
+    runRecordsTable.deleteAll(Range.singleton(getCountApplicationPrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, applicationId)));
   }
 
   public void deleteProgramHistory(String namespaceId) {
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_ACTIVE, namespaceId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED, namespaceId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_COUNT, namespaceId).build());
-    deleteAll(new MDSKey.Builder().add(TYPE_RUN_RECORD_UPGRADE_COUNT, namespaceId).build());
-
-  }
-
-  public void createNamespace(NamespaceMeta metadata) {
-    write(getNamespaceKey(metadata.getName()), metadata);
-  }
-
-  private MDSKey getNamespaceKey(@Nullable String name) {
-    MDSKey.Builder builder = new MDSKey.Builder().add(TYPE_NAMESPACE);
-    if (null != name) {
-      builder.add(name);
-    }
-    return builder.build();
+    runRecordsTable.deleteAll(Range.singleton(getRunRecordNamespacePrefixWithString(TYPE_RUN_RECORD_ACTIVE, namespaceId)));
+    runRecordsTable.deleteAll(Range.singleton(
+      getRunRecordNamespacePrefixWithString(TYPE_RUN_RECORD_COMPLETED, namespaceId)));
+    runRecordsTable.deleteAll(Range.singleton(getCountNamespacePrefix(TYPE_COUNT, namespaceId)));
+    runRecordsTable.deleteAll(Range.singleton(
+      getCountNamespacePrefix(TYPE_RUN_RECORD_UPGRADE_COUNT, namespaceId)));
   }
 
   /**
@@ -1219,49 +1182,50 @@ public class AppMetadataStore {
    * @param workflowRunId the {@link ProgramRunId} representing the workflow run
    * @param workflowToken the {@link WorkflowToken} to set to
    */
-  public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) {
+  public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken workflowToken) throws IOException {
     if (workflowRunId.getType() != ProgramType.WORKFLOW) {
       throw new IllegalArgumentException("WorkflowToken can only be set for workflow execution: " + workflowRunId);
     }
 
-    // Workflow token will be stored with following key:
-    // [wft][namespace][app][WORKFLOW][workflowName][workflowRun]
-    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowRunId).build();
-
-    write(key, workflowToken);
+    List<Field<?>> keys = getWorkflowPrimaryKeysWithoutNode(workflowRunId);
+    keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.WORKFLOW_DATA, GSON.toJson(workflowToken)));
+    workflowsTable.upsert(keys);
   }
 
-  public WorkflowToken getWorkflowToken(ProgramId workflowId, String workflowRunId) {
+  public WorkflowToken getWorkflowToken(ProgramId workflowId, String workflowRunId) throws IOException {
     Preconditions.checkArgument(ProgramType.WORKFLOW == workflowId.getType());
-    // Workflow token is stored with following key:
-    // [wft][namespace][app][version][WORKFLOW][workflowName][workflowRun]
-    MDSKey key = getProgramKeyBuilder(TYPE_WORKFLOW_TOKEN, workflowId.run(workflowRunId)).build();
+    List<Field<?>> keys = getWorkflowPrimaryKeysWithoutNode(workflowId.run(workflowRunId));
+    Optional<StructuredRow> row = workflowsTable.read(keys);
 
-    BasicWorkflowToken workflowToken = get(key, BasicWorkflowToken.class);
-
-    if (workflowToken == null) {
+    if (!row.isPresent()) {
       LOG.debug("No workflow token available for workflow: {}, runId: {}", workflowId, workflowRunId);
       // Its ok to not allow any updates by returning a 0 size token.
       return new BasicWorkflowToken(0);
     }
 
-    return workflowToken;
+    return GSON.fromJson(row.get().getString(StoreDefinition.AppMetadataStore.WORKFLOW_DATA), WorkflowToken.class);
   }
 
   /**
-   * @return programs that were running between given start and end time
+   * @return programs that were running between given start and end time and are completed
    */
-  public Set<RunId> getRunningInRange(long startTimeInSecs, long endTimeInSecs) {
-    // We have scan timeout to be half of transaction timeout to eliminate transaction timeouts during large scans.
-    long scanTimeoutMills = TimeUnit.SECONDS.toMillis(cConf.getLong(TxConstants.Manager.CFG_TX_TIMEOUT)) / 2;
-    LOG.trace("Scan timeout = {}ms", scanTimeoutMills);
+  public Set<RunId> getRunningInRangeCompleted(long startTimeInSecs, long endTimeInSecs) throws IOException {
+    // This method scans a large amount of data and may timeout. However, the previous implementation would
+    // simply return incomplete data. We have doubled the amount of time each transaction can take by using two
+    // transactions - and can further get all namespaces from the smaller app spec table and do one transaction per
+    // namespace if necessary.
+    return getRunningInRangeForStatus(TYPE_RUN_RECORD_COMPLETED, startTimeInSecs, endTimeInSecs);
+  }
 
-    Set<RunId> runIds = new HashSet<>();
-    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_COMPLETED, startTimeInSecs, endTimeInSecs,
-                                                        scanTimeoutMills));
-    Iterables.addAll(runIds, getRunningInRangeForStatus(TYPE_RUN_RECORD_ACTIVE, startTimeInSecs, endTimeInSecs,
-                                                        scanTimeoutMills));
-    return runIds;
+  /**
+   * @return programs that were running between given start and end time and are active
+   */
+  public Set<RunId> getRunningInRangeActive(long startTimeInSecs, long endTimeInSecs) throws IOException {
+    // This method scans a large amount of data and may timeout. However, the previous implementation would
+    // simply return incomplete data. We have doubled the amount of time each transaction can take by using two
+    // transactions - and can further get all namespaces from the smaller app spec table and do one transaction per
+    // namespace if necessary.
+    return getRunningInRangeForStatus(TYPE_RUN_RECORD_ACTIVE, startTimeInSecs, endTimeInSecs);
   }
 
   /**
@@ -1270,10 +1234,10 @@ public class AppMetadataStore {
    * @param programId the program to get the count
    * @return the number of run count
    */
-  public long getProgramRunCount(ProgramId programId) {
-    MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
-    byte[] count = getValue(key);
-    return count == null ? 0 : Bytes.toLong(count);
+  public long getProgramRunCount(ProgramId programId) throws IOException {
+    List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, programId);
+    Optional<StructuredRow> row = programCountsTable.read(countKey);
+    return row.isPresent() ? row.get().getLong(StoreDefinition.AppMetadataStore.COUNTS) : 0;
   }
 
   /**
@@ -1282,20 +1246,17 @@ public class AppMetadataStore {
    * @param programIds the collection of program ids to get the program
    * @return the map of the program id to its run count
    */
-  public Map<ProgramId, Long> getProgramRunCounts(Collection<ProgramId> programIds) throws BadRequestException {
-    Map<MDSKey, ProgramId> mdsKeyProgramIdMap = new HashMap<>();
+  public Map<ProgramId, Long> getProgramRunCounts(Collection<ProgramId> programIds)
+    throws BadRequestException, IOException {
+    Map<ProgramId, Long> result = new LinkedHashMap<>();
     if (programIds.size() > 100) {
       throw new BadRequestException(String.format("%d programs found, the maximum number supported is 100",
                                                   programIds.size()));
     }
     for (ProgramId programId : programIds) {
-      MDSKey key = getProgramKeyBuilder(TYPE_COUNT, programId).build();
-      mdsKeyProgramIdMap.put(key, programId);
-    }
-    Map<MDSKey, byte[]> counts = getKV(mdsKeyProgramIdMap.keySet());
-    Map<ProgramId, Long> result = new LinkedHashMap<>();
-    for (MDSKey mdsKey : mdsKeyProgramIdMap.keySet()) {
-      result.put(mdsKeyProgramIdMap.get(mdsKey), counts.containsKey(mdsKey) ? Bytes.toLong(counts.get(mdsKey)) : 0L);
+      List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, programId);
+      Optional<StructuredRow> row = programCountsTable.read(countKey);
+      result.put(programId, row.isPresent() ? row.get().getLong(StoreDefinition.AppMetadataStore.COUNTS) : 0);
     }
     return result;
   }
@@ -1303,11 +1264,16 @@ public class AppMetadataStore {
   /**
    * Write the start time for the upgrade if it does not exist.
    */
-  void writeUpgradeStartTimeIfNotExist() {
-    MDSKey mdsKey = new MDSKey(RUN_COUNT_FIRST_UPGRADE_TIME);
-    if (get(mdsKey, Long.TYPE) == null) {
+  void writeUpgradeStartTimeIfNotExist() throws IOException {
+    Optional<StructuredRow> row = getUpgradeMetadataRow(RUN_COUNT_FIRST_UPGRADE_TIME);
+    if (!row.isPresent()) {
       LOG.info("Start to upgrade the run count");
-      write(mdsKey, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()));
+      Collection<Field<?>> fields = row.get().getPrimaryKeys();
+      fields.add(
+        Fields.stringField(
+          StoreDefinition.AppMetadataStore.METADATA_VALUE,
+          String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))));
+      upgradeMetadataTable.upsert(fields);
     }
   }
 
@@ -1317,7 +1283,7 @@ public class AppMetadataStore {
    * @param maxRows maximum number of rows to be upgraded in this call.
    * @return a boolean indicating whether the upgrade of active run records is complete.
    */
-  boolean upgradeActiveRunRecords(int maxRows) {
+  boolean upgradeActiveRunRecords(int maxRows) throws IOException {
     int remainingRows = maxRows - upgradeActiveRowkey(TYPE_RUN_RECORD_STARTING, maxRows);
     if (remainingRows > 0) {
       remainingRows -= upgradeActiveRowkey(TYPE_RUN_RECORD_STARTED, remainingRows);
@@ -1338,27 +1304,28 @@ public class AppMetadataStore {
    * @param maxRows maximum number of rows to be upgraded in this call.
    * @return the number of rows it updates
    */
-  private int upgradeActiveRowkey(String recordType, int maxRows) {
-    MDSKey startKey = new MDSKey.Builder().add(recordType).build();
-    Map<MDSKey, RunRecordMeta> oldMap = listKV(startKey, RunRecordMeta.class, maxRows);
+  private int upgradeActiveRowkey(String recordType, int maxRows) throws IOException {
+    List<Field<?>> startKey = getRunRecordStatusPrefix(recordType);
+    Iterator<StructuredRow> iterator = runRecordsTable.scan(Range.singleton(startKey), maxRows);
+    List<StructuredRow> rows = ImmutableList.copyOf(iterator);
 
-    for (Map.Entry<MDSKey, RunRecordMeta> oldEntry : oldMap.entrySet()) {
-      MDSKey oldKey = oldEntry.getKey();
-      RunRecordMeta runRecord = oldEntry.getValue();
-      // extract the program id from the old key, the format will be same after the program name is reached, so the
-      // method can be used directly.
-      MDSKey newKey = getProgramKeyBuilder(TYPE_RUN_RECORD_ACTIVE, getProgramID(oldKey))
-        .add(getInvertedTsKeyPart(runRecord.getStartTs()))
-        .add(runRecord.getPid())
-        .build();
-
-      delete(oldKey);
-      write(newKey, runRecord);
+    for(StructuredRow row : rows) {
+      Collection<Field<?>> keys = row.getPrimaryKeys();
+      RunRecordMeta runRecord =
+        GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
+      List<Field<?>> newKeys = getProgramIDFields(keys);
+      newKeys.add(
+        Fields.longField(
+          StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(runRecord.getStartTs())));
+      newKeys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_ID, runRecord.getPid()));
+      newKeys.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA, GSON.toJson(runRecord)));
+      runRecordsTable.delete(keys);
+      runRecordsTable.upsert(newKeys);
     }
 
-    LOG.info("Upgrading {} active run records of {}", oldMap.size(), recordType);
+    LOG.info("Upgrading {} active run records of {}", rows.size(), recordType);
 
-    return oldMap.size();
+    return rows.size();
   }
 
   /**
@@ -1368,53 +1335,61 @@ public class AppMetadataStore {
    * @param maxRows maximum number of rows to be upgraded in this call.
    * @return true if all old completed run records has been scanned.
    */
-  boolean computeOldCompletedRunCount(int maxRows) {
-    Long upgradeStart = get(new MDSKey(RUN_COUNT_FIRST_UPGRADE_TIME), Long.TYPE);
-    if (upgradeStart == null) {
+  boolean computeOldCompletedRunCount(int maxRows) throws IOException {
+    Optional<StructuredRow> upgradeStart = getUpgradeMetadataRow(RUN_COUNT_FIRST_UPGRADE_TIME);
+    if (!upgradeStart.isPresent()) {
       // this should not happen since we will write the upgrade start time before the upgrade start
       LOG.warn("Unable to get the first upgrade start time, will use the current timestamp to distinguish the old " +
                  "run records");
     }
 
     long upgradeStartTime =
-      upgradeStart == null ? TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) : upgradeStart;
+      upgradeStart.isPresent()
+        ? Long.valueOf(upgradeStart.get().getString(StoreDefinition.AppMetadataStore.METADATA_VALUE))
+        : TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
     // get the progress we have, if no entry, scan from the beginning
-    MDSKey progress = get(new MDSKey(RUN_COUNT_PROGRESS), MDSKey.class);
-    MDSKey prefix = new MDSKey.Builder().add(TYPE_RUN_RECORD_COMPLETED).build();
-    MDSKey startKey = progress == null ? prefix : progress;
-    // scan to the end
-    MDSKey stopKey = new MDSKey(Bytes.stopKeyForPrefix(prefix.getKey()));
+    Optional<StructuredRow> progress = getUpgradeMetadataRow(RUN_COUNT_PROGRESS);
+    List<Field<?>> prefix = getRunRecordStatusPrefix(TYPE_RUN_RECORD_COMPLETED);
+    // ArrayList to be precise about deserialization
+    List<Field<?>> startKey =
+      progress.isPresent()
+        ? GSON.fromJson(progress.get().getString(StoreDefinition.AppMetadataStore.METADATA_VALUE),
+                        new TypeToken<ArrayList<Field<?>>>() {
+                        }.getType())
+        : prefix;
 
-    Map<MDSKey, RunRecordMeta> runRecords = listKV(startKey, stopKey, RunRecordMeta.class, maxRows, x -> true);
-    Map<ProgramId, Long> counts = new HashMap<>();
+    // Bound is EXCLUSIVE so that we do not re-read the same record. This is fine for the beginning since prefix is
+    // not a valid key.
+    Iterator<StructuredRow> iterator = runRecordsTable.scan(Range.from(startKey, Range.Bound.EXCLUSIVE), maxRows);
+    List<Field<?>> lastPrimaryKey = null;
+    Map<List<Field<?>>, Long> counts = new HashMap<>();
+    int numProcessed = 0;
 
-    // remember the progress
-    MDSKey lastRowKey = null;
-    for (Map.Entry<MDSKey, RunRecordMeta> entry : runRecords.entrySet()) {
-      lastRowKey = entry.getKey();
-      // skip if the key is equal to the progress key, since this key has already been counted in previous scan
-      if (lastRowKey.equals(progress)) {
-        continue;
-      }
-      ProgramId programId = getProgramID(lastRowKey);
-      RunRecordMeta runRecord = entry.getValue();
+    while (iterator.hasNext()) {
+      StructuredRow row = iterator.next();
+      RunRecordMeta runRecord =
+        GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
+      lastPrimaryKey = new ArrayList<>(row.getPrimaryKeys());
+      List<Field<?>> programFields = getProgramIDFields(lastPrimaryKey);
+      // Sort by field name so the list can be used as a key in the map. This way, we can be lazy and not convert
+      // the list of fields to a ProgramId.
+      programFields.sort(Comparator.comparing(Field::getName));
       if (runRecord.getStartTs() < upgradeStartTime) {
-        counts.compute(programId, (programId1, count) -> count == null ? 1L : count + 1L);
+        counts.compute(programFields, (programFields1, count) -> count == null ? 1L : count + 1L);
       }
+      numProcessed++;
     }
 
-    for (Map.Entry<ProgramId, Long> entry : counts.entrySet()) {
-      increment(getProgramKeyBuilder(TYPE_RUN_RECORD_UPGRADE_COUNT, entry.getKey()).build(), entry.getValue());
-    }
-
-    // record the progress
-    if (lastRowKey != null) {
-      write(new MDSKey(RUN_COUNT_PROGRESS), lastRowKey);
+    if (lastPrimaryKey != null) {
+      upgradeMetadataTable.upsert(
+        ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_KEY, RUN_COUNT_PROGRESS),
+                         Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_VALUE,
+                                            GSON.toJson(lastPrimaryKey))));
     }
 
     // If we are not able to get the max number of rows, that means we reach the end of this record type
-    return runRecords.size() < maxRows;
+    return numProcessed < maxRows;
   }
 
   /**
@@ -1423,25 +1398,38 @@ public class AppMetadataStore {
    * @param maxRows maximum number of rows to be upgraded in this call.
    * @return true if all the old result has been merged.
    */
-  boolean mergeCountResult(int maxRows) {
-    MDSKey startKey = new MDSKey.Builder().add(TYPE_RUN_RECORD_UPGRADE_COUNT).build();
-    Map<MDSKey, byte[]> oldCounts = listKV(startKey, maxRows);
-    for (Map.Entry<MDSKey, byte[]> entry : oldCounts.entrySet()) {
-      // increment and delete the old key
-      increment(getProgramKeyBuilder(TYPE_COUNT, getProgramID(entry.getKey())).build(), Bytes.toLong(entry.getValue()));
-      delete(entry.getKey());
+  boolean mergeCountResult(int maxRows) throws IOException {
+    List<Field<?>> key = getCountTypePrefix(TYPE_RUN_RECORD_UPGRADE_COUNT);
+    Iterator<StructuredRow> iterator = programCountsTable.scan(Range.from(key, Range.Bound.INCLUSIVE), maxRows);
+    List<StructuredRow> rows = ImmutableList.copyOf(iterator);
+    for (StructuredRow row : rows) {
+      Collection<Field<?>> primaryKeys = row.getPrimaryKeys();
+      List<Field<?>> newKeys = new ArrayList<>();
+      for (Field<?> field : primaryKeys) {
+        if (field.getName().equals(StoreDefinition.AppMetadataStore.COUNT_TYPE)) {
+          newKeys.add(Fields.stringField(StoreDefinition.AppMetadataStore.COUNT_TYPE, TYPE_COUNT));
+        } else {
+          newKeys.add(field);
+        }
+      }
+      programCountsTable.increment(
+        newKeys, StoreDefinition.AppMetadataStore.COUNTS, row.getLong(StoreDefinition.AppMetadataStore.COUNTS));
+      programCountsTable.delete(primaryKeys);
     }
-    return oldCounts.size() < maxRows;
+
+    return rows.size() < maxRows;
   }
 
-  void deleteStartUpTimeRow() {
-    delete(new MDSKey(RUN_COUNT_FIRST_UPGRADE_TIME));
+  void deleteStartUpTimeRow() throws IOException {
+    upgradeMetadataTable.delete(
+      ImmutableList.of(
+        Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_KEY, RUN_COUNT_FIRST_UPGRADE_TIME)));
   }
 
   /**
    * @return true if the upgrade of the app meta store is complete
    */
-  boolean hasUpgraded() {
+  boolean hasUpgraded() throws IOException {
     boolean upgraded = upgradeCompleted;
     if (upgraded) {
       return true;
@@ -1462,12 +1450,11 @@ public class AppMetadataStore {
 
       lastUpgradeCompletedCheck = now;
 
-      MDSKey.Builder keyBuilder = new MDSKey.Builder();
-      keyBuilder.add(APP_VERSION_UPGRADE_KEY);
-      String version = get(keyBuilder.build(), String.class);
-      if (version == null) {
+      Optional<StructuredRow> row = getUpgradeMetadataRow(APP_VERSION_UPGRADE_KEY);
+      if (!row.isPresent()) {
         return false;
       }
+      String version = row.get().getString(StoreDefinition.AppMetadataStore.METADATA_VALUE);
       ProjectInfo.Version actual = new ProjectInfo.Version(version);
       upgradeCompleted = upgraded = actual.compareTo(ProjectInfo.getVersion()) >= 0;
     }
@@ -1478,10 +1465,13 @@ public class AppMetadataStore {
    * Mark the table that the upgrade is complete.
    * TODO: CDAP-14114 change the logic to run count upgrade
    */
-  public void upgradeCompleted() {
+  public void upgradeCompleted() throws IOException {
     MDSKey.Builder keyBuilder = new MDSKey.Builder();
     keyBuilder.add(APP_VERSION_UPGRADE_KEY);
-    write(keyBuilder.build(), ProjectInfo.getVersion().toString());
+    List<Field<?>> fields =
+      ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_KEY, APP_VERSION_UPGRADE_KEY),
+                       Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_VALUE, ProjectInfo.getVersion().toString()));
+    upgradeMetadataTable.upsert(fields);
 
     // Reset the lastUpgradeCompletedCheck to 0L to force checking from Table next time when hasUpgraded is called
     synchronized (AppMetadataStore.class) {
@@ -1498,16 +1488,11 @@ public class AppMetadataStore {
    *         or {@code null} if no message id was stored before
    */
   @Nullable
-  public String retrieveSubscriberState(String topic, String subscriber) {
-    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE).add(topic);
+  public String retrieveSubscriberState(String topic, String subscriber) throws IOException {
+    List<Field<?>> keys = getSubscriberKeys(topic, subscriber);
+    Optional<StructuredRow> row = subscriberStateTable.read(keys);
 
-    // For backward compatibility, skip the subscriber part if it is empty or null
-    if (subscriber != null && !subscriber.isEmpty()) {
-      keyBuilder.add(subscriber);
-    }
-
-    byte[] rawBytes = get(keyBuilder.build(), BYTE_TYPE);
-    return (rawBytes == null) ? null : Bytes.toString(rawBytes);
+    return row.isPresent() ? row.get().getString(StoreDefinition.AppMetadataStore.SUBSCRIBER_MESSAGE) : null;
   }
 
   /**
@@ -1517,15 +1502,11 @@ public class AppMetadataStore {
    * @param subscriber the subscriber name
    * @param messageId the most recently processed message id
    */
-  public void persistSubscriberState(String topic, String subscriber, String messageId) {
-    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE).add(topic);
+  public void persistSubscriberState(String topic, String subscriber, String messageId) throws IOException {
+    List<Field<?>> keys = getSubscriberKeys(topic, subscriber);
+    keys.add(Fields.stringField(StoreDefinition.AppMetadataStore.SUBSCRIBER_MESSAGE, messageId));
 
-    // For backward compatibility, skip the subscriber part if it is empty or null
-    if (subscriber != null && !subscriber.isEmpty()) {
-      keyBuilder.add(subscriber);
-    }
-
-    write(keyBuilder.build(), Bytes.toBytes(messageId));
+    subscriberStateTable.upsert(keys);
   }
 
   /**
@@ -1534,67 +1515,56 @@ public class AppMetadataStore {
    * @param topic the topic to persist the message id
    * @param subscriber the subscriber name
    */
-  public void deleteSubscriberState(String topic, String subscriber) {
-    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE).add(topic);
-    keyBuilder.add(subscriber);
-    delete(keyBuilder.build());
-  }
-
-  private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
-                                                     final long endTimeInSecs, long maxScanTimeMillis) {
-    List<Iterable<RunId>> batches = getRunningInRangeForStatus(statusKey, startTimeInSecs, endTimeInSecs,
-                                                               maxScanTimeMillis, Ticker.systemTicker());
-    return Iterables.concat(batches);
+  public void deleteSubscriberState(String topic, String subscriber) throws IOException {
+    List<Field<?>> keys = getSubscriberKeys(topic, subscriber);
+    subscriberStateTable.delete(keys);
   }
 
   @VisibleForTesting
-  List<Iterable<RunId>> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
-                                                   final long endTimeInSecs, long maxScanTimeMillis, Ticker ticker) {
+  Set<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
+                                                   final long endTimeInSecs) throws IOException {
     // Create time filter to get running programs between start and end time
     Predicate<RunRecordMeta> timeFilter = (runRecordMeta) ->
       runRecordMeta.getStartTs() < endTimeInSecs &&
         (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
 
-    // Break up scans into smaller batches to prevent transaction timeout
-    List<Iterable<RunId>> batches = new ArrayList<>();
-    MDSKey startKey = new MDSKey.Builder().add(statusKey).build();
-    MDSKey endKey = new MDSKey(Bytes.stopKeyForPrefix(startKey.getKey()));
-    while (true) {
-      ScanFunction scanFunction = new ScanFunction(timeFilter, ticker, maxScanTimeMillis);
-      scanFunction.start();
-      scan(startKey, endKey, RunRecordMeta.class, scanFunction);
-      // stop when scan returns zero elements
-      if (scanFunction.getNumProcessed() == 0) {
-        break;
-      }
-      batches.add(Iterables.transform(scanFunction.getValues(),
-                                      runRecordMeta -> RunIds.fromString(runRecordMeta.getPid())));
-      // key for next scan is the last key + 1 from the previous scan
-      startKey = new MDSKey(Bytes.stopKeyForPrefix(scanFunction.getLastKey().getKey()));
-    }
-    return batches;
+    List<Field<?>> prefix = getRunRecordStatusPrefix(statusKey);
+    return
+      getProgramRunIdMap(Range.singleton(prefix), timeFilter, null, Integer.MAX_VALUE).entrySet()
+        .stream()
+        .map(entry -> RunIds.fromString(entry.getValue().getPid()))
+        .collect(Collectors.toSet());
   }
 
   /**
    * Returns a ProgramId given the MDS key
    *
-   * @param key the MDS key to be used
-   * @return ProgramId created from the MDS key
+   * @param fullPrimaryKeys the full set of primary keys to get the programId fields from
+   * @return the remaining list of primary keys which describe a programId
    */
-  private static ProgramId getProgramID(MDSKey key) {
-    MDSKey.Splitter splitter = key.split();
+  private List<Field<?>> getProgramIDFields(Collection<Field<?>> fullPrimaryKeys) {
+    List<Field<?>> newKeys = new ArrayList();
+    for (Field<?> field : fullPrimaryKeys) {
+      if (!field.getName().equals(StoreDefinition.AppMetadataStore.RUN_START_TIME)
+        && !field.getName().equals(StoreDefinition.AppMetadataStore.RUN_ID)) {
+        newKeys.add(field);
+      }
+    }
+    return newKeys;
+  }
 
-    // Format : recordType, ns, app, version, type, program, ts, runid
+  private List<Field<?>> getSubscriberKeys(String topic, String subscriber) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SUBSCRIBER_TOPIC, topic));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.SUBSCRIBER, subscriber));
+    return fields;
+  }
 
-    // record type
-    splitter.getString();
-    String namespace = splitter.getString();
-    String application = splitter.getString();
-    String appVersion = splitter.getString();
-    String type = splitter.getString();
-    String program = splitter.getString();
-
-    return (new ApplicationId(namespace, application, appVersion).program(ProgramType.valueOf(type), program));
+  private Optional<StructuredRow> getUpgradeMetadataRow(String keyFieldName) throws IOException {
+    List<Field<?>> fields = new ArrayList();
+    fields.add(
+      Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_KEY, keyFieldName));
+    return upgradeMetadataTable.read(fields);
   }
 
   private List<Field<?>> getProgramRunInvertedTimeKey(String recordType, ProgramRunId runId, long startTs) {
@@ -1649,6 +1619,26 @@ public class AppMetadataStore {
     return fields;
   }
 
+  private List<Field<?>> getCountTypePrefix(String countType) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.COUNT_TYPE, countType));
+    return fields;
+  }
+
+  private List<Field<?>> getCountNamespacePrefix(String countType, String namespace) {
+    List<Field<?>> fields = getCountTypePrefix(countType);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespace));
+    return fields;
+  }
+
+  private List<Field<?>> getCountApplicationPrefix(String countType, ApplicationId applicationId) {
+    List<Field<?>> fields = getCountTypePrefix(countType);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, applicationId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, applicationId.getApplication()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, applicationId.getVersion()));
+    return fields;
+  }
+
   private <T> List<T> scanWithRange(Range range, Type typeofT, StructuredTable table, String field)
     throws IOException {
     List<T> result = new ArrayList<>();
@@ -1666,14 +1656,14 @@ public class AppMetadataStore {
     table.upsert(keys);
   }
 
-  private List<Field<?>> getStatusPrefix(String status) {
+  private List<Field<?>> getRunRecordStatusPrefix(String status) {
     List<Field<?>> fields = new ArrayList<>();
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, status));
     return fields;
   }
 
-  private List<Field<?>> getNamespacePrefix(String status, @Nullable NamespaceId namespaceId) {
-    List<Field<?>> fields = getStatusPrefix(status);
+  private List<Field<?>> getRunRecordNamespacePrefix(String status, @Nullable NamespaceId namespaceId) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
     if (namespaceId == null) {
       return fields;
     }
@@ -1681,8 +1671,14 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getApplicationPrefix(String status, @Nullable ApplicationId applicationId) {
-    List<Field<?>> fields = getStatusPrefix(status);
+  private List<Field<?>> getRunRecordNamespacePrefixWithString(String status, String namespaceId) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    return fields;
+  }
+
+  private List<Field<?>> getRunRecordApplicationPrefix(String status, @Nullable ApplicationId applicationId) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
     if (applicationId == null) {
       return fields;
     }
@@ -1691,12 +1687,12 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private List<Field<?>> getProgramPrefix(String status, @Nullable ProgramId programId) {
+  private List<Field<?>> getRunRecordProgramPrefix(String status, @Nullable ProgramId programId) {
     if (programId == null) {
-      return getStatusPrefix(status);
+      return getRunRecordStatusPrefix(status);
     }
     List<Field<?>> fields =
-      getApplicationPrefix(
+      getRunRecordApplicationPrefix(
         status, new ApplicationId(programId.getNamespace(), programId.getApplication(), programId.getVersion()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD, programId.getType().name()));
     fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programId.getProgram()));
@@ -1711,63 +1707,15 @@ public class AppMetadataStore {
     }
     return GSON.fromJson(row.get().getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
   }
-  private static class AppVersionPredicate implements Predicate<MDSKey> {
-    private final String version;
 
-    AppVersionPredicate(String version) {
-      this.version = version;
-    }
-
-    @Override
-    public boolean test(MDSKey input) {
-      ProgramId programId = getProgramID(input);
-      return programId.getVersion().equals(version);
-    }
-  }
-
-  private static class ScanFunction implements Function<MetadataStoreDataset.KeyValue<RunRecordMeta>, Boolean> {
-    private final Predicate<RunRecordMeta> filter;
-    private final Stopwatch stopwatch;
-    private final long maxScanTimeMillis;
-    private final List<RunRecordMeta> values = new ArrayList<>();
-    private int numProcessed = 0;
-    private MDSKey lastKey;
-
-    ScanFunction(Predicate<RunRecordMeta> filter, Ticker ticker, long maxScanTimeMillis) {
-      this.filter = filter;
-      this.maxScanTimeMillis = maxScanTimeMillis;
-      this.stopwatch = new Stopwatch(ticker);
-    }
-
-    public void start() {
-      stopwatch.start();
-    }
-
-    public List<RunRecordMeta> getValues() {
-      return Collections.unmodifiableList(values);
-    }
-
-    public int getNumProcessed() {
-      return numProcessed;
-    }
-
-    public MDSKey getLastKey() {
-      return lastKey;
-    }
-
-    @Override
-    public Boolean apply(MetadataStoreDataset.KeyValue<RunRecordMeta> input) {
-      long elapsedMillis = stopwatch.elapsedMillis();
-      if (elapsedMillis > maxScanTimeMillis) {
-        return false;
-      }
-
-      ++numProcessed;
-      lastKey = input.getKey();
-      if (filter.test(input.getValue())) {
-        values.add(input.getValue());
-      }
-      return true;
-    }
+  private List<Field<?>> getProgramCountPrimaryKeys(String type, ProgramId programId) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.COUNT_TYPE, type));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, programId.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, programId.getApplication()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, programId.getVersion()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD, programId.getType().name()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programId.getProgram()));
+    return fields;
   }
 }
