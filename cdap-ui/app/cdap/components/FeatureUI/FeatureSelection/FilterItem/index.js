@@ -1,18 +1,3 @@
-/*
- * Copyright © 2018 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 /* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -46,7 +31,7 @@ class FilterItem extends Component {
       this.setState({ 'doubleView': true });
     } else {
       this.setState({ 'doubleView': false });
-      // remove the max value
+      //remove the max value
       this.maxValueChange(null);
     }
     const result = { selectedFilterType: item };
@@ -59,7 +44,6 @@ class FilterItem extends Component {
   }
 
   minValueChange = (evt) => {
-    console.log("min value :: " + evt.target.value);
     const result = { minValue: evt.target.value };
     this.props.changFilterItem(result, this.props.itemIndex);
   }
@@ -105,8 +89,13 @@ class FilterItem extends Component {
             </div>
             : null
           }
-          <i className="fa fa-minus-circle text-danger action-icon" aria-hidden="true" onClick={this.props.removeFilterItem}></i>
+          <i className="fa fa-minus-circle action-icon" aria-hidden="true" onClick={this.props.removeFilterItem}></i>
         </div>
+        {
+          this.props.itemVO.hasRangeError ?
+            <div className="error-box">Invalid range values</div>
+            : null
+        }
         <div className="filter-column-box">
           <label className="filter-column-label">Column Name:</label>
           <Dropdown className="filter-type-dropdown" isOpen={this.state.columnOpen} toggle={this.toggleColumnDropDown.bind(this)}>

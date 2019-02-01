@@ -14,20 +14,19 @@
  * the License.
 */
 import * as React from 'react';
-import NavLinkWrapper from 'components/NavLinkWrapper';
-import { withContext } from 'components/Header/NamespaceLinkContext';
+import {withContext} from 'components/Header/NamespaceLinkContext';
 import classnames from 'classnames';
 require('./FELink.scss');
 
 interface IFELinkProps {
   context: {
     namespace: string;
-    isNativeLink: boolean;
   };
 }
 
 class FELink extends React.PureComponent<IFELinkProps> {
   public render() {
+
     const featureName = "Feature Engineering";
     const { namespace } = this.props.context;
 
@@ -37,8 +36,8 @@ class FELink extends React.PureComponent<IFELinkProps> {
         className={classnames({
           active: this.isFEActive(),
         })}
-        onClick = {this.navigateToFeature.bind(this, namespace)}
-      >{featureName}
+      onClick = {this.navigateToFeature.bind(this, namespace)}>
+      {featureName}
       </li>
     );
   }

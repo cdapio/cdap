@@ -1,21 +1,7 @@
-/*
- * Copyright © 2018 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
+import isNil from 'lodash/isNil';
 
 export function toCamelCase(value) {
   return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
@@ -171,3 +157,19 @@ export function getFeatureObject(props) {
   return featureObject;
 }
 
+export function checkResponseError(result) {
+  return (isNil(result) ||
+  (result.status && result.status > 200) ||
+  (result.statusCode && result.statusCode > 200) ||
+  (result.response && result.response.status && result.response.status > 200));
+}
+
+export function getErrorMessage(error) {
+  let errorMessage = "Error in retrieving data";
+  if(!isEmpty(error.message)) {
+    errorMessage = error.message;
+  } else if(error.response && !isEmpty(error.response.message)) {
+    errorMessage = error.response.message;
+  }
+  return errorMessage;
+}

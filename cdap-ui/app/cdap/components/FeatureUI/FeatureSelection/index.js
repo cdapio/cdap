@@ -1,18 +1,3 @@
-/*
- * Copyright © 2018 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 /* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import FilterContainer from './FilterContainer';
@@ -20,22 +5,37 @@ import './FeatureSelection.scss';
 import GridHeader from './GridHeader';
 import GridContainer from './GridContainer';
 import { isNil } from 'lodash';
-import { SERVER_IP, GET_PIPE_LINE_FILTERED_DATA, GET_PIPE_LINE_FILTERED } from '../config';
+import {
+  GET_PIPE_LINE_FILTERED,
+  GET_FEATURE_CORRELAION
+} from '../config';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import CorrelationContainer from './CorrelationContainer';
+import FEDataServiceApi from '../feDataService';
+import NamespaceStore from 'services/NamespaceStore';
+import { checkResponseError, getErrorMessage } from '../util';
+import SaveFeatureModal from './SaveFeatureModal';
 
 class FeatureSelection extends Component {
+
+
   constructor(props) {
     super(props);
-    this.state = this.dataParser(this.props.pipeLineData);
+    this.state = Object.assign({
+      activeTab: "1", selectedFeatures: [],
+      openSaveModal: false,
+      enableSave:false
+    }, this.dataParser(this.props.pipeLineData));
   }
 
   dataParser = (data) => {
     const columDefs = [];
     const rowData = [];
     const columns = [];
+    const featureNames = [];
 
+    let rowCount = 0;
     data.forEach(item => {
       if (columDefs.length <= 0) {
         // generate filter column
@@ -49,7 +49,7 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "featureName", field: "featureName", width: 250, checkboxSelection: true });
+          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 250, checkboxSelection: true });
         }
         columns.forEach(element => {
           columDefs.push({ headerName: element.name, field: element.name });
@@ -60,22 +60,33 @@ class FeatureSelection extends Component {
       if (!isNil(item.featureStatistics)) {
         // let counter = 0;
         const rowObj = { featureName: item.featureName };
+        featureNames.push({ id: rowCount, name: item.featureName, selected: false });
         columns.forEach(element => {
           rowObj[element.name] = item.featureStatistics[element.name];
         });
         rowData.push(rowObj);
+        rowCount++;
       }
     });
     return {
       gridColumnDefs: columDefs,
       gridRowData: rowData,
       filterColumns: columns,
-      activeTab: "1"
+      featureNames: featureNames
     };
   }
 
   navigateToParentWindow = () => {
     this.props.nagivateToParent();
+  }
+
+  gridRowSelectionChange = (selectedRows) => {
+    if (!isNil(selectedRows) && selectedRows.length > 0) {
+      this.setState({ selectedFeatures: selectedRows, enableSave:true });
+
+    } else {
+      this.setState({ selectedFeatures: [], enableSave: false });
+    }
   }
 
   applyFilter = (filterObj) => {
@@ -85,6 +96,7 @@ class FeatureSelection extends Component {
 
   requestGenerator = (value) => {
     const filtersList = [];
+    let result = {};
     if (!isNil(value) && !isNil(value.filterItemList)) {
       value.filterItemList.forEach(element => {
         let low = 0;
@@ -104,39 +116,37 @@ class FeatureSelection extends Component {
         });
       });
     }
-    return {
-      orderByStat: value.selectedOrderbyColumn.name.replace(/\s/g, ""),
+
+    result = {
       startPosition: value.minLimitValue.trim() == "" ? 0 : Number(value.minLimitValue.trim()),
       endPosition: value.maxLimitValue.trim() == "" ? 0 : Number(value.maxLimitValue.trim()),
       isComposite: true,
-      compositeType: "OR",
+      compositeType: value.selectedCompositeOption,
       filterList: filtersList
     };
+    if (value.selectedOrderbyColumn.id != -1) {
+      result['orderByStat'] = value.selectedOrderbyColumn.name.replace(/\s/g, "");
+    }
+
+    return result;
   }
 
   getFilteredRecords(requestObj) {
-
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
-
-    let URL = SERVER_IP + GET_PIPE_LINE_FILTERED_DATA + featureGenerationPipelineName + '/features/filter';
-
-    fetch(URL, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestObj)
-    }).then(res => res.json())
-      .then(
-        (result) => {
-          if (isNil(result) || isNil(result["featureStatsList"])) {
-            alert("Pipeline filter Data Error");
+    FEDataServiceApi.pipelineFilteredData(
+      {
+        namespace: NamespaceStore.getState().selectedNamespace,
+        pipeline: featureGenerationPipelineName,
+      }, requestObj).subscribe(
+        result => {
+          if (checkResponseError(result) || isNil(result["featureStatsList"])) {
+            this.handleError(result, GET_PIPE_LINE_FILTERED);
           } else {
-            // to do
+            const parsedResult = this.dataParser(result["featureStatsList"]);
+            this.setState({ gridRowData: parsedResult.gridRowData });
           }
         },
-        (error) => {
+        error => {
           this.handleError(error, GET_PIPE_LINE_FILTERED);
         }
       );
@@ -150,12 +160,76 @@ class FeatureSelection extends Component {
     }
   }
 
+  applyCorrelation = (value) => {
+    const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
+    const selectedFeatures = [value.selectedfeatures.name];
+    FEDataServiceApi.featureCorrelationData(
+      {
+        namespace: NamespaceStore.getState().selectedNamespace,
+        pipeline: featureGenerationPipelineName,
+        coefficientType: value.coefficientType.name
+      }, selectedFeatures).subscribe(
+        result => {
+          if (checkResponseError(result) || isNil(result["featureCorrelationScores"])) {
+            this.handleError(result, GET_FEATURE_CORRELAION);
+          } else {
+            const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
+            this.setState({ gridColumnDefs: parsedResult.gridColumnDefs });
+            this.setState({ gridRowData: parsedResult.gridRowData });
+          }
+        },
+        error => {
+          this.handleError(error, GET_FEATURE_CORRELAION);
+        }
+      );
+
+  }
+
+
+  handleError(error, type) {
+    console.log(type, error);
+    alert(getErrorMessage(error));
+  }
+
+  praseCorrelation = (value) => {
+    const columDefs = [];
+    const rowData = [];
+    // generate column def\featureCorrelationScores
+    if (!isNil(value) && value.length > 0) {
+      const item = value[0]['featureCorrelationScores'];
+      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 250, checkboxSelection: true });
+      columDefs.push({ headerName: "Value", field: "value" });
+
+      if (!isNil(item)) {
+        for (let key in item) {
+          rowData.push({ featureName: key, value: item[key] });
+        }
+      }
+    }
+    return {
+      gridColumnDefs: columDefs,
+      gridRowData: rowData
+    };
+  }
+
+  onSaveClick =()=>{
+    this.setState({openSaveModal:true});
+  }
+
+  onSaveModalClose = () => {
+    this.setState({openSaveModal:false});
+  }
+
   render() {
     return (
       <div className="feature-selection-box">
         <div className="grid-box">
-          <GridHeader selectedPipeline={this.props.selectedPipeline} backnavigation={this.navigateToParentWindow}></GridHeader>
-          <GridContainer gridColums={this.state.gridColumnDefs} rowData={this.state.gridRowData}></GridContainer>
+          <GridHeader selectedPipeline={this.props.selectedPipeline} backnavigation={this.navigateToParentWindow}
+            save={this.onSaveClick} enableSave={this.state.enableSave}></GridHeader>
+          <GridContainer gridColums={this.state.gridColumnDefs}
+            rowData={this.state.gridRowData}
+            selectionChange={this.gridRowSelectionChange}
+          ></GridContainer>
         </div>
         <div className="filter-box">
           <Nav tabs className="tab-header">
@@ -180,10 +254,14 @@ class FeatureSelection extends Component {
                 applyFilter={this.applyFilter}></FilterContainer>
             </TabPane>
             <TabPane tabId="2" className="tab-pane">
-              <CorrelationContainer></CorrelationContainer>
+              <CorrelationContainer applyCorrelation={this.applyCorrelation} featureNames={this.state.featureNames}></CorrelationContainer>
             </TabPane>
           </TabContent>
         </div>
+
+        <SaveFeatureModal open={this.state.openSaveModal} message={this.state.alertMessage}
+          onClose={this.onSaveModalClose} selectedPipeline={this.props.selectedPipeline}
+          selectedFeatures={this.state.selectedFeatures}/>
       </div>
     );
   }

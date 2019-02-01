@@ -1,18 +1,3 @@
-/*
- * Copyright © 2018 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 /* eslint react/prop-types: 0 */
 import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
@@ -31,7 +16,6 @@ import {
   AccordionItemBody,
 } from 'react-accessible-accordion';
 
-// Demo styles, see 'Styles' section below for some notes on use.
 import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
 import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase } from '../util';
@@ -218,9 +202,10 @@ class PropertySelector extends React.Component {
     return (
       <div className="property-step-container">
         <div className="property-container">
+        <div className = "config-selector-header">Property</div>
           <Accordion onChange={this.onAccordionChange.bind(this)}>
             {
-              Array.from(updatedPropMap.keys()).map(property => {
+              Array.from(updatedPropMap.keys()).map((property, index) => {
                 let isMandatory = false;
                 let subParams = updatedPropMap.get(property);
                 let description;
@@ -229,16 +214,18 @@ class PropertySelector extends React.Component {
                   description = subParams[0].description;
                 }
                 return (
-                  <AccordionItem key={property}>
-                    <AccordionItemTitle>
-                      {toCamelCase(property)}
-                      {
-                        isMandatory && <i className = "fa fa-asterisk mandatory"></i>
-                      }
-                      {
-                      description &&
-                      <InfoTip id = {property+ '_InfoTip'} description = {description}/>
-                      }
+                  <AccordionItem key={property} expanded = {index == 0? true: false}>
+                  <AccordionItemTitle className = {index == this.currentPropertyIndex? "accordion__title selected": "accordion__title"}>
+                      <div className = "title-items">
+                        {
+                        description && <InfoTip id = {property+ '_InfoTip'} description = {description}/>
+                        }
+                        {
+                          isMandatory && <i className = "fa fa-asterisk mandatory"></i>
+                        }
+                        <div className ="heading" title = {toCamelCase(property)}>{toCamelCase(property)}</div>
+                      </div>
+                      <div className="accordion__arrow" role="presentation" />
                     </AccordionItemTitle>
 
                     <AccordionItemBody>
@@ -261,7 +248,7 @@ class PropertySelector extends React.Component {
           </Accordion>
         </div>
         <div className="schema-container">
-          <div className = "column-selector-header">{"Select columns for : " + toCamelCase(this.currentProperty.paramName)
+          <div className = "config-selector-header">{"Select columns for : " + toCamelCase(this.currentProperty.paramName)
               + (isEmpty(this.currentProperty.subParams)?"": (" (" + toCamelCase(this.currentSubProperty) + ")"))}</div>
           <div className="schema-filter-container">
             <label>Column Type</label>
@@ -279,6 +266,7 @@ class PropertySelector extends React.Component {
                 }
               </DropdownMenu>
             </Dropdown>
+            <div className = "spacer"></div>
             <InputGroup>
               <Input placeholder="search" onChange={this.onFilterKeyChange.bind(this)} />
               <i className = "search-icon fa fa-search"></i>
