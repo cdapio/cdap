@@ -53,6 +53,7 @@ import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.http.NettyHttpService;
 import com.google.common.reflect.TypeToken;
 import org.apache.tephra.TransactionSystemClient;
@@ -87,7 +88,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            MessagingService messagingService,
                            ArtifactManager artifactManager, MetadataReader metadataReader,
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
-                           PluginFinder pluginFinder) {
+                           PluginFinder pluginFinder, TransactionRunner transactionRunner) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -97,7 +98,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
-                                               pluginFinder);
+                                               pluginFinder, transactionRunner);
     this.context = contextFactory.create(null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -151,12 +152,13 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               ArtifactManager artifactManager,
                                                               MetadataReader metadataReader,
                                                               MetadataPublisher metadataPublisher,
-                                                              PluginFinder pluginFinder) {
+                                                              PluginFinder pluginFinder,
+                                                              TransactionRunner transactionRunner) {
     return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
-                                               namespaceQueryAdmin, pluginFinder);
+                                               namespaceQueryAdmin, pluginFinder, transactionRunner);
   }
 
   /**

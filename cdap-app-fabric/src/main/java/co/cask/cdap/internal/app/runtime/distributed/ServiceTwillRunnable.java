@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Module;
@@ -38,6 +39,8 @@ public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServicePr
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
     Module module = super.createModule(cConf, hConf, programOptions, programRunId);
-    return Modules.combine(module, new DistributedArtifactManagerModule());
+    return Modules.combine(module,
+                           new DistributedArtifactManagerModule(),
+                           new SystemDatasetRuntimeModule().getDistributedModules());
   }
 }

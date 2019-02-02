@@ -32,6 +32,7 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -58,6 +59,7 @@ import javax.annotation.Nullable;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final CConfiguration cConf;
   private final String applicationName;
@@ -120,11 +122,7 @@ public final class InMemoryConfigurator implements Configurator {
     }
   }
 
-  private ConfigResponse createResponse(Application<?> app) throws Exception {
-    return new DefaultConfigResponse(0, getSpecJson(app));
-  }
-
-  private <T extends Config> String getSpecJson(Application<T> app) throws Exception {
+  private <T extends Config> ConfigResponse createResponse(Application<T> app) throws Exception {
     // This Gson cannot be static since it is used to deserialize user class.
     // Gson will keep a static map to class, hence will leak the classloader
     Gson gson = new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
@@ -201,9 +199,10 @@ public final class InMemoryConfigurator implements Configurator {
       }
     }
     ApplicationSpecification specification = configurer.createSpecification(applicationName, applicationVersion);
+    AppSpecInfo appSpecInfo = new AppSpecInfo(specification, configurer.getSystemTables());
 
     // Convert the specification to JSON.
     // We write the Application specification to output file in JSON format.
-    return ApplicationSpecificationAdapter.create().toJson(specification);
+    return new DefaultConfigResponse(0, GSON.toJson(appSpecInfo));
   }
 }

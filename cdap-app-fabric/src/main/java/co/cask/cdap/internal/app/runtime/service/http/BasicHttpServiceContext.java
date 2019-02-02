@@ -24,8 +24,8 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
-import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.SystemHttpServiceContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -39,9 +39,15 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.transaction.TransactionException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TxRunnable;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -64,7 +70,7 @@ import javax.annotation.Nullable;
  * Default implementation of HttpServiceContext which simply stores and retrieves the
  * spec provided when this class is instantiated
  */
-public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext {
+public class BasicHttpServiceContext extends AbstractContext implements SystemHttpServiceContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicHttpServiceContext.class);
 
   private final CConfiguration cConf;
@@ -75,6 +81,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   private final AtomicInteger instanceCount;
   private final ArtifactManager artifactManager;
   private final PluginFinder pluginFinder;
+  private final TransactionRunner transactionRunner;
   private final Collection<Closeable> closeables;
 
   /**
@@ -103,7 +110,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
                                  ArtifactManager artifactManager, MetadataReader metadataReader,
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
-                                 PluginFinder pluginFinder) {
+                                 PluginFinder pluginFinder, TransactionRunner transactionRunner) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
@@ -117,6 +124,7 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
     this.instanceCount = instanceCount;
     this.artifactManager = artifactManager;
     this.pluginFinder = pluginFinder;
+    this.transactionRunner = transactionRunner;
     this.closeables = new ArrayList<>();
   }
 
@@ -189,6 +197,19 @@ public class BasicHttpServiceContext extends AbstractContext implements HttpServ
   public CloseableClassLoader createClassLoader(String namespace, ArtifactInfo artifactInfo,
                                                 @Nullable ClassLoader parentClassLoader) throws IOException {
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
+  }
+
+  @Override
+  public void run(TxRunnable runnable) throws TransactionException {
+    if (!namespaceId.equals(NamespaceId.SYSTEM)) {
+      // should not happen in normal circumstances, as this is checked when the application is deployed.
+      // could possibly be called if the user is directly casting to a SystemHttpServiceContext in user services.
+      throw new UnauthorizedException("System table transactions can only be run by "
+                                        + "applications in the system namespace.");
+    }
+    // table names are prefixed to prevent clashes with CDAP platform tables.
+    transactionRunner.run(context -> runnable.run(
+      tableId -> context.getTable(new StructuredTableId(DefaultSystemTableConfigurer.PREFIX + tableId.getName()))));
   }
 
   /**

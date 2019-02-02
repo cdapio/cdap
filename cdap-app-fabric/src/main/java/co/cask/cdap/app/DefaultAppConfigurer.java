@@ -28,6 +28,7 @@ import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.SystemServiceConfigurer;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.worker.Worker;
@@ -45,16 +46,22 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
+import co.cask.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -76,6 +83,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final Map<String, ServiceSpecification> services = new HashMap<>();
   private final Map<String, ScheduleCreationSpec> scheduleSpecs = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
+  private final Map<StructuredTableId, StructuredTableSpecification> systemTables = new HashMap<>();
   private final TriggerFactory triggerFactory;
   private String name;
   private String description;
@@ -171,12 +179,25 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   @Override
   public void addService(Service service) {
     Preconditions.checkArgument(service != null, "Service cannot be null.");
+    // check that a system service is only used in system namespace
+    if (!deployNamespace.equals(Id.Namespace.fromEntityId(NamespaceId.SYSTEM))) {
+      TypeToken<?> type = TypeToken.of(service.getClass()).resolveType(Service.class.getTypeParameters()[0]);
+      if (SystemServiceConfigurer.class.isAssignableFrom(type.getRawType())) {
+        throw new IllegalArgumentException(String.format(
+          "Invalid service '%s'. Services can only use a SystemServiceConfigurer if the application is "
+            + "deployed in the system namespace.", service.getClass().getSimpleName()));
+      }
+    }
+
+    DefaultSystemTableConfigurer systemTableConfigurer = new DefaultSystemTableConfigurer();
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
-                                                                       artifactRepository, pluginInstantiator);
+                                                                       artifactRepository, pluginInstantiator,
+                                                                       systemTableConfigurer);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
     addDatasetsAndPlugins(configurer);
+    addSystemTableSpecs(systemTableConfigurer.getTableSpecs());
     services.put(spec.getName(), spec);
   }
 
@@ -261,6 +282,10 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
                                                builtScheduleSpecs, workers, getPlugins());
   }
 
+  public Collection<StructuredTableSpecification> getSystemTables() {
+    return systemTables.values();
+  }
+
   /**
    * Adds the dataset and plugins at the application level so that they can be used by any program in the application.
    *
@@ -274,5 +299,16 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private void addDatasets(DefaultDatasetConfigurer configurer) {
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
+  }
+
+  private void addSystemTableSpecs(Collection<StructuredTableSpecification> specs) {
+    for (StructuredTableSpecification spec : specs) {
+      StructuredTableSpecification existing = systemTables.get(spec.getTableId());
+      if (existing != null && !existing.equals(spec)) {
+        throw new IllegalArgumentException(String.format(
+          "System table '%s' was created more than once with different specifications.", spec.getTableId().getName()));
+      }
+      systemTables.put(spec.getTableId(), spec);
+    }
   }
 }

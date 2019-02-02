@@ -78,8 +78,11 @@ import javax.ws.rs.Path;
  *
  * @see HttpContentConsumer
  * @see HttpContentProducer
+ * @param <T> type of service context
+ * @param <V> type of service configurer
  */
-public interface HttpServiceHandler extends ProgramLifecycle<HttpServiceContext> {
+public interface HttpServiceHandler<T extends HttpServiceContext, V extends HttpServiceConfigurer>
+  extends ProgramLifecycle<T> {
 
   /**
    * Configures this HttpServiceHandler with the given {@link HttpServiceConfigurer}.
@@ -87,7 +90,7 @@ public interface HttpServiceHandler extends ProgramLifecycle<HttpServiceContext>
    *
    * @param configurer the HttpServiceConfigurer which is used to configure this Handler
    */
-  void configure(HttpServiceConfigurer configurer);
+  void configure(V configurer);
 
   /**
    * Invoked whenever a new instance of this HttpServiceHandler is created. Note that this
@@ -98,7 +101,7 @@ public interface HttpServiceHandler extends ProgramLifecycle<HttpServiceContext>
    */
   @Override
   @TransactionPolicy(TransactionControl.IMPLICIT)
-  void initialize(HttpServiceContext context) throws Exception;
+  void initialize(T context) throws Exception;
 
   /**
    * Invoked whenever an instance of this HttpServiceHandler is destroyed. This may happen

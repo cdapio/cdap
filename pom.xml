@@ -2734,6 +2734,8 @@
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-storage-spi</module>
+        <module>cdap-system-app-api</module>
+        <module>cdap-system-app-unit-test</module>
         <module>cdap-tms</module>
         <module>cdap-gateway</module>
         <module>cdap-explore-client</module>

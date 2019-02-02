@@ -23,11 +23,14 @@ import java.util.Map;
 /**
  * An abstract implementation of {@link HttpServiceHandler}. Classes that extend this class only
  * have to implement a configure method which can be used to add optional arguments.
+ *
+ * @param <T> type of service context
+ * @param <V> type of service configurer
  */
-public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigurable<HttpServiceConfigurer>
-  implements HttpServiceHandler {
-  private HttpServiceConfigurer configurer;
-  private HttpServiceContext context;
+public abstract class AbstractHttpServiceHandler<T extends HttpServiceContext, V extends HttpServiceConfigurer>
+  extends AbstractPluginConfigurable<V> implements HttpServiceHandler<T, V> {
+  private V configurer;
+  private T context;
 
   /**
    * This can be overridden in child classes to add custom user properties during configure time.
@@ -43,7 +46,7 @@ public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigura
    * @param configurer the {@link HttpServiceConfigurer} which is used to configure this Handler
    */
   @Override
-  public final void configure(HttpServiceConfigurer configurer) {
+  public final void configure(V configurer) {
     this.configurer = configurer;
     configure();
   }
@@ -56,7 +59,7 @@ public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigura
    * @throws Exception
    */
   @Override
-  public void initialize(HttpServiceContext context) throws Exception {
+  public void initialize(T context) throws Exception {
     this.context = context;
   }
 
@@ -71,7 +74,7 @@ public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigura
   /**
    * @return the {@link HttpServiceContext} which was used when this class was initialized
    */
-  protected final HttpServiceContext getContext() {
+  protected final T getContext() {
     return context;
   }
 
@@ -79,7 +82,7 @@ public abstract class AbstractHttpServiceHandler extends AbstractPluginConfigura
    * @return the {@link HttpServiceConfigurer} used to configure this class
    */
   @Override
-  protected final HttpServiceConfigurer getConfigurer() {
+  protected final V getConfigurer() {
     return configurer;
   }
 
