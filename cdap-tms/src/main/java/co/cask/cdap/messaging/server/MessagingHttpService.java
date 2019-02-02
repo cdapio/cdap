@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
@@ -95,8 +96,8 @@ public class MessagingHttpService extends AbstractIdleService {
       .setHttpHandlers(handlers)
       .build();
     httpService.start();
-    cancelDiscovery = discoveryService.register(new Discoverable(Constants.Service.MESSAGING_SERVICE,
-                                                                 httpService.getBindAddress()));
+    cancelDiscovery = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable(Constants.Service.MESSAGING_SERVICE, httpService.getBindAddress())));
     LOG.info("Messaging HTTP server started on {}", httpService.getBindAddress());
   }
 

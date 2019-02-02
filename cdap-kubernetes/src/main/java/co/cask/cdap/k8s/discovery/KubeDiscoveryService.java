@@ -93,7 +93,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * @param namespace the Kubernetes namespace to perform service discovery on
    * @param podLabels the set of labels for the current pod
    */
-  KubeDiscoveryService(String namespace, Map<String, String> podLabels) {
+  public KubeDiscoveryService(String namespace, Map<String, String> podLabels) {
     this.namespace = namespace;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
     this.podLabels = Collections.unmodifiableMap(new HashMap<>(podLabels));
