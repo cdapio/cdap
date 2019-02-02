@@ -20,7 +20,6 @@ package co.cask.cdap.data.runtime;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.data2.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
@@ -70,8 +69,8 @@ public class StorageModule extends PrivateModule {
       }
 
       storageImpl = storageImpl.toLowerCase();
-      if (storageImpl.equals(Constants.Dataset.DATA_STROAGE_NOSQL)) {
-        return new NoSqlTransactionRunner(injector.getInstance(DatasetFramework.class),
+      if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
+        return new NoSqlTransactionRunner(injector.getInstance(NoSqlStructuredTableAdmin.class),
                                           injector.getInstance(TransactionSystemClient.class));
       }
 
@@ -107,20 +106,20 @@ public class StorageModule extends PrivateModule {
     public StructuredTableAdmin get() {
       String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
       if (storageImpl == null) {
-        throw new IllegalStateException("No storage implentation is specified in the configuration file");
+        throw new IllegalStateException("No storage implementation is specified in the configuration file");
       }
 
       storageImpl = storageImpl.toLowerCase();
-      if (storageImpl.equals(Constants.Dataset.DATA_STROAGE_NOSQL)) {
-        return new NoSqlStructuredTableAdmin(injector.getInstance(DatasetFramework.class));
+      if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
+        return injector.getInstance(NoSqlStructuredTableAdmin.class);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
         // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
         return null;
       }
-      throw new UnsupportedOperationException(String.format("%s is not a supported storage implementation, the " +
-                                                              "supported implementations are NoSql and PostgresSql.",
-                                                            storageImpl));
+      throw new UnsupportedOperationException(
+        String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
+                      storageImpl, Constants.Dataset.DATA_STORAGE_NOSQL, Constants.Dataset.DATA_STORAGE_SQL));
     }
   }
 }

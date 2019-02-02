@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,12 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -36,23 +39,24 @@ public class HBaseTableDefinition extends AbstractTableDefinition<Table, HBaseTa
   @Inject
   private Configuration hConf;
   @Inject
-  private HBaseTableUtil hBaseTableUtil;
+  private Provider<HBaseTableUtil> hBaseTableUtilProvider;
   @Inject
   private LocationFactory locationFactory;
 
-  public HBaseTableDefinition(String name) {
+  @Inject
+  public HBaseTableDefinition(@Named(Constants.Dataset.TABLE_TYPE) String name) {
     super(name);
   }
 
   @Override
   public Table getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                           Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseTable(datasetContext, spec, arguments, cConf, hConf, hBaseTableUtil);
+    return new HBaseTable(datasetContext, spec, arguments, cConf, hConf, hBaseTableUtilProvider.get());
   }
 
   @Override
   public HBaseTableAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                   ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
+    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtilProvider.get(), cConf, locationFactory);
   }
 }

@@ -17,51 +17,50 @@
 package co.cask.cdap.data2.nosql;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
-import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistry;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  * The Nosql admin will use the existing dataset framework to create and drop tables.
  */
 public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
-  static final String ENTITY_TABLE_NAME = "entity.store";
+
   private static final Logger LOG = LoggerFactory.getLogger(NoSqlStructuredTableAdmin.class);
+  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
 
-  private final DatasetFramework datasetFramework;
+  static final String ENTITY_TABLE_NAME = "entity.store";
 
-  public NoSqlStructuredTableAdmin(DatasetFramework datasetFramework) {
-    this.datasetFramework = datasetFramework;
+  private final DatasetDefinition tableDefinition;
+  private final DatasetSpecification entityTableSpec;
+
+  @Inject
+  public NoSqlStructuredTableAdmin(@Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+    this.tableDefinition = tableDefinition;
+    entityTableSpec = tableDefinition.configure(ENTITY_TABLE_NAME, DatasetProperties.EMPTY);
   }
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException {
-    LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
-    try {
-      DatasetId datasetInstanceId = NamespaceId.SYSTEM.dataset(ENTITY_TABLE_NAME);
-      if (!datasetFramework.hasInstance(datasetInstanceId)) {
-        datasetFramework.addInstance(Table.class.getName(), datasetInstanceId, DatasetProperties.EMPTY);
-      }
-      DatasetAdmin admin = datasetFramework.getAdmin(datasetInstanceId, null);
-      if (admin == null) {
-        throw new IOException(String.format("Error creating table %s. Cannot get DatasetAdmin", spec.getTableId()));
-      }
-      if (!admin.exists()) {
-        admin.create();
-      }
-    } catch (DatasetManagementException e) {
-      throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
+    LOG.info("Creating table {} in namespace {}", spec.getTableId().getName(), NamespaceId.SYSTEM);
+    DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityTableSpec, null);
+    if (!admin.exists()) {
+      LOG.info("Creating dataset table {} in namespace {}", entityTableSpec.getName(), NamespaceId.SYSTEM);
+      admin.create();
     }
     StructuredTableSpecificationRegistry.registerSpecification(spec);
   }
@@ -73,18 +72,17 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void drop(StructuredTableId tableId) throws IOException {
-    LOG.info("Dropping table {} in namespace {}", tableId, NamespaceId.SYSTEM);
-    try {
-      DatasetId datasetInstanceId = NamespaceId.SYSTEM.dataset(ENTITY_TABLE_NAME);
-      DatasetAdmin admin = datasetFramework.getAdmin(datasetInstanceId, null);
-      if (admin == null) {
-        throw new IOException(String.format("Error dropping table %s. Cannot get DatasetAdmin", tableId));
-      }
+    LOG.info("Dropping table {} in namespace {}", tableId.getName(), NamespaceId.SYSTEM);
+    StructuredTableSpecificationRegistry.removeSpecification(tableId);
+    if (StructuredTableSpecificationRegistry.isEmpty()) {
+      DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityTableSpec, null);
+      LOG.info("Dropping dataset table {} in namespace {}", entityTableSpec.getName(), NamespaceId.SYSTEM);
       admin.drop();
-      datasetFramework.deleteInstance(datasetInstanceId);
-      StructuredTableSpecificationRegistry.removeSpecification(tableId);
-    } catch (DatasetManagementException e) {
-      throw new IOException(String.format("Error dropping table %s", tableId), e);
     }
+  }
+
+  <T> T getEntityTable() throws IOException {
+    //noinspection unchecked
+    return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityTableSpec, Collections.emptyMap(), null);
   }
 }

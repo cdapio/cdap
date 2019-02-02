@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,10 @@ package co.cask.cdap.data2.dataset2.lib.table.leveldb;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,7 +35,8 @@ public class LevelDBTableDefinition extends AbstractTableDefinition<Table, Level
   @Inject
   private LevelDBTableService service;
 
-  public LevelDBTableDefinition(String name) {
+  @Inject
+  public LevelDBTableDefinition(@Named(Constants.Dataset.TABLE_TYPE) String name) {
     super(name);
   }
 
