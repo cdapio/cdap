@@ -24,7 +24,8 @@ commonModule.directive('dagMinimap', () => {
     templateUrl: 'dag-minimap/dag-minimap.html',
     bindToController: true,
     scope: {
-      canvasScale: '='
+      canvasScale: '=',
+      panning: '&'
     }
   };
 });

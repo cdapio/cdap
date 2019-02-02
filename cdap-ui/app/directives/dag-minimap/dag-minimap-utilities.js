@@ -22,7 +22,7 @@ class DAGMinimapUtilities {
       nodeWidth: 200,
       nodeHeight: 100,
       conditionNode: 105,
-      padding: 5
+      padding: 5,
     };
     this.MIN_SCALE = 0.5;
   }
@@ -154,8 +154,8 @@ class DAGMinimapUtilities {
       return {
         height: this.SIZE.height + padding,
         width: this.SIZE.width + padding,
-        top: -this.SIZE.padding,
-        left: -this.SIZE.padding,
+        top: 0,
+        left: 0,
       };
     }
 
@@ -171,16 +171,41 @@ class DAGMinimapUtilities {
     const nodeOffsetX = (canvasScale * minX) + ((1 - canvasScale) / 2 * dagContainerSize.width);
 
     let top = (canvasPanningY + nodeOffsetY) * scaleRatio;
-    top = -top + yOffset;
+    top = -top + yOffset + this.SIZE.padding;
 
     let left = (canvasPanningX + nodeOffsetX) * scaleRatio;
-    left = -left + xOffset;
+    left = -left + xOffset + this.SIZE.padding;
 
     return {
       height,
       width,
       top,
       left,
+    };
+  }
+
+  /**
+   * Function to transpose location of minimap click to actual panning offset for dag-container
+   *
+   * @param posX x coordinate of the mouse location within minimap
+   * @param posY y coordinate of the mouse location within minimap
+   * @param graphMetadata result from getGraphMetadata function
+   * @param canvasScale the scale of the actual graph canvas (dag-container)
+   *
+   * returns the x and y offset for dag-container
+   */
+  getViewportLocation(posX, posY, graphMetadata, canvasScale) {
+    const x = posX - this.SIZE.padding - (this.SIZE.width / 2);
+    const y = posY - this.SIZE.padding - (this.SIZE.height / 2);
+
+    const { scale } = graphMetadata;
+
+    const trueX = -x / scale * canvasScale;
+    const trueY = -y / scale * canvasScale;
+
+    return {
+      x: trueX,
+      y: trueY,
     };
   }
 }

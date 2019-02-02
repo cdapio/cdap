@@ -489,14 +489,21 @@ angular.module(PKG.name + '.commons')
     }
 
     function transformCanvas (top, left) {
-      vm.panning.top += top;
-      vm.panning.left += left;
+      const newTop = top + vm.panning.top;
+      const newLeft = left + vm.panning.left;
+
+      vm.setCanvasPanning(newTop, newLeft);
+    }
+
+    vm.setCanvasPanning = (top, left) => {
+      vm.panning.top = top;
+      vm.panning.left = left;
 
       vm.panning.style = {
         'top': vm.panning.top + 'px',
         'left': vm.panning.left + 'px'
       };
-    }
+    };
 
     function addConnection(newConnObj) {
       let connection = {
