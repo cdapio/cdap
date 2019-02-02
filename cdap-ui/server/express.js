@@ -43,7 +43,6 @@ var express = require('express'),
   bodyParser = require('body-parser'),
   DLL_PATH = path.normalize(__dirname + '/../dll'),
   DIST_PATH = path.normalize(__dirname + '/../dist'),
-  OLD_DIST_PATH = path.normalize(__dirname + '/../old_dist'),
   LOGIN_DIST_PATH = path.normalize(__dirname + '/../login_dist'),
   CDAP_DIST_PATH = path.normalize(__dirname + '/../cdap_dist'),
   MARKET_DIST_PATH = path.normalize(__dirname + '/../common_dist'),
@@ -394,13 +393,6 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         log.error(e);
       });
   });
-
-  app.use('/old_assets', [
-    express.static(OLD_DIST_PATH + '/assets', getExpressStaticConfig()),
-    function(req, res) {
-      finalhandler(req, res)(false); // 404
-    },
-  ]);
   // serve static assets
   app.use('/assets', [
     express.static(DIST_PATH + '/assets'),
@@ -706,13 +698,5 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     ]
   );
 
-  app.all(
-    ['/oldcdap', '/oldcdap*'],
-    [
-      function(req, res) {
-        res.sendFile(OLD_DIST_PATH + '/index.html');
-      },
-    ]
-  );
   return app;
 }
