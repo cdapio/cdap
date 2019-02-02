@@ -74,7 +74,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
   @Override
   protected Injector doInit(TwillContext context) {
-    getCConfiguration().set(Constants.MetricsProcessor.ADDRESS, context.getHost().getCanonicalHostName());
+    getCConfiguration().set(Constants.MetricsProcessor.BIND_ADDRESS, context.getHost().getCanonicalHostName());
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 

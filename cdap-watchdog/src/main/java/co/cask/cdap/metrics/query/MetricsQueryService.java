@@ -67,6 +67,7 @@ public class MetricsQueryService extends AbstractIdleService {
                                                                      Constants.Service.METRICS)));
 
     builder.setHost(address);
+    builder.setPort(cConf.getInt(Constants.Metrics.PORT));
 
     builder.setConnectionBacklog(backlogcnxs);
     builder.setExecThreadPoolSize(execthreads);

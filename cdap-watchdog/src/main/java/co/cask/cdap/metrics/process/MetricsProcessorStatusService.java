@@ -59,7 +59,8 @@ public class MetricsProcessorStatusService extends AbstractIdleService {
       .setHttpHandlers(handlers)
       .setHandlerHooks(ImmutableList.of(new MetricsReporterHook(metricsCollectionService,
                                                                 Constants.Service.METRICS_PROCESSOR)))
-      .setHost(cConf.get(Constants.MetricsProcessor.ADDRESS))
+      .setHost(cConf.get(Constants.MetricsProcessor.BIND_ADDRESS))
+      .setPort(cConf.getInt(Constants.MetricsProcessor.BIND_PORT))
       .build();
   }
 

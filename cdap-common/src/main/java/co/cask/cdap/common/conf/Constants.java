@@ -62,8 +62,6 @@ public final class Constants {
   public static final String SPARK_HOME = "SPARK_HOME";
   // Environment variable name for spark compat version
   public static final String SPARK_COMPAT_ENV = "SPARK_COMPAT";
-  // Environment variable for TEZ home
-  public static final String TEZ_HOME = "TEZ_HOME";
   // File specifying bootstrap steps
   public static final String BOOTSTRAP_FILE = "bootstrap.file";
 
@@ -528,8 +526,6 @@ public final class Constants {
     public static final String BACKLOG_CONNECTIONS = "router.connection.backlog";
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
-    public static final String CLIENT_BOSS_THREADS = "router.client.boss.threads";
-    public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
     public static final String CONNECTION_TIMEOUT_SECS = "router.connection.idle.timeout.secs";
     public static final String ROUTER_USERSERVICE_FALLBACK_STRAGEY = "router.userservice.fallback.strategy";
     public static final String ROUTER_AUDIT_PATH_CHECK_ENABLED = "router.audit.path.check.enabled";
@@ -540,7 +536,6 @@ public final class Constants {
      */
     public static final String DEFAULT_ROUTER_PORT = "11015";
 
-    public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
     public static final String DONT_ROUTE_SERVICE = "dont-route-to-service";
     public static final String AUDIT_LOGGER_NAME = "http-access";
   }
@@ -550,6 +545,7 @@ public final class Constants {
    */
   public static final class Metrics {
     public static final String ADDRESS = "metrics.bind.address";
+    public static final String PORT = "metrics.bind.port";
     public static final String CLUSTER_NAME = "metrics.cluster.name";
     public static final String CONFIG_AUTHENTICATION_REQUIRED = "metrics.authenticate";
     public static final String BACKLOG_CONNECTIONS = "metrics.connection.backlog";
@@ -733,7 +729,8 @@ public final class Constants {
     public static final String MAX_INSTANCES = "metrics.processor.max.instances";
 
     public static final String METRICS_PROCESSOR_STATUS_HANDLER = "metrics.processor.status.handler";
-    public static final String ADDRESS = "metrics.processor.status.bind.address";
+    public static final String BIND_ADDRESS = "metrics.processor.status.bind.address";
+    public static final String BIND_PORT = "metrics.processor.status.bind.port";
 
     public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
   }
@@ -900,7 +897,6 @@ public final class Constants {
     public static final String LOGIN_MODULE_CLASS_NAME = "security.authentication.loginmodule.className";
     /** Realm file for Basic Authentication */
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
-    /** Enables external SSL */
     /** Key to mark a discoverable which supports ssl */
     public static final String SSL_URI_SCHEME = "https://";
     public static final String URI_SCHEME = "http://";
@@ -988,16 +984,10 @@ public final class Constants {
     public static final class Router {
       /** SSL keystore location */
       public static final String SSL_KEYSTORE_PATH = "router.ssl.keystore.path";
-      /** SSL keystore type */
-      public static final String SSL_KEYSTORE_TYPE = "router.ssl.keystore.type";
       /** SSL keystore key password */
       public static final String SSL_KEYPASSWORD = "router.ssl.keystore.keypassword";
       /** SSL keystore password */
       public static final String SSL_KEYSTORE_PASSWORD = "router.ssl.keystore.password";
-
-      /** Default SSL keystore type */
-      public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
-
       /** Paths to exclude from authentication, given by a single regular expression */
       public static final String BYPASS_AUTHENTICATION_REGEX = "router.bypass.auth.regex";
     }
@@ -1150,16 +1140,9 @@ public final class Constants {
   public static final boolean DEFAULT_DATA_LEVELDB_FSYNC = true;
 
   /**
-   * Config for Log Collection.
-   */
-  public static final String CFG_LOG_COLLECTION_ROOT = "log.collection.root";
-  public static final String DEFAULT_LOG_COLLECTION_ROOT = "data/logs";
-
-  /**
    * Used for upgrade and backwards compatability
    */
   public static final String DEVELOPER_ACCOUNT = "developer";
-  public static final String APP_META_UPGRADE_TIMEOUT_SECS = "app.meta.upgrade.timeout.secs";
 
   /**
    * Constants related to external systems.
@@ -1195,10 +1178,6 @@ public final class Constants {
      */
     public static final String SSL_BIND_PORT = "dashboard.ssl.bind.port";
 
-    /**
-     * True to allow self-signed SSL certificates for endpoints accessed by the dashboard.
-     */
-    public static final String SSL_ALLOW_SELFSIGNEDCERT = "dashboard.selfsignedcertificate.enabled";
   }
 
   /**
@@ -1234,18 +1213,6 @@ public final class Constants {
     public static final String MESSAGING_FETCH_SIZE = "metadata.messaging.fetch.size";
     public static final String MESSAGING_POLL_DELAY_MILLIS = "metadata.messaging.poll.delay.millis";
 
-    public static final String MIGRATOR_BATCH_SIZE = "metadata.upgrade.migration.batch.size";
-  }
-
-  /**
-   * Constants for Remote System Operation Service.
-   */
-  public static final class RemoteSystemOpService {
-    public static final String EXEC_THREADS = "remote.system.op.exec.threads";
-    public static final String WORKER_THREADS = "remote.system.op.worker.threads";
-    public static final String SERVICE_DESCRIPTION = "Service to perform system operations through HTTP requests.";
-    public static final String SERVICE_BIND_ADDRESS = "remote.system.op.service.bind.address";
-    public static final String HANDLERS_NAME = "remote.system.op.handlers";
   }
 
   /**
@@ -1300,6 +1267,9 @@ public final class Constants {
 
     // The network address for the http server to bind to.
     public static final String HTTP_SERVER_BIND_ADDRESS = "messaging.http.server.bind.address";
+
+    // The network port for the http server to bind to.
+    public static final String HTTP_SERVER_BIND_PORT = "messaging.http.server.bind.port";
 
     // The guice binding name for http handler used by the messaging system
     public static final String HANDLER_BINDING_NAME = "messaging.http.handler";

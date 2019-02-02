@@ -344,14 +344,6 @@
   </property>
 
   <property>
-    <name>app.meta.upgrade.timeout.secs</name>
-    <value>60</value>
-    <description>
-      Timeout value in seconds while upgrading application versions
-    </description>
-  </property>
-
-  <property>
     <name>app.output.dir</name>
     <value>/programs</value>
     <description>
@@ -1409,15 +1401,6 @@
   </property>
 
   <property>
-    <name>log.collection.root</name>
-    <value>${local.data.dir}/logs</value>
-    <description>
-      In CDAP Local Sandbox, the local directory under which the system log pipeline saves
-      log files
-    </description>
-  </property>
-
-  <property>
     <name>log.kafka.topic</name>
     <value>logs.user-v2</value>
     <description>
@@ -1888,6 +1871,22 @@
   </property>
 
   <property>
+    <name>messaging.http.server.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Messaging HTTP server bind address
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.http.server.bind.port</name>
+    <value>0</value>
+    <description>
+      Messaging HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
+
+  <property>
     <name>messaging.http.server.consume.chunk.size</name>
     <value>60000</value>
     <description>
@@ -2119,15 +2118,23 @@
     </description>
   </property>
 
+  <!-- Metrics Configuration -->
+
   <property>
-    <name>metadata.upgrade.migration.batch.size</name>
-    <value>1000</value>
+    <name>metrics.bind.address</name>
+    <value>0.0.0.0</value>
     <description>
-      Number of metadata value or history rows to be migrated to v2 metadata table in a batch
+      Metrics query HTTP service bind address
     </description>
   </property>
 
-  <!-- Metrics Configuration -->
+  <property>
+    <name>metrics.bind.port</name>
+    <value>0</value>
+    <description>
+      Metrics query HTTP service bind port; if 0, binds to a random port
+    </description>
+  </property>
 
   <property>
     <name>metrics.boss.threads</name>
@@ -2339,6 +2346,14 @@
     <value>0.0.0.0</value>
     <description>
       Metrics processor HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.processor.status.bind.port</name>
+    <value>0</value>
+    <description>
+      Metrics processor HTTP service bind port; if 0, binds to a random port
     </description>
   </property>
 
@@ -2671,47 +2686,6 @@
     <value>exponential.backoff</value>
     <description>
       The type of retry policy for custom actions. Allowed options: "none",
-      "fixed.delay", or "exponential.backoff".
-    </description>
-  </property>
-
-  <property>
-    <name>flow.retry.policy.base.delay.ms</name>
-    <value>100</value>
-    <description>
-      The base delay between retries in milliseconds
-    </description>
-  </property>
-
-  <property>
-    <name>flow.retry.policy.max.delay.ms</name>
-    <value>1000</value>
-    <description>
-      The maximum delay between retries in milliseconds
-    </description>
-  </property>
-
-  <property>
-    <name>flow.retry.policy.max.retries</name>
-    <value>3</value>
-    <description>
-      The maximum number of retries to attempt before aborting
-    </description>
-  </property>
-
-  <property>
-    <name>flow.retry.policy.max.time.secs</name>
-    <value>10</value>
-    <description>
-      The maximum elapsed time in seconds before retries are aborted
-    </description>
-  </property>
-
-  <property>
-    <name>flow.retry.policy.type</name>
-    <value>none</value>
-    <description>
-      The type of retry policy for flows. Allowed options: "none",
       "fixed.delay", or "exponential.backoff".
     </description>
   </property>
