@@ -30,6 +30,7 @@ import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
+import co.cask.cdap.data.security.DefaultSecretStore;
 import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
 import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
 import co.cask.cdap.explore.service.ExploreServiceManager;
@@ -110,6 +111,7 @@ import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.route.store.ZKRouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
+import co.cask.cdap.securestore.spi.SecretStore;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.DefaultUGIProvider;
@@ -365,6 +367,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
 
       bind(Store.class).to(DefaultStore.class);
+      bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
 
       // In App-Fabric, we can write directly, hence bind to the basic implementation
       bind(WorkflowStateWriter.class).to(BasicWorkflowStateWriter.class);

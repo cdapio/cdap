@@ -28,8 +28,6 @@ import java.util.Collection;
  *
  * The implementation of this class must be thread safe as store and retrieve methods can be called from multiple
  * threads.
- *
- * TODO CDAP-14699 Expose dataset through context in initialize method.
  */
 public interface SecretManager {
   /**
