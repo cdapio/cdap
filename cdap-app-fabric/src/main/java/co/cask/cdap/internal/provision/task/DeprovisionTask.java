@@ -38,7 +38,7 @@ import java.util.Optional;
 
 /**
  * Performs steps to deprovision a cluster for a program run. Before any operation is performed, state is persisted
- * to the ProvisionerDataset to record what we are doing. This is done in case we crash in the middle of the task
+ * to the ProvisionerTable to record what we are doing. This is done in case we crash in the middle of the task
  * and the task is later restarted. The operation state transition looks like:
  *
  *                                                        |-- (state == NOT_FOUND) --> Deleted

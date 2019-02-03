@@ -149,8 +149,8 @@ public class ProvisioningService extends AbstractIdleService {
     this.secureStore = secureStore;
     this.programStateWriter = programStateWriter;
     this.taskStateCleanup = programRunId -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      provisionerDataset.deleteTaskInfo(programRunId);
+      ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+      provisionerTable.deleteTaskInfo(programRunId);
     });
   }
 
@@ -219,7 +219,7 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Scans the ProvisionerDataset for any tasks that should be in progress but are not being executed and consumes
+   * Scans the ProvisionerTable for any tasks that should be in progress but are not being executed and consumes
    * them.
    */
   @VisibleForTesting
@@ -252,8 +252,8 @@ public class ProvisioningService extends AbstractIdleService {
                   programRunId, provisionerName);
         provisionerNotifier.orphaned(programRunId);
         Transactionals.execute(transactional, dsContext -> {
-          ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-          provisionerDataset.deleteTaskInfo(provisioningTaskInfo.getProgramRunId());
+          ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+          provisionerTable.deleteTaskInfo(provisioningTaskInfo.getProgramRunId());
         });
         continue;
       }
@@ -363,8 +363,8 @@ public class ProvisioningService extends AbstractIdleService {
       new ProvisioningTaskInfo(programRunId, provisionRequest.getProgramDescriptor(), programOptions,
                                properties, name, provisionRequest.getUser(), provisioningOp,
                                createKeysDirectory(programRunId).toURI(), null);
-    ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
-    provisionerDataset.putTaskInfo(provisioningTaskInfo);
+    ProvisionerTable provisionerTable = ProvisionerTable.get(datasetContext, datasetFramework);
+    provisionerTable.putTaskInfo(provisioningTaskInfo);
 
     return createProvisionTask(provisioningTaskInfo, provisioner);
   }
@@ -388,11 +388,11 @@ public class ProvisioningService extends AbstractIdleService {
   @VisibleForTesting
   Runnable deprovision(ProgramRunId programRunId, DatasetContext datasetContext,
                        Consumer<ProgramRunId> taskCleanup) {
-    ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
+    ProvisionerTable provisionerTable = ProvisionerTable.get(datasetContext, datasetFramework);
 
     // look up information for the corresponding provision operation
     ProvisioningTaskInfo existing =
-      provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
+      provisionerTable.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
     if (existing == null) {
       runWithProgramLogging(programRunId, Collections.emptyMap(),
                             () -> LOG.error("No task state found while deprovisioning the cluster. "
@@ -426,7 +426,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                        ProvisioningOp.Status.REQUESTING_DELETE);
     ProvisioningTaskInfo provisioningTaskInfo = new ProvisioningTaskInfo(existing, provisioningOp,
                                                                          existing.getCluster());
-    provisionerDataset.putTaskInfo(provisioningTaskInfo);
+    provisionerTable.putTaskInfo(provisioningTaskInfo);
 
     return createDeprovisionTask(provisioningTaskInfo, provisioner, taskCleanup);
   }
@@ -636,8 +636,8 @@ public class ProvisioningService extends AbstractIdleService {
   private List<ProvisioningTaskInfo> getInProgressTasks() {
     return Retries.callWithRetries(
       () -> Transactionals.execute(transactional, dsContext -> {
-        ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-        return provisionerDataset.listTaskInfo();
+        ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+        return provisionerTable.listTaskInfo();
       }),
       RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
       t -> {
@@ -801,9 +801,9 @@ public class ProvisioningService extends AbstractIdleService {
       LOG.debug("Cancelled {} task for program run {}.", taskKey.getType(), taskKey.getProgramRunId());
       // this is the task state after it has been cancelled
       ProvisioningTaskInfo currentTaskInfo = Transactionals.execute(transactional, dsContext -> {
-        ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
+        ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
 
-        ProvisioningTaskInfo currentInfo = provisionerDataset.getTaskInfo(taskKey);
+        ProvisioningTaskInfo currentInfo = provisionerTable.getTaskInfo(taskKey);
         if (currentInfo == null) {
           return null;
         }
@@ -814,7 +814,7 @@ public class ProvisioningService extends AbstractIdleService {
         ProvisioningOp newOp =
           new ProvisioningOp(currentInfo.getProvisioningOp().getType(), ProvisioningOp.Status.CANCELLED);
         ProvisioningTaskInfo newTaskInfo = new ProvisioningTaskInfo(currentInfo, newOp, currentInfo.getCluster());
-        provisionerDataset.putTaskInfo(newTaskInfo);
+        provisionerTable.putTaskInfo(newTaskInfo);
         LOG.trace("Recorded cancelled state for {} task for program run {}.",
                   taskKey.getType(), taskKey.getProgramRunId());
 

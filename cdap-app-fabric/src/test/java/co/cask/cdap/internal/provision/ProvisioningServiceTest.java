@@ -232,13 +232,13 @@ public class ProvisioningServiceTest {
     task.run();
     // task state should have been cleaned up
     ProvisioningTaskInfo taskInfo = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      return provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
+      ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+      return provisionerTable.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
     });
     Assert.assertNull("provision task info was not cleaned up", taskInfo);
     taskInfo = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      return provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION));
+      ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+      return provisionerTable.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION));
     });
     Assert.assertNull("deprovision task info was not cleaned up", taskInfo);
   }
@@ -264,8 +264,8 @@ public class ProvisioningServiceTest {
                                                              cluster);
 
     transactional.execute(dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      provisionerDataset.putTaskInfo(taskInfo);
+      ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+      provisionerTable.putTaskInfo(taskInfo);
     });
 
     provisioningService.resumeTasks(t -> { });
@@ -361,8 +361,8 @@ public class ProvisioningServiceTest {
   private void waitForExpectedProvisioningState(ProvisioningTaskKey taskKey, ProvisioningOp.Status expectedState)
     throws InterruptedException, ExecutionException, TimeoutException {
     Tasks.waitFor(expectedState, () -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
+      ProvisionerTable provisionerTable = ProvisionerTable.get(dsContext, datasetFramework);
+      ProvisioningTaskInfo provisioningTaskInfo = provisionerTable.getTaskInfo(taskKey);
       return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
     }), 60, TimeUnit.SECONDS);
   }

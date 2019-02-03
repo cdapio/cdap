@@ -23,7 +23,7 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.provision.ProvisionerDataset;
+import co.cask.cdap.internal.provision.ProvisionerTable;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.internal.provision.ProvisioningTaskKey;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A Provisioning task that is responsible for executing multiple subtasks. Before each subtask is executed, state
- * will be persisted to the ProvisionerDataset so that it can be picked up later in case the task is interrupted
+ * will be persisted to the ProvisionerTable so that it can be picked up later in case the task is interrupted
  * partway through.
  *
  * Handles retrying any subtasks that throw a RetryableProvisioningException.
@@ -66,7 +66,7 @@ public abstract class ProvisioningTask {
 
   /**
    * Execute all subtasks, persisting task info before each subtask such that this task can be re-created from the
-   * task info stored in the ProvisionerDataset.
+   * task info stored in the ProvisionerTable.
    *
    * @throws InterruptedException if the task was interrupted
    * @throws TransactionFailureException if there was a failure persisting task info
@@ -126,7 +126,7 @@ public abstract class ProvisioningTask {
   }
 
   /**
-   * Write the task state to the {@link ProvisionerDataset}, retrying if any exception is caught. Before persisting
+   * Write the task state to the {@link ProvisionerTable}, retrying if any exception is caught. Before persisting
    * the state, the current state will be checked. If the current state is cancelled, it will not be overwritten.
    *
    * @param taskInfo the task state to save
@@ -141,7 +141,7 @@ public abstract class ProvisioningTask {
     try {
       // Stop retrying if we are interrupted. Otherwise, retry on every exception, up to the retry limit
       return Retries.callWithInterruptibleRetries(() -> Transactionals.execute(transactional, dsContext -> {
-        ProvisionerDataset dataset = ProvisionerDataset.get(dsContext, datasetFramework);
+        ProvisionerTable dataset = ProvisionerTable.get(dsContext, datasetFramework);
         ProvisioningTaskInfo currentState = dataset.getTaskInfo(taskKey);
         // if the state is cancelled, don't write anything and transition to the end subtask.
         if (currentState != null && currentState.getProvisioningOp().getStatus() == ProvisioningOp.Status.CANCELLED) {
@@ -179,7 +179,7 @@ public abstract class ProvisioningTask {
   protected abstract void handleSubtaskFailure(ProvisioningTaskInfo taskInfo, Exception e);
 
   /**
-   * Logic to run when task info could not be saved to the ProvisionerDataset.
+   * Logic to run when task info could not be saved to the ProvisionerTable.
    *
    * @param taskInfo task info that could not be saved
    * @param e the non-retryable exception

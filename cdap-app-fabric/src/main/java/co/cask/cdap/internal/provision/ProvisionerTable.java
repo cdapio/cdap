@@ -31,8 +31,6 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -50,7 +48,7 @@ import javax.annotation.Nullable;
  * This dataset does not wrap its operations in a transaction. It is up to the caller to decide what operations
  * belong in a transaction.
  */
-public class ProvisionerDataset {
+public class ProvisionerTable {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
@@ -58,18 +56,18 @@ public class ProvisionerDataset {
   private static final byte[] STATE_PREFIX = Bytes.toBytes("pr.state");
   private final MetadataStoreDataset table;
 
-  public static ProvisionerDataset get(DatasetContext datasetContext, DatasetFramework dsFramework) {
+  public static ProvisionerTable get(DatasetContext datasetContext, DatasetFramework dsFramework) {
     try {
       Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, AppMetadataStore.APP_META_INSTANCE_ID,
                                                     Table.class.getName(),
                                                     DatasetProperties.EMPTY);
-      return new ProvisionerDataset(table);
+      return new ProvisionerTable(table);
     } catch (DatasetManagementException | IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private ProvisionerDataset(Table table) {
+  private ProvisionerTable(Table table) {
     this.table = new MetadataStoreDataset(table, GSON);
   }
 

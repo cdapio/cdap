@@ -160,4 +160,19 @@ public final class StoreDefinition {
       tableAdmin.create(UNIV_PLUGIN_DATA_SPEC);
     }
   }
+
+  public static final class ProvisionerStore {
+    public static final StructuredTableId PROVISONER_TABLE = new StructuredTableId("provisoner_table");
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String VERSION_FIELD = "version";
+    public static final String PROGRAM_TYPE_FIELD = "program_type";
+    public static final String PROGRAM_FIELD = "program";
+    public static final String RUN_FIELD = "run";
+    public static final String PROVISIONING_OP_TYPE = "provisioning_operation_type";
+    //
+    public static final String PROVISONING_OP_STATUS = "provisioning_operation_status";
+
+
+  }
 }
