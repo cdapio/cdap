@@ -44,7 +44,7 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
-    if (tableAdmin.getSpecification(OwnerStore.OWNER_MDS_TABLE) == null) {
+    if (tableAdmin.getSpecification(OwnerStore.OWNER_TABLE) == null) {
       OwnerStore.createTables(tableAdmin);
     }
     if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
@@ -168,13 +168,13 @@ public final class StoreDefinition {
    * Table specification and create table definitions for owner store.
    */
   public static final class OwnerStore {
-    public static final StructuredTableId OWNER_MDS_TABLE = new StructuredTableId("owner_mds");
+    public static final StructuredTableId OWNER_TABLE = new StructuredTableId("owner_data");
     public static final String PRINCIPAL_FIELD = "principal";
     public static final String KEYTAB_FIELD = "keytab";
 
     public static final StructuredTableSpecification OWNER_TABLE_SPEC =
       new StructuredTableSpecification.Builder()
-        .withId(OWNER_MDS_TABLE)
+        .withId(OWNER_TABLE)
         .withFields(Fields.stringType(PRINCIPAL_FIELD),
                     Fields.bytesType(KEYTAB_FIELD))
         .withPrimaryKeys(PRINCIPAL_FIELD).build();

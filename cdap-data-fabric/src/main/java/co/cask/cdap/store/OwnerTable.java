@@ -18,10 +18,17 @@ package co.cask.cdap.store;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.proto.element.EntityTypeSimpleName;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.ServiceId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableContext;
@@ -29,8 +36,11 @@ import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Fields;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import scala.collection.mutable.StringBuilder;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -39,9 +49,30 @@ import javax.annotation.Nullable;
  */
 public class OwnerTable {
   private final StructuredTable table;
+  private static final Map<Class<? extends NamespacedEntityId>, String> TYPE_MAP =
+    ImmutableMap.<Class<? extends NamespacedEntityId>, String>builder()
+      .put(NamespaceId.class, EntityTypeSimpleName.NAMESPACE.getSerializedForm())
+      .put(ArtifactId.class, EntityTypeSimpleName.ARTIFACT.getSerializedForm())
+      .put(ApplicationId.class, EntityTypeSimpleName.APP.getSerializedForm())
+      .put(ProgramId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(WorkflowId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(ServiceId.class, EntityTypeSimpleName.PROGRAM.getSerializedForm())
+      .put(DatasetId.class, EntityTypeSimpleName.DATASET.getSerializedForm())
+      .put(ScheduleId.class, EntityTypeSimpleName.SCHEDULE.getSerializedForm())
+      .build();
+
+  private static final String ROW_KEY_SEPARATOR = ":";
+  private static final String NAMESPACE_ROW_KEY_PREFIX = "n";
+  private static final String APP_ID_ROW_KEY_PREFIX = "ap";
+  private static final String PROGRAM_ID_ROW_KEY_PREFIX = "p";
+  private static final String PROGRAM_TYPE_ROW_KEY_PREFIX = "t";
+  private static final String DATASET_ID_ROW_KEY_PREFIX = "d";
+  private static final String ARTIFACT_ID_ROW_KEY_PREFIX = "at";
+  private static final String ARTIFACT_VERSION_ROW_KEY_PREFIX = "av";
+  private static final String SCHEDULE_NAME_ROW_KEY_PREFIX = "av";
 
   public OwnerTable(StructuredTableContext context) throws TableNotFoundException {
-    this.table = context.getTable(StoreDefinition.OwnerStore.OWNER_MDS_TABLE);
+    this.table = context.getTable(StoreDefinition.OwnerStore.OWNER_TABLE);
   }
 
   /**
@@ -108,12 +139,112 @@ public class OwnerTable {
                                                      createRowKey(entityId))));
   }
 
-  private static String createRowKey(NamespacedEntityId targetId) {
-    String targetType = EntityIdKeyHelper.getTargetType(targetId);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(targetType);
-    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
-    MDSKey build = builder.build();
-    return build.toString();
+  private String createRowKey(NamespacedEntityId namespacedEntityId) {
+    StringBuilder builder = new StringBuilder();
+    String type = TYPE_MAP.get(namespacedEntityId.getClass());
+    if (type.equals(TYPE_MAP.get(NamespaceId.class))) {
+      NamespaceId namespaceId = (NamespaceId) namespacedEntityId;
+      builder.append(NAMESPACE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(namespaceId.getNamespace());
+    } else if (type.equals(TYPE_MAP.get(ProgramId.class))) {
+      ProgramId program = (ProgramId) namespacedEntityId;
+      String namespaceId = program.getNamespace();
+      String appId = program.getApplication();
+      String programType = program.getType().name();
+      String programId = program.getProgram();
+
+      builder.append(NAMESPACE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(namespaceId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(APP_ID_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(appId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(PROGRAM_TYPE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(programType);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(PROGRAM_ID_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(programId);
+    } else if (type.equals(TYPE_MAP.get(ApplicationId.class))) {
+      ApplicationId application = (ApplicationId) namespacedEntityId;
+      String namespaceId = application.getNamespace();
+      String appId = application.getApplication();
+
+      builder.append(NAMESPACE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(namespaceId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(APP_ID_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(appId);
+    } else if (type.equals(TYPE_MAP.get(DatasetId.class))) {
+      DatasetId datasetInstance = (DatasetId) namespacedEntityId;
+      String namespaceId = datasetInstance.getNamespace();
+      String datasetId = datasetInstance.getDataset();
+
+      builder.append(NAMESPACE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(namespaceId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(DATASET_ID_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(datasetId);
+    } else if (type.equals(TYPE_MAP.get(ArtifactId.class))) {
+      ArtifactId artifactId = (ArtifactId) namespacedEntityId;
+      String namespaceId = artifactId.getNamespace();
+      String name = artifactId.getArtifact();
+      String version = artifactId.getVersion();
+
+      builder.append(NAMESPACE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(namespaceId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(ARTIFACT_ID_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(name);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(ARTIFACT_VERSION_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(version);
+    } else if (type.equals(TYPE_MAP.get(ScheduleId.class))) {
+      ScheduleId scheduleId = (ScheduleId) namespacedEntityId;
+      String namespaceId = scheduleId.getNamespace();
+      String appId = scheduleId.getApplication();
+      String version = scheduleId.getVersion();
+      String scheduleName = scheduleId.getSchedule();
+
+      builder.append(NAMESPACE_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(namespaceId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(APP_ID_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(appId);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(ARTIFACT_VERSION_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(version);
+
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(SCHEDULE_NAME_ROW_KEY_PREFIX);
+      builder.append(ROW_KEY_SEPARATOR);
+      builder.append(scheduleName);
+    } else {
+      throw new IllegalArgumentException("Unexpected .");
+    }
+    return builder.toString();
   }
 }
