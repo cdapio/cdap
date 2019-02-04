@@ -375,7 +375,8 @@ public abstract class StructuredTableTest {
 
   private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {
     List<Collection<Field<?>>> expected = new ArrayList<>(max);
-    for (int i = 0; i < max; i++) {
+    // Write rows in reverse order to test sorting
+    for (int i = max - 1; i >= 0; i--) {
       List<Field<?>> fields = Arrays.asList(Fields.intField(KEY, i),
                                             Fields.longField(KEY2, (long) i),
                                             Fields.stringField(STRING_COL, VAL + i + suffix),
@@ -389,6 +390,7 @@ public abstract class StructuredTableTest {
         table.upsert(fields);
       });
     }
+    Collections.reverse(expected);
     return expected;
   }
 
