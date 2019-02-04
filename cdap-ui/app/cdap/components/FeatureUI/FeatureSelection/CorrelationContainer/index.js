@@ -7,7 +7,7 @@ import propTypes from 'prop-types';
 
 
 class CorrelationContainer extends Component {
-  algolist = [{ id: 1, name: "pearson" }, { id: 2, name: "spearman" }];
+  algolist = [{ id: 1, name: "pearson" }, { id: 2, name: "spearman" }, { id: 3, name: "ChiSqTest" },{ id: 4, name: "mic" }];
   correlationItems = [{ id: 1, enable: false, name: "TopN", minValue: "", maxValue: "", doubleView: false, hasRangeError: false },
   { id: 2, enable: false, name: "LowN", minValue: "", maxValue: "", doubleView: false, hasRangeError: false },
   { id: 3, enable: false, name: "Range", minValue: "", maxValue: "", doubleView: true, hasRangeError: false }

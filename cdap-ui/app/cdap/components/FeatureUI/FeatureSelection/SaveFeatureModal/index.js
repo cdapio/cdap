@@ -28,11 +28,11 @@ class SaveFeatureModal extends React.Component {
 
   onCancel() {
     this.props.onClose('CANCEL');
-    this.setState({name:"", hasError:false, errorMessage:""});
+    gridRowData: parsedResult.gridRowData
   }
 
   onOk() {
-    this.setState({name:"", hasError:false, errorMessage:""});
+    this.setState({hasError:false, errorMessage:""});
     this.savePipeline();
   }
 
@@ -51,10 +51,8 @@ class SaveFeatureModal extends React.Component {
             const message = getErrorMessage(result, "couldn't save pipeline");
             this.setState({hasError:true, errorMessage:message});
           } else {
+            this.setState({ name:""});
             this.props.onClose('OK');
-            const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
-            this.setState({ gridColumnDefs: parsedResult.gridColumnDefs });
-            this.setState({ gridRowData: parsedResult.gridRowData });
           }
         },
         error => {
