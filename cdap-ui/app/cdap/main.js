@@ -49,7 +49,6 @@ import globalEvents from 'services/global-events';
 import HttpExecutor from 'components/HttpExecutor';
 import { applyTheme } from 'services/ThemeHelper';
 import ErrorBoundary from 'components/ErrorBoundary';
-import OverlayFocus from 'components/OverlayFocus';
 import { Theme } from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
 import ThemeWrapper from 'components/ThemeWrapper';
@@ -197,7 +196,6 @@ class CDAP extends Component {
             </div>
           )}
           <Footer />
-          <OverlayFocus />
           <AuthRefresher />
         </div>
       </BrowserRouter>

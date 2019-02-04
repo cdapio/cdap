@@ -65,6 +65,7 @@ interface IDrawerFeatureLinkProps extends WithStyles<typeof styles> {
   isActive?: boolean;
   subMenu?: IDrawerFeatureLinkProps[];
   'data-cy'?: string;
+  id: string;
 }
 interface IDrawerFeatureLinkState {
   submenuOpen: boolean;
@@ -97,6 +98,7 @@ class DrawerFeatureLink extends React.PureComponent<
       featureUrl,
       isAngular,
       isActive,
+      id,
       ...rest
     }: IDrawerFeatureLinkProps,
     isSubMenu = false
@@ -113,6 +115,7 @@ class DrawerFeatureLink extends React.PureComponent<
     }
     return (
       <ListItemLink
+        id={id}
         className={classnames(classes.listItem, {
           [classes.nestListPadding]: isSubMenu,
           [classes.activeListItem]: localIsActive,
@@ -124,7 +127,7 @@ class DrawerFeatureLink extends React.PureComponent<
         data-cy={rest['data-cy']}
       >
         <If condition={typeof featureSVGIconName === 'string'}>
-          <IconSVG className={classes.featureIconSize} name={featureSVGIconName} />
+          <IconSVG className={classes.featureIconSize} name={featureSVGIconName || ''} />
         </If>
         <ListItemText
           disableTypography

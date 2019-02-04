@@ -16,7 +16,6 @@
 
 import * as React from 'react';
 import List from '@material-ui/core/List';
-import ListItemText from '@material-ui/core/ListItemText';
 import Drawer from '@material-ui/core/Drawer';
 import NamespaceDropdown from 'components/NamespaceDropdown';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
@@ -25,7 +24,7 @@ import { Link } from 'react-router-dom';
 import { withContext, INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import DrawerFeatureLink from 'components/AppHeader/AppDrawer/DrawerFeatureLink';
 import { Theme } from 'services/ThemeHelper';
-import IconSVG from 'components/IconSVG';
+import ee from 'event-emitter';
 
 const DRAWER_WIDTH = '240px';
 export const appDrawerListItemTextStyles = {
@@ -73,8 +72,20 @@ interface IAppDrawerProps extends WithStyles<typeof styles> {
 }
 
 class AppDrawer extends React.PureComponent<IAppDrawerProps> {
+  private eventEmitter = ee(ee);
+  public constructor(props) {
+    super(props);
+    this.eventEmitter.on('NUX-TOUR-START', this.toggleNuxTourProgressFlag);
+    this.eventEmitter.on('NUX-TOUR-END', this.toggleNuxTourProgressFlag);
+  }
   public state = {
     onNamespacePreferenceEdit: false,
+    nuxTourInProgress: false,
+  };
+  public toggleNuxTourProgressFlag = () => {
+    this.setState({
+      nuxTourInProgress: !this.state.nuxTourInProgress,
+    });
   };
   public toggleonNamespacePreferenceEdit = () => {
     this.setState({ onNamespacePreferenceEdit: !this.state.onNamespacePreferenceEdit });
@@ -85,7 +96,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
     const nsurl = `ns/${namespace}`;
     return (
       <Drawer
-        open={open}
+        open={this.state.nuxTourInProgress || open}
         onClose={onClose}
         className={classes.drawer}
         disableEnforceFocus={true}
@@ -113,6 +124,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureUrl={`/${nsurl}`}
             componentDidNavigate={componentDidNavigate}
             data-cy="navbar-control-center-link"
+            id="navbar-control-center"
             isActive={
               location.pathname === `/cdap/${nsurl}` ||
               location.pathname.startsWith(`/cdap/${nsurl}/dataset`) ||
@@ -127,6 +139,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
                 featureName: Theme.featureNames.pipelinesList,
                 featureFlag: Theme.showPipelines,
                 featureUrl: `/${nsurl}/pipelines`,
+                id: 'navbar-pipelines',
                 componentDidNavigate,
                 featureSVGIconName: 'icon-list',
                 'data-cy': 'navbar-pipelines-link',
@@ -149,6 +162,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureUrl={`/${nsurl}/dataprep`}
             componentDidNavigate={componentDidNavigate}
             data-cy="navbar-dataprep-link"
+            id="navbar-preparation"
             isActive={
               location.pathname.startsWith(`/cdap/${nsurl}/dataprep`) ||
               location.pathname.startsWith(`/cdap/${nsurl}/connections`)
@@ -176,6 +190,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             featureFlag={Theme.showMetadata}
             featureName={Theme.featureNames.metadata}
             isAngular={true}
+            id="navbar-metadata"
             data-cy="navbar-metadata-link"
           />
         </List>
