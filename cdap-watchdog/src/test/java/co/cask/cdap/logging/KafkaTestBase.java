@@ -21,6 +21,7 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.kafka.KafkaTester;
@@ -62,6 +63,7 @@ public abstract class KafkaTestBase {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
+      new StorageModule(),
       new KafkaLogAppenderModule(),
       new AbstractModule() {
         @Override

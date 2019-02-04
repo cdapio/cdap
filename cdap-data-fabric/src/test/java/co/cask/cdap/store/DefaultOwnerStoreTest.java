@@ -22,15 +22,22 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.data2.nosql.NoSqlStructuredTableAdmin;
+import co.cask.cdap.data2.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.impersonation.OwnerStore;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -52,7 +59,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
   private static OwnerStore ownerStore;
 
   @BeforeClass
-  public static void createInjector() throws IOException {
+  public static void setup() throws IOException, TableAlreadyExistsException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
@@ -65,11 +72,18 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
       new NamespaceAdminTestModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getMasterModule()
+      new AuthenticationContextModules().getMasterModule(),
+      new StorageModule()
     );
-    TransactionManager txManager = injector.getInstance(TransactionManager.class);
-    txManager.startAndWait();
-    ownerStore = injector.getInstance(OwnerStore.class);
+
+    injector.getInstance(TransactionManager.class).startAndWait();
+
+    StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    TransactionRunner transactionRunner =
+      new NoSqlTransactionRunner(injector.getInstance(NoSqlStructuredTableAdmin.class),
+                                 injector.getInstance(TransactionSystemClient.class));
+    StoreDefinition.OwnerStore.createTables(structuredTableAdmin);
+    ownerStore = new DefaultOwnerStore(transactionRunner);
   }
 
   @Override

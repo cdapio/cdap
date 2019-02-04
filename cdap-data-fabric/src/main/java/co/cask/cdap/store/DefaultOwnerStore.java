@@ -16,34 +16,18 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.ConflictDetection;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.dataset2.lib.table.EntityIdKeyHelper;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.security.impersonation.OwnerStore;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
-import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -65,97 +49,56 @@ import javax.annotation.Nullable;
  * </p>
  */
 public class DefaultOwnerStore extends OwnerStore {
-  private static final String OWNER_PREFIX = "o";
-  // currently, we only leverage one column of the table. However, not using KeyValueTable, so that being able to use
-  // additional columns in the future is simple. In future, we will like to support storing keytab file location
-  // too which we will store in another column.
-  private static final byte[] COL = Bytes.toBytes("c");
-  private static final DatasetId DATASET_ID = NamespaceId.SYSTEM.dataset("owner.meta");
-  private static final DatasetProperties DATASET_PROPERTIES =
-    DatasetProperties.builder().add(Table.PROPERTY_CONFLICT_LEVEL, ConflictDetection.COLUMN.name()).build();
 
 
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
+  private final TransactionRunner txRunner;
 
   @Inject
-  DefaultOwnerStore(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                                   txClient, DATASET_ID.getParent(),
-                                                                   Collections.emptyMap(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+  DefaultOwnerStore(TransactionRunner txRunner) {
+    this.txRunner = txRunner;
   }
 
-  /**
-   * Adds datasets and types to the given {@link DatasetFramework} used by {@link DefaultOwnerStore}
-   *
-   * @param framework framework to add types and datasets to
-   */
-  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(Table.class.getName(), DATASET_ID, DATASET_PROPERTIES);
+  private OwnerTable getOwnerTable(StructuredTableContext context) throws TableNotFoundException {
+    return new OwnerTable(context);
   }
 
   @Override
   public void add(final NamespacedEntityId entityId,
                   final KerberosPrincipalId kerberosPrincipalId) throws IOException, AlreadyExistsException {
     validate(entityId, kerberosPrincipalId);
-    Transactionals.execute(transactional, context -> {
-      Table metaTable = getTable(context);
-      // make sure that an owner does not already exists
-      byte[] principalBytes = metaTable.get(createRowKey(entityId), COL);
-      if (principalBytes != null) {
-        throw new AlreadyExistsException(entityId,
-                                         String.format("Owner information already exists for entity '%s'.",
-                                                       entityId));
-      }
-      metaTable.put(createRowKey(entityId), COL, Bytes.toBytes(kerberosPrincipalId.getPrincipal()));
-    }, IOException.class, AlreadyExistsException.class);
+    TransactionRunners.run(txRunner, context -> {
+      OwnerTable ownerTable = getOwnerTable(context);
+      ownerTable.add(entityId, kerberosPrincipalId);
+    }, AlreadyExistsException.class, IOException.class);
   }
 
   @Override
   @Nullable
   public KerberosPrincipalId getOwner(final NamespacedEntityId entityId) throws IOException {
     validate(entityId);
-    return Transactionals.execute(transactional, context -> {
-      byte[] principalBytes = getTable(context).get(createRowKey(entityId), COL);
-      return principalBytes == null ? null : new KerberosPrincipalId(Bytes.toString(principalBytes));
+    return TransactionRunners.run(txRunner, context -> {
+      OwnerTable ownerTable = getOwnerTable(context);
+      return ownerTable.getOwner(entityId);
     }, IOException.class);
   }
 
   @Override
   public boolean exists(final NamespacedEntityId entityId) throws IOException {
     validate(entityId);
-    return Transactionals.execute(transactional, context -> {
-      byte[] principalBytes = getTable(context).get(createRowKey(entityId), COL);
-      return principalBytes != null;
+    return TransactionRunners.run(txRunner, context -> {
+      OwnerTable ownerTable = getOwnerTable(context);
+      return ownerTable.exists(entityId);
     }, IOException.class);
   }
 
   @Override
   public void delete(final NamespacedEntityId entityId) throws IOException {
     validate(entityId);
-    Transactionals.execute(transactional, context -> {
-      getTable(context).delete(createRowKey(entityId));
+    TransactionRunners.run(txRunner, context -> {
+      OwnerTable ownerTable = getOwnerTable(context);
+      ownerTable.delete(entityId);
     }, IOException.class);
   }
 
-  private Table getTable(DatasetContext context) throws IOException, DatasetManagementException {
-    return DatasetsUtil.getOrCreateDataset(context, datasetFramework, DATASET_ID, Table.class.getName(),
-                                           DATASET_PROPERTIES);
-  }
 
-  private static byte[] createRowKey(NamespacedEntityId targetId) {
-    // We are not going to upgrade owner.meta table in 5.0, when we upgrade this table,
-    // we should call  EntityIdKeyHelper#getTargetType()
-    String targetType = EntityIdKeyHelper.getV1TargetType(targetId);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(OWNER_PREFIX);
-    builder.add(targetType);
-    EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
-    MDSKey build = builder.build();
-    return build.getKey();
-  }
 }

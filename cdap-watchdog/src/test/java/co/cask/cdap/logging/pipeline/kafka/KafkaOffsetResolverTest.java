@@ -24,6 +24,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.context.GenericLoggingContext;
@@ -85,6 +86,7 @@ public class KafkaOffsetResolverTest {
                       new AuthorizationTestModule(),
                       new AuthorizationEnforcementModule().getInMemoryModules(),
                       new AuthenticationContextModules().getNoOpModule(),
+                      new StorageModule(),
                       new AbstractModule() {
                         @Override
                         protected void configure() {
