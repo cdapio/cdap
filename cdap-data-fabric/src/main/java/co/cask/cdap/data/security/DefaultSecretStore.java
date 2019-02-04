@@ -75,10 +75,6 @@ public class DefaultSecretStore implements SecretStore {
                                                                                        .SecretStore.NAMESPACE_FIELD,
                                                                                      namespace));
       try (CloseableIterator<StructuredRow> iterator = table.scan(Range.singleton(partialKey), Integer.MAX_VALUE)) {
-        if (!iterator.hasNext()) {
-          return Collections.emptyList();
-        }
-
         List<T> list = new ArrayList<>();
         while (iterator.hasNext()) {
           StructuredRow row = iterator.next();
