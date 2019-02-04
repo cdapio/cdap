@@ -28,7 +28,6 @@ class SaveFeatureModal extends React.Component {
 
   onCancel() {
     this.props.onClose('CANCEL');
-    gridRowData: parsedResult.gridRowData
   }
 
   onOk() {
