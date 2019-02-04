@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,22 +18,14 @@ package co.cask.cdap.messaging.subscriber;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeBoundIterator;
-import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.AbstractIterator;
 import org.apache.tephra.TransactionNotInProgressException;
@@ -41,11 +33,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.xml.ws.handler.MessageContext;
 
 /**
  * An abstract base class for implementing message consumption from TMS.
@@ -54,20 +44,13 @@ import javax.xml.ws.handler.MessageContext;
  *
  * @param <T> the type that each message will be decoded to.
  */
-public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetryableScheduledService {
+public abstract class AbstractMessagingSubscriberService<T> extends AbstractMessagingPollingService<T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMessagingSubscriberService.class);
-  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
 
-  private final TopicId topicId;
   private final boolean transactionalFetch;
-  private final int fetchSize;
-  private final long emptyFetchDelayMillis;
-  private final MetricsContext metricsContext;
   private final int txTimeoutSeconds;
   private final int maxTxTimeoutSeconds;
-  private boolean messageIdInitialized;
-  private String messageId;
 
   /**
    * Constructor.
@@ -86,27 +69,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
                                                int txTimeoutSeconds, int maxTxTimeoutSeconds,
                                                long emptyFetchDelayMillis,
                                                RetryStrategy retryStrategy, MetricsContext metricsContext) {
-    super(retryStrategy);
-    this.topicId = topicId;
+    super(topicId, metricsContext, fetchSize, emptyFetchDelayMillis, retryStrategy);
     this.transactionalFetch = transactionalFetch;
-    this.fetchSize = fetchSize;
     this.txTimeoutSeconds = txTimeoutSeconds;
     this.maxTxTimeoutSeconds = maxTxTimeoutSeconds;
-    this.emptyFetchDelayMillis = emptyFetchDelayMillis;
-    this.metricsContext = metricsContext;
   }
-
-  /**
-   * Returns the {@link TopicId} that this service is fetching from.
-   */
-  protected final TopicId getTopicId() {
-    return topicId;
-  }
-
-  /**
-   * Returns the {@link MessageContext} that this service used for interacting with TMS.
-   */
-  protected abstract MessagingContext getMessagingContext();
 
   /**
    * Returns the {@link Transactional} for executing tasks in transaction.
@@ -138,15 +105,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
   protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
 
   /**
-   * Decodes the raw {@link Message} into an object of type {@code T}.
-   *
-   * @param message the {@link Message} to decode
-   * @return an object of type {@code T}
-   * @throws Exception if the decode failed and the given message will be skipped for processing
-   */
-  protected abstract T decodeMessage(Message message) throws Exception;
-
-  /**
    * Whether the message should run in its own transaction because it is expected to be an expensive operation.
    *
    * @param message the message to process
@@ -174,74 +132,31 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
    * Perform post processing after a batch of messages has been processed and before the next batch of
    * messages is fetched. This will take place outside of the transaction used when processing messages.
    */
+  @Override
   protected void postProcess() {
     // no-op
   }
 
+  @Nullable
   @Override
-  protected final long runTask() throws Exception {
-    long delayMillis = fetchAndProcessMessages();
-    try {
-      postProcess();
-    } catch (Exception e) {
-      LOG.warn("Failed to perform post processing after processing messages.", e);
-    }
-    return delayMillis;
+  protected final String loadMessageId() {
+    return Transactionals.execute(getTransactional(), (TxCallable<String>) this::loadMessageId);
   }
 
+  @Nullable
   @Override
-  protected final boolean shouldRetry(Exception ex) {
-    // Log the exception
-    try {
-      throw ex;
-    } catch (ServiceUnavailableException e) {
-      SAMPLING_LOG.warn("Failed to contact service {}. Will retry in next run.", e.getServiceName(), e);
-    } catch (TopicNotFoundException e) {
-      SAMPLING_LOG.warn("Failed to fetch from TMS. Will retry in next run.", e);
-    } catch (Exception e) {
-      SAMPLING_LOG.warn("Failed to get and process notifications. Will retry in next run", e);
-    }
-
-    return true;
-  }
-
-  /**
-   * The method has the main logic to perform one fetch from TMS and process the fetched messages.
-   *
-   * @return number of milliseconds to sleep before the next fetch and process should happen.
-   */
-  private long fetchAndProcessMessages() throws TopicNotFoundException, IOException {
-    // Fetch the messageId if hasn't been fetched
-    if (!messageIdInitialized) {
-      messageId = Transactionals.execute(getTransactional(), this::loadMessageId);
-      messageIdInitialized = true;
-    }
-
-    // Collects batch of messages for processing.
-    // The fetch may be transactional, and it's ok to have the fetching and the processing happen in two
-    // non-overlapping transactions, as long as the processing transaction starts after the fetching one.
-    long startTime = System.currentTimeMillis();
-
-    final List<Message> messages = fetchMessages(messageId);
-    metricsContext.gauge("tms.fetch.time.ms", System.currentTimeMillis() - startTime);
-    metricsContext.increment("tms.fetch.messages", messages.size());
-
-    // Return if stopping or request to sleep for configured number of milliseconds if there are no notifications
-    if (messages.isEmpty() || state() != State.RUNNING) {
-      return emptyFetchDelayMillis;
-    }
-
-    startTime = System.currentTimeMillis();
-
-    MessageTrackingIterator iterator;
+  protected String processMessages(Iterator<ImmutablePair<String, T>> messages) {
     int curTxTimeout = txTimeoutSeconds;
+    MessageTrackingIterator iterator;
+
     while (true) {
       try {
         // Process the notifications and record the message id of where the processing is up to.
         // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
         long timeBoundMillis = 900L * curTxTimeout;
         iterator = Transactionals.execute(getTransactional(), curTxTimeout, context -> {
-          TimeBoundIterator<Message> timeBoundMessages = new TimeBoundIterator<>(messages.iterator(), timeBoundMillis);
+          TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+                                                                                                  timeBoundMillis);
           MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
           processMessages(context, trackingIterator);
           String lastMessageId = trackingIterator.getLastMessageId();
@@ -267,71 +182,31 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
         throw e;
       }
     }
-    messageId = iterator.getLastMessageId() == null ? messageId : iterator.getLastMessageId();
 
-    long endTime = System.currentTimeMillis();
-    metricsContext.gauge("process.duration.ms", endTime - startTime);
-    metricsContext.increment("process.notifications", iterator.getConsumedCount());
-
-    // Calculate the delay
-    if (messageId != null) {
-      metricsContext.gauge("process.delay.ms", endTime - getMessagePublishTime(messageId));
-    }
-
-    // Poll again immediately
-    return 0L;
+    return iterator.getLastMessageId();
   }
 
-  /**
-   * Fetch messages from TMS, optionally with transaction.
-   */
-  private List<Message> fetchMessages(@Nullable final String messageId) throws TopicNotFoundException, IOException {
+  @Override
+  protected List<Message> fetchMessages(@Nullable String messageId) throws TopicNotFoundException, IOException {
     if (!transactionalFetch) {
-      return doFetchMessages(messageId);
+      return super.fetchMessages(messageId);
     }
     return Transactionals.execute(getTransactional(), context -> {
-      return doFetchMessages(messageId);
+      return super.fetchMessages(messageId);
     }, TopicNotFoundException.class, IOException.class);
   }
 
   /**
-   * Actually fetching messages from TMS.
-   */
-  private List<Message> doFetchMessages(@Nullable String messageId) throws TopicNotFoundException, IOException {
-    List<Message> messages = new ArrayList<>();
-    LOG.trace("Fetching from topic '{}' with messageId '{}'", messageId);
-    MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
-    try (CloseableIterator<Message> iterator = messageFetcher.fetch(topicId.getNamespace(),
-                                                                    topicId.getTopic(), fetchSize, messageId)) {
-      while (iterator.hasNext() && state() == State.RUNNING) {
-        messages.add(iterator.next());
-      }
-    }
-    return messages;
-  }
-
-  /**
-   * Returns the publish time encoded in the given message id.
-   *
-   * @param messageId the message id to decode
-   * @return the publish time or {@code 0} if the message id is {@code null}.
-   */
-  private long getMessagePublishTime(String messageId) {
-    return new MessageId(Bytes.fromHexString(messageId)).getPublishTimestamp();
-  }
-
-  /**
-   * An {@link Iterator} that decodes {@link Message} and remembers the message id that has
-   * been consumed up to.
+   * An {@link Iterator} that remembers the message id that has been consumed up to.
    */
   private final class MessageTrackingIterator extends AbstractIterator<ImmutablePair<String, T>> {
 
-    private final Iterator<Message> messages;
+    private final Iterator<ImmutablePair<String, T>> messages;
     private String lastMessageId;
     private int consumedCount;
     private boolean shouldEnd;
 
-    MessageTrackingIterator(Iterator<Message> messages) {
+    MessageTrackingIterator(Iterator<ImmutablePair<String, T>> messages) {
       this.messages = messages;
       this.consumedCount = 0;
       this.shouldEnd = false;
@@ -339,50 +214,31 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
 
     @Override
     protected ImmutablePair<String, T> computeNext() {
-      if (shouldEnd) {
+      if (shouldEnd || !messages.hasNext()) {
         return endOfData();
       }
-      // Decode the next message into Notification.
-      while (messages.hasNext()) {
-        Message message = messages.next();
 
-        try {
-          T decoded = decodeMessage(message);
-          if (shouldRunInSeparateTx(decoded)) {
-            // if we should process this message in a separate tx and we've already processed other messages,
-            // pretend we've gone through all messages already. The next time we try to process a batch of messages,
-            // this expensive one will be the first message.
-            if (consumedCount > 0) {
-              LOG.debug("Ending message batch early to process {} in a separate tx", decoded);
-              return endOfData();
-            }
-            // if we should process this message in a separate tx and we haven't processed any messages yet,
-            // remember that we should pretend this iterator only had one element in it
-            shouldEnd = true;
-          }
-          LOG.trace("Processing message from topic {} with message id {}: {}", topicId, message.getId(), decoded);
-          consumedCount++;
-          lastMessageId = message.getId();
-          return new ImmutablePair<>(message.getId(), decoded);
-        } catch (Exception e) {
-          // This shouldn't happen.
-          LOG.warn("Failed to decode message with id {} and payload '{}'. Skipped.",
-                   message.getId(), message.getPayloadAsString(), e);
+      ImmutablePair<String, T> message = messages.next();
+      if (shouldRunInSeparateTx(message.getSecond())) {
+        // if we should process this message in a separate tx and we've already processed other messages,
+        // pretend we've gone through all messages already. The next time we try to process a batch of messages,
+        // this expensive one will be the first message.
+        if (consumedCount > 0) {
+          LOG.debug("Ending message batch early to process {} in a separate tx", message.getSecond());
+          return endOfData();
         }
-
-        consumedCount++;
-        lastMessageId = message.getId();
+        // if we should process this message in a separate tx and we haven't processed any messages yet,
+        // remember that we should pretend this iterator only had one element in it
+        shouldEnd = true;
       }
-      return endOfData();
+      consumedCount++;
+      lastMessageId = message.getFirst();
+      return message;
     }
 
     @Nullable
     String getLastMessageId() {
       return lastMessageId;
-    }
-
-    int getConsumedCount() {
-      return consumedCount;
     }
   }
 }

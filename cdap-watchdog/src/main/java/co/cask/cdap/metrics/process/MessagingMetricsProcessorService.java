@@ -159,7 +159,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
-
     while (metaTable == null) {
       if (stopping) {
         LOG.info("We are shutting down, giving up on acquiring consumer metaTable.");
@@ -167,9 +166,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       }
       try {
         metaTable = metricDatasetFactory.createConsumerMeta();
-      } catch (ServiceUnavailableException e) {
-        // No need to log the exception here since this can only happen when the DatasetService is not running.
-        // try in next iteration
       } catch (Exception e) {
         LOG.warn("Cannot access consumer metaTable, will retry in 1 sec.");
         try {

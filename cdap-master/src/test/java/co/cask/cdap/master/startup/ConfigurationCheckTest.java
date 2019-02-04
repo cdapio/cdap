@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,11 +46,6 @@ public class ConfigurationCheckTest {
   @Test (expected = RuntimeException.class)
   public void invalidLoggingKafkaTopicTest() {
     runConfigurationCheck(Constants.Logging.KAFKA_TOPIC, "invalid:topic");
-  }
-
-  @Test (expected = RuntimeException.class)
-  public void invalidNotificationTopicTest() {
-    runConfigurationCheck(Constants.Notification.TOPIC, "invalidtopic#1");
   }
 
   @Test (expected = RuntimeException.class)

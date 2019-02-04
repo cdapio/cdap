@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.DashboardStore;
@@ -35,6 +35,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -52,7 +53,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final PreferencesService preferencesService;
   private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ArtifactRepository artifactRepository;
   private final StorageProviderNamespaceAdmin storageProviderNamespaceAdmin;
@@ -62,7 +63,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   @Inject
   DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
                                   DashboardStore dashboardStore, DatasetFramework dsFramework,
-                                  MetricStore metricStore,
+                                  MetricsSystemClient metricsSystemClient,
                                   ApplicationLifecycleService applicationLifecycleService,
                                   ArtifactRepository artifactRepository,
                                   StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
@@ -72,7 +73,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     this.preferencesService = preferencesService;
     this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
-    this.metricStore = metricStore;
+    this.metricsSystemClient = metricsSystemClient;
     this.applicationLifecycleService = applicationLifecycleService;
     this.artifactRepository = artifactRepository;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
@@ -116,23 +117,20 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
     // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
-      impersonator.doAs(namespaceId, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          // Delete namespace in storage providers
-          storageProviderNamespaceAdmin.delete(namespaceId);
-          return null;
-        }
+      impersonator.doAs(namespaceId, (Callable<Void>) () -> {
+        // Delete namespace in storage providers
+        storageProviderNamespaceAdmin.delete(namespaceId);
+        return null;
       });
     }
   }
 
-  private void deleteMetrics(NamespaceId namespaceId) {
+  private void deleteMetrics(NamespaceId namespaceId) throws IOException {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = new LinkedHashMap<>();
     tags.put(Constants.Metrics.Tag.NAMESPACE, namespaceId.getNamespace());
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
                                                           new ArrayList<>(tags.keySet()));
-    metricStore.delete(deleteQuery);
+    metricsSystemClient.delete(deleteQuery);
   }
 }

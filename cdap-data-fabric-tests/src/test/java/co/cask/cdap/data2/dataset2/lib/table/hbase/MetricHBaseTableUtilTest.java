@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,7 @@ public class MetricHBaseTableUtilTest {
   public void testGetVersion() throws Exception {
     // Verify new metric datasets are properly recognized as 2.8+ version from now on
     HBaseMetricsTableDefinition definition =
-      new HBaseMetricsTableDefinition("foo", TEST_HBASE.getConfiguration(), hBaseTableUtil,
+      new HBaseMetricsTableDefinition("foo", TEST_HBASE.getConfiguration(), () -> hBaseTableUtil,
                                       new LocalLocationFactory(TMP_FOLDER.newFolder()), cConf);
     DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 

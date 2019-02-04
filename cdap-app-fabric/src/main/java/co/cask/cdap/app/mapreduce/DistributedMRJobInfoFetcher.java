@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,8 @@ import co.cask.cdap.proto.MRJobInfo;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 /**
  * Retrieves information about a run of a MapReduce job, using {@link MRJobClient} and
@@ -44,7 +46,7 @@ public class DistributedMRJobInfoFetcher implements MRJobInfoFetcher {
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
   @Override
-  public MRJobInfo getMRJobInfo(Id.Run runId) {
+  public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException {
     try {
       return mrJobClient.getMRJobInfo(runId);
     } catch (Exception e) {
