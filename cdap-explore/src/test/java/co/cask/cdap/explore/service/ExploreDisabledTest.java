@@ -55,6 +55,9 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -70,6 +73,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -106,6 +110,13 @@ public class ExploreDisabledTest {
     }
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
+
+    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    try {
+      StoreDefinition.createAllTables(tableAdmin);
+    } catch (IOException | TableAlreadyExistsException e) {
+      throw new RuntimeException("Failed to create the system tables", e);
+    }
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     NamespacePathLocator namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
