@@ -30,7 +30,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.TimeMathParser;
-import co.cask.cdap.internal.app.store.WorkflowDataset;
+import co.cask.cdap.internal.app.store.WorkflowTable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.WorkflowStatsComparison;
@@ -165,12 +165,12 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                                       " 's', 'm', 'h', 'd' units. Entered value was : " + interval);
     }
     WorkflowId workflow = new WorkflowId(namespaceId, appId, workflowId);
-    Collection<WorkflowDataset.WorkflowRunRecord> workflowRunRecords =
+    Collection<WorkflowTable.WorkflowRunRecord> workflowRunRecords =
       store.retrieveSpacedRecords(workflow, runId, limit, timeInterval);
 
     List<WorkflowRunMetrics> workflowRunMetricsList = new ArrayList<>();
     Map<String, Long> startTimes = new HashMap<>();
-    for (WorkflowDataset.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
+    for (WorkflowTable.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
       workflowRunMetricsList.add(getDetailedRecord(workflow, workflowRunRecord.getWorkflowRunId()));
       startTimes.put(workflowRunRecord.getWorkflowRunId(),
                      RunIds.getTime(RunIds.fromString(workflowRunRecord.getWorkflowRunId()), TimeUnit.SECONDS));
@@ -244,13 +244,13 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
    */
   @Nullable
   private WorkflowRunMetrics getDetailedRecord(WorkflowId workflowId, String runId) throws Exception {
-    WorkflowDataset.WorkflowRunRecord workflowRunRecord = store.getWorkflowRun(workflowId, runId);
+    WorkflowTable.WorkflowRunRecord workflowRunRecord = store.getWorkflowRun(workflowId, runId);
     if (workflowRunRecord == null) {
       return null;
     }
-    List<WorkflowDataset.ProgramRun> programRuns = workflowRunRecord.getProgramRuns();
+    List<WorkflowTable.ProgramRun> programRuns = workflowRunRecord.getProgramRuns();
     List<ProgramMetrics> programMetricsList = new ArrayList<>();
-    for (WorkflowDataset.ProgramRun programRun : programRuns) {
+    for (WorkflowTable.ProgramRun programRun : programRuns) {
       Map<String, Long> programMap = new HashMap<>();
       String programName = programRun.getName();
       ProgramType programType = programRun.getProgramType();

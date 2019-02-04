@@ -17,40 +17,44 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.PercentileInformation;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.spi.data.table.field.Range;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Dataset for Completed Workflows and their associated programs
  */
-public class WorkflowDataset extends AbstractDataset {
+public class WorkflowTable {
 
   private static final Gson GSON = new Gson();
   private static final byte[] RUNID = Bytes.toBytes("r");
@@ -58,41 +62,32 @@ public class WorkflowDataset extends AbstractDataset {
   private static final byte[] NODES = Bytes.toBytes("n");
   private static final Type PROGRAM_RUNS_TYPE = new TypeToken<List<ProgramRun>>() { }.getType();
 
-  private final Table table;
+  private final StructuredTable table;
 
-  WorkflowDataset(Table table) {
-    super("workflow.statistics", table);
+  WorkflowTable(StructuredTable table) {
     this.table = table;
   }
 
-  void write(WorkflowId id, RunRecordMeta runRecordMeta, List<ProgramRun> programRunList) {
+  void write(WorkflowId id, RunRecordMeta runRecordMeta, List<ProgramRun> programRunList) throws IOException {
     long startTs = runRecordMeta.getStartTs();
 
-    MDSKey mdsKey = getRowKeyBuilder(id, startTs).build();
-    byte[] rowKey = mdsKey.getKey();
+    List<Field<?>> fields = getPrimaryKeyFields(id, startTs);
     Long stopTs = runRecordMeta.getStopTs();
     Preconditions.checkState(stopTs != null, "Workflow Stats are written when the workflow has completed. Hence, " +
       "expected workflow stop time to be non-null. Workflow = %s, Run = %s, Stop time = %s", id, runRecordMeta, stopTs);
     long timeTaken = stopTs - startTs;
-
-    String value = GSON.toJson(programRunList, PROGRAM_RUNS_TYPE);
-
-    table.put(rowKey, RUNID, Bytes.toBytes(runRecordMeta.getPid()));
-    table.put(rowKey, TIME_TAKEN, Bytes.toBytes(timeTaken));
-    table.put(rowKey, NODES, Bytes.toBytes(value));
+    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.RUN_ID_FIELD, runRecordMeta.getPid()));
+    fields.add(Fields.longField(StoreDefinition.WorkflowStore.TIME_TAKEN_FIELD, timeTaken));
+    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.PROGRAM_RUN_DATA,
+                                  GSON.toJson(programRunList, PROGRAM_RUNS_TYPE)));
+    table.upsert(fields);
   }
 
-  public void delete(ApplicationId id) {
-    MDSKey mdsKey = new MDSKey.Builder().add(id.getNamespace()).add(id.getApplication()).build();
-    Scanner scanner = table.scan(mdsKey.getKey(), Bytes.stopKeyForPrefix(mdsKey.getKey()));
-    Row row;
-    try {
-      while ((row = scanner.next()) != null) {
-        table.delete(row.getRow());
-      }
-    } finally {
-      scanner.close();
-    }
+  public void delete(ApplicationId id) throws IOException {
+    table.deleteAll(
+      Range.singleton(
+        ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()),
+                         Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()))));
   }
 
   /**
@@ -103,22 +98,13 @@ public class WorkflowDataset extends AbstractDataset {
    * @param timeRangeEnd End of the time range that the scan should end at
    * @return List of WorkflowRunRecords
    */
-  private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd) {
-    byte[] startRowKey = getRowKeyBuilder(id, timeRangeStart).build().getKey();
-    byte[] endRowKey = getRowKeyBuilder(id, timeRangeEnd).build().getKey();
-    Scan scan = new Scan(startRowKey, endRowKey);
-
-    Scanner scanner = table.scan(scan);
-    Row indexRow;
+  private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd) throws IOException {
+    Iterator<StructuredRow> iterator = table.scan(
+      Range.create(getPrimaryKeyFields(id, timeRangeStart), Range.Bound.INCLUSIVE,
+                   getPrimaryKeyFields(id, timeRangeEnd), Range.Bound.EXCLUSIVE), Integer.MAX_VALUE);
     List<WorkflowRunRecord> workflowRunRecordList = new ArrayList<>();
-    while ((indexRow = scanner.next()) != null) {
-      Map<byte[], byte[]> columns = indexRow.getColumns();
-      String workflowRunId = Bytes.toString(columns.get(RUNID));
-      long timeTaken = Bytes.toLong(columns.get(TIME_TAKEN));
-
-      List<ProgramRun> programRunList = GSON.fromJson(Bytes.toString(columns.get(NODES)), PROGRAM_RUNS_TYPE);
-      WorkflowRunRecord workflowRunRecord = new WorkflowRunRecord(workflowRunId, timeTaken, programRunList);
-      workflowRunRecordList.add(workflowRunRecord);
+    while (iterator.hasNext()) {
+      workflowRunRecordList.add(getRunRecordFromRow(iterator.next()));
     }
     return workflowRunRecordList;
   }
@@ -146,7 +132,7 @@ public class WorkflowDataset extends AbstractDataset {
     }
 
     double avgRunTime = 0.0;
-    for (WorkflowDataset.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
+    for (WorkflowTable.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
       avgRunTime += workflowRunRecord.getTimeTaken();
     }
     avgRunTime /= runs;
@@ -197,20 +183,20 @@ public class WorkflowDataset extends AbstractDataset {
     return percentileInformationList;
   }
 
-  private List<WorkflowDataset.WorkflowRunRecord> sort(List<WorkflowDataset.WorkflowRunRecord> workflowRunRecords) {
+  private List<WorkflowTable.WorkflowRunRecord> sort(List<WorkflowTable.WorkflowRunRecord> workflowRunRecords) {
     Collections.sort(workflowRunRecords, new Comparator<WorkflowRunRecord>() {
       @Override
-      public int compare(WorkflowDataset.WorkflowRunRecord o1, WorkflowDataset.WorkflowRunRecord o2) {
+      public int compare(WorkflowTable.WorkflowRunRecord o1, WorkflowTable.WorkflowRunRecord o2) {
         return Longs.compare(o1.getTimeTaken(), o2.getTimeTaken());
       }
     });
     return workflowRunRecords;
   }
 
-  private Collection<ProgramRunDetails> getProgramRuns(List<WorkflowDataset.WorkflowRunRecord> workflowRunRecords) {
+  private Collection<ProgramRunDetails> getProgramRuns(List<WorkflowTable.WorkflowRunRecord> workflowRunRecords) {
     Map<String, ProgramRunDetails> programToRunRecord = new HashMap<>();
-    for (WorkflowDataset.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
-      for (WorkflowDataset.ProgramRun run : workflowRunRecord.getProgramRuns()) {
+    for (WorkflowTable.WorkflowRunRecord workflowRunRecord : workflowRunRecords) {
+      for (WorkflowTable.ProgramRun run : workflowRunRecord.getProgramRuns()) {
         ProgramRunDetails programRunDetails = programToRunRecord.get(run.getName());
         if (programRunDetails == null) {
           programRunDetails = new ProgramRunDetails(run.getName(), run.getProgramType(), new ArrayList<Long>());
@@ -223,25 +209,19 @@ public class WorkflowDataset extends AbstractDataset {
   }
 
   @Nullable
-  WorkflowRunRecord getRecord(WorkflowId id, String pid) {
+  WorkflowRunRecord getRecord(WorkflowId id, String pid) throws IOException {
     RunId runId = RunIds.fromString(pid);
     long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
-    MDSKey mdsKey = getRowKeyBuilder(id, startTime).build();
-    byte[] startRowKey = mdsKey.getKey();
-
-    Row indexRow = table.get(startRowKey);
-    if (indexRow.isEmpty()) {
+    List<Field<?>> fields = getPrimaryKeyFields(id, startTime);
+    Optional<StructuredRow> indexRow = table.read(fields);
+    if (!indexRow.isPresent()) {
       return null;
     }
-    Map<byte[], byte[]> columns = indexRow.getColumns();
-    String workflowRunId = Bytes.toString(columns.get(RUNID));
-    long timeTaken = Bytes.toLong(columns.get(TIME_TAKEN));
-
-    List<ProgramRun> actionRunsList = GSON.fromJson(Bytes.toString(columns.get(NODES)), PROGRAM_RUNS_TYPE);
-    return new WorkflowRunRecord(workflowRunId, timeTaken, actionRunsList);
+    return getRunRecordFromRow(indexRow.get());
   }
 
-  Collection<WorkflowRunRecord> getDetailsOfRange(WorkflowId workflow, String runId, int limit, long timeInterval) {
+  Collection<WorkflowRunRecord> getDetailsOfRange(WorkflowId workflow, String runId, int limit, long timeInterval)
+    throws IOException {
     Map<String, WorkflowRunRecord> mainRunRecords = getNeighbors(workflow, RunIds.fromString(runId),
                                                                  limit, timeInterval);
     WorkflowRunRecord workflowRunRecord = getRecord(workflow, runId);
@@ -261,7 +241,8 @@ public class WorkflowDataset extends AbstractDataset {
    * @return A Map of WorkflowRunId to the corresponding Workflow Run Record. A map is used so that duplicates of
    * the WorkflowRunRecord are not obtained
    */
-  private Map<String, WorkflowRunRecord> getNeighbors(WorkflowId id, RunId runId, int limit, long timeInterval) {
+  private Map<String, WorkflowRunRecord> getNeighbors(WorkflowId id, RunId runId, int limit, long timeInterval)
+    throws IOException {
     long startTime = RunIds.getTime(runId, TimeUnit.SECONDS);
     Map<String, WorkflowRunRecord> workflowRunRecords = new HashMap<>();
     int i = -limit;
@@ -270,28 +251,27 @@ public class WorkflowDataset extends AbstractDataset {
     // startTime + (limit * timeInterval) since we want to capture all runs that started in this range.
     // Since we want to stop getting the same key, we have the prevStartTime become 1 more than the time at which
     // the last record was found if the (interval * the count of the loop) is less than the time.
-    while (prevStartTime <= startTime + (limit * timeInterval)) {
-      MDSKey mdsKey = getRowKeyBuilder(id, prevStartTime).build();
-      byte[] startRowKey = mdsKey.getKey();
-      Scan scan = new Scan(startRowKey, null);
-      Scanner scanner = table.scan(scan);
-      Row indexRow = scanner.next();
-      if (indexRow == null) {
-        return workflowRunRecords;
+    long upperBound = startTime + (limit * timeInterval);
+    while (prevStartTime <= upperBound) {
+      List<Field<?>> lowerBoundFields = getPrimaryKeyFields(id, prevStartTime);
+      List<Field<?>> upperBoundFields = getPrimaryKeyFields(id, upperBound);
+      // This only works since the all keys but the last primary key are the same, so we can scan for a range in the
+      // last primary key which is numeric.
+      try (CloseableIterator<StructuredRow> iterator =
+        table.scan(Range.create(lowerBoundFields, Range.Bound.INCLUSIVE, upperBoundFields, Range.Bound.EXCLUSIVE),
+                   1)) {
+        if (!iterator.hasNext()) {
+          return workflowRunRecords;
+        }
+        StructuredRow indexRow = iterator.next();
+        long timeOfNextRecord =
+          indexRow.getLong(StoreDefinition.WorkflowStore.START_TIME_FIELD);
+        workflowRunRecords.put(indexRow.getString(StoreDefinition.WorkflowStore.RUN_ID_FIELD),
+                               getRunRecordFromRow(indexRow));
+        prevStartTime = startTime + (i * timeInterval) < timeOfNextRecord ?
+          timeOfNextRecord + 1 : startTime + (i * timeInterval);
+        i++;
       }
-      byte[] rowKey = indexRow.getRow();
-      long time = ByteBuffer.wrap(rowKey, rowKey.length - Bytes.SIZEOF_LONG, Bytes.SIZEOF_LONG).getLong();
-      if (!((time >= (startTime - (limit * timeInterval))) && time <= (startTime + (limit * timeInterval)))) {
-        break;
-      }
-      Map<byte[], byte[]> columns = indexRow.getColumns();
-      String workflowRunId = Bytes.toString(columns.get(RUNID));
-      long timeTaken = Bytes.toLong(columns.get(TIME_TAKEN));
-      List<ProgramRun> programRunList = GSON.fromJson(Bytes.toString(columns.get(NODES)), PROGRAM_RUNS_TYPE);
-      workflowRunRecords.put(workflowRunId, new WorkflowRunRecord(workflowRunId, timeTaken, programRunList));
-      prevStartTime = startTime + (i * timeInterval) < time ?
-        time + 1 : startTime + (i * timeInterval);
-      i++;
     }
     return workflowRunRecords;
   }
@@ -387,8 +367,20 @@ public class WorkflowDataset extends AbstractDataset {
     }
     }
 
-  private static MDSKey.Builder getRowKeyBuilder(WorkflowId id, long time) {
-    return new MDSKey.Builder().add(id.getNamespace())
-      .add(id.getApplication()).add(id.getVersion()).add(id.getProgram()).add(time);
+  private static List<Field<?>> getPrimaryKeyFields(WorkflowId id, long time) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()));
+    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()));
+    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.VERSION_FIELD, id.getVersion()));
+    fields.add(Fields.stringField(StoreDefinition.WorkflowStore.PROGRAM_FIELD, id.getProgram()));
+    fields.add(Fields.longField(StoreDefinition.WorkflowStore.START_TIME_FIELD, time));
+    return fields;
+  }
+
+  private static WorkflowRunRecord getRunRecordFromRow(StructuredRow row) {
+    return new WorkflowRunRecord(row.getString(StoreDefinition.WorkflowStore.RUN_ID_FIELD),
+                                 row.getLong(StoreDefinition.WorkflowStore.TIME_TAKEN_FIELD),
+                                 GSON.fromJson(row.getString(StoreDefinition.WorkflowStore.PROGRAM_RUN_DATA),
+                                               PROGRAM_RUNS_TYPE));
   }
 }
