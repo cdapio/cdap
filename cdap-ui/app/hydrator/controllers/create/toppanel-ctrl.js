@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 class HydratorPlusPlusTopPanelCtrl {
   constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid, HydratorUpgradeService) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
@@ -66,6 +65,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.focusTimeout = null;
     this.fetchMacrosTimeout = null;
     this.timeoutInMinutes = 2;
+    this.showIcon = window.CaskCommon.ThemeHelper.Theme.showPipelineCreateButton;
 
     if ($stateParams.isClone) {
       this.openMetadata();

@@ -48,6 +48,9 @@ export default class ResourceCenterButton extends Component {
     });
   }
   render() {
+    if (this.props && this.props.showIcon === false) {
+      return null;
+    }
     return (
       <div>
         <div
@@ -70,5 +73,6 @@ export default class ResourceCenterButton extends Component {
   }
 }
 ResourceCenterButton.propTypes = {
-  className: PropTypes.string
+  className: PropTypes.string,
+  showIcon: PropTypes.bool
 };
