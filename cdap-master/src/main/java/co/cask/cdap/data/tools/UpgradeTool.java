@@ -60,7 +60,6 @@ import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
@@ -75,7 +74,6 @@ import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.store.DefaultOwnerStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -481,8 +479,6 @@ public class UpgradeTool {
       // then leave this block empty but do not remove block so that it can be used in next release if needed
     }
 
-    // owner metadata
-    DefaultOwnerStore.setupDatasets(datasetFramework);
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageDataset.setupDatasets(datasetFramework);
