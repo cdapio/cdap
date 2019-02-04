@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -417,9 +418,16 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   private String getReadQuery(Collection<Field<?>> keys, Collection<String> columns, boolean forUpdate) {
-    String prefix = "SELECT " + (columns == null || columns.isEmpty() ? "*" : Joiner.on(",").join(columns)) +
-      " FROM " + tableSchema.getTableId().getName() + " WHERE ";
-    return combineWithEqualClause(prefix, keys, forUpdate ? " FOR UPDATE " : "");
+    StringBuilder queryString =
+      new StringBuilder("SELECT ")
+        .append(columns == null || columns.isEmpty() ? "*" : Joiner.on(",").join(columns))
+        .append(" FROM ")
+        .append(tableSchema.getTableId().getName())
+        .append(" WHERE ").append(getEqualsClause(keys))
+        .append(getOrderByClause(tableSchema.getPrimaryKeys()))
+        .append(forUpdate ? " FOR UPDATE " : "")
+        .append(";");
+    return queryString.toString();
   }
 
   /**
@@ -433,12 +441,12 @@ public class PostgresSqlStructuredTable implements StructuredTable {
    */
   private String getScanQuery(Range range, int limit) {
     StringBuilder queryString = new StringBuilder("SELECT * FROM ").append(tableSchema.getTableId().getName());
-    if (range.getBegin().isEmpty() && range.getEnd().isEmpty()) {
-      return queryString.append(" LIMIT ").append(limit).append(";").toString();
+    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+      queryString.append(" WHERE ");
+      appendRange(queryString, range);
     }
 
-    queryString.append(" WHERE ");
-    appendRange(queryString, range);
+    queryString.append(getOrderByClause(tableSchema.getPrimaryKeys()));
     queryString.append(" LIMIT ").append(limit).append(";");
     return queryString.toString();
   }
@@ -470,8 +478,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   private String getDeleteQuery(Collection<Field<?>> keys) {
-    String prefix = "DELETE FROM " + tableSchema.getTableId().getName() + " WHERE ";
-    return combineWithEqualClause(prefix, keys, "");
+    return String.format("DELETE FROM %s WHERE %s;", tableSchema.getTableId().getName(), getEqualsClause(keys));
   }
 
   private String getDeleteAllStatement(Range range) {
@@ -485,15 +492,22 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   private String getIncrementStatement(Collection<Field<?>> keys, String column) {
-    String prefix = String.format("UPDATE %s SET %s = %s + ? WHERE ",
-                                  tableSchema.getTableId().getName(), column, column);
-    return combineWithEqualClause(prefix, keys, "");
+    return String.format("UPDATE %s SET %s = %s + ? WHERE %s;",
+                         tableSchema.getTableId().getName(), column, column, getEqualsClause(keys));
   }
 
-  private String combineWithEqualClause(String prefix, Collection<Field<?>> keys, String suffix) {
-    StringJoiner joiner = new StringJoiner(" AND ", prefix, suffix + ";");
+  private String getEqualsClause(Collection<Field<?>> keys) {
+    StringJoiner joiner = new StringJoiner(" AND ");
     for (Field<?> key : keys) {
       joiner.add(key.getName() + "=?");
+    }
+    return joiner.toString();
+  }
+
+  private String getOrderByClause(List<String> keys) {
+    StringJoiner joiner = new StringJoiner(", ", " ORDER BY ", "");
+    for (String key : keys) {
+      joiner.add(key);
     }
     return joiner.toString();
   }
