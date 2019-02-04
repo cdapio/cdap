@@ -40,6 +40,8 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -79,6 +81,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final Deque<MonitorMessage> lastProgramStateMessages;
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
   private final RemoteExecutionLogProcessor logProcessor;
@@ -94,7 +97,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
                         RemoteExecutionLogProcessor logProcessor,
                         ProfileMetricService metricScheduledService,
-                        RemoteProcessController remoteProcessController, ProgramStateWriter programStateWriter) {
+                        RemoteProcessController remoteProcessController, ProgramStateWriter programStateWriter,
+                        TransactionRunner transactionRunner) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
     this.programRunId = programRunId;
@@ -105,8 +109,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.topicsToRequest = new HashMap<>();
     this.datasetFramework = datasetFramework;
-    this.messagingContext = messagingContext;
     this.transactional = transactional;
+    this.messagingContext = messagingContext;
     this.scheduledExecutorService = scheduledExecutorService;
     this.logProcessor = logProcessor;
     this.programFinishTime = -1L;
@@ -115,6 +119,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.metricScheduledService = metricScheduledService;
     this.remoteProcessController = remoteProcessController;
     this.programStateWriter = programStateWriter;
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -198,8 +203,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     updateProgramFinishTime(monitorResponses);
 
     // Publish messages for all the topics and persist corresponding offsets in a single transaction.
-    long latestPublishTime = Transactionals.execute(transactional, context -> {
-      AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
+    long latestPublishTime = TransactionRunners.run(transactionRunner, context->  {
+      AppMetadataStore store = AppMetadataStore.create(context);
       return processResponse(monitorResponses, store);
     });
 
@@ -263,8 +268,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private Map<String, MonitorConsumeRequest> initTopics(Collection<String> topicConfigs) {
     Map<String, MonitorConsumeRequest> consumeRequests = new HashMap<>();
 
-    Transactionals.execute(transactional, context -> {
-      AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
+    TransactionRunners.run(transactionRunner, context->  {
+      AppMetadataStore store = AppMetadataStore.create(context);
 
       for (String topicConfig : topicConfigs) {
         String messageId = store.retrieveSubscriberState(topicConfig, programRunId.getRun());
@@ -349,8 +354,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
       String topic = requestKeyToLocalTopic.get(topicConfig);
 
       // Publish last program state messages with Retries
-      Retries.runWithRetries(() -> Transactionals.execute(transactional, context -> {
-        AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
+      Retries.runWithRetries(() -> TransactionRunners.run(transactionRunner, context->  {
+        AppMetadataStore store = AppMetadataStore.create(context);
         publish(topicConfig, topic, lastProgramStateMessages, store);
       }), getRetryStrategy());
     }
@@ -376,15 +381,22 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
    */
   private void clearStates() {
     try {
-      Retries.runWithRetries(() -> Transactionals.execute(transactional, context -> {
-        AppMetadataStore store = AppMetadataStore.create(cConf, context, datasetFramework);
-        RemoteRuntimeDataset runtimeDataset = RemoteRuntimeDataset.create(context, datasetFramework);
+      Retries.runWithRetries(() -> TransactionRunners.run(transactionRunner, context->  {
+        AppMetadataStore store = AppMetadataStore.create(context);
 
         // cleanup all the offsets after publishing terminal states.
         for (String topicConf : requestKeyToLocalTopic.keySet()) {
           store.deleteSubscriberState(topicConf, programRunId.getRun());
         }
-
+      }, RetryableException.class), getRetryStrategy());
+    } catch (Exception e) {
+      // Just log the exception. The state remained won't affect normal operation.
+      LOG.warn("Exception raised when clearing runtime monitor states", e);
+    }
+    // TODO: CDAP-14848 merge transactions back together
+    try {
+      Retries.runWithRetries(() -> Transactionals.execute(transactional, context->  {
+        RemoteRuntimeDataset runtimeDataset = RemoteRuntimeDataset.create(context, datasetFramework);
         runtimeDataset.delete(programRunId);
       }, RetryableException.class), getRetryStrategy());
     } catch (Exception e) {

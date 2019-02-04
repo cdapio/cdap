@@ -59,6 +59,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -120,12 +121,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   @Nullable
   @Override
   protected String loadMessageId(DatasetContext datasetContext) {
-    return getAppMetadataStore(datasetContext).retrieveSubscriberState(getTopicId().getTopic(), "");
+    //return getAppMetadataStore(datasetContext).retrieveSubscriberState(getTopicId().getTopic(), "");
+    return "";
   }
 
   @Override
   protected void storeMessageId(DatasetContext datasetContext, String messageId) {
-    getAppMetadataStore(datasetContext).persistSubscriberState(getTopicId().getTopic(), "", messageId);
+   // getAppMetadataStore(datasetContext).persistSubscriberState(getTopicId().getTopic(), "", messageId);
   }
 
   @Override
@@ -381,7 +383,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
-                                                DatasetContext datasetContext, AppMetadataStore appMetadataStore) {
+                                                DatasetContext datasetContext, AppMetadataStore appMetadataStore)
+    throws IOException {
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
@@ -536,6 +539,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Returns an instance of {@link AppMetadataStore}.
    */
   private AppMetadataStore getAppMetadataStore(DatasetContext context) {
-    return AppMetadataStore.create(cConf, context, datasetFramework);
+    //return AppMetadataStore.create(cConf, context, datasetFramework);
+    return null;
   }
 }

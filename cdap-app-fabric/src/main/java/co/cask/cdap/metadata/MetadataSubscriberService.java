@@ -61,6 +61,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -71,6 +72,7 @@ import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -158,15 +160,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Nullable
   @Override
-  protected String loadMessageId(DatasetContext datasetContext) {
-    AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
-    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
+  protected String loadMessageId(DatasetContext context) throws IOException {
+    //AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    //return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
+    return "";
   }
 
   @Override
-  protected void storeMessageId(DatasetContext datasetContext, String messageId) {
-    AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
-    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
+  protected void storeMessageId(DatasetContext context, String messageId) throws IOException {
+    //AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    //appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
   }
 
   @Override
@@ -194,7 +197,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new UsageProcessor(datasetContext);
           case WORKFLOW_TOKEN:
           case WORKFLOW_STATE:
-            return new WorkflowProcessor(datasetContext);
+            //return new WorkflowProcessor(datasetContext);
           case METADATA_OPERATION:
             return new MetadataOperationProcessor(cConf);
           case DATASET_OPERATION:
@@ -204,7 +207,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case ENTITY_CREATION:
           case ENTITY_DELETION:
             return new ProfileMetadataMessageProcessor(
-              cConf, datasetContext, datasetFramework, metadataStore, transactionRunner);
+              datasetContext, datasetFramework, metadataStore, transactionRunner);
           default:
             return null;
         }
@@ -217,7 +220,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         continue;
       }
 
-      processor.processMessage(message);
+      // TODO test processor.processMessage(message);
     }
   }
 
@@ -309,12 +312,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     private final AppMetadataStore appMetadataStore;
 
-    WorkflowProcessor(DatasetContext datasetContext) {
-      this.appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
+    WorkflowProcessor(StructuredTableContext context) {
+      this.appMetadataStore = AppMetadataStore.create(context);
     }
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message) throws IOException{
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
         return;

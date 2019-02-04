@@ -48,6 +48,7 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.gson.Gson;
@@ -59,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -82,18 +84,18 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   private final MetadataStore metadataStore;
   private final NamespaceStore defaultNamespaceStore;
-  private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesDataset preferencesDataset;
+  private final TransactionRunner transactionRunner;
 
-  public ProfileMetadataMessageProcessor(CConfiguration cConf, DatasetContext datasetContext,
+  public ProfileMetadataMessageProcessor(DatasetContext datasetContext,
                                          DatasetFramework datasetFramework, MetadataStore metadataStore,
                                          TransactionRunner transactionRunner) {
     defaultNamespaceStore = new DefaultNamespaceStore(transactionRunner);
-    appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
     scheduleDataset = Schedulers.getScheduleStore(datasetContext, datasetFramework);
     preferencesDataset = PreferencesDataset.get(datasetContext, datasetFramework);
     this.metadataStore = metadataStore;
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -142,14 +144,19 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         }
         LOG.trace("Updating profile metadata for {}", entityId);
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
-        for (ApplicationMeta meta : appMetadataStore.getAllApplications(namespaceId.getNamespace())) {
+        List<ApplicationMeta> applicationMetas = TransactionRunners.run(transactionRunner, context -> {
+          return AppMetadataStore.create(context).getAllApplications(namespaceId.getNamespace());
+        });
+        for (ApplicationMeta meta : applicationMetas) {
           collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
         }
         break;
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         // make sure app exists before updating
-        ApplicationMeta meta = appMetadataStore.getApplication(appId);
+        ApplicationMeta meta = TransactionRunners.run(transactionRunner, context -> {
+          return AppMetadataStore.create(context).getApplication(appId);
+        });
         if (meta == null) {
           LOG.debug("Application {} is not found, so the profile metadata of its programs/schedules will not get " +
                       "updated. Ignoring the message {}", appId, message);
@@ -160,7 +167,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         // make sure the app of the program exists before updating
-        meta = appMetadataStore.getApplication(programId.getParent());
+        meta = TransactionRunners.run(transactionRunner, context -> {
+          return AppMetadataStore.create(context).getApplication(programId.getParent());
+        });
         if (meta == null) {
           LOG.debug("Application {} is not found, so the profile metadata of program {} will not get updated. " +
                       "Ignoring the message {}", programId.getParent(), programId, message);

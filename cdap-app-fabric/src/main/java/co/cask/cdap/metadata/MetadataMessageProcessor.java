@@ -19,6 +19,8 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 
+import java.io.IOException;
+
 /**
  * Interface for metadata message processor
  */
@@ -27,6 +29,6 @@ public interface MetadataMessageProcessor {
   /**
    * Processes one {@link MetadataMessage}.
    */
-  void processMessage(MetadataMessage message);
+  void processMessage(MetadataMessage message) throws IOException;
 
 }

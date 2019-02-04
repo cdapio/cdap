@@ -271,29 +271,13 @@ public abstract class StructuredTableTest {
 
   @Test
   public void testIncrement() throws Exception {
-    // Write a record
     Collection<Field<?>> keys = Arrays.asList(Fields.intField(KEY, 100), Fields.longField(KEY2, 200L));
-    Field<?> longField = Fields.longField(LONG_COL, 100L);
-    getTransactionRunner().run(context -> {
-      StructuredTable table = context.getTable(SIMPLE_TABLE);
-      Collection<Field<?>> fields = new ArrayList<>(keys);
-      fields.add(longField);
-      table.upsert(fields);
-    });
-
-    // Verify write
-    getTransactionRunner().run(context -> {
-      StructuredTable table = context.getTable(SIMPLE_TABLE);
-      Optional<StructuredRow> rowOptional = table.read(keys);
-      Assert.assertTrue(rowOptional.isPresent());
-      Assert.assertEquals(longField.getValue(), rowOptional.get().getLong(LONG_COL));
-    });
 
     // Increment
     long increment = 30;
     getTransactionRunner().run(context -> {
       StructuredTable table = context.getTable(SIMPLE_TABLE);
-      table.increment(keys, longField.getName(), increment);
+      table.increment(keys, LONG_COL, increment);
       try {
         table.increment(keys, FLOAT_COL, increment);
         Assert.fail("Expected IllegalArgumentException since only long columns can be incremented");
@@ -308,7 +292,28 @@ public abstract class StructuredTableTest {
       Optional<StructuredRow> rowOptional = table.read(keys);
       Assert.assertTrue(rowOptional.isPresent());
       //noinspection ConstantConditions
-      Assert.assertEquals(((Long) longField.getValue()) + increment, (long) rowOptional.get().getLong(LONG_COL));
+      Assert.assertEquals(increment, (long) rowOptional.get().getLong(LONG_COL));
+    });
+
+    // Increment again with row already existing
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      table.increment(keys, LONG_COL, increment);
+      try {
+        table.increment(keys, FLOAT_COL, increment);
+        Assert.fail("Expected IllegalArgumentException since only long columns can be incremented");
+      } catch (IllegalArgumentException e) {
+        // Expected, see the exception message above
+      }
+    });
+
+    // Verify increment
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Optional<StructuredRow> rowOptional = table.read(keys);
+      Assert.assertTrue(rowOptional.isPresent());
+      //noinspection ConstantConditions
+      Assert.assertEquals(increment + increment, (long) rowOptional.get().getLong(LONG_COL));
     });
 
     // Increment on primary key should fail
