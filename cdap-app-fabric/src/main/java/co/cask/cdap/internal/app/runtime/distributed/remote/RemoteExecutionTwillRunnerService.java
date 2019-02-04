@@ -61,6 +61,7 @@ import co.cask.cdap.runtime.spi.provisioner.Node;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.cdap.security.tools.KeyStores;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -143,6 +144,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final ProgramStateWriter programStateWriter;
   private final SSHSessionManager sshSessionManager;
   private final MonitorSocksProxy monitorSocksProxy;
+  private final TransactionRunner transactionRunner;
 
   private LocationCache locationCache;
   private Path cachePath;
@@ -154,7 +156,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                     DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                     RemoteExecutionLogProcessor logProcessor,
                                     MetricsCollectionService metricsCollectionService,
-                                    ProvisioningService provisioningService, ProgramStateWriter programStateWriter) {
+                                    ProvisioningService provisioningService, ProgramStateWriter programStateWriter,
+                                    TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -174,6 +177,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     this.programStateWriter = programStateWriter;
     this.sshSessionManager = new SSHSessionManager();
     this.monitorSocksProxy = new MonitorSocksProxy(cConf, sshSessionManager);
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -376,7 +380,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                          datasetFramework, transactional,
                                                          messagingContext, monitorScheduler, logProcessor,
                                                          profileMetricsService,
-                                                         remoteProcessController, programStateWriter);
+                                                         remoteProcessController, programStateWriter,
+                                                         transactionRunner);
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
         RunIds.fromString(key.getRun()), runtimeMonitor);
 

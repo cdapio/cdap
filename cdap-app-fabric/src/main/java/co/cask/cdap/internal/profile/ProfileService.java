@@ -45,12 +45,15 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -71,11 +74,12 @@ public class ProfileService {
   private final Transactional transactional;
   private final CConfiguration cConf;
   private final MetricStore metricStore;
+  private final TransactionRunner transactionRunner;
 
   @Inject
   public ProfileService(CConfiguration cConfiguration,
                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                        MetricStore metricStore) {
+                        MetricStore metricStore, TransactionRunner transactionRunner) {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -85,6 +89,7 @@ public class ProfileService {
     );
     this.cConf = cConfiguration;
     this.metricStore = metricStore;
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -211,8 +216,8 @@ public class ProfileService {
     Transactionals.execute(transactional, context -> {
       ProfileDataset profileDataset = getProfileDataset(context);
       Profile profile = profileDataset.getProfile(profileId);
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
-      deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+      //AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
+      //deleteProfile(profileDataset, appMetadataStore, profileId, profile);
     }, NotFoundException.class, ProfileConflictException.class);
     deleteMetrics(profileId);
   }
@@ -230,14 +235,14 @@ public class ProfileService {
     List<ProfileId> deleted = new ArrayList<>();
     Transactionals.execute(transactional, context -> {
       ProfileDataset profileDataset = getProfileDataset(context);
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
       List<Profile> profiles = profileDataset.getProfiles(namespaceId, false);
       for (Profile profile : profiles) {
         ProfileId profileId = namespaceId.profile(profile.getName());
-        deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+        //deleteProfile(profileDataset, appMetadataStore, profileId, profile);
         deleted.add(profileId);
       }
     }, ProfileConflictException.class, NotFoundException.class);
+
     // delete the metrics
     for (ProfileId profileId : deleted) {
       deleteMetrics(profileId);
@@ -332,7 +337,7 @@ public class ProfileService {
   }
 
   private void deleteProfile(ProfileDataset profileDataset, AppMetadataStore appMetadataStore, ProfileId profileId,
-                             Profile profile) throws ProfileConflictException, NotFoundException {
+                             Profile profile) throws ProfileConflictException, NotFoundException, IOException {
     // The profile status must be DISABLED
     if (profile.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(

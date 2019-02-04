@@ -29,6 +29,8 @@ import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
@@ -39,34 +41,24 @@ import org.apache.tephra.TransactionSystemClient;
  */
 public class BasicWorkflowStateWriter implements WorkflowStateWriter {
 
-  private final CConfiguration cConf;
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
 
   @Inject
-  BasicWorkflowStateWriter(CConfiguration cConf, DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this.cConf = cConf;
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+  BasicWorkflowStateWriter(TransactionRunner transactionRunner) {
+    this.transactionRunner = transactionRunner;
   }
-
 
   @Override
   public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
-    Transactionals.execute(transactional, context -> {
-      AppMetadataStore.create(cConf, context, datasetFramework).setWorkflowToken(workflowRunId, token);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore.create(context).setWorkflowToken(workflowRunId, token);
     });
   }
 
   @Override
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
-    Transactionals.execute(transactional, context -> {
-      AppMetadataStore.create(cConf, context, datasetFramework).addWorkflowNodeState(workflowRunId, nodeStateDetail);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore.create(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
     });
   }
 }

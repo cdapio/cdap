@@ -16,7 +16,6 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
@@ -47,6 +46,9 @@ public final class StoreDefinition {
     }
     if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
       NamespaceStore.createTables(tableAdmin);
+    }
+    if (overWrite || tableAdmin.getSpecification(AppMetadataStore.APPLICATION_SPECIFICATIONS) == null) {
+      AppMetadataStore.createTables(tableAdmin);
     }
   }
 
@@ -96,7 +98,6 @@ public final class StoreDefinition {
     public static final String NODE_STATE_DATA = "node_state_data";
     public static final String RUN_STATUS = "run_status";
     public static final String RUN_START_TIME = "run_start_time";
-    public static final String RUN_ID = "run_id";
     public static final String RUN_RECORD_DATA = "run_record_data";
     public static final String WORKFLOW_DATA = "workflow_data";
     public static final String COUNT_TYPE = "count_type";
@@ -142,12 +143,11 @@ public final class StoreDefinition {
                     Fields.stringType(VERSION_FIELD),
                     Fields.stringType(PROGRAM_TYPE_FIELD),
                     Fields.stringType(PROGRAM_FIELD),
-                    Fields.stringType(RUN_FIELD),
                     Fields.longType(RUN_START_TIME),
-                    Fields.stringType(RUN_ID),
+                    Fields.stringType(RUN_FIELD),
                     Fields.stringType(RUN_RECORD_DATA))
         .withPrimaryKeys(RUN_STATUS, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD,
-                         PROGRAM_FIELD, RUN_FIELD, RUN_START_TIME, RUN_ID)
+                         PROGRAM_FIELD, RUN_START_TIME, RUN_FIELD)
         .build();
 
     public static final StructuredTableSpecification WORKFLOWS_SPEC =
@@ -173,10 +173,9 @@ public final class StoreDefinition {
                     Fields.stringType(VERSION_FIELD),
                     Fields.stringType(PROGRAM_TYPE_FIELD),
                     Fields.stringType(PROGRAM_FIELD),
-                    Fields.stringType(RUN_FIELD),
                     Fields.longType(COUNTS))
         .withPrimaryKeys(
-          COUNT_TYPE, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
+          COUNT_TYPE, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD)
         .build();
 
     public static final StructuredTableSpecification UPGRADE_METADATA_SPEC =
@@ -191,11 +190,20 @@ public final class StoreDefinition {
       new StructuredTableSpecification.Builder()
         .withId(SUBSCRIBER_STATE)
         .withFields(Fields.stringType(SUBSCRIBER_TOPIC),
-                    Fields.stringType(SUBSCRIBER)
+                    Fields.stringType(SUBSCRIBER),
                     Fields.stringType(SUBSCRIBER_MESSAGE))
         .withPrimaryKeys(SUBSCRIBER_TOPIC, SUBSCRIBER)
         .build();
 
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(APPLICATION_SPECIFICATIONS_TABLE_SPEC);
+      tableAdmin.create(WORKFLOW_NODE_STATES_SPEC);
+      tableAdmin.create(RUN_RECORDS_SPEC);
+      tableAdmin.create(WORKFLOWS_SPEC);
+      tableAdmin.create(PROGRAM_COUNTS_SPEC);
+      tableAdmin.create(UPGRADE_METADATA_SPEC);
+      tableAdmin.create(SUBSCRIBER_STATE_SPEC);
+    }
   }
 
 

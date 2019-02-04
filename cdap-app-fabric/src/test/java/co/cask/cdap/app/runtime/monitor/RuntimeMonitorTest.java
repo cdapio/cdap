@@ -50,6 +50,10 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.tools.KeyStores;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -105,6 +109,7 @@ public class RuntimeMonitorTest {
   private DatasetFramework datasetFramework;
   private Transactional transactional;
   private MetricsCollectionService metricsCollectionService;
+  private TransactionRunner transactionRunner;
 
   private KeyStore serverKeyStore;
   private KeyStore clientKeyStore;
@@ -114,7 +119,7 @@ public class RuntimeMonitorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Before
-  public void init() throws IOException {
+  public void init() throws IOException, TableAlreadyExistsException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
@@ -163,9 +168,11 @@ public class RuntimeMonitorTest {
         NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
+    this.transactionRunner = transactionRunner;
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
@@ -224,7 +231,8 @@ public class RuntimeMonitorTest {
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                                       transactionRunner);
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -239,7 +247,8 @@ public class RuntimeMonitorTest {
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                         datasetFramework, transactional, messagingContext, scheduler,
                                         monitorMessage -> { }, profileMetricService,
-                                        new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                        transactionRunner);
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     lastProcessed = verifyPublishedMessages(monitorCConf, 2, lastProcessed);
@@ -295,7 +304,8 @@ public class RuntimeMonitorTest {
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                                       transactionRunner);
     runtimeMonitor.startAndWait();
 
     // Wait and verify messages as being republished by the runtime monitor to the "local" metrics topics
@@ -352,7 +362,8 @@ public class RuntimeMonitorTest {
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                                       transactionRunner);
 
     runtimeMonitor.startAndWait();
     verifyPublishedMessages(monitorCConf, 2, null);

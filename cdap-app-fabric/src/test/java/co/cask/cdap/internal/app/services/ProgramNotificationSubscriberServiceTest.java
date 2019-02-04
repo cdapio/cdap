@@ -55,6 +55,8 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
@@ -82,12 +84,10 @@ public class ProgramNotificationSubscriberServiceTest {
   private static final String SYSTEM_METRIC_PREFIX = "system.";
 
   private static Injector injector;
-  private static Table appMetaTable;
-  private static AppMetadataStore metadataStoreDataset;
   private static ProgramHeartbeatDataset programHeartbeatDataset;
-  private static TransactionExecutor txnl;
   private static TransactionExecutor heartBeatTxnl;
   private static ProgramStateWriter programStateWriter;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
   public static void setupClass() throws Exception {
@@ -99,29 +99,20 @@ public class ProgramNotificationSubscriberServiceTest {
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
     DatasetId storeTable = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-    appMetaTable = DatasetsUtil.getOrCreateDataset(datasetFramework, storeTable, Table.class.getName(),
-                                                   DatasetProperties.EMPTY, Collections.emptyMap());
-    metadataStoreDataset = new AppMetadataStore(appMetaTable, cConf);
 
     DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
     Table heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
                                                      DatasetProperties.EMPTY, Collections.emptyMap());
 
-    txnl = txExecutorFactory.createExecutor(Collections.singleton(metadataStoreDataset));
     programHeartbeatDataset = new ProgramHeartbeatDataset(heartbeatTable);
     heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
   @After
   public void cleanupTest() throws Exception {
-    txnl.execute(() -> {
-      Scanner scanner = appMetaTable.scan(null, null);
-      Row row;
-      while ((row = scanner.next()) != null) {
-        appMetaTable.delete(row.getRow());
-      }
-    });
+     // figure out some way of deleting all tables
   }
 
   @Test
@@ -144,7 +135,8 @@ public class ProgramNotificationSubscriberServiceTest {
 
     programStateWriter.start(runId, programOptions, null, programDescriptor);
 
-    Tasks.waitFor(ProgramRunStatus.STARTING, () -> txnl.execute(() -> {
+    Tasks.waitFor(ProgramRunStatus.STARTING, () -> TransactionRunners.run(transactionRunner, context -> {
+                    AppMetadataStore metadataStoreDataset = new AppMetadataStore(context);
                     RunRecordMeta meta = metadataStoreDataset.getRun(runId);
                     if (meta == null) {
                       return null;
@@ -171,7 +163,8 @@ public class ProgramNotificationSubscriberServiceTest {
 
     long startTime = System.currentTimeMillis();
     // record the program status in app meta store
-    txnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore metadataStoreDataset = new AppMetadataStore(context);
       int sourceId = 0;
       metadataStoreDataset.recordProgramProvisioning(programRunId, Collections.emptyMap(), systemArgs,
                                                      AppFabricTestHelper.createSourceId(++sourceId), artifactId);
@@ -279,7 +272,8 @@ public class ProgramNotificationSubscriberServiceTest {
 
   private void checkProgramStatus(ArtifactId artifactId, ProgramRunId runId, ProgramRunStatus expectedStatus)
     throws InterruptedException, ExecutionException, TimeoutException {
-    Tasks.waitFor(expectedStatus, () -> txnl.execute(() -> {
+    Tasks.waitFor(expectedStatus, () -> TransactionRunners.run(transactionRunner, context -> {
+                    AppMetadataStore metadataStoreDataset = new AppMetadataStore(context);
                     RunRecordMeta meta = metadataStoreDataset.getRun(runId);
                     if (meta == null) {
                       return null;

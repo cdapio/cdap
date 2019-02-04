@@ -39,10 +39,12 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -203,14 +205,18 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     }
     fieldValidator.validatePrimaryKeys(keys, false);
 
-    String sql = getIncrementStatement(keys, column);
+    List<Field<?>> fieldsWithValue = new ArrayList<>(keys);
+    // If the row does not exist, insert it with long field = amount
+    fieldsWithValue.add(Fields.longField(column, amount));
+    String sql = getWriteSqlQuery(fieldsWithValue, column);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      statement.setLong(1, amount);
-      int index = 2;
-      for (Field<?> key : keys) {
+      int index = 1;
+      for (Field<?> key : fieldsWithValue) {
         setField(statement, key, index);
         index++;
       }
+      // populate increment amount
+      statement.setLong(index, amount);
       LOG.trace("SQL statement: {}", statement);
       statement.executeUpdate();
     } catch (SQLException e) {
@@ -276,7 +282,7 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   private void upsertInternal(Collection<Field<?>> fields) throws IOException {
-    String sqlQuery = getWriteSqlQuery(fields);
+    String sqlQuery = getWriteSqlQuery(fields, null);
     try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
       int index = 1;
       for (Field<?> field : fields) {
@@ -394,9 +400,10 @@ public class PostgresSqlStructuredTable implements StructuredTable {
    * DO UPDATE SET col1=EXCLUDED.col1,col2=EXCLUDED.col2,col3=EXCLUDED.col3;
    *
    * @param fields fields to write
+   * @param incrementField the field to increment if conflict. If null, then do not increment
    * @return the sql query
    */
-  private String getWriteSqlQuery(Collection<Field<?>> fields) {
+  private String getWriteSqlQuery(Collection<Field<?>> fields, @Nullable String incrementField) {
     StringJoiner insertPart = new StringJoiner(",",
                                                "INSERT INTO " + tableSchema.getTableId().getName() + " (",
                                                ") ");
@@ -409,6 +416,8 @@ public class PostgresSqlStructuredTable implements StructuredTable {
       valuePart.add("?");
       if (tableSchema.isPrimaryKeyColumn(field.getName())) {
         conflictPart.add(field.getName());
+      } else if (incrementField != null && field.getName().equals(incrementField)) {
+        updatePart.add(field.getName() + " = " + tableSchema.getTableId().getName() + "." + field.getName() + " + ?");
       } else {
         updatePart.add(field.getName() + "=EXCLUDED." + field.getName());
       }
@@ -482,12 +491,6 @@ public class PostgresSqlStructuredTable implements StructuredTable {
       appendRange(statement, range);
     }
     return statement.toString();
-  }
-
-  private String getIncrementStatement(Collection<Field<?>> keys, String column) {
-    String prefix = String.format("UPDATE %s SET %s = %s + ? WHERE ",
-                                  tableSchema.getTableId().getName(), column, column);
-    return combineWithEqualClause(prefix, keys, "");
   }
 
   private String combineWithEqualClause(String prefix, Collection<Field<?>> keys, String suffix) {
