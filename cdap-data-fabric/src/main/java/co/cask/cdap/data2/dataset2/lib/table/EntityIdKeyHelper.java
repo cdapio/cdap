@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -102,25 +101,8 @@ public final class EntityIdKeyHelper {
     }
   }
 
-  private static String getTargetType(NamespacedEntityId namespacedEntityId) {
+  public static String getTargetType(NamespacedEntityId namespacedEntityId) {
     return TYPE_MAP.get(namespacedEntityId.getClass());
-  }
-
-  /**
-   * To get entity type in v1 format. We need this method because in 5.0 we are renaming Dataset
-   * serialization from DatasetInstance to Dataset.
-   *
-   * @param namespacedEntityId entity for which type is needed
-   * @return v1 type of the entity
-   */
-  public static String getV1TargetType(NamespacedEntityId namespacedEntityId) {
-    String v1Type = TYPE_MAP.get(namespacedEntityId.getClass());
-    switch (v1Type) {
-      case MetadataEntity.DATASET:
-        v1Type = "datasetinstance";
-        break;
-    }
-    return v1Type;
   }
 
   private EntityIdKeyHelper() {

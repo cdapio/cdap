@@ -109,9 +109,7 @@ public class OwnerTable {
   }
 
   private static String createRowKey(NamespacedEntityId targetId) {
-    // We are not going to upgrade owner.meta table in 5.0, when we upgrade this table,
-    // we should call  EntityIdKeyHelper#getTargetType()
-    String targetType = EntityIdKeyHelper.getV1TargetType(targetId);
+    String targetType = EntityIdKeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(targetType);
     EntityIdKeyHelper.addTargetIdToKey(builder, targetId);
