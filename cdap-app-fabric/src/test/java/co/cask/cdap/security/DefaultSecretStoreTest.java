@@ -158,47 +158,47 @@ public abstract class DefaultSecretStoreTest {
   private static class FakeEncoder implements Encoder<TestSecret> {
     @Override
     public byte[] encode(TestSecret data) throws IOException {
-      ByteArrayOutputStream bos = new ByteArrayOutputStream();
-      try (DataOutputStream dos = new DataOutputStream(bos)) {
-        dos.writeUTF(data.getName());
-        dos.writeBoolean(data.getDescription() != null);
+      ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+      try (DataOutputStream dataOutputStream = new DataOutputStream(byteOutputStream)) {
+        dataOutputStream.writeUTF(data.getName());
+        dataOutputStream.writeBoolean(data.getDescription() != null);
         if (data.getDescription() != null) {
-          dos.writeUTF(data.getDescription());
+          dataOutputStream.writeUTF(data.getDescription());
         }
-        dos.writeLong(data.getCreationTimeMs());
+        dataOutputStream.writeLong(data.getCreationTimeMs());
 
         Map<String, String> properties = data.getProperties();
-        dos.writeInt(properties.size());
+        dataOutputStream.writeInt(properties.size());
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          dos.writeUTF(entry.getKey());
-          dos.writeUTF(entry.getValue());
+          dataOutputStream.writeUTF(entry.getKey());
+          dataOutputStream.writeUTF(entry.getValue());
         }
 
         byte[] secret = data.getSecretData();
-        dos.writeInt(secret.length);
-        dos.write(secret);
+        dataOutputStream.writeInt(secret.length);
+        dataOutputStream.write(secret);
       }
-      return bos.toByteArray();
+      return byteOutputStream.toByteArray();
     }
   }
 
   private static class FakeDecoder implements Decoder<TestSecret> {
     @Override
     public TestSecret decode(byte[] data) throws IOException {
-      try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data))) {
-        String name = dis.readUTF();
-        boolean descriptionExists = dis.readBoolean();
-        String description = descriptionExists ? dis.readUTF() : null;
-        long creationTimeMs = dis.readLong();
+      try (DataInputStream dataInputStream = new DataInputStream(new ByteArrayInputStream(data))) {
+        String name = dataInputStream.readUTF();
+        boolean descriptionExists = dataInputStream.readBoolean();
+        String description = descriptionExists ? dataInputStream.readUTF() : null;
+        long creationTimeMs = dataInputStream.readLong();
 
         Map<String, String> properties = new HashMap<>();
-        int len = dis.readInt();
+        int len = dataInputStream.readInt();
         for (int i = 0; i < len; i++) {
-          properties.put(dis.readUTF(), dis.readUTF());
+          properties.put(dataInputStream.readUTF(), dataInputStream.readUTF());
         }
 
-        byte[] secret = new byte[dis.readInt()];
-        dis.readFully(secret);
+        byte[] secret = new byte[dataInputStream.readInt()];
+        dataInputStream.readFully(secret);
         return new TestSecret(name, description, secret, creationTimeMs, properties);
       }
     }

@@ -33,12 +33,12 @@ import javax.sql.DataSource;
  * Tests {@link DefaultSecretStore} with Sql storage implementation.
  */
 public class SqlDefaultSecureStoreTest extends DefaultSecretStoreTest {
-  private static EmbeddedPostgres pg;
+  private static EmbeddedPostgres postgres;
 
   @BeforeClass
   public static void setup() throws Exception {
-    pg = EmbeddedPostgres.start();
-    DataSource dataSource = pg.getPostgresDatabase();
+    postgres = EmbeddedPostgres.start();
+    DataSource dataSource = postgres.getPostgresDatabase();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     store = new DefaultSecretStore(transactionRunner);
@@ -47,6 +47,6 @@ public class SqlDefaultSecureStoreTest extends DefaultSecretStoreTest {
 
   @AfterClass
   public static void afterClass() throws IOException {
-    pg.close();
+    postgres.close();
   }
 }
