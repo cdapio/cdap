@@ -22,6 +22,17 @@ $border-shadow-color: #cccccc;
     padding-top: 50px;
     height: calc(100vh - 104px);
     overflow: auto;
+    &.no-header {
+      padding-top: 0px;
+      height: calc(100vh - 55px);
+    }
+    &.no-footer {
+      height: calc(100vh - 50px);
+    }
+    &.no-header-footer {
+      padding-top: 0px;
+      height: 100vh;
+    }
   }
 }
 
