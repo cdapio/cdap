@@ -67,6 +67,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "show-footer"?: boolean;
     "show-header"?: boolean;
     "show-pipeline-create-button"?: boolean;
+    "show-data-prep-plus-button"?: boolean;
   };
   "features"?: {
     "about-product"?: boolean;
@@ -170,6 +171,7 @@ interface IThemeObj {
   featureNames?: IFeatureNames;
   showAboutProductModal?: boolean;
   showPipelineCreateButton?: boolean;
+  showDataPrepPlusButton?: boolean;
 }
 
 function getTheme(): IThemeObj {
@@ -211,6 +213,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showFooter: true,
       showHeader: true,
       showPipelineCreateButton: true,
+      showDataPrepPlusButton: true,
       featureNames: {
         analytics: 'Analytics',
         controlCenter: 'Control Center',
@@ -248,6 +251,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('show-pipeline-create-button' in contentJson) {
       content.showPipelineCreateButton = contentJson['show-pipeline-create-button'];
+    }
+    if ('show-data-prep-plus-button' in contentJson) {
+      content.showDataPrepPlusButton = contentJson['show-data-prep-plus-button'];
     }
     if ('product-logo-navbar' in contentJson) {
       const productLogoNavbar = window.CDAP_UI_THEME.content['product-logo-navbar'];

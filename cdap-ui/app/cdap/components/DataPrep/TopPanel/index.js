@@ -401,6 +401,11 @@ export default class DataPrepTopPanel extends Component {
   }
 
   render() {
+    let plusBtn = null;
+    if(Theme && Theme.showDataPrepPlusButton){
+      {!this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null }
+    }
+
     return (
       <div className="row top-panel clearfix">
         <div className="left-title">
@@ -441,7 +446,7 @@ export default class DataPrepTopPanel extends Component {
               null
           }
           {this.renderMenu()}
-          {!this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null }
+          {plusBtn}
           {this.renderAddToPipelineModal()}
           {this.renderPersistViewSchemaModal()}
           {this.renderSchemaModal()}

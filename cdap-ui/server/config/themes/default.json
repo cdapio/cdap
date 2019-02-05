@@ -25,7 +25,8 @@
     "footer-link": "https://www.apache.org/licenses/LICENSE-2.0",
     "show-footer": true,
     "show-header": true,
-    "show-pipeline-create-button": true
+    "show-pipeline-create-button": true,
+    "show-data-prep-plus-button": true
   },
   "features": {
     "about-product": true,
