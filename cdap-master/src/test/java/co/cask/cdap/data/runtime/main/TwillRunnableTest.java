@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.test.MockTwillContext;
 import co.cask.cdap.data.tools.HBaseTableExporter;
+import co.cask.cdap.security.impersonation.OwnerStore;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -58,7 +59,8 @@ public class TwillRunnableTest {
 
   @Test
   public void testMetricsTwillRunnableInjector() {
-    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
+    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "")
+      .getInstance(OwnerStore.class);
   }
 
   @Test
