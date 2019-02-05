@@ -38,7 +38,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.kafka.KafkaTester;
@@ -130,7 +129,6 @@ public class KafkaLogProcessorPipelineTest {
                       new AuthorizationTestModule(),
                       new AuthorizationEnforcementModule().getInMemoryModules(),
                       new AuthenticationContextModules().getNoOpModule(),
-                      new StorageModule(),
                       new AbstractModule() {
                         @Override
                         protected void configure() {
