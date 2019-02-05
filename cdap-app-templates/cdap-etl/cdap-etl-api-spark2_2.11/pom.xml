@@ -26,14 +26,14 @@
     <version>6.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>cdap-etl-api-spark</artifactId>
-  <name>CDAP ETL App Template Spark1 Scala 2.10 API</name>
+  <artifactId>cdap-etl-api-spark2_2.11</artifactId>
+  <name>CDAP ETL App Template Spark2 Scala 2.11 API</name>
   <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-api-spark</artifactId>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
@@ -45,12 +45,12 @@
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-core_2.10</artifactId>
+      <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming_2.10</artifactId>
+      <artifactId>spark-streaming_2.11</artifactId>
       <scope>provided</scope>
     </dependency>
   </dependencies>

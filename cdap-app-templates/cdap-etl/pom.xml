@@ -36,6 +36,7 @@
     <module>cdap-data-streams2_2.11</module>
     <module>cdap-etl-api</module>
     <module>cdap-etl-api-spark</module>
+    <module>cdap-etl-api-spark2_2.11</module>
     <module>cdap-etl-archetypes</module>
     <module>cdap-etl-batch</module>
     <module>cdap-etl-core</module>
