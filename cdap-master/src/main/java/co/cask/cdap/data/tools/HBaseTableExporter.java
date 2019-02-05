@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -109,6 +110,7 @@ public class HBaseTableExporter {
       new DFSLocationModule(),
       new DataFabricModules(HBaseTableExporter.class.getName()).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),

@@ -30,6 +30,7 @@ import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.main.transaction.TransactionHttpService;
 import co.cask.cdap.data.runtime.main.transaction.TransactionPingHandler;
 import co.cask.cdap.data2.audit.AuditModule;
@@ -100,6 +101,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new MessagingClientModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),

@@ -28,6 +28,7 @@ import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.logging.framework.distributed.DistributedLogFramework;
 import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
@@ -105,6 +106,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new NamespaceQueryAdminModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new DistributedLogFrameworkModule(twillContext),
       new KafkaLogAppenderModule(),
       new AuditModule().getDistributedModules(),
