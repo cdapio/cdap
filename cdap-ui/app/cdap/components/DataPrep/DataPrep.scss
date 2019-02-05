@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '~styles/variables.scss';
+
 $panel-toggle-bg-color: #999999;
 $toggle-btn-disabled-bg-color: #cccccc;
 
@@ -31,8 +33,8 @@ $toggle-btn-disabled-bg-color: #cccccc;
     .dataprep-body.row {
       // height calculations
       // 100vh - height of navbar - top panel - footer
-      // 100vh - 50px - 50px - 54px
-      height: calc(100vh - 154px);
+      // 100vh - 48px - 50px - 54px
+      height: calc(100vh - (#{$height-of-footer} + #{$height-of-header} + 50px));
     }
   }
 
@@ -75,10 +77,10 @@ $toggle-btn-disabled-bg-color: #cccccc;
   .dataprep-body.row {
     // height calculations
     // 100vh - height of navbar - top panel - footer - tabs
-    // 100vh - 50px - 50px - 54px - 50px
+    // 100vh - 48px - 50px - 54px - 50px
     margin-right: 0;
     margin-left: 0;
-    height: calc(100vh - 204px);
+    height: calc(100vh - (#{$height-of-footer} + #{$height-of-header} + 102px));
 
     .dataprep-main {
       height: 100%;

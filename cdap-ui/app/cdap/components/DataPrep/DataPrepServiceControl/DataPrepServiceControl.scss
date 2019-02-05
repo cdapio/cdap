@@ -14,13 +14,15 @@
  * the License.
 */
 
+@import '~styles/variables.scss';
+
 $border-shadow-color: #cccccc;
 
 .dataprep-container {
   &.dataprep-service-control,
   &.dataprep-service-control.error {
     padding-top: 50px;
-    height: calc(100vh - 104px);
+    height: calc(100vh - (#{$height-of-footer} + #{$height-of-header}));
     overflow: auto;
   }
 }

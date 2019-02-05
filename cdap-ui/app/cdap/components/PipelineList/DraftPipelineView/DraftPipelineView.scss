@@ -15,9 +15,7 @@
  */
 
 @import '~styles/colors.scss';
-
-$bg-color: $grey-06;
-$header-height: 70px;
+@import '~components/PipelineList/DraftPipelineView/DraftPipelineViewVariables.scss';
 
 .pipeline-draft-view {
   padding: 0 45px 15px 45px;

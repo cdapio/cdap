@@ -15,6 +15,7 @@
 */
 
 @import './GraphHint.scss';
+@import '~styles/variables.scss';
 
 $pipeline-summary-bg: white;
 $summary_titlebar_bg: #f5f5f5;
@@ -32,8 +33,8 @@ $min_height_of_graph: 340px;
     background: $pipeline-summary-bg;
     overflow: auto;
     // Header + Top panel = 105 + Footer = 54 + summary title bar = 54 + border 1px + 41px for filter section
-    // anti-pattern. This is now how we should do this.
-    height: calc(100vh - 254px);
+    // anti-pattern. This is NOT how we should do this.
+    height: calc(100vh - (#{$height-of-footer} + #{$height-of-header} + 153px));
 
     > div {
       width: calc(50% - 20px);

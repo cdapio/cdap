@@ -19,6 +19,8 @@ import PostRunActions from 'components/PostRunActions';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import T from 'i18n-react';
 
+require('./AlertsTabContent.scss');
+
 const PREFIX = 'features.PipelineConfigurations.Alerts';
 
 export default class AlertsTabContent extends Component {

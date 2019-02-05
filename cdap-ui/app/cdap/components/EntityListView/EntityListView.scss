@@ -29,7 +29,7 @@
 }
 
 .entity-list-view {
-  height: calc(100vh - 155px);
+  height: calc(100vh - (#{$height-of-footer} + #{$height-of-header} + 50px));
   align-items: flex-start;
   overflow-x: hidden;
 

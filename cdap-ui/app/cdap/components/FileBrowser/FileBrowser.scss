@@ -30,7 +30,7 @@ $empty-message-link-color: var(--brand-primary-color);
 .file-browser-container {
   // Whichever component is using this component will need to
   // overwrite this height styling
-  height: calc(100vh - 50px - 54px);
+  height: calc(100vh - (#{$height-of-footer} + #{$height-of-header}));
 
   .directory-content-table {
     padding: 0;

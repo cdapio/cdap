@@ -20,12 +20,10 @@ import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/Mi
 import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
 import FileDnD from 'components/FileDnD';
 
-require('./UploadJsonStep.scss');
-
 const mapStateWithDNDFileProps = (state) => {
   return {
     file: state.uploadjson.contents,
-    error: state.uploadjson.__error
+    error: state.uploadjson.__error,
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
@@ -37,20 +35,19 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
           type: MicroserviceUploadActions.setJson,
           payload: {
             json: evt.target.result,
-            jsonFile: e[0]
-          }
+            jsonFile: e[0],
+          },
         });
       };
 
       reader.readAsText(e[0], 'UTF-8');
-    }
+    },
   };
 };
 const MicroserviceJsonUploader = connect(
   mapStateWithDNDFileProps,
   mapDispatchWithDNDFileProps
 )(FileDnD);
-
 
 export default function UploadJsonStep() {
   return (

@@ -29,6 +29,7 @@ $success_alert_bg_color: $brand-success;
     border-bottom: 1px solid $grey-05;
     margin-left: 0;
     display: flex;
+    flex-wrap: unset;
 
     .left-title,
     .action-buttons,

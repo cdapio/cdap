@@ -43,9 +43,9 @@ body {
   font-family: var(--font-family);
 
   #app-container {
-    margin-top: 50px;
+    margin-top: 48px;
     overflow-y: auto;
-    height: calc(100vh - 104px); // Header + footer heights
+    height: calc(100vh - (#{$height-of-footer} + #{$height-of-header})); // Header + footer heights
   }
   .container-fluid {
     padding-bottom: 52px; // footer height

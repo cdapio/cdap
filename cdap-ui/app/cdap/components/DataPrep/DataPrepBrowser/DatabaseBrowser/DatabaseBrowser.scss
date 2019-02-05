@@ -21,7 +21,7 @@ $header-bg: #eeeeee;
 $content-font-color: #333333;
 
 .database-browser {
-  height: calc(100vh - 50px - 54px);
+  height: calc(100vh - (#{$height-of-footer} + #{$height-of-header}));
 
   .database-browser-header,
   .database-browser-content {
