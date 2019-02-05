@@ -17,11 +17,8 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -38,11 +35,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramHistory;
@@ -63,8 +56,6 @@ import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.store.StoreDefinition;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -74,8 +65,6 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,8 +114,7 @@ public class DefaultStore implements Store {
     framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
-  private AppMetadataStore getAppMetadataStore(StructuredTableContext context) throws IOException,
-                                                                                     DatasetManagementException {
+  private AppMetadataStore getAppMetadataStore(StructuredTableContext context) {
     return AppMetadataStore.create(context);
   }
 
@@ -189,21 +177,24 @@ public class DefaultStore implements Store {
   @Override
   public void setStop(ProgramRunId id, long endTime, ProgramRunStatus runStatus,
                       BasicThrowable failureCause, byte[] sourceId) {
-    /*Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
+    Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
+      WorkflowTable workflowTable = getWorkflowTable(context);
       metaStore.recordProgramStop(id, endTime, runStatus, failureCause, sourceId);
 
       // This block has been added so that completed workflow runs can be logged to the workflow dataset
       WorkflowId workflowId = new WorkflowId(id.getParent().getParent(), id.getProgram());
       if (id.getType() == ProgramType.WORKFLOW && runStatus == ProgramRunStatus.COMPLETED) {
-        recordCompletedWorkflow(metaStore, workflowId, id.getRun());
+        recordCompletedWorkflow(metaStore, workflowTable, workflowId, id.getRun());
       }
       // todo: delete old history data
-    });*/
+    });
   }
 
-  private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowId workflowId, String runId) {
+  private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowTable workflowTable,
+                                       WorkflowId workflowId, String runId)
+    throws IOException {
     RunRecordMeta runRecord = metaStore.getRun(workflowId.run(runId));
     if (runRecord == null) {
       return;
@@ -251,10 +242,7 @@ public class DefaultStore implements Store {
       return;
     }
 
-    // TODO(CDAP-14770): merge the two transactions into one after appmetadatastore is migrated
-    TransactionRunners.run(transactionRunner, structuredTableContext -> {
-      getWorkflowTable(structuredTableContext).write(workflowId, runRecord, programRunsList);
-    });
+    workflowTable.write(workflowId, runRecord, programRunsList);
   }
 
   @Override

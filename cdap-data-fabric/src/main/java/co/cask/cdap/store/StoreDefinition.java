@@ -84,39 +84,6 @@ public final class StoreDefinition {
     }
   }
 
-  /**
-   * Schema for workflow table
-   */
-  public static final class WorkflowStore {
-    public static final StructuredTableId WORKFLOW_STATISTICS = new StructuredTableId("workflow_statistics");
-
-    public static final String NAMESPACE_FIELD = "namespace";
-    public static final String APPLICATION_FIELD = "application";
-    public static final String VERSION_FIELD = "version";
-    public static final String PROGRAM_FIELD = "program";
-    public static final String START_TIME_FIELD = "start_time";
-    public static final String RUN_ID_FIELD = "run_id";
-    public static final String TIME_TAKEN_FIELD = "time_taken";
-    public static final String PROGRAM_RUN_DATA = "program_run_data";
-
-    public static final StructuredTableSpecification WORKFLOW_TABLE_SPEC = new StructuredTableSpecification.Builder()
-      .withId(WORKFLOW_STATISTICS)
-      .withFields(Fields.stringType(NAMESPACE_FIELD),
-                  Fields.stringType(APPLICATION_FIELD),
-                  Fields.stringType(VERSION_FIELD),
-                  Fields.stringType(PROGRAM_FIELD),
-                  Fields.longType(START_TIME_FIELD),
-                  Fields.stringType(RUN_ID_FIELD),
-                  Fields.longType(TIME_TAKEN_FIELD),
-                  Fields.stringType(PROGRAM_RUN_DATA))
-      .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_FIELD, START_TIME_FIELD)
-      .build();
-
-    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
-      tableAdmin.create(WORKFLOW_TABLE_SPEC);
-    }
-  }
-
   public static final class AppMetadataStore {
     public static final StructuredTableId APPLICATION_SPECIFICATIONS = new StructuredTableId("application_specs");
     public static final StructuredTableId WORKFLOW_NODE_STATES = new StructuredTableId("workflow_node_states");
@@ -242,6 +209,40 @@ public final class StoreDefinition {
       tableAdmin.create(PROGRAM_COUNTS_SPEC);
       tableAdmin.create(UPGRADE_METADATA_SPEC);
       tableAdmin.create(SUBSCRIBER_STATE_SPEC);
+    }
+  }
+
+
+  /**
+   * Schema for workflow table
+   */
+  public static final class WorkflowStore {
+    public static final StructuredTableId WORKFLOW_STATISTICS = new StructuredTableId("workflow_statistics");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String VERSION_FIELD = "version";
+    public static final String PROGRAM_FIELD = "program";
+    public static final String START_TIME_FIELD = "start_time";
+    public static final String RUN_ID_FIELD = "run_id";
+    public static final String TIME_TAKEN_FIELD = "time_taken";
+    public static final String PROGRAM_RUN_DATA = "program_run_data";
+
+    public static final StructuredTableSpecification WORKFLOW_TABLE_SPEC = new StructuredTableSpecification.Builder()
+      .withId(WORKFLOW_STATISTICS)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(APPLICATION_FIELD),
+                  Fields.stringType(VERSION_FIELD),
+                  Fields.stringType(PROGRAM_FIELD),
+                  Fields.longType(START_TIME_FIELD),
+                  Fields.stringType(RUN_ID_FIELD),
+                  Fields.longType(TIME_TAKEN_FIELD),
+                  Fields.stringType(PROGRAM_RUN_DATA))
+      .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_FIELD, START_TIME_FIELD)
+      .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(WORKFLOW_TABLE_SPEC);
     }
   }
 
