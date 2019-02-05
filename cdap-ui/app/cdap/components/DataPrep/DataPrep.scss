@@ -27,13 +27,6 @@ $toggle-btn-disabled-bg-color: #cccccc;
       height: 50px;
       line-height: 50px;
     }
-
-    .dataprep-body.row {
-      // height calculations
-      // 100vh - height of navbar - top panel - footer
-      // 100vh - 50px - 50px - 54px
-      height: calc(100vh - 154px);
-    }
   }
 
   .top-section {
@@ -78,7 +71,16 @@ $toggle-btn-disabled-bg-color: #cccccc;
     // 100vh - 50px - 50px - 54px - 50px
     margin-right: 0;
     margin-left: 0;
-    height: calc(100vh - 204px);
+    height: calc(100vh - 154px);
+    &.no-header {
+      height: calc(100vh - 55px);
+    }
+    &.no-footer {
+      height: calc(100vh - 150px);
+    }
+    &.no-header-footer {
+      height: calc(100vh - 100px);
+    }
 
     .dataprep-main {
       height: 100%;

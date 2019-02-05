@@ -38,6 +38,7 @@ import isEmpty from 'lodash/isEmpty';
 import {getCurrentNamespace} from 'services/NamespaceStore';
 import Helmet from 'react-helmet';
 import {Theme} from 'services/ThemeHelper';
+import { getClassNameForHeaderFooter } from '../FeatureUI/util';
 
 require('./DataPrep.scss');
 
@@ -271,6 +272,7 @@ export default class DataPrep extends Component {
   }
 
   render() {
+    const entityClassName = getClassNameForHeaderFooter();
     if (this.state.backendDown) { return this.renderBackendDown(); }
 
     if (this.state.loading) {
@@ -309,7 +311,7 @@ export default class DataPrep extends Component {
           </div>
         </div>
 
-        <div className="row dataprep-body">
+        <div className={`row dataprep-body ${entityClassName}`}>
           <div className="dataprep-main col-xs-12">
             <DataPrepContentWrapper />
           </div>

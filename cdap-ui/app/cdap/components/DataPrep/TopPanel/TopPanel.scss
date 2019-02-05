@@ -35,6 +35,10 @@ $success_alert_bg_color: $brand-success;
     .content-switch {
       flex: 0.4;
     }
+    .btn-primary-mwc {
+      background-color: #03a9f4 !important;
+      border-color: #03a9f4 !important;
+    }
     .content-switch {
       display: inline-flex;
       align-items: center;
