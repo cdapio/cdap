@@ -85,7 +85,7 @@ export default class SchemaModal extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let requestObj = {
-      namespace,
+      context: namespace,
       workspaceId,
     };
 

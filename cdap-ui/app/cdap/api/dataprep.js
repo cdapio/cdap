@@ -19,23 +19,22 @@ import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 
-const appPath = '/namespaces/:namespace/apps/dataprep';
+const appPath = '/namespaces/system/apps/dataprep';
 const baseServicePath = `${appPath}/services/service`;
-const basepath = `${baseServicePath}/methods/workspaces/:workspaceId`;
-const connectionsPath = `${baseServicePath}/methods/connections`;
+const contextPath = `${baseServicePath}/methods/contexts/:context`;
+const basepath = `${contextPath}/workspaces/:workspaceId`;
+const connectionsPath = `${contextPath}/connections`;
 const connectionTypesPath = `${baseServicePath}/methods/connectionTypes`;
 
 const MyDataPrepApi = {
-  create: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
-  upload: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/upload`),
   execute: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/execute`),
   summary: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/summary`),
   getSchema: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/schema`),
-  getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`),
+  getUsage: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/usage`),
   getInfo: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/info`),
   getWorkspace: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),
-  getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/workspaces`),
+  getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/workspaces`),
 
   // WRANGLER SERVICE MANAGEMENT
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
@@ -44,18 +43,16 @@ const MyDataPrepApi = {
   getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${baseServicePath}/status`),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/usage`, {
-    interval: 2000,
-  }),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/health`),
 
   // File System Browser
-  explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs`),
-  readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/read`),
+  explorer: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/explorer/fs`),
+  readFile: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/explorer/fs/read`),
   getSpecification: apiCreator(
     dataSrc,
     'GET',
     'REQUEST',
-    `${baseServicePath}/methods/explorer/fs/specification`
+    `${contextPath}/explorer/fs/specification`
   ),
 
   // Database Browser
@@ -74,15 +71,15 @@ const MyDataPrepApi = {
   ),
 
   // JDBC
-  jdbcDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/drivers`),
-  jdbcAllowed: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/allowed`),
+  jdbcDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/jdbc/drivers`),
+  jdbcAllowed: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/jdbc/allowed`),
   jdbcTestConnection: apiCreator(
     dataSrc,
     'POST',
     'REQUEST',
-    `${baseServicePath}/methods/connections/jdbc/test`
+    `${contextPath}/connections/jdbc/test`
   ),
-  getDatabaseList: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/databases`),
+  getDatabaseList: apiCreator(dataSrc, 'POST', 'REQUEST', `${contextPath}/connections/databases`),
 
   // Kafka
   kafkaTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/kafka/test`),
@@ -210,7 +207,7 @@ const MyDataPrepApi = {
     dataSrc,
     'GET',
     'REQUEST',
-    `${baseServicePath}/methods/spanner/workspaces/:workspaceId/specification`
+    `${contextPath}/spanner/workspaces/:workspaceId/specification`
   ),
 
   // Connections
@@ -224,7 +221,6 @@ const MyDataPrepApi = {
   ),
   deleteConnection: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${connectionsPath}/:connectionId`),
   getConnection: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId`),
-  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`),
 
   // Connection types
   listConnectionTypes: apiCreator(dataSrc, 'GET', 'REQUEST', connectionTypesPath),

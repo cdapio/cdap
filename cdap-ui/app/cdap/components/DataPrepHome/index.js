@@ -83,16 +83,15 @@ export default class DataPrepHome extends Component {
   }
 
   checkBackendUp() {
-    let namespace = getCurrentNamespace();
-    MyDataPrepApi.ping({ namespace })
-      .combineLatest(MyDataPrepApi.getApp({ namespace }))
+    MyDataPrepApi.ping()
+      .combineLatest(MyDataPrepApi.getApp())
       .subscribe(
         (res) => {
           const appSpec = res[1];
 
           let minimumVersion = new Version(MIN_DATAPREP_VERSION);
 
-          if (minimumVersion.compareTo(new Version(appSpec.artifactVersion)) > 0) {
+          if (minimumVersion.compareTo(new Version(appSpec.artifact.version)) > 0) {
             console.log('dataprep minimum version not met');
 
             this.setState({
@@ -146,7 +145,9 @@ export default class DataPrepHome extends Component {
   }
 
   updateWorkspaceListRetry(namespace) {
-    MyDataPrepApi.getWorkspaceList({ namespace }).subscribe(
+    MyDataPrepApi.getWorkspaceList({
+      context: namespace,
+    }).subscribe(
       (res) => {
         if (res.values.length === 0) {
           this.setState({

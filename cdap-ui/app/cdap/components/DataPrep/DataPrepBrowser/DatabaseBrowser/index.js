@@ -97,7 +97,7 @@ export default class DatabaseBrowser extends Component {
   prepTable = (tableId) => {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.state.connectionId,
       tableId,
       lines: 100,

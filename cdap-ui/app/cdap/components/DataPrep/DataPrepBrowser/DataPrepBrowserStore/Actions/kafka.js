@@ -47,7 +47,7 @@ const setKafkaAsActiveBrowser = (payload) => {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
 
@@ -55,7 +55,7 @@ const setKafkaAsActiveBrowser = (payload) => {
     (res) => {
       let info = objectQuery(res, 'values', 0);
 
-      MyDataPrepApi.listTopics({ namespace }, info).subscribe(
+      MyDataPrepApi.listTopics({ context: namespace }, info).subscribe(
         (topics) => {
           setKafkaProperties({
             info,

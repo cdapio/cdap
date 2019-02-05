@@ -66,7 +66,7 @@ export default class BigQueryConnection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -124,7 +124,7 @@ export default class BigQueryConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.createConnection({ context: namespace }, requestBody).subscribe(
       () => {
         this.setState({ error: null });
         this.props.onAdd();
@@ -143,7 +143,7 @@ export default class BigQueryConnection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -188,7 +188,7 @@ export default class BigQueryConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.bigQueryTestConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.bigQueryTestConnection({ context: namespace }, requestBody).subscribe(
       (res) => {
         this.setState({
           connectionResult: {
@@ -199,7 +199,7 @@ export default class BigQueryConnection extends Component {
         });
       },
       (err) => {
-        console.log('Error testing BigQuery connection', err);
+        console.log('Error testing Google BigQuery connection', err);
 
         let errorMessage =
           objectQuery(err, 'response', 'message') ||

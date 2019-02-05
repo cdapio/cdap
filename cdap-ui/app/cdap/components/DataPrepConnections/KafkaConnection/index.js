@@ -78,7 +78,7 @@ export default class KafkaConnection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -157,7 +157,7 @@ export default class KafkaConnection extends Component {
       },
     };
 
-    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.createConnection({ context: namespace }, requestBody).subscribe(
       () => {
         this.setState({ error: null });
         this.props.onAdd();
@@ -176,7 +176,7 @@ export default class KafkaConnection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -225,7 +225,7 @@ export default class KafkaConnection extends Component {
       },
     };
 
-    MyDataPrepApi.kafkaTestConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.kafkaTestConnection({ context: namespace }, requestBody).subscribe(
       (res) => {
         this.setState({
           connectionResult: {

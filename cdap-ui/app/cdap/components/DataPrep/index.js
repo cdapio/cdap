@@ -35,7 +35,6 @@ import { isNilOrEmpty } from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
-import { getCurrentNamespace } from 'services/NamespaceStore';
 import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
 
@@ -43,7 +42,7 @@ require('./DataPrep.scss');
 
 const i18nPrefix = 'features.DataPrep.Upgrade';
 const DATAPREP_I18N_PREFIX = 'features.DataPrep';
-const MIN_DATAPREP_VERSION = '3.0.3-SNAPSHOT';
+const MIN_DATAPREP_VERSION = '4.0.0-SNAPSHOT';
 const artifactName = 'wrangler-service';
 
 export { i18nPrefix, MIN_DATAPREP_VERSION, artifactName };
@@ -131,9 +130,7 @@ export default class DataPrep extends Component {
       return;
     }
 
-    const namespace = getCurrentNamespace();
-
-    MyDataPrepApi.ping({ namespace }).subscribe(
+    MyDataPrepApi.ping().subscribe(
       () => {
         this.init(this.props);
       },
@@ -148,7 +145,7 @@ export default class DataPrep extends Component {
   }
 
   init(props) {
-    let workspaceId = props.workspaceId;
+    const workspaceId = props.workspaceId;
 
     if (props.singleWorkspaceMode) {
       DataPrepStore.dispatch({

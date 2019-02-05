@@ -69,7 +69,7 @@ export default class S3Browser extends Component {
     };
     MyDataPrepApi.readS3File(
       {
-        namespace,
+        context: namespace,
         connectionId,
         activeBucket,
         key: file.path,

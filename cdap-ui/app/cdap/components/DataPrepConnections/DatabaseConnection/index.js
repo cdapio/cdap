@@ -51,13 +51,20 @@ export default class DatabaseConnection extends Component {
 
       let namespace = NamespaceStore.getState().selectedNamespace;
 
-      let params = {
-        namespace,
+      const namespaceParams = {
+        context: namespace,
+      };
+
+      let connectionParams = {
+        ...namespaceParams,
         connectionId: this.props.connectionId,
       };
 
-      MyDataPrepApi.getConnection(params)
-        .combineLatest(MyDataPrepApi.jdbcDrivers({ namespace }), MyDataPrepApi.jdbcAllowed(params))
+      MyDataPrepApi.getConnection(connectionParams)
+        .combineLatest(
+          MyDataPrepApi.jdbcDrivers(namespaceParams),
+          MyDataPrepApi.jdbcAllowed(namespaceParams)
+        )
         .subscribe(
           (res) => {
             let connInfo = objectQuery(res, 0, 'values', 0);

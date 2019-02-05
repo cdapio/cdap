@@ -69,7 +69,7 @@ export default class DatabaseOptions extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
     };
 
     MyDataPrepApi.jdbcAllowed(params)

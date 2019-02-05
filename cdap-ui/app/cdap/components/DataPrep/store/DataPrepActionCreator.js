@@ -54,7 +54,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
-    namespace,
+    context: namespace,
     workspaceId,
   };
 
@@ -171,7 +171,7 @@ export function updateWorkspaceProperties() {
   let { directives, workspaceId, properties } = DataPrepStore.getState().dataprep;
   let namespace = NamespaceStore.getState().selectedNamespace;
   let params = {
-    namespace,
+    context: namespace,
     workspaceId,
   };
   let requestBody = directiveRequestBodyCreator(directives);
@@ -193,7 +193,7 @@ export function setWorkspace(workspaceId) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
-    namespace,
+    context: namespace,
     workspaceId,
   };
 
@@ -239,9 +239,12 @@ function fetchColumnsInformation(params, requestBody, headers) {
 }
 
 export function getWorkspaceList(workspaceId) {
-  let namespace = NamespaceStore.getState().selectedNamespace;
+  const namespace = NamespaceStore.getState().selectedNamespace;
+  const params = {
+    context: namespace,
+  };
 
-  MyDataPrepApi.getWorkspaceList({ namespace }).subscribe((res) => {
+  MyDataPrepApi.getWorkspaceList(params).subscribe((res) => {
     if (res.values.length === 0) {
       DataPrepStore.dispatch({
         type: DataPrepActions.setWorkspaceList,

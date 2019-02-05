@@ -83,7 +83,7 @@ export function checkDataPrepHigherVersion() {
 
   // Check artifacts upgrade
   MyArtifactApi.list({ namespace })
-    .combineLatest(MyDataPrepApi.getApp({ namespace }))
+    .combineLatest(MyDataPrepApi.getApp())
     .subscribe((res) => {
       let wranglerArtifactVersions = res[0]
         .filter((artifact) => {

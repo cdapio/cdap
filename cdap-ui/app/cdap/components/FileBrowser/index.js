@@ -194,10 +194,10 @@ export default class FileBrowser extends Component {
     }
   }
   ingestFile(content) {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-    let { scope } = this.props;
-    let params = {
-      namespace,
+    const namespace = NamespaceStore.getState().selectedNamespace;
+    const { scope } = this.props;
+    const params = {
+      context: namespace,
       path: content.path,
       lines: 10000,
       sampler: 'first',
@@ -214,19 +214,21 @@ export default class FileBrowser extends Component {
       }
     }
 
-    let headers = {
+    const headers = {
       'Content-Type': content.type,
     };
 
     MyDataPrepApi.readFile(params, null, headers).subscribe(
       (res) => {
-        let workspaceId = res.values[0].id;
+        const workspaceId = res.values[0].id;
 
         if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
           this.props.onWorkspaceCreate(workspaceId);
           return;
         }
-        let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+        const navigatePath = `${
+          window.location.origin
+        }/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         window.location.href = navigatePath;
       },
       (err) => {

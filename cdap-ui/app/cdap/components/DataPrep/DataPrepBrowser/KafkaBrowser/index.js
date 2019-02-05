@@ -103,7 +103,7 @@ export default class KafkaBrowser extends Component {
     });
     let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.state.connectionId,
       topic,
       lines: 100,
@@ -231,25 +231,23 @@ export default class KafkaBrowser extends Component {
           toggle={this.props.toggle}
           browserTitle={T.translate(`${PREFIX}.title`)}
         />
-        <If condition={this.state.error}>
-          <div>
-            <div className="kafka-browser-header">
-              <div className="kafka-metadata">
-                <h5>{this.state.info.name}</h5>
-                <span className="tables-count">
-                  {T.translate(`${PREFIX}.topicCount`, {
-                    count: this.state.topics.length,
-                  })}
-                </span>
-              </div>
-              <div className="table-name-search">
-                <Input
-                  placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
-                  value={this.state.search}
-                  onChange={this.handleSearch}
-                  autoFocus={this.state.searchFocus}
-                />
-              </div>
+        <If condition={!this.state.error}>
+          <div className="kafka-browser-header">
+            <div className="kafka-metadata">
+              <h5>{this.state.info.name}</h5>
+              <span className="tables-count">
+                {T.translate(`${PREFIX}.topicCount`, {
+                  count: this.state.topics.length,
+                })}
+              </span>
+            </div>
+            <div className="table-name-search">
+              <Input
+                placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+                value={this.state.search}
+                onChange={this.handleSearch}
+                autoFocus={this.state.searchFocus}
+              />
             </div>
           </div>
         </If>

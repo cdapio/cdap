@@ -80,7 +80,7 @@ export default class DataPrepAutoComplete extends Component {
   getUsage() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.getUsage({ namespace }).subscribe((res) => {
+    MyDataPrepApi.getUsage({ context: namespace }).subscribe((res) => {
       const fuseOptions = {
         include: ['matches', 'score'],
         caseSensitive: false,

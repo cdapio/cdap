@@ -131,7 +131,7 @@ export default class S3Connection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -179,7 +179,7 @@ export default class S3Connection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.createConnection({ context: namespace }, requestBody).subscribe(
       () => {
         this.setState({ error: null });
         this.props.onAdd();
@@ -198,7 +198,7 @@ export default class S3Connection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -247,7 +247,7 @@ export default class S3Connection extends Component {
       },
     };
 
-    MyDataPrepApi.s3TestConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.s3TestConnection({ context: namespace }, requestBody).subscribe(
       (res) => {
         this.setState({
           connectionResult: {
@@ -258,7 +258,7 @@ export default class S3Connection extends Component {
         });
       },
       (err) => {
-        console.log('Error testing kafka connection', err);
+        console.log('Error testing S3 connection', err);
 
         let errorMessage =
           objectQuery(err, 'response', 'message') ||
