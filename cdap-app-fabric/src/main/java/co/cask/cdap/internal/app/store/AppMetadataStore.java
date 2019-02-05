@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.BadRequestException;
@@ -178,20 +179,6 @@ public class AppMetadataStore {
       context.getTable(StoreDefinition.AppMetadataStore.SUBSCRIBER_STATE);
   }
 
-  /*@Override
-  protected <T> T deserialize(MDSKey key, byte[] serialized, Type typeOfT) {
-    if (RunRecordMeta.class.equals(typeOfT)) {
-      RunRecordMeta meta = GSON.fromJson(Bytes.toString(serialized), RunRecordMeta.class);
-      meta = RunRecordMeta.builder(meta)
-        .setProgramRunId(getProgramID(key).run(meta.getPid()))
-        .build();
-      //noinspection unchecked
-      return (T) meta;
-    } else {
-      return GSON.fromJson(Bytes.toString(serialized), typeOfT);
-    }
-  }*/
-
   @Nullable
   public ApplicationMeta getApplication(ApplicationId appId) throws IOException {
     return getApplication(appId.getNamespace(), appId.getApplication(), appId.getVersion());
@@ -230,7 +217,7 @@ public class AppMetadataStore {
     List<ApplicationId> appIds = new ArrayList<>();
     Iterator<StructuredRow> iterator =
       applicationSpecificationTable.scan(getNamespaceAndApplicationRange(namespaceId, appId), Integer.MAX_VALUE);
-   while(iterator.hasNext()) {
+   while (iterator.hasNext()) {
      StructuredRow row = iterator.next();
      appIds.add(
        new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
@@ -244,7 +231,10 @@ public class AppMetadataStore {
     throws IOException {
     Map<ApplicationId, ApplicationMeta> result = new HashMap<>();
     for (ApplicationId appId: appIds) {
-      result.put(appId, getApplication(appId));
+      ApplicationMeta applicationMeta = getApplication(appId);
+      if (applicationMeta != null) {
+        result.put(appId, getApplication(appId));
+      }
     }
     return result;
   }
@@ -1008,20 +998,21 @@ public class AppMetadataStore {
     int limit) throws IOException {
     Map<ProgramRunId, RunRecordMeta> programRunIdMap = new LinkedHashMap<>();
     // Only pass in limit if predicates are null, or else we may return fewer than limit items
-    Iterator<StructuredRow> iterator =
-      runRecordsTable.scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE);
-    while (iterator.hasNext() && limit > 0) {
-      StructuredRow row = iterator.next();
-      ProgramId programId =
-        new ApplicationId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
-                          row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
-                          row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD))
-          .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
-                   row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
-      RunRecordMeta meta = deserializeRunRecordMeta(row);
-      if ((predicate == null || predicate.test(meta)) && (keyPredicate == null || keyPredicate.test(row))) {
-        programRunIdMap.put(programId.run(meta.getPid()), meta);
-        limit--;
+    try (CloseableIterator<StructuredRow> iterator =
+      runRecordsTable.scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE)) {
+      while (iterator.hasNext() && limit > 0) {
+        StructuredRow row = iterator.next();
+        ProgramId programId =
+          new ApplicationId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
+                            row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
+                            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD))
+            .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
+                     row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
+        RunRecordMeta meta = deserializeRunRecordMeta(row);
+        if ((predicate == null || predicate.test(meta)) && (keyPredicate == null || keyPredicate.test(row))) {
+          programRunIdMap.put(programId.run(meta.getPid()), meta);
+          limit--;
+        }
       }
     }
     return programRunIdMap;
@@ -1174,7 +1165,7 @@ public class AppMetadataStore {
       return new BasicWorkflowToken(0);
     }
 
-    return GSON.fromJson(row.get().getString(StoreDefinition.AppMetadataStore.WORKFLOW_DATA), WorkflowToken.class);
+    return GSON.fromJson(row.get().getString(StoreDefinition.AppMetadataStore.WORKFLOW_DATA), BasicWorkflowToken.class);
   }
 
   /**
@@ -1239,8 +1230,8 @@ public class AppMetadataStore {
     Optional<StructuredRow> row = getUpgradeMetadataRow(RUN_COUNT_FIRST_UPGRADE_TIME);
     if (!row.isPresent()) {
       LOG.info("Start to upgrade the run count");
-      Collection<Field<?>> fields = row.get().getPrimaryKeys();
-      fields.add(
+      Collection<Field<?>> fields = ImmutableList.of(
+        Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_KEY, RUN_COUNT_FIRST_UPGRADE_TIME),
         Fields.stringField(
           StoreDefinition.AppMetadataStore.METADATA_VALUE,
           String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()))));
@@ -1277,10 +1268,12 @@ public class AppMetadataStore {
    */
   private int upgradeActiveRowkey(String recordType, int maxRows) throws IOException {
     List<Field<?>> startKey = getRunRecordStatusPrefix(recordType);
-    Iterator<StructuredRow> iterator = runRecordsTable.scan(Range.singleton(startKey), maxRows);
-    List<StructuredRow> rows = ImmutableList.copyOf(iterator);
+    List<StructuredRow> rows;
+    try (CloseableIterator<StructuredRow> iterator = runRecordsTable.scan(Range.singleton(startKey), maxRows)) {
+      rows = ImmutableList.copyOf(iterator);
+    }
 
-    for(StructuredRow row : rows) {
+    for (StructuredRow row : rows) {
       Collection<Field<?>> keys = row.getPrimaryKeys();
       RunRecordMeta runRecord = deserializeRunRecordMeta(row);
       List<Field<?>> newKeys = getProgramIDFields(keys);
@@ -1331,21 +1324,23 @@ public class AppMetadataStore {
 
     // Bound is EXCLUSIVE so that we do not re-read the same record. This is fine for the beginning since prefix is
     // not a valid key.
-    Iterator<StructuredRow> iterator = runRecordsTable.scan(Range.from(startKey, Range.Bound.EXCLUSIVE), maxRows);
     List<Field<?>> lastPrimaryKey = null;
-    Map<List<Field<?>>, Long> counts = new HashMap<>();
     int numProcessed = 0;
+    try (CloseableIterator<StructuredRow> iterator =
+      runRecordsTable.scan(Range.from(startKey, Range.Bound.EXCLUSIVE), maxRows)) {
+      Map<List<Field<?>>, Long> counts = new HashMap<>();
 
-    while (iterator.hasNext()) {
-      StructuredRow row = iterator.next();
-      RunRecordMeta runRecord = deserializeRunRecordMeta(row);
-      lastPrimaryKey = new ArrayList<>(row.getPrimaryKeys());
-      List<Field<?>> programFields = getProgramIDFields(lastPrimaryKey);
-      // Fields should be in correct primary key ordering
-      if (runRecord.getStartTs() < upgradeStartTime) {
-        counts.compute(programFields, (programFields1, count) -> count == null ? 1L : count + 1L);
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        RunRecordMeta runRecord = deserializeRunRecordMeta(row);
+        lastPrimaryKey = new ArrayList<>(row.getPrimaryKeys());
+        List<Field<?>> programFields = getProgramIDFields(lastPrimaryKey);
+        // Fields should be in correct primary key ordering
+        if (runRecord.getStartTs() < upgradeStartTime) {
+          counts.compute(programFields, (programFields1, count) -> count == null ? 1L : count + 1L);
+        }
+        numProcessed++;
       }
-      numProcessed++;
     }
 
     if (lastPrimaryKey != null) {
@@ -1367,8 +1362,11 @@ public class AppMetadataStore {
    */
   boolean mergeCountResult(int maxRows) throws IOException {
     List<Field<?>> key = getCountTypePrefix(TYPE_RUN_RECORD_UPGRADE_COUNT);
-    Iterator<StructuredRow> iterator = programCountsTable.scan(Range.from(key, Range.Bound.INCLUSIVE), maxRows);
-    List<StructuredRow> rows = ImmutableList.copyOf(iterator);
+    List<StructuredRow> rows;
+    try (CloseableIterator<StructuredRow> iterator =
+      programCountsTable.scan(Range.from(key, Range.Bound.INCLUSIVE), maxRows)) {
+      rows = ImmutableList.copyOf(iterator);
+    }
     for (StructuredRow row : rows) {
       Collection<Field<?>> primaryKeys = row.getPrimaryKeys();
       List<Field<?>> newKeys = new ArrayList<>();
@@ -1437,7 +1435,8 @@ public class AppMetadataStore {
     keyBuilder.add(APP_VERSION_UPGRADE_KEY);
     List<Field<?>> fields =
       ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_KEY, APP_VERSION_UPGRADE_KEY),
-                       Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_VALUE, ProjectInfo.getVersion().toString()));
+                       Fields.stringField(StoreDefinition.AppMetadataStore.METADATA_VALUE,
+                                          ProjectInfo.getVersion().toString()));
     upgradeMetadataTable.upsert(fields);
 
     // Reset the lastUpgradeCompletedCheck to 0L to force checking from Table next time when hasUpgraded is called
@@ -1489,7 +1488,7 @@ public class AppMetadataStore {
 
   @VisibleForTesting
   Set<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,
-                                                   final long endTimeInSecs) throws IOException {
+                                        final long endTimeInSecs) throws IOException {
     // Create time filter to get running programs between start and end time
     Predicate<RunRecordMeta> timeFilter = (runRecordMeta) ->
       runRecordMeta.getStartTs() < endTimeInSecs &&
@@ -1505,7 +1504,7 @@ public class AppMetadataStore {
 
   @VisibleForTesting
   // USE ONLY IN TESTS: WILL DELETE ALL METADATA STORE INFO
-  void deleteAllAppMetadataTables() throws IOException {
+  public void deleteAllAppMetadataTables() throws IOException {
     deleteTable(applicationSpecificationTable, StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
     deleteTable(workflowNodeStateTable, StoreDefinition.AppMetadataStore.NAMESPACE_FIELD);
     deleteTable(runRecordsTable, StoreDefinition.AppMetadataStore.RUN_STATUS);
@@ -1521,7 +1520,7 @@ public class AppMetadataStore {
   }
 
   /**
-   * Returns a ProgramId given the MDS key
+   * Returns a ProgramId given the primary keys
    *
    * @param fullPrimaryKeys the full set of primary keys to get the programId fields from
    * @return the remaining list of primary keys which describe a programId
@@ -1633,10 +1632,11 @@ public class AppMetadataStore {
   private <T> List<T> scanWithRange(Range range, Type typeofT, StructuredTable table, String field)
     throws IOException {
     List<T> result = new ArrayList<>();
-    Iterator<StructuredRow> iterator = table.scan(range, Integer.MAX_VALUE);
-    while (iterator.hasNext()) {
-      result.add(
-        GSON.fromJson(iterator.next().getString(field), typeofT));
+    try (CloseableIterator<StructuredRow> iterator = table.scan(range, Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        result.add(
+          GSON.fromJson(iterator.next().getString(field), typeofT));
+      }
     }
     return result;
   }
@@ -1703,7 +1703,8 @@ public class AppMetadataStore {
     RunRecordMeta existing =
       GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
     RunRecordMeta newMeta = RunRecordMeta.builder(existing)
-      .setProgramRunId(getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
+      .setProgramRunId(
+        getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
       .build();
     return newMeta;
   }
@@ -1716,7 +1717,7 @@ public class AppMetadataStore {
   }
 
   private static String getStringFromField(Field<?> field) {
-    return (String)field.getValue();
+    return (String) field.getValue();
   }
 
   private List<Field<?>> getProgramCountPrimaryKeys(String type, ProgramId programId) {

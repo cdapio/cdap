@@ -154,6 +154,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         // make sure app exists before updating
+        // TODO: CDAP-14848 move transactions back to Metadata subscriber service once migration is complete
         ApplicationMeta meta = TransactionRunners.run(transactionRunner, context -> {
           return AppMetadataStore.create(context).getApplication(appId);
         });
@@ -166,7 +167,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
-        // make sure the app of the program exists before updating
+        // make sure the app of the program exists beforg
         meta = TransactionRunners.run(transactionRunner, context -> {
           return AppMetadataStore.create(context).getApplication(programId.getParent());
         });

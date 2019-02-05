@@ -37,6 +37,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
@@ -76,15 +78,16 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   @Inject
   ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                        MetricsCollectionService metricsCollectionService) {
+                                        MetricsCollectionService metricsCollectionService,
+                                        TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.messagingService = messagingService;
     this.datasetFramework = datasetFramework;
     this.txClient = txClient;
     this.metricsCollectionService = metricsCollectionService;
-    this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(),
-                                            new DataEventSubscriberService(),
-                                            new ProgramStatusEventSubscriberService());
+    this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(transactionRunner),
+                                            new DataEventSubscriberService(transactionRunner),
+                                            new ProgramStatusEventSubscriberService(transactionRunner));
   }
 
   @Override
@@ -123,10 +126,11 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
    */
   private abstract class AbstractSchedulerSubscriberService extends AbstractNotificationSubscriberService {
 
-    AbstractSchedulerSubscriberService(String name, String topic, int fetchSize, boolean transactionalFetch) {
+    AbstractSchedulerSubscriberService(String name, String topic, int fetchSize, boolean transactionalFetch,
+                                       TransactionRunner transactionRunner) {
       super(name, cConf, topic, transactionalFetch, fetchSize,
             cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
-            messagingService, datasetFramework, txClient, metricsCollectionService);
+            messagingService, datasetFramework, txClient, metricsCollectionService, transactionRunner);
     }
 
     @Nullable
@@ -138,6 +142,17 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     @Override
     protected void storeMessageId(DatasetContext datasetContext, String messageId) {
       getJobQueue(datasetContext).persistSubscriberState(getTopicId().getTopic(), messageId);
+    }
+
+    @Nullable
+    @Override
+    protected String loadMessageId(StructuredTableContext context) {
+      return null;
+    }
+
+    @Override
+    protected void storeMessageId(StructuredTableContext context, String messageId) {
+      // Intentional NO-OP until CDAP-14848 is resolved
     }
 
     @Override
@@ -176,10 +191,10 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
    */
   private final class SchedulerEventSubscriberService extends AbstractSchedulerSubscriberService {
 
-    SchedulerEventSubscriberService() {
+    SchedulerEventSubscriberService(TransactionRunner transactionRunner) {
       // Time and stream size events are non-transactional
       super("scheduler.event", cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), false);
+            cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), false, transactionRunner);
     }
 
     @Override
@@ -218,10 +233,10 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
    */
   private final class DataEventSubscriberService extends AbstractSchedulerSubscriberService {
 
-    DataEventSubscriberService() {
+    DataEventSubscriberService(TransactionRunner transactionRunner) {
       // Dataset partition events are published transactionally, hence fetch need to be transactional too.
       super("scheduler.data.event", cConf.get(Constants.Dataset.DATA_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), true);
+            cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), true, transactionRunner);
     }
 
     @Override
@@ -243,10 +258,10 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
    */
   private final class ProgramStatusEventSubscriberService extends AbstractSchedulerSubscriberService {
 
-    ProgramStatusEventSubscriberService() {
+    ProgramStatusEventSubscriberService(TransactionRunner transactionRunner) {
       // Fetch transactionally since publishing from AppMetadataStore is transactional.
       super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true);
+            cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true, transactionRunner);
     }
 
     @Override

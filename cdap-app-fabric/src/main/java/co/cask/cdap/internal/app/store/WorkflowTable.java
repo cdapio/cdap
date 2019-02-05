@@ -30,6 +30,7 @@ import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.store.StoreDefinition;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
@@ -57,9 +58,6 @@ import javax.annotation.Nullable;
 public class WorkflowTable {
 
   private static final Gson GSON = new Gson();
-  private static final byte[] RUNID = Bytes.toBytes("r");
-  private static final byte[] TIME_TAKEN = Bytes.toBytes("t");
-  private static final byte[] NODES = Bytes.toBytes("n");
   private static final Type PROGRAM_RUNS_TYPE = new TypeToken<List<ProgramRun>>() { }.getType();
 
   private final StructuredTable table;
@@ -88,6 +86,13 @@ public class WorkflowTable {
       Range.singleton(
         ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()),
                          Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()))));
+  }
+
+  @VisibleForTesting
+  void deleteAll() throws IOException {
+    table.deleteAll(
+      Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, "")),
+                 Range.Bound.INCLUSIVE));
   }
 
   /**

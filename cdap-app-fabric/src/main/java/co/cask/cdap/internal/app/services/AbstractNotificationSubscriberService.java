@@ -33,6 +33,7 @@ import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -48,6 +49,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
 
   private final String name;
   private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
   private final MultiThreadMessagingContext messagingContext;
 
   @Inject
@@ -55,7 +57,8 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
                                                   boolean transactionalFetch, int fetchSize, long emptyFetchDelayMillis,
                                                   MessagingService messagingService,
                                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                                  MetricsCollectionService metricsCollectionService) {
+                                                  MetricsCollectionService metricsCollectionService,
+                                                  TransactionRunner transactionRunner) {
     super(NamespaceId.SYSTEM.topic(topicName), transactionalFetch, fetchSize,
           cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
           cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
@@ -76,6 +79,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
         NamespaceId.SYSTEM, ImmutableMap.of(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -91,6 +95,11 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
   @Override
   protected Transactional getTransactional() {
     return transactional;
+  }
+
+  @Override
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
   }
 
   @Override

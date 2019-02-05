@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,95 +16,143 @@
 
 package co.cask.cdap.logging.gateway.handlers.store;
 
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.collect.Iterables;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.store.StoreDefinition;
+import com.google.gson.Gson;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Duplicate store class for application meatadata.
  * JIRA https://issues.cask.co/browse/CDAP-2172
  */
-public class AppMetadataStore extends MetadataStoreDataset {
-  private static final String TYPE_RUN_RECORD_ACTIVE = "runRecordActive";
-  public static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
-  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
-  public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
-  public static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
+public class AppMetadataStore {
 
-  public AppMetadataStore(Table table) {
-    super(table);
+  private static final Gson GSON = new Gson();
+  private static final String TYPE_RUN_RECORD_ACTIVE = "runRecordActive";
+  private static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
+
+  private final StructuredTable runRecordsTable;
+
+  public AppMetadataStore(StructuredTable table) {
+    this.runRecordsTable = table;
   }
 
   // TODO: getRun is duplicated from cdap-app-fabric AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
-  public RunRecordMeta getRun(ProgramId program, final String runid) {
+  public RunRecordMeta getRun(ProgramId programId, String runId) throws IOException {
     // Query active run record first
-    RunRecordMeta running = getUnfinishedRun(program, runid);
+    RunRecordMeta running = getUnfinishedRun(programId, runId);
     // If program is running, this will be non-null
     if (running != null) {
       return running;
     }
     // If program is not running, query completed run records
-    return getCompletedRun(program, runid);
+    return getCompletedRun(programId, runId);
   }
 
-  /**
-   * @return run records for runs that do not have start time in mds key for the run record.
-   */
-  private RunRecordMeta getUnfinishedRun(ProgramId programId, String runid) {
-    MDSKey runningKey = getProgramKeyBuilder(TYPE_RUN_RECORD_ACTIVE, programId)
-      .add(getInvertedTsKeyPart(RunIds.getTime(runid, TimeUnit.SECONDS)))
-      .add(runid)
-      .build();
-    return get(runningKey, RunRecordMeta.class);
+
+  private RunRecordMeta getUnfinishedRun(ProgramId programId, String runId) throws IOException {
+    List<Field<?>> runningKey = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
+    runningKey.add(Fields.longField(
+      StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(RunIds.getTime(runId, TimeUnit.SECONDS))));
+    runningKey.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, runId));
+    return getRunRecordMeta(runningKey);
   }
 
-  private RunRecordMeta getCompletedRun(ProgramId programId, final String runid) {
-    MDSKey completedKey = getProgramKeyBuilder(TYPE_RUN_RECORD_COMPLETED, programId).build();
-    return getCompletedRun(completedKey, runid);
-  }
-
-  private RunRecordMeta getCompletedRun(MDSKey completedKey, final String runid) {
-    // Get start time from RunId
-    long programStartSecs = RunIds.getTime(RunIds.fromString(runid), TimeUnit.SECONDS);
-    if (programStartSecs > -1) {
-      // If start time is found, run a get
-      MDSKey key = new MDSKey.Builder(completedKey)
-        .add(getInvertedTsKeyPart(programStartSecs))
-        .add(runid)
-        .build();
-
-      return get(key, RunRecordMeta.class);
-    } else {
-      // If start time is not found, scan the table (backwards compatibility when run ids were random UUIDs)
-      MDSKey startKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(Long.MAX_VALUE)).build();
-      MDSKey stopKey = new MDSKey.Builder(completedKey).add(getInvertedTsScanKeyPart(0)).build();
-      List<RunRecordMeta> runRecords =
-        list(startKey, stopKey, RunRecordMeta.class, 1,  // Should have only one record for this runid
-             input -> input.getPid().equals(runid));
-      return Iterables.getFirst(runRecords, null);
+  private RunRecordMeta getRunRecordMeta(List<Field<?>> primaryKeys) throws IOException {
+    Optional<StructuredRow> row = runRecordsTable.read(primaryKeys);
+    if (!row.isPresent()) {
+      return null;
     }
+    return deserializeRunRecordMeta(row.get());
+  }
+
+  private static RunRecordMeta deserializeRunRecordMeta(StructuredRow row) {
+    RunRecordMeta existing =
+      GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
+    RunRecordMeta newMeta =
+      RunRecordMeta.builder(existing)
+      .setProgramRunId(
+        getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
+      .build();
+    return newMeta;
+  }
+
+  private static ProgramId getProgramIdFromRunRecordsPrimaryKeys(List<Field<?>> primaryKeys) {
+    // Assume keys are in correct ordering - skip first field since it's run_status
+    return new ApplicationId(getStringFromField(primaryKeys.get(1)), getStringFromField(primaryKeys.get(2)),
+                             getStringFromField(primaryKeys.get(3)))
+      .program(ProgramType.valueOf(getStringFromField(primaryKeys.get(4))), getStringFromField(primaryKeys.get(5)));
+  }
+
+  private static String getStringFromField(Field<?> field) {
+    return (String) field.getValue();
+  }
+
+
+  private RunRecordMeta getCompletedRun(ProgramId programId, final String runId)
+    throws IOException {
+    List<Field<?>> completedKey = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programId);
+    // Get start time from RunId
+    long programStartSecs = RunIds.getTime(RunIds.fromString(runId), TimeUnit.SECONDS);
+    completedKey.add(
+      Fields.longField(StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(programStartSecs)));
+    completedKey.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_FIELD, runId));
+    return getRunRecordMeta(completedKey);
   }
 
   private long getInvertedTsKeyPart(long endTime) {
     return Long.MAX_VALUE - endTime;
   }
 
-  /**
-   * Returns inverted scan key for given time. The scan key needs to be adjusted to maintain the property that
-   * start key is inclusive and end key is exclusive on a scan. Since when you invert start key, it becomes end key and
-   * vice-versa.
-   */
-  private long getInvertedTsScanKeyPart(long time) {
-    long invertedTsKey = getInvertedTsKeyPart(time);
-    return invertedTsKey < Long.MAX_VALUE ? invertedTsKey + 1 : invertedTsKey;
+  private List<Field<?>> getRunRecordProgramPrefix(String status, @Nullable ProgramId programId) {
+    if (programId == null) {
+      return getRunRecordStatusPrefix(status);
+    }
+    List<Field<?>> fields =
+      getRunRecordApplicationPrefix(
+        status, new ApplicationId(programId.getNamespace(), programId.getApplication(), programId.getVersion()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD, programId.getType().name()));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.PROGRAM_FIELD, programId.getProgram()));
+    return fields;
+  }
+
+  private List<Field<?>> getRunRecordStatusPrefix(String status) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.RUN_STATUS, status));
+    return fields;
+  }
+
+  private List<Field<?>> getRunRecordApplicationPrefix(String status, @Nullable ApplicationId applicationId) {
+    List<Field<?>> fields = getRunRecordStatusPrefix(status);
+    if (applicationId == null) {
+      return fields;
+    }
+    fields.addAll(getApplicationPrimaryKeys(
+      applicationId.getNamespace(), applicationId.getApplication(), applicationId.getVersion()));
+    return fields;
+  }
+
+  private List<Field<?>> getApplicationPrimaryKeys(String namespaceId, String appId, String versionId) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD, namespaceId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.APPLICATION_FIELD, appId));
+    fields.add(Fields.stringField(StoreDefinition.AppMetadataStore.VERSION_FIELD, versionId));
+    return fields;
   }
 }

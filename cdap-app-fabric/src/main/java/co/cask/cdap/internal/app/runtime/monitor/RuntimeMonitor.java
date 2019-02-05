@@ -109,8 +109,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.topicsToRequest = new HashMap<>();
     this.datasetFramework = datasetFramework;
-    this.transactional = transactional;
     this.messagingContext = messagingContext;
+    this.transactional = transactional;
     this.scheduledExecutorService = scheduledExecutorService;
     this.logProcessor = logProcessor;
     this.programFinishTime = -1L;

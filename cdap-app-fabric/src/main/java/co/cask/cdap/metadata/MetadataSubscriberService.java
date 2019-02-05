@@ -63,6 +63,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -154,22 +155,37 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
+  }
+
+  @Override
   protected MetadataMessage decodeMessage(Message message) {
     return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
   }
 
   @Nullable
   @Override
+  protected String loadMessageId(StructuredTableContext context) throws IOException {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
+  }
+
+  @Override
+  protected void storeMessageId(StructuredTableContext context, String messageId) throws IOException {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
+  }
+
+  @Nullable
+  @Override
+  // TODO: CDAP-14848 delete below two methods once migration is complete
   protected String loadMessageId(DatasetContext context) throws IOException {
-    //AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    //return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
-    return "";
+    return null;
   }
 
   @Override
   protected void storeMessageId(DatasetContext context, String messageId) throws IOException {
-    //AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-    //appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
   }
 
   @Override
@@ -180,7 +196,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected void processMessages(DatasetContext datasetContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) {
+                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) throws IOException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
@@ -197,7 +213,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new UsageProcessor(datasetContext);
           case WORKFLOW_TOKEN:
           case WORKFLOW_STATE:
-            //return new WorkflowProcessor(datasetContext);
+            return new WorkflowProcessor();
           case METADATA_OPERATION:
             return new MetadataOperationProcessor(cConf);
           case DATASET_OPERATION:
@@ -220,7 +236,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         continue;
       }
 
-      // TODO test processor.processMessage(message);
+      processor.processMessage(message);
     }
   }
 
@@ -310,14 +326,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private final class WorkflowProcessor implements MetadataMessageProcessor {
 
-    private final AppMetadataStore appMetadataStore;
-
-    WorkflowProcessor(StructuredTableContext context) {
-      this.appMetadataStore = AppMetadataStore.create(context);
-    }
+    WorkflowProcessor() {}
 
     @Override
-    public void processMessage(MetadataMessage message) throws IOException{
+    public void processMessage(MetadataMessage message) throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
         return;
@@ -327,10 +339,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
       switch (message.getType()) {
         case WORKFLOW_TOKEN:
-          appMetadataStore.setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
+          TransactionRunners.run(transactionRunner, context -> {
+            AppMetadataStore.create(context)
+              .setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
+          });
           break;
         case WORKFLOW_STATE:
-          appMetadataStore.addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
+          TransactionRunners.run(transactionRunner, context -> {
+            AppMetadataStore.create(context)
+              .addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
+          });
           break;
         default:
           // This shouldn't happen

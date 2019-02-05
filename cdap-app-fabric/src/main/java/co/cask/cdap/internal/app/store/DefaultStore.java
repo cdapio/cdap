@@ -34,7 +34,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.proto.BasicThrowable;
@@ -96,11 +95,10 @@ public class DefaultStore implements Store {
   private static final Map<String, String> EMPTY_STRING_MAP = ImmutableMap.of();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private DatasetFramework dsFramework;
   private TransactionRunner transactionRunner;
 
   @Inject
-  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionRunner transactionRunner) {
+  public DefaultStore(TransactionRunner transactionRunner) {
     this.transactionRunner = transactionRunner;
   }
 
@@ -603,14 +601,10 @@ public class DefaultStore implements Store {
 
   @VisibleForTesting
   void clear() throws Exception {
-    truncate(dsFramework.getAdmin(AppMetadataStore.APP_META_INSTANCE_ID, null));
-    truncate(dsFramework.getAdmin(WORKFLOW_STATS_INSTANCE_ID, null));
-  }
-
-  private void truncate(DatasetAdmin admin) throws Exception {
-    if (admin != null) {
-      admin.truncate();
-    }
+   TransactionRunners.run(transactionRunner, context -> {
+      getAppMetadataStore(context).deleteAllAppMetadataTables();
+      getWorkflowTable(context).deleteAll();
+    });
   }
 
   private ApplicationSpecification getApplicationSpec(AppMetadataStore mds, ApplicationId id) throws IOException {

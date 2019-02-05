@@ -216,8 +216,10 @@ public class ProfileService {
     Transactionals.execute(transactional, context -> {
       ProfileDataset profileDataset = getProfileDataset(context);
       Profile profile = profileDataset.getProfile(profileId);
-      //AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
-      //deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+      TransactionRunners.run(transactionRunner, structuredTableContext -> {
+        AppMetadataStore appMetadataStore = AppMetadataStore.create(structuredTableContext);
+        deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+      });
     }, NotFoundException.class, ProfileConflictException.class);
     deleteMetrics(profileId);
   }
@@ -238,11 +240,13 @@ public class ProfileService {
       List<Profile> profiles = profileDataset.getProfiles(namespaceId, false);
       for (Profile profile : profiles) {
         ProfileId profileId = namespaceId.profile(profile.getName());
-        //deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+        TransactionRunners.run(transactionRunner, structuredTableContext -> {
+          AppMetadataStore appMetadataStore = AppMetadataStore.create(structuredTableContext);
+          deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+        });
         deleted.add(profileId);
       }
     }, ProfileConflictException.class, NotFoundException.class);
-
     // delete the metrics
     for (ProfileId profileId : deleted) {
       deleteMetrics(profileId);

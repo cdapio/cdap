@@ -111,8 +111,10 @@ public class ProgramNotificationSubscriberServiceTest {
   }
 
   @After
-  public void cleanupTest() throws Exception {
-     // figure out some way of deleting all tables
+  public void cleanupTest() {
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore.create(context).deleteAllAppMetadataTables();
+    });
   }
 
   @Test

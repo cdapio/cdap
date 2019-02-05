@@ -55,6 +55,8 @@ import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -154,6 +156,7 @@ public class LogHandlerTest {
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
 
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();

@@ -84,6 +84,9 @@ public final class StoreDefinition {
     }
   }
 
+  /**
+   *  Defines schema for AppMetadata tables
+   */
   public static final class AppMetadataStore {
     public static final StructuredTableId APPLICATION_SPECIFICATIONS = new StructuredTableId("application_specs");
     public static final StructuredTableId WORKFLOW_NODE_STATES = new StructuredTableId("workflow_node_states");
@@ -91,6 +94,7 @@ public final class StoreDefinition {
     public static final StructuredTableId WORKFLOWS = new StructuredTableId("workflows");
     public static final StructuredTableId PROGRAM_COUNTS = new StructuredTableId("program_counts");
     public static final StructuredTableId UPGRADE_METADATA = new StructuredTableId("upgrade_metadata");
+    // TODO: CDAP-14876 Move this table into it's own store, along with associated methods
     public static final StructuredTableId SUBSCRIBER_STATE = new StructuredTableId("subscriber_state");
 
     public static final String NAMESPACE_FIELD = "namespace";
