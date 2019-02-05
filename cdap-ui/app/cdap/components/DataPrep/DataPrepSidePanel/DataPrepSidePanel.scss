@@ -45,6 +45,8 @@ $quality-bar-null-color: #95a5a6;
         cursor: pointer;
         background-color: $tab-bg-color;
         color: white;
+        text-overflow: ellipsis;
+        overflow: hidden;
 
         &.active {
           background-color: white;

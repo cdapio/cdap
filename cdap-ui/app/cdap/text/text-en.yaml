@@ -379,11 +379,11 @@ features:
         toggle:
           clearAll: Clear All
           selectAll: Select All
-      directivesTabLabel: Directives ({directivesCount})
+      directivesTabLabel: Transformations ({directivesCount})
       DirectivesTab:
-        label: Directives
+        label: Transformations
       noColumns: No columns
-      noDirectives: No directives
+      noDirectives: No transformations
     DataPrepTable:
       DataType:
         unknown: unknown
@@ -396,7 +396,7 @@ features:
       dataErrorMessageTitle: Unable to load data.
       dataErrorMessageTitle2: Unable to load data for "{workspaceName}".
       emptyWorkspace: No data
-      noData: No data. Try removing some directives.
+      noData: No data. Try removing some transformations.
       refreshBtnLinkLabel: Refresh
       suggestion1: the page
       suggestionTitle: "You can try to:"
@@ -517,7 +517,7 @@ features:
         columnTypeLabel:
           numeric: Numeric
         destinationColumnInputLabel: Name destination column
-        disabledTooltip: "Calculate directives can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        disabledTooltip: "Calculate transformation can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
         newColumnInputCountSuffix: _count
         Options:
           POWEROF:
@@ -549,7 +549,7 @@ features:
           TAN: Tan
         title: Calculate
       ChangeDataType:
-        disabledTooltip: "Change data type directive is not available on columns of data type 'LocalDate', 'LocalTime', or 'ZonedDateTime'"
+        disabledTooltip: "Change data type transformation is not available on columns of data type 'LocalDate', 'LocalTime', or 'ZonedDateTime'"
         Options:
           boolean: Boolean
           bytes: Bytes
@@ -690,7 +690,7 @@ features:
           pipe: Pipe
           tab: Tab
           whitespace: Whitespace
-      failedApplyDirectiveMessage: Failed to apply directive. Please modify input and try again #temporary fallback until backend sends non-null error
+      failedApplyDirectiveMessage: Failed to apply transformation. Please modify input and try again #temporary fallback until backend sends non-null error
       FillNullOrEmpty:
         title: Fill null or empty cells
       Filter:
@@ -727,7 +727,7 @@ features:
         replaceWith: Replace with
         title: Find and replace
       Format:
-        disabledTooltip: "Format directives can only be executed on columns of data type 'string' or 'date'"
+        disabledTooltip: "Format transformation can only be executed on columns of data type 'string' or 'date'"
         Formats:
           CONCATENATE:
             addDescription: of the content of each row
@@ -1024,8 +1024,8 @@ features:
       kafka: Kafka
       more: More
       PlusButton:
-        addDirective: Add directive
-        successMessage: You successfully added a custom directive. Apply that directive by typing it into the power mode input area.
+        addDirective: Add transformation
+        successMessage: You successfully added a custom transformation. Apply that transformation by typing it into the power mode input area.
       realtimeDisabledTooltip: "Importing data from {type} in realtime is currently not supported."
       s3: S3
       spanner: Google Cloud Spanner
@@ -1051,7 +1051,7 @@ features:
         cancelButton: No, keep tab open
         confirmButton: Yes, close tab
         header: Close tab
-        helperMessage: Any directives you have applied in this tab will be lost.
+        helperMessage: Any transformations you have applied in this tab will be lost.
         mainMessage: Are you sure you want to close {workspace}?
   DataPrepConnections:
     AddConnections:
@@ -1293,7 +1293,7 @@ features:
       modelNameWithColon: "Model name:"
       moreInfo: for more info
       nextSelect: Next, select a machine learning algorithm
-      numDirectives: "No of directives: "
+      numDirectives: "No of transformations: "
       pageTitle: '{productName} | {featureName} | {experimentIdWithSuffix}'
       random: Random
       selectMLAlgorithm: Select a machine learning algorithm
@@ -2323,9 +2323,9 @@ features:
       modalheadertitle: Add driver
     Directive:
       actionbtn0: Upload
-      description: A directive is a data manipulation instruction that can be used to perform data cleansing, transformation and filtering.
-      label: Directive
-      modalheadertitle: Upload directive artifact
+      description: A transformation is a data manipulation instruction that can be used to perform data cleansing, transformation and filtering.
+      label: Transformation
+      modalheadertitle: Upload transformation artifact
     HydratorPipeline:
       actionbtn0: Create
       actionbtn1: Import
@@ -2570,21 +2570,21 @@ features:
       subtitle: You can now create a pipeline to extract data from database using the driver.
     DirectiveUpload:
       callToAction: Go to preparation
-      footertitle: Upload directive artifact
+      footertitle: Upload transformation artifact
       Step1:
-        description: Upload your directive JAR file.
-        errorMessage: Invalid directive. Directive must be a JAR file.
+        description: Upload your transformation JAR file.
+        errorMessage: Invalid transformation. Transformation must be a JAR file.
         filePathLabel: Choose file
-        shorttitle: Upload directive JAR file
-        title: Upload directive JAR file
+        shorttitle: Upload transformation JAR file
+        title: Upload transformation JAR file
       Step2:
-        description: Upload the directive configuration JSON file.
-        errorMessage: Invalid directive JSON. Plugin configuration should be in JSON format.
-        errorMessageParentArtifacts: Invalid directive JSON. Please specify parent artifacts.
-        shorttitle: Upload directive configuration JSON file
-        title: Upload directive configuration JSON file
-      subtitle: Start preparing data with the directive.
-      success: You have successfully uploaded the directive "{pluginName}".
+        description: Upload the transformation configuration JSON file.
+        errorMessage: Invalid transformation JSON. Plugin configuration should be in JSON format.
+        errorMessageParentArtifacts: Invalid transformation JSON. Please specify parent artifacts.
+        shorttitle: Upload transformation configuration JSON file
+        title: Upload transformation configuration JSON file
+      subtitle: Start preparing data with the transformation.
+      success: You have successfully uploaded the transformation "{pluginName}".
     Done: Done
     FailedMessage: Failed to {step}
     GoToHomePage: Go to homepage
