@@ -46,7 +46,6 @@ import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
@@ -530,8 +529,7 @@ public class MasterServiceMain extends DaemonMain {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
-      new KafkaLogAppenderModule(),
-      new StorageModule()
+      new KafkaLogAppenderModule()
     );
   }
 
@@ -575,7 +573,6 @@ public class MasterServiceMain extends DaemonMain {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
-      new StorageModule(),
       new OperationalStatsModule(),
       new AbstractModule() {
         @Override
