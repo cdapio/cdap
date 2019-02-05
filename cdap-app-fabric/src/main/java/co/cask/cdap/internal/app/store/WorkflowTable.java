@@ -258,7 +258,7 @@ public class WorkflowTable {
       // This only works since the all keys but the last primary key are the same, so we can scan for a range in the
       // last primary key which is numeric.
       try (CloseableIterator<StructuredRow> iterator =
-        table.scan(Range.create(lowerBoundFields, Range.Bound.INCLUSIVE, upperBoundFields, Range.Bound.EXCLUSIVE),
+        table.scan(Range.create(lowerBoundFields, Range.Bound.INCLUSIVE, upperBoundFields, Range.Bound.INCLUSIVE),
                    1)) {
         if (!iterator.hasNext()) {
           return workflowRunRecords;
