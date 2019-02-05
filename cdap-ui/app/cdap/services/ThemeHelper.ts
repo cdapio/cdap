@@ -21,6 +21,7 @@ import isBoolean from 'lodash/isBoolean';
 
 interface IThemeJSON {
   "spec-version": string;
+  "is-customer-MWC"?: boolean;
 }
 
 interface IJsonFeatureNames {
@@ -172,17 +173,21 @@ interface IThemeObj {
   showAboutProductModal?: boolean;
   showPipelineCreateButton?: boolean;
   showDataPrepPlusButton?: boolean;
+  isCustomerMWC?: boolean;
 }
 
 function getTheme(): IThemeObj {
   let theme: IThemeObj = {};
   const DEFAULT_THEME_JSON: IThemeJSON = {
     'spec-version': '1.0',
+    'is-customer-MWC': true,
   };
 
   const themeJSON = window.CDAP_UI_THEME || DEFAULT_THEME_JSON;
   const specVersion = themeJSON['spec-version'] || '1.0';
-
+  if (window.CDAP_UI_THEME['is-customer-MWC']) {
+    theme.isCustomerMWC = window.CDAP_UI_THEME['is-customer-MWC'];
+  }
   if (specVersion === '1.0') {
     theme = {
       ...theme,

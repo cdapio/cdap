@@ -403,7 +403,7 @@ export default class DataPrepTopPanel extends Component {
   render() {
     let plusBtn = null;
     if(Theme && Theme.showDataPrepPlusButton){
-      {!this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null }
+      plusBtn = !this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null;
     }
 
     return (
@@ -437,7 +437,7 @@ export default class DataPrepTopPanel extends Component {
           {
             !this.props.singleWorkspaceMode ?
               <button
-                className="btn btn-primary"
+                className={"btn btn-primary "+ (Theme && Theme.isCustomerMWC ? 'btn-primary-mwc': '')}
                 onClick={this.toggleAddToPipelineModal}
               >
                 {T.translate(`${PREFIX}.addToPipelineBtnLabel`)}

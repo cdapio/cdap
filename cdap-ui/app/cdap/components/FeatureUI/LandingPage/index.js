@@ -43,6 +43,7 @@ import FeatureSelection from '../FeatureSelection';
 import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError, getErrorMessage } from '../util';
 import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
+import { Theme } from 'services/ThemeHelper';
 
 
 require('./LandingPage.scss');
@@ -583,7 +584,7 @@ class LandingPage extends React.Component {
                 </Dropdown>
                 <i className="fa fa-refresh refresh-button" onClick = {() => this.getPipelines(this.state.selectedPipelineType)}></i>
               </div>
-              <button className="feature-button" onClick={this.toggleFeatureWizard}>+ Add New</button>
+              <button className={"feature-button "+ (Theme && Theme.isCustomerMWC ? 'feature-button-mwc':'')}  onClick={this.toggleFeatureWizard}>+ Add New</button>
             </div>
             <FeatureTable data={this.state.data}
               onView={this.viewPipeline.bind(this)}

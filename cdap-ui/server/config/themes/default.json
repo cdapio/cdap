@@ -1,5 +1,6 @@
 {
   "spec-version": "1.0",
+  "is-customer-MWC": true,
   "styles": {
     "brand-primary-color": "#3b78e7",
     "navbar-color": "#333333",

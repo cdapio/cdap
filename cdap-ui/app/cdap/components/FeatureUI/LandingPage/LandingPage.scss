@@ -54,6 +54,17 @@
   }
 }
 
+.feature-button-mwc {
+  background-color: #03a9f4 !important;
+  border-color: #03a9f4 !important;
+}
+.feature-button-mwc:disabled,
+.feature-button-mwc[disabled] {
+  background-color: #bdbdbd !important;
+  color: rgba(0, 0, 0, 0.38) !important;
+  border-color: #bdbdbd !important;
+}
+
 .feature-button {
   background-color: #0275d8;
   border-color: #0275d8;
