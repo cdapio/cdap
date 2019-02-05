@@ -38,6 +38,9 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -93,7 +96,12 @@ public class RemoteRuntimeDatasetTest {
       ((Service) messagingService).startAndWait();
     }
     datasetFramework = injector.getInstance(DatasetFramework.class);
-
+    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    try {
+      StoreDefinition.createAllTables(tableAdmin);
+    } catch (IOException | TableAlreadyExistsException e) {
+      throw new RuntimeException("Failed to create the system tables", e);
+    }
     TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
     datasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),

@@ -44,6 +44,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
+    if (tableAdmin.getSpecification(OwnerStore.OWNER_TABLE) == null) {
+      OwnerStore.createTables(tableAdmin);
+    }
     if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
       NamespaceStore.createTables(tableAdmin);
     }
@@ -194,6 +197,26 @@ public final class StoreDefinition {
       tableAdmin.create(APP_DATA_SPEC);
       tableAdmin.create(PLUGIN_DATA_SPEC);
       tableAdmin.create(UNIV_PLUGIN_DATA_SPEC);
+    }
+  }
+
+  /**
+   * Table specification and create table definitions for owner store.
+   */
+  public static final class OwnerStore {
+    public static final StructuredTableId OWNER_TABLE = new StructuredTableId("owner_data");
+    public static final String PRINCIPAL_FIELD = "principal";
+    public static final String KEYTAB_FIELD = "keytab";
+
+    public static final StructuredTableSpecification OWNER_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(OWNER_TABLE)
+        .withFields(Fields.stringType(PRINCIPAL_FIELD),
+                    Fields.bytesType(KEYTAB_FIELD))
+        .withPrimaryKeys(PRINCIPAL_FIELD).build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(OWNER_TABLE_SPEC);
     }
   }
 }
