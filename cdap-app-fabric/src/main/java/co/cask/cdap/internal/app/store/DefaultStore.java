@@ -39,7 +39,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
@@ -59,6 +58,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -104,9 +108,11 @@ public class DefaultStore implements Store {
   private CConfiguration configuration;
   private DatasetFramework dsFramework;
   private Transactional transactional;
+  private TransactionRunner transactionRunner;
 
   @Inject
-  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
+  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient,
+                      TransactionRunner transactionRunner) {
     this.configuration = conf;
     this.dsFramework = framework;
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -115,6 +121,7 @@ public class DefaultStore implements Store {
         NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -132,11 +139,8 @@ public class DefaultStore implements Store {
     return AppMetadataStore.create(configuration, datasetContext, dsFramework);
   }
 
-  private WorkflowDataset getWorkflowDataset(DatasetContext datasetContext) throws IOException,
-                                                                                   DatasetManagementException {
-    Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, WORKFLOW_STATS_INSTANCE_ID,
-                                                  Table.class.getName(), DatasetProperties.EMPTY);
-    return new WorkflowDataset(table);
+  private WorkflowTable getWorkflowTable(StructuredTableContext context) throws TableNotFoundException {
+    return new WorkflowTable(context.getTable(StoreDefinition.WorkflowStore.WORKFLOW_STATISTICS));
   }
 
   @Override
@@ -202,14 +206,13 @@ public class DefaultStore implements Store {
       // This block has been added so that completed workflow runs can be logged to the workflow dataset
       WorkflowId workflowId = new WorkflowId(id.getParent().getParent(), id.getProgram());
       if (id.getType() == ProgramType.WORKFLOW && runStatus == ProgramRunStatus.COMPLETED) {
-        recordCompletedWorkflow(metaStore, getWorkflowDataset(context), workflowId, id.getRun());
+        recordCompletedWorkflow(metaStore, workflowId, id.getRun());
       }
       // todo: delete old history data
     });
   }
 
-  private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowDataset workflowDataset,
-                                       WorkflowId workflowId, String runId) {
+  private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowId workflowId, String runId) {
     RunRecordMeta runRecord = metaStore.getRun(workflowId.run(runId));
     if (runRecord == null) {
       return;
@@ -226,7 +229,7 @@ public class DefaultStore implements Store {
     boolean workFlowNodeFailed = false;
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(workflowId.getProgram());
     Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
-    List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
+    List<WorkflowTable.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : runRecord.getProperties().entrySet()) {
       if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey())
         || "workflowNodeState".equals(entry.getKey()))) {
@@ -244,8 +247,8 @@ public class DefaultStore implements Store {
             workFlowNodeFailed = true;
             break;
           }
-          programRunsList.add(new WorkflowDataset.ProgramRun(entry.getKey(), entry.getValue(),
-                                                             programType, stopTs - innerProgramRun.getStartTs()));
+          programRunsList.add(new WorkflowTable.ProgramRun(entry.getKey(), entry.getValue(),
+                                                           programType, stopTs - innerProgramRun.getStartTs()));
         } else {
           workFlowNodeFailed = true;
           break;
@@ -257,13 +260,16 @@ public class DefaultStore implements Store {
       return;
     }
 
-    workflowDataset.write(workflowId, runRecord, programRunsList);
+    // TODO(CDAP-14770): merge the two transactions into one after appmetadatastore is migrated
+    TransactionRunners.run(transactionRunner, structuredTableContext -> {
+      getWorkflowTable(structuredTableContext).write(workflowId, runRecord, programRunsList);
+    });
   }
 
   @Override
   public void deleteWorkflowStats(ApplicationId id) {
-    Transactionals.execute(transactional, context -> {
-      getWorkflowDataset(context).delete(id);
+    TransactionRunners.run(transactionRunner, context -> {
+      getWorkflowTable(context).delete(id);
     });
   }
 
@@ -285,25 +291,25 @@ public class DefaultStore implements Store {
   @Nullable
   public WorkflowStatistics getWorkflowStatistics(WorkflowId id, long startTime,
                                                   long endTime, List<Double> percentiles) {
-    return Transactionals.execute(transactional, context -> {
-      return getWorkflowDataset(context).getStatistics(id, startTime, endTime, percentiles);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getWorkflowTable(context).getStatistics(id, startTime, endTime, percentiles);
     });
   }
 
   @Override
-  public WorkflowDataset.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId) {
-    return Transactionals.execute(transactional, context -> {
-      return getWorkflowDataset(context).getRecord(workflowId, runId);
+  public WorkflowTable.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getWorkflowTable(context).getRecord(workflowId, runId);
     });
   }
 
   @Override
-  public Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflow,
-                                                                             String runId,
-                                                                             int limit,
-                                                                             long timeInterval) {
-    return Transactionals.execute(transactional, context -> {
-      return getWorkflowDataset(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
+  public Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflow,
+                                                                           String runId,
+                                                                           int limit,
+                                                                           long timeInterval) {
+    return  TransactionRunners.run(transactionRunner, context -> {
+      return getWorkflowTable(context).getDetailsOfRange(workflow, runId, limit, timeInterval);
     });
   }
 

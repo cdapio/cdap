@@ -33,6 +33,7 @@ import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -46,13 +47,17 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-    // TODO(CDAP-14770): change this when migrating DefaultStore
-    store = injector.getInstance(DefaultStore.class);
-
     pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
+
+    // TODO(CDAP-14770): fully change this when migrating the rest of DefaultStore
+    store =
+      new DefaultStore(injector.getInstance(CConfiguration.class),
+                       injector.getInstance(DatasetFramework.class),
+                       injector.getInstance(TransactionSystemClient.class),
+                       transactionRunner);
 
     nsStore = new DefaultNamespaceStore(transactionRunner);
     nsAdmin = new DefaultNamespaceAdmin(
@@ -61,6 +66,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
       injector.getInstance(CConfiguration.class), injector.getInstance(Impersonator.class),
       injector.getInstance(AuthorizationEnforcer.class), injector.getInstance(AuthenticationContext.class));
     StoreDefinition.NamespaceStore.createTables(structuredTableAdmin);
+    StoreDefinition.WorkflowStore.createTables(structuredTableAdmin);
   }
 
   @AfterClass

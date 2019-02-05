@@ -29,7 +29,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.app.store.WorkflowDataset;
+import co.cask.cdap.internal.app.store.WorkflowTable;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramRunClusterStatus;
@@ -380,7 +380,7 @@ public interface Store {
   Map<String, String> getRuntimeArguments(ProgramRunId runId);
 
   /**
-   * Deletes data for an application from the WorkflowDataset table
+   * Deletes data for an application from the WorkflowTable table
    * @param id id of application to be deleted
    */
   void deleteWorkflowStats(ApplicationId id);
@@ -436,7 +436,7 @@ public interface Store {
    * @param runId RunId of the workflow run
    * @return A workflow run record corresponding to the runId
    */
-  WorkflowDataset.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId);
+  WorkflowTable.WorkflowRunRecord getWorkflowRun(WorkflowId workflowId, String runId);
 
   /**
    * Get a list of workflow runs that are spaced apart by time interval in both directions from the run id provided.
@@ -447,8 +447,8 @@ public interface Store {
    * @param timeInterval The timeInterval with which the user wants to space out the runs
    * @return Map of runId of Workflow to DetailedStatistics of the run
    */
-  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflowId, String runId,
-                                                                      int limit, long timeInterval);
+  Collection<WorkflowTable.WorkflowRunRecord> retrieveSpacedRecords(WorkflowId workflowId, String runId,
+                                                                    int limit, long timeInterval);
 
   /**
    * @return programs that were running between given start and end time.
