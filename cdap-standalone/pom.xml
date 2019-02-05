@@ -647,7 +647,7 @@
                     <!-- copy secure store extensions -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-securestore-ext-cloudkms/target/libexec</directory>
-                      <targetPath>ext/securestores/cloudkms</targetPath>
+                      <targetPath>ext/securestores/gcp-cloudkms</targetPath>
                       <includes>
                         <include>*.jar</include>
                       </includes>

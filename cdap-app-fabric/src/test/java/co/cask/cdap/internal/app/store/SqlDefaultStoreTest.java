@@ -65,7 +65,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
       injector.getProvider(NamespaceResourceDeleter.class), injector.getProvider(StorageProviderNamespaceAdmin.class),
       injector.getInstance(CConfiguration.class), injector.getInstance(Impersonator.class),
       injector.getInstance(AuthorizationEnforcer.class), injector.getInstance(AuthenticationContext.class));
-    StoreDefinition.NamespaceStore.createTables(structuredTableAdmin);
+    StoreDefinition.NamespaceStore.createTable(structuredTableAdmin);
     StoreDefinition.WorkflowStore.createTables(structuredTableAdmin);
   }
 

@@ -28,7 +28,6 @@ import java.util.Collection;
  *
  * The implementation of this class must be thread safe as store and retrieve methods can be called from multiple
  * threads.
- *
  */
 public interface SecretStore {
 

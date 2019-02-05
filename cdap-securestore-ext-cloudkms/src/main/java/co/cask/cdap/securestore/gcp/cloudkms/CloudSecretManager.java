@@ -35,7 +35,7 @@ import java.util.List;
  */
 public class CloudSecretManager implements SecretManager {
   private static final Logger LOG = LoggerFactory.getLogger(CloudSecretManager.class);
-  private static final String CLOUD_KMS_NAME = "cloudkms";
+  private static final String CLOUD_KMS_NAME = "gcp-cloudkms";
   private static final String CRYPTO_KEY_PREFIX = "cdap_key_";
   private final SecretInfoCodec encoderDecoder;
   private SecretStore store;

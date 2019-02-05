@@ -45,7 +45,10 @@ public final class StoreDefinition {
       ArtifactStore.createTables(tableAdmin);
     }
     if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
-      NamespaceStore.createTables(tableAdmin);
+      NamespaceStore.createTable(tableAdmin);
+    }
+    if (overWrite || tableAdmin.getSpecification(SecretStore.SECRET_STORE_TABLE) == null) {
+      SecretStore.createTable(tableAdmin);
     }
     if (overWrite || tableAdmin.getSpecification(WorkflowStore.WORKFLOW_STATISTICS) == null) {
       WorkflowStore.createTables(tableAdmin);
@@ -73,7 +76,7 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(NAMESPACE_TABLE_SPEC);
     }
   }
@@ -194,6 +197,28 @@ public final class StoreDefinition {
       tableAdmin.create(APP_DATA_SPEC);
       tableAdmin.create(PLUGIN_DATA_SPEC);
       tableAdmin.create(UNIV_PLUGIN_DATA_SPEC);
+    }
+  }
+
+  /**
+   * Schema for {@link SecretStore}.
+   */
+  public static final class SecretStore {
+    public static final StructuredTableId SECRET_STORE_TABLE = new StructuredTableId("secret_store");
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String SECRET_NAME_FIELD = "secret_name";
+    public static final String SECRET_DATA_FIELD = "secret_data";
+
+    public static final StructuredTableSpecification SECRET_STORE_SPEC = new StructuredTableSpecification.Builder()
+      .withId(SECRET_STORE_TABLE)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(SECRET_NAME_FIELD),
+                  Fields.bytesType(SECRET_DATA_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, SECRET_NAME_FIELD)
+      .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(SECRET_STORE_SPEC);
     }
   }
 }

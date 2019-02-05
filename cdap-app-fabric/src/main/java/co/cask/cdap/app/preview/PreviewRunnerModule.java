@@ -23,6 +23,7 @@ import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.data.security.DefaultSecretStore;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.MockExploreClient;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -48,6 +49,7 @@ import co.cask.cdap.route.store.LocalRouteStore;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.NoOpScheduler;
 import co.cask.cdap.scheduler.Scheduler;
+import co.cask.cdap.securestore.spi.SecretStore;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.DefaultUGIProvider;
@@ -113,6 +115,7 @@ public class PreviewRunnerModule extends PrivateModule {
     );
 
     bind(Store.class).to(DefaultStore.class);
+    bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
     bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 
     bind(UGIProvider.class).to(DefaultUGIProvider.class);
