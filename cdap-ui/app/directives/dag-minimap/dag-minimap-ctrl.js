@@ -45,6 +45,9 @@ class DAGMinimapCtrl {
       if (this.viewportTimeout) {
         this.$timeout.cancel(this.viewportTimeout);
       }
+      if (this.updateStateTimeout) {
+        this.$timeout.cancel(this.updateStateTimeout);
+      }
     });
   }
 
@@ -118,7 +121,7 @@ class DAGMinimapCtrl {
   getViewportBox() {
     if (!this.dagContainerSize) {
       this.updateDAGContainerSize();
-      return;
+      return {};
     }
 
     const viewport = this.DAGMinimapUtilities.getViewportBox(
@@ -141,8 +144,16 @@ class DAGMinimapCtrl {
   updateState() {
     const state = this.DAGPlusPlusNodesStore;
     const minimap = this.updateNodesAndViewport(state.getNodes());
-    this.state.nodes = minimap.nodes;
-    this.state.viewport = minimap.viewport;
+
+    if (this.updateStateTimeout) {
+      this.$timeout.cancel(this.updateStateTimeout);
+    }
+    this.updateStateTimeout = this.$timeout(() => {
+      this.state = {
+        nodes: minimap.nodes,
+        viewport: minimap.viewport,
+      };
+    });
   }
 
   updateNodesAndViewport(nodesReference) {
