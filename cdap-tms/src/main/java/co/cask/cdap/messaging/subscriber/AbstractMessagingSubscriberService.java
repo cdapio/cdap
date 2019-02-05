@@ -138,30 +138,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractRetr
   protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
 
   /**
-   * Loads last persisted message id. This method will be called from a transaction.
-   * The returned message id will be used as the starting message id (exclusive) for the first fetch.
-   *
-   * @param datasetContext the {@link DatasetContext} for getting dataset instances.
-   * @return the last persisted message id or {@code null} to have first fetch starts from the first available message
-   *         in the topic.
-   * @throws Exception if failed to load the message id
-   */
-  @Nullable
-  protected abstract String loadMessageId(DatasetContext datasetContext) throws Exception;
-
-  /**
-   * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(DatasetContext, Iterator)}.
-   *
-   * @param datasetContext the {@link DatasetContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(DatasetContext, Iterator)} has been processed
-   *                  up to.
-   * @throws Exception if failed to persist the message id
-   * @see #processMessages(DatasetContext, Iterator)
-   */
-  protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
-
-  /**
    * Decodes the raw {@link Message} into an object of type {@code T}.
    *
    * @param message the {@link Message} to decode
