@@ -54,9 +54,6 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -159,12 +156,6 @@ public class DatasetOpExecutorServiceTest {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(bob.getParent()).build());
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    try {
-      StoreDefinition.createAllTables(tableAdmin);
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Failed to create the system tables", e);
-    }
   }
 
   @After
