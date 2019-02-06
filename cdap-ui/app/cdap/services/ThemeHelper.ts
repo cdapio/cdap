@@ -331,7 +331,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showDashboard: true,
       showReports: true,
       showDataPrep: true,
-      showFeatureEngineering: true,
+      showFeatureEngineering: false,
       showPipelines: true,
       showAnalytics: true,
       showRulesEngine: true,

@@ -193,12 +193,14 @@ export function getErrorMessage(error, defaultMessage) {
 
 export function getClassNameForHeaderFooter(){
   let className = '';
-  if (!Theme.showHeader && !Theme.showfooter) {
-    className =  'no-header-footer';
-  } else if (!Theme.showHeader) {
-    className =  'no-header';
-  } else if (!Theme.showFooter) {
-    className =  'no-footer';
+  if(Theme){
+    if (!Theme.showHeader && !Theme.showfooter) {
+      className =  'no-header-footer';
+    } else if (!Theme.showHeader) {
+      className =  'no-header';
+    } else if (!Theme.showFooter) {
+      className =  'no-footer';
+    }
   }
   return className;
 }

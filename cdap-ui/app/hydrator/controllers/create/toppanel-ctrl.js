@@ -66,6 +66,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.fetchMacrosTimeout = null;
     this.timeoutInMinutes = 2;
     this.showIcon = window.CaskCommon.ThemeHelper.Theme.showPipelineCreateButton;
+    $scope.getClassName = window.CaskCommon.Util.getClassNameForHeaderFooter();
 
     if ($stateParams.isClone) {
       this.openMetadata();

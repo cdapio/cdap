@@ -1,6 +1,5 @@
 {
   "spec-version": "1.0",
-  "is-customer-MWC": true,
   "styles": {
     "brand-primary-color": "#3b78e7",
     "navbar-color": "#333333",
@@ -23,24 +22,20 @@
     },
     "favicon-path": "/cdap_assets/img/favicon.png",
     "footer-text": "Licensed under the Apache License, Version 2.0",
-    "footer-link": "https://www.apache.org/licenses/LICENSE-2.0",
-    "show-footer": false,
-    "show-header": false,
-    "show-pipeline-create-button": false,
-    "show-data-prep-plus-button": false
+    "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
   },
   "features": {
     "about-product": true,
     "dashboard": true,
     "reports": true,
     "data-prep": true,
-    "feature-engineering": true,
     "pipelines": true,
     "analytics": true,
     "rules-engine": true,
     "metadata": true,
     "hub": true,
     "ingest-data": true,
-    "add-namespace": true
+    "add-namespace": true,
+    "feature-engineering": true
   }
 }
