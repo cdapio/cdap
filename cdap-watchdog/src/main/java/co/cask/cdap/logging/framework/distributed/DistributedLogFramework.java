@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,6 @@ import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.kafka.KafkaLogProcessorPipeline;
 import co.cask.cdap.logging.pipeline.kafka.KafkaPipelineConfig;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -98,15 +97,12 @@ public class DistributedLogFramework extends ResourceBalancerService {
       );
 
       RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
-      pipelines.add(new RetryOnStartFailureService(new Supplier<Service>() {
-        @Override
-        public Service get() {
-          return new KafkaLogProcessorPipeline(
-            new LogProcessorPipelineContext(cConf, context.getName(), context,
-                                            context.getMetricsContext(), context.getInstanceId()),
-            checkpointManagerFactory.create(topic, pipelineSpec.getCheckpointPrefix()), brokerService, config);
-        }
-      }, retryStrategy));
+      pipelines.add(new RetryOnStartFailureService(
+        () -> new KafkaLogProcessorPipeline(
+          new LogProcessorPipelineContext(cConf, context.getName(), context,
+                                          context.getMetricsContext(), context.getInstanceId()),
+          checkpointManagerFactory.create(topic, pipelineSpec.getCheckpointPrefix()), brokerService, config),
+        retryStrategy));
     }
 
     // Returns a Service that start/stop all pipelines.

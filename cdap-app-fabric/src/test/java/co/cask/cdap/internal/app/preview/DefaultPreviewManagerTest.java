@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.preview;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRunner;
@@ -49,7 +48,6 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -86,7 +84,6 @@ public class DefaultPreviewManagerTest {
       new DataSetServiceModules().getInMemoryModules(),
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
-      new ServiceStoreModules().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new NonCustomLocationUnitTestModule(),
       new LocalLogAppenderModule(),
@@ -94,7 +91,6 @@ public class DefaultPreviewManagerTest {
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new ConfigStoreModule().getInMemoryModule(),
-      new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getInMemoryModules(),
       new AuthorizationModule(),

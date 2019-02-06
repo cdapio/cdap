@@ -426,7 +426,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new KafkaLogAppenderModule(),
       new ExploreRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new AuthenticationContextModules().getMasterModule(),
       new SecureStoreClientModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),

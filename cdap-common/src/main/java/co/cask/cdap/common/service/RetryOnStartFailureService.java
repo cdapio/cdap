@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.common.service;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -28,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -66,9 +66,8 @@ public class RetryOnStartFailureService extends AbstractService {
       public void run() {
         int failures = 0;
         long startTime = System.currentTimeMillis();
-        long delay = 0L;
 
-        while (delay >= 0 && !stopped) {
+        while (!stopped) {
           try {
             currentDelegate.start().get();
             // Only assigned the delegate if and only if the delegate service started successfully
@@ -79,7 +78,7 @@ public class RetryOnStartFailureService extends AbstractService {
           } catch (Throwable t) {
             LOG.debug("Exception raised when starting service {}", delegateServiceName, t);
 
-            delay = retryStrategy.nextRetry(++failures, startTime);
+            long delay = retryStrategy.nextRetry(++failures, startTime);
             if (delay < 0) {
               LOG.error("Failed to start service {} after {} retries in {}ms",
                         delegateServiceName, failures, System.currentTimeMillis() - startTime);
@@ -132,12 +131,7 @@ public class RetryOnStartFailureService extends AbstractService {
     // because if the underlying service is not yet started due to failure, it shouldn't affect the stop state
     // of this retrying service.
     if (currentDelegate != null) {
-      currentDelegate.stop().addListener(new Runnable() {
-        @Override
-        public void run() {
-          notifyStopped();
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
+      currentDelegate.stop().addListener(this::notifyStopped, Threads.SAME_THREAD_EXECUTOR);
       return;
     }
 

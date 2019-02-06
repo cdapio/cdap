@@ -59,7 +59,6 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.preview.PreviewSecureStoreModule;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -221,7 +220,6 @@ public class DefaultPreviewManager implements PreviewManager {
       // save threads for reading metrics from TMS, as there won't be metrics in TMS.
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new LocalLogAppenderModule(),
-      new NamespaceStoreModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new MetadataReaderWriterModules().getInMemoryModules(),
       new ProvisionerModule(),

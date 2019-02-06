@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,52 +18,20 @@ package co.cask.cdap.data2.audit;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.runtime.RuntimeModule;
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 
 /**
  * Guice bindings for publishing audit.
  */
-public class AuditModule extends RuntimeModule {
-  @Override
-  public Module getInMemoryModules() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(AuditPublisher.class).to(InMemoryAuditPublisher.class);
-        bind(InMemoryAuditPublisher.class).in(Singleton.class);
-        expose(AuditPublisher.class);
-        expose(InMemoryAuditPublisher.class);
-      }
-    };
-  }
+public class AuditModule extends AbstractModule {
 
   @Override
-  public Module getStandaloneModules() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(AuditPublisher.class).toProvider(AuditPublisherProvider.class).in(Scopes.SINGLETON);
-        expose(AuditPublisher.class);
-      }
-    };
-  }
-
-  @Override
-  public Module getDistributedModules() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        bind(AuditPublisher.class).toProvider(AuditPublisherProvider.class).in(Scopes.SINGLETON);
-        expose(AuditPublisher.class);
-      }
-    };
+  protected void configure() {
+    bind(AuditPublisher.class).toProvider(AuditPublisherProvider.class).in(Scopes.SINGLETON);
   }
 
   private static final class AuditPublisherProvider implements Provider<AuditPublisher> {

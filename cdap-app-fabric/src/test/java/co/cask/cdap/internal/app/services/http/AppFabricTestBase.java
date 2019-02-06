@@ -232,16 +232,15 @@ public abstract class AppFabricTestBase {
     }
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+
+    // Define all StructuredTable before starting any services that need StructuredTable
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
+
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-
-    // Create the tables required for unit test. This needs to happen before the app fabric server is started
-    // since bootstrap service will attempt to write to tables.
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
-
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);

@@ -19,8 +19,8 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.MasterUtils;
@@ -80,9 +80,7 @@ import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.StoreDefinition;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Iterables;
@@ -385,18 +383,6 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
-   * Gets an instance of the given {@link Service} class from the given {@link Injector}, start the service and
-   * returns it.
-   */
-  private static <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
-    T service = injector.getInstance(cls);
-    LOG.debug("Starting service in master {}", service);
-    service.startAndWait();
-    LOG.info("Service {} started in master", service);
-    return service;
-  }
-
-  /**
    * Stops a guava {@link Service}. No exception will be thrown even stopping failed.
    */
   private static void stopQuietly(@Nullable Service service) {
@@ -565,13 +551,12 @@ public class MasterServiceMain extends DaemonMain {
       new MetricsStoreModule(),
       new MessagingClientModule(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getDistributedModules(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
-      new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
+      new MonitorHandlerModule(true),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
@@ -633,11 +618,19 @@ public class MasterServiceMain extends DaemonMain {
         exploreClient = injector.getInstance(ExploreClient.class);
       }
 
+      try {
+        // Define all StructuredTable before starting any services that need StructuredTable
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                        injector.getInstance(StructuredTableRegistry.class));
+      } catch (IOException | TableAlreadyExistsException e) {
+        throw new RuntimeException("Unable to create the system tables.", e);
+      }
+
       authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
-      services.add(getAndStart(injector, KafkaClientService.class));
-      services.add(getAndStart(injector, MetricsCollectionService.class));
-      services.add(getAndStart(injector, OperationalStatsService.class));
-      ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
+      services.add(injector.getInstance(KafkaClientService.class));
+      services.add(injector.getInstance(MetricsCollectionService.class));
+      services.add(injector.getInstance(OperationalStatsService.class));
+      ServiceStore serviceStore = injector.getInstance(ServiceStore.class);
       services.add(serviceStore);
       services.add(injector.getInstance(SecureStoreService.class));
 
@@ -659,12 +652,8 @@ public class MasterServiceMain extends DaemonMain {
       }
 
       // Create app-fabric and dataset services
-      services.add(new RetryOnStartFailureService(new Supplier<Service>() {
-        @Override
-        public Service get() {
-          return injector.getInstance(DatasetService.class);
-        }
-      }, RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
+      services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
+                                                  RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
       services.add(injector.getInstance(AppFabricServer.class));
 
       executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
@@ -688,13 +677,6 @@ public class MasterServiceMain extends DaemonMain {
           stop(true);
           throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
         }
-      }
-
-      StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-      try {
-        StoreDefinition.createAllTables(tableAdmin, injector.getInstance(StructuredTableRegistry.class));
-      } catch (IOException | TableAlreadyExistsException e) {
-        throw new RuntimeException("Unable to create the system tables.", e);
       }
       LOG.info("CDAP Master started successfully.");
     }

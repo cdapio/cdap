@@ -32,8 +32,8 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -100,7 +100,6 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
@@ -232,7 +231,7 @@ public class TestBase {
       new LocalLocationModule(),
       new InMemoryDiscoveryModule(),
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
-      new ServiceStoreModules().getInMemoryModules(),
+      new MonitorHandlerModule(false),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new SecureStoreServerModule(),
       new MetadataReaderWriterModules().getInMemoryModules(),
@@ -248,7 +247,6 @@ public class TestBase {
       new LogReaderRuntimeModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getStandaloneModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
@@ -278,6 +276,10 @@ public class TestBase {
 
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
+    // Define all StructuredTable before starting any services that need StructuredTable
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
+
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
@@ -324,8 +326,6 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
                                          ImmutableSet.of(Action.ADMIN));
     }
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
       // only create the default namespace on first test. if multiple tests are run in the same JVM,

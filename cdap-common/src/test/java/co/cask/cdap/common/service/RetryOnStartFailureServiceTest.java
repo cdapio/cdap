@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.common.service;
 
 import co.cask.cdap.common.utils.Tasks;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -34,6 +33,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 /**
  *
@@ -116,21 +116,16 @@ public class RetryOnStartFailureServiceTest {
     final Map<String, String> context = Collections.singletonMap("key", "value");
 
     // Create the service before setting the context.
-    Service service = new RetryOnStartFailureService(new Supplier<Service>() {
+    Service service = new RetryOnStartFailureService(() -> new AbstractIdleService() {
+
       @Override
-      public Service get() {
-        return new AbstractIdleService() {
+      protected void startUp() throws Exception {
+        Assert.assertEquals(context, MDC.getCopyOfContextMap());
+      }
 
-          @Override
-          protected void startUp() throws Exception {
-            Assert.assertEquals(context, MDC.getCopyOfContextMap());
-          }
-
-          @Override
-          protected void shutDown() throws Exception {
-            Assert.assertEquals(context, MDC.getCopyOfContextMap());
-          }
-        };
+      @Override
+      protected void shutDown() throws Exception {
+        Assert.assertEquals(context, MDC.getCopyOfContextMap());
       }
     }, RetryStrategies.noRetry());
 

@@ -127,7 +127,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new MetricsProcessorModule(twillContext),
       new MetricsProcessorStatusServiceModule(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {

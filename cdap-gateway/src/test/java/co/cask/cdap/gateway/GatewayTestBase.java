@@ -176,12 +176,13 @@ public abstract class GatewayTestBase {
     }
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
+    // Define all StructuredTable before starting any services that need StructuredTable
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
@@ -198,9 +199,6 @@ public abstract class GatewayTestBase {
     router = injector.getInstance(NettyRouter.class);
     router.startAndWait();
     port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
-
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
 
     return injector;
   }
