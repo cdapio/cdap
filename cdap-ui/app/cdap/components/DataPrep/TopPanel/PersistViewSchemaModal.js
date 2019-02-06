@@ -17,16 +17,16 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
-import { Modal, ModalHeader, ModalBody } from 'reactstrap';
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from 'reactstrap';
 import DataPrepStore from 'components/DataPrep/store';
-import {objectQuery} from 'services/helpers';
+import { objectQuery } from 'services/helpers';
 import T from 'i18n-react';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
-import {getSchemaObjFromFieldsArray} from 'components/SchemaEditor/SchemaHelpers';
+import { getSchemaObjFromFieldsArray } from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import MyFeatureEngineeringApi from 'api/featureengineeringapp';
 import NamespaceStore from 'services/NamespaceStore';
-import {directiveRequestBodyCreator, viewSchemaPersistRequestBodyCreator} from 'components/DataPrep/helper';
+import { directiveRequestBodyCreator, viewSchemaPersistRequestBodyCreator } from 'components/DataPrep/helper';
 
 const PREFIX = 'features.DataPrep.TopPanel';
 const mapErrorToMessage = (message) => {
@@ -34,11 +34,11 @@ const mapErrorToMessage = (message) => {
     let splitMessage = message.split("field name: ");
     let fieldName = objectQuery(splitMessage, 1) || message;
     return {
-      message: T.translate(`${PREFIX}.invalidFieldNameMessage`, {fieldName}),
+      message: T.translate(`${PREFIX}.invalidFieldNameMessage`, { fieldName }),
       remedies: `${T.translate(`${PREFIX}.invalidFieldNameRemedies1`)}`
     };
   }
-  return {message};
+  return { message };
 };
 
 
@@ -56,8 +56,9 @@ export default class PersistViewSchemaModel extends Component {
       batchConfig: null,
       schema: [],
       response: null,
-      datasetName: null,
-      formloaded: false
+      datasetName: "",
+      formloaded: false,
+      navigateFE: false,
     };
   }
 
@@ -67,9 +68,13 @@ export default class PersistViewSchemaModel extends Component {
   }
 
   persistViewSchema() {
-    if (!this.state.loading) {
-      return;
-    }
+    // if (!this.state.loading) {
+    //   return;
+    // }
+    this.setState({
+      error: false,
+      loading: true,
+    });
 
     let config = this.state.realtimeConfig;
     let configType = 'realTime';
@@ -80,28 +85,29 @@ export default class PersistViewSchemaModel extends Component {
     let datasetName = this.state.datasetName;
     let namespace = NamespaceStore.getState().selectedNamespace;
     let requestObj = {
-        namespace: namespace,
-        datasetName: datasetName,
-        configType: configType
-      };
-     let requestBody = viewSchemaPersistRequestBodyCreator(JSON.stringify([getSchemaObjFromFieldsArray(this.state.schema)], null, 4),JSON.stringify(config));
-      MyFeatureEngineeringApi
-        .persistWranglerPluginConfig(requestObj, requestBody)
-        .subscribe(
-          (res) => {
-            this.setState({
-              loading: false,
-              response: objectQuery(res, 'response', 'message') || JSON.stringify(res)
-            });
-          },
-          (err) => {
-            this.setState({
-              loading: false,
-              error: objectQuery(err, 'response', 'message') || JSON.stringify(err)
-            });
-            console.log('Error', err);
-          }
-        );
+      namespace: namespace,
+      datasetName: datasetName,
+      configType: configType
+    };
+    let requestBody = viewSchemaPersistRequestBodyCreator(JSON.stringify([getSchemaObjFromFieldsArray(this.state.schema)], null, 4), JSON.stringify(config));
+    MyFeatureEngineeringApi
+      .persistWranglerPluginConfig(requestObj, requestBody)
+      .subscribe(
+        (res) => {
+          this.setState({
+            navigateFE: true,
+            loading: false,
+            response: objectQuery(res, 'response', 'message') || JSON.stringify(res)
+          });
+        },
+        (err) => {
+          this.setState({
+            loading: false,
+            error: objectQuery(err, 'response', 'message') || JSON.stringify(err)
+          });
+          console.log('Error', err);
+        }
+      );
   }
 
   generateLinks() {
@@ -111,20 +117,20 @@ export default class PersistViewSchemaModel extends Component {
     getPipelineConfig().subscribe(
       (res) => {
 
-        this.setState({        
+        this.setState({
           worspaceId: workspaceId,
           realtimeConfig: res.realtimeConfig,
           batchConfig: res.batchConfig,
           configloading: false
         });
-        
+
       },
       (err) => {
-        let {message, remedies = null} = mapErrorToMessage(err);
+        let { message, remedies = null } = mapErrorToMessage(err);
 
         if (remedies) {
           this.setState({
-            error: {message, remedies},
+            error: { message, remedies },
             configloading: false
           });
           return;
@@ -139,16 +145,15 @@ export default class PersistViewSchemaModel extends Component {
   }
 
   handleChange = (e) => {
-    this.setState({datasetName: e.target.value});
+    this.setState({ datasetName: e.target.value });
   }
-  
- 
-  handleSubmit = (e) => {
-    this.setState({formloaded: true});
-    e.preventDefault();
+
+
+  handleSubmit = () => {
+    this.setState({ formloaded: true });
     this.persistViewSchema();
   }
-  
+
   getSchema() {
     let state = DataPrepStore.getState().dataprep;
     let workspaceId = state.workspaceId;
@@ -177,94 +182,92 @@ export default class PersistViewSchemaModel extends Component {
       });
   }
 
+   navigateToFeature = () => {
+    const namespace = NamespaceStore.getState().selectedNamespace;
+    const feURL = `/ns/${namespace}/featureEngineering`;
+    const fePath = `/cdap${feURL}`;
+    window.location.href = fePath;
+  }
+
+
   render() {
     let content;
-    let headerContent;
-    if(!this.state.configloading && !this.state.schemaloading && !this.state.formloaded) {
-        content = (
-        <div className="text-xs-center">		
-          <form onSubmit={this.handleSubmit}>
-            <label>
-              Dataset Name:
-              <input type="text" value={this.state.datasetName} onChange={this.handleChange} size="70" />
-            </label>
-            <input type="submit" value="Submit" />
-          </form>
-        </div>
-    );
-        headerContent = (
-        <div className="text-xs-center">	
-          <p><b>Enter Dataset Name</b></p>
-        </div>
-    );
+    let inputStyle = {
+      'width': '300px',
+      'margin-left': '10px'
+    };
+    let modalStyle = {
+      'width': '500px'
+    };
+    if (!this.state.configloading && !this.state.schemaloading && !this.state.formloaded) {
+      content = null;
     } else {
-      headerContent = (
-        <div className="text-xs-center">	
-         <p><b>Result</b></p>
-        </div>
-      );        
       if (this.state.loading) {
-      content = (
-        <div className="text-xs-center">
-          <h4>
-            <span className="fa fa-spin fa-spinner" />
-          </h4>
-        </div>
-      );
-    } else if (this.state.error) {
-      content = (
-        <div>
-          <div className="text-danger">
-            <span className="fa fa-exclamation-triangle"></span>
-            <span>
-              {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
-            </span>
+        content = (
+          <div className="text-xs-center">
+            <h4>
+              <span className="fa fa-spin fa-spinner" />
+            </h4>
           </div>
-          <div className="remedy-message">
+        );
+      } else if (this.state.error) {
+        content = (
+          <div>
+            <div className="text-danger">
+              <span className="fa fa-exclamation-triangle"></span>
+              <span>
+                {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
+              </span>
+            </div>
+            <div className="remedy-message">
               {
                 objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
               }
             </div>
 
-        </div>
-      );
-    } else {
-      content = (
-        <div className="remedy-message">
-          {this.state.response}
-        </div>
-      );
-     }
+          </div>
+        );
+      } else {
+        content = (
+          <div className="remedy-message">
+            {this.state.response}
+          </div>
+        );
+      }
     }
 
     return (
-      <Modal
+      <Modal style={modalStyle}
         isOpen={true}
         toggle={this.props.toggle}
         size="lg"
         zIndex="1061"
         className="dataprep-schema-modal"
       >
-        <ModalHeader>
-          <span>
-             {headerContent}
-          </span>
-
-          <div
-            className="close-section float-xs-right"
-          >
-            <span
-              className="fa fa-times"
-              onClick={this.props.toggle}
-            />
-          </div>
-        </ModalHeader>
+        <ModalHeader>Persist Dataset</ModalHeader>
         <ModalBody>
+            <div className="text-xs-left">
+              <label>
+                Dataset Name:
+                  <input type="text" style={inputStyle} value={this.state.datasetName} onChange={this.handleChange} />
+              </label>
+            </div>
+
           {content}
         </ModalBody>
+        <ModalFooter>
+          {
+            this.state.navigateFE ?
+            <Button className="btn-margin" color="primary" onClick={this.navigateToFeature}>Continue in FeatureEngineering</Button>
+            :null
+          }
+
+          <Button className="btn-margin" color="secondary" onClick={this.props.toggle}>Cancel</Button>
+          <Button className="btn-margin" color="primary" onClick={this.handleSubmit}
+            disabled={this.state.datasetName.trim().length < 1} >OK</Button>
+        </ModalFooter>
       </Modal>
     );
-  
   }
 }
 
