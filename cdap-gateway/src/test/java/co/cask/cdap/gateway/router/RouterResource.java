@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import com.google.common.net.InetAddresses;
@@ -60,7 +59,6 @@ class RouterResource extends ExternalResource {
                                              new AppFabricTestModule(cConf));
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AccessTokenTransformer accessTokenTransformer = new MockAccessTokenTransfomer();
-    RouteStore routeStore = injector.getInstance(RouteStore.class);
     SConfiguration sConf = injector.getInstance(SConfiguration.class);
     cConf.set(Constants.Router.ADDRESS, hostname);
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
@@ -70,7 +68,7 @@ class RouterResource extends ExternalResource {
     router =
       new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                       new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
-                                              new RouterPathLookup(), routeStore),
+                                              new RouterPathLookup()),
                       new MockTokenValidator("failme"), accessTokenTransformer, discoveryServiceClient);
     router.startAndWait();
   }

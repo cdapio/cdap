@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.http.AbstractHttpHandler;
@@ -69,7 +68,6 @@ public class RoutingToDataSetsTest {
     // Starting router
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
-    RouteStore routeStore = injector.getInstance(RouteStore.class);
 
     SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
@@ -77,8 +75,7 @@ public class RoutingToDataSetsTest {
 
     cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
-                                  new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup(),
-                                                          routeStore),
+                                  new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup()),
                                   new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
     nettyRouter.startAndWait();
 
