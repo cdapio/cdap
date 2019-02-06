@@ -19,7 +19,7 @@ const SERVICE_PORT = "11015";
 export const SERVER_IP = (window.location.hostname == "localhost") ? REMOTE_IP : (window.location.protocol + "//" + window.location.hostname + ":" + SERVICE_PORT);
 export const GET_PIPE_LINE_CORRELATED_DATA = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/ManualFeatureSelectionService/methods/featureengineering/features/correlation/matrix/get?pipelineName=";
 
-export const PIPELINE_TYPES = ["All", "featureGeneration", "featureSelection"];
+export const PIPELINE_TYPES = ["All", "Feature Generation Pipeline", "Selected Feature Pipeline"];
 
 export const GET_PIPELINE = "GET_PIPELINE";
 export const GET_SCHEMA = "GET_SCHEMA";
