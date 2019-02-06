@@ -117,6 +117,15 @@
   </property>
 
   <property>
+    <name>master.environment.extensions.dir</name>
+    <value>/opt/cdap/master/ext/environments</value>
+    <description>
+      Semicolon-separated list of local directories that are scanned for
+      CDAP Master environment providers.
+    </description>
+  </property>
+
+  <property>
     <name>master.startup.checks.classes</name>
     <value></value>
     <description>

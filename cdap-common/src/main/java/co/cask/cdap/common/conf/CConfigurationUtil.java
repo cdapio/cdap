@@ -20,9 +20,15 @@ import com.google.common.base.Preconditions;
 
 import java.io.File;
 import java.net.URI;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Utilities for {@link CConfiguration}.
@@ -30,6 +36,34 @@ import java.util.Properties;
 public class CConfigurationUtil extends Configuration {
 
   private CConfigurationUtil() { }
+
+  /**
+   * Returns an immutable {@link Map} that is backed by the given {@link CConfiguration}.
+   */
+  public static Map<String, String> asMap(CConfiguration cConf) {
+    return new AbstractMap<String, String>() {
+      @Override
+      public Set<Entry<String, String>> entrySet() {
+        return Collections.unmodifiableSet(
+          StreamSupport.stream(cConf.spliterator(), false).collect(Collectors.toSet()));
+      }
+
+      @Override
+      public boolean containsKey(Object key) {
+        return get(key) != null;
+      }
+
+      @Override
+      public String get(Object key) {
+        return cConf.get(key.toString());
+      }
+
+      @Override
+      public int size() {
+        return cConf.size();
+      }
+    };
+  }
 
   public static void copyTxProperties(CConfiguration cConf, org.apache.hadoop.conf.Configuration destination) {
     Properties props = cConf.getProps();
