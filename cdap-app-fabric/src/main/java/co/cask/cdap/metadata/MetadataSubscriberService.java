@@ -32,12 +32,12 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.SystemMetadataProvider;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
@@ -92,8 +92,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
 
-  private static final Set<String> DESCRIPTION_SET = Collections.singleton(SystemMetadataProvider.DESCRIPTION_KEY);
-  private static final Set<String> CREATION_TIME_SET = Collections.singleton(SystemMetadataProvider.CREATION_TIME_KEY);
+  private static final Set<String> DESCRIPTION_SET = Collections.singleton(MetadataConstants.DESCRIPTION_KEY);
+  private static final Set<String> CREATION_TIME_SET = Collections.singleton(MetadataConstants.CREATION_TIME_KEY);
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;

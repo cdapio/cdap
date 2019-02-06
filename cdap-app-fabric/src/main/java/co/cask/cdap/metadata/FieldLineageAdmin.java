@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,11 +26,11 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -111,8 +111,8 @@ public class FieldLineageAdmin {
                                                                    MetadataEntity.ofDataset(endPoint.getNamespace(),
                                                                                             endPoint.getName()));
       // the system metadata contains the schema of the dataset which is written by the DatasetSystemMetadataWriter
-      if (properties.containsKey(AbstractSystemMetadataWriter.SCHEMA_KEY)) {
-        String schema = properties.get(AbstractSystemMetadataWriter.SCHEMA_KEY);
+      if (properties.containsKey(MetadataConstants.SCHEMA_KEY)) {
+        String schema = properties.get(MetadataConstants.SCHEMA_KEY);
         Schema sc = Schema.parseJson(schema);
         if (sc.getFields() != null) {
           Set<String> schemaFields = sc.getFields().stream().map(Schema.Field::getName).collect(Collectors.toSet());

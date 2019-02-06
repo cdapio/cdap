@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
@@ -917,9 +916,9 @@ public class MetadataDatasetTest {
     final long creationTime = System.currentTimeMillis();
     txnl.execute(() -> {
       dataset.addProperty(program1, "key", value);
-      dataset.addProperty(program1, AbstractSystemMetadataWriter.SCHEMA_KEY, schema);
-      dataset.addProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, name);
-      dataset.addProperty(dataset1, AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(creationTime));
+      dataset.addProperty(program1, MetadataConstants.SCHEMA_KEY, schema);
+      dataset.addProperty(dataset1, MetadataConstants.ENTITY_NAME_KEY, name);
+      dataset.addProperty(dataset1, MetadataConstants.CREATION_TIME_KEY, String.valueOf(creationTime));
     });
     final String namespaceId = program1.getValue(MetadataEntity.NAMESPACE);
     txnl.execute(() -> {
@@ -1003,7 +1002,7 @@ public class MetadataDatasetTest {
     ApplicationId ns1app3 = new NamespaceId("ns1").app("a3");
     ApplicationId ns2app1 = new NamespaceId("ns2").app("a1");
     ApplicationId ns2app2 = new NamespaceId("ns2").app("a2");
-    String key = AbstractSystemMetadataWriter.ENTITY_NAME_KEY;
+    String key = MetadataConstants.ENTITY_NAME_KEY;
     txnl.execute(() -> {
       dataset.addProperty(ns1app1.toMetadataEntity(), key, ns1app1.getApplication());
       dataset.addProperty(ns1app2.toMetadataEntity(), key, ns1app2.getApplication());
@@ -1017,7 +1016,7 @@ public class MetadataDatasetTest {
     MetadataEntry ns1app3Entry = new MetadataEntry(ns1app3.toMetadataEntity(), key, ns1app3.getApplication());
     MetadataEntry ns2app1Entry = new MetadataEntry(ns2app1.toMetadataEntity(), key, ns2app1.getApplication());
     MetadataEntry ns2app2Entry = new MetadataEntry(ns2app2.toMetadataEntity(), key, ns2app2.getApplication());
-    SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
+    SortInfo nameAsc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
     // first, get the full ordered list in one page
     SearchRequest request1 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
                                                0, 10, 1, null, false, EnumSet.allOf(EntityScope.class));
@@ -1067,19 +1066,19 @@ public class MetadataDatasetTest {
     MetadataEntity ns1App = new NamespaceId("ns1").app(appName).toMetadataEntity();
     MetadataEntity ns2App = new NamespaceId("ns2").app(appName).toMetadataEntity();
     txnl.execute(() -> {
-      dataset.addProperty(ns2App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
-      dataset.addProperty(ns1App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+      dataset.addProperty(ns2App, MetadataConstants.ENTITY_NAME_KEY, appName);
+      dataset.addProperty(ns1App, MetadataConstants.ENTITY_NAME_KEY, appName);
     });
 
-    SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
+    SortInfo nameAsc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
 
     SearchRequest request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
                                               0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     SearchResults results = txnl.execute(() -> dataset.search(request));
     List<MetadataEntry> actual = results.getResults();
     List<MetadataEntry> expected = new ArrayList<>();
-    expected.add(new MetadataEntry(ns1App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName));
-    expected.add(new MetadataEntry(ns2App, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName));
+    expected.add(new MetadataEntry(ns1App, MetadataConstants.ENTITY_NAME_KEY, appName));
+    expected.add(new MetadataEntry(ns2App, MetadataConstants.ENTITY_NAME_KEY, appName));
     Assert.assertEquals(expected, actual);
   }
 
@@ -1092,15 +1091,15 @@ public class MetadataDatasetTest {
     String dsName = "name21 name22";
     String appName = "name31 name32 name33";
     txnl.execute(() -> {
-      dataset.addProperty(program1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, flowName);
-      dataset.addProperty(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, dsName);
-      dataset.addProperty(app1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+      dataset.addProperty(program1, MetadataConstants.ENTITY_NAME_KEY, flowName);
+      dataset.addProperty(dataset1, MetadataConstants.ENTITY_NAME_KEY, dsName);
+      dataset.addProperty(app1, MetadataConstants.ENTITY_NAME_KEY, appName);
     });
     NamespaceId namespaceId = new NamespaceId(program1.getValue(MetadataEntity.NAMESPACE));
     EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
-    MetadataEntry flowEntry = new MetadataEntry(program1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, flowName);
-    MetadataEntry dsEntry = new MetadataEntry(dataset1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, dsName);
-    MetadataEntry appEntry = new MetadataEntry(app1, AbstractSystemMetadataWriter.ENTITY_NAME_KEY, appName);
+    MetadataEntry flowEntry = new MetadataEntry(program1, MetadataConstants.ENTITY_NAME_KEY, flowName);
+    MetadataEntry dsEntry = new MetadataEntry(dataset1, MetadataConstants.ENTITY_NAME_KEY, dsName);
+    MetadataEntry appEntry = new MetadataEntry(app1, MetadataConstants.ENTITY_NAME_KEY, appName);
     txnl.execute(() -> {
       // since no sort is to be performed by the dataset, we return all (ignore limit and offset)
       SearchRequest request = new SearchRequest(namespaceId, "name*", targets, SortInfo.DEFAULT, 0, 3, 1, null,
@@ -1115,7 +1114,7 @@ public class MetadataDatasetTest {
         searchResults.getResults()
       );
       // ascending sort by name. offset and limit should be respected.
-      SortInfo nameAsc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
+      SortInfo nameAsc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
       // first 2 in ascending order
       request = new SearchRequest(namespaceId, "*", targets, nameAsc, 0, 2, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
@@ -1127,7 +1126,7 @@ public class MetadataDatasetTest {
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
       // descending sort by name. offset and filter should be respected.
-      SortInfo nameDesc = new SortInfo(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, SortInfo.SortOrder.DESC);
+      SortInfo nameDesc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.DESC);
       // first 2 in descending order
       request = new SearchRequest(namespaceId, "*", targets, nameDesc, 0, 2, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));

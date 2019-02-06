@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -51,7 +52,7 @@ public abstract class AbstractSystemMetadataWriter implements SystemMetadataWrit
     Map<String, String> properties = getSystemPropertiesToAdd();
     if (!Strings.isNullOrEmpty(schema)) {
       properties = new HashMap<>(properties);
-      properties.put(SystemMetadataProvider.SCHEMA_KEY, schema);
+      properties.put(MetadataConstants.SCHEMA_KEY, schema);
     }
     metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(metadataEntity, properties, tags));
   }

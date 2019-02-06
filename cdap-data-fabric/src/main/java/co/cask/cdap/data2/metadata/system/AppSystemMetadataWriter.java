@@ -54,13 +54,13 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
-    properties.put(ENTITY_NAME_KEY, appSpec.getName());
+    properties.put(MetadataConstants.ENTITY_NAME_KEY, appSpec.getName());
     properties.put(VERSION_KEY, appId.getVersion());
     String description = appSpec.getDescription();
     if (!Strings.isNullOrEmpty(description)) {
-      properties.put(DESCRIPTION_KEY, description);
+      properties.put(MetadataConstants.DESCRIPTION_KEY, description);
     }
-    properties.put(CREATION_TIME_KEY, creationTime);
+    properties.put(MetadataConstants.CREATION_TIME_KEY, creationTime);
     addPrograms(properties);
     addSchedules(properties);
     // appSpec.getPlugins() returns all instances of all plugins, so there may be duplicates.

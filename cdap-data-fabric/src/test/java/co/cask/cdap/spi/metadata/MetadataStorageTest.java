@@ -18,6 +18,7 @@ package co.cask.cdap.spi.metadata;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -34,16 +35,22 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
 import static co.cask.cdap.api.metadata.MetadataScope.USER;
-import static co.cask.cdap.data2.metadata.system.SystemMetadataProvider.ENTITY_NAME_KEY;
+import static co.cask.cdap.data2.metadata.MetadataConstants.CREATION_TIME_KEY;
+import static co.cask.cdap.data2.metadata.MetadataConstants.ENTITY_NAME_KEY;
 import static co.cask.cdap.spi.metadata.MetadataKind.PROPERTY;
 import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
 
@@ -877,86 +884,98 @@ public abstract class MetadataStorageTest {
   }
 
   @Test
-  public void testPaginationWithSorting() throws Exception {
-
-    final String ns = "ns1";
-    final String programName = "prog";
-    final String datasetName = "ds";
-    final String appName = "app";
-    final NamespaceId ns1Id = new NamespaceId(ns);
-    final ApplicationId app1Id = ns1Id.app("app");
-    final MetadataEntity app = app1Id.toMetadataEntity();
-    final MetadataEntity program = app1Id.worker(programName).toMetadataEntity();
-    final MetadataEntity dataset = ns1Id.dataset(datasetName).toMetadataEntity();
-
-    MetadataRecord appRecord =
-      new MetadataRecord(app, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, appName, "k", "name1")));
-    MetadataRecord datasetRecord =
-      new MetadataRecord(dataset, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, datasetName, "kk", "name2")));
-    MetadataRecord programRecord =
-      new MetadataRecord(program, new Metadata(SYSTEM, props(ENTITY_NAME_KEY, programName, "kkk", "name3")));
-
+  public void testSortedSearchAndPagination() throws IOException {
     MetadataStorage mds = getMetadataStorage();
-    mds.batch(batch(new Update(app, appRecord.getMetadata()),
-                    new Update(dataset, datasetRecord.getMetadata()),
-                    new Update(program, programRecord.getMetadata())));
 
-    assertResults(mds, SearchRequest.of("name*").addNamespace(ns).setLimit(3).build(),
-                  appRecord, datasetRecord, programRecord);
+    // create 10 unique random entity ids with random creation times
+    NoDupRandom random = new NoDupRandom();
+    List<MetadataEntity> entities = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      entities.add(MetadataEntity.ofDataset("myns", "ds" + String.valueOf(random.nextInt(1000))));
+    }
 
-    // ascending sort by name. offset and limit should be respected.
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2)
-                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                  appRecord, datasetRecord);
-    // return 2 with offset 1 in ascending order
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setOffset(1).setLimit(2)
-                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                  datasetRecord, programRecord);
-    // first 2 in descending order
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2)
-                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.DESC)).build(),
-                  programRecord, datasetRecord);
-    // third one in descending order
-    assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setOffset(2).setLimit(1)
-                    .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.DESC)).build(),
-                  appRecord);
-    // test cursors
-    SearchResponse response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(1).setCursorRequested(true)
-                      .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                    appRecord);
-    Assert.assertNotNull(response.getCursor());
-    response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(1).setCursorRequested(true)
-                      .setCursor(response.getCursor()).setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
-                      .build(),
-                    datasetRecord);
-    Assert.assertNotNull(response.getCursor());
-    response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(1).setCursorRequested(true)
-                      .setCursor(response.getCursor()).setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
-                      .build(),
-                    programRecord);
-    Assert.assertNull(response.getCursor());
+    long creationTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(60);
+    List<MetadataRecord> records = entities.stream().map(
+      entity -> new MetadataRecord(
+        entity, new Metadata(SYSTEM, props(MetadataConstants.CREATION_TIME_KEY,
+                                           String.valueOf(creationTime + random.nextInt(1000000)),
+                                           MetadataConstants.ENTITY_NAME_KEY,
+                                           entity.getValue(entity.getType())))))
+      .collect(Collectors.toList());
 
-    // test cursors with page size 2
-    response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2).setCursorRequested(true)
-                      .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).build(),
-                    appRecord, datasetRecord);
-    Assert.assertNotNull(response.getCursor());
-    Assert.assertEquals(3, response.getTotalResults());
-    response =
-      assertInOrder(mds, SearchRequest.of("*").addNamespace(ns).setLimit(2).setCursorRequested(true)
-                      .setCursor(response.getCursor()).setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
-                      .build(),
-                    programRecord);
-    Assert.assertNull(response.getCursor());
-    // TODO (CDAP-14584) expect 3 here after this bug is fixed
-    // Assert.assertEquals(3, response.getTotalResults());
+    // index all entities
+    mds.batch(records.stream().map(
+      record -> new MetadataMutation.Update(record.getEntity(), record.getMetadata()))
+                .collect(Collectors.toList()));
+
+    testSortedSearch(mds, records, ENTITY_NAME_KEY);
+    testSortedSearch(mds, records, CREATION_TIME_KEY);
 
     // clean up
-    mds.batch(batch(new Drop(app), new Drop(dataset), new Drop(program)));
+    mds.batch(entities.stream().map(Drop::new).collect(Collectors.toList()));
+  }
+
+  private void testSortedSearch(MetadataStorage mds, List<MetadataRecord> records, String sortKey) throws IOException {
+    // test search by sort key itself
+    for (MetadataRecord record : records) {
+      assertResults(mds, SearchRequest.of(
+        sortKey + ":" + record.getMetadata().getProperties(SYSTEM).get(sortKey)).build(), record);
+    }
+
+    Sorting asc = new Sorting(MetadataConstants.CREATION_TIME_KEY, Sorting.Order.ASC);
+    Sorting desc = new Sorting(MetadataConstants.CREATION_TIME_KEY, Sorting.Order.DESC);
+    List<MetadataRecord> sorted = new ArrayList<>(records);
+    sorted.sort(Comparator.comparingLong(
+      r -> Long.parseLong(r.getMetadata().getProperties().get(new ScopedName(SYSTEM, CREATION_TIME_KEY)))));
+    List<MetadataRecord> reverse = new ArrayList<>(sorted);
+    Collections.reverse(reverse);
+
+    testSortedSearch(mds, asc, sorted);
+    testSortedSearch(mds, desc, reverse);
+  }
+
+  private void testSortedSearch(MetadataStorage mds, Sorting sorting, List<MetadataRecord> sorted) throws IOException {
+    // search once with sort by creation time and validate that records are in order
+    SearchResponse response = mds.search(SearchRequest.of("*").setSorting(sorting).build());
+    Assert.assertEquals(sorted, response.getResults());
+
+    // search for a window of results
+    assertInOrder(mds, SearchRequest.of("*").setSorting(sorting).setOffset(0).setLimit(4).build(),
+                  sorted.subList(0, 4));
+    assertInOrder(mds, SearchRequest.of("*").setSorting(sorting).setOffset(2).setLimit(4).build(),
+                  sorted.subList(2, 6));
+    assertInOrder(mds, SearchRequest.of("*").setSorting(sorting).setOffset(8).setLimit(4).build(),
+                  sorted.subList(8, 10));
+    assertEmpty(mds, SearchRequest.of("*").setSorting(sorting).setOffset(12).setLimit(4).build());
+
+    // search with cursor
+    response = assertInOrder(mds, SearchRequest.of("*").setSorting(sorting).setLimit(4)
+                               .setCursorRequested(true).build(),
+                             sorted.subList(0, 4));
+    Assert.assertNotNull(response.getCursor());
+    response = assertInOrder(mds, SearchRequest.of("*").setSorting(sorting).setLimit(4)
+                               .setCursorRequested(true).setCursor(response.getCursor()).build(),
+                             sorted.subList(4, 8));
+    Assert.assertNotNull(response.getCursor());
+    response = assertInOrder(mds, SearchRequest.of("*").setSorting(sorting).setLimit(4)
+                               .setCursorRequested(true).setCursor(response.getCursor()).build(),
+                             sorted.subList(8, 10));
+    Assert.assertNull(response.getCursor());
+  }
+
+  private static class NoDupRandom {
+    private final Random random = new Random(System.currentTimeMillis());
+    private final Set<Integer> seen = new HashSet<>();
+
+    int nextInt(int bound) {
+      while (true) {
+        int value = random.nextInt(bound);
+        if (!seen.contains(value)) {
+          seen.add(value);
+          return value;
+        }
+      }
+    }
   }
 
   private void verifyMetadataSelection(MetadataStorage mds, MetadataEntity entity, Metadata metadata,
@@ -1013,11 +1032,17 @@ public abstract class MetadataStorageTest {
   }
 
   protected static SearchResponse assertInOrder(MetadataStorage mds, SearchRequest request,
-                                                MetadataRecord... expectedResults)
+                                                List<MetadataRecord> expectedResults)
     throws IOException {
     SearchResponse response = mds.search(request);
-    Assert.assertEquals(ImmutableList.copyOf(expectedResults), response.getResults());
+    Assert.assertEquals(expectedResults, response.getResults());
     return response;
+  }
+
+  protected static SearchResponse assertInOrder(MetadataStorage mds, SearchRequest request,
+                                                MetadataRecord... expectedResults)
+    throws IOException {
+    return assertInOrder(mds, request, ImmutableList.copyOf(expectedResults));
   }
 
   protected static SearchResponse assertResults(MetadataStorage mds, SearchRequest request,

@@ -201,10 +201,10 @@ public class MetadataDataset extends AbstractDataset {
 
   private static final Set<Indexer> DEFAULT_INDEXERS = Collections.singleton(new DefaultValueIndexer());
   private static final Map<String, Set<Indexer>> SYSTEM_METADATA_KEY_TO_INDEXERS = ImmutableMap.of(
-    AbstractSystemMetadataWriter.SCHEMA_KEY, Collections.singleton(
+    MetadataConstants.SCHEMA_KEY, Collections.singleton(
       new SchemaIndexer()
     ),
-    AbstractSystemMetadataWriter.ENTITY_NAME_KEY, ImmutableSet.of(
+    MetadataConstants.ENTITY_NAME_KEY, ImmutableSet.of(
       // used for listing entities sorted in ascending order of name
       new ValueOnlyIndexer(),
       // used for listing entities sorted in descending order of name
@@ -212,7 +212,7 @@ public class MetadataDataset extends AbstractDataset {
       // used for searching entities with a search query
       new DefaultValueIndexer()
     ),
-    AbstractSystemMetadataWriter.CREATION_TIME_KEY, ImmutableSet.of(
+    MetadataConstants.CREATION_TIME_KEY, ImmutableSet.of(
       // used for listing entities sorted in ascending order of creation time
       new ValueOnlyIndexer(),
       // used for listing entities sorted in descending order of creation time
@@ -923,20 +923,20 @@ public class MetadataDataset extends AbstractDataset {
     switch (sortOrder) {
       case ASC:
         switch (key) {
-          case AbstractSystemMetadataWriter.ENTITY_NAME_KEY:
+          case MetadataConstants.ENTITY_NAME_KEY:
             indexColumn = ENTITY_NAME_INDEX_COLUMN;
             break;
-          case AbstractSystemMetadataWriter.CREATION_TIME_KEY:
+          case MetadataConstants.CREATION_TIME_KEY:
             indexColumn = CREATION_TIME_INDEX_COLUMN;
             break;
         }
         break;
       case DESC:
         switch (key) {
-          case AbstractSystemMetadataWriter.ENTITY_NAME_KEY:
+          case MetadataConstants.ENTITY_NAME_KEY:
             indexColumn = INVERTED_ENTITY_NAME_INDEX_COLUMN;
             break;
-          case AbstractSystemMetadataWriter.CREATION_TIME_KEY:
+          case MetadataConstants.CREATION_TIME_KEY:
             indexColumn = INVERTED_CREATION_TIME_INDEX_COLUMN;
             break;
         }

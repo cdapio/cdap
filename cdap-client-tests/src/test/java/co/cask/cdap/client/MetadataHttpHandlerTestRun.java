@@ -514,8 +514,8 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     // Verify create time exists, and is within the past hour
     Assert.assertTrue("Expected creation time to exist but it does not",
-                      dsSystemProperties.containsKey(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
-    long createTime = Long.parseLong(dsSystemProperties.get(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
+                      dsSystemProperties.containsKey(MetadataConstants.CREATION_TIME_KEY));
+    long createTime = Long.parseLong(dsSystemProperties.get(MetadataConstants.CREATION_TIME_KEY));
     Assert.assertTrue("Dataset create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
 
@@ -523,9 +523,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableMap.of(
         "type", KeyValueTable.class.getName(),
-        AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test dataset",
-        AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
-        AbstractSystemMetadataWriter.ENTITY_NAME_KEY, datasetInstance.getEntityName()
+        MetadataConstants.DESCRIPTION_KEY, "test dataset",
+        MetadataConstants.CREATION_TIME_KEY, String.valueOf(createTime),
+        MetadataConstants.ENTITY_NAME_KEY, datasetInstance.getEntityName()
       ),
       dsSystemProperties
     );
@@ -533,10 +533,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     //Update properties, and make sure that system metadata gets updated (except create time)
     datasetClient.update(datasetInstance, TableProperties.builder().setTTL(100000L).build().getProperties());
     Tasks.waitFor(ImmutableMap.of("type", KeyValueTable.class.getName(),
-                                  AbstractSystemMetadataWriter.DESCRIPTION_KEY, "test dataset",
-                                  AbstractSystemMetadataWriter.TTL_KEY, "100000",
-                                  AbstractSystemMetadataWriter.CREATION_TIME_KEY, String.valueOf(createTime),
-                                  AbstractSystemMetadataWriter.ENTITY_NAME_KEY, datasetInstance.getEntityName()),
+                                  MetadataConstants.DESCRIPTION_KEY, "test dataset",
+                                  MetadataConstants.TTL_KEY, "100000",
+                                  MetadataConstants.CREATION_TIME_KEY, String.valueOf(createTime),
+                                  MetadataConstants.ENTITY_NAME_KEY, datasetInstance.getEntityName()),
                   () -> getProperties(datasetInstance, MetadataScope.SYSTEM),
                   10, TimeUnit.SECONDS);
 
@@ -545,7 +545,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(
       ImmutableSet.of(
         new MetadataRecord(artifactId.toMetadataEntity(), MetadataScope.SYSTEM,
-                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, artifactId.getEntityName()),
+                           ImmutableMap.of(MetadataConstants.ENTITY_NAME_KEY, artifactId.getEntityName()),
                            ImmutableSet.of())
       ),
       removeCreationTime(getMetadata(artifactId.toMetadataEntity(), MetadataScope.SYSTEM))
@@ -566,9 +566,9 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
              AllProgramsApp.NoOpWorker.NAME)
         .put(ProgramType.WORKFLOW.getPrettyName() + MetadataConstants.KEYVALUE_SEPARATOR
                + AllProgramsApp.NoOpWorkflow.NAME, AllProgramsApp.NoOpWorkflow.NAME)
-        .put(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, app.getEntityName())
+        .put(MetadataConstants.ENTITY_NAME_KEY, app.getEntityName())
         .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION)
-        .put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, AllProgramsApp.DESCRIPTION)
+        .put(MetadataConstants.DESCRIPTION_KEY, AllProgramsApp.DESCRIPTION)
         .put("schedule" + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_NAME,
              AllProgramsApp.SCHEDULE_NAME + MetadataConstants.KEYVALUE_SEPARATOR + AllProgramsApp.SCHEDULE_DESCRIPTION)
         .build(),
@@ -680,7 +680,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ImmutableSet.of(
         new MetadataRecord(systemId, MetadataScope.USER, userProperties, userTags),
         new MetadataRecord(systemId, MetadataScope.SYSTEM,
-                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, systemId.getEntityName()),
+                           ImmutableMap.of(MetadataConstants.ENTITY_NAME_KEY, systemId.getEntityName()),
                            ImmutableSet.of())
       ),
       removeCreationTime(getMetadata(systemId.toMetadataEntity()))
@@ -704,7 +704,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ImmutableSet.of(
         new MetadataRecord(systemId, MetadataScope.USER, ImmutableMap.of(), ImmutableSet.of()),
         new MetadataRecord(systemId, MetadataScope.SYSTEM,
-                           ImmutableMap.of(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, systemId.getEntityName()),
+                           ImmutableMap.of(MetadataConstants.ENTITY_NAME_KEY, systemId.getEntityName()),
                            ImmutableSet.of())
       ),
       removeCreationTime(getMetadata(systemId.toMetadataEntity()))
@@ -998,7 +998,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     NamespaceId namespace = new NamespaceId("invalid");
     Set<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
     try {
-      searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY);
+      searchMetadata(namespace, "*", targets, MetadataConstants.ENTITY_NAME_KEY);
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -1014,7 +1014,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // search with bad sort order
     try {
-      searchMetadata(namespace, "*", targets, AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " unknown");
+      searchMetadata(namespace, "*", targets, MetadataConstants.ENTITY_NAME_KEY + " unknown");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -1051,7 +1051,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     namespaceClient.create(new NamespaceMeta.Builder().setName(namespace).build());
     try {
       EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
-      searchMetadata(namespace, "text", targets, AbstractSystemMetadataWriter.CREATION_TIME_KEY + " desc");
+      searchMetadata(namespace, "text", targets, MetadataConstants.CREATION_TIME_KEY + " desc");
       Assert.fail("Expected not to be able to specify 'query' and 'sort' parameters.");
     } catch (BadRequestException expected) {
       // expected
@@ -1087,7 +1087,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                                                  new MetadataSearchResultRecord(view));
     Tasks.waitFor(expected,
                   () -> new ArrayList<>(searchMetadata(namespace, "*", targets,
-                                                       AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc")),
+                                                       MetadataConstants.ENTITY_NAME_KEY + " asc")),
                   10, TimeUnit.SECONDS);
 
     // test descending order of entity name
@@ -1098,7 +1098,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
     Assert.assertEquals(expected,
                         new ArrayList<>(searchMetadata(namespace, "*", targets,
-                                                       AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " desc")));
+                                                       MetadataConstants.ENTITY_NAME_KEY + " desc")));
 
     // test ascending order of creation time
     expected = ImmutableList.of(
@@ -1108,7 +1108,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
     Assert.assertEquals(expected,
                         new ArrayList<>(searchMetadata(namespace, "*", targets,
-                                                       AbstractSystemMetadataWriter.CREATION_TIME_KEY + " asc")));
+                                                       MetadataConstants.CREATION_TIME_KEY + " asc")));
 
     // test descending order of creation time
     expected = ImmutableList.of(
@@ -1118,7 +1118,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     );
     Assert.assertEquals(expected,
                         new ArrayList<>(searchMetadata(namespace, "*", targets,
-                                                       AbstractSystemMetadataWriter.CREATION_TIME_KEY + " desc")));
+                                                       MetadataConstants.CREATION_TIME_KEY + " desc")));
     // cleanup
     namespaceClient.delete(namespace);
   }
@@ -1145,7 +1145,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // do sorting with creation time here since the testSearchResultPagination does with entity name
     // the sorted result order _auditLog mydataset text2 text1 (ascending: creation from earliest time)
-    String sort = AbstractSystemMetadataWriter.CREATION_TIME_KEY + " " + SortInfo.SortOrder.ASC;
+    String sort = MetadataConstants.CREATION_TIME_KEY + " " + SortInfo.SortOrder.ASC;
 
     // offset 1, limit 2, 2 cursors, should return just the dataset created above other than trackerDataset even
     // though it was created before since showHidden is false and it should not affect pagination
@@ -1179,7 +1179,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // search with showHidden to true
     EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
-    String sort = AbstractSystemMetadataWriter.ENTITY_NAME_KEY + " asc";
+    String sort = MetadataConstants.ENTITY_NAME_KEY + " asc";
     // search to get all the above entities offset 0, limit interger max  and cursors 0
     Tasks.waitFor(true, () -> {
       List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(tracker),
@@ -1248,10 +1248,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                            @Nullable String description,
                                            @Nullable ProfileId profileId) throws Exception {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
-      .put(AbstractSystemMetadataWriter.ENTITY_NAME_KEY, programId.getEntityName())
+      .put(MetadataConstants.ENTITY_NAME_KEY, programId.getEntityName())
       .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION);
     if (description != null) {
-      properties.put(AbstractSystemMetadataWriter.DESCRIPTION_KEY, description);
+      properties.put(MetadataConstants.DESCRIPTION_KEY, description);
     }
     if (profileId != null) {
       properties.put("profile", profileId.getScopedName());
@@ -1613,11 +1613,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   private Map<String, String> removeCreationTime(Map<String, String> systemProperties) {
-    Assert.assertTrue(systemProperties.containsKey(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
-    long createTime = Long.parseLong(systemProperties.get(AbstractSystemMetadataWriter.CREATION_TIME_KEY));
+    Assert.assertTrue(systemProperties.containsKey(MetadataConstants.CREATION_TIME_KEY));
+    long createTime = Long.parseLong(systemProperties.get(MetadataConstants.CREATION_TIME_KEY));
     Assert.assertTrue("Create time should be within the last hour - " + createTime,
                       createTime > System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
-    systemProperties.remove(AbstractSystemMetadataWriter.CREATION_TIME_KEY);
+    systemProperties.remove(MetadataConstants.CREATION_TIME_KEY);
     return systemProperties;
   }
 }
