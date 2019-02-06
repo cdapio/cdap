@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.proto;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents metadata for namespaces
@@ -39,11 +40,13 @@ public final class NamespaceMeta {
 
   private final String name;
   private final String description;
+  private final long generation;
   private final NamespaceConfig config;
 
-  private NamespaceMeta(String name, String description, NamespaceConfig config) {
+  private NamespaceMeta(String name, String description, long generation, NamespaceConfig config) {
     this.name = name;
     this.description = description;
+    this.generation = generation;
     this.config = config;
   }
 
@@ -53,6 +56,16 @@ public final class NamespaceMeta {
 
   public String getDescription() {
     return description;
+  }
+
+  /**
+   * Get the namespace generation. The generation is set when the namespace is created. If the namespace is deleted
+   * and then created again, it will have a higher generation.
+   *
+   * @return the namespace generation
+   */
+  public long getGeneration() {
+    return generation;
   }
 
   public NamespaceConfig getConfig() {
@@ -73,6 +86,7 @@ public final class NamespaceMeta {
     private String groupName;
     private String keytabURIWithoutVersion;
     private int keytabURIVersion;
+    private long generation = 0;
     private boolean exploreAsPrincipal = true;
 
     public Builder() {
@@ -82,6 +96,7 @@ public final class NamespaceMeta {
     public Builder(NamespaceMeta meta) {
       this.name = meta.getName();
       this.description = meta.getDescription();
+      this.generation = meta.getGeneration();
       NamespaceConfig config = meta.getConfig();
       if (config != null) {
         this.schedulerQueueName = config.getSchedulerQueueName();
@@ -166,29 +181,22 @@ public final class NamespaceMeta {
       return this;
     }
 
+    public Builder setGeneration(long generation) {
+      this.generation = generation;
+      return this;
+    }
+
     public NamespaceMeta build() {
-      if (name == null) {
-        throw new IllegalArgumentException("Namespace id cannot be null.");
-      }
-      if (description == null) {
-        description = "";
-      }
-
-      // scheduler queue name is kept non nullable unlike others like root directory, hbase namespace etc for backward
-      // compatibility
-      if (schedulerQueueName == null) {
-        schedulerQueueName = "";
-      }
-
       // combine the keytab URI with the version if the version is not 0
       String uri = keytabURIVersion == 0 ? keytabURIWithoutVersion : keytabURIWithoutVersion + "#" + keytabURIVersion;
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
-                                                                      hbaseNamespace, hiveDatabase,
-                                                                      principal, groupName, uri,
-                                                                      exploreAsPrincipal));
+      return build(uri);
     }
 
     public NamespaceMeta buildWithoutKeytabURIVersion() {
+      return build(keytabURIWithoutVersion);
+    }
+
+    private NamespaceMeta build(@Nullable String keytabURI) {
       if (name == null) {
         throw new IllegalArgumentException("Namespace id cannot be null.");
       }
@@ -202,10 +210,11 @@ public final class NamespaceMeta {
         schedulerQueueName = "";
       }
 
-      return new NamespaceMeta(name, description, new NamespaceConfig(schedulerQueueName, rootDirectory,
-                                                                      hbaseNamespace, hiveDatabase,
-                                                                      principal, groupName, keytabURIWithoutVersion,
-                                                                      exploreAsPrincipal));
+      return new NamespaceMeta(name, description, generation,
+                               new NamespaceConfig(schedulerQueueName, rootDirectory,
+                                                   hbaseNamespace, hiveDatabase,
+                                                   principal, groupName, keytabURI,
+                                                   exploreAsPrincipal));
     }
   }
 
@@ -223,13 +232,14 @@ public final class NamespaceMeta {
     }
     NamespaceMeta other = (NamespaceMeta) o;
     return Objects.equals(name, other.name)
+      && generation == other.generation
       && Objects.equals(description, other.description)
       && Objects.equals(config, other.config);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, config);
+    return Objects.hash(name, description, generation, config);
   }
 
   @Override
@@ -237,7 +247,8 @@ public final class NamespaceMeta {
     return "NamespaceMeta{" +
       "name='" + name + '\'' +
       ", description='" + description + '\'' +
-      ", config=" + getConfig() +
+      ", generation=" + generation +
+      ", config=" + config +
       '}';
   }
 }

@@ -23,7 +23,6 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 

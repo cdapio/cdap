@@ -17,6 +17,7 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.NamespaceSummary;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
@@ -207,5 +208,11 @@ public class DefaultAuthorizationContext implements AuthorizationContext {
   @Override
   public boolean namespaceExists(String namespace) throws IOException {
     return delegateAdmin.namespaceExists(namespace);
+  }
+
+  @Nullable
+  @Override
+  public NamespaceSummary getNamespaceSummary(String namespace) throws IOException {
+    return delegateAdmin.getNamespaceSummary(namespace);
   }
 }

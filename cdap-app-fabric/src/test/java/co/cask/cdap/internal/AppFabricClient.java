@@ -18,7 +18,6 @@ package co.cask.cdap.internal;
 
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;

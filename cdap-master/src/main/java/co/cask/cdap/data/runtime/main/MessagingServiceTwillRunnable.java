@@ -43,8 +43,6 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -52,7 +50,6 @@ import java.util.List;
  * A {@link TwillRunnable} for messaging system.
  */
 public class MessagingServiceTwillRunnable extends AbstractMasterTwillRunnable {
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingServiceTwillRunnable.class);
 
   private Injector injector;
 

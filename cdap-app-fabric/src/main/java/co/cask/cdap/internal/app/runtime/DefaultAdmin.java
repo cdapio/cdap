@@ -17,16 +17,19 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.NamespaceSummary;
 import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 
@@ -168,6 +171,21 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   public boolean namespaceExists(String namespace) throws IOException {
     try {
       return namespaceQueryAdmin.exists(new NamespaceId(namespace));
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Nullable
+  @Override
+  public NamespaceSummary getNamespaceSummary(String namespace) throws IOException {
+    try {
+      NamespaceMeta meta = namespaceQueryAdmin.get(new NamespaceId(namespace));
+      return new NamespaceSummary(meta.getName(), meta.getDescription(), meta.getGeneration());
+    } catch (NamespaceNotFoundException e) {
+      return null;
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {
