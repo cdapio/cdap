@@ -23,15 +23,17 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- *
+ * Tests for {@link StructuredTableRegistry}.
  */
 public abstract class StructuredTableRegistryTest {
-
-  protected abstract StructuredTableRegistry getStructuredTableSpecificationRegistry();
+  /**
+   * @return the right implementation of the registry based on the underlying storage.
+   */
+  protected abstract StructuredTableRegistry getStructuredTableRegistry();
 
   @Test
   public void testRegistry() throws Exception {
-    StructuredTableRegistry registry = getStructuredTableSpecificationRegistry();
+    StructuredTableRegistry registry = getStructuredTableRegistry();
     registry.initialize();
 
     StructuredTableId tableId1 = new StructuredTableId("table1");

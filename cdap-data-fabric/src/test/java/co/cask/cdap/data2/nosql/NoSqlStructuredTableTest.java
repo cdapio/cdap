@@ -35,6 +35,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -67,12 +68,15 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
   }
 
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws IOException {
     Configuration txConf = HBaseConfiguration.create();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableAdmin.class);
     transactionRunner = dsFrameworkUtil.getInjector().getInstance(NoSqlTransactionRunner.class);
+    NoSqlStructuredTableRegistry registry =
+      dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
+    registry.initialize();
   }
 
   @AfterClass

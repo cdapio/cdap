@@ -36,7 +36,7 @@ public class NoSqlStructuredTableRegistryTest extends StructuredTableRegistryTes
   private static TransactionManager txManager;
 
   @Override
-  protected StructuredTableRegistry getStructuredTableSpecificationRegistry() {
+  protected StructuredTableRegistry getStructuredTableRegistry() {
     return dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
   }
 
