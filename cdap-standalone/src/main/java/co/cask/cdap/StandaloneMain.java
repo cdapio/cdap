@@ -78,6 +78,7 @@ import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
@@ -229,7 +230,8 @@ public class StandaloneMain {
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();
     // This needs to happen before any dataset instantiators are started
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
     serviceStore.startAndWait();
 
     remoteExecutionTwillRunnerService.start();

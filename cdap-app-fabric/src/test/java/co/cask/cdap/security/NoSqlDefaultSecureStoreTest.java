@@ -19,9 +19,7 @@ package co.cask.cdap.security;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.security.DefaultSecretStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.Injector;
 import org.junit.BeforeClass;
 
@@ -30,13 +28,10 @@ import org.junit.BeforeClass;
  */
 public class NoSqlDefaultSecureStoreTest extends DefaultSecretStoreTest {
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector(CConfiguration.create());
 
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     store = new DefaultSecretStore(transactionRunner);
-
-    StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StoreDefinition.ArtifactStore.createTables(structuredTableAdmin);
   }
 }
