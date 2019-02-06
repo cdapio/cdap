@@ -194,7 +194,7 @@ export function getErrorMessage(error, defaultMessage) {
 export function getClassNameForHeaderFooter(){
   let className = '';
   if(Theme !== undefined){
-    if (!Theme.showHeader && !Theme.showfooter) {
+    if (!Theme.showHeader && !Theme.showFooter) {
       className =  'no-header-footer';
     } else if (!Theme.showHeader) {
       className =  'no-header';
