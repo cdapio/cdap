@@ -26,6 +26,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { Theme } from 'services/ThemeHelper';
 
 require('./Home.scss');
 
@@ -126,7 +127,9 @@ export default class Home extends Component {
             );
           }} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
-          <Route path="/ns/:namespace/featureEngineering" component={FeatureUI} />
+          {
+            Theme.showFeatureEngineering && <Route path="/ns/:namespace/featureEngineering" component={FeatureUI} />
+          }
           <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
