@@ -19,6 +19,7 @@ package co.cask.cdap.store;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Fields;
 
@@ -39,8 +40,9 @@ public final class StoreDefinition {
    *
    * @param tableAdmin the table admin to create the table
    */
-  public static void createAllTables(StructuredTableAdmin tableAdmin, boolean overWrite)
-    throws IOException, TableAlreadyExistsException {
+  public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry,
+                                     boolean overWrite) throws IOException, TableAlreadyExistsException {
+    registry.initialize();
     if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
@@ -55,8 +57,9 @@ public final class StoreDefinition {
     }
   }
 
-  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
-    createAllTables(tableAdmin, false);
+  public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
+    throws IOException, TableAlreadyExistsException {
+    createAllTables(tableAdmin, registry, false);
   }
 
   /**

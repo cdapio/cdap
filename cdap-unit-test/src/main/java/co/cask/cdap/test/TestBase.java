@@ -98,6 +98,7 @@ import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
@@ -323,7 +324,8 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), principal,
                                          ImmutableSet.of(Action.ADMIN));
     }
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     if (firstInit) {
       // only create the default namespace on first test. if multiple tests are run in the same JVM,

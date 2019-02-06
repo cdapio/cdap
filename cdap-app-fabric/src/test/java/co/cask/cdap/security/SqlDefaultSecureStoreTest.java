@@ -18,6 +18,7 @@ package co.cask.cdap.security;
 
 import co.cask.cdap.data.security.DefaultSecretStore;
 import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
 import co.cask.cdap.data2.sql.SqlTransactionRunner;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
@@ -39,7 +40,8 @@ public class SqlDefaultSecureStoreTest extends DefaultSecretStoreTest {
   public static void setup() throws Exception {
     postgres = EmbeddedPostgres.start();
     DataSource dataSource = postgres.getPostgresDatabase();
-    StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
+    StructuredTableAdmin structuredTableAdmin =
+      new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     store = new DefaultSecretStore(transactionRunner);
     StoreDefinition.SecretStore.createTable(structuredTableAdmin);

@@ -19,8 +19,8 @@ package co.cask.cdap.data2.sql;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistry;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.base.Joiner;
 
@@ -38,9 +38,11 @@ import javax.sql.DataSource;
  * Sql structured admin to use jdbc connection to create and drop tables.
  */
 public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
+  private final StructuredTableRegistry registry;
   private final DataSource dataSource;
 
-  public PostgresSqlStructuredTableAdmin(DataSource dataSource) {
+  public PostgresSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {
+    this.registry = registry;
     this.dataSource = dataSource;
   }
 
@@ -55,7 +57,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
       }
       Statement statement = connection.createStatement();
       statement.execute(getCreateStatement(spec));
-      StructuredTableSpecificationRegistry.registerSpecification(spec);
+      registry.registerSpecification(spec);
       statement.close();
     } catch (SQLException e) {
       throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
@@ -65,7 +67,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
   @Nullable
   @Override
   public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-    return StructuredTableSpecificationRegistry.getSpecification(tableId);
+    return registry.getSpecification(tableId);
   }
 
   @Override
@@ -74,7 +76,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     try (Connection connection = dataSource.getConnection()) {
       Statement statement = connection.createStatement();
       statement.execute(sqlQuery);
-      StructuredTableSpecificationRegistry.removeSpecification(tableId);
+      registry.removeSpecification(tableId);
     } catch (SQLException e) {
       throw new IOException(String.format("Error dropping table %s", tableId), e);
     }
