@@ -23,9 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
@@ -40,7 +38,6 @@ public class NoSqlArtifactStoreTest extends ArtifactStoreTest {
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
     Injector injector = AppFabricTestHelper.getInjector(cConf);
-    StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     artifactStore = new ArtifactStore(cConf,
                                       injector.getInstance(NamespacePathLocator.class),
@@ -48,6 +45,5 @@ public class NoSqlArtifactStoreTest extends ArtifactStoreTest {
                                       injector.getInstance(Impersonator.class),
                                       transactionRunner
     );
-    StoreDefinition.ArtifactStore.createTables(structuredTableAdmin);
   }
 }
