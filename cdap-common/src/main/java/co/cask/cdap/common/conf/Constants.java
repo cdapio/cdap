@@ -90,6 +90,13 @@ public final class Constants {
   }
 
   /**
+   * Configuration for Master.
+   */
+  public static final class Master {
+    public static final String EXTENSIONS_DIR = "master.environment.extensions.dir";
+  }
+
+  /**
    * Global Service names.
    */
   public static final class Service {
