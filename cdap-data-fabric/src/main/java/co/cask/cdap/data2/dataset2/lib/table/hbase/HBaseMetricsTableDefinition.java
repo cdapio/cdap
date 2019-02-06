@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -62,20 +63,22 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
   @Inject
   private Configuration hConf;
   @Inject
-  private HBaseTableUtil hBaseTableUtil;
+  private Provider<HBaseTableUtil> hBaseTableUtilProvider;
   @Inject
   private LocationFactory locationFactory;
+
+  private volatile HBaseTableUtil hBaseTableUtil;
 
   public HBaseMetricsTableDefinition(String name) {
     super(name);
   }
 
   @VisibleForTesting
-  HBaseMetricsTableDefinition(String name, Configuration hConf, HBaseTableUtil hBaseTableUtil,
+  HBaseMetricsTableDefinition(String name, Configuration hConf, Provider<HBaseTableUtil> hBaseTableUtilProvider,
                               LocationFactory locationFactory, CConfiguration cConf) {
     super(name);
     this.hConf = hConf;
-    this.hBaseTableUtil = hBaseTableUtil;
+    this.hBaseTableUtilProvider = hBaseTableUtilProvider;
     this.locationFactory = locationFactory;
     this.cConf = cConf;
   }
@@ -103,18 +106,37 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
         spec.getName(), datasetSplits);
     }
 
-    return new HBaseMetricsTable(datasetContext, spec, hConf, hBaseTableUtil, cConf);
+    return new HBaseMetricsTable(datasetContext, spec, hConf, getHBaseTableUtil(), cConf);
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
-    return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
+    return new HBaseTableAdmin(datasetContext, spec, hConf, getHBaseTableUtil(), cConf, locationFactory);
   }
 
   @Override
   public DatasetSpecification reconfigure(String instanceName, DatasetProperties properties,
                                           DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     throw new IncompatibleUpdateException("System Metrics Table properties can not be changed after creation.");
+  }
+
+  /**
+   * Returns the {@link HBaseTableUtil} to use.
+   */
+  private HBaseTableUtil getHBaseTableUtil() {
+    HBaseTableUtil tableUtil = hBaseTableUtil;
+    if (tableUtil != null) {
+      return tableUtil;
+    }
+
+    synchronized (this) {
+      tableUtil = hBaseTableUtil;
+      if (tableUtil != null) {
+        return tableUtil;
+      }
+      hBaseTableUtil = tableUtil = hBaseTableUtilProvider.get();
+      return tableUtil;
+    }
   }
 }

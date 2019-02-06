@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -34,9 +35,13 @@ import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.TimePartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.lib.table.CubeModule;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.ObjectMappedTableModule;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseMetricsTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableDefinition;
+import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryMetricsTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableDefinition;
+import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBMetricsTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableDefinition;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.hbase.HBaseTableModule;
@@ -53,6 +58,7 @@ import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 
@@ -81,6 +87,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(InMemoryTableDefinition.class);
+
+        // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
+        // dataset service to get metrics table.
+        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
+          .toInstance(new InMemoryMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }
@@ -101,6 +112,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(LevelDBTableDefinition.class);
+
+        // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
+        // dataset service to get metrics table.
+        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
+          .toInstance(new LevelDBMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }
@@ -147,6 +163,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(HBaseTableDefinition.class);
+
+        // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
+        // dataset service to get metrics table.
+        bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
+          .toInstance(new HBaseMetricsTableDefinition(MetricsTable.class.getName()));
       }
     };
   }

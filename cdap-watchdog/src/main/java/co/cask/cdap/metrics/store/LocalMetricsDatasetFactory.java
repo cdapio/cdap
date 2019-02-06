@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Cask Data, Inc.
+ * Copyright 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,10 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import com.google.inject.Inject;
 
@@ -28,13 +29,13 @@ import com.google.inject.Inject;
 public class LocalMetricsDatasetFactory extends DefaultMetricDatasetFactory {
 
   @Inject
-  public LocalMetricsDatasetFactory(CConfiguration cConf, DatasetFramework dsFramework) {
-    super(cConf, dsFramework);
+  public LocalMetricsDatasetFactory(CConfiguration cConf,
+                                    DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition) {
+    super(cConf, metricsTableDefinition);
   }
 
   @Override
-  public MetricsTable getOrCreateResolutionMetricsTable(String tableName, TableProperties.Builder props,
-                                                        int resolution) {
+  MetricsTable getOrCreateResolutionMetricsTable(String tableName, TableProperties.Builder props, int resolution) {
     return getOrCreateMetricsTable(tableName, props.build());
   }
 }

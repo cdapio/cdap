@@ -579,6 +579,9 @@ public final class Constants {
 
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
 
+    public static final String ADMIN_TOPIC = "metrics.admin.topic";
+    public static final String ADMIN_POLL_DELAY_MILLIS = "metrics.admin.poll.delay.millis";
+
     // part of table name for metrics
     public static final String METRICS_META_TABLE = "metrics.meta.table";
     public static final String DEFAULT_ENTITY_TABLE_NAME = "metrics.entity";
@@ -1101,14 +1104,6 @@ public final class Constants {
     public static final class Jdbc {
       public static final String URL_PREFIX = "jdbc:cdap://";
     }
-  }
-
-  /**
-   * Notification system configuration.
-   */
-  public static final class Notification {
-    public static final String TOPIC = "notification.topic";
-
   }
 
   public static final String CFG_LOCAL_DATA_DIR = "local.data.dir";

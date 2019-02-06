@@ -16,12 +16,14 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
@@ -36,8 +38,13 @@ import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
- * Default implementation of {@link MetricDatasetFactory}, which uses {@link DatasetFramework} for acquiring
+ * Default implementation of {@link MetricDatasetFactory}, which uses {@link DatasetDefinition} to create
  * {@link MetricsTable} instances.
  */
 public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
@@ -45,13 +52,16 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
+  private final DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition;
+  private final Set<DatasetId> existingDatasets;
   private final Supplier<EntityTable> entityTable;
-  private final DatasetFramework dsFramework;
 
   @Inject
-  public DefaultMetricDatasetFactory(final CConfiguration cConf, DatasetFramework dsFramework) {
+  public DefaultMetricDatasetFactory(CConfiguration cConf,
+                                     DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition) {
     this.cConf = cConf;
-    this.dsFramework = dsFramework;
+    this.metricsTableDefinition = metricsTableDefinition;
+    this.existingDatasets = Collections.newSetFromMap(new ConcurrentHashMap<>());
     this.entityTable = Suppliers.memoize(() -> {
       String tableName = cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
                                    Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
@@ -95,62 +105,50 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return new MetricsConsumerMetaTable(table);
   }
 
-  protected MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
-    // metrics tables are in the system namespace
-    DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(tableName);
-    MetricsTable table = null;
+  MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
     try {
-      table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId, MetricsTable.class.getName(),
-                                              props, null);
+      // metrics tables are in the system namespace
+      return getOrCreateTable(NamespaceId.SYSTEM.dataset(tableName), props);
     } catch (Exception e) {
-      Throwables.propagate(e);
+      throw Throwables.propagate(e);
     }
-    return table;
   }
 
-  protected MetricsTable getOrCreateResolutionMetricsTable(String tableName, TableProperties.Builder props,
-                                                           int resolution) {
+  MetricsTable getOrCreateResolutionMetricsTable(String tableName, TableProperties.Builder props, int resolution) {
     try {
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
                 GSON.toJson(getMetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
       props.add(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
                 cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
-
-      DatasetId tableId = NamespaceId.SYSTEM.dataset(tableName);
-      return DatasetsUtil.getOrCreateDataset(dsFramework, tableId, MetricsTable.class.getName(),
-                                             props.build(), null);
+      return getOrCreateTable(NamespaceId.SYSTEM.dataset(tableName), props.build());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  private MetricsTable getOrCreateTable(DatasetId tableId, DatasetProperties props) throws IOException {
+    DatasetContext datasetContext = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
+    DatasetSpecification spec = metricsTableDefinition.configure(tableId.getDataset(), props);
+
+    if (!existingDatasets.contains(tableId)) {
+      // Check and create if we don't know if the table exists or not
+      DatasetAdmin admin = metricsTableDefinition.getAdmin(datasetContext, spec, getClass().getClassLoader());
+      if (!admin.exists()) {
+        // All admin.create() implementations handled race condition for concurrent create.
+        // Not sure if that's the API contract or just the implementations since it is not specified in the API
+        // But from the dataset op executor implementation, it seems it is a required contract.
+        admin.create();
+      }
+      existingDatasets.add(tableId);
+    }
+
+    return metricsTableDefinition.getDataset(datasetContext, spec, Collections.emptyMap(), getClass().getClassLoader());
   }
 
   private static byte[][] getMetricsTableSplits(int splits) {
     RowKeyDistributorByHashPrefix rowKeyDistributor = new RowKeyDistributorByHashPrefix(
       new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
     return rowKeyDistributor.getSplitKeys(splits, splits);
-  }
-
-
-  /**
-   * Creates the metrics tables and metrics meta table using the factory {@link DefaultMetricDatasetFactory}
-   * <p>
-   * It is primarily used by upgrade and data-migration tool.
-   *
-   * @param cConf configuration
-   * @param factory metrics dataset factory
-   */
-  public static void setupDatasets(CConfiguration cConf, DefaultMetricDatasetFactory factory) {
-    // adding all fact tables
-    int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
-    if (minimumResolution < Constants.Metrics.MINUTE_RESOLUTION) {
-      factory.getOrCreateFactTable(minimumResolution);
-    }
-    factory.getOrCreateFactTable(Constants.Metrics.MINUTE_RESOLUTION);
-    factory.getOrCreateFactTable(Constants.Metrics.HOUR_RESOLUTION);
-    factory.getOrCreateFactTable(Integer.MAX_VALUE);
-
-    // adding consumer meta
-    factory.createConsumerMeta();
   }
 
   private int getRollTime(int resolution) {

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy;
 
-import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -69,7 +69,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
   private final MetadataPublisher metadataPublisher;
@@ -83,7 +83,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           Store store, OwnerAdmin ownerAdmin,
                           DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                          @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
+                          @Assisted ProgramTerminator programTerminator, MetricsSystemClient metricsSystemClient,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                           MetadataPublisher metadataPublisher,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
@@ -96,7 +96,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.programTerminator = programTerminator;
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
-    this.metricStore = metricStore;
+    this.metricsSystemClient = metricsSystemClient;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
     this.metadataPublisher = metadataPublisher;
@@ -117,7 +117,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
                                                      authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator,
-                                                    metricStore, metadataPublisher, programScheduler));
+                                                    metricsSystemClient, metadataPublisher, programScheduler));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
