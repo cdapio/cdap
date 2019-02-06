@@ -112,6 +112,7 @@ public class NamespaceHttpHandler extends AbstractAppFabricHttpHandler {
     NamespaceMeta.Builder builder = metadata == null ? new NamespaceMeta.Builder() :
       new NamespaceMeta.Builder(metadata);
     builder.setName(namespace);
+    builder.setGeneration(System.currentTimeMillis());
 
     NamespaceMeta finalMetadata = builder.build();
 

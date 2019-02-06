@@ -37,7 +37,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -353,9 +352,13 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(3, namespaces.size());
     Set<NamespaceMeta> expectedNamespaces = ImmutableSet.of(NamespaceMeta.DEFAULT, TEST_NAMESPACE_META1,
                                                             TEST_NAMESPACE_META2);
-    Assert.assertEquals(expectedNamespaces, Sets.newHashSet(namespaces));
+    for (NamespaceMeta actual : namespaces) {
+      actual = new NamespaceMeta.Builder(actual).setGeneration(0L).build();
+      Assert.assertTrue(expectedNamespaces.contains(actual));
+    }
 
     NamespaceMeta namespaceMeta = namespaceClient.get(new NamespaceId(TEST_NAMESPACE1));
+    namespaceMeta = new NamespaceMeta.Builder(namespaceMeta).setGeneration(0L).build();
     Assert.assertEquals(TEST_NAMESPACE_META1, namespaceMeta);
 
     try {
@@ -371,7 +374,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     namespaceClient.create(toCreate);
     NamespaceMeta receivedMeta = namespaceClient.get(fooNamespace);
     Assert.assertNotNull(receivedMeta);
-    Assert.assertEquals(toCreate, receivedMeta);
+    Assert.assertEquals(toCreate, new NamespaceMeta.Builder(receivedMeta).setGeneration(0L).build());
 
     namespaceClient.delete(fooNamespace);
     try {

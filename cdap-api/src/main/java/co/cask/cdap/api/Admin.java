@@ -23,6 +23,7 @@ import co.cask.cdap.api.messaging.MessagingAdmin;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * This interface provides methods for operational calls from within a CDAP application.
@@ -38,4 +39,14 @@ public interface Admin extends DatasetManager, SecureStoreManager, MessagingAdmi
    * @throws IOException if there was a error making the request to check namespace existence
    */
   boolean namespaceExists(String namespace) throws IOException;
+
+  /**
+   * Get information about the specified namespace. Returns null if the namespace does not exist.
+   *
+   * @param namespace the namespace to get information about
+   * @return information about the namespace
+   * @throws IOException if there was a error making the request to get namespace information
+   */
+  @Nullable
+  NamespaceSummary getNamespaceSummary(String namespace) throws IOException;
 }

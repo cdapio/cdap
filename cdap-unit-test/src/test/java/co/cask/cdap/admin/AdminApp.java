@@ -17,6 +17,7 @@
 package co.cask.cdap.admin;
 
 import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.NamespaceSummary;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.artifact.ArtifactInfo;
@@ -110,8 +111,11 @@ public class AdminApp extends AbstractApplication {
     public void getNamespace(HttpServiceRequest request, HttpServiceResponder responder,
                              @PathParam("namespace") String namespace) throws IOException {
       Admin admin = getContext().getAdmin();
-      if (!admin.namespaceExists(namespace)) {
+      NamespaceSummary summary = admin.getNamespaceSummary(namespace);
+      if (summary == null) {
         responder.sendError(404, String.format("namespace '%s' not found.", namespace));
+      } else {
+        responder.sendJson(summary);
       }
     }
 
