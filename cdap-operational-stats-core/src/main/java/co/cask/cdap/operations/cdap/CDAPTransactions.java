@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,32 +16,27 @@
 
 package co.cask.cdap.operations.cdap;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.operations.OperationalStats;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 
 /**
  * {@link OperationalStats} for reporting CDAP transaction statistics.
  */
 public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransactionsMXBean {
 
-  private static final Map<String, AggregationFunction> METRICS =
-    ImmutableMap.of("system.committing.size", AggregationFunction.LATEST,
-                    "system.committed.size", AggregationFunction.LATEST);
+  private static final List<String> METRICS = Arrays.asList("system.committing.size", "system.committed.size");
 
   private TransactionSystemClient txClient;
-  private MetricStore metricStore;
+  private MetricsSystemClient metricsSystemClient;
   private int numInvalidTx;
   private long readPointer;
   private long writePointer;
@@ -52,7 +47,7 @@ public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransacti
   @Override
   public void initialize(Injector injector) {
     txClient = injector.getInstance(TransactionSystemClient.class);
-    metricStore = injector.getInstance(MetricStore.class);
+    metricsSystemClient = injector.getInstance(MetricsSystemClient.class);
   }
 
   @Override
@@ -92,10 +87,8 @@ public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransacti
 
   @Override
   public void collect() throws Exception {
-    Collection<MetricTimeSeries> collection =
-      metricStore.query(new MetricDataQuery(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE, METRICS,
-                                            Constants.Metrics.TRANSACTION_MANAGER_CONTEXT,
-                                            Collections.<String>emptyList(), null));
+    Collection<MetricTimeSeries> collection = metricsSystemClient.query(Constants.Metrics.TRANSACTION_MANAGER_CONTEXT,
+                                                                        METRICS);
     for (MetricTimeSeries metricTimeSeries : collection) {
       if (metricTimeSeries.getMetricName().equals("system.committing.size")) {
         numCommittingChangeSets = (int) aggregateMetricValue(metricTimeSeries);

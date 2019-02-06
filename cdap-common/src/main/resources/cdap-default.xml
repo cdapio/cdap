@@ -1993,7 +1993,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions}</value>
+    <value>${audit.topic},${metadata.messaging.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${metrics.admin.topic},${time.event.topic},${program.status.event.topic},${program.status.record.event.topic},${log.tms.topic.prefix}:${log.publish.num.partitions}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2366,6 +2366,22 @@
   </property>
 
   <property>
+    <name>metrics.admin.topic</name>
+    <value>metricsadmin</value>
+    <description>
+      Topic name for publishing metrics administrative events to the messaging system
+    </description>
+  </property>
+
+  <property>
+    <name>metrics.admin.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new metrics administrative events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>metrics.worker.threads</name>
     <value>${http.service.worker.threads}</value>
     <description>
@@ -2546,17 +2562,6 @@
       "fixed.delay", or "exponential.backoff".
     </description>
   </property>
-
-  <!-- Notification System Configuration -->
-
-  <property>
-    <name>notification.topic</name>
-    <value>notifications</value>
-    <description>
-      Topic name used to publish notifications in the messaging system
-    </description>
-  </property>
-
 
   <!-- Operational Statistics Configuration -->
 

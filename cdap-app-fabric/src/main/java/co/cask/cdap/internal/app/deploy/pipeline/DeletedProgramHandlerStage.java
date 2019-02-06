@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
@@ -34,6 +34,7 @@ import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,18 +53,18 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
 
   private final Store store;
   private final ProgramTerminator programTerminator;
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
   private final MetadataPublisher metadataPublisher;
   private final Scheduler programScheduler;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
-                                    MetricStore metricStore,
+                                    MetricsSystemClient metricsSystemClient,
                                     MetadataPublisher metadataPublisher,
                                     Scheduler programScheduler) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
-    this.metricStore = metricStore;
+    this.metricsSystemClient = metricsSystemClient;
     this.metadataPublisher = metadataPublisher;
     this.programScheduler = programScheduler;
   }
@@ -95,7 +96,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     emit(appSpec);
   }
 
-  private void deleteMetrics(Set<ProgramId> programs) {
+  private void deleteMetrics(Set<ProgramId> programs) throws IOException {
     for (ProgramId programId : programs) {
       LOG.debug("Deleting metrics for program {}", programId);
 
@@ -110,7 +111,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         long endTs = System.currentTimeMillis() / 1000;
         MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
                                                               new ArrayList<>(tags.keySet()));
-        metricStore.delete(deleteQuery);
+        metricsSystemClient.delete(deleteQuery);
       }
     }
   }

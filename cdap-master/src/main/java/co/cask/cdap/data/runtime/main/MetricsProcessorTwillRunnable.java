@@ -39,6 +39,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import co.cask.cdap.metrics.process.MetricsAdminSubscriberService;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.runtime.MessagingMetricsProcessorRuntimeService;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -52,6 +53,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
@@ -68,6 +70,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   private static final Logger LOG = LoggerFactory.getLogger(MetricsProcessorTwillRunnable.class);
 
   private Injector injector;
+  private int instanceId;
 
   public MetricsProcessorTwillRunnable(String name, String cConfName, String hConfName) {
     super(name, cConfName, hConfName);
@@ -78,6 +81,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     getCConfiguration().set(Constants.MetricsProcessor.BIND_ADDRESS, context.getHost().getCanonicalHostName());
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
+
+    instanceId = context.getInstanceId();
 
     String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS_PROCESSOR,
                                       context.getInstanceId());
@@ -94,6 +99,11 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   public void addServices(List<? super Service> services) {
     services.add(injector.getInstance(MessagingMetricsProcessorRuntimeService.class));
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
+
+    // Only starts the MetricsAdminSubscriberService in instance 0
+    if (instanceId == 0) {
+      services.add(injector.getInstance(MetricsAdminSubscriberService.class));
+    }
   }
 
   @VisibleForTesting
@@ -142,6 +152,9 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
       bind(MessagingMetricsProcessorRuntimeService.class);
       expose(MessagingMetricsProcessorRuntimeService.class);
+
+      bind(MetricsAdminSubscriberService.class).in(Scopes.SINGLETON);
+      expose(MetricsAdminSubscriberService.class);
     }
   }
 }

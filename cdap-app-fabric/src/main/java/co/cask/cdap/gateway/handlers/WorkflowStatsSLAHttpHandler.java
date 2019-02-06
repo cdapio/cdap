@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,8 @@
 
 package co.cask.cdap.gateway.handlers;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricSearchQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
-import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
@@ -44,6 +40,7 @@ import com.google.inject.Singleton;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -67,13 +64,13 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new Gson();
   private final Store store;
   private final MRJobInfoFetcher mrJobInfoFetcher;
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
 
   @Inject
-  WorkflowStatsSLAHttpHandler(Store store, MRJobInfoFetcher mrJobInfoFetcher, MetricStore metricStore) {
+  WorkflowStatsSLAHttpHandler(Store store, MRJobInfoFetcher mrJobInfoFetcher, MetricsSystemClient metricsSystemClient) {
     this.store = store;
     this.mrJobInfoFetcher = mrJobInfoFetcher;
-    this.metricStore = metricStore;
+    this.metricsSystemClient = metricsSystemClient;
   }
 
   /**
@@ -224,7 +221,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
         if (programLevelDetails.get(programName) == null) {
           WorkflowStatsComparison.ProgramNodes programNodes = new WorkflowStatsComparison.ProgramNodes(
             programName, programMetrics.getProgramType(),
-            new ArrayList<WorkflowStatsComparison.ProgramNodes.WorkflowProgramDetails>());
+            new ArrayList<>());
           programLevelDetails.put(programName, programNodes);
         }
         programLevelDetails.get(programName).addWorkflowDetails(
@@ -273,29 +270,21 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     return mrJobInfoFetcher.getMRJobInfo(Id.Run.fromEntityId(mapreduceProgram.run(runId))).getCounters();
   }
 
-  private Map<String, Long> getSparkDetails(ProgramId sparkProgram, String runId) {
+  private Map<String, Long> getSparkDetails(ProgramId sparkProgram, String runId) throws IOException {
     Map<String, String> context = new HashMap<>();
     context.put(Constants.Metrics.Tag.NAMESPACE, sparkProgram.getNamespace());
     context.put(Constants.Metrics.Tag.APP, sparkProgram.getApplication());
     context.put(Constants.Metrics.Tag.SPARK, sparkProgram.getProgram());
     context.put(Constants.Metrics.Tag.RUN_ID, runId);
 
-    List<TagValue> tags = new ArrayList<>();
-    for (Map.Entry<String, String> entry : context.entrySet()) {
-      tags.add(new TagValue(entry.getKey(), entry.getValue()));
-    }
-    MetricSearchQuery metricSearchQuery = new MetricSearchQuery(0, 0, Integer.MAX_VALUE, tags);
-    Collection<String> metricNames = metricStore.findMetricNames(metricSearchQuery);
-    Map<String, Long> overallResult = new HashMap<>();
-    for (String metricName : metricNames) {
-      Collection<MetricTimeSeries> resultPerQuery = metricStore.query(
-        new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
-                            context, new ArrayList<String>()));
+    Collection<String> metricNames = metricsSystemClient.search(context);
+    Collection<MetricTimeSeries> queryResult = metricsSystemClient.query(context, metricNames);
 
-      for (MetricTimeSeries metricTimeSeries : resultPerQuery) {
-        overallResult.put(metricTimeSeries.getMetricName(), metricTimeSeries.getTimeValues().get(0).getValue());
-      }
+    Map<String, Long> overallResult = new HashMap<>();
+    for (MetricTimeSeries timeSeries : queryResult) {
+      overallResult.put(timeSeries.getMetricName(), timeSeries.getTimeValues().get(0).getValue());
     }
+
     return overallResult;
   }
 

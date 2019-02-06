@@ -85,6 +85,7 @@ import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequestConfig;
@@ -238,7 +239,8 @@ public abstract class AppFabricTestBase {
 
     // Create the tables required for unit test. This needs to happen before the app fabric server is started
     // since bootstrap service will attempt to write to tables.
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
 
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();

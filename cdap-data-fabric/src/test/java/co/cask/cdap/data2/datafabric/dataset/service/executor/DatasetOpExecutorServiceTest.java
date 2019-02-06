@@ -56,6 +56,7 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -160,8 +161,9 @@ public class DatasetOpExecutorServiceTest {
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(bob.getParent()).build());
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
     try {
-      StoreDefinition.createAllTables(tableAdmin);
+      StoreDefinition.createAllTables(tableAdmin, registry);
     } catch (IOException | TableAlreadyExistsException e) {
       throw new RuntimeException("Failed to create the system tables", e);
     }

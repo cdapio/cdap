@@ -19,6 +19,7 @@ package co.cask.cdap.data.tools;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -32,6 +33,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.metrics.NoOpMetricsSystemClient;
 import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.common.zookeeper.coordination.DiscoverableCodec;
@@ -68,8 +70,6 @@ import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
-import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
@@ -222,12 +222,12 @@ public class UpgradeTool {
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
       // the DataFabricDistributedModule needs MetricsCollectionService binding
-      new MetricsStoreModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
-          // Since Upgrade tool does not do anything with Metrics we just bind it to NoOpMetricsCollectionService
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          // Since Upgrade tool does not do anything with Metrics we just bind it to no-op implementations
+          bind(MetricsCollectionService.class).toInstance(new NoOpMetricsCollectionService());
+          bind(MetricsSystemClient.class).toInstance(new NoOpMetricsSystemClient());
         }
 
         @Provides
@@ -491,10 +491,6 @@ public class UpgradeTool {
     LoggingStoreTableUtil.setupDatasets(datasetFramework);
     // scheduler metadata
     ScheduleStoreTableUtil.setupDatasets(datasetFramework);
-
-    // metrics data
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
-    DefaultMetricDatasetFactory.setupDatasets(cConf, factory);
 
     // Usage registry
     UsageDataset.setupDatasets(datasetFramework);

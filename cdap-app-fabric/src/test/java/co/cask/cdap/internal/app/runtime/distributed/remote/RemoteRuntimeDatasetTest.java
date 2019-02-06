@@ -40,6 +40,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -97,8 +98,9 @@ public class RemoteRuntimeDatasetTest {
     }
     datasetFramework = injector.getInstance(DatasetFramework.class);
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
     try {
-      StoreDefinition.createAllTables(tableAdmin);
+      StoreDefinition.createAllTables(tableAdmin, registry);
     } catch (IOException | TableAlreadyExistsException e) {
       throw new RuntimeException("Failed to create the system tables", e);
     }

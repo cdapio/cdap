@@ -57,6 +57,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -72,6 +73,12 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
   private static final String ARTIFACT_BATCH_NAME = "cdap-data-pipeline";
   private static final String ARTIFACT_STREAMING_NAME = "cdap-data-streams";
+
+  @GET
+  @Path("v1/health")
+  public void healthCheck(HttpServiceRequest request, HttpServiceResponder responder) {
+    responder.sendStatus(HttpURLConnection.HTTP_OK);
+  }
 
   @POST
   @Path("v1/contexts/{context}/validations/stage")

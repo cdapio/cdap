@@ -65,6 +65,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -251,6 +252,12 @@ public class ReportGenerationSpark extends AbstractExtendedSpark {
         cipher.init(cipherMode, secretKeySpec);
         return cipher;
       }
+    }
+
+    @GET
+    @Path("/health")
+    public void healthCheck(HttpServiceRequest request, HttpServiceResponder responder) {
+      responder.sendStatus(HttpURLConnection.HTTP_OK);
     }
 
     @GET

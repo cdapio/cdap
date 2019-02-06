@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,9 @@
 
 package co.cask.cdap.app.mapreduce;
 
-import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
-import co.cask.cdap.api.metrics.MetricDataQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -29,7 +27,6 @@ import co.cask.cdap.proto.MRTaskInfo;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -38,7 +35,9 @@ import com.google.common.collect.Table;
 import com.google.inject.Inject;
 import org.apache.hadoop.mapreduce.TaskCounter;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,11 +47,11 @@ import java.util.Map;
  */
 public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
 
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
 
   @Inject
-  public LocalMRJobInfoFetcher(MetricStore metricStore) {
-    this.metricStore = metricStore;
+  public LocalMRJobInfoFetcher(MetricsSystemClient metricsSystemClient) {
+    this.metricsSystemClient = metricsSystemClient;
   }
 
   /**
@@ -60,7 +59,7 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
   @Override
-  public MRJobInfo getMRJobInfo(Id.Run runId) {
+  public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException {
     Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
 
     // baseTags has tag keys: ns.app.mr.runid
@@ -131,12 +130,13 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
                                          reduceProgress.get(reduceTaskId) / 100.0F, taskEntry.getValue()));
     }
 
-    return getJobCounters(mapTags, reduceTags, mapTaskInfos, reduceTaskInfos);
+    return getJobCounters(mapTags, reduceTags, mapTaskInfos, reduceTaskInfos, runId);
   }
 
 
   private MRJobInfo getJobCounters(Map<String, String> mapTags, Map<String, String> reduceTags,
-                                   List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos) {
+                                   List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos,
+                                   Id.Run runId) throws IOException {
     HashMap<String, Long> metrics = Maps.newHashMap();
 
     Map<String, String> mapMetricsToCounters =
@@ -163,15 +163,8 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
   }
 
   private void getAggregates(Map<String, String> tags, Map<String, String> metricsToCounters,
-                             Map<String, Long> result) {
-    Map<String, AggregationFunction> metrics = Maps.newHashMap();
-    // all map-reduce metrics are gauges
-    for (String metric : metricsToCounters.keySet()) {
-      metrics.put(metric, AggregationFunction.LATEST);
-    }
-    MetricDataQuery metricDataQuery =
-      new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metrics, tags, ImmutableList.<String>of());
-    Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
+                             Map<String, Long> result) throws IOException {
+    Collection<MetricTimeSeries> query = metricsSystemClient.query(tags, metricsToCounters.keySet());
     // initialize elements to zero
     for (String counterName : metricsToCounters.values()) {
       result.put(counterName, 0L);
@@ -185,16 +178,10 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
 
   // queries MetricStore for one metric across all tasks of a certain TaskType, using GroupBy InstanceId
   private void queryGroupedAggregates(Map<String, String> tags, Table<String, String, Long> allTaskMetrics,
-                                                   Map<String, String> metricsToCounters)  {
-    Map<String, AggregationFunction> metrics = Maps.newHashMap();
-    // all map-reduce metrics are gauges
-    for (String metric : metricsToCounters.keySet()) {
-      metrics.put(metric, AggregationFunction.LATEST);
-    }
+                                      Map<String, String> metricsToCounters) throws IOException {
 
-    MetricDataQuery metricDataQuery = new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, metrics,
-                                                          tags, ImmutableList.of(Constants.Metrics.Tag.INSTANCE_ID));
-    Collection<MetricTimeSeries> query = metricStore.query(metricDataQuery);
+    Collection<MetricTimeSeries> query = metricsSystemClient.query(
+      tags, metricsToCounters.keySet(), Collections.singleton(Constants.Metrics.Tag.INSTANCE_ID));
 
     for (MetricTimeSeries metricTimeSeries : query) {
       List<TimeValue> timeValues = metricTimeSeries.getTimeValues();

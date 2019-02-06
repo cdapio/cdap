@@ -60,6 +60,7 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -182,8 +183,9 @@ public class BaseHiveExploreServiceTest {
     namespacePathLocator = injector.getInstance(NamespacePathLocator.class);
 
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
     try {
-      StoreDefinition.createAllTables(tableAdmin);
+      StoreDefinition.createAllTables(tableAdmin, registry);
     } catch (IOException | TableAlreadyExistsException e) {
       throw new RuntimeException("Failed to create the system tables", e);
     }

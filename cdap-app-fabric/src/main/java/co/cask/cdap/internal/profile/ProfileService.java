@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
@@ -51,6 +51,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -70,12 +71,11 @@ public class ProfileService {
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final CConfiguration cConf;
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
 
   @Inject
-  public ProfileService(CConfiguration cConfiguration,
-                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                        MetricStore metricStore) {
+  public ProfileService(CConfiguration cConf, DatasetFramework datasetFramework,
+                        TransactionSystemClient txClient, MetricsSystemClient metricsSystemClient) {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
@@ -83,8 +83,8 @@ public class ProfileService {
         Collections.emptyMap(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-    this.cConf = cConfiguration;
-    this.metricStore = metricStore;
+    this.cConf = cConf;
+    this.metricsSystemClient = metricsSystemClient;
   }
 
   /**
@@ -214,6 +214,7 @@ public class ProfileService {
       AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
       deleteProfile(profileDataset, appMetadataStore, profileId, profile);
     }, NotFoundException.class, ProfileConflictException.class);
+
     deleteMetrics(profileId);
   }
 
@@ -425,6 +426,10 @@ public class ProfileService {
     }
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
                                                           new ArrayList<>(tags.keySet()));
-    metricStore.delete(deleteQuery);
+    try {
+      metricsSystemClient.delete(deleteQuery);
+    } catch (IOException e) {
+      LOG.warn("Failed to delete metrics for profile {}", profileId, e);
+    }
   }
 }

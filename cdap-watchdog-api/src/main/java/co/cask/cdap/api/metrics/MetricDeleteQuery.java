@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,7 @@
 
 package co.cask.cdap.api.metrics;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -32,9 +30,9 @@ import java.util.function.Predicate;
 public class MetricDeleteQuery {
   private final long startTs;
   private final long endTs;
-  private final Collection<String> metricNames;
+  private final List<String> metricNames;
   private final Map<String, String> sliceByTagValues;
-  private final Predicate<List<String>> tagPredicate;
+  private final List<String> aggregationTags;
 
   /**
    * Creates instance of {@link MetricDeleteQuery} that defines selection of data to delete from the metric store.
@@ -50,9 +48,9 @@ public class MetricDeleteQuery {
                            Map<String, String> sliceByTagValues, List<String> aggregationTags) {
     this.startTs = startTs;
     this.endTs = endTs;
-    this.metricNames = metricNames;
+    this.metricNames = new ArrayList<>(metricNames);
     this.sliceByTagValues = new LinkedHashMap<>(sliceByTagValues);
-    this.tagPredicate = aggregates -> Collections.indexOfSubList(aggregates, aggregationTags) == 0;
+    this.aggregationTags = new ArrayList<>(aggregationTags);
   }
 
   public long getStartTs() {
@@ -72,16 +70,17 @@ public class MetricDeleteQuery {
   }
 
   public Predicate<List<String>> getTagPredicate() {
-    return tagPredicate;
+    return aggregates -> Collections.indexOfSubList(aggregates, aggregationTags) == 0;
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("startTs", startTs)
-      .add("endTs", endTs)
-      .add("metricName", metricNames)
-      .add("sliceByTags", Joiner.on(",").withKeyValueSeparator(":").useForNull("null").join(sliceByTagValues))
-      .toString();
+    return "MetricDeleteQuery{" +
+      "startTs=" + startTs +
+      ", endTs=" + endTs +
+      ", metricNames=" + metricNames +
+      ", sliceByTagValues=" + sliceByTagValues +
+      ", aggregationTags=" + aggregationTags +
+      '}';
   }
 }

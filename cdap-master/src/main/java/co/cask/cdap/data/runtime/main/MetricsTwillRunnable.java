@@ -107,6 +107,8 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new MessagingClientModule(),
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
+      // For the injection of DatasetDefinition of MetricsTable directly
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
       new SystemDatasetRuntimeModule().getDistributedModules(),

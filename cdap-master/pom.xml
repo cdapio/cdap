@@ -636,7 +636,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.securestores.ext.dir}/cloudkms</outputDirectory>
+                  <outputDirectory>${stage.securestores.ext.dir}/gcp-cloudkms</outputDirectory>
                   <resources>
                     <resource>
                       <directory>

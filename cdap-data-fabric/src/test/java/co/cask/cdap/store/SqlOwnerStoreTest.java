@@ -17,9 +17,11 @@
 package co.cask.cdap.store;
 
 import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
 import co.cask.cdap.data2.sql.SqlTransactionRunner;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
@@ -40,7 +42,8 @@ public class SqlOwnerStoreTest extends OwnerStoreTest {
   public static void setup() throws Exception {
     pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
+    StructuredTableRegistry registry = new SqlStructuredTableRegistry();
+    StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     StoreDefinition.OwnerStore.createTables(structuredTableAdmin);
     ownerStore = new DefaultOwnerStore(transactionRunner);

@@ -45,16 +45,17 @@ public class NoSqlTransactionRunner implements TransactionRunner {
   @Inject
   public NoSqlTransactionRunner(NoSqlStructuredTableAdmin tableAdmin, TransactionSystemClient txClient) {
     this.tableAdmin = tableAdmin;
-    this.transactional = Transactions.createTransactionalWithRetry(createTransactional(txClient),
-                                                                   RetryStrategies.retryOnConflict(20, 100));
+    this.transactional = Transactions.createTransactionalWithRetry(
+      createTransactional(txClient, tableAdmin::getEntityTable),
+      RetryStrategies.retryOnConflict(20, 100));
   }
 
-  private Transactional createTransactional(TransactionSystemClient txClient) {
+  static Transactional createTransactional(TransactionSystemClient txClient, TableDatasetAccesor datasetAccesor) {
     return new Transactional() {
       @Override
       public void execute(co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
-        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext)) {
+        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext, datasetAccesor)) {
           txContext.start();
           finishExecute(txContext, datasetContext, runnable);
         } catch (Exception e) {
@@ -65,7 +66,7 @@ public class NoSqlTransactionRunner implements TransactionRunner {
       @Override
       public void execute(int timeout, co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
         TransactionContext txContext = new TransactionContext(txClient);
-        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext)) {
+        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext, datasetAccesor)) {
           txContext.start(timeout);
           finishExecute(txContext, datasetContext, runnable);
         } catch (Exception e) {
@@ -99,13 +100,15 @@ public class NoSqlTransactionRunner implements TransactionRunner {
     }
   }
 
-  private class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
+  private static class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
 
     private final TransactionContext txContext;
+    private final TableDatasetAccesor datasetAccesor;
     private Dataset entityTable = null;
 
-    private EntityTableDatasetContext(TransactionContext txContext) {
+    private EntityTableDatasetContext(TransactionContext txContext, TableDatasetAccesor datasetAccesor) {
       this.txContext = txContext;
+      this.datasetAccesor = datasetAccesor;
     }
 
     @Override
@@ -119,10 +122,9 @@ public class NoSqlTransactionRunner implements TransactionRunner {
     @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
       // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
-      if (NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME.equals(name)) {
         if (entityTable == null) {
           try {
-            entityTable = tableAdmin.getEntityTable();
+            entityTable = datasetAccesor.getTableDataset(name);
             txContext.addTransactionAware((TransactionAware) entityTable);
           } catch (IOException e) {
             throw new DatasetInstantiationException("Cannot instantiate entity table", e);
@@ -130,8 +132,6 @@ public class NoSqlTransactionRunner implements TransactionRunner {
         }
         //noinspection unchecked
         return (T) entityTable;
-      }
-      throw new DatasetInstantiationException("Trying to access dataset other than entity table: " + name);
     }
 
     @Override
@@ -158,5 +158,9 @@ public class NoSqlTransactionRunner implements TransactionRunner {
     public void discardDataset(Dataset dataset) {
       // no-op
     }
+  }
+
+  interface TableDatasetAccesor {
+    <T extends Dataset> T getTableDataset(String name) throws IOException;
   }
 }

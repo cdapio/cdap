@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,7 +60,7 @@ public interface AuthorizationEnforcer {
    * @param entityIds the entities on which the visibility check is to be performed
    * @param principal the principal to check the visibility for
    * @return a set of entities that are visible to the principal
-   * @throws Exception if any errors occured while performing the check
+   * @throws Exception if any errors occurred while performing the check
    */
   Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception;
 

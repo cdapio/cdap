@@ -52,4 +52,9 @@ public class NoopMetadataStorage implements MetadataStorage {
   public SearchResponse search(SearchRequest request) {
     return new SearchResponse(request, null, 0, Collections.emptyList());
   }
+
+  @Override
+  public void close() {
+    // no-op
+  }
 }

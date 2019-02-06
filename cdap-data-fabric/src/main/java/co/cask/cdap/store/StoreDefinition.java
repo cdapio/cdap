@@ -19,6 +19,7 @@ package co.cask.cdap.store;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.Fields;
 
@@ -39,8 +40,9 @@ public final class StoreDefinition {
    *
    * @param tableAdmin the table admin to create the table
    */
-  public static void createAllTables(StructuredTableAdmin tableAdmin, boolean overWrite)
-    throws IOException, TableAlreadyExistsException {
+  public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry,
+                                     boolean overWrite) throws IOException, TableAlreadyExistsException {
+    registry.initialize();
     if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
@@ -48,15 +50,19 @@ public final class StoreDefinition {
       OwnerStore.createTables(tableAdmin);
     }
     if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
-      NamespaceStore.createTables(tableAdmin);
+      NamespaceStore.createTable(tableAdmin);
+    }
+    if (overWrite || tableAdmin.getSpecification(SecretStore.SECRET_STORE_TABLE) == null) {
+      SecretStore.createTable(tableAdmin);
     }
     if (overWrite || tableAdmin.getSpecification(WorkflowStore.WORKFLOW_STATISTICS) == null) {
       WorkflowStore.createTables(tableAdmin);
     }
   }
 
-  public static void createAllTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
-    createAllTables(tableAdmin, false);
+  public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
+    throws IOException, TableAlreadyExistsException {
+    createAllTables(tableAdmin, registry, false);
   }
 
   /**
@@ -76,7 +82,7 @@ public final class StoreDefinition {
         .withPrimaryKeys(NAMESPACE_FIELD)
         .build();
 
-    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(NAMESPACE_TABLE_SPEC);
     }
   }
@@ -217,6 +223,27 @@ public final class StoreDefinition {
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(OWNER_TABLE_SPEC);
+    }
+  }
+  /**
+   * Schema for {@link SecretStore}.
+   */
+  public static final class SecretStore {
+    public static final StructuredTableId SECRET_STORE_TABLE = new StructuredTableId("secret_store");
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String SECRET_NAME_FIELD = "secret_name";
+    public static final String SECRET_DATA_FIELD = "secret_data";
+
+    public static final StructuredTableSpecification SECRET_STORE_SPEC = new StructuredTableSpecification.Builder()
+      .withId(SECRET_STORE_TABLE)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(SECRET_NAME_FIELD),
+                  Fields.bytesType(SECRET_DATA_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, SECRET_NAME_FIELD)
+      .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(SECRET_STORE_SPEC);
     }
   }
 }

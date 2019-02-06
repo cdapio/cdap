@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * The Storage Provider API for Metadata.
  */
-public interface MetadataStorage {
+public interface MetadataStorage extends AutoCloseable {
 
   /**
    * Apply the given mutation to the metadata state.
@@ -55,4 +55,11 @@ public interface MetadataStorage {
    * @return the result of the search, never null.
    */
   SearchResponse search(SearchRequest request) throws IOException;
+
+  /**
+   * Close the storage provider. Do not throw exceptions - this will be called
+   * when the Metadata service shuts down.
+   */
+  @Override
+  void close();
 }

@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.securestore.spi.SecretManager;
 import co.cask.cdap.securestore.spi.SecretManagerContext;
 import co.cask.cdap.securestore.spi.SecretNotFoundException;
+import co.cask.cdap.securestore.spi.SecretStore;
 import co.cask.cdap.securestore.spi.secret.Secret;
 import co.cask.cdap.securestore.spi.secret.SecretMetadata;
 import co.cask.cdap.security.store.SecureStoreService;
@@ -54,12 +55,12 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final SecretManagerContext context;
   private final String type;
-  private final SecretManager secretManager;
+  private SecretManager secretManager;
 
   @Inject
-  SecretManagerSecureStoreService(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
+  SecretManagerSecureStoreService(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin, SecretStore store) {
     this(namespaceQueryAdmin,
-         new DefaultSecretManagerContext(cConf),
+         new DefaultSecretManagerContext(cConf, store),
          cConf.get(Constants.Security.Store.PROVIDER),
          new SecretManagerExtensionLoader(cConf.get(Constants.Security.Store.EXTENSIONS_DIR))
            .get(cConf.get(Constants.Security.Store.PROVIDER)));
@@ -155,6 +156,7 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
       LOG.info("Initialized secure store of type {}.", type);
     } catch (IOException e) {
       LOG.error(String.format("Error occurred while initializing secure store of type %s.", type), e);
+      this.secretManager = null;
     }
   }
 

@@ -26,7 +26,7 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -118,7 +118,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final Scheduler scheduler;
   private final UsageRegistry usageRegistry;
   private final PreferencesService preferencesService;
-  private final MetricStore metricStore;
+  private final MetricsSystemClient metricsSystemClient;
   private final OwnerAdmin ownerAdmin;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
@@ -132,8 +132,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
                               Store store, Scheduler scheduler, UsageRegistry usageRegistry,
-                              PreferencesService preferencesService, MetricStore metricStore, OwnerAdmin ownerAdmin,
-                              ArtifactRepository artifactRepository,
+                              PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
+                              OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataPublisher metadataPublisher,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
@@ -144,7 +144,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.scheduler = scheduler;
     this.usageRegistry = usageRegistry;
     this.preferencesService = preferencesService;
-    this.metricStore = metricStore;
+    this.metricsSystemClient = metricsSystemClient;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
     this.metadataPublisher = metadataPublisher;
@@ -601,7 +601,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param applicationId the application to delete metrics for.
    */
-  private void deleteMetrics(ApplicationId applicationId) {
+  private void deleteMetrics(ApplicationId applicationId) throws IOException {
     ApplicationSpecification spec = this.store.getApplication(applicationId);
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = new LinkedHashMap<>();
@@ -610,7 +610,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     tags.put(Constants.Metrics.Tag.APP, spec.getName());
     MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.emptySet(), tags,
                                                           new ArrayList<>(tags.keySet()));
-    metricStore.delete(deleteQuery);
+    metricsSystemClient.delete(deleteQuery);
   }
 
   /**

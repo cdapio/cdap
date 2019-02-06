@@ -435,4 +435,9 @@ public class DatasetMetadataStorage implements MetadataStorage {
                           .putAll(meta.getProperties())
                           .putAll(other.getProperties()).build());
   }
+
+  @Override
+  public void close() {
+    // nop-op
+  }
 }
