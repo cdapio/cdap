@@ -27,4 +27,5 @@ public enum MetadataKind {
   PROPERTY;
 
   public static final Set<MetadataKind> ALL = EnumSet.allOf(MetadataKind.class);
+  public static final Set<MetadataKind> NONE = EnumSet.noneOf(MetadataKind.class);
 }

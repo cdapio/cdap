@@ -32,6 +32,10 @@ public class ScopedNameOfKind extends ScopedName {
     this.kind = kind;
   }
 
+  public ScopedNameOfKind(MetadataKind kind, ScopedName scopedName) {
+    this(kind, scopedName.getScope(), scopedName.getName());
+  }
+
   public MetadataKind getKind() {
     return kind;
   }
