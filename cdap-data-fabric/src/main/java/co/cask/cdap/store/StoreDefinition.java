@@ -44,7 +44,7 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
       ArtifactStore.createTables(tableAdmin);
     }
-    if (tableAdmin.getSpecification(OwnerStore.OWNER_TABLE) == null) {
+    if (overWrite || tableAdmin.getSpecification(OwnerStore.OWNER_TABLE) == null) {
       OwnerStore.createTables(tableAdmin);
     }
     if (overWrite || tableAdmin.getSpecification(NamespaceStore.NAMESPACES) == null) {
