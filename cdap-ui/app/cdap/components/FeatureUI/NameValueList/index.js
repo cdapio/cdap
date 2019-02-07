@@ -84,7 +84,7 @@ class NameValueList extends React.Component {
                 basicData.map((item) => {
                   return (
                     <div className='list-row' key={item.name}>
-                      <div className='name'>{item.name}
+                      <div className='name'>{isEmpty(item.displayName)? item.name: item.displayName}
                           {
                             item.isMandatory && <i className = "fa fa-asterisk mandatory"></i>
                           }
@@ -116,7 +116,7 @@ class NameValueList extends React.Component {
                   advanceData.map((item) => {
                     return (
                       <div className='list-row' key={item.name}>
-                        <div className='name'>{item.name}</div>
+                        <div className='name'>{isEmpty(item.displayName)? item.name: item.displayName}</div>
                         <div className='colon'>:</div>
                         <Input className='value' type="text" name="value" placeholder='value'
                           defaultValue={item.value} onChange={this.onValueUpdated.bind(this, item)} />

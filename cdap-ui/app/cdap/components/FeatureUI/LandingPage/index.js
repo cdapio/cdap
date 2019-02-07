@@ -299,6 +299,7 @@ class LandingPage extends React.Component {
       let configObj = find(configList, { name: config.paramName });
       return {
         name: config.paramName,
+        displayName: isEmpty(config.displayName) ? config.paramName: config.displayName ,
         value: isEmpty(configObj) ? (isEmpty(config.defaultValue) ? "" : config.defaultValue) : configObj.value,
         dataType: config.dataType,
         isCollection: config.isCollection,

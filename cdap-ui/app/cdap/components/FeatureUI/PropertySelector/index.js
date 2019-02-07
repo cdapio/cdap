@@ -189,10 +189,13 @@ class PropertySelector extends React.Component {
     if (isNil(this.currentProperty) && !isEmpty(this.props.availableProperties)) {
       this.currentProperty = this.props.availableProperties[this.currentPropertyIndex];
     }
+    let propertyDisplayNameMap = new Map();
     this.props.availableProperties.map((property) => {
+      propertyDisplayNameMap.set(property.paramName, isEmpty(property.displayName) ? property.paramName: property.displayName);
       if (isEmpty(property.subParams)) {
         updatedPropMap.set(property.paramName, [{
           header: "none",
+          displayName: "none",
           isCollection: true,
           isSelected: false,
           isMandatory: property.isMandatory,
@@ -204,6 +207,7 @@ class PropertySelector extends React.Component {
         property.subParams.forEach(subParam => {
           subParamValues.push({
             header: subParam.paramName,
+            displayName: isEmpty(subParam.displayName) ? subParam.paramName: subParam.displayName,
             isCollection: subParam.isCollection,
             isMandatory: property.isMandatory,
             description: property.description,
@@ -239,7 +243,7 @@ class PropertySelector extends React.Component {
                         {
                           isMandatory && <i className = "fa fa-asterisk mandatory"></i>
                         }
-                        <div className ="heading" title = {toCamelCase(property)}>{toCamelCase(property)}</div>
+                        <div className ="heading" title = {propertyDisplayNameMap.get(property)}>{propertyDisplayNameMap.get(property)}</div>
                       </div>
                       <div className="accordion__arrow" role="presentation" />
                     </AccordionItemTitle>
@@ -249,7 +253,7 @@ class PropertySelector extends React.Component {
                         updatedPropMap.get(property).map(propValue => {
                           return (<List dataProvider={propValue.values}
                             key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
-                            header={(propValue.header == "none") ? undefined : propValue.header}
+                            header={(propValue.header == "none") ? undefined : propValue.displayName}
                             headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
                             onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
                         })
@@ -264,7 +268,7 @@ class PropertySelector extends React.Component {
           </Accordion>
         </div>
         <div className="schema-container">
-          <div className = "config-selector-header">{"Select columns for : " + toCamelCase(this.currentProperty.paramName)
+          <div className = "config-selector-header">{"Select dataset columns for : " + propertyDisplayNameMap.get(this.currentProperty.paramName)
               + (isEmpty(this.currentProperty.subParams)?"": (" (" + toCamelCase(this.currentSubProperty) + ")"))}</div>
           <div className="schema-filter-container">
             <label>Column Type</label>
@@ -297,7 +301,7 @@ class PropertySelector extends React.Component {
                 }).filter((item) => this.columnfilter(item, this.state.filterKey, this.state.filterType));
                 return (<div className="schema" key = {schema.schemaName}>
                   <CheckList dataProvider={columns} isSingleSelect={this.isSingleSelect(this.currentProperty, this.currentSubProperty)}
-                    title={schema.schemaName} handleChange={this.handleColumnChange.bind(this, schema)} />
+                    title={"Dataset: " + schema.schemaName} handleChange={this.handleColumnChange.bind(this, schema)} />
                 </div>);
               })
             }
