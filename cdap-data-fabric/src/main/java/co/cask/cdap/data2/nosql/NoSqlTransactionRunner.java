@@ -30,6 +30,7 @@ import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * No sql transaction runner to start a transaction
@@ -44,8 +45,8 @@ public class NoSqlTransactionRunner implements TransactionRunner {
     this.transactional = Transactions.createTransactionalWithRetry(
       NoSQLTransactionals.createTransactional(txClient, new TableDatasetSupplier() {
         @Override
-        public <T extends Dataset> T getTableDataset(String name) throws IOException {
-          return tableAdmin.getEntityTable();
+        public <T extends Dataset> T getTableDataset(String name, Map<String, String> arguments) throws IOException {
+          return tableAdmin.getEntityTable(arguments);
         }
       }),
       RetryStrategies.retryOnConflict(20, 100));

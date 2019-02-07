@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -80,8 +81,8 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
         txClient,
         new TableDatasetSupplier() {
           @Override
-          public <T extends Dataset> T getTableDataset(String name) throws IOException {
-            return getRegistryTable();
+          public <T extends Dataset> T getTableDataset(String name, Map<String, String> arguments) throws IOException {
+            return getRegistryTable(arguments);
           }
         }
       ),
@@ -112,7 +113,7 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
     Transactionals.execute(
       transactional,
       context -> {
-        Table table = context.getDataset(ENTITY_REGISTRY);
+        Table table = context.getDataset(ENTITY_REGISTRY, Collections.emptyMap());
         byte[] serialized = table.get(getRowKeyBytes(tableId), SCHEMA_COL_BYTES);
         if (serialized != null) {
           throw new TableAlreadyExistsException(tableId);
@@ -136,7 +137,7 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
     Transactionals.execute(
       transactional,
       context -> {
-        Table table = context.getDataset(ENTITY_REGISTRY);
+        Table table = context.getDataset(ENTITY_REGISTRY, Collections.emptyMap());
         table.delete(getRowKeyBytes(tableId));
       });
     specCache.invalidate(tableId);
@@ -147,7 +148,7 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
     return Transactionals.execute(
       transactional,
       context -> {
-        Table table = context.getDataset(ENTITY_REGISTRY);
+        Table table = context.getDataset(ENTITY_REGISTRY, Collections.emptyMap());
         try (Scanner scanner = table.scan(TABLE_ROWKEY_PREFIX, Bytes.stopKeyForPrefix(TABLE_ROWKEY_PREFIX))) {
           return scanner.next() == null;
         }
@@ -160,7 +161,7 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
       Transactionals.execute(
         transactional,
         context -> {
-          Table table = context.getDataset(ENTITY_REGISTRY);
+          Table table = context.getDataset(ENTITY_REGISTRY, Collections.emptyMap());
           byte[] serialized = table.get(getRowKeyBytes(tableId), SCHEMA_COL_BYTES);
           if (serialized == null) {
             return null;
@@ -175,8 +176,8 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
    return Bytes.concat(TABLE_ROWKEY_PREFIX, Bytes.toBytes(tableId.getName()));
   }
 
-  private <T extends Dataset> T getRegistryTable() throws IOException {
+  private <T extends Dataset> T getRegistryTable(Map<String, String> arguments) throws IOException {
     //noinspection unchecked
-    return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityRegistrySpec, Collections.emptyMap(), null);
+    return (T) tableDefinition.getDataset(SYSTEM_CONTEXT, entityRegistrySpec, arguments, null);
   }
 }

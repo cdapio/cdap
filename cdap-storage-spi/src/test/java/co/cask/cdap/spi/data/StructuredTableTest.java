@@ -37,6 +37,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,6 +70,7 @@ public abstract class StructuredTableTest {
                    Fields.doubleType(DOUBLE_COL), Fields.floatType(FLOAT_COL), Fields.bytesType(BYTES_COL),
                    Fields.longType(LONG_COL))
        .withPrimaryKeys(KEY, KEY2)
+       .withIndexes(STRING_COL)
        .build();
       SIMPLE_SCHEMA = new StructuredTableSchema(SIMPLE_SPEC);
     } catch (InvalidFieldException e) {
@@ -373,6 +375,65 @@ public abstract class StructuredTableTest {
     Assert.assertEquals(expected, scanSimpleStructuredRows(Range.all(), max));
   }
 
+  @Test
+  public void testIndexScan() throws Exception {
+    int num = 5;
+    // Write a few records
+    List<Collection<Field<?>>> expected = new ArrayList<>();
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      int counter = 0;
+      for (String value : Arrays.asList("abc", "def", "ghi")) {
+        for (int i = 0; i < num; ++i) {
+          Collection<Field<?>> keys = Arrays.asList(Fields.intField(KEY, counter),
+                                                    Fields.longField(KEY2, counter * 100L));
+          Collection<Field<?>> fields = new ArrayList<>(keys);
+          fields.add(Fields.stringField(STRING_COL, value));
+          table.upsert(fields);
+          expected.add(fields);
+          ++counter;
+        }
+      }
+    });
+
+    // Verify write
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), 1000)) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        Assert.assertEquals(expected, rows);
+      }
+    });
+
+    // Scan by index
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.stringField(STRING_COL, "def"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        Assert.assertEquals(expected.subList(num, 2 * num), rows);
+      }
+
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.stringField(STRING_COL, "abc"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        Assert.assertEquals(expected.subList(0, num), rows);
+      }
+
+      // non-existent index value
+      try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.stringField(STRING_COL, "non"))) {
+        List<Collection<Field<?>>> rows = convertRowsToFields(iterator, Arrays.asList(KEY, KEY2, STRING_COL));
+        Assert.assertEquals(Collections.emptyList(), rows);
+      }
+
+      // non-index column
+      try {
+        table.scan(Fields.longField(LONG_COL, 1L));
+        Assert.fail("Expected InvalidFieldException for scanning a non-index column");
+      } catch (InvalidFieldException e) {
+        // Expected
+      }
+    });
+  }
+
   private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {
     List<Collection<Field<?>>> expected = new ArrayList<>(max);
     // Write rows in reverse order to test sorting
@@ -433,6 +494,15 @@ public abstract class StructuredTableTest {
           convertRowToFields(structuredRow, fields)));
     }
     return actual;
+  }
+
+  private List<Collection<Field<?>>> convertRowsToFields(Iterator<StructuredRow> iterator, List<String> columns) {
+    List<Collection<Field<?>>> rows = new ArrayList<>();
+    while (iterator.hasNext()) {
+      StructuredRow row = iterator.next();
+      rows.add(convertRowToFields(row, columns));
+    }
+    return rows;
   }
 
   private List<Field<?>> convertRowToFields(StructuredRow row, List<String> columns) {

@@ -19,14 +19,15 @@ package co.cask.cdap.data2.nosql.dataset;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Interface to supply the dataset for entity tables.
  */
 public interface TableDatasetSupplier {
   /**
-   * @return the dataset for the given entity table name
+   * @return the dataset for the given entity table name and arguments
    * @throws IOException on errors when instantiating the dataset for the entity table
    */
-  <T extends Dataset> T getTableDataset(String name) throws IOException;
+  <T extends Dataset> T getTableDataset(String name, Map<String, String> arguments) throws IOException;
 }
