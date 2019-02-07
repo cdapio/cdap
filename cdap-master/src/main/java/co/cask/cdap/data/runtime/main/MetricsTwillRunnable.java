@@ -111,7 +111,6 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
       new LogReaderRuntimeModules().getDistributedModules(),
       new MetricsHandlerModule(),
