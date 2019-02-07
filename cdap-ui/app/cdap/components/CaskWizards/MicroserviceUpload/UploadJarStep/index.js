@@ -19,12 +19,11 @@ import { connect, Provider } from 'react-redux';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
 import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
 import FileDnD from 'components/FileDnD';
-require('./UploadJarStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
     file: state.uploadjar.contents,
-    error: state.uploadjar.__error
+    error: state.uploadjar.__error,
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {
@@ -33,10 +32,10 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
       dispatch({
         type: MicroserviceUploadActions.setFilePath,
         payload: {
-          file: e[0]
-        }
+          file: e[0],
+        },
       });
-    }
+    },
   };
 };
 const MicroserviceJarUploader = connect(

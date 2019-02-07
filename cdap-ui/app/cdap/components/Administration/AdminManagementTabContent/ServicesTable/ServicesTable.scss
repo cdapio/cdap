@@ -16,30 +16,22 @@
 
 @import '../../../PipelineSummary/StickyTableHeader.scss';
 @import '../../../../styles/variables.scss';
-
-$table_cell_border_color: gray;
-$table_background_color: transparent;
-$table_border_color: lightgray;
-$instance_bg_color: $grey-05;
-$instance_bg_hover_color: white;
-$height_of_header: 35px;
-$height_of_conent: 415px;
-$table_row_hover_bg_color: $grey-08;
+@import '../AdminManagementTabContentVariables.scss';
 
 .services-table {
   background: $cdap-white;
   padding: 25px;
   font-weight: 500;
-  height: $height_of_conent;
+  height: $height-of-content;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid $table_border_color;
+  border: 1px solid $table-border-color;
 
   .table-sm td,
   .table-sm th {
-    border-bottom: 2px solid $table_border_color;
+    border-bottom: 2px solid $table-border-color;
   }
 
   .table-sm tbody tr {
@@ -50,7 +42,7 @@ $table_row_hover_bg_color: $grey-08;
     }
   }
 
-  @include stickyheader(10%, 30%, 20%, 20%, 20%, $bgColor: $table_background_color);
+  @include stickyheader(10%, 30%, 20%, 20%, 20%, $bgColor: $table-background-color);
 
   .table-container {
     height: 100%;
@@ -66,7 +58,7 @@ $table_row_hover_bg_color: $grey-08;
     }
 
     .table-scroll {
-      height: calc(100% - #{$height_of_header});
+      height: calc(100% - #{$instance-bg-hover-color});
       width: 100%;
       .table {
         thead tr th {
@@ -94,7 +86,7 @@ $table_row_hover_bg_color: $grey-08;
         tr {
           cursor: pointer;
           &:hover {
-            background: $table_row_hover_bg_color;
+            background: $table-row-hover-bg-color;
           }
           td {
             a,
@@ -122,8 +114,8 @@ $table_row_hover_bg_color: $grey-08;
           .requested-instances-holder {
             padding: 1px 5px 3px;
             &:hover {
-              border: 1px solid $instance_bg_color;
-              background: $instance_bg_hover_color;
+              border: 1px solid $instance-bg-color;
+              background: $instance-bg-hover-color;
             }
           }
         }

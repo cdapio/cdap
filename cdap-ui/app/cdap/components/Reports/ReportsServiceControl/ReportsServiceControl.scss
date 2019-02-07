@@ -18,7 +18,7 @@
 
 .reports-service-control {
   display: flex;
-  height: calc(100vh - 104px);
+  height: calc(100vh - (#{$height-of-footer} + #{$height-of-header}));
   font-size: 15px;
   overflow: auto;
 

@@ -18,7 +18,7 @@
 @import "../DatasetDetailedView/DetailedViewStyling.scss";
 
 .app-detailed-view {
-  height: calc(100vh - 104px);
+  height: calc(100vh - (#{$height-of-footer} + #{$height-of-header}));
   background: rgba(238, 238, 238, 1);
   color: rgba(51, 51, 51, 1);
   overflow-y: auto;

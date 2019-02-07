@@ -23,8 +23,6 @@ import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpl
 import FileDnD from 'components/FileDnD';
 import T from 'i18n-react';
 
-require('./UploadJsonStep.scss');
-
 const mapStateWithDNDFileProps = (state) => {
   return {
     file: state.upload.json.contents,

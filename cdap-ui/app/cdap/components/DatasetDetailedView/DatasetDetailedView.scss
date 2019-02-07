@@ -14,8 +14,8 @@
  * the License.
  */
 
-@import "../AppDetailedView/AppDetailedView.scss";
 @import "./DetailedViewStyling.scss";
+@import "~styles/variables.scss";
 
 .app-detailed-view {
   &.dataset-detailed-view {

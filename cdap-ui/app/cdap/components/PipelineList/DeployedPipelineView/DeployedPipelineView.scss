@@ -14,8 +14,7 @@
  * the License.
  */
 
-$header-height: 70px;
-$padding-size: 45px;
+@import './DeployedPipelineViewVariables.scss';
 
 .pipeline-deployed-view {
   padding-left: $padding-size;

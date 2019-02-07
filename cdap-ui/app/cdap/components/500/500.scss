@@ -19,7 +19,7 @@
 
 .page-500 {
   display: flex;
-  height: calc(100vh - 104px);
+  height: calc(100vh - (#{$height-of-footer} + #{$height-of-header}));
   justify-content: center;
   align-items: center;
   flex-direction: column;

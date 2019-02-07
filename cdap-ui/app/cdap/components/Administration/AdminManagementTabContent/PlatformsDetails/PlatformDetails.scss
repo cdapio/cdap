@@ -15,7 +15,7 @@
 */
 
 @import '../../../../styles/variables.scss';
-@import '../ServicesTable/ServicesTable.scss';
+@import '../AdminManagementTabContentVariables.scss';
 
 $platform_section_border_color: lightgray;
 $loading_container_bg_color: $grey-07;
@@ -28,7 +28,7 @@ $loading_container_bg_color: $grey-07;
   align-items: center;
 
   &.loading {
-    height: $height_of_conent;
+    height: $height-of-content;
     background: $loading_container_bg_color;
     margin-top: 27px;
   }
@@ -43,7 +43,7 @@ $loading_container_bg_color: $grey-07;
     background: $cdap-white;
     padding: 25px;
     width: 100%;
-    height: $height_of_conent;
+    height: $height-of-content;
     border: 1px solid $platform_section_border_color;
     overflow: auto;
   }

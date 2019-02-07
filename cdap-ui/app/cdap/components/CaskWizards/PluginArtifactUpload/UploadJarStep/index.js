@@ -22,7 +22,6 @@ import PluginArtifactUploadStore from 'services/WizardStores/PluginArtifactUploa
 import PluginArtifactUploadActions from 'services/WizardStores/PluginArtifactUpload/PluginArtifactUploadActions';
 import T from 'i18n-react';
 import FileDnD from 'components/FileDnD';
-require('./UploadJarStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {

@@ -47,7 +47,7 @@
     }
   }
   .dataprephome-wrapper {
-    height: calc(100vh - 154px); // header + footer + workspace tab
+    height: calc(100vh - (#{$height-of-footer} + #{$height-of-header} + 50px)); // header + footer + workspace tab
     .dataprep-container {
       .dataprep-error-alert-container {
         top: 0;
