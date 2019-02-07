@@ -73,15 +73,15 @@ public class SearchHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SearchHelper.class);
 
-  public static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.business");
-  public static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.system");
+  protected static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.business");
+  protected static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.system");
 
   private static final Comparator<Map.Entry<MetadataEntity, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     // sort in descending order
     (o1, o2) -> o2.getValue() - o1.getValue();
 
-  private final Transactional transactional;
-  private final DatasetFramework dsFramework;
+  protected final Transactional transactional;
+  protected final DatasetFramework dsFramework;
 
   @Inject
   public SearchHelper(TransactionSystemClient txClient, DatasetFramework dsFramework) {
@@ -112,7 +112,7 @@ public class SearchHelper {
     }
   }
 
-  private static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
+  protected static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 
