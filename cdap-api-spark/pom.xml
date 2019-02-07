@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>50.50.50</version>
+    <version>5.1.201</version>
   </parent>
 
   <artifactId>cdap-api-spark</artifactId>
