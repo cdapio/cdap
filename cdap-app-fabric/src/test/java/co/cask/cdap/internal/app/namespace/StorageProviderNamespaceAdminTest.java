@@ -25,6 +25,7 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.NamespaceStore;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
@@ -79,7 +80,8 @@ public class StorageProviderNamespaceAdminTest {
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
     // we don't use namespace admin here but the store because namespaceadmin will try to create the
     // home directory for namespace which we don't want. We just want to store the namespace meta in store
     // to look up during the delete.

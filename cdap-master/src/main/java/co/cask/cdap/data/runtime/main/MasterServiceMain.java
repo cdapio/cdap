@@ -77,6 +77,7 @@ import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
@@ -690,12 +691,10 @@ public class MasterServiceMain extends DaemonMain {
       }
 
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-      if (tableAdmin.getSpecification(StoreDefinition.ArtifactStore.ARTIFACT_DATA_TABLE) == null) {
-        try {
-          StoreDefinition.createAllTables(tableAdmin);
-        } catch (IOException | TableAlreadyExistsException e) {
-          throw new RuntimeException("Unable to create the system tables.", e);
-        }
+      try {
+        StoreDefinition.createAllTables(tableAdmin, injector.getInstance(StructuredTableRegistry.class));
+      } catch (IOException | TableAlreadyExistsException e) {
+        throw new RuntimeException("Unable to create the system tables.", e);
       }
       LOG.info("CDAP Master started successfully.");
     }

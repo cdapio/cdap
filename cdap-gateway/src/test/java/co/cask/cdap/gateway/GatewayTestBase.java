@@ -42,6 +42,7 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -179,7 +180,8 @@ public abstract class GatewayTestBase {
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     logQueryService = injector.getInstance(LogQueryService.class);
@@ -197,7 +199,8 @@ public abstract class GatewayTestBase {
     router.startAndWait();
     port = router.getBoundAddress().orElseThrow(IllegalStateException::new).getPort();
 
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                    injector.getInstance(StructuredTableRegistry.class));
 
     return injector;
   }

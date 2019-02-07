@@ -17,23 +17,19 @@
 package co.cask.cdap.data2.nosql;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.data2.nosql.dataset.NoSQLTransactionals;
+import co.cask.cdap.data2.nosql.dataset.TableDatasetSupplier;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.spi.data.transaction.TransactionException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TxRunnable;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * No sql transaction runner to start a transaction
@@ -45,47 +41,14 @@ public class NoSqlTransactionRunner implements TransactionRunner {
   @Inject
   public NoSqlTransactionRunner(NoSqlStructuredTableAdmin tableAdmin, TransactionSystemClient txClient) {
     this.tableAdmin = tableAdmin;
-    this.transactional = Transactions.createTransactionalWithRetry(createTransactional(txClient),
-                                                                   RetryStrategies.retryOnConflict(20, 100));
-  }
-
-  private Transactional createTransactional(TransactionSystemClient txClient) {
-    return new Transactional() {
-      @Override
-      public void execute(co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
-        TransactionContext txContext = new TransactionContext(txClient);
-        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext)) {
-          txContext.start();
-          finishExecute(txContext, datasetContext, runnable);
-        } catch (Exception e) {
-          Throwables.propagateIfPossible(e, TransactionFailureException.class);
+    this.transactional = Transactions.createTransactionalWithRetry(
+      NoSQLTransactionals.createTransactional(txClient, new TableDatasetSupplier() {
+        @Override
+        public <T extends Dataset> T getTableDataset(String name) throws IOException {
+          return tableAdmin.getEntityTable();
         }
-      }
-
-      @Override
-      public void execute(int timeout, co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
-        TransactionContext txContext = new TransactionContext(txClient);
-        try (EntityTableDatasetContext datasetContext = new EntityTableDatasetContext(txContext)) {
-          txContext.start(timeout);
-          finishExecute(txContext, datasetContext, runnable);
-        } catch (Exception e) {
-          Throwables.propagateIfPossible(e, TransactionFailureException.class);
-        }
-      }
-
-      private void finishExecute(TransactionContext txContext, DatasetContext dsContext,
-                                 co.cask.cdap.api.TxRunnable runnable)
-        throws TransactionFailureException {
-        try {
-          runnable.run(dsContext);
-        } catch (Exception e) {
-          txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
-        }
-        // The call the txContext.abort above will always have exception thrown
-        // Hence we'll only reach here if and only if the runnable.run() returns normally.
-        txContext.finish();
-      }
-    };
+      }),
+      RetryStrategies.retryOnConflict(20, 100));
   }
 
   @Override
@@ -96,67 +59,6 @@ public class NoSqlTransactionRunner implements TransactionRunner {
       );
     } catch (TransactionFailureException e) {
       throw new TransactionException("Failure executing NoSql transaction:", e.getCause() == null ? e : e.getCause());
-    }
-  }
-
-  private class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
-
-    private final TransactionContext txContext;
-    private Dataset entityTable = null;
-
-    private EntityTableDatasetContext(TransactionContext txContext) {
-      this.txContext = txContext;
-    }
-
-    @Override
-    public void close() throws Exception {
-      if (entityTable != null) {
-        entityTable.close();
-        entityTable = null;
-      }
-    }
-
-    @Override
-    public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-      // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
-      if (NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME.equals(name)) {
-        if (entityTable == null) {
-          try {
-            entityTable = tableAdmin.getEntityTable();
-            txContext.addTransactionAware((TransactionAware) entityTable);
-          } catch (IOException e) {
-            throw new DatasetInstantiationException("Cannot instantiate entity table", e);
-          }
-        }
-        //noinspection unchecked
-        return (T) entityTable;
-      }
-      throw new DatasetInstantiationException("Trying to access dataset other than entity table: " + name);
-    }
-
-    @Override
-    public <T extends Dataset> T getDataset(String namespace, String name) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments)  {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void releaseDataset(Dataset dataset) {
-      // no-op
-    }
-
-    @Override
-    public void discardDataset(Dataset dataset) {
-      // no-op
     }
   }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
 import co.cask.cdap.data2.sql.SqlTransactionRunner;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
@@ -49,7 +50,8 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
     Injector injector = AppFabricTestHelper.getInjector();
     pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
+    StructuredTableAdmin structuredTableAdmin =
+      new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
 
     // TODO(CDAP-14770): fully change this when migrating the rest of DefaultStore

@@ -66,6 +66,7 @@ import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
@@ -155,7 +156,7 @@ public class AppFabricTestHelper {
       }
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
       try {
-        StoreDefinition.createAllTables(tableAdmin);
+        StoreDefinition.createAllTables(tableAdmin, injector.getInstance(StructuredTableRegistry.class));
       } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
       }

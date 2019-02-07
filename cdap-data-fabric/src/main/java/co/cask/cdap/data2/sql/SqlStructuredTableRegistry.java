@@ -14,37 +14,42 @@
  * the License.
  */
 
-package co.cask.cdap.spi.data.table;
+package co.cask.cdap.data2.sql;
+
+import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 /**
- * A tempory class to register the specification of the table created.
+ * A tempory class to register the specification of the SQL tables created.
  * TODO: CDAP-14673 convert this into actual schema registry
  */
-public final class StructuredTableSpecificationRegistry {
+public class SqlStructuredTableRegistry implements StructuredTableRegistry {
   private static final Map<StructuredTableId, StructuredTableSpecification> specMap = new ConcurrentHashMap<>();
 
-  private StructuredTableSpecificationRegistry() {
-    // prevent instantiation
+  @Override
+  public void initialize() {
+    // Nothing to do
   }
 
-  public static void registerSpecification(StructuredTableSpecification specification) {
+  public void registerSpecification(StructuredTableSpecification specification) {
     specMap.put(specification.getTableId(), specification);
   }
 
   @Nullable
-  public static StructuredTableSpecification getSpecification(StructuredTableId tableId) {
+  public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
     return specMap.get(tableId);
   }
 
-  public static void removeSpecification(StructuredTableId tableId) {
+  public void removeSpecification(StructuredTableId tableId) {
     specMap.remove(tableId);
   }
 
-  public static boolean isEmpty() {
+  public boolean isEmpty() {
     return specMap.isEmpty();
   }
 }

@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
 import co.cask.cdap.data2.sql.SqlTransactionRunner;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -51,7 +52,8 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
 
     pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(dataSource);
+    StructuredTableAdmin structuredTableAdmin =
+      new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     artifactStore = new ArtifactStore(cConf,
                                       injector.getInstance(NamespacePathLocator.class),

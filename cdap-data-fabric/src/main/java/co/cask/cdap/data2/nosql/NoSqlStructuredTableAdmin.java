@@ -24,9 +24,10 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import co.cask.cdap.spi.data.table.StructuredTableSpecificationRegistry;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
@@ -47,34 +48,37 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   private final DatasetDefinition tableDefinition;
   private final DatasetSpecification entityTableSpec;
+  private final StructuredTableRegistry registry;
 
   @Inject
-  public NoSqlStructuredTableAdmin(@Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+  public NoSqlStructuredTableAdmin(@Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition,
+                                   StructuredTableRegistry registry) {
     this.tableDefinition = tableDefinition;
     entityTableSpec = tableDefinition.configure(ENTITY_TABLE_NAME, DatasetProperties.EMPTY);
+    this.registry = registry;
   }
 
   @Override
-  public void create(StructuredTableSpecification spec) throws IOException {
+  public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
     LOG.info("Creating table {} in namespace {}", spec.getTableId().getName(), NamespaceId.SYSTEM);
     DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityTableSpec, null);
     if (!admin.exists()) {
       LOG.info("Creating dataset table {} in namespace {}", entityTableSpec.getName(), NamespaceId.SYSTEM);
       admin.create();
     }
-    StructuredTableSpecificationRegistry.registerSpecification(spec);
+    registry.registerSpecification(spec);
   }
 
   @Override
   public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-    return StructuredTableSpecificationRegistry.getSpecification(tableId);
+    return registry.getSpecification(tableId);
   }
 
   @Override
   public void drop(StructuredTableId tableId) throws IOException {
     LOG.info("Dropping table {} in namespace {}", tableId.getName(), NamespaceId.SYSTEM);
-    StructuredTableSpecificationRegistry.removeSpecification(tableId);
-    if (StructuredTableSpecificationRegistry.isEmpty()) {
+    registry.removeSpecification(tableId);
+    if (registry.isEmpty()) {
       DatasetAdmin admin = tableDefinition.getAdmin(SYSTEM_CONTEXT, entityTableSpec, null);
       LOG.info("Dropping dataset table {} in namespace {}", entityTableSpec.getName(), NamespaceId.SYSTEM);
       admin.drop();
