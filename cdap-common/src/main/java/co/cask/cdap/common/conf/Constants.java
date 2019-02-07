@@ -537,7 +537,6 @@ public final class Constants {
     public static final String SERVER_BOSS_THREADS = "router.server.boss.threads";
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
     public static final String CONNECTION_TIMEOUT_SECS = "router.connection.idle.timeout.secs";
-    public static final String ROUTER_USERSERVICE_FALLBACK_STRAGEY = "router.userservice.fallback.strategy";
     public static final String ROUTER_AUDIT_PATH_CHECK_ENABLED = "router.audit.path.check.enabled";
     public static final String ROUTER_AUDIT_LOG_ENABLED = "router.audit.log.enabled";
 

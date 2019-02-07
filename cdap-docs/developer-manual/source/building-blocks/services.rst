@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2019 Cask Data, Inc.
 
 .. _user-services:
 
@@ -217,8 +217,6 @@ as explained in :ref:`Configuring Resources <advanced-configuring-resources>`.
 An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
 <examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
 
-.. _services-routing:
-
 Service Thread Model
 ====================
 An HTTP server is started for each Service instance, which by default starts 60 threads to handle
@@ -233,39 +231,6 @@ Both the number of service threads and the thread keep-alive time can be altered
 - ``system.service.threads``: Number of threads to use in the HTTP server
 - ``system.service.thread.keepalive.secs``: Number of seconds a thread can sit idle before getting terminated
 
-
-Service Routing
-===============
-When multiple versions of the same service are running, you can control where service
-requests are routed.
-
-For example, if version ``v1`` and version ``v2`` of the same application are running, you
-can choose to direct 50% of the requests to version ``v1`` of the service and 50% to version
-``v2``. This can be achieved by uploading a *route configuration* (also known as a *route
-config*): a map of version names to the percentage of requests to be routed to that
-version.
-
-For a specific service, if a route config is not present or if it cannot be retrieved, a
-fallback routing strategy is used. The strategy used can be configured in the
-``cdap-site.xml`` file.
-
-These fallback strategies are available: *random*, *smallest*, *largest*, and *drop*.
-
-**Random** is the default fallback strategy. If the random fallback strategy is chosen,
-the request is routed to any version of the service.
-
-If **smallest** is chosen, the request is routed to the smallest version (based on a
-string comparison of the available versions). Similarly for **largest**: the request
-is routed to the largest version. If **drop** is chosen as the fallback strategy, the
-request is not routed to any version.
-
-The fallback strategy can be configured using the property
-``router.userservice.fallback.strategy`` in the 
-:ref:`cdap-site.xml file <appendix-cdap-site.xml>`.
-
-For information on how to store, fetch, and delete a routing configuration
-(*RouteConfig*), refer to the :ref:`Route Config HTTP RESTful API documentation 
-<http-restful-api-route-config>`.
 
 Services Examples
 =================

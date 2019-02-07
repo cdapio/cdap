@@ -3198,20 +3198,6 @@
     </description>
   </property>
 
-  <property>
-    <name>router.userservice.fallback.strategy</name>
-    <value>random</value>
-    <description>
-      If a RouteConfig is not found for a particular user service, this
-      property is used to set the fallback routing strategy. Allowed
-      options: "random", "smallest", "largest", or "drop". A string
-      comparison of the versions of the user service is used for "smallest"
-      or "largest". The "drop" option will not route the request to any
-      service and will return "service not found".
-    </description>
-  </property>
-
-
   <!-- Security Configuration -->
 
   <property>

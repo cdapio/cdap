@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.bootstrap.BootstrapService;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.security.tools.HttpsEnabler;
 import co.cask.cdap.security.tools.KeyStores;
@@ -76,7 +75,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
-  private final RouteStore routeStore;
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
@@ -102,7 +100,6 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
                          PluginService pluginService,
-                         RouteStore routeStore,
                          CoreSchedulerService coreSchedulerService,
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService,
@@ -121,7 +118,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.pluginService = pluginService;
-    this.routeStore = routeStore;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
@@ -189,7 +185,6 @@ public class AppFabricServer extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     coreSchedulerService.stopAndWait();
-    routeStore.close();
     bootstrapService.stopAndWait();
     cancelHttpService.cancel();
     programRuntimeService.stopAndWait();
