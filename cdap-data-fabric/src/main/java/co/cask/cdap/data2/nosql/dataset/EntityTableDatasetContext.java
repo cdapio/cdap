@@ -19,11 +19,11 @@ package co.cask.cdap.data2.nosql.dataset;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionContext;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,7 +33,7 @@ import java.util.Map;
 class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
   private final TransactionContext txContext;
   private final TableDatasetSupplier datasetAccesor;
-  private Dataset entityTable = null;
+  private final Map<Map<String, String>, Dataset> entityTables = new HashMap<>();
 
   EntityTableDatasetContext(TransactionContext txContext, TableDatasetSupplier datasetAccesor) {
     this.txContext = txContext;
@@ -42,9 +42,21 @@ class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    if (entityTable != null) {
-      entityTable.close();
-      entityTable = null;
+    Exception ex = null;
+    for (Dataset entry : entityTables.values()) {
+      try {
+        entry.close();
+      } catch (IOException e) {
+        if (ex == null) {
+          ex = e;
+        } else {
+          ex.addSuppressed(e);
+        }
+      }
+    }
+    entityTables.clear();
+    if (ex != null) {
+      throw ex;
     }
   }
 
@@ -61,10 +73,12 @@ class EntityTableDatasetContext implements DatasetContext, AutoCloseable {
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
     // this is the only method that gets called on this dataset context (see NoSqlStructuredTableContext)
+    Dataset entityTable = entityTables.get(arguments);
     if (entityTable == null) {
       try {
         entityTable = datasetAccesor.getTableDataset(name, arguments);
         txContext.addTransactionAware((TransactionAware) entityTable);
+        entityTables.put(arguments, entityTable);
       } catch (IOException e) {
         throw new DatasetInstantiationException("Cannot instantiate entity table", e);
       }

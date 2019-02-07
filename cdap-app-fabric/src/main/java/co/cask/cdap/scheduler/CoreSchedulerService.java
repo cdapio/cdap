@@ -18,7 +18,6 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
@@ -138,10 +137,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
       @Override
       protected void startUp() throws Exception {
-        if (!datasetFramework.hasInstance(Schedulers.STORE_DATASET_ID)) {
-          datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME,
-                                       Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
-        }
         timeSchedulerService.startAndWait();
         cleanupJobs();
         constraintCheckerService.startAndWait();
@@ -489,7 +484,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
     checkStarted();
-    execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
+    execute((StoreAndQueueTxRunnable<Void, Exception>) (store, queue) -> {
       store.modifySchedulesTriggeredByDeletedProgram(programId);
       return null;
     }, RuntimeException.class);
@@ -600,16 +595,18 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     V run(ProgramScheduleStoreDataset store, JobQueueDataset jobQueue, ProfileStore profileStore) throws T;
   }
 
-  private <V, T extends Exception> V execute(StoreTxRunnable<V, T> runnable,
+  private <V, T extends Exception> V execute(StoreTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return Transactionals.execute(transactional, context -> {
-      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-      return runnable.run(store);
-    }, tClass);
+    return TransactionRunners.run(
+      transactionRunner,
+      context -> {
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+        return runnable.run(store);
+      }, tClass);
   }
 
   @SuppressWarnings("UnusedReturnValue")
-  private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, T> runnable,
+  private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);

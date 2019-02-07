@@ -29,6 +29,9 @@ import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -95,6 +98,17 @@ public class Schedulers {
       return DatasetsUtil
         .getOrCreateDataset(context, dsFramework, STORE_DATASET_ID, STORE_TYPE_NAME, DatasetProperties.EMPTY);
     } catch (DatasetManagementException | IOException e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  public static ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {
+    try {
+      return new ProgramScheduleStoreDataset(
+        context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_SCHEDULE_STORE_TABLE),
+        context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_TRIGGER_STORE_TABLE)
+      );
+    } catch (TableNotFoundException e) {
       throw Throwables.propagate(e);
     }
   }

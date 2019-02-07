@@ -51,11 +51,13 @@ import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -182,6 +184,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
                       "Ignoring the message {}", scheduleId, message);
           return;
+        } catch (IOException e) {
+          // TODO: (poorna) handle exception
+          throw Throwables.propagate(e);
         }
         break;
       default:
@@ -237,8 +242,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       : getProfileId(programId).orElse(appProfile);
     addProfileMetadataUpdate(programId, programProfile, updates);
 
-    for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
-      collectScheduleProfileMetadata(schedule, programProfile, updates);
+    try {
+      for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
+        collectScheduleProfileMetadata(schedule, programProfile, updates);
+      }
+    } catch (IOException e) {
+      // TODO: (poorna) handle exception
+      throw Throwables.propagate(e);
     }
   }
 

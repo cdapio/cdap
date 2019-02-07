@@ -279,6 +279,7 @@ public final class StoreDefinition {
   }
 
   /**
+<<<<<<< HEAD
    * Table schema for profile store.
    */
   public static final class ProfileStore {
@@ -315,6 +316,58 @@ public final class StoreDefinition {
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(PROFILE_STORE_SPEC);
       tableAdmin.create(PROFILE_ENTITY_STORE_SPEC);
+    }
+  }
+
+  /**
+   * Table schema for program schedule store.
+   */
+  public static final class ProgramScheduleStore {
+    public static final StructuredTableId PROGRAM_SCHEDULE_STORE_TABLE =
+      new StructuredTableId("program_schedule_store");
+    public static final StructuredTableId PROGRAM_TRIGGER_STORE_TABLE =
+      new StructuredTableId("program_trigger_store");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String VERSION_FIELD = "version";
+    public static final String SCHEDULE_NAME = "schedule_name";
+    public static final String SEQUENCE_ID = "sequence_id";
+    public static final String SCHEDULE = "schedule";
+    public static final String UPDATE_TIME = "update_time";
+    public static final String STATUS = "status";
+    public static final String TRIGGER_KEY = "trigger_key";
+
+
+    public static final StructuredTableSpecification PROGRAM_SCHEDULE_STORE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(PROGRAM_SCHEDULE_STORE_TABLE)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(SCHEDULE_NAME),
+                    Fields.stringType(SCHEDULE),
+                    Fields.longType(UPDATE_TIME),
+                    Fields.stringType(STATUS))
+        .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, SCHEDULE_NAME)
+        .build();
+
+    public static final StructuredTableSpecification PROGRAM_TRIGGER_STORE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(PROGRAM_TRIGGER_STORE_TABLE)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(SCHEDULE_NAME),
+                    Fields.intType(SEQUENCE_ID),
+                    Fields.stringType(TRIGGER_KEY))
+        .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, SCHEDULE_NAME, SEQUENCE_ID)
+        .withIndexes(TRIGGER_KEY)
+        .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(PROGRAM_SCHEDULE_STORE_SPEC);
+      tableAdmin.create(PROGRAM_TRIGGER_STORE_SPEC);
     }
   }
 }

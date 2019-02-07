@@ -19,10 +19,12 @@ package co.cask.cdap.spi.data;
 
 import co.cask.cdap.spi.data.table.StructuredTableId;
 
+import java.io.IOException;
+
 /**
  * Thrown when a table does not exist when it is expected to.
  */
-public class TableNotFoundException extends Exception {
+public class TableNotFoundException extends IOException {
   private final StructuredTableId id;
 
   public TableNotFoundException(StructuredTableId id) {
