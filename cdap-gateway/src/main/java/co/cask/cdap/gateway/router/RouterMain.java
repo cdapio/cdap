@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,16 +24,12 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
 import co.cask.cdap.common.runtime.DaemonMain;
-import co.cask.cdap.route.store.RouteStore;
-import co.cask.cdap.route.store.ZKRouteStore;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Scopes;
 import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -50,7 +46,6 @@ public class RouterMain extends DaemonMain {
   private CConfiguration cConf;
   private ZKClientService zkClientService;
   private NettyRouter router;
-  private RouteStore routeStore;
 
   public static void main(String[] args) {
     try {
@@ -97,8 +92,6 @@ public class RouterMain extends DaemonMain {
       // Get the Router
       router = injector.getInstance(NettyRouter.class);
 
-      // Get RouteStore so that we can close it when shutting down
-      routeStore = injector.getInstance(RouteStore.class);
       LOG.info("Router initialized.");
     } catch (Throwable t) {
       LOG.error(t.getMessage(), t);
@@ -125,11 +118,6 @@ public class RouterMain extends DaemonMain {
   public void stop() {
     LOG.info("Stopping Router...");
     Futures.getUnchecked(Services.chainStop(router, zkClientService));
-    try {
-      routeStore.close();
-    } catch (Exception ex) {
-      LOG.debug("Exception when trying to close RouteStore.", ex);
-    }
     LOG.info("Router stopped.");
   }
 
@@ -145,13 +133,7 @@ public class RouterMain extends DaemonMain {
       new ZKDiscoveryModule(),
       new RouterModules().getDistributedModules(),
       new SecurityModules().getDistributedModules(),
-      new IOModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(RouteStore.class).to(ZKRouteStore.class).in(Scopes.SINGLETON);
-        }
-      }
+      new IOModule()
     );
   }
 }

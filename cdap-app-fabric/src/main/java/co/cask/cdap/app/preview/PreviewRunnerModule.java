@@ -45,8 +45,6 @@ import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.metadata.DefaultMetadataAdmin;
 import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.pipeline.PipelineFactory;
-import co.cask.cdap.route.store.LocalRouteStore;
-import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.NoOpScheduler;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.securestore.spi.SecretStore;
@@ -116,7 +114,6 @@ public class PreviewRunnerModule extends PrivateModule {
 
     bind(Store.class).to(DefaultStore.class);
     bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
-    bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 
     bind(UGIProvider.class).to(DefaultUGIProvider.class);
     expose(UGIProvider.class);

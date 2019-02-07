@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2015-2017 Cask Data, Inc.
+    :copyright: Copyright © 2015-2019 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -31,7 +31,6 @@ CDAP HTTP RESTful API v3
     Profile <profile>
     Query <query>
     Reports <reports>
-    Route Config <routeconfig>
     Security <security>
     Service <service>
     Stream <stream>
@@ -74,8 +73,6 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Stream: <stream>` sending data events to a stream or to inspect the contents of a stream
 - :doc:`Dataset: <dataset>` interacting with datasets, dataset modules, and dataset types
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services
-- :doc:`Route Config: <query>` create, fetch, and delete route configurations (*route
-  configs*) which allocate requests between different versions of a service
 - :doc:`Workflow: <workflow>` retrieving values from workflow tokens and statistics on workflow runs
 
 **Querying and Viewing APIs**
@@ -115,8 +112,6 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Preferences: <preferences>` setting, retrieving, and deleting preferences
 - :doc:`Query: <query>` sending ad-hoc queries to CDAP datasets
 - :doc:`Reports: <reports>` generate reports to understand and monitor program runs and their performance
-- :doc:`Route Config: <query>` create, fetch, and delete route configurations (*route
-  configs*) which allocate requests between different versions of a service
 - :doc:`Security: <security>` granting, revoking, and listing privileges, as well as adding, retrieving,
   and managing *Secure Keys*
 - :doc:`Service: <service>` supports making requests to the methods of an application’s services

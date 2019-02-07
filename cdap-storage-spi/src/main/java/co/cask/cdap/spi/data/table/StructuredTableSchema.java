@@ -53,6 +53,10 @@ public class StructuredTableSchema {
     return primaryKeys;
   }
 
+  public Set<String> getIndexes() {
+    return indexes;
+  }
+
   /**
    * Check if the given field name is a column of the primary keys.
    *

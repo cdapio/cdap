@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.service.ServiceDiscoverable;
-import co.cask.cdap.gateway.discovery.RouteFallbackStrategy;
-import co.cask.cdap.gateway.discovery.UserServiceEndpointStrategy;
-import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.gateway.discovery.VersionFilteredServiceDiscovered;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -48,12 +46,10 @@ public class RouterServiceLookup {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final LoadingCache<RouteDestination, EndpointStrategy> discoverableCache;
   private final RouterPathLookup routerPathLookup;
-  private final RouteStore routeStore;
-  private final RouteFallbackStrategy fallbackStrategy;
 
   @Inject
   RouterServiceLookup(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
-                      RouterPathLookup routerPathLookup, RouteStore routeStore) {
+                      RouterPathLookup routerPathLookup) {
     this.discoveryServiceClient = discoveryServiceClient;
     this.routerPathLookup = routerPathLookup;
     this.discoverableCache = CacheBuilder.newBuilder()
@@ -64,9 +60,6 @@ public class RouterServiceLookup {
           return discover(key);
         }
       });
-    this.routeStore = routeStore;
-    this.fallbackStrategy = RouteFallbackStrategy.valueOfRouteFallbackStrategy(
-      cConf.get(Constants.Router.ROUTER_USERSERVICE_FALLBACK_STRAGEY));
   }
 
   /**
@@ -97,14 +90,19 @@ public class RouterServiceLookup {
   }
 
   private EndpointStrategy discover(RouteDestination routeDestination) {
-    LOG.debug("Looking up service name {}", routeDestination);
-    // If its a user service, then use UserServiceEndpointStrategy Strategy
     String serviceName = routeDestination.getServiceName();
 
-    return ServiceDiscoverable.isUserService(serviceName) ?
-      new UserServiceEndpointStrategy(() -> discoveryServiceClient.discover(serviceName),
-                                      routeStore, ServiceDiscoverable.getId(serviceName),
-                                      fallbackStrategy, routeDestination.getVersion()) :
-      new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName));
+    if (ServiceDiscoverable.isUserService(serviceName)) {
+      String version = routeDestination.getVersion();
+
+      // If the request is from the versioned endpoint, filter the discoverables by the version
+      if (version != null) {
+        return new RandomEndpointStrategy(
+          () -> new VersionFilteredServiceDiscovered(discoveryServiceClient.discover(serviceName), version));
+      }
+    }
+
+    // For all other cases, use the random strategy
+    return new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName));
   }
 }

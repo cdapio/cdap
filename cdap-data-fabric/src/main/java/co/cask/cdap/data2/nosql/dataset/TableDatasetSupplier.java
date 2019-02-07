@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,22 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.discovery;
+package co.cask.cdap.data2.nosql.dataset;
+
+import co.cask.cdap.api.dataset.Dataset;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
- * Fall back routing strategy for User Services.
+ * Interface to supply the dataset for entity tables.
  */
-public enum RouteFallbackStrategy {
-  RANDOM,
-  DROP,
-  SMALLEST,
-  LARGEST;
-
-  public static RouteFallbackStrategy valueOfRouteFallbackStrategy(String strategy) {
-    try {
-      return RouteFallbackStrategy.valueOf(strategy.toUpperCase());
-    } catch (Exception e) {
-      return RouteFallbackStrategy.RANDOM;
-    }
-  }
+public interface TableDatasetSupplier {
+  /**
+   * @return the dataset for the given entity table name and arguments
+   * @throws IOException on errors when instantiating the dataset for the entity table
+   */
+  <T extends Dataset> T getTableDataset(String name, Map<String, String> arguments) throws IOException;
 }

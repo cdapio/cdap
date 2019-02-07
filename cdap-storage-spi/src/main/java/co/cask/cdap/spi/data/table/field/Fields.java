@@ -141,4 +141,11 @@ public final class Fields {
   public static boolean isPrimaryKeyType(FieldType.Type type) {
     return FieldType.PRIMARY_KEY_TYPES.contains(type);
   }
+
+  /**
+   * @return true if the type is allowed to be an index column, false otherwise
+   */
+  public static boolean isIndexColumnType(FieldType.Type type) {
+    return FieldType.INDEX_COLUMN_TYPES.contains(type);
+  }
 }
