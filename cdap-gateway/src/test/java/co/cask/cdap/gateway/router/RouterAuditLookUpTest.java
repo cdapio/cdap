@@ -36,7 +36,7 @@ public class RouterAuditLookUpTest {
 
   @Test
   public void testCorrectNumberInClassPath() throws Exception {
-    Assert.assertEquals(ExceptedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER, AUDIT_LOOK_UP.getNumberOfPaths());
+    Assert.assertEquals(ExpectedNumberOfAuditPolicyPaths.EXPECTED_PATH_NUMBER, AUDIT_LOOK_UP.getNumberOfPaths());
   }
 
   @Test
@@ -68,9 +68,6 @@ public class RouterAuditLookUpTest {
                   new AuditLogConfig(HttpMethod.POST, true, false, EMPTY_HEADERS));
     // endpoints from ConsoleSettingsHttpHandler
     assertContent("/v3/configuration/user/", DEFAULT_AUDIT);
-    // endpoints from DashboardHttpHandler
-    assertContent("/v3/namespaces/default/configuration/dashboards",
-                  new AuditLogConfig(HttpMethod.POST, true, true, EMPTY_HEADERS));
     // endpoints from MetadataHttpHandler
     assertContent("/v3/namespaces/default/apps/app1/metadata/properties",
                   new AuditLogConfig(HttpMethod.POST, true, false, EMPTY_HEADERS));

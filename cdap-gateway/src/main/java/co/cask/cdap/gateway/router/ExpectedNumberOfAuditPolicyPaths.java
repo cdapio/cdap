@@ -20,6 +20,6 @@ package co.cask.cdap.gateway.router;
 /**
  * Expected number of paths annotated with {@link co.cask.cdap.common.security.AuditPolicy}
  */
-public final class ExceptedNumberOfAuditPolicyPaths {
-  public static final int EXPECTED_PATH_NUMBER = 70;
+public final class ExpectedNumberOfAuditPolicyPaths {
+  public static final int EXPECTED_PATH_NUMBER = 68;
 }
