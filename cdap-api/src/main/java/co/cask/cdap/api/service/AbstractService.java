@@ -26,12 +26,15 @@ import java.util.Arrays;
  * An abstract implementation of {@link Service}. Users may extend this to write a {@link Service}.
  *
  * The default no-op constructor must be implemented.
+ *
+ * @param <T> type of service configurer
  */
-public abstract class AbstractService extends AbstractPluginConfigurable<ServiceConfigurer> implements Service {
-  private ServiceConfigurer configurer;
+public abstract class AbstractService<T extends ServiceConfigurer> extends AbstractPluginConfigurable<T>
+  implements Service<T> {
+  private T configurer;
 
   @Override
-  public final void configure(ServiceConfigurer serviceConfigurer) {
+  public final void configure(T serviceConfigurer) {
     this.configurer = serviceConfigurer;
     configure();
   }
@@ -88,7 +91,7 @@ public abstract class AbstractService extends AbstractPluginConfigurable<Service
    * Returns the {@link ServiceConfigurer}, only available at configuration time.
    */
   @Override
-  protected final ServiceConfigurer getConfigurer() {
+  protected final T getConfigurer() {
     return configurer;
   }
 

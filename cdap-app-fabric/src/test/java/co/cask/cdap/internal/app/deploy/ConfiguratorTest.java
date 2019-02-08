@@ -30,6 +30,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
@@ -43,6 +44,7 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -68,7 +70,7 @@ public class ConfiguratorTest {
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static CConfiguration conf;
   private static AuthorizationEnforcer authEnforcer;
   private static AuthenticationContext authenticationContext;
@@ -112,8 +114,8 @@ public class ConfiguratorTest {
       Assert.assertNotNull(response);
 
       // Deserialize the JSON spec back into Application object.
-      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
-      ApplicationSpecification specification = adapter.fromJson(response.getResponse());
+      AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+      ApplicationSpecification specification = appSpecInfo.getAppSpec();
       Assert.assertNotNull(specification);
       Assert.assertEquals(AllProgramsApp.NAME, specification.getName()); // Simple checks.
 
@@ -151,8 +153,8 @@ public class ConfiguratorTest {
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);
 
-      ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
-      ApplicationSpecification specification = adapter.fromJson(response.getResponse());
+      AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+      ApplicationSpecification specification = appSpecInfo.getAppSpec();
       Assert.assertNotNull(specification);
       Assert.assertEquals(1, specification.getDatasets().size());
       Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
@@ -164,7 +166,7 @@ public class ConfiguratorTest {
       response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);
 
-      specification = adapter.fromJson(response.getResponse());
+      specification = GSON.fromJson(response.getResponse(), AppSpecInfo.class).getAppSpec();
       Assert.assertNotNull(specification);
       Assert.assertEquals(1, specification.getDatasets().size());
       Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));

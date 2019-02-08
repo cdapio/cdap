@@ -26,6 +26,7 @@ import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationRegistrationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationVerificationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.CreateDatasetInstancesStage;
+import co.cask.cdap.internal.app.deploy.pipeline.CreateSystemTablesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeleteAndCreateSchedulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
@@ -43,6 +44,7 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
@@ -77,6 +79,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final AuthenticationContext authenticationContext;
   private final co.cask.cdap.scheduler.Scheduler programScheduler;
   private final AuthorizationEnforcer authorizationEnforcer;
+  private final StructuredTableAdmin structuredTableAdmin;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -88,7 +91,8 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           MetadataPublisher metadataPublisher,
                           Impersonator impersonator, AuthenticationContext authenticationContext,
                           Scheduler programScheduler,
-                          AuthorizationEnforcer authorizationEnforcer) {
+                          AuthorizationEnforcer authorizationEnforcer,
+                          StructuredTableAdmin structuredTableAdmin) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -104,6 +108,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.authenticationContext = authenticationContext;
     this.programScheduler = programScheduler;
     this.authorizationEnforcer = authorizationEnforcer;
+    this.structuredTableAdmin = structuredTableAdmin;
   }
 
   @Override
@@ -112,6 +117,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
                                                   authorizationEnforcer, authenticationContext));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,
                                                    ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,

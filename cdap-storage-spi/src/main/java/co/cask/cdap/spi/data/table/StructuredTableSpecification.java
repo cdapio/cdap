@@ -21,6 +21,7 @@ import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import co.cask.cdap.spi.data.table.field.Fields;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -122,12 +123,29 @@ public final class StructuredTableSpecification {
    * Builder used to create {@link StructuredTableSpecification}
    */
   public static final class Builder {
-    private static final String[] EMPTY_STRING_ARRAY = new String[0];
-
     private StructuredTableId tableId;
-    private FieldType[] fieldTypes;
-    private String[] primaryKeys;
-    private String[] indexes = EMPTY_STRING_ARRAY;
+    private List<FieldType> fieldTypes;
+    private List<String> primaryKeys;
+    private List<String> indexes;
+
+    /**
+     * Create a builder that is initialized with all the information from an existing specification.
+     */
+    public Builder() {
+      this.fieldTypes = new ArrayList<>();
+      this.primaryKeys = new ArrayList<>();
+      this.indexes = new ArrayList<>();
+    }
+
+    /**
+     * Create a builder that is initialized with all the information from an existing specification.
+     */
+    public Builder(StructuredTableSpecification existing) {
+      this.tableId = existing.getTableId();
+      this.fieldTypes = new ArrayList<>(existing.getFieldTypes());
+      this.primaryKeys = new ArrayList<>(existing.getPrimaryKeys());
+      this.indexes = new ArrayList<>(existing.getIndexes());
+    }
 
     /**
      * Set the table id. A table should have an id.
@@ -145,7 +163,7 @@ public final class StructuredTableSpecification {
      * @return Builder instance
      */
     public Builder withFields(FieldType ...fieldTypes) {
-      this.fieldTypes = fieldTypes;
+      this.fieldTypes = Arrays.asList(fieldTypes);
       return this;
     }
 
@@ -156,7 +174,7 @@ public final class StructuredTableSpecification {
      * @return Builder instance
      */
     public Builder withPrimaryKeys(String ...primaryKeys) {
-      this.primaryKeys = primaryKeys;
+      this.primaryKeys = Arrays.asList(primaryKeys);
       return this;
     }
 
@@ -168,7 +186,7 @@ public final class StructuredTableSpecification {
      */
     public Builder withIndexes(String ...indexes) {
       if (indexes != null) {
-        this.indexes = indexes;
+        this.indexes = Arrays.asList(indexes);
       }
       return this;
     }
@@ -179,8 +197,7 @@ public final class StructuredTableSpecification {
      */
     public StructuredTableSpecification build() throws InvalidFieldException {
       validate();
-      return new StructuredTableSpecification(tableId, Arrays.asList(fieldTypes), Arrays.asList(primaryKeys),
-                                              Arrays.asList(indexes));
+      return new StructuredTableSpecification(tableId, fieldTypes, primaryKeys, indexes);
     }
 
     private void validate() throws InvalidFieldException {
@@ -196,11 +213,11 @@ public final class StructuredTableSpecification {
             tableId.getName()));
       }
 
-      if (fieldTypes == null || fieldTypes.length == 0) {
+      if (fieldTypes == null || fieldTypes.size() == 0) {
         throw new IllegalArgumentException("No fieldTypes specified for the table " + tableId);
       }
 
-      if (primaryKeys == null || primaryKeys.length == 0) {
+      if (primaryKeys == null || primaryKeys.size() == 0) {
         throw new IllegalArgumentException("No primary keys specified for the table " + tableId);
       }
 
@@ -215,8 +232,8 @@ public final class StructuredTableSpecification {
       }
 
       // Validate that the primary key is part of fields defined and of valid type
-      Map<String, FieldType.Type> typeMap =
-        Arrays.stream(fieldTypes).collect(Collectors.toMap(FieldType::getName, FieldType::getType));
+      Map<String, FieldType.Type> typeMap = fieldTypes.stream()
+        .collect(Collectors.toMap(FieldType::getName, FieldType::getType));
       for (String primaryKey : primaryKeys) {
         FieldType.Type type = typeMap.get(primaryKey);
         if (type == null) {

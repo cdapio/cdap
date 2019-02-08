@@ -47,6 +47,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
@@ -77,6 +78,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final PluginFinder pluginFinder;
+  private final TransactionRunner transactionRunner;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -86,7 +88,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               MessagingService messagingService,
                               ArtifactManagerFactory artifactManagerFactory,
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                              NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder) {
+                              NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
+                              TransactionRunner transactionRunner) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -101,6 +104,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.pluginFinder = pluginFinder;
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -142,7 +146,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           txClient, discoveryServiceClient,
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
-                                                          metadataPublisher, namespaceQueryAdmin, pluginFinder);
+                                                          metadataPublisher, namespaceQueryAdmin, pluginFinder,
+                                                          transactionRunner);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),

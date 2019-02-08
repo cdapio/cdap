@@ -38,6 +38,8 @@ import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.filesystem.Location;
 
 import java.util.concurrent.TimeUnit;
@@ -53,9 +55,9 @@ import java.util.concurrent.TimeUnit;
  * It is expected a {@link Pipeline#setFinally(Stage)} stage to clean it up after the pipeline execution finished.
  */
 public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private final CConfiguration cConf;
   private final Store store;
-  private final ApplicationSpecificationAdapter adapter;
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -70,7 +72,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
-    this.adapter = ApplicationSpecificationAdapter.create();
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -111,7 +112,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     if (response.getExitCode() != 0) {
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
-    ApplicationSpecification specification = adapter.fromJson(response.getResponse());
+    AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
+    ApplicationSpecification specification = appSpecInfo.getAppSpec();
     ApplicationId applicationId;
     if (appVersion == null) {
       applicationId = deploymentInfo.getNamespaceId().app(specification.getName());
@@ -122,6 +124,6 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getOwnerPrincipal(),
-                                   deploymentInfo.canUpdateSchedules()));
+                                   deploymentInfo.canUpdateSchedules(), appSpecInfo.getSystemTables()));
   }
 }

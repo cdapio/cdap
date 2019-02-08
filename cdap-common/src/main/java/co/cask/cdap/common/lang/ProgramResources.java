@@ -17,6 +17,7 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.app.Application;
+import co.cask.cdap.api.service.SystemServiceConfigurer;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -86,6 +87,7 @@ public final class ProgramResources {
     // Add everything in cdap-api as visible resources
     // Trace dependencies for cdap-api classes
     Set<String> result = ClassPathResources.getResourcesWithDependencies(classLoader, Application.class);
+    result.addAll(ClassPathResources.getResourcesWithDependencies(classLoader, SystemServiceConfigurer.class));
 
     // Gather resources for javax.ws.rs classes. They are not traceable from the api classes.
     Iterables.addAll(result, Iterables.transform(ClassPathResources.getClassPathResources(classLoader, Path.class),

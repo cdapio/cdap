@@ -20,9 +20,12 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.gson.annotations.SerializedName;
 import org.apache.twill.filesystem.Location;
 
+import java.util.Collection;
+import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -36,6 +39,7 @@ public class ApplicationDeployable {
   private final ApplicationSpecification specification;
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
+  private final Collection<StructuredTableSpecification> systemTables;
   @SerializedName("principal")
   private final KerberosPrincipalId ownerPrincipal;
   @SerializedName("update-schedules")
@@ -46,7 +50,7 @@ public class ApplicationDeployable {
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         null, true);
+         null, true, Collections.emptyList());
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
@@ -54,7 +58,8 @@ public class ApplicationDeployable {
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope,
                                @Nullable KerberosPrincipalId ownerPrincipal,
-                               boolean updateSchedules) {
+                               boolean updateSchedules,
+                               Collection<StructuredTableSpecification> systemTables) {
     this.artifactId = artifactId;
     this.artifactLocation = artifactLocation;
     this.applicationId = applicationId;
@@ -63,6 +68,7 @@ public class ApplicationDeployable {
     this.applicationDeployScope = applicationDeployScope;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
+    this.systemTables = systemTables;
   }
 
   /**
@@ -115,6 +121,10 @@ public class ApplicationDeployable {
   @Nullable
   public KerberosPrincipalId getOwnerPrincipal() {
     return ownerPrincipal;
+  }
+
+  public Collection<StructuredTableSpecification> getSystemTables() {
+    return systemTables;
   }
 
   /**

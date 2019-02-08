@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.api.service;
+package co.cask.cdap.api.service.http;
 
-import co.cask.cdap.api.service.http.HttpServiceHandler;
+import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Defines a custom user Service. Services are custom applications that run in program containers and provide
- * endpoints to serve requests.
- *
- * @param <T> type of service configurer
+ * A System HttpServiceHandler that exposes capabilities beyond those that are not available to user service handlers.
+ * System handlers can only be run by applications that run in the system namespace.
  */
-public interface Service<T extends ServiceConfigurer> {
+@Beta
+public interface SystemHttpServiceHandler
+  extends HttpServiceHandler<SystemHttpServiceContext, SystemHttpServiceConfigurer> {
 
-  /**
-   * Configure the Service by adding {@link HttpServiceHandler}s to handle requests.
-   * @param configurer to use to add handlers to the Service.
-   */
-  void configure(T configurer);
 }

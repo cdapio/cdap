@@ -165,6 +165,7 @@ public class TestBase {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
+  static Injector injector;
   private static CConfiguration cConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
@@ -221,7 +222,7 @@ public class TestBase {
       System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
     }
 
-    Injector injector = Guice.createInjector(
+    injector = Guice.createInjector(
       createDataFabricModule(),
       new TransactionExecutorModule(),
       new DataSetsModules().getStandaloneModules(),
@@ -344,7 +345,17 @@ public class TestBase {
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
+  }
 
+  /**
+   * If a subclass has a {@link BeforeClass} method, this can be called within that method to determine whether this
+   * is the first time it was called. This is useful in test suites, where most initialization should only happen once
+   * at the very first init.
+   *
+   * @return whether this is the first time the class has been initialized.
+   */
+  protected static boolean isFirstInit() {
+    return nestedStartCount == 1;
   }
 
   private static TestManager getTestManager() {

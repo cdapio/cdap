@@ -17,34 +17,45 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.SystemTableConfigurer;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceConfigurer;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.service.SystemServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
+import co.cask.cdap.api.service.http.SystemHttpServiceConfigurer;
+import co.cask.cdap.api.service.http.SystemHttpServiceContext;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
  * A default implementation of {@link ServiceConfigurer}.
  */
-public class DefaultServiceConfigurer extends AbstractConfigurer implements ServiceConfigurer {
+public class DefaultServiceConfigurer extends AbstractConfigurer implements SystemServiceConfigurer {
 
   private final String className;
   private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
+  private final SystemTableConfigurer systemTableConfigurer;
 
   private String name;
   private String description;
@@ -56,7 +67,8 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
    * Create an instance of {@link DefaultServiceConfigurer}
    */
   public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
-                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                  DefaultSystemTableConfigurer systemTableConfigurer) {
     super(namespace, artifactId, artifactRepository, pluginInstantiator);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
@@ -67,6 +79,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.systemTableConfigurer = systemTableConfigurer;
   }
 
   @Override
@@ -110,7 +123,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+        handler, deployNamespace, artifactId, artifactRepository, pluginInstantiator, systemTableConfigurer);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),
@@ -126,5 +139,29 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Serv
   private void verifyHandlers(List<? extends HttpServiceHandler> handlers) {
     Preconditions.checkArgument(!handlers.isEmpty(), "Service %s should have at least one handler", name);
     new HttpHandlerFactory("", TransactionControl.IMPLICIT).validateHttpHandler(handlers);
+    for (HttpServiceHandler handler : handlers) {
+      // check that a system service handler is only used in system namespace
+      if (!deployNamespace.equals(Id.Namespace.fromEntityId(NamespaceId.SYSTEM))) {
+        TypeToken<?> contextType = TypeToken.of(handler.getClass())
+          .resolveType(HttpServiceHandler.class.getTypeParameters()[0]);
+        if (SystemHttpServiceContext.class.isAssignableFrom(contextType.getRawType())) {
+          throw new IllegalArgumentException(String.format(
+            "Invalid service handler '%s'. Service handlers can only use a SystemHttpServiceContext if the "
+              + "application is deployed in the system namespace.", handler.getClass().getSimpleName()));
+        }
+        TypeToken<?> configurerType = TypeToken.of(handler.getClass())
+          .resolveType(HttpServiceHandler.class.getTypeParameters()[1]);
+        if (SystemHttpServiceConfigurer.class.isAssignableFrom(configurerType.getRawType())) {
+          throw new IllegalArgumentException(String.format(
+            "Invalid service handler '%s'. Service handlers can only use a SystemHttpServiceConfigurer if the "
+              + "application is deployed in the system namespace.", handler.getClass().getSimpleName()));
+        }
+      }
+    }
+  }
+
+  @Override
+  public void createTable(StructuredTableSpecification tableSpecification) {
+    systemTableConfigurer.createTable(tableSpecification);
   }
 }

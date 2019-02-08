@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.SystemTableConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceConfigurer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
+import co.cask.cdap.api.service.http.SystemHttpServiceConfigurer;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.AbstractConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -27,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
+import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,10 +41,11 @@ import java.util.Set;
 /**
  * Default implementation of {@link HttpServiceConfigurer}.
  */
-public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer implements HttpServiceConfigurer {
+public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer implements SystemHttpServiceConfigurer {
 
   private final HttpServiceHandler handler;
   private final String name;
+  private final SystemTableConfigurer systemTableConfigurer;
   private Map<String, String> properties;
   private Set<String> datasets;
 
@@ -55,12 +59,14 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
                                              Id.Namespace deployNamespace,
                                              Id.Artifact artifactId,
                                              ArtifactRepository artifactRepository,
-                                             PluginInstantiator pluginInstantiator) {
+                                             PluginInstantiator pluginInstantiator,
+                                             SystemTableConfigurer systemTableConfigurer) {
     super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.handler = handler;
     this.name = handler.getClass().getSimpleName();
     this.properties = new HashMap<>();
     this.datasets = new HashSet<>();
+    this.systemTableConfigurer = systemTableConfigurer;
   }
 
   /**
@@ -86,5 +92,11 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
                       new PropertyFieldExtractor(properties),
                       new ServiceEndpointExtractor(endpoints));
     return new HttpServiceHandlerSpecification(handler.getClass().getName(), name, "", properties, datasets, endpoints);
+  }
+
+
+  @Override
+  public void createTable(StructuredTableSpecification tableSpecification) {
+    systemTableConfigurer.createTable(tableSpecification);
   }
 }
