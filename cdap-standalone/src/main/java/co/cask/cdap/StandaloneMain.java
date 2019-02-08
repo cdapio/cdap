@@ -19,8 +19,8 @@ package co.cask.cdap;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
@@ -80,7 +80,6 @@ import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.store.StoreDefinition;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -227,11 +226,12 @@ public class StandaloneMain {
     injector.getInstance(MessagingHttpService.class).startAndWait();
 
     txService.startAndWait();
-    metricsCollectionService.startAndWait();
-    datasetService.startAndWait();
-    // This needs to happen before any dataset instantiators are started
+    // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
+
+    metricsCollectionService.startAndWait();
+    datasetService.startAndWait();
     serviceStore.startAndWait();
 
     remoteExecutionTwillRunnerService.start();
@@ -482,17 +482,16 @@ public class StandaloneMain {
       new SecurityModules().getStandaloneModules(),
       new SecureStoreServerModule(),
       new ExploreRuntimeModule().getStandaloneModules(),
-      new ServiceStoreModules().getStandaloneModules(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getStandaloneModules(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),
-      new AuditModule().getStandaloneModules(),
+      new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewHttpModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
+      new MonitorHandlerModule(false),
       new OperationalStatsModule()
     );
   }

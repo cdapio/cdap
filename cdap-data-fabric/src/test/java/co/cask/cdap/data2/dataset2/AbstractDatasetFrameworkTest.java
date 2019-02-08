@@ -41,7 +41,7 @@ import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.test.TestRunner;
 import co.cask.cdap.data.ProgramContext;
-import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.audit.AuditTestModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
@@ -155,7 +155,7 @@ public abstract class AbstractDatasetFrameworkTest {
       new NonCustomLocationUnitTestModule(),
       new TransactionInMemoryModule(),
       new NamespaceAdminTestModule(),
-      new AuditModule().getInMemoryModules(),
+      new AuditTestModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

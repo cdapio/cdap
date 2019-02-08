@@ -104,7 +104,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new NamespaceQueryAdminModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       // needed by RemoteDatasetFramework while making an HTTP call to DatasetService
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),

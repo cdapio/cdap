@@ -118,7 +118,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new LogQueryServerModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {

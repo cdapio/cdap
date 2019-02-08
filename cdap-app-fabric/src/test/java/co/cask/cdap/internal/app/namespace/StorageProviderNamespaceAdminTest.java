@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,10 +78,12 @@ public class StorageProviderNamespaceAdminTest {
     // start the dataset service for namespace store to work
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-    datasetService = injector.getInstance(DatasetService.class);
-    datasetService.startAndWait();
+    // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
+
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
     // we don't use namespace admin here but the store because namespaceadmin will try to create the
     // home directory for namespace which we don't want. We just want to store the namespace meta in store
     // to look up during the delete.

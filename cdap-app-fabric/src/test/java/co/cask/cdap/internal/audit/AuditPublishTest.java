@@ -84,7 +84,7 @@ public class AuditPublishTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
 
-    Injector injector = AppFabricTestHelper.getInjector(cConf, new AuditModule().getDistributedModules());
+    Injector injector = AppFabricTestHelper.getInjector(cConf, new AuditModule());
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();

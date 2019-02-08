@@ -24,7 +24,6 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -63,7 +62,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
@@ -350,7 +348,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new TwillModule(),
       new ExploreClientModule(),
       new DataFabricModules().getDistributedModules(),
-      new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
@@ -359,7 +356,6 @@ public class JobQueueDebugger extends AbstractIdleService {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new KafkaClientModule(),
-      new NamespaceStoreModule().getDistributedModules(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreServerModule(),

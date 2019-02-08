@@ -23,7 +23,6 @@ import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -62,7 +61,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -281,12 +279,10 @@ public class DistributedWorkflowProgramRunnerTest {
       new MetricsStoreModule(),
       new MessagingClientModule(),
       new ExploreClientModule(),
-      new NamespaceStoreModule().getDistributedModules(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
-      new ServiceStoreModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),

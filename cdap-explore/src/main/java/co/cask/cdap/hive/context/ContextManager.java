@@ -131,7 +131,7 @@ public class ContextManager {
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
       new KafkaClientModule(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new SecureStoreClientModule(),
       new AuthenticationContextModules().getMasterModule(),

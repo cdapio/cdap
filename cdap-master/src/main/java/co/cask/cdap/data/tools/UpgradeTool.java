@@ -23,7 +23,6 @@ import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -75,7 +74,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.DefaultOwnerStore;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -211,10 +209,8 @@ public class UpgradeTool {
       new TwillModule(),
       new ExploreClientModule(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new ServiceStoreModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),
-      new NamespaceStoreModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),

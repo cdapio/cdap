@@ -222,18 +222,33 @@ public abstract class AbstractServiceMain extends DaemonMain {
    *
    * @param injector the Guice {@link Injector} for all the necessary bindings
    * @param services the {@link List} to populate services to run
+   * @param closeableResources the {@link List} to populate {@link AutoCloseable} that will be closed on stopping
+   *                           of this service main
    */
   protected abstract void addServices(Injector injector, List<? super Service> services,
                                       List<? super AutoCloseable> closeableResources);
 
+  /**
+   * Returns the {@link LoggingContext} to use for this service main.
+   *
+   * @return the {@link LoggingContext} or {@code null} to not setting logging context
+   */
   @Nullable
   protected abstract LoggingContext getLoggingContext();
 
+  /**
+   * Configuration class to help parsing command line arguments
+   */
   private static final class ConfigOptions {
     @Option(name = "env", usage = "Name of the CDAP master environment extension provider")
     private String envProvider;
   }
 
+  /**
+   * The class bridge a {@link Supplier} to Guice {@link Provider}.
+   *
+   * @param <T> type of the object provided by this {@link Provider}
+   */
   private static final class SupplierProviderBridge<T> implements Provider<T> {
 
     private final Supplier<T> supplier;

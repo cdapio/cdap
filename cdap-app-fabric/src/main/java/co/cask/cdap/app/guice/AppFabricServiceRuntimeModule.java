@@ -27,13 +27,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.security.DefaultSecretStore;
-import co.cask.cdap.data2.datafabric.dataset.DatasetExecutorServiceManager;
-import co.cask.cdap.data2.datafabric.dataset.MetadataServiceManager;
-import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
@@ -43,7 +39,6 @@ import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
 import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.ImpersonationHandler;
-import co.cask.cdap.gateway.handlers.MonitorHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import co.cask.cdap.gateway.handlers.OperationsDashboardHttpHandler;
@@ -70,9 +65,6 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
-import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
-import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
@@ -91,19 +83,7 @@ import co.cask.cdap.internal.bootstrap.guice.BootstrapModules;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerModule;
-import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
-import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
-import co.cask.cdap.logging.run.InMemoryExploreServiceManager;
-import co.cask.cdap.logging.run.InMemoryLogSaverServiceManager;
-import co.cask.cdap.logging.run.InMemoryMessagingServiceManager;
-import co.cask.cdap.logging.run.InMemoryMetadataServiceManager;
-import co.cask.cdap.logging.run.InMemoryMetricsProcessorServiceManager;
-import co.cask.cdap.logging.run.InMemoryMetricsServiceManager;
-import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
-import co.cask.cdap.messaging.distributed.MessagingServiceManager;
 import co.cask.cdap.metadata.MetadataServiceModule;
-import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
-import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
@@ -120,7 +100,6 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -171,7 +150,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-                               addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -212,7 +190,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-                               addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -245,29 +222,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            });
   }
 
-  private void addInMemoryBindings(Binder binder) {
-    MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
-      binder, String.class, MasterServiceManager.class);
-    mapBinder.addBinding(Constants.Service.LOGSAVER)
-      .to(InMemoryLogSaverServiceManager.class);
-    mapBinder.addBinding(Constants.Service.TRANSACTION)
-      .to(InMemoryTransactionServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-      .to(InMemoryMetricsProcessorServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METRICS)
-      .to(InMemoryMetricsServiceManager.class);
-    mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-      .to(InMemoryAppFabricServiceManager.class);
-    mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
-      .to(InMemoryDatasetExecutorServiceManager.class);
-    mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
-      .to(InMemoryMetadataServiceManager.class);
-    mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-      .to(InMemoryExploreServiceManager.class);
-    mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
-      .to(InMemoryMessagingServiceManager.class);
-  }
-
   @Override
   public Module getDistributedModules() {
 
@@ -291,26 +245,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(DefaultUGIProvider.class);
-                               MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
-                                 binder(), String.class, MasterServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER)
-                                 .to(LogSaverStatusServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.TRANSACTION)
-                                 .to(TransactionServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-                                 .to(MetricsProcessorStatusServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS)
-                                 .to(MetricsServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-                                 .to(AppFabricServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
-                                 .to(DatasetExecutorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
-                                 .to(MetadataServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                 .to(ExploreServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
-                                 .to(MessagingServiceManager.class);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -384,7 +318,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       CommonHandlers.add(handlerBinder);
       handlerBinder.addBinding().to(ConfigHandler.class);
       handlerBinder.addBinding().to(VersionHandler.class);
-      handlerBinder.addBinding().to(MonitorHandler.class);
       handlerBinder.addBinding().to(UsageHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);

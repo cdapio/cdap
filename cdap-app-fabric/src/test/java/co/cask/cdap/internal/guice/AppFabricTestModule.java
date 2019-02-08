@@ -18,8 +18,8 @@ package co.cask.cdap.internal.guice;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -44,7 +44,6 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.inject.AbstractModule;
 import org.apache.hadoop.conf.Configuration;
 
@@ -89,7 +88,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new IOModule());
     install(new InMemoryDiscoveryModule());
     install(new AppFabricServiceRuntimeModule().getInMemoryModules());
-    install(new ServiceStoreModules().getInMemoryModules());
+    install(new MonitorHandlerModule(false));
     install(new ProgramRunnerRuntimeModule().getInMemoryModules());
     install(new NonCustomLocationUnitTestModule());
     install(new LocalLogAppenderModule());
@@ -99,7 +98,6 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());
     install(new ConfigStoreModule().getInMemoryModule());
-    install(new NamespaceStoreModule().getStandaloneModules());
     install(new MetadataServiceModule());
     install(new AuthorizationModule());
     install(new AuthorizationEnforcementModule().getStandaloneModules());

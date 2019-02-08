@@ -47,7 +47,6 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.cdap.store.guice.NamespaceStoreModule;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -102,7 +101,6 @@ public class InMemoryExploreServiceTest {
         new ExploreRuntimeModule().getInMemoryModules(),
         new ExploreClientModule(),
         new NamespaceAdminTestModule(),
-        new NamespaceStoreModule().getStandaloneModules(),
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),
         new AuthenticationContextModules().getMasterModule(),

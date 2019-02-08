@@ -115,7 +115,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new KafkaLogAppenderModule(),
       new ExploreClientModule(),
       new MetadataServiceModule(),
-      new AuditModule().getDistributedModules(),
+      new AuditModule(),
       new EntityVerifierModule(),
       new SecureStoreClientModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),

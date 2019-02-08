@@ -148,7 +148,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new ZKDiscoveryModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingClientModule());
-    modules.add(new AuditModule().getDistributedModules());
+    modules.add(new AuditModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());

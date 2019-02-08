@@ -25,6 +25,7 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.data2.audit.AuditTestModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -67,7 +68,7 @@ public class SystemMetadataAuditPublishTest {
       @Override
       protected void configure() {
         bind(MetadataStore.class).to(DefaultMetadataStore.class);
-        install(new AuditModule().getInMemoryModules());
+        install(new AuditTestModule());
       }
     });
     auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);

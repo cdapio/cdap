@@ -136,7 +136,15 @@ public class AppFabricTestHelper {
       if (messagingService instanceof Service) {
         ((Service) messagingService).startAndWait();
       }
+
       injector.getInstance(TransactionManager.class).startAndWait();
+      try {
+        // Define all StructuredTable before starting any services that need StructuredTable
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                        injector.getInstance(StructuredTableRegistry.class));
+      } catch (IOException | TableAlreadyExistsException e) {
+        throw new RuntimeException("Unable to create the system tables.", e);
+      }
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
@@ -153,12 +161,6 @@ public class AppFabricTestHelper {
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
-      }
-      StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-      try {
-        StoreDefinition.createAllTables(tableAdmin, injector.getInstance(StructuredTableRegistry.class));
-      } catch (IOException | TableAlreadyExistsException e) {
-        throw new RuntimeException("Failed to create the system tables", e);
       }
     }
     return injector;
