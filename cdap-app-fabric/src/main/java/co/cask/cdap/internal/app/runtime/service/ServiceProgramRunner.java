@@ -57,7 +57,6 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.Closeable;
 import java.util.Collections;
 
 /**
@@ -150,7 +149,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           transactionRunner);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
-      component.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),
+      component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
                                                          Threads.SAME_THREAD_EXECUTOR);
 
       ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId),

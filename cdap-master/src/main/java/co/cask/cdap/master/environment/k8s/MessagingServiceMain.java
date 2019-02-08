@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
 /**
  * Main class for running {@link MessagingService} in Kubernetes.
  */
-public class MessagingServiceMain extends AbstractServiceMain {
+public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
    * Main entry point
@@ -50,7 +50,7 @@ public class MessagingServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     // We use the "local" module in K8s, as PV will be used as the persistent storage.
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
@@ -64,7 +64,8 @@ public class MessagingServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);
@@ -74,7 +75,7 @@ public class MessagingServiceMain extends AbstractServiceMain {
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext() {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.MESSAGING_SERVICE);

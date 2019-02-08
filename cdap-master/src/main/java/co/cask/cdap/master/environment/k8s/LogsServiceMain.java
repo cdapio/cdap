@@ -65,7 +65,7 @@ import javax.annotation.Nullable;
 /**
  * Main class for running log saver and log query service in Kubernetes.
  */
-public class LogsServiceMain extends AbstractServiceMain {
+public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
    * Main entry point.
@@ -75,7 +75,7 @@ public class LogsServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
@@ -120,7 +120,7 @@ public class LogsServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources, MasterEnvironment masterEnv,
-                             MasterEnvironmentContext masterEnvContext) {
+                             MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
     // log saver
     services.add(injector.getInstance(LogBufferService.class));
     // log handler
@@ -129,7 +129,7 @@ public class LogsServiceMain extends AbstractServiceMain {
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext() {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.LOGSAVER);

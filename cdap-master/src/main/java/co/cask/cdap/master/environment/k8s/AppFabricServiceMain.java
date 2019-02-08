@@ -68,7 +68,7 @@ import javax.annotation.Nullable;
 /**
  * The main class to run app-fabric and other supporting services.
  */
-public class AppFabricServiceMain extends AbstractServiceMain {
+public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
    * Main entry point
@@ -78,7 +78,7 @@ public class AppFabricServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       // Always use local table implementations, which use LevelDB.
       // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
@@ -120,7 +120,8 @@ public class AppFabricServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
     closeableResources.add(injector.getInstance(AuthorizerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
@@ -141,7 +142,7 @@ public class AppFabricServiceMain extends AbstractServiceMain {
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext() {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.APP_FABRIC_HTTP);

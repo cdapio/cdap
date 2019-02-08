@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.artifact.LocalArtifactManager;
 import co.cask.cdap.internal.app.runtime.artifact.LocalPluginFinder;
@@ -72,7 +73,9 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     expose(ArtifactManagerFactory.class);
 
     bind(PluginFinder.class).to(LocalPluginFinder.class);
+    bind(ArtifactFinder.class).to(LocalPluginFinder.class);
     expose(PluginFinder.class);
+    expose(ArtifactFinder.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =

@@ -49,6 +49,7 @@ public class MasterServiceMainTestBase {
   private static InMemoryZKServer zkServer;
   private static Map<Class<?>, ServiceMainManager<?>> serviceManagers = new LinkedHashMap<>();
   private static CConfiguration originalCConf;
+  protected static String[] initArgs;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -125,7 +126,7 @@ public class MasterServiceMainTestBase {
    * @throws Exception if failed to start the service
    */
   protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(Class<T> serviceMainClass,
-                                                                                 String dataDir)
+                                                                                       String dataDir)
     throws Exception {
 
     // Set a unique local data directory for each service
@@ -151,8 +152,9 @@ public class MasterServiceMainTestBase {
       cConf.writeXml(writer);
     }
 
+    initArgs = new String[] { "--env=mock", "--conf=" + confDir.getAbsolutePath() };
     T service = serviceMainClass.newInstance();
-    service.init(new String[] { "--env=mock", "--conf=" + confDir.getAbsolutePath() });
+    service.init(initArgs);
     service.start();
 
     return new ServiceMainManager<T>() {

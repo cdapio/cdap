@@ -24,7 +24,6 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.options.Option;
 import co.cask.cdap.common.options.OptionsParser;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.utils.ProjectInfo;
@@ -40,6 +39,7 @@ import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -57,7 +57,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -65,16 +64,20 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * The abstract base class for writing various CDAP master service main classes.
+ * The abstract base class for writing various service main classes.
+ *
+ * @param <T> type of options supported by the service.
  */
-public abstract class AbstractServiceMain extends DaemonMain {
+public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends DaemonMain {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceMain.class);
 
   private final List<Service> services = new ArrayList<>();
   private final List<AutoCloseable> closeableResources = new ArrayList<>();
-  private Injector injector;
   private MasterEnvironment masterEnv;
+  private Injector injector;
+  private CConfiguration cConf;
+  private T options;
 
   /**
    * Helper method for sub-class to call from static void main.
@@ -113,28 +116,29 @@ public abstract class AbstractServiceMain extends DaemonMain {
   }
 
   @Override
-  public final void init(String[] args) throws MalformedURLException {
+  public final void init(String[] args) throws Exception {
     LOG.info("Initializing master service class {}", getClass().getName());
 
     // Intercept JUL loggers
     SLF4JBridgeHandler.install();
 
-    ConfigOptions opts = new ConfigOptions();
-    OptionsParser.init(opts, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
+    TypeToken<?> type = TypeToken.of(getClass()).resolveType(AbstractServiceMain.class.getTypeParameters()[0]);
+    options = (T) type.getRawType().newInstance();
+    OptionsParser.init(options, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
 
-    CConfiguration cConf = CConfiguration.create();
-    if (opts.extraConfPath != null) {
-      cConf.addResource(new File(opts.extraConfPath, "cdap-site.xml").toURI().toURL());
+    cConf = CConfiguration.create();
+    if (options.getExtraConfPath() != null) {
+      cConf.addResource(new File(options.getExtraConfPath(), "cdap-site.xml").toURI().toURL());
     }
 
     Configuration hConf = new Configuration();
 
     MasterEnvironmentExtensionLoader envExtLoader = new MasterEnvironmentExtensionLoader(cConf);
-    masterEnv = envExtLoader.get(opts.envProvider);
+    masterEnv = envExtLoader.get(options.getEnvProvider());
 
     if (masterEnv == null) {
       throw new IllegalArgumentException("Unable to find a MasterEnvironment implementation with name "
-                                           + opts.envProvider);
+                                           + options.getEnvProvider());
     }
 
     MasterEnvironmentContext masterEnvContext = new DefaultMasterEnvironmentContext(cConf);
@@ -158,7 +162,7 @@ public abstract class AbstractServiceMain extends DaemonMain {
       }
     });
     modules.add(getLogAppenderModule());
-    modules.addAll(getServiceModules());
+    modules.addAll(getServiceModules(masterEnv, options));
 
     injector = Guice.createInjector(modules);
 
@@ -167,36 +171,35 @@ public abstract class AbstractServiceMain extends DaemonMain {
     closeableResources.add(logAppenderInitializer);
 
     logAppenderInitializer.initialize();
-    Optional.ofNullable(getLoggingContext()).ifPresent(LoggingContextAccessor::setLoggingContext);
+    Optional.ofNullable(getLoggingContext(options)).ifPresent(LoggingContextAccessor::setLoggingContext);
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
-    addServices(injector, services, closeableResources, masterEnv, masterEnvContext);
+    addServices(injector, services, closeableResources, masterEnv, masterEnvContext, options);
 
-    LOG.info("Master service {} initialized", getClass().getName());
+    LOG.info("Service {} initialized", getClass().getName());
   }
 
   @Override
   public final void start() {
-    LOG.info("Starting all services for master service {}", getClass().getName());
+    LOG.info("Starting all services for {}", getClass().getName());
     for (Service service : services) {
-      LOG.info("Starting service {} in master service {}", service, getClass().getName());
+      LOG.info("Starting service {}", service, getClass().getName());
       service.startAndWait();
     }
-    LOG.info("All services for master service {} started", getClass().getName());
+    LOG.info("All services for {} started", getClass().getName());
   }
 
   @Override
   public final void stop() {
-    // Stop service in reverse order
-    LOG.info("Stopping all services for master service {}", getClass().getName());
+    LOG.info("Stopping all services for {}", getClass().getName());
     for (Service service : Lists.reverse(services)) {
-      LOG.info("Stopping service {} in master service {}", service, getClass().getName());
+      LOG.info("Stopping service {}", service, getClass().getName());
       try {
         service.stopAndWait();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure each service has a chance to stop
-        LOG.warn("Exception raised when stopping service {} in master service {}", service, getClass().getName(), e);
+        LOG.warn("Exception raised when stopping service {}", service, getClass().getName(), e);
       }
     }
 
@@ -205,11 +208,10 @@ public abstract class AbstractServiceMain extends DaemonMain {
         closeable.close();
       } catch (Exception e) {
         // Catch and log exception on stopping to make sure all closeables are closed
-        LOG.warn("Exception raised when closing resource {} in master service {}", closeable, getClass().getName(), e);
+        LOG.warn("Exception raised when closing resource {}", closeable, getClass().getName(), e);
       }
     }
-
-    LOG.info("All services for master service {} stopped", getClass().getName());
+    LOG.info("All services for {} stopped", getClass().getName());
   }
 
   @Override
@@ -251,7 +253,7 @@ public abstract class AbstractServiceMain extends DaemonMain {
   /**
    * Returns a {@link List} of Guice {@link Module} that this specific for this master service.
    */
-  protected abstract List<Module> getServiceModules();
+  protected abstract List<Module> getServiceModules(MasterEnvironment masterEnv, T options);
 
   /**
    * Adds {@link Service} to run.
@@ -263,7 +265,8 @@ public abstract class AbstractServiceMain extends DaemonMain {
    */
   protected abstract void addServices(Injector injector, List<? super Service> services,
                                       List<? super AutoCloseable> closeableResources,
-                                      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext);
+                                      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                                      T options);
 
   /**
    * Returns the {@link LoggingContext} to use for this service main.
@@ -271,18 +274,7 @@ public abstract class AbstractServiceMain extends DaemonMain {
    * @return the {@link LoggingContext} or {@code null} to not setting logging context
    */
   @Nullable
-  protected abstract LoggingContext getLoggingContext();
-
-  /**
-   * Configuration class to help parsing command line arguments
-   */
-  private static final class ConfigOptions {
-    @Option(name = "env", usage = "Name of the CDAP master environment extension provider")
-    private String envProvider;
-
-    @Option(name = "conf", usage = "Directory path for CDAP configuration files")
-    private String extraConfPath;
-  }
+  protected abstract LoggingContext getLoggingContext(T options);
 
   /**
    * The class bridge a {@link Supplier} to Guice {@link Provider}.

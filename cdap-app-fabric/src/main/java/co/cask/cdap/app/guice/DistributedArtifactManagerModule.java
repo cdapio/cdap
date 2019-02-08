@@ -17,6 +17,7 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.artifact.ArtifactManager;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
@@ -33,6 +34,7 @@ public class DistributedArtifactManagerModule extends AbstractModule {
   protected void configure() {
     // Bind the PluginFinder implementation
     bind(PluginFinder.class).to(RemotePluginFinder.class);
+    bind(ArtifactFinder.class).to(RemotePluginFinder.class);
 
     // Bind the ArtifactManager implementation
     install(new FactoryModuleBuilder()

@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
@@ -58,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
  */
-public class RemotePluginFinder implements PluginFinder {
+public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
 
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
@@ -118,6 +119,8 @@ public class RemotePluginFinder implements PluginFinder {
       }, retryStrategy);
     } catch (PluginNotExistsException e) {
       throw e;
+    } catch (ArtifactNotFoundException e) {
+      throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -174,7 +177,8 @@ public class RemotePluginFinder implements PluginFinder {
   /**
    * Retrieves the {@link Location} of a given artifact.
    */
-  private Location getArtifactLocation(ArtifactId artifactId) throws IOException {
+  @Override
+  public Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(
         HttpMethod.GET, String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
@@ -187,7 +191,7 @@ public class RemotePluginFinder implements PluginFinder {
     HttpResponse response = remoteClient.execute(requestBuilder.build());
 
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
-      throw new IOException("Could not get artifact detail, endpoint not found");
+      throw new ArtifactNotFoundException(artifactId);
     }
     if (response.getResponseCode() != 200) {
       throw new IOException("Exception while getting artifacts list: " + response.getResponseCode()

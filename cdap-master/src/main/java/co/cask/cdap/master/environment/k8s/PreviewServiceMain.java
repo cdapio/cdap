@@ -52,7 +52,7 @@ import javax.annotation.Nullable;
 /**
  * The main class to run the preview service.
  */
-public class PreviewServiceMain extends AbstractServiceMain {
+public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
    * Main entry point
@@ -62,7 +62,7 @@ public class PreviewServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new PreviewHttpModule(),
       new DataSetServiceModules().getStandaloneModules(),
@@ -91,14 +91,15 @@ public class PreviewServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(PreviewHttpServer.class));
   }
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext() {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.PREVIEW_HTTP);
