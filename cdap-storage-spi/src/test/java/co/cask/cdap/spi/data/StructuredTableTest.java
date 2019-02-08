@@ -29,7 +29,9 @@ import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +50,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * TODO: CDAP-14750 add more unit tests for the StructuredTable
  */
 public abstract class StructuredTableTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   // TODO: test complex schema will all allowed data types
   protected static final StructuredTableSpecification SIMPLE_SPEC;
 

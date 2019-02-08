@@ -25,6 +25,8 @@ import co.cask.cdap.store.StoreDefinition;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import javax.sql.DataSource;
@@ -34,11 +36,14 @@ import javax.sql.DataSource;
  */
 public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static EmbeddedPostgres pg;
 
   @BeforeClass
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
-    pg = EmbeddedPostgres.start();
+    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
     SqlStructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry();
     structuredTableRegistry.initialize();
