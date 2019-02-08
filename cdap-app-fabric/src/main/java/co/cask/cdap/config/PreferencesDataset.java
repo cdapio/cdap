@@ -33,7 +33,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * This class is responsible for Perferences operations. It uses {@link ConfigDataset} as the underlying storage.
+ * This class is responsible for Perferences operations.
+ * It uses {@link InternalPreferencesDataset} as the underlying storage.
  * It does not wrap its operations in a transaction. It is up to the caller to decide what operations belong
  * in a transaction.
  */
@@ -44,17 +45,17 @@ public class PreferencesDataset {
   // Id for Properties config stored at the instance level
   private static final String INSTANCE_PROPERTIES = "instance";
 
-  private final ConfigDataset configDataset;
+  private final InternalPreferencesDataset internalPreferencesDataset;
 
-  private PreferencesDataset(ConfigDataset configDataset) {
-    this.configDataset = configDataset;
+  private PreferencesDataset(InternalPreferencesDataset internalPreferencesDataset) {
+    this.internalPreferencesDataset = internalPreferencesDataset;
   }
 
   /**
    * Get the PreferenceDataset
    */
   public static PreferencesDataset get(DatasetContext datasetContext, DatasetFramework dsFramework) {
-    return new PreferencesDataset(ConfigDataset.get(datasetContext, dsFramework));
+    return new PreferencesDataset(InternalPreferencesDataset.get(datasetContext, dsFramework));
   }
 
   /**
@@ -194,7 +195,7 @@ public class PreferencesDataset {
   private Map<String, String> getConfigProperties(String namespace, String id) {
     Map<String, String> value = new HashMap<>();
     try {
-      Config config = configDataset.get(namespace, PREFERENCES_CONFIG_TYPE, id);
+      Config config = internalPreferencesDataset.get(namespace, PREFERENCES_CONFIG_TYPE, id);
       value.putAll(config.getProperties());
     } catch (ConfigNotFoundException e) {
       //no-op - return empty map
@@ -204,12 +205,12 @@ public class PreferencesDataset {
 
   private void setConfig(String namespace, String id, Map<String, String> propertyMap) {
     Config config = new Config(id, propertyMap);
-    configDataset.createOrUpdate(namespace, PREFERENCES_CONFIG_TYPE, config);
+    internalPreferencesDataset.createOrUpdate(namespace, PREFERENCES_CONFIG_TYPE, config);
   }
 
   private void deleteConfig(String namespace, String id) {
     try {
-      configDataset.delete(namespace, PREFERENCES_CONFIG_TYPE, id);
+      internalPreferencesDataset.delete(namespace, PREFERENCES_CONFIG_TYPE, id);
     } catch (ConfigNotFoundException e) {
       //no-op
     }

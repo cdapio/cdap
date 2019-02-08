@@ -209,7 +209,7 @@ public class DefaultPreviewManager implements PreviewManager {
       new PreviewSecureStoreModule(secureStore),
       new PreviewDiscoveryRuntimeModule(discoveryService),
       new LocalLocationModule(),
-      new ConfigStoreModule().getStandaloneModule(),
+      new ConfigStoreModule(),
       new PreviewRunnerModule(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
                               privilegesManager, preferencesService),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),

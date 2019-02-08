@@ -19,31 +19,14 @@ package co.cask.cdap.config.guice;
 import co.cask.cdap.config.ConfigStore;
 import co.cask.cdap.config.DefaultConfigStore;
 import com.google.inject.AbstractModule;
-import com.google.inject.Module;
 
 /**
  * Configuration Store Guice Modules.
  */
-public class ConfigStoreModule {
+public class ConfigStoreModule extends AbstractModule {
 
-  public Module getInMemoryModule() {
-    return getModule();
-  }
-
-  public Module getStandaloneModule() {
-    return getModule();
-  }
-
-  public Module getDistributedModule() {
-    return getModule();
-  }
-
-  private Module getModule() {
-    return new AbstractModule() {
-      @Override
-      protected void configure() {
-        bind(ConfigStore.class).to(DefaultConfigStore.class);
-      }
-    };
+  @Override
+  protected void configure() {
+    bind(ConfigStore.class).to(DefaultConfigStore.class);
   }
 }

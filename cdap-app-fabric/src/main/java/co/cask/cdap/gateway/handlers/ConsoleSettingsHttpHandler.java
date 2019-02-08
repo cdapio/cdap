@@ -73,7 +73,7 @@ public class ConsoleSettingsHttpHandler extends AbstractHttpHandler {
     }
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.addProperty(ID, userConfig.getId());
+    jsonObject.addProperty(ID, userConfig.getName());
 
     //We store the serialized JSON string of the properties in ConfigStore and we return a JsonObject back
     jsonObject.add(CONFIG_PROPERTY, JSON_PARSER.parse(userConfig.getProperties().get(CONFIG_PROPERTY)));

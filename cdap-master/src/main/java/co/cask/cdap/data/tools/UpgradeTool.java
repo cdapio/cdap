@@ -484,8 +484,6 @@ public class UpgradeTool {
     FieldLineageDataset.setupDatasets(datasetFramework);
     // app metadata
     DefaultStore.setupDatasets(datasetFramework);
-    // config store
-    DefaultConfigStore.setupDatasets(datasetFramework);
     // logs metadata
     LoggingStoreTableUtil.setupDatasets(datasetFramework);
     // scheduler metadata

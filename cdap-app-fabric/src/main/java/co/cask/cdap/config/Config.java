@@ -26,7 +26,7 @@ import java.util.Map;
  * Configuration Class that holds an Id and properties as a Map.
  */
 public final class Config {
-  private final String id;
+  private final String name;
   private final Map<String, String> properties;
 
   /**
@@ -37,12 +37,12 @@ public final class Config {
   public Config(String name, Map<String, String> properties) {
     Preconditions.checkNotNull(name);
     Preconditions.checkNotNull(properties);
-    this.id = name;
+    this.name = name;
     this.properties = ImmutableMap.copyOf(properties);
   }
 
-  public String getId() {
-    return id;
+  public String getName() {
+    return name;
   }
 
   public Map<String, String> getProperties() {
@@ -56,11 +56,11 @@ public final class Config {
     }
 
     Config config = (Config) o;
-    return Objects.equal(this.id, config.id) && Objects.equal(this.properties, config.properties);
+    return Objects.equal(this.name, config.name) && Objects.equal(this.properties, config.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(this.id, this.properties);
+    return Objects.hashCode(this.name, this.properties);
   }
 }

@@ -59,9 +59,9 @@ public class ConsoleSettingsStore {
     List<Config> configList = configStore.list(CONSOLE_NAMESPACE, CONFIG_TYPE);
     for (Config config : configList) {
       try {
-        configStore.delete(CONSOLE_NAMESPACE, CONFIG_TYPE, config.getId());
+        configStore.delete(CONSOLE_NAMESPACE, CONFIG_TYPE, config.getName());
       } catch (ConfigNotFoundException e) {
-        LOG.warn("ConsoleSettings for {} not found", config.getId());
+        LOG.warn("ConsoleSettings for {} not found", config.getName());
       }
     }
   }

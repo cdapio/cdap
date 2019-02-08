@@ -55,6 +55,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(WorkflowStore.WORKFLOW_STATISTICS) == null) {
       WorkflowStore.createTables(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(ConfigStore.CONFIGS) == null) {
+      ConfigStore.createTable(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -81,6 +84,31 @@ public final class StoreDefinition {
 
     public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(NAMESPACE_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for ConfigStore
+   */
+  public static final class ConfigStore {
+    public static final StructuredTableId CONFIGS = new StructuredTableId("configs");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String PROPERTIES_FIELD = "properties";
+
+    public static final StructuredTableSpecification CONFIG_TABLE_SPEC = new StructuredTableSpecification.Builder()
+      .withId(CONFIGS)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(TYPE_FIELD),
+                  Fields.stringType(NAME_FIELD),
+                  Fields.stringType(PROPERTIES_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
+      .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(CONFIG_TABLE_SPEC);
     }
   }
 

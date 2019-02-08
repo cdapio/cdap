@@ -44,10 +44,10 @@ public interface ConfigStore {
    * Delete a Configuration.
    * @param namespace namespace
    * @param type configuration type
-   * @param id name of the configuration
+   * @param name name of the configuration
    * @throws ConfigNotFoundException if configuration is not found
    */
-  void delete(String namespace, String type, String id) throws ConfigNotFoundException;
+  void delete(String namespace, String type, String name) throws ConfigNotFoundException;
 
   /**
    * List all Configurations which are of a specific type.
@@ -61,11 +61,11 @@ public interface ConfigStore {
    * Read a Configuration.
    * @param namespace namespace
    * @param type configuration type
-   * @param id name of the configuration
+   * @param name name of the configuration
    * @return {@link Config}
    * @throws ConfigNotFoundException if configuration is not found
    */
-  Config get(String namespace, String type, String id) throws ConfigNotFoundException;
+  Config get(String namespace, String type, String name) throws ConfigNotFoundException;
 
   /**
    * Update a Configuration.
