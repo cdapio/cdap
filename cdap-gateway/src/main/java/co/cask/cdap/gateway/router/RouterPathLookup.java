@@ -91,8 +91,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return null;
     } else if ("bootstrap".equals(uriParts[1])) {
       return APP_FABRIC_HTTP;
-    } else if ("dashboard".equals(uriParts[1])) {
-      return APP_FABRIC_HTTP;
     } else if ((uriParts.length >= 11) && "versions".equals(uriParts[5]) && isUserServiceType(uriParts[7])
       && "methods".equals(uriParts[9])) {
       // User defined services (version specific) handle methods on them:
