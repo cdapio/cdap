@@ -46,7 +46,7 @@ const setSpannerAsActiveBrowser = (payload, getInstances = false) => {
 
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
 
@@ -74,7 +74,7 @@ const listSpannerInstances = (connectionId) => {
   setSpannerLoading();
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
 
@@ -97,7 +97,7 @@ const listSpannerDatabases = (connectionId, instanceId) => {
   setSpannerLoading();
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
     instanceId,
   };
@@ -122,7 +122,7 @@ const listSpannerTables = (connectionId, instanceId, databaseId) => {
   setSpannerLoading();
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
     instanceId,
     databaseId,

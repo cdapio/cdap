@@ -81,7 +81,7 @@ class SpannerTableListView extends React.PureComponent<ISpannerTableListViewProp
     const databaseId =
       this.props.databaseId || objectQuery(this.props, 'match', 'params', 'databaseId');
     const params = {
-      namespace,
+      context: namespace,
       connectionId,
       instanceId,
       databaseId,

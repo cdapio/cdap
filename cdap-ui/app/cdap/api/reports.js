@@ -42,6 +42,6 @@ export const MyReportsApi = {
     interval: 2000,
   }),
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', reportsPath),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${methodsPath}/health`),
   deleteApp: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
 };

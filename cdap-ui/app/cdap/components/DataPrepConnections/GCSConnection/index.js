@@ -68,7 +68,7 @@ export default class GCSConnection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -120,7 +120,7 @@ export default class GCSConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.createConnection({ context: namespace }, requestBody).subscribe(
       () => {
         this.setState({ error: null });
         this.props.onAdd();
@@ -139,7 +139,7 @@ export default class GCSConnection extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -184,7 +184,7 @@ export default class GCSConnection extends Component {
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.gcsTestConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.gcsTestConnection({ context: namespace }, requestBody).subscribe(
       (res) => {
         this.setState({
           connectionResult: {
@@ -195,7 +195,7 @@ export default class GCSConnection extends Component {
         });
       },
       (err) => {
-        console.log('Error testing kafka connection', err);
+        console.log('Error testing Google Cloud Storage connection', err);
 
         let errorMessage =
           objectQuery(err, 'response', 'message') ||

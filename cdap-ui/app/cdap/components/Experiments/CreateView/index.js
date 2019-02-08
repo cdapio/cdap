@@ -93,7 +93,7 @@ export default class ExperimentCreateView extends Component {
       let requestBody = directiveRequestBodyCreator(directives);
       MyDataPrepApi.getSchema(
         {
-          namespace: getCurrentNamespace(),
+          context: getCurrentNamespace(),
           workspaceId,
         },
         requestBody
@@ -148,7 +148,7 @@ export default class ExperimentCreateView extends Component {
     if (workspaceId) {
       // Every workspace created in experiments create view is temp. So don't worry about deleting it.
       MyDataPrepApi.delete({
-        namespace: getCurrentNamespace(),
+        context: getCurrentNamespace(),
         workspaceId,
       }).subscribe();
     }

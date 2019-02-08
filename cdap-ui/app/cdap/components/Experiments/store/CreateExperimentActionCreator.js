@@ -190,7 +190,7 @@ function createExperiment() {
 
   MyDataPrepApi.getSchema(
     {
-      namespace: getCurrentNamespace(),
+      context: getCurrentNamespace(),
       workspaceId: experiments_create.workspaceId,
     },
     requestBody
@@ -414,7 +414,7 @@ function trainModel() {
 
 function createWorkspace(filePath) {
   let params = {
-    namespace: getCurrentNamespace(),
+    context: getCurrentNamespace(),
     path: filePath,
     lines: 10000,
     sampler: 'first',
@@ -439,7 +439,7 @@ function createWorkspace(filePath) {
 
 function applyDirectives(workspaceId, directives) {
   return MyDataPrepApi.getWorkspace({
-    namespace: getCurrentNamespace(),
+    context: getCurrentNamespace(),
     workspaceId,
   }).mergeMap((res) => {
     let workspaceInfo = res.values[0];
@@ -568,7 +568,7 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
       let requestBody = directiveRequestBodyCreator(directives);
       return MyDataPrepApi.getSchema(
         {
-          namespace: getCurrentNamespace(),
+          context: getCurrentNamespace(),
           workspaceId: experiment.workspaceId,
         },
         requestBody
@@ -634,7 +634,7 @@ function setAlgorithmList() {
   let requestBody = directiveRequestBodyCreator(directives);
   MyDataPrepApi.getSchema(
     {
-      namespace: getCurrentNamespace(),
+      context: getCurrentNamespace(),
       workspaceId: experiments_create.workspaceId,
     },
     requestBody

@@ -46,7 +46,7 @@ const setBigQueryAsActiveBrowser = (payload, getDatasets = false) => {
 
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
 
@@ -74,7 +74,7 @@ const listBiqQueryDatasets = (connectionId) => {
   setBigQueryLoading();
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
 
@@ -97,7 +97,7 @@ const listBigQueryTables = (connectionId, datasetId) => {
   setBigQueryLoading();
   let namespace = getCurrentNamespace();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
     datasetId,
   };

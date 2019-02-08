@@ -132,7 +132,7 @@ export default class DataPrepTopPanel extends Component {
       let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
       let namespace = NamespaceStore.getState().selectedNamespace;
       let requestObj = {
-        namespace,
+        context: namespace,
         workspaceId,
       };
       let requestBody = directiveRequestBodyCreator(directives);

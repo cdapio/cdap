@@ -62,7 +62,7 @@ export default class GCSBrowser extends Component {
     };
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId,
       activeBucket: file.bucket,
       blob: file.blob,

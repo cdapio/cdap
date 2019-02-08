@@ -68,7 +68,7 @@ export default class ConnectionsUpload extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let fileName = this.state.file.name;
 
-    let url = `/namespaces/${namespace}/apps/dataprep/services/service/methods/workspaces`;
+    let url = `/namespaces/system/apps/dataprep/services/service/methods/contexts/${namespace}/workspaces`;
 
     let headers = {
       'Content-Type': 'application/data-prep',

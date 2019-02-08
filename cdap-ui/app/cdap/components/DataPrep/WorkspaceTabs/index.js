@@ -160,7 +160,7 @@ export default class WorkspaceTabs extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyDataPrepApi.delete({
-      namespace,
+      context: namespace,
       workspaceId,
     }).subscribe(
       () => {

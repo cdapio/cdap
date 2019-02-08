@@ -40,7 +40,7 @@ const setS3AsActiveBrowser = (payload) => {
 
   let namespace = NamespaceStore.getState().selectedNamespace;
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
   DataPrepBrowserStore.dispatch({
@@ -89,7 +89,7 @@ const fetchBucketDetails = (path = '') => {
   }
   let { selectedNamespace: namespace } = NamespaceStore.getState();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
   if (path) {

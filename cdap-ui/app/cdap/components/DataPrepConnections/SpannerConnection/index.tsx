@@ -91,7 +91,7 @@ export default class SpannerConnection extends React.PureComponent<
     const namespace = getCurrentNamespace();
 
     const params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -145,7 +145,7 @@ export default class SpannerConnection extends React.PureComponent<
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.createConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.createConnection({ context: namespace }, requestBody).subscribe(
       () => {
         this.setState({ error: null });
         this.props.onAdd();
@@ -163,7 +163,7 @@ export default class SpannerConnection extends React.PureComponent<
     const namespace = getCurrentNamespace();
 
     const params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
     };
 
@@ -206,7 +206,7 @@ export default class SpannerConnection extends React.PureComponent<
       properties: this.constructProperties(),
     };
 
-    MyDataPrepApi.spannerTestConnection({ namespace }, requestBody).subscribe(
+    MyDataPrepApi.spannerTestConnection({ context: namespace }, requestBody).subscribe(
       (res) => {
         this.setState({
           connectionResult: {

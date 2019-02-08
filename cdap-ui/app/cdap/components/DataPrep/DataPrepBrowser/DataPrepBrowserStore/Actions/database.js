@@ -56,7 +56,7 @@ const setDatabaseAsActiveBrowser = (payload) => {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
   MyDataPrepApi.getConnection(params).subscribe(

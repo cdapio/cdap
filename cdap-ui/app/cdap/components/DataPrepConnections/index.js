@@ -162,17 +162,15 @@ export default class DataPrepConnections extends Component {
   }
 
   checkBackendUp() {
-    let namespace = getCurrentNamespace();
-
-    MyDataPrepApi.ping({ namespace })
-      .combineLatest(MyDataPrepApi.getApp({ namespace }))
+    MyDataPrepApi.ping()
+      .combineLatest(MyDataPrepApi.getApp())
       .subscribe(
         (res) => {
           const appSpec = res[1];
 
           let minimumVersion = new Version(MIN_DATAPREP_VERSION);
 
-          if (minimumVersion.compareTo(new Version(appSpec.artifactVersion)) > 0) {
+          if (minimumVersion.compareTo(new Version(appSpec.artifact.version)) > 0) {
             console.log('dataprep minimum version not met');
 
             this.setState({
@@ -258,9 +256,7 @@ export default class DataPrepConnections extends Component {
   };
 
   fetchConnectionTypes = () => {
-    MyDataPrepApi.listConnectionTypes({
-      namespace: getCurrentNamespace(),
-    }).subscribe(
+    MyDataPrepApi.listConnectionTypes().subscribe(
       (res) => {
         this.setState({
           connectionTypes: res,
@@ -307,7 +303,7 @@ export default class DataPrepConnections extends Component {
     let namespace = getCurrentNamespace();
 
     MyDataPrepApi.listConnections({
-      namespace,
+      context: namespace,
       type: '*',
     }).subscribe((res) => {
       let state = {};

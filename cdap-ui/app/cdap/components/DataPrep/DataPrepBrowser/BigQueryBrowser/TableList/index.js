@@ -111,7 +111,7 @@ class TableListView extends Component {
     let namespace = getCurrentNamespace();
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId: this.props.connectionId,
       datasetId: this.props.datasetId,
       tableId,

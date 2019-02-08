@@ -49,7 +49,7 @@ const setGCSAsActiveBrowser = (payload) => {
 
   let namespace = NamespaceStore.getState().selectedNamespace;
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
 
@@ -92,7 +92,7 @@ const fetchGCSDetails = (path = '') => {
   }
   let { selectedNamespace: namespace } = NamespaceStore.getState();
   let params = {
-    namespace,
+    context: namespace,
     connectionId,
   };
   if (path) {

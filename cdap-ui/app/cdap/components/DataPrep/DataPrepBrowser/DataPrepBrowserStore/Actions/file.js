@@ -52,10 +52,10 @@ const goToPath = (path) => {
   setFileSystemLoading();
   setFileSystemPath(path);
 
-  let namespace = NamespaceStore.getState().selectedNamespace;
+  const namespace = NamespaceStore.getState().selectedNamespace;
 
   MyDataPrepApi.explorer({
-    namespace,
+    context: namespace,
     path,
     hidden: true,
   }).subscribe(

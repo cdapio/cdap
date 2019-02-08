@@ -127,5 +127,5 @@ export const myExperimentsApi = {
   createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
   getServiceStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${servicePath}/status`),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${servicePath}/status`),
-  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/experiments`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${basePath}/health`),
 };

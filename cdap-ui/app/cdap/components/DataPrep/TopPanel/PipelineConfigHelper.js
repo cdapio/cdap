@@ -31,13 +31,13 @@ const PREFIX = 'features.DataPrep.PipelineError';
 
 export default function getPipelineConfig() {
   let workspaceInfo = DataPrepStore.getState().dataprep.workspaceInfo;
-  let namespace = NamespaceStore.getState().selectedNamespace;
 
-  return MyDataPrepApi.getInfo({ namespace }).mergeMap((res) => {
+  return MyDataPrepApi.getInfo().mergeMap((res) => {
     if (res.statusCode === 404) {
       console.log(`can't find method; use latest wrangler-transform`);
       return constructProperties(workspaceInfo);
     }
+
     let pluginVersion = res.values[0]['plugin.version'];
     return constructProperties(workspaceInfo, pluginVersion);
   });
@@ -365,12 +365,12 @@ function constructSpannerSource(artifactsList, spannerInfo) {
     return null;
   }
 
-  let googeCloudArtifact = find(artifactsList, { name: 'google-cloud' });
-  if (!googeCloudArtifact) {
+  let googleCloudArtifact = find(artifactsList, { name: 'google-cloud' });
+  if (!googleCloudArtifact) {
     return T.translate(`${PREFIX}.spanner`);
   }
 
-  googeCloudArtifact.version = '[0.11.0-SNAPSHOT, 3.0.0)';
+  googleCloudArtifact.version = '[0.11.0-SNAPSHOT, 3.0.0)';
   let plugin = objectQuery(spannerInfo, 'values', 0);
 
   let pluginName = Object.keys(plugin)[0];
@@ -381,7 +381,7 @@ function constructSpannerSource(artifactsList, spannerInfo) {
     name: plugin.name,
     label: plugin.name,
     type: 'batchsource',
-    artifact: googeCloudArtifact,
+    artifact: googleCloudArtifact,
     properties: plugin.properties,
   };
 
@@ -408,7 +408,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
   let workspaceId = state.workspaceId;
 
   let requestObj = {
-    namespace,
+    context: namespace,
     workspaceId,
   };
 
@@ -421,7 +421,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
 
   if (state.workspaceInfo.properties.connection === 'file') {
     let specParams = {
-      namespace,
+      context: namespace,
       path: state.workspaceUri,
       wid: workspaceId,
     };
@@ -429,7 +429,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
     rxArray.push(MyDataPrepApi.getSpecification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'database') {
     let specParams = {
-      namespace,
+      context: namespace,
       connectionId,
       tableId: state.workspaceInfo.properties.id,
     };
@@ -438,7 +438,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
     rxArray.push(MyDataPrepApi.getSchema(requestObj, requestBody));
   } else if (state.workspaceInfo.properties.connection === 'kafka') {
     let specParams = {
-      namespace,
+      context: namespace,
       connectionId,
       topic: state.workspaceInfo.properties.topic,
     };
@@ -448,7 +448,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
     let activeBucket = state.workspaceInfo.properties['bucket-name'];
     let key = state.workspaceInfo.properties.key;
     let specParams = {
-      namespace,
+      context: namespace,
       connectionId,
       activeBucket,
       key,
@@ -457,21 +457,21 @@ function constructProperties(workspaceInfo, pluginVersion) {
     rxArray.push(MyDataPrepApi.getS3Specification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'gcs') {
     let specParams = {
-      namespace,
+      context: namespace,
       connectionId: state.workspaceInfo.properties.connectionid,
       wid: workspaceId,
     };
     rxArray.push(MyDataPrepApi.getGCSSpecification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'bigquery') {
     let specParams = {
-      namespace,
+      context: namespace,
       connectionId: state.workspaceInfo.properties.connectionid,
       wid: workspaceId,
     };
     rxArray.push(MyDataPrepApi.getBigQuerySpecification(specParams));
   } else if (state.workspaceInfo.properties.connection === 'spanner') {
     let specParams = {
-      namespace,
+      context: namespace,
       workspaceId,
     };
     rxArray.push(MyDataPrepApi.getSpannerSpecification(specParams));

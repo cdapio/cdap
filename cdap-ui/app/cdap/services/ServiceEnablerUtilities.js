@@ -233,6 +233,8 @@ export default function enableSystemApp({
       (res) => {
         if (res.status === PROGRAM_STATUSES.RUNNING) {
           observer.next();
+        } else if (res.status === PROGRAM_STATUSES.STOPPED) {
+          enableService(subject);
         } else {
           pingService(subject);
         }
