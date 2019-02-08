@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,11 +32,6 @@ import javax.annotation.Nullable;
  */
 public interface SystemMetadataProvider {
 
-  String SCHEMA_KEY = "schema";
-  String TTL_KEY = "ttl";
-  String DESCRIPTION_KEY = "description";
-  String ENTITY_NAME_KEY = "entity-name";
-  String CREATION_TIME_KEY = "creation-time";
   String VERSION_KEY = "version";
   String EXPLORE_TAG = "explore";
 

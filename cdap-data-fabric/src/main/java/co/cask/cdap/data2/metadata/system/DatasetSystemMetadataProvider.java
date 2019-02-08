@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -87,7 +88,7 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
   @Override
   public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
-    properties.put(ENTITY_NAME_KEY, dsInstance.getDataset());
+    properties.put(MetadataConstants.ENTITY_NAME_KEY, dsInstance.getDataset());
     Map<String, String> datasetProperties = dsProperties.getProperties();
     if (dsType != null) {
       properties.put(TYPE, dsType);
@@ -95,13 +96,13 @@ public class DatasetSystemMetadataProvider implements SystemMetadataProvider {
     // use TableProperties to extract the TTL, because it handles the case of a negative TTL (== no TTL)
     Long ttl = TableProperties.getTTL(datasetProperties);
     if (ttl != null) {
-      properties.put(TTL_KEY, String.valueOf(ttl));
+      properties.put(MetadataConstants.TTL_KEY, String.valueOf(ttl));
     }
     if (description != null) {
-      properties.put(DESCRIPTION_KEY, description);
+      properties.put(MetadataConstants.DESCRIPTION_KEY, description);
     }
     if (createTime > 0) {
-      properties.put(CREATION_TIME_KEY, String.valueOf(createTime));
+      properties.put(MetadataConstants.CREATION_TIME_KEY, String.valueOf(createTime));
     }
     return properties.build();
   }

@@ -145,7 +145,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   // various fields in a metadata document (indexed in elasticsearch)
   private static final String DOC_TYPE = "meta";
-  private static final String CREATED_FIELD = "name"; // contains the creation time
+  private static final String CREATED_FIELD = "created"; // contains the creation time
   private static final String HIDDEN_FIELD = "hidden"; // contains the _ from the entity name (if present)
   private static final String NAME_FIELD = "name"; // contains the entity name
   private static final String NAMESPACE_FIELD = "namespace"; // contains the type of the entity
@@ -206,18 +206,20 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       }
       GetIndexRequest request = new GetIndexRequest();
       request.indices(indexName);
-      if (client.indices().exists(request, RequestOptions.DEFAULT)) {
-        created = true;
-        return;
+      if (!client.indices().exists(request, RequestOptions.DEFAULT)) {
+        LOG.info("Creating index " + indexName);
+        CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
+        createIndexRequest.settings(createSettings(), XContentType.JSON);
+        createIndexRequest.mapping(DOC_TYPE, getMapping(), XContentType.JSON);
+        CreateIndexResponse response = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
+        if (!response.isAcknowledged()) {
+          throw new IOException("Create index request was not acknowledged by EleasticSearch: " + response);
+        }
       }
-      LOG.info("Creating index " + indexName);
-      CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
-      createIndexRequest.settings(createSettings(), XContentType.JSON);
-      createIndexRequest.mapping(DOC_TYPE, getMapping(), XContentType.JSON);
-      CreateIndexResponse response = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
-      if (!response.isAcknowledged()) {
-        throw new IOException("Create index request was not acknowledged by EleasticSearch: " + response);
-      }
+      // For some unknown reason, multi-get fails immediately after creating an index
+      // However, performing one regular read appears to fix that, perhaps it waits until the index is ready?
+      // Hence, perform one read to ensure the index is ready to use.
+      readFromIndex(MetadataEntity.ofNamespace("system"));
       created = true;
     }
   }
@@ -272,6 +274,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public MetadataChange apply(MetadataMutation mutation) throws IOException {
+    ensureIndexCreated();
     MetadataEntity entity = mutation.getEntity();
     Metadata before = readFromIndex(entity);
     Tuple<? extends DocWriteRequest, MetadataChange> intermediary = applyMutation(before, mutation);
@@ -281,6 +284,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException {
+    ensureIndexCreated();
     MultiGetRequest multiGet = new MultiGetRequest();
     for (MetadataMutation mutation : mutations) {
       multiGet.add(indexName, DOC_TYPE, toDocumentId(mutation.getEntity()));
@@ -309,6 +313,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public Metadata read(Read read) throws IOException {
+    ensureIndexCreated();
     Metadata metadata = readFromIndex(read.getEntity());
     return filterMetadata(metadata, KEEP, read.getKinds(), read.getScopes(), read.getSelection());
   }
@@ -482,7 +487,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private Optional<MetadataDocument> readFromIndexIfExists(MetadataEntity entity) throws IOException {
     String id = toDocumentId(entity);
     try {
-      ensureIndexCreated();
       GetRequest getRequest = new GetRequest(indexName).type(DOC_TYPE).id(id);
       GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
       if (!response.isExists()) {
@@ -499,7 +503,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * The request must be executed by the caller.
    */
   private IndexRequest writeToIndex(MetadataEntity entity, Metadata metadata) throws IOException {
-    ensureIndexCreated();
     MetadataDocument doc = MetadataDocument.of(entity, metadata);
     LOG.info("Indexing document: {}", doc);
     return new IndexRequest(indexName)

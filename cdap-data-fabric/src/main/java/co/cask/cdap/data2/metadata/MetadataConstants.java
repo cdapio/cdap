@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Cask Data, Inc.
+ * Copyright 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,4 +23,10 @@ public class MetadataConstants {
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
+
+  public static final String SCHEMA_KEY = "schema";
+  public static final String TTL_KEY = "ttl";
+  public static final String DESCRIPTION_KEY = "description";
+  public static final String ENTITY_NAME_KEY = "entity-name";
+  public static final String CREATION_TIME_KEY = "creation-time";
 }

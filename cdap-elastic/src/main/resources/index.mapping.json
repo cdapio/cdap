@@ -30,6 +30,9 @@
     "name": {
       "type": "keyword"
     },
+    "created": {
+      "type": "date"
+    },
     "namespace": {
       "type": "keyword"
     },

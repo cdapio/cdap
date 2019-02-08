@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.id.Id;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.id.ArtifactId;
 import com.google.common.collect.ImmutableMap;
@@ -42,12 +43,12 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
-    properties.put(ENTITY_NAME_KEY, artifactInfo.getName());
+    properties.put(MetadataConstants.ENTITY_NAME_KEY, artifactInfo.getName());
     ArtifactClasses classes = artifactInfo.getClasses();
     for (PluginClass pluginClass : classes.getPlugins()) {
       SystemMetadataProvider.addPlugin(pluginClass, artifactInfo.getVersion(), properties);
     }
-    properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
+    properties.put(MetadataConstants.CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
     return properties.build();
   }
 }

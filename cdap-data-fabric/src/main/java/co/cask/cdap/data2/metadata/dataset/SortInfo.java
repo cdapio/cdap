@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
@@ -85,17 +85,17 @@ public class SortInfo {
     if (Iterables.size(sortSplit) != 2) {
       throw new BadRequestException(
         String.format("'sort' parameter should be a space separated string containing the field ('%s' or '%s') and " +
-                        "the sort order ('%s' or '%s'). Found %s.", AbstractSystemMetadataWriter.ENTITY_NAME_KEY,
-                      AbstractSystemMetadataWriter.CREATION_TIME_KEY, SortOrder.ASC, SortOrder.DESC, sort));
+                        "the sort order ('%s' or '%s'). Found %s.", MetadataConstants.ENTITY_NAME_KEY,
+                      MetadataConstants.CREATION_TIME_KEY, SortOrder.ASC, SortOrder.DESC, sort));
     }
     Iterator<String> iterator = sortSplit.iterator();
     String sortBy = iterator.next();
     String sortOrder = iterator.next();
-    if (!AbstractSystemMetadataWriter.ENTITY_NAME_KEY.equalsIgnoreCase(sortBy) &&
-      !AbstractSystemMetadataWriter.CREATION_TIME_KEY.equalsIgnoreCase(sortBy)) {
+    if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sortBy) &&
+      !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sortBy)) {
       throw new BadRequestException(
-        String.format("Sort field must be '%s' or '%s'. Found %s.", AbstractSystemMetadataWriter.ENTITY_NAME_KEY,
-                      AbstractSystemMetadataWriter.CREATION_TIME_KEY, sortBy));
+        String.format("Sort field must be '%s' or '%s'. Found %s.", MetadataConstants.ENTITY_NAME_KEY,
+                      MetadataConstants.CREATION_TIME_KEY, sortBy));
     }
     if (!"asc".equalsIgnoreCase(sortOrder) && !"desc".equalsIgnoreCase(sortOrder)) {
       throw new BadRequestException(

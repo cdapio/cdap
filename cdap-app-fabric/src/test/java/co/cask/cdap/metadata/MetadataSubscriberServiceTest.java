@@ -36,13 +36,13 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesService;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.system.SystemMetadataProvider;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
@@ -258,8 +258,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     Assert.assertTrue(meta.getTags().isEmpty());
 
     MetadataPublisher metadataPublisher = getInjector().getInstance(MessagingMetadataPublisher.class);
-    final String descriptionKey = SystemMetadataProvider.DESCRIPTION_KEY;
-    final String creationTimeKey = SystemMetadataProvider.CREATION_TIME_KEY;
+    final String descriptionKey = MetadataConstants.DESCRIPTION_KEY;
+    final String creationTimeKey = MetadataConstants.CREATION_TIME_KEY;
 
     // publish a create event
     Map<String, String> props = ImmutableMap.of("x", "y", descriptionKey, "desc1", creationTimeKey, "123456");

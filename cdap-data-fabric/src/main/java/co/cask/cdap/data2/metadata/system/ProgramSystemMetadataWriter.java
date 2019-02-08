@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -51,13 +52,13 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   public Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
-    properties.put(ENTITY_NAME_KEY, programId.getEntityName());
+    properties.put(MetadataConstants.ENTITY_NAME_KEY, programId.getEntityName());
     properties.put(VERSION_KEY, programId.getVersion());
     String description = programSpec.getDescription();
     if (!Strings.isNullOrEmpty(description)) {
-      properties.put(DESCRIPTION_KEY, description);
+      properties.put(MetadataConstants.DESCRIPTION_KEY, description);
     }
-    properties.put(CREATION_TIME_KEY, creationTime);
+    properties.put(MetadataConstants.CREATION_TIME_KEY, creationTime);
     return properties.build();
   }
 

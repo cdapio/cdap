@@ -18,9 +18,12 @@ package co.cask.cdap.metadata.elastic;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.ScopedName;
 import org.elasticsearch.common.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -39,11 +42,14 @@ import javax.annotation.Nullable;
  */
 public class MetadataDocument {
 
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataDocument.class);
+
   private final MetadataEntity entity;
   private final Metadata metadata;
   private final String namespace;
   private final String type;
   private final String name;
+  private final Long created;
   private final boolean hidden;
   private final String user;
   private final String system;
@@ -52,6 +58,7 @@ public class MetadataDocument {
   private MetadataDocument(MetadataEntity entity, Metadata metadata,
                            @Nullable String namespace,
                            String type, String name,
+                           @Nullable Long created,
                            String user, String system,
                            Set<Property> props) {
     this.entity = entity;
@@ -59,6 +66,7 @@ public class MetadataDocument {
     this.namespace = namespace;
     this.type = type;
     this.name = name;
+    this.created = created;
     this.hidden = name.startsWith("_");
     this.user = user;
     this.system = system;
@@ -85,11 +93,13 @@ public class MetadataDocument {
       return false;
     }
     MetadataDocument that = (MetadataDocument) o;
-    return Objects.equals(entity, that.entity) &&
+    return hidden == that.hidden &&
+      Objects.equals(entity, that.entity) &&
       Objects.equals(metadata, that.metadata) &&
       Objects.equals(namespace, that.namespace) &&
       Objects.equals(type, that.type) &&
       Objects.equals(name, that.name) &&
+      Objects.equals(created, that.created) &&
       Objects.equals(user, that.user) &&
       Objects.equals(system, that.system) &&
       Objects.equals(props, that.props);
@@ -97,7 +107,7 @@ public class MetadataDocument {
 
   @Override
   public int hashCode() {
-    return Objects.hash(entity, metadata, namespace, type, name, user, system, props);
+    return Objects.hash(entity, metadata, namespace, type, name, created, hidden, user, system, props);
   }
 
   @Override
@@ -108,6 +118,7 @@ public class MetadataDocument {
       ", namespace='" + namespace + '\'' +
       ", type='" + type + '\'' +
       ", name='" + name + '\'' +
+      ", created='" + created + '\'' +
       ", hidden='" + hidden + '\'' +
       ", user='" + user + '\'' +
       ", system='" + system + '\'' +
@@ -158,11 +169,16 @@ public class MetadataDocument {
    * A builder for MetadataDocuments.
    */
   public static class Builder {
+
+    private static final ScopedName CREATION_TIME_KEY = new ScopedName(MetadataScope.SYSTEM,
+                                                                       MetadataConstants.CREATION_TIME_KEY);
+
     private final MetadataEntity entity;
     private Metadata metadata = Metadata.EMPTY;
     private final String namespace;
     private final String type;
     private final String name;
+    private Long created;
     private final List<String> userTags = new ArrayList<>();
     private final List<String> systemTags = new ArrayList<>();
     private final StringBuilder userText = new StringBuilder();
@@ -204,6 +220,15 @@ public class MetadataDocument {
       this.metadata = metadata;
       metadata.getTags().forEach(this::addTag);
       metadata.getProperties().forEach(this::addProperty);
+
+      if (metadata.getProperties().containsKey(CREATION_TIME_KEY)) {
+        try {
+          created = Long.parseLong(metadata.getProperties().get(CREATION_TIME_KEY));
+        } catch (NumberFormatException e) {
+          LOG.warn("Unable to parse property {} as long. Skipping indexing of {} for entity {}.",
+                   CREATION_TIME_KEY, CREATION_TIME_KEY.getName(), entity, e);
+        }
+      }
       return this;
     }
 
@@ -213,7 +238,7 @@ public class MetadataDocument {
       properties.add(
         new Property(MetadataScope.SYSTEM.name(), "tags", Strings.collectionToDelimitedString(systemTags, " ")));
       return
-        new MetadataDocument(entity, metadata, namespace, type, name,
+        new MetadataDocument(entity, metadata, namespace, type, name, created,
                              userText.toString(), systemText.toString(), properties);
     }
   }
