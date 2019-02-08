@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.config.DashboardStore;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -51,7 +50,6 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
   private final Impersonator impersonator;
   private final Store store;
   private final PreferencesService preferencesService;
-  private final DashboardStore dashboardStore;
   private final DatasetFramework dsFramework;
   private final MetricsSystemClient metricsSystemClient;
   private final ApplicationLifecycleService applicationLifecycleService;
@@ -62,7 +60,7 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
 
   @Inject
   DefaultNamespaceResourceDeleter(Impersonator impersonator, Store store, PreferencesService preferencesService,
-                                  DashboardStore dashboardStore, DatasetFramework dsFramework,
+                                  DatasetFramework dsFramework,
                                   MetricsSystemClient metricsSystemClient,
                                   ApplicationLifecycleService applicationLifecycleService,
                                   ArtifactRepository artifactRepository,
@@ -71,7 +69,6 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
     this.impersonator = impersonator;
     this.store = store;
     this.preferencesService = preferencesService;
-    this.dashboardStore = dashboardStore;
     this.dsFramework = dsFramework;
     this.metricsSystemClient = metricsSystemClient;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -87,8 +84,6 @@ public class DefaultNamespaceResourceDeleter implements NamespaceResourceDeleter
 
     // Delete Preferences associated with this namespace
     preferencesService.deleteProperties(namespaceId);
-    // Delete all dashboards associated with this namespace
-    dashboardStore.delete(namespaceId.getNamespace());
     // Delete all applications
     applicationLifecycleService.removeAll(namespaceId);
     // Delete datasets and modules

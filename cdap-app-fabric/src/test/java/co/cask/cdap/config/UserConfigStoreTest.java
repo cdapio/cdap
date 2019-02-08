@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tests for {@link ConfigStore}, {@link ConsoleSettingsStore}, {@link DashboardStore} and {@link PreferencesService}.
+ * Tests for {@link ConfigStore}, {@link ConsoleSettingsStore}, and {@link PreferencesService}.
  */
 public class UserConfigStoreTest extends AppFabricTestBase {
 
@@ -177,23 +177,7 @@ public class UserConfigStoreTest extends AppFabricTestBase {
     Assert.assertTrue(store.list().isEmpty());
   }
 
-  // Testing DashboardStore
-  @Test
-  public void testDashboardDeletingNamespace() throws Exception {
-    String namespace = "myspace";
-    int dashboardCount = 10;
-    Map<String, String> emptyMap = ImmutableMap.of();
-    DashboardStore store = getInjector().getInstance(DashboardStore.class);
-    for (int i = 0; i < dashboardCount; i++) {
-      store.create(namespace, emptyMap);
-    }
-
-    Assert.assertEquals(dashboardCount, store.list(namespace).size());
-    store.delete(namespace);
-    Assert.assertTrue(store.list(namespace).isEmpty());
-  }
-
-  // Testing PrefernecesStore
+  // Testing PreferencesStore
   @Test
   public void testCleanSlate() throws Exception {
     Map<String, String> emptyMap = ImmutableMap.of();

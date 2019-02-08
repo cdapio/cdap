@@ -37,7 +37,6 @@ import co.cask.cdap.gateway.handlers.BootstrapHttpHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
-import co.cask.cdap.gateway.handlers.DashboardHttpHandler;
 import co.cask.cdap.gateway.handlers.ImpersonationHandler;
 import co.cask.cdap.gateway.handlers.NamespaceHttpHandler;
 import co.cask.cdap.gateway.handlers.OperationalStatsHttpHandler;
@@ -321,7 +320,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(UsageHandler.class);
       handlerBinder.addBinding().to(NamespaceHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
-      handlerBinder.addBinding().to(DashboardHttpHandler.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
       // TODO: [CDAP-13355] Move OperationsDashboardHttpHandler into report generation app
       handlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
