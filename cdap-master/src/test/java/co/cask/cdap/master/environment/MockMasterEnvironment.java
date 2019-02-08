@@ -16,19 +16,37 @@
 
 package co.cask.cdap.master.environment;
 
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.InMemoryDiscoveryService;
+import org.apache.twill.discovery.ZKDiscoveryService;
+import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.function.Supplier;
 
 /**
- *
+ * A mock implementation of {@link MasterEnvironment} to facilitate unit testing.
  */
 public class MockMasterEnvironment implements MasterEnvironment {
 
-  private final InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+  private ZKClientService zkClient;
+  private ZKDiscoveryService discoveryService;
+
+  @Override
+  public void initialize(MasterEnvironmentContext context) {
+    zkClient = ZKClientService.Builder.of(context.getConfigurations().get(Constants.Zookeeper.QUORUM)).build();
+    zkClient.startAndWait();
+
+    discoveryService = new ZKDiscoveryService(zkClient);
+  }
+
+  @Override
+  public void destroy() {
+    discoveryService.close();
+    zkClient.stopAndWait();
+  }
 
   @Override
   public String getName() {
