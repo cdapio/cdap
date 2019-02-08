@@ -93,7 +93,11 @@ class HubButton extends React.PureComponent<IHubButtonProps, IHubButtonState> {
     const { classes } = this.props;
     return (
       <React.Fragment>
-        <Button className={classnames(classes.buttonLink)} onClick={this.onClickHandler}>
+        <Button
+          className={classnames(classes.buttonLink)}
+          onClick={this.onClickHandler}
+          id="navbar-hub"
+        >
           <div>
             <span
               className={classnames('cask-market-button', this.props.className, {

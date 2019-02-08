@@ -23,6 +23,7 @@ import Tour from 'components/EntityListView/Tour';
 import { objectQuery } from 'services/helpers';
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
+import ee from 'event-emitter';
 
 import './Welcome.scss';
 
@@ -44,6 +45,8 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
     showModal: false,
     showAgain: false,
   };
+
+  private eventEmitter = ee(ee);
 
   public componentDidMount() {
     // Checking for session storage so that the welcome modal is not shown
@@ -76,7 +79,8 @@ export default class Welcome extends React.PureComponent<void, IWelcomeState> {
 
   private startTour = () => {
     this.close();
-    Tour.start();
+    this.eventEmitter.emit('NUX-TOUR-START');
+    setTimeout(Tour.start.bind(Tour), 225);
   };
 
   private toggleShowAgain = () => {

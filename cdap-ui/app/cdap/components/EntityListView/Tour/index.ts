@@ -22,7 +22,20 @@ const PREFIX = 'features.NUX';
 const featureNames = Theme.featureNames;
 
 const tour = new GuidedTour();
-
+const popperOptions = {
+  placement: 'right',
+  modifiers: {
+    preventOverflow: {
+      order: ['right'],
+      escapeWithReference: false,
+      boundariesElement: 'window',
+    },
+    offset: {
+      enabled: true,
+      offset: 135,
+    },
+  },
+};
 const steps: ITourStep[] = [
   {
     id: 'control-center',
@@ -33,7 +46,8 @@ const steps: ITourStep[] = [
       }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Control_Center_NUX.png" />',
     ],
-    attachTo: '#navbar-control-center bottom',
+    attachTo: '#navbar-control-center > div right',
+    popperOptions,
     shouldFocus: true,
   },
   {
@@ -43,7 +57,8 @@ const steps: ITourStep[] = [
       T.translate(`${PREFIX}.Pipelines.text`, { featureName: featureNames.pipelines }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
     ],
-    attachTo: '#navbar-pipelines bottom',
+    attachTo: '#navbar-pipelines > div right',
+    popperOptions,
     shouldFocus: true,
   },
   {
@@ -53,7 +68,8 @@ const steps: ITourStep[] = [
       T.translate(`${PREFIX}.Preparation.text`, { featureName: featureNames.dataPrep }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Dataprep_NUX.png" />',
     ],
-    attachTo: '#navbar-preparation bottom',
+    attachTo: '#navbar-preparation > div right',
+    popperOptions,
     shouldFocus: true,
   },
   {
@@ -63,7 +79,8 @@ const steps: ITourStep[] = [
       T.translate(`${PREFIX}.Metadata.text`, { featureName: featureNames.metadata }).toString(),
       '<img class="img-fluid" src="/cdap_assets/img/nux/Metadata_NUX.png" />',
     ],
-    attachTo: '#navbar-metadata bottom',
+    attachTo: '#navbar-metadata > div right',
+    popperOptions,
     shouldFocus: true,
   },
   {
