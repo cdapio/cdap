@@ -37,6 +37,7 @@ angular.module(PKG.name + '.services')
         runsCountPath = '/namespaces/:namespace/runcount',
         latestRuns = '/namespaces/:namespace/runs';
 
+    var pipelineAppPath = '/namespaces/system/apps/pipeline/services/studio/methods/v1';
 
     return $resource(
       '',
@@ -95,7 +96,11 @@ angular.module(PKG.name + '.services')
         // PREVIEW
         runPreview: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/previews', false, { suppressErrors: true }),
         stopPreview: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/previews/:previewId/stop', false, { suppressErrors: true }),
-        getStagePreview: myHelpers.getConfig('POST', 'REQUEST', previewPath + '/:previewId/tracers', false, { suppressErrors: true })
+        getStagePreview: myHelpers.getConfig('POST', 'REQUEST', previewPath + '/:previewId/tracers', false, { suppressErrors: true }),
+
+
+        // PIPELINE SYSTEM APP
+        validateStage: myHelpers.getConfig('POST', 'REQUEST', pipelineAppPath + '/contexts/:context/validations/stage', false),
       }
     );
   });

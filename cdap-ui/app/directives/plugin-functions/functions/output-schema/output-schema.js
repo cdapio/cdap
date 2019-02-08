@@ -26,24 +26,9 @@ angular.module(PKG.name + '.commons')
       controller: function ($scope, $uibModal, EventPipe, myPipelineApi) {
         var vm = this;
         var fnConfig = $scope.fnConfig;
-        var methodName = fnConfig['plugin-method'] || 'getSchema';
-        var methodType = fnConfig.method || 'GET';
         vm.label = fnConfig['label'] || 'Get Schema';
         vm.btnClass = fnConfig['button-class'] || 'btn-default';
 
-        var getPluginMethodApi = function(methodType) {
-          switch(methodType) {
-            case 'POST':
-              return myPipelineApi.postPluginMethod;
-            case 'GET':
-              return myPipelineApi.getPluginMethod;
-            case 'PUT':
-              return myPipelineApi.putPluginMethod;
-            case 'DELETE':
-              return myPipelineApi.deletePluginMethod;
-          }
-        };
-        var pluginMethodApi = getPluginMethodApi(methodType);
         vm.node = $scope.node;
         var getRequiredFields = function() {
           if (!fnConfig['required-fields']) { return []; }
@@ -65,32 +50,8 @@ angular.module(PKG.name + '.commons')
             templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
             windowClass: 'hydrator-modal node-config-modal layered-modal output-schema-modal',
             keyboard: true,
-            controller: function ($scope, nodeInfo, $state, HydratorPlusPlusHydratorService, HydratorPlusPlusNodeService) {
+            controller: function ($scope, nodeInfo, $state, HydratorPlusPlusNodeService, myHelpers) {
               var mvm = this;
-
-              mvm.node = angular.copy(nodeInfo);
-
-
-              /* This function is needed to handle the output schema res after the fetch api. The res
-              is in two different formats depending on whether one schema is returned, or multiple:
-              1. If one schema is returned, then the res object is like this:
-                {
-                  name: ...,
-                  type: ...,
-                  fields: [...]
-                }
-              In this case just return the res right away.
-              2. If multiple schemas are returned, then the object is like this:
-                {
-                  [schemaName1]: {
-                    name: ...,
-                    type: ...,
-                    fields: [...]
-                  },
-                  [schemaName2]: ...
-                }
-              In this case we need to show all the schema names along with their schema
-              */
 
               const parseResSchema = (res) => {
                 if (res.name && res.type && res.fields) {
@@ -109,67 +70,68 @@ angular.module(PKG.name + '.commons')
                 return schemaArrWithSortedRecordSchemas;
               };
 
-              mvm.fetchSchema = function () {
-                var config = mvm.node.plugin.properties;
-                // This is lame where we stringify the input schema from the formatOutputSchema function but again parse it here to send it as an object to the backend.
-                if (!fnConfig['multiple-inputs'] || fnConfig['multiple-inputs'] === 'false') {
+              mvm.stageErrors = [];
+              mvm.showLoading = true;
 
-                  // Have to check that there is an inputSchema, otherwise it should just ignore
-                  if (nodeInfo.inputSchema && nodeInfo.inputSchema.length) {
-                    var firstNode = nodeInfo.inputSchema[0];
-                    var fields;
-                    try {
-                      fields = JSON.parse(firstNode.schema).fields || [];
-                      config.inputSchema = JSON.parse(HydratorPlusPlusHydratorService.formatOutputSchema(fields));
-                    } catch(e) {
-                      config.inputSchema = '';
-                    }
-                  }
-
-                } else {
-                  var obj = {};
-
-                  angular.forEach(nodeInfo.inputSchema, (input) => {
-                    let schema;
-                    try {
-                      schema = JSON.parse(input.schema);
-                    } catch(e) {
-                      console.log('ERROR: ', e);
-                      return;
-                    }
-                    obj[input.name] = schema;
-                  });
-
-                  config.inputSchemas = obj;
-                }
-
-                mvm.showLoading = true;
-
-                var params = {
-                  namespace: $state.params.namespace,
-                  artifactName: mvm.node.plugin.artifact.name,
-                  version: mvm.node.plugin.artifact.version,
-                  pluginType: mvm.node.type,
-                  pluginName: mvm.node.plugin.name,
-                  methodName: methodName,
-                  scope: mvm.node.plugin.artifact.scope
-                };
-
-
-                pluginMethodApi(params, config)
-                  .$promise
-                  .then(function (res) {
-                    mvm.error = null;
-                    mvm.schemas = parseResSchema(res);
-                    mvm.showLoading = false;
-                  }, function (err) {
-                    mvm.schemas = null;
-                    mvm.error = err.data;
-                    mvm.showLoading = false;
-                  });
+              const params = {
+                context: $state.params.namespace
               };
 
-              mvm.fetchSchema();
+              const pluginInfo = angular.copy(nodeInfo.plugin);
+              pluginInfo.type = nodeInfo.type;
+
+              let schemaParseError = null;
+
+              const requestBody = {
+                stage: {
+                  name: nodeInfo.name,
+                  plugin: pluginInfo,
+                },
+                inputSchemas: nodeInfo.inputSchema.map((input) => {
+                  let schema;
+
+                  try {
+                    schema = JSON.parse(input.schema);
+                  } catch (e) {
+                    schemaParseError = e;
+                  }
+
+                  return {
+                    stage: input.name,
+                    schema
+                  };
+                })
+              };
+
+              if (schemaParseError) {
+                mvm.error = schemaParseError;
+                return;
+              }
+
+              myPipelineApi.validateStage(params, requestBody)
+                .$promise
+                .then((res) => {
+                  if (res.errors.length > 0) {
+                    mvm.stageErrors = res.errors.map(err => err.message);
+                  } else {
+                    const outputSchema = myHelpers.objectQuery(res, 'spec', 'outputSchema');
+                    const portSchemas = myHelpers.objectQuery(res, 'spec', 'portSchemas');
+
+                    if (!outputSchema && !portSchemas) {
+                      mvm.error = 'There is no output schema.';
+                      return;
+                    }
+
+                    mvm.schemas = parseResSchema(outputSchema || portSchemas);
+                  }
+
+                  mvm.showLoading = false;
+                  mvm.error = null;
+                }, (err) => {
+                  mvm.showLoading = false;
+                  mvm.schemas = null;
+                  mvm.error = err.data;
+                });
 
               mvm.apply = function () {
                 mvm.schemas = mvm.schemas.map(schema => {
