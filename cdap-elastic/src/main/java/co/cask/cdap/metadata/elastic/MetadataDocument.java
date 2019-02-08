@@ -181,6 +181,8 @@ public class MetadataDocument {
     private Long created;
     private final List<String> userTags = new ArrayList<>();
     private final List<String> systemTags = new ArrayList<>();
+    private final List<String> userPropertyNames = new ArrayList<>();
+    private final List<String> systemPropertyNames = new ArrayList<>();
     private final StringBuilder userText = new StringBuilder();
     private final StringBuilder systemText = new StringBuilder();
     private final Set<Property> properties = new HashSet<>();
@@ -214,6 +216,7 @@ public class MetadataDocument {
       append(scope, name);
       append(scope, value);
       properties.add(new Property(scope.name(), name, value));
+      (MetadataScope.USER == key.getScope() ? userPropertyNames : systemPropertyNames).add(name);
     }
 
     Builder addMetadata(Metadata metadata) {
@@ -234,9 +237,17 @@ public class MetadataDocument {
 
     MetadataDocument build() {
       properties.add(
-        new Property(MetadataScope.USER.name(), "tags", Strings.collectionToDelimitedString(userTags, " ")));
+        new Property(MetadataScope.USER.name(), MetadataConstants.TAGS_KEY,
+                     Strings.collectionToDelimitedString(userTags, " ")));
       properties.add(
-        new Property(MetadataScope.SYSTEM.name(), "tags", Strings.collectionToDelimitedString(systemTags, " ")));
+        new Property(MetadataScope.SYSTEM.name(), MetadataConstants.TAGS_KEY,
+                     Strings.collectionToDelimitedString(systemTags, " ")));
+      properties.add(
+        new Property(MetadataScope.USER.name(), MetadataConstants.PROPERTIES_KEY,
+                     Strings.collectionToDelimitedString(userPropertyNames, " ")));
+      properties.add(
+        new Property(MetadataScope.SYSTEM.name(), MetadataConstants.PROPERTIES_KEY,
+                     Strings.collectionToDelimitedString(systemPropertyNames, " ")));
       return
         new MetadataDocument(entity, metadata, namespace, type, name, created,
                              userText.toString(), systemText.toString(), properties);

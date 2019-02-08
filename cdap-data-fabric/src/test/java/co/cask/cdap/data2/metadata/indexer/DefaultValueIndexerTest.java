@@ -38,6 +38,7 @@ public class DefaultValueIndexerTest {
     Set<String> expected = new HashSet<>();
     expected.add("val");
     expected.add("key:val");
+    expected.add("properties:key");
     Assert.assertEquals(expected, indexer.getIndexes(entry));
   }
 
@@ -52,6 +53,7 @@ public class DefaultValueIndexerTest {
     expected.add("key:foo bar");
     expected.add("key:foo");
     expected.add("key:bar");
+    expected.add("properties:key");
     Assert.assertEquals(expected, indexer.getIndexes(entry));
   }
 

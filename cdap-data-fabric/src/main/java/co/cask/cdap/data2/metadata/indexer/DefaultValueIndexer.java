@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,10 +35,11 @@ public class DefaultValueIndexer implements Indexer {
   /**
    * Generates a set of tokens based on the metadata values. Splits values on whitespace, '-', '_', ':', and ',' to
    * generate multiple tokens. Also generates an additional token that has the metadata key prefixed to it.
+   * Also adds a token that allows searching the property name, that is, properties:key, except if the key is "tags".
    *
    * For example, when given property 'owner'='foo bar', six tokens will be generated:
    *
-   * 'foo bar', 'foo', 'bar', 'owner:foo bar', 'owner:foo', and 'owner:bar'.
+   * 'foo bar', 'foo', 'bar', 'owner:foo bar', 'owner:foo', 'owner:bar', and 'properties:owner'.
    *
    * If 'tags'='foo,bar baz' is given, six tokens will be generated:
    *
@@ -79,6 +80,9 @@ public class DefaultValueIndexer implements Indexer {
     Set<String> indexesWithKeyValue = new HashSet<>(indexes);
     for (String index : indexes) {
       indexesWithKeyValue.add(key + MetadataConstants.KEYVALUE_SEPARATOR + index);
+    }
+    if (!key.equalsIgnoreCase(MetadataConstants.TAGS_KEY)) {
+      indexesWithKeyValue.add(MetadataConstants.PROPERTIES_KEY + MetadataConstants.KEYVALUE_SEPARATOR + key);
     }
     return indexesWithKeyValue;
   }
