@@ -211,7 +211,6 @@ public class MetadataDocument {
       String name = key.getName().toLowerCase();
       value = value.toLowerCase();
       MetadataScope scope = key.getScope();
-      append(scope, name);
       append(scope, value);
       properties.add(new Property(scope.name(), name, value));
     }

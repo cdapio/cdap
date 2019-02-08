@@ -63,6 +63,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
 import static co.cask.cdap.api.metadata.MetadataScope.USER;
 
@@ -116,8 +118,8 @@ public class SearchHelper {
     return USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
   }
 
-  public MetadataSearchResponse search(SearchRequest request) {
-    Set<MetadataScope> searchScopes = EnumSet.allOf(MetadataScope.class);
+  public MetadataSearchResponse search(SearchRequest request, @Nullable MetadataScope scope) {
+    Set<MetadataScope> searchScopes = scope == null ? EnumSet.allOf(MetadataScope.class) : Collections.singleton(scope);
     if ("*".equals(request.getQuery())) {
       if (SortInfo.DEFAULT.equals(request.getSortInfo())) {
         // Can't disallow this completely, because it is required for upgrade, but log a warning to indicate that

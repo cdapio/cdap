@@ -373,7 +373,7 @@ public class DefaultMetadataStore extends SearchHelper implements MetadataStore 
 
   @Override
   public MetadataSearchResponse search(SearchRequest request) {
-    return super.search(request);
+    return super.search(request, null);
   }
 
   @Override
