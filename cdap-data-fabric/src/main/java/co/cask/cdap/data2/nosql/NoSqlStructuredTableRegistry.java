@@ -128,6 +128,15 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   @Override
   public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
     Optional<StructuredTableSpecification> optional = specCache.getUnchecked(tableId);
+    if (optional.isPresent()) {
+      return optional.get();
+    }
+    // If spec is not available in cache, then check storage to see if the table is now created
+    optional = getSpecificationFromStorage(tableId);
+    if (optional.isPresent()) {
+      // Table is now created, refresh the cache
+      specCache.invalidate(tableId);
+    }
     return optional.orElse(null);
   }
 
