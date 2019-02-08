@@ -28,11 +28,16 @@ import com.google.common.base.Joiner;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import javax.sql.DataSource;
 
 public class SqlUserConfigStoreTest extends UserConfigStoreTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static EmbeddedPostgres pg;
 
@@ -42,7 +47,7 @@ public class SqlUserConfigStoreTest extends UserConfigStoreTest {
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
 
-    pg = EmbeddedPostgres.start();
+    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
     admin = new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(admin, dataSource);
