@@ -22,6 +22,7 @@ package co.cask.cdap.data2.metadata;
 public class MetadataConstants {
 
   public static final String TAGS_KEY = "tags";
+  public static final String PROPERTIES_KEY = "properties";
   public static final String KEYVALUE_SEPARATOR = ":";
 
   public static final String SCHEMA_KEY = "schema";

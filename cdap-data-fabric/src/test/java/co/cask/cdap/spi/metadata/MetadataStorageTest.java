@@ -563,14 +563,20 @@ public abstract class MetadataStorageTest {
 
     // add properties for program and dataset
     final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
-    MetadataRecord programRecord = new MetadataRecord(
-      program, new Metadata(USER, props("key1", "value1", "key2", "value2", "multiword", multiWordValue)));
+    MetadataRecord programRecord = new MetadataRecord(program, new Metadata(USER, props("key1", "value1",
+                                                                                        "key2", "value2",
+                                                                                        "multiword", multiWordValue)));
     MetadataRecord datasetRecord = new MetadataRecord(dataset,
       new Metadata(ImmutableSet.of(), ImmutableMap.of(new ScopedName(SYSTEM, "sKey1"), "sValue1",
                                                       new ScopedName(USER, "Key1"), "Value1")));
 
     mds.batch(batch(new Update(program, programRecord.getMetadata()),
                     new Update(dataset, datasetRecord.getMetadata())));
+
+    // search based on the names of properties
+    assertResults(mds, SearchRequest.of("properties:key1").build(), programRecord, datasetRecord);
+    assertResults(mds, SearchRequest.of("properties:skey1").setScope(SYSTEM).build(), datasetRecord);
+    assertResults(mds, SearchRequest.of("properties:multi*").setScope(USER).build(), programRecord);
 
     // Search for it based on key and value
     assertResults(mds, SearchRequest.of("key1:value1").addType(TYPE_PROGRAM).build(), programRecord);
