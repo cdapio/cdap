@@ -33,6 +33,9 @@
     "created": {
       "type": "date"
     },
+    "ttl": {
+      "type": "long"
+    },
     "namespace": {
       "type": "keyword"
     },

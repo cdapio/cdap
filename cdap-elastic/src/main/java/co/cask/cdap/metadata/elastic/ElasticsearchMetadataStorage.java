@@ -835,6 +835,18 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (field == null) {
       return createTermQuery(textField, term);
     }
+    if (MetadataConstants.TTL_KEY.equals(field)
+      && (request.getScope() == null || MetadataScope.SYSTEM == request.getScope())) {
+      try {
+        // since TTL is indexed as a long, Elasticsearch can handle any numeric value.
+        // But it would fail on "*" or "?". Hence only create a term query for TTL if
+        // we can parse this as a double (that covers pretty much all numeric formats)
+        Double.parseDouble(term);
+        return QueryBuilders.termQuery(field, term);
+      } catch (NumberFormatException e) {
+        // ignore - the follow-on code will create a regular term query for this
+      }
+    }
     BoolQueryBuilder boolQuery = new BoolQueryBuilder();
     boolQuery.must(new TermQueryBuilder(NESTED_NAME_FIELD, field).boost(0.0F));
     if (request.getScope() != null) {

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -50,6 +51,7 @@ public class MetadataDocument {
   private final String type;
   private final String name;
   private final Long created;
+  private final Long ttl;
   private final boolean hidden;
   private final String user;
   private final String system;
@@ -59,6 +61,7 @@ public class MetadataDocument {
                            @Nullable String namespace,
                            String type, String name,
                            @Nullable Long created,
+                           @Nullable Long ttl,
                            String user, String system,
                            Set<Property> props) {
     this.entity = entity;
@@ -67,6 +70,7 @@ public class MetadataDocument {
     this.type = type;
     this.name = name;
     this.created = created;
+    this.ttl = ttl;
     this.hidden = name.startsWith("_");
     this.user = user;
     this.system = system;
@@ -100,6 +104,7 @@ public class MetadataDocument {
       Objects.equals(type, that.type) &&
       Objects.equals(name, that.name) &&
       Objects.equals(created, that.created) &&
+      Objects.equals(ttl, that.ttl) &&
       Objects.equals(user, that.user) &&
       Objects.equals(system, that.system) &&
       Objects.equals(props, that.props);
@@ -107,7 +112,7 @@ public class MetadataDocument {
 
   @Override
   public int hashCode() {
-    return Objects.hash(entity, metadata, namespace, type, name, created, hidden, user, system, props);
+    return Objects.hash(entity, metadata, namespace, type, name, created, ttl, hidden, user, system, props);
   }
 
   @Override
@@ -118,8 +123,9 @@ public class MetadataDocument {
       ", namespace='" + namespace + '\'' +
       ", type='" + type + '\'' +
       ", name='" + name + '\'' +
-      ", created='" + created + '\'' +
-      ", hidden='" + hidden + '\'' +
+      ", created=" + created +
+      ", ttl=" + ttl +
+      ", hidden=" + hidden +
       ", user='" + user + '\'' +
       ", system='" + system + '\'' +
       ", props=" + props +
@@ -170,6 +176,7 @@ public class MetadataDocument {
    */
   public static class Builder {
 
+    private static final ScopedName TTL_KEY = new ScopedName(MetadataScope.SYSTEM, MetadataConstants.TTL_KEY);
     private static final ScopedName CREATION_TIME_KEY = new ScopedName(MetadataScope.SYSTEM,
                                                                        MetadataConstants.CREATION_TIME_KEY);
 
@@ -179,6 +186,7 @@ public class MetadataDocument {
     private final String type;
     private final String name;
     private Long created;
+    private Long ttl;
     private final List<String> userTags = new ArrayList<>();
     private final List<String> systemTags = new ArrayList<>();
     private final List<String> userPropertyNames = new ArrayList<>();
@@ -216,21 +224,26 @@ public class MetadataDocument {
       append(scope, value);
       properties.add(new Property(scope.name(), name, value));
       (MetadataScope.USER == key.getScope() ? userPropertyNames : systemPropertyNames).add(name);
+      checkForBuiltInLong(CREATION_TIME_KEY, key, value).ifPresent(x -> created = x);
+      checkForBuiltInLong(TTL_KEY, key, value).ifPresent(x -> ttl = x);
+    }
+
+    Optional<Long> checkForBuiltInLong(ScopedName builtIn, ScopedName key, String value) {
+      if (key.equals(builtIn)) {
+        try {
+          return Optional.of(Long.parseLong(value));
+        } catch (NumberFormatException e) {
+          LOG.warn("Unable to parse property {} as long. Skipping indexing of {} for entity {}.",
+                   builtIn, builtIn.getName(), entity, e);
+        }
+      }
+      return Optional.empty();
     }
 
     Builder addMetadata(Metadata metadata) {
       this.metadata = metadata;
       metadata.getTags().forEach(this::addTag);
       metadata.getProperties().forEach(this::addProperty);
-
-      if (metadata.getProperties().containsKey(CREATION_TIME_KEY)) {
-        try {
-          created = Long.parseLong(metadata.getProperties().get(CREATION_TIME_KEY));
-        } catch (NumberFormatException e) {
-          LOG.warn("Unable to parse property {} as long. Skipping indexing of {} for entity {}.",
-                   CREATION_TIME_KEY, CREATION_TIME_KEY.getName(), entity, e);
-        }
-      }
       return this;
     }
 
@@ -248,7 +261,7 @@ public class MetadataDocument {
         new Property(MetadataScope.SYSTEM.name(), MetadataConstants.PROPERTIES_KEY,
                      Strings.collectionToDelimitedString(systemPropertyNames, " ")));
       return
-        new MetadataDocument(entity, metadata, namespace, type, name, created,
+        new MetadataDocument(entity, metadata, namespace, type, name, created, ttl,
                              userText.toString(), systemText.toString(), properties);
     }
   }
