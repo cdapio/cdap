@@ -391,7 +391,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
       request.getCursor(),
       request.isShowHidden(),
       entityScopes
-    ));
+    ), request.getScope());
     // translate results back
     List<MetadataRecord> results = new ArrayList<>(response.getResults().size());
     response.getResults().forEach(record -> {

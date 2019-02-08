@@ -345,6 +345,70 @@ public abstract class MetadataStorageTest {
   }
 
   @Test
+  public void testSearchDescription() throws IOException {
+    MetadataStorage mds = getMetadataStorage();
+
+    final String ns1 = "ns1";
+    final String ns2 = "ns2";
+    final NamespaceId ns1Id = new NamespaceId(ns1);
+    final NamespaceId ns2Id = new NamespaceId(ns2);
+    final ApplicationId app1Id = ns1Id.app("app1");
+    final ApplicationId app2Id = ns2Id.app("app1");
+    final MetadataEntity app1 = app1Id.toMetadataEntity();
+    final MetadataEntity app2 = app2Id.toMetadataEntity();
+
+    ScopedName descUser = new ScopedName(USER, "description");
+    ScopedName descSystem = new ScopedName(SYSTEM, "description");
+    MetadataRecord app1Record = new MetadataRecord(app1, new Metadata(tags(), props(descSystem,
+                                                                                    "this is the first application",
+                                                                                    descUser,
+                                                                                    "business description of app1")));
+    MetadataRecord app2Record = new MetadataRecord(app2, new Metadata(tags(), props(descSystem,
+                                                                                    "this other app description")));
+    // add some metadata with descriptions
+    mds.batch(batch(new Update(app1, app1Record.getMetadata()),
+                    new Update(app2, app2Record.getMetadata())));
+
+    // search with field description:
+    assertResults(mds, SearchRequest.of("description:first").build(), app1Record);
+    assertResults(mds, SearchRequest.of("description:this").build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("description:app*").build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("description:description").build(), app1Record, app2Record);
+
+    // search in SCOPE SYSTEM
+    assertResults(mds, SearchRequest.of("description:first").setScope(SYSTEM).build(), app1Record);
+    assertResults(mds, SearchRequest.of("description:this").setScope(SYSTEM).build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("description:app*").setScope(SYSTEM).build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("description:description").setScope(SYSTEM).build(), app2Record);
+
+    // search in scope USER
+    assertEmpty(mds, SearchRequest.of("description:first").setScope(USER).build());
+    assertEmpty(mds, SearchRequest.of("description:this").setScope(USER).build());
+    assertResults(mds, SearchRequest.of("description:app*").setScope(USER).build(), app1Record);
+    assertResults(mds, SearchRequest.of("description:description").setScope(USER).build(), app1Record);
+
+    // search plain text should match description text 
+    assertResults(mds, SearchRequest.of("first").build(), app1Record);
+    assertResults(mds, SearchRequest.of("this").build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("app*").build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("description").build(), app1Record, app2Record);
+
+    // search in SCOPE SYSTEM
+    assertResults(mds, SearchRequest.of("first").setScope(SYSTEM).build(), app1Record);
+    assertResults(mds, SearchRequest.of("this").setScope(SYSTEM).build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("app*").setScope(SYSTEM).build(), app1Record, app2Record);
+    assertResults(mds, SearchRequest.of("description").setScope(SYSTEM).build(), app2Record);
+
+    // search in scope USER
+    assertEmpty(mds, SearchRequest.of("first").setScope(USER).build());
+    assertEmpty(mds, SearchRequest.of("this").setScope(USER).build());
+    assertResults(mds, SearchRequest.of("app*").setScope(USER).build(), app1Record);
+    assertResults(mds, SearchRequest.of("description").setScope(USER).build(), app1Record);
+
+    mds.batch(batch(new Drop(app1), new Drop(app2)));
+  }
+
+  @Test
   public void testSearchOnTags() throws Exception {
     MetadataStorage mds = getMetadataStorage();
 
@@ -367,13 +431,13 @@ public abstract class MetadataStorageTest {
     }
 
     // add tags for these entities
-    MetadataRecord
-      app1Record = new MetadataRecord(app1, new Metadata(USER, tags("tag1", "tag2", "tag3"))),
-      app2Record = new MetadataRecord(app2, new Metadata(USER, tags("tag1", "tag2", "tag3_more"))),
-      program1Record = new MetadataRecord(program1, new Metadata(USER, tags("tag1"))),
-      dataset1Record = new MetadataRecord(dataset1, new Metadata(USER, tags("tag3", "tag2", "tag12-tag33"))),
-      dataset2Record = new MetadataRecord(dataset2, new Metadata(USER, tags("tag2", "tag4"))),
-      file1Record = new MetadataRecord(file1, new Metadata(USER, tags("tag2", "tag5")));
+    MetadataRecord app1Record = new MetadataRecord(app1, new Metadata(USER, tags("tag1", "tag2", "tag3")));
+    MetadataRecord app2Record = new MetadataRecord(app2, new Metadata(USER, tags("tag1", "tag2", "tag3_more")));
+    MetadataRecord program1Record = new MetadataRecord(program1, new Metadata(USER, tags("tag1")));
+    MetadataRecord dataset1Record = new MetadataRecord(dataset1,
+                                                       new Metadata(USER, tags("tag3", "tag2", "tag12-tag33")));
+    MetadataRecord dataset2Record = new MetadataRecord(dataset2, new Metadata(USER, tags("tag2", "tag4")));
+    MetadataRecord file1Record = new MetadataRecord(file1, new Metadata(USER, tags("tag2", "tag5")));
 
     mds.batch(ImmutableList.of(app1Record, app2Record, program1Record, dataset1Record, dataset2Record, file1Record)
                 .stream().map(record -> new Update(record.getEntity(), record.getMetadata()))
