@@ -32,6 +32,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -69,7 +70,8 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
 
   private volatile HBaseTableUtil hBaseTableUtil;
 
-  public HBaseMetricsTableDefinition(String name) {
+  @Inject
+  public HBaseMetricsTableDefinition(@Named(Constants.Dataset.TABLE_TYPE_NO_TX) String name) {
     super(name);
   }
 

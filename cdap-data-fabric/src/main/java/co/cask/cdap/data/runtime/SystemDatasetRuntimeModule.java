@@ -88,6 +88,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         bind(DatasetDefinition.class)
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(InMemoryTableDefinition.class);
 
+        bind(String.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).toInstance("table-no-tx");
+        bind(DatasetDefinition.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).to(InMemoryMetricsTableDefinition.class);
+
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.
         bind(new TypeLiteral<DatasetDefinition<MetricsTable, DatasetAdmin>>() { })
@@ -112,6 +117,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(LevelDBTableDefinition.class);
+
+        bind(String.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).toInstance("table-no-tx");
+        bind(DatasetDefinition.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).to(LevelDBMetricsTableDefinition.class);
 
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.
@@ -163,6 +173,11 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).toInstance("table");
         bind(DatasetDefinition.class)
           .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE)).to(HBaseTableDefinition.class);
+
+        bind(String.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).toInstance("table-no-tx");
+        bind(DatasetDefinition.class)
+          .annotatedWith(Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)).to(HBaseMetricsTableDefinition.class);
 
         // Direct binding for the Metrics table definition such that metrics system doesn't need to go through
         // dataset service to get metrics table.

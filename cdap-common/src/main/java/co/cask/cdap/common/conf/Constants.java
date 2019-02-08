@@ -440,6 +440,7 @@ public final class Constants {
 
     // used for Guice named bindings
     public static final String TABLE_TYPE = "table.type";
+    public static final String TABLE_TYPE_NO_TX = "table.type.no.tx";
 
     /**
      * Constants for PartitionedFileSet's DynamicPartitioner
