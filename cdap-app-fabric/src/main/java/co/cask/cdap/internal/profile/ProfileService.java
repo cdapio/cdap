@@ -18,7 +18,6 @@ package co.cask.cdap.internal.profile;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.common.MethodNotAllowedException;
@@ -33,7 +32,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.internal.app.store.profile.ProfileDataset;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
@@ -45,6 +44,8 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
@@ -63,18 +64,19 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 
 /**
- * This class is to manage profile related functions. It will wrap the {@link ProfileDataset} operation
+ * This class is to manage profile related functions. It will wrap the {@link ProfileStore} operation
  * in transaction in each method
  */
 public class ProfileService {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileService.class);
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
   private final CConfiguration cConf;
   private final MetricsSystemClient metricsSystemClient;
 
   @Inject
-  public ProfileService(CConfiguration cConf, DatasetFramework datasetFramework,
+  public ProfileService(CConfiguration cConf, DatasetFramework datasetFramework, TransactionRunner transactionRunner,
                         TransactionSystemClient txClient, MetricsSystemClient metricsSystemClient) {
     this.datasetFramework = datasetFramework;
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -84,6 +86,7 @@ public class ProfileService {
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.cConf = cConf;
+    this.transactionRunner = transactionRunner;
     this.metricsSystemClient = metricsSystemClient;
   }
 
@@ -95,8 +98,8 @@ public class ProfileService {
    * @throws NotFoundException if the profile is not found
    */
   public Profile getProfile(ProfileId profileId) throws NotFoundException {
-    return Transactionals.execute(transactional, context -> {
-      return getProfileDataset(context).getProfile(profileId);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return ProfileStore.get(context).getProfile(profileId);
     }, NotFoundException.class);
   }
 
@@ -149,8 +152,8 @@ public class ProfileService {
    * @return the list of profiles which is in this namespace
    */
   public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem) {
-    return Transactionals.execute(transactional, context -> {
-      return getProfileDataset(context).getProfiles(namespaceId, includeSystem);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return ProfileStore.get(context).getProfiles(namespaceId, includeSystem);
     });
   }
 
@@ -162,8 +165,8 @@ public class ProfileService {
    * @throws MethodNotAllowedException if trying to update the Native profile
    */
   public void saveProfile(ProfileId profileId, Profile profile) throws MethodNotAllowedException {
-    Transactionals.execute(transactional, context -> {
-      ProfileDataset dataset = getProfileDataset(context);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore dataset = ProfileStore.get(context);
       if (profileId.equals(ProfileId.NATIVE)) {
         try {
           dataset.getProfile(profileId);
@@ -184,8 +187,8 @@ public class ProfileService {
    * @param profile the information of the profile
    */
   public void createIfNotExists(ProfileId profileId, Profile profile) {
-    Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).createIfNotExists(profileId, profile);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore.get(context).createIfNotExists(profileId, profile);
     });
   }
 
@@ -208,11 +211,13 @@ public class ProfileService {
       throw new MethodNotAllowedException(String.format("Profile Native %s cannot be deleted.",
                                                         profileId.getScopedName()));
     }
-    Transactionals.execute(transactional, context -> {
-      ProfileDataset profileDataset = getProfileDataset(context);
-      Profile profile = profileDataset.getProfile(profileId);
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
-      deleteProfile(profileDataset, appMetadataStore, profileId, profile);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore profileStore = ProfileStore.get(context);
+      Profile profile = profileStore.getProfile(profileId);
+      Transactionals.execute(transactional, context1 -> {
+        AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context1, datasetFramework);
+        deleteProfile(profileStore, appMetadataStore, profileId, profile);
+      }, NotFoundException.class, ProfileConflictException.class);
     }, NotFoundException.class, ProfileConflictException.class);
 
     deleteMetrics(profileId);
@@ -229,15 +234,17 @@ public class ProfileService {
       throw new MethodNotAllowedException("Deleting all system profiles is not allowed.");
     }
     List<ProfileId> deleted = new ArrayList<>();
-    Transactionals.execute(transactional, context -> {
-      ProfileDataset profileDataset = getProfileDataset(context);
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context, datasetFramework);
-      List<Profile> profiles = profileDataset.getProfiles(namespaceId, false);
-      for (Profile profile : profiles) {
-        ProfileId profileId = namespaceId.profile(profile.getName());
-        deleteProfile(profileDataset, appMetadataStore, profileId, profile);
-        deleted.add(profileId);
-      }
+    TransactionRunners.run(transactionRunner, context -> {
+       Transactionals.execute(transactional, context1 -> {
+         ProfileStore profileStore = ProfileStore.get(context);
+         AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, context1, datasetFramework);
+         List<Profile> profiles = profileStore.getProfiles(namespaceId, false);
+         for (Profile profile : profiles) {
+           ProfileId profileId = namespaceId.profile(profile.getName());
+           deleteProfile(profileStore, appMetadataStore, profileId, profile);
+           deleted.add(profileId);
+         }
+       }, ProfileConflictException.class, NotFoundException.class);
     }, ProfileConflictException.class, NotFoundException.class);
     // delete the metrics
     for (ProfileId profileId : deleted) {
@@ -250,8 +257,8 @@ public class ProfileService {
    */
   @VisibleForTesting
   public void clear() {
-    Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).deleteAllProfiles();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore.get(context).deleteAllProfiles();
     });
   }
 
@@ -263,8 +270,8 @@ public class ProfileService {
    * @throws ProfileConflictException if the profile is already enabled
    */
   public void enableProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
-    Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).enableProfile(profileId);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore.get(context).enableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
 
@@ -282,8 +289,8 @@ public class ProfileService {
       throw new MethodNotAllowedException(String.format("Cannot change status for Profile Native %s, " +
                                                           "it should always be ENABLED", profileId.getScopedName()));
     }
-    Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).disableProfile(profileId);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore.get(context).disableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
 
@@ -295,8 +302,8 @@ public class ProfileService {
    * @throws NotFoundException if the profile is not found
    */
   public Set<EntityId> getProfileAssignments(ProfileId profileId) throws NotFoundException {
-    return Transactionals.execute(transactional, context -> {
-      return getProfileDataset(context).getProfileAssignments(profileId);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return ProfileStore.get(context).getProfileAssignments(profileId);
     }, NotFoundException.class);
   }
 
@@ -310,8 +317,8 @@ public class ProfileService {
    */
   public void addProfileAssignment(ProfileId profileId,
                                    EntityId entityId) throws NotFoundException, ProfileConflictException {
-    Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).addProfileAssignment(profileId, entityId);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore.get(context).addProfileAssignment(profileId, entityId);
     }, NotFoundException.class, ProfileConflictException.class);
   }
 
@@ -323,17 +330,13 @@ public class ProfileService {
    * @throws NotFoundException if the profile is not found
    */
   public void removeProfileAssignment(ProfileId profileId, EntityId entityId) throws NotFoundException {
-    Transactionals.execute(transactional, context -> {
-      getProfileDataset(context).removeProfileAssignment(profileId, entityId);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore.get(context).removeProfileAssignment(profileId, entityId);
     }, NotFoundException.class);
   }
 
-  private ProfileDataset getProfileDataset(DatasetContext context) {
-    return ProfileDataset.get(context, datasetFramework);
-  }
-
-  private void deleteProfile(ProfileDataset profileDataset, AppMetadataStore appMetadataStore, ProfileId profileId,
-                             Profile profile) throws ProfileConflictException, NotFoundException {
+  private void deleteProfile(ProfileStore profileStore, AppMetadataStore appMetadataStore, ProfileId profileId,
+                             Profile profile) throws ProfileConflictException, NotFoundException, IOException {
     // The profile status must be DISABLED
     if (profile.getStatus() == ProfileStatus.ENABLED) {
       throw new ProfileConflictException(
@@ -343,7 +346,7 @@ public class ProfileService {
     }
 
     // There must be no assignments to this profile
-    Set<EntityId> assignments = profileDataset.getProfileAssignments(profileId);
+    Set<EntityId> assignments = profileStore.getProfileAssignments(profileId);
     int numAssignments = assignments.size();
     if (numAssignments > 0) {
       String firstEntity = getUserFriendlyEntityStr(assignments.iterator().next());
@@ -380,7 +383,7 @@ public class ProfileService {
     }
 
     // delete the profile
-    profileDataset.deleteProfile(profileId);
+    profileStore.deleteProfile(profileId);
   }
 
   private String getUserFriendlyEntityStr(EntityId entityId) {

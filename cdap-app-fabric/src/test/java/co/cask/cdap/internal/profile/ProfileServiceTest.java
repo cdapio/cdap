@@ -46,15 +46,18 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.twill.api.RunId;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -68,7 +71,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Unit test for profile store
  */
-public class ProfileServiceTest {
+public abstract class ProfileServiceTest {
   private static final List<ProvisionerPropertyValue> PROPERTY_SUMMARIES =
     ImmutableList.<ProvisionerPropertyValue>builder()
       .add(new ProvisionerPropertyValue("1st property", "1st value", false))
@@ -76,17 +79,19 @@ public class ProfileServiceTest {
       .add(new ProvisionerPropertyValue("3rd property", "3rd value", false))
       .build();
 
-  private static Injector injector;
-  private static ProfileService profileService;
+  protected abstract Injector getInjector();
+  protected abstract ProfileService getProfileService();
+  protected abstract StructuredTableAdmin getTableAdmin();
 
-  @BeforeClass
-  public static void setup() {
-    injector = AppFabricTestHelper.getInjector();
-    profileService = injector.getInstance(ProfileService.class);
-  }
+  private ProfileService profileService;
 
-  @After
-  public void afterTest() throws Exception {
+  @Before
+  public void beforeTest() throws IOException, TableAlreadyExistsException {
+    StructuredTableAdmin tableAdmin = getTableAdmin();
+    if (tableAdmin.getSpecification(StoreDefinition.ProfileStore.PROFILE_STORE_TABLE) == null) {
+      StoreDefinition.ProfileStore.createTables(tableAdmin);
+    }
+    profileService = getProfileService();
     profileService.clear();
   }
 
@@ -335,7 +340,7 @@ public class ProfileServiceTest {
     profileService.removeProfileAssignment(myProfile, NamespaceId.DEFAULT);
 
     // add an active record to DefaultStore, deletion should still fail
-    Store store = injector.getInstance(DefaultStore.class);
+    Store store = getInjector().getInstance(DefaultStore.class);
     ProgramId programId = NamespaceId.DEFAULT.app("myApp").workflow("myProgram");
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact("testArtifact", "1.0").toApiArtifactId();
     RunId runId = RunIds.generate(System.currentTimeMillis());
@@ -436,11 +441,11 @@ public class ProfileServiceTest {
     profileService.disableProfile(myProfile);
 
     // emit some metrics
-    MetricsCollectionService metricService = injector.getInstance(MetricsCollectionService.class);
+    MetricsCollectionService metricService = getInjector().getInstance(MetricsCollectionService.class);
     MetricsContext metricsContext = metricService.getContext(getMetricsTags(runId, myProfile));
     metricsContext.increment(Constants.Metrics.Program.PROGRAM_NODE_MINUTES, 30L);
 
-    MetricStore metricStore = injector.getInstance(MetricStore.class);
+    MetricStore metricStore = getInjector().getInstance(MetricStore.class);
     Tasks.waitFor(30L, () -> getMetric(metricStore, runId, myProfile,
                                       "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
                   10, TimeUnit.SECONDS);

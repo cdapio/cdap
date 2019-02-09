@@ -61,6 +61,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ConfigStore.CONFIGS) == null) {
       ConfigStore.createTable(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(ProfileStore.PROFILE_STORE_TABLE) == null) {
+      ProfileStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -272,6 +275,46 @@ public final class StoreDefinition {
 
     public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(SECRET_STORE_SPEC);
+    }
+  }
+
+  /**
+   * Table schema for profile store.
+   */
+  public static final class ProfileStore {
+    public static final StructuredTableId PROFILE_STORE_TABLE =
+      new StructuredTableId("profile_store");
+    public static final StructuredTableId PROFILE_ENTITY_STORE_TABLE =
+      new StructuredTableId("profile_entity_store");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String PROFILE_ID_FIELD = "profile_id";
+    public static final String ENTITY_ID_FIELD = "entity_id";
+    public static final String PROFILE_DATA_FIELD = "profile_data";
+    public static final String ENTITY_DATA_FIELD = "entity_data";
+
+    public static final StructuredTableSpecification PROFILE_STORE_SPEC =
+      new StructuredTableSpecification.Builder()
+      .withId(PROFILE_STORE_TABLE)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(PROFILE_ID_FIELD),
+                  Fields.stringType(PROFILE_DATA_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_ID_FIELD)
+      .build();
+
+    public static final StructuredTableSpecification PROFILE_ENTITY_STORE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(PROFILE_ENTITY_STORE_TABLE)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(PROFILE_ID_FIELD),
+                    Fields.stringType(ENTITY_ID_FIELD),
+                    Fields.stringType(ENTITY_DATA_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, PROFILE_ID_FIELD, ENTITY_ID_FIELD)
+        .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(PROFILE_STORE_SPEC);
+      tableAdmin.create(PROFILE_ENTITY_STORE_SPEC);
     }
   }
 }
