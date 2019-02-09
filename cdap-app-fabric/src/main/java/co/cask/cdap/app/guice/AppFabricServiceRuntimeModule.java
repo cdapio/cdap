@@ -135,7 +135,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
                            new NamespaceAdminModule().getInMemoryModules(),
-                           new ConfigStoreModule().getInMemoryModule(),
+                           new ConfigStoreModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            BootstrapModules.getInMemoryModule(),
@@ -174,7 +174,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
     return Modules.combine(new AppFabricServiceModule(PreviewHttpHandler.class),
                            new NamespaceAdminModule().getStandaloneModules(),
-                           new ConfigStoreModule().getStandaloneModule(),
+                           new ConfigStoreModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            new ProvisionerModule(),
@@ -227,7 +227,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class, PreviewHttpHandler.class),
                            new PreviewHttpModule().getDistributedModules(),
                            new NamespaceAdminModule().getDistributedModules(),
-                           new ConfigStoreModule().getDistributedModule(),
+                           new ConfigStoreModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
                            new MetadataServiceModule(),

@@ -90,7 +90,7 @@ public class DefaultPreviewManagerTest {
       new LogReaderRuntimeModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
-      new ConfigStoreModule().getInMemoryModule(),
+      new ConfigStoreModule(),
       new MetadataServiceModule(),
       new MetadataReaderWriterModules().getInMemoryModules(),
       new AuthorizationModule(),

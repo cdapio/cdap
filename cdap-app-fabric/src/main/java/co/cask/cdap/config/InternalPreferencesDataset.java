@@ -40,8 +40,12 @@ import java.util.Map;
 /**
  * Dataset for configs. This dataset does not wrap its operations in a transaction. It is up to the caller
  * to decide what operations belong in a transaction.
+ *
+ * This used to be the backing dataset for the DefaultConfigStore as well as the PreferencesDataset, but now only backs
+ * the PreferencesDataset. This should be consolidated with the PreferencesDataset when it is migrated to the use
+ * StructuredTable
  */
-public class ConfigDataset {
+public class InternalPreferencesDataset {
   static final DatasetId CONFIG_STORE_DATASET_INSTANCE_ID =
     NamespaceId.SYSTEM.dataset(Constants.ConfigStore.CONFIG_TABLE);
   private static final Gson GSON = new Gson();
@@ -51,30 +55,30 @@ public class ConfigDataset {
 
   private final Table table;
 
-  private ConfigDataset(Table table) {
+  private InternalPreferencesDataset(Table table) {
     this.table = table;
   }
 
-  public static ConfigDataset get(DatasetContext datasetContext, DatasetFramework dsFramework) {
+  public static InternalPreferencesDataset get(DatasetContext datasetContext, DatasetFramework dsFramework) {
     try {
       Table table = DatasetsUtil.getOrCreateDataset(datasetContext, dsFramework, CONFIG_STORE_DATASET_INSTANCE_ID,
                                                     Table.class.getName(), DatasetProperties.EMPTY);
-      return new ConfigDataset(table);
+      return new InternalPreferencesDataset(table);
     } catch (IOException | DatasetManagementException e) {
       throw new RuntimeException(e);
     }
   }
 
   public void create(String namespace, String type, Config config) throws ConfigExistsException {
-    boolean success = table.compareAndSwap(rowKey(namespace, type, config.getId()), PROPERTY_COLUMN, null,
+    boolean success = table.compareAndSwap(rowKey(namespace, type, config.getName()), PROPERTY_COLUMN, null,
                                            Bytes.toBytes(GSON.toJson(config.getProperties())));
     if (!success) {
-      throw new ConfigExistsException(namespace, type, config.getId());
+      throw new ConfigExistsException(namespace, type, config.getName());
     }
   }
 
   public void createOrUpdate(String namespace, String type, Config config) {
-    table.put(rowKey(namespace, type, config.getId()), PROPERTY_COLUMN,
+    table.put(rowKey(namespace, type, config.getName()), PROPERTY_COLUMN,
               Bytes.toBytes(GSON.toJson(config.getProperties())));
   }
 
@@ -110,9 +114,9 @@ public class ConfigDataset {
   }
 
   public void update(String namespace, String type, Config config) throws ConfigNotFoundException {
-    byte[] rowKey = rowKey(namespace, type, config.getId());
+    byte[] rowKey = rowKey(namespace, type, config.getName());
     if (table.get(rowKey).isEmpty()) {
-      throw new ConfigNotFoundException(namespace, type, config.getId());
+      throw new ConfigNotFoundException(namespace, type, config.getName());
     }
     table.put(rowKey, PROPERTY_COLUMN, Bytes.toBytes(GSON.toJson(config.getProperties())));
   }
