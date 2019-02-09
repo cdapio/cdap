@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
+import co.cask.cdap.gateway.discovery.InMemoryRouteStore;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.route.store.RouteConfig;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
@@ -55,6 +58,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -93,7 +97,9 @@ public class AuditLogTest {
 
     InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
 
-    RouterServiceLookup serviceLookup = new RouterServiceLookup(cConf, discoveryService, new RouterPathLookup());
+    RouterServiceLookup serviceLookup = new RouterServiceLookup(
+      cConf, discoveryService, new RouterPathLookup(),
+      new InMemoryRouteStore(Collections.emptyMap()));
 
     router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, new SuccessTokenValidator(),
                              new MockAccessTokenTransfomer(), discoveryService);

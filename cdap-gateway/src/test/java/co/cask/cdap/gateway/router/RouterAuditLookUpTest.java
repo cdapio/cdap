@@ -79,6 +79,8 @@ public class RouterAuditLookUpTest {
     assertContent("/v3/preferences", DEFAULT_AUDIT);
     // endpoints from ProgramLifecycleHttpHandler
     assertContent("/v3/namespaces/default/stop", new AuditLogConfig(HttpMethod.POST, true, true, EMPTY_HEADERS));
+    // endpoints from RouteConfigHttpHandler
+    assertContent("/v3/namespaces/default/apps/myApp/services/myService/routeconfig", DEFAULT_AUDIT);
     // endpoints from SecureStoreHandler
     assertContent("/v3/namespaces/default/securekeys/myKey", DEFAULT_AUDIT);
     // endpoints from TransactionHttpHandler

@@ -454,6 +454,67 @@ public class CLIMainTest extends CLITestBase {
   }
 
   @Test
+  public void testRouteConfig() throws Exception {
+    ServiceId service = FAKE_APP_ID.service(PrefixedEchoHandler.NAME);
+    ServiceId serviceV1 = FAKE_APP_ID_V_1.service(PrefixedEchoHandler.NAME);
+    String serviceName = String.format("%s.%s", FakeApp.NAME, PrefixedEchoHandler.NAME);
+    String serviceArgument = String.format("%s version %s", serviceName, ApplicationId.DEFAULT_VERSION);
+    String serviceV1Argument = String.format("%s version %s", serviceName, V1_SNAPSHOT);
+
+    try {
+      // Start service with default version
+      Map<String, String> runtimeArgs = ImmutableMap.of("sdf", ApplicationId.DEFAULT_VERSION);
+      String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
+      testCommandOutputContains(cli, "start service " + serviceArgument + " '" + runtimeArgsKV + "'",
+                                "Successfully started service");
+      assertProgramStatus(programClient, service, "RUNNING");
+      // Verify that RouteConfig is empty initially
+      testCommandOutputContains(cli, "get route-config for service " + serviceName, GSON.toJson(ImmutableMap.of()));
+      // Call non-version service and get response from service with Default version
+      testCommandOutputContains(cli, "call service " + serviceName + " POST /echo body \"testBody\"",
+                                String.format("%s:testBody", ApplicationId.DEFAULT_VERSION));
+
+      // Start serviceV1
+      Map<String, String> runtimeArgs1 = ImmutableMap.of("sdf", V1_SNAPSHOT);
+      String runtimeArgs1KV = SPACE_EQUALS_JOINER.join(runtimeArgs1);
+      testCommandOutputContains(cli, "start service " + serviceV1Argument + " '" + runtimeArgs1KV + "'",
+                                "Successfully started service");
+      assertProgramStatus(programClient, serviceV1, "RUNNING");
+
+      // Set RouteConfig to route all traffic to service with default version
+      Map<String, Integer> routeConfig = ImmutableMap.of(ApplicationId.DEFAULT_VERSION, 100, V1_SNAPSHOT, 0);
+      String routeConfigKV = SPACE_EQUALS_JOINER.join(routeConfig);
+      testCommandOutputContains(cli, "set route-config for service " + serviceName + " '" + routeConfigKV + "'",
+                                "Successfully set route configuration");
+      for (int i = 0; i < 10; i++) {
+        testCommandOutputContains(cli, "call service " + serviceName + " POST /echo body \"testBody\"",
+                                  String.format("%s:testBody", ApplicationId.DEFAULT_VERSION));
+      }
+      // Get the RouteConfig set previously
+      testCommandOutputContains(cli, "get route-config for service " + serviceName, GSON.toJson(routeConfig));
+
+      // Set RouteConfig to route all traffic to serviceV1
+      routeConfig = ImmutableMap.of(ApplicationId.DEFAULT_VERSION, 0, V1_SNAPSHOT, 100);
+      routeConfigKV = SPACE_EQUALS_JOINER.join(routeConfig);
+      testCommandOutputContains(cli, "set route-config for service " + serviceName + " '" + routeConfigKV + "'",
+                                "Successfully set route configuration");
+      for (int i = 0; i < 10; i++) {
+        testCommandOutputContains(cli, "call service " + serviceName + " POST /echo body \"testBody\"",
+                                  String.format("%s:testBody", V1_SNAPSHOT));
+      }
+      // Get the RouteConfig set previously
+      testCommandOutputContains(cli, "get route-config for service " + serviceName, GSON.toJson(routeConfig));
+      // Delete the RouteConfig and verify the RouteConfig is empty
+      testCommandOutputContains(cli, "delete route-config for service " + serviceName,
+                                "Successfully deleted route configuration");
+      testCommandOutputContains(cli, "get route-config for service " + serviceName, GSON.toJson(ImmutableMap.of()));
+    } finally {
+      // Stop all running services
+      programClient.stopAll(NamespaceId.DEFAULT);
+    }
+  }
+
+  @Test
   public void testSpark() throws Exception {
     String sparkId = FakeApp.SPARK.get(0);
     String qualifiedSparkId = FakeApp.NAME + "." + sparkId;

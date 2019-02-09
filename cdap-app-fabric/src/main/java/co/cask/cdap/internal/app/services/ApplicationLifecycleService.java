@@ -28,6 +28,7 @@ import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
@@ -72,6 +73,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
@@ -123,6 +125,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetadataPublisher metadataPublisher;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final RouteStore routeStore;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
 
@@ -134,7 +137,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataPublisher metadataPublisher,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              MessagingService messagingService) {
+                              RouteStore routeStore, MessagingService messagingService) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.store = store;
@@ -148,6 +151,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.routeStore = routeStore;
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
   }
@@ -699,6 +703,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     ApplicationSpecification appSpec = store.getApplication(appId);
     deleteAppMetadata(appId, appSpec);
+    deleteRouteConfig(appId, appSpec);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
     try {
@@ -732,6 +737,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
     }
     store.removeApplication(appId);
+  }
+
+  // Delete route configs for all services, if they are present, in that Application
+  private void deleteRouteConfig(ApplicationId appId, ApplicationSpecification appSpec) {
+    for (ServiceSpecification serviceSpec : appSpec.getServices().values()) {
+      ProgramId serviceId = appId.service(serviceSpec.getName());
+      try {
+        routeStore.delete(serviceId);
+      } catch (NotFoundException ex) {
+        // expected if a config has not been stored for that service.
+      }
+    }
   }
 
   /**

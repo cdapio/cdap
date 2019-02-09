@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.router;
-
-import co.cask.cdap.common.conf.CConfiguration;
-import com.google.inject.Injector;
-import org.junit.Assert;
-import org.junit.Test;
+package co.cask.cdap.gateway.discovery;
 
 /**
- * Test RouterMain.
+ * Fall back routing strategy for User Services.
  */
-public class RouterMainTest {
+public enum RouteFallbackStrategy {
+  RANDOM,
+  DROP,
+  SMALLEST,
+  LARGEST;
 
-  @Test
-  public void testGuiceInjection() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-
-    Injector injector = RouterMain.createGuiceInjector(cConf);
-    Assert.assertNotNull(injector);
-
-    NettyRouter router = injector.getInstance(NettyRouter.class);
-    Assert.assertNotNull(router);
+  public static RouteFallbackStrategy valueOfRouteFallbackStrategy(String strategy) {
+    try {
+      return RouteFallbackStrategy.valueOf(strategy.toUpperCase());
+    } catch (Exception e) {
+      return RouteFallbackStrategy.RANDOM;
+    }
   }
 }

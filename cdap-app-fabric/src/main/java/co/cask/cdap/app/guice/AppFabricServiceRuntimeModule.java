@@ -45,6 +45,7 @@ import co.cask.cdap.gateway.handlers.PreferencesHttpHandler;
 import co.cask.cdap.gateway.handlers.ProfileHttpHandler;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ProvisionerHttpHandler;
+import co.cask.cdap.gateway.handlers.RouteConfigHttpHandler;
 import co.cask.cdap.gateway.handlers.TransactionHttpHandler;
 import co.cask.cdap.gateway.handlers.UpgradeHttpHandler;
 import co.cask.cdap.gateway.handlers.UsageHandler;
@@ -84,6 +85,9 @@ import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.route.store.LocalRouteStore;
+import co.cask.cdap.route.store.RouteStore;
+import co.cask.cdap.route.store.ZKRouteStore;
 import co.cask.cdap.scheduler.CoreSchedulerService;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.securestore.spi.SecretStore;
@@ -149,6 +153,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                               bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -189,6 +194,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                               bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -244,6 +250,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
                                bind(UGIProvider.class).to(DefaultUGIProvider.class);
+                               bind(RouteStore.class).to(ZKRouteStore.class).in(Scopes.SINGLETON);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -333,6 +340,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(SecureStoreHandler.class);
       handlerBinder.addBinding().to(RemotePrivilegesHandler.class);
       handlerBinder.addBinding().to(UpgradeHttpHandler.class);
+      handlerBinder.addBinding().to(RouteConfigHttpHandler.class);
       handlerBinder.addBinding().to(OperationalStatsHttpHandler.class);
       handlerBinder.addBinding().to(ProfileHttpHandler.class);
       handlerBinder.addBinding().to(ProvisionerHttpHandler.class);
