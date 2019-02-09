@@ -42,7 +42,10 @@ public class ResolvingDiscoverable extends Discoverable {
     return resolve(super.getSocketAddress());
   }
 
-  private InetSocketAddress resolve(InetSocketAddress bindAddress) {
+  /**
+   * Resolves the given {@link InetSocketAddress}.
+   */
+  public static InetSocketAddress resolve(InetSocketAddress bindAddress) {
     try {
       // If domain of bindAddress is not resolvable, address of bindAddress is null.
       if (bindAddress.getAddress() != null && bindAddress.getAddress().isAnyLocalAddress()) {

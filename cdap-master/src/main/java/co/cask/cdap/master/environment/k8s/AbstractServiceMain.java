@@ -16,7 +16,11 @@
 
 package co.cask.cdap.master.environment.k8s;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -28,6 +32,9 @@ import co.cask.cdap.common.options.Option;
 import co.cask.cdap.common.options.OptionsParser;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data.runtime.DataFabricModules;
+import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.LogMessage;
@@ -44,14 +51,20 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -106,13 +119,17 @@ public abstract class AbstractServiceMain extends DaemonMain {
   }
 
   @Override
-  public final void init(String[] args) {
+  public final void init(String[] args) throws MalformedURLException {
     LOG.info("Initializing master service class {}", getClass().getName());
 
     ConfigOptions opts = new ConfigOptions();
     OptionsParser.init(opts, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
 
     CConfiguration cConf = CConfiguration.create();
+    if (opts.extraConfPath != null) {
+      cConf.addResource(new File(opts.extraConfPath, "cdap-site.xml").toURI().toURL());
+    }
+
     Configuration hConf = new Configuration();
 
     MasterEnvironmentExtensionLoader envExtLoader = new MasterEnvironmentExtensionLoader(cConf);
@@ -213,6 +230,23 @@ public abstract class AbstractServiceMain extends DaemonMain {
   }
 
   /**
+   * Returns the Guice module for data-fabric bindings.
+   */
+  protected final Module getDataFabricModule() {
+    return Modules.override(
+      new DataFabricModules("master").getDistributedModules()).with(new AbstractModule() {
+      @Override
+      protected void configure() {
+        // Bind transaction system to a constant one, basically no transaction, with every write become
+        // visible immediately.
+        // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
+        bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
+        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+      }
+    });
+  }
+
+  /**
    * Returns a {@link List} of Guice {@link Module} that this specific for this master service.
    */
   protected abstract List<Module> getServiceModules();
@@ -242,6 +276,9 @@ public abstract class AbstractServiceMain extends DaemonMain {
   private static final class ConfigOptions {
     @Option(name = "env", usage = "Name of the CDAP master environment extension provider")
     private String envProvider;
+
+    @Option(name = "conf", usage = "Directory path for CDAP configuration files")
+    private String extraConfPath;
   }
 
   /**
@@ -264,14 +301,26 @@ public abstract class AbstractServiceMain extends DaemonMain {
   }
 
   /**
-   * A {@link LogAppender} that just print to System.out.
+   * A {@link LogAppender} that just log with the current log appender.
    * TODO: Remove this class when there is a proper LogAppender for K8s.
    */
   private static final class SysOutLogAppender extends LogAppender {
 
     @Override
     protected void appendEvent(LogMessage logMessage) {
-      System.out.println(logMessage);
+      ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+      if (loggerFactory instanceof LoggerContext) {
+        ch.qos.logback.classic.Logger logger = ((LoggerContext) loggerFactory).getLogger(logMessage.getLoggerName());
+        Iterator<Appender<ILoggingEvent>> iterator = logger.iteratorForAppenders();
+        while (iterator.hasNext()) {
+          Appender<ILoggingEvent> appender = iterator.next();
+          if (appender != this) {
+            appender.doAppend(logMessage);
+          }
+        }
+      } else {
+        System.out.println(logMessage);
+      }
     }
   }
 }

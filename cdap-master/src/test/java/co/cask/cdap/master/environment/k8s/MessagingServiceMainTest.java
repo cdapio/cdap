@@ -17,7 +17,6 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.client.ClientMessagingService;
@@ -25,13 +24,11 @@ import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -43,26 +40,15 @@ import java.util.stream.StreamSupport;
 /**
  * Unit test for {@link MessagingServiceMain}.
  */
-public class MessagingServiceMainTest extends MasterMainTestBase {
-
-  @BeforeClass
-  public static void init() throws IOException {
-    initialize(cConf -> {
-      cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, InetAddress.getLoopbackAddress().getHostAddress());
-      cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_BIND_PORT, 0);
-    });
-  }
+public class MessagingServiceMainTest extends MasterServiceMainTestBase {
 
   @Test
   public void testMessagingService() throws Exception {
-    MessagingServiceMain main = new MessagingServiceMain();
-    main.init(new String[] { "--env=mock"});
-    main.start();
+    // Discover the TMS endpoint
+    Injector injector = getServiceMainInstance(MessagingServiceMain.class).getInjector();
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
 
-    // For testing, we use the mock environment, which use the same in memory discovery service
-    DiscoveryServiceClient discoveryServiceClient = main.getInjector().getInstance(DiscoveryServiceClient.class);
-
-    // Try to create topic, then publish and then poll some messages
+    // Use a separate TMS client to create topic, then publish and then poll some messages
     TopicId topicId = NamespaceId.SYSTEM.topic("test");
     MessagingService messagingService = new ClientMessagingService(discoveryServiceClient);
     messagingService.createTopic(new TopicMetadata(topicId));
@@ -85,8 +71,5 @@ public class MessagingServiceMainTest extends MasterMainTestBase {
 
       Assert.assertEquals(messages, received);
     }
-
-    main.stop();
-    main.destroy();
   }
 }
