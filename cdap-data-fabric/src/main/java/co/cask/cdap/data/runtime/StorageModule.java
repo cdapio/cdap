@@ -23,6 +23,9 @@ import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.data2.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.data2.nosql.NoSqlStructuredTableRegistry;
 import co.cask.cdap.data2.nosql.NoSqlTransactionRunner;
+import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
+import co.cask.cdap.data2.sql.SqlTransactionRunner;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
@@ -80,7 +83,8 @@ public class StorageModule extends PrivateModule {
 
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
         // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
-        return null;
+        return new SqlTransactionRunner(injector.getInstance(StructuredTableAdmin.class),
+                                        null);
       }
 
       throw new UnsupportedOperationException(String.format("%s is not a supported storage implementation, the " +
@@ -119,7 +123,8 @@ public class StorageModule extends PrivateModule {
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
         // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
-        return null;
+        return new PostgresSqlStructuredTableAdmin(injector.getInstance(StructuredTableRegistry.class),
+                                                   null);
       }
       throw new UnsupportedOperationException(
         String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
@@ -157,7 +162,7 @@ public class StorageModule extends PrivateModule {
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
         // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
-        return null;
+        return new SqlStructuredTableRegistry();
       }
       throw new UnsupportedOperationException(
         String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",

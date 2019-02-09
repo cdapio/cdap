@@ -93,6 +93,36 @@ public class TransactionRunners {
   }
 
   /**
+   * Executes the given {@link TxRunnable} using the given {@link TransactionRunner}.
+   *
+   * @param txRunner the {@link TransactionRunner} to use for txRunner execution
+   * @param runnable the {@link TxRunnable} to be executed inside a transaction
+   * @param <X1> exception type of first propagate type
+   * @param <X2> exception type of second propagate type
+   * @param <X3> exception type of third propagate type
+   * @throws X1 if failed to execute the given {@link TxRunnable} in a transaction. If the
+   * TransactionException has a cause in it, the cause is thrown as-is if it is an instance of X1.
+   * @throws X2 if failed to execute the given {@link TxRunnable} in a transaction. If the
+   * TransactionException has a cause in it, the cause is thrown as-is if it is an instance of X2.
+   * @throws X3 if failed to execute the given {@link TxRunnable} in a transaction. If the
+   * TransactionException has a cause in it, the cause is thrown as-is if it is an instance of X3.
+   * @throws RuntimeException if cause is not an instance of X1 or X2 or X3. The cause is wrapped with
+   * {@link RuntimeException} if it is not already a {@link RuntimeException}.
+   */
+  public static <X1 extends Throwable, X2 extends Throwable, X3 extends Throwable>
+  void run(TransactionRunner txRunner,
+           TxRunnable runnable,
+           Class<X1> exception1,
+           Class<X2> exception2,
+           Class<X3> exception3) throws X1, X2, X3 {
+    try {
+      txRunner.run(runnable);
+    } catch (TransactionException e) {
+      throw propagate(e, exception1, exception2, exception3);
+    }
+  }
+
+  /**
    * Executes the given {@link TxCallable} using the given {@link TransactionRunner}.
    *
    * @param txRunner the {@link TransactionRunner} to use for txRunner execution
@@ -182,12 +212,10 @@ public class TransactionRunners {
    * Propagates the given {@link TransactionException}. If the {@link TransactionException#getCause()}
    * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
    * throw the failure exception as-is the given propagated type if the type matches or as {@link RuntimeException}.
-   * This method will always throw exception and the returned exception is for satisfying Java static analysis only.
    *
    * @param e the {@link TransactionException} to propagate
    * @param propagateType if the exception is an instance of this type, it will be rethrown as is
    * @param <X> exception type of propagate type
-   * @return a exception of type X
    */
   public static <X extends Throwable> X propagate(TransactionException e, Class<X> propagateType) throws X {
     Throwable cause = firstNonNull(e.getCause(), e);
@@ -199,20 +227,42 @@ public class TransactionRunners {
    * Propagates the given {@link TransactionException}. If the {@link TransactionException#getCause()}
    * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
    * throw the failure exception as-is the given propagated types if the type matches or as {@link RuntimeException}.
-   * This method will always throw and the returned exception is for satisfying Java static analysis only.
    *
    * @param e the {@link TransactionException} to propagate
    * @param propagateType1 if the exception is an instance of this type, it will be rethrown as is
    * @param propagateType2 if the exception is an instance of this type, it will be rethrown as is
    * @param <X1> exception type of first propagate type
    * @param <X2> exception type of second propagate type
-   * @return a exception of type X1,X2
    */
   public static <X1 extends Throwable, X2 extends Throwable> X1 propagate(TransactionException e,
                                                                           Class<X1> propagateType1,
                                                                           Class<X2> propagateType2) throws X1, X2 {
     Throwable cause = firstNonNull(e.getCause(), e);
     propagateIfPossible(cause, propagateType1, propagateType2);
+    throw propagate(cause);
+  }
+
+  /**
+   * Propagates the given {@link TransactionException}. If the {@link TransactionException#getCause()}
+   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
+   * throw the failure exception as-is the given propagated types if the type matches or as {@link RuntimeException}.
+   *
+   * @param e the {@link TransactionException} to propagate
+   * @param propagateType1 if the exception is an instance of this type, it will be rethrown as is
+   * @param propagateType2 if the exception is an instance of this type, it will be rethrown as is
+   * @param propagateType3 if the exception is an instance of this type, it will be rethrown as is
+   * @param <X1> exception type of first propagate type
+   * @param <X2> exception type of second propagate type
+   * @param <X3> exception type of third propagate type
+   */
+  public static <X1 extends Throwable, X2 extends Throwable, X3 extends Throwable> X1
+  propagate(TransactionException e,
+            Class<X1> propagateType1,
+            Class<X2> propagateType2,
+            Class<X3> propagateType3) throws X1, X2, X3 {
+    Throwable cause = firstNonNull(e.getCause(), e);
+    propagateIfPossible(cause, propagateType1, propagateType2);
+    propagateIfPossible(cause, propagateType3);
     throw propagate(cause);
   }
 

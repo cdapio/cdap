@@ -27,7 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.store.profile.ProfileDataset;
+import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
@@ -41,12 +41,15 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -63,11 +66,12 @@ public class PreferencesService {
   private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final AdminEventPublisher adminEventPublisher;
+  private final TransactionRunner transactionRunner;
 
   @Inject
   public PreferencesService(DatasetFramework datasetFramework, TransactionSystemClient txClient,
                             MessagingService messagingService,
-                            CConfiguration cConf) {
+                            CConfiguration cConf, TransactionRunner transactionRunner) {
     this.datasetFramework = datasetFramework;
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -77,6 +81,7 @@ public class PreferencesService {
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
+    this.transactionRunner = transactionRunner;
   }
 
   private Map<String, String> getConfigProperties(EntityId entityId) {
@@ -99,9 +104,11 @@ public class PreferencesService {
     throws NotFoundException, ProfileConflictException, BadRequestException {
     try {
       transactional.execute(context -> {
-        ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
-        PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
-        setConfig(profileDataset, preferencesDataset, entityId, propertyMap);
+        TransactionRunners.run(transactionRunner, context1 -> {
+          ProfileStore profileStore = ProfileStore.get(context1);
+          PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
+          setConfig(profileStore, preferencesDataset, entityId, propertyMap);
+        }, NotFoundException.class, ProfileConflictException.class, BadRequestException.class);
       });
     } catch (TransactionFailureException e) {
       Throwable cause = e.getCause();
@@ -120,9 +127,9 @@ public class PreferencesService {
   /**
    * Validate the profile status is enabled and set the preferences
    */
-  private void setConfig(ProfileDataset profileDataset, PreferencesDataset preferencesDataset, EntityId entityId,
+  private void setConfig(ProfileStore profileStore, PreferencesDataset preferencesDataset, EntityId entityId,
                          Map<String, String> propertyMap)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
+    throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
 
     boolean isInstanceLevel = entityId.getEntityType().equals(EntityType.INSTANCE);
     NamespaceId namespaceId = isInstanceLevel ?
@@ -141,7 +148,7 @@ public class PreferencesService {
                                                     propertyMap.get(SystemArguments.PROFILE_NAME)));
       }
 
-      if (profileDataset.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
+      if (profileStore.getProfile(profileId).getStatus() == ProfileStatus.DISABLED) {
         throw new ProfileConflictException(String.format("Profile %s in namespace %s is disabled. It cannot be " +
                                                            "assigned to any programs or schedules",
                                                          profileId.getProfile(), profileId.getNamespace()),
@@ -158,13 +165,13 @@ public class PreferencesService {
 
     // After everything is set, publish the update message and add the association if profile is present
     if (profile.isPresent()) {
-      profileDataset.addProfileAssignment(profile.get(), entityId);
+      profileStore.addProfileAssignment(profile.get(), entityId);
       adminEventPublisher.publishProfileAssignment(entityId, profile.get());
     }
 
     // if old properties has the profile, remove the association
     if (oldProfile.isPresent()) {
-      profileDataset.removeProfileAssignment(oldProfile.get(), entityId);
+      profileStore.removeProfileAssignment(oldProfile.get(), entityId);
     }
 
     // if new profiles do not have profile information but old profiles have, it is same as deletion of the profile
@@ -185,7 +192,9 @@ public class PreferencesService {
 
       // if there is profile properties, publish the message to update metadata and remove the assignment
       if (oldProfile.isPresent()) {
-        ProfileDataset.get(context, datasetFramework).removeProfileAssignment(oldProfile.get(), entityId);
+        TransactionRunners.run(transactionRunner, context1 -> {
+          ProfileStore.get(context1).removeProfileAssignment(oldProfile.get(), entityId);
+        });
         adminEventPublisher.publishProfileUnAssignment(entityId);
       }
     });
@@ -268,15 +277,17 @@ public class PreferencesService {
     Set<String> added = new HashSet<>();
     try {
       transactional.execute(context -> {
-        ProfileDataset profileDataset = ProfileDataset.get(context, datasetFramework);
-        PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
-        Map<String, String> oldProperties = preferencesDataset.getPreferences(instanceId);
-        Map<String, String> newProperties = new HashMap<>(properties);
+        TransactionRunners.run(transactionRunner, context1 -> {
+          ProfileStore profileStore = ProfileStore.get(context1);
+          PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
+          Map<String, String> oldProperties = preferencesDataset.getPreferences(instanceId);
+          Map<String, String> newProperties = new HashMap<>(properties);
 
-        added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
-        newProperties.putAll(oldProperties);
+          added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
+          newProperties.putAll(oldProperties);
 
-        setConfig(profileDataset, preferencesDataset, instanceId, newProperties);
+          setConfig(profileStore, preferencesDataset, instanceId, newProperties);
+        });
       });
     } catch (TransactionFailureException e) {
       Throwable cause = e.getCause();
