@@ -19,8 +19,11 @@ package co.cask.cdap.data2.dataset2.lib.table.inmemory;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.io.IOException;
 import java.util.Map;
@@ -30,7 +33,8 @@ import java.util.Map;
  */
 public class InMemoryMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
 
-  public InMemoryMetricsTableDefinition(String name) {
+  @Inject
+  public InMemoryMetricsTableDefinition(@Named(Constants.Dataset.TABLE_TYPE_NO_TX) String name) {
     super(name);
   }
 

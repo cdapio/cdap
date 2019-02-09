@@ -383,6 +383,18 @@ public class MasterServiceMain extends DaemonMain {
   }
 
   /**
+   * Gets an instance of the given {@link Service} class from the given {@link Injector}, start the service and
+   * returns it.
+   */
+  private static <T extends Service> T getAndStart(Injector injector, Class<T> cls) {
+    T service = injector.getInstance(cls);
+    LOG.debug("Starting service in master {}", service);
+    service.startAndWait();
+    LOG.info("Service {} started in master", service);
+    return service;
+  }
+
+  /**
    * Stops a guava {@link Service}. No exception will be thrown even stopping failed.
    */
   private static void stopQuietly(@Nullable Service service) {
@@ -630,7 +642,7 @@ public class MasterServiceMain extends DaemonMain {
       services.add(injector.getInstance(KafkaClientService.class));
       services.add(injector.getInstance(MetricsCollectionService.class));
       services.add(injector.getInstance(OperationalStatsService.class));
-      ServiceStore serviceStore = injector.getInstance(ServiceStore.class);
+      ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);
       services.add(injector.getInstance(SecureStoreService.class));
 
@@ -664,7 +676,7 @@ public class MasterServiceMain extends DaemonMain {
       // Starts all services.
       for (Service service : services) {
         if (service.isRunning()) {
-          // Some services already started (e.g. MetricsCollectionService, KafkaClientService)
+          // Some services are already started
           continue;
         }
         LOG.info("Starting service in master: {}", service);
