@@ -128,8 +128,7 @@ public class MasterServiceMainTestBase {
     );
     DatasetDefinition tableDef = injector.getInstance(Key.get(DatasetDefinition.class,
                                                               Names.named(Constants.Dataset.TABLE_TYPE)));
-    StructuredTableRegistry tableRegistry = new NoSqlStructuredTableRegistry(tableDef,
-                                                                             new ConstantTransactionSystemClient());
+    StructuredTableRegistry tableRegistry = new NoSqlStructuredTableRegistry(tableDef);
     StructuredTableAdmin tableAdmin = new NoSqlStructuredTableAdmin(tableDef, tableRegistry);
     StoreDefinition.createAllTables(tableAdmin, tableRegistry);
     injector.getInstance(LevelDBTableService.class).close();
