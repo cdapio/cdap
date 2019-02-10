@@ -476,8 +476,6 @@ public class UpgradeTool {
       // then leave this block empty but do not remove block so that it can be used in next release if needed
     }
 
-    // owner metadata
-    DefaultOwnerStore.setupDatasets(datasetFramework);
     // metadata and lineage
     DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageDataset.setupDatasets(datasetFramework);
