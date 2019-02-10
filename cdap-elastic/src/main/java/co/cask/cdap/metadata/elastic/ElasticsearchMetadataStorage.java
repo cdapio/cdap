@@ -49,6 +49,7 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
+import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -71,6 +72,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.collect.Tuple;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
@@ -116,15 +118,23 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   static final String CONF_ELASTIC_SCROLL_TIMEOUT = "metadata.elasticsearch.scroll.timeout";
   @VisibleForTesting
   static final String CONF_ELASTIC_WAIT_FOR_MUTATIONS = "metadata.elasticsearch.wait.for.mutations";
-  private static final String CONF_ELASTIC_NUM_SHARDS = "metadata.elasticsearch.num.shards";
-  private static final String CONF_ELASTIC_NUM_REPLICAS = "metadata.elasticsearch.num.replicas";
+  @VisibleForTesting
+  static final String CONF_ELASTIC_NUM_SHARDS = "metadata.elasticsearch.num.shards";
+  @VisibleForTesting
+  static final String CONF_ELASTIC_NUM_REPLICAS = "metadata.elasticsearch.num.replicas";
+  @VisibleForTesting
+  static final String CONF_ELASTIC_WINDOW_SIZE = "metadata.elasticsearch.max.window.size";
 
   private static final String DEFAULT_ELASTIC_HOSTS = "localhost:9200";
   private static final String DEFAULT_INDEX_NAME = "cdap.metadata";
   private static final String DEFAULT_SCROLL_TIMEOUT = "60s";
-  private static final int DEFAULT_NUM_SHARDS = 1;
-  private static final int DEFAULT_NUM_REPLICAS = 1;
   private static final boolean DEFAULT_WAIT_FOR_MUTATIONS = false;
+
+  private static final String SETTING_NUMBER_OF_SHARDS = "number_of_shards";
+  private static final String SETTING_NUMBER_OF_REPLICAS = "number_of_replicas";
+  private static final String SETTING_MAX_RESULT_WINDOW = "max_result_window";
+  private static final int DEFAULT_MAX_RESULT_WINDOW = 10000; // this is hardcoded in Elasticsearch
+
 
   private static final String MAPPING_RESOURCE = "index.mapping.json";
 
@@ -170,6 +180,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private final WriteRequest.RefreshPolicy refreshPolicy;
 
   private volatile boolean created = false;
+  private int maxWindowSize = DEFAULT_MAX_RESULT_WINDOW;
 
   @Inject
   public ElasticsearchMetadataStorage(CConfiguration cConf) {
@@ -196,7 +207,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
-  private void ensureIndexCreated() throws IOException {
+  @VisibleForTesting
+  void ensureIndexCreated() throws IOException {
     if (created) {
       return;
     }
@@ -207,15 +219,29 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       GetIndexRequest request = new GetIndexRequest();
       request.indices(indexName);
       if (!client.indices().exists(request, RequestOptions.DEFAULT)) {
-        LOG.info("Creating index " + indexName);
+        String settings = createSettings();
+        LOG.info("Creating index '{}' with settings: {}", indexName, settings);
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
-        createIndexRequest.settings(createSettings(), XContentType.JSON);
+        createIndexRequest.settings(settings, XContentType.JSON);
         createIndexRequest.mapping(DOC_TYPE, getMapping(), XContentType.JSON);
         CreateIndexResponse response = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
         if (!response.isAcknowledged()) {
           throw new IOException("Create index request was not acknowledged by EleasticSearch: " + response);
         }
       }
+      request = new GetIndexRequest();
+      request.indices(indexName);
+      GetIndexResponse response = client.indices().get(request, RequestOptions.DEFAULT);
+      Settings settings = response.getSettings().get(indexName);
+      if (settings == null) {
+        throw new IOException("Unable to obtain Elasticsearch settings for index " + indexName);
+      }
+      String maxWindow = response.getSetting(indexName, "index.max_result_window");
+      if (maxWindow != null) {
+        maxWindowSize = Integer.parseInt(maxWindow);
+      }
+      LOG.debug("Using Elasticsearch index {} with 'max_result_window' of {}", indexName, maxWindowSize);
+
       // For some unknown reason, multi-get fails immediately after creating an index
       // However, performing one regular read appears to fix that, perhaps it waits until the index is ready?
       // Hence, perform one read to ensure the index is ready to use.
@@ -235,13 +261,22 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   // Elasticsearch index settings, used when creating the index
   private String createSettings() {
-    int numShards = cConf.getInt(CONF_ELASTIC_NUM_SHARDS, DEFAULT_NUM_SHARDS);
-    int numReplicas = cConf.getInt(CONF_ELASTIC_NUM_REPLICAS, DEFAULT_NUM_REPLICAS);
+    String numShards = cConf.get(CONF_ELASTIC_NUM_SHARDS);
+    String numReplicas = cConf.get(CONF_ELASTIC_NUM_REPLICAS);
+    String maxResultWindow = cConf.get(CONF_ELASTIC_WINDOW_SIZE);
+    Map<String, Integer> indexSettings = new HashMap<>();
+    if (numShards != null) {
+      indexSettings.put(SETTING_NUMBER_OF_SHARDS, Integer.parseInt(numShards));
+    }
+    if (numReplicas != null) {
+      indexSettings.put(SETTING_NUMBER_OF_REPLICAS, Integer.parseInt(numReplicas));
+    }
+    if (maxResultWindow != null) {
+      indexSettings.put(SETTING_MAX_RESULT_WINDOW, Integer.parseInt(maxResultWindow));
+    }
+
     return ("{" +
-      "  'index': {" +
-      "    'number_of_shards': " + numShards + "," +
-      "    'number_of_replicas': " + numReplicas +
-      "  }," +
+      (indexSettings.isEmpty() ? "" : "'index': " + GSON.toJson(indexSettings) + ",") +
       "  'analysis': {" +
       "    'analyzer': {" +
       "      'text_analyzer': {" +
@@ -335,8 +370,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation.
    */
-  private Tuple<? extends DocWriteRequest, MetadataChange> applyMutation(Metadata before, MetadataMutation mutation)
-    throws IOException {
+  private Tuple<? extends DocWriteRequest, MetadataChange> applyMutation(Metadata before, MetadataMutation mutation) {
     switch (mutation.getType()) {
       case CREATE:
         return create(before, (MetadataMutation.Create) mutation);
@@ -361,8 +395,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<IndexRequest, MetadataChange> create(Metadata before, MetadataMutation.Create create)
-    throws IOException {
+  private Tuple<IndexRequest, MetadataChange> create(Metadata before, MetadataMutation.Create create) {
     // if the entity did not exist before, none of the directives apply and this is equivalent to update()
     if (before.isEmpty()) {
       return update(create.getEntity(), before, create.getMetadata());
@@ -439,8 +472,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<IndexRequest, MetadataChange> update(MetadataEntity entity, Metadata before, Metadata updates)
-    throws IOException {
+  private Tuple<IndexRequest, MetadataChange> update(MetadataEntity entity, Metadata before, Metadata updates) {
     Set<ScopedName> tags = new HashSet<>(before.getTags());
     tags.addAll(updates.getTags());
     Map<ScopedName, String> properties = new HashMap<>(before.getProperties());
@@ -461,8 +493,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<IndexRequest, MetadataChange> remove(Metadata before, MetadataMutation.Remove remove)
-    throws IOException {
+  private Tuple<IndexRequest, MetadataChange> remove(Metadata before, MetadataMutation.Remove remove) {
     Metadata after = filterMetadata(before, DISCARD, remove.getKinds(), remove.getScopes(), remove.getRemovals());
     return Tuple.tuple(writeToIndex(remove.getEntity(), after), new MetadataChange(remove.getEntity(), before, after));
   }
@@ -502,7 +533,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * Create an Elasticsearch index request for adding or updating the metadata for an entity in the index.
    * The request must be executed by the caller.
    */
-  private IndexRequest writeToIndex(MetadataEntity entity, Metadata metadata) throws IOException {
+  private IndexRequest writeToIndex(MetadataEntity entity, Metadata metadata) {
     MetadataDocument doc = MetadataDocument.of(entity, metadata);
     LOG.info("Indexing document: {}", doc);
     return new IndexRequest(indexName)
@@ -666,9 +697,18 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   }
 
   private SearchSourceBuilder createSearchSource(co.cask.cdap.spi.metadata.SearchRequest request, int offset) {
+    // clients cannot know what the index's max window size is, but any request where offset + limit
+    // exceeds that size will fail in ES. Hence we need to adjust the requested number of results to
+    // not exceed that window size.
+    if (maxWindowSize < offset) {
+      throw new IllegalArgumentException(String.format("Offset %d is greater than the index's '%s' settings of %d",
+                                                       offset, SETTING_MAX_RESULT_WINDOW, maxWindowSize));
+    }
+    int limit = Integer.min(maxWindowSize - offset, request.getLimit());
+
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
     searchSourceBuilder.from(offset);
-    searchSourceBuilder.size(Integer.min(10000, request.getLimit()));
+    searchSourceBuilder.size(limit);
     if (request.getSorting() != null) {
       searchSourceBuilder.sort(mapSortKey(request.getSorting().getKey().toLowerCase()),
                                SortOrder.valueOf(request.getSorting().getOrder().name()));
