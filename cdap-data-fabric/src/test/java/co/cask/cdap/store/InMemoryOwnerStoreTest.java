@@ -31,7 +31,7 @@ public class InMemoryOwnerStoreTest extends OwnerStoreTest {
   private static OwnerStore ownerStore;
 
   @BeforeClass
-  public static void createInjector() {
+  public static void setup() {
     Injector injector = Guice.createInjector(new AbstractModule() {
       @Override
       protected void configure() {
