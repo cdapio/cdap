@@ -17,7 +17,6 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -127,7 +126,7 @@ public class MasterServiceMainTestBase {
       new SystemDatasetRuntimeModule().getStandaloneModules()
     );
     DatasetDefinition tableDef = injector.getInstance(Key.get(DatasetDefinition.class,
-                                                              Names.named(Constants.Dataset.TABLE_TYPE)));
+                                                              Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)));
     StructuredTableRegistry tableRegistry = new NoSqlStructuredTableRegistry(tableDef);
     StructuredTableAdmin tableAdmin = new NoSqlStructuredTableAdmin(tableDef, tableRegistry);
     StoreDefinition.createAllTables(tableAdmin, tableRegistry);
