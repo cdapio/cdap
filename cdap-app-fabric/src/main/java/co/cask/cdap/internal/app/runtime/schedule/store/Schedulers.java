@@ -93,16 +93,6 @@ public class Schedulers {
     }
   }
 
-  // TODO: (poorna) remove this
-  public static ProgramScheduleStoreDataset getScheduleStore(DatasetContext context, DatasetFramework dsFramework) {
-    try {
-      return DatasetsUtil
-        .getOrCreateDataset(context, dsFramework, STORE_DATASET_ID, STORE_TYPE_NAME, DatasetProperties.EMPTY);
-    } catch (DatasetManagementException | IOException e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
   public static ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {
     try {
       return new ProgramScheduleStoreDataset(
