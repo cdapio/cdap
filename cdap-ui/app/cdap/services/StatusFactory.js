@@ -22,6 +22,7 @@ import cookie from 'react-cookie';
 import isNil from 'lodash/isNil';
 import { Observable } from 'rxjs/Observable';
 import SystemServicesStore, { pollSystemServices } from 'services/SystemServicesStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 let pollingObservable;
 let systemServiceSubscription;
@@ -41,7 +42,18 @@ const parseAndDispatchBackendStatus = (response) => {
   let loadingState = LoadingIndicatorStore.getState().loading;
   if (response.status <= 399) {
     if ([BACKENDSTATUS.NODESERVERDOWN].indexOf(loadingState.status) !== -1) {
-      window.location.reload();
+      const studioPath = `/pipelines/ns/${getCurrentNamespace()}/studio`;
+      if (location.pathname === studioPath) {
+        LoadingIndicatorStore.dispatch({
+          type: BACKENDSTATUS.STATUSUPDATE,
+          payload: {
+            status: BACKENDSTATUS.BACKENDUP,
+          },
+        });
+        retries = 0;
+      } else {
+        window.location.reload();
+      }
     }
     if ([BACKENDSTATUS.BACKENDDOWN].indexOf(loadingState.status) !== -1) {
       StatusAlertMessageStore.dispatch({
