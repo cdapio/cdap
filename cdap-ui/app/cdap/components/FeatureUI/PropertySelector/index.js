@@ -61,7 +61,12 @@ class PropertySelector extends React.Component {
 
   handleColumnChange(schema, checkList) {
     if (this.currentProperty) {
-      let schemaColumns = schema.schemaColumns.filter((item, index) => checkList.get(index)).map(column => {
+      let schemaColumns = schema.schemaColumns.filter((item) => {
+        if(checkList.get(item.columnName) == undefined) {
+          return item.checked;
+        } else
+          return checkList.get(item.columnName);
+        }).map(column => {
         column.checked = true;
         return column;
       });
