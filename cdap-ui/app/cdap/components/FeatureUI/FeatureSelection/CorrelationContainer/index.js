@@ -218,7 +218,7 @@ class CorrelationContainer extends Component {
                 this.state.featureNames.map((item) => {
                   return (<ListGroupItem active={item.selected} key={item.id}
                     onClick={() => this.onFeatrureClick(item)}>
-                    <label className='feature-box-item'>{item.name} title={item.name}</label>
+                    <label className='feature-box-item' title={item.name}>{item.name} </label>
                     {
                       item.selected && <i className="fa fa-check select-icon"></i>
                     }

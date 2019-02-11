@@ -76,7 +76,7 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 250, checkboxSelection: true, tooltipField:'featureName' });
+          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, tooltipField:'featureName' });
         }
         columns.forEach(element => {
           columDefs.push({ headerName: element.name, field: element.name , resizable: true});
@@ -243,7 +243,7 @@ class FeatureSelection extends Component {
     // generate column def\featureCorrelationScores
     if (!isNil(value) && value.length > 0) {
       const item = value[0]['featureCorrelationScores'];
-      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 250, checkboxSelection: true, tooltipField:'featureName'  });
+      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true, tooltipField:'featureName'  });
       columDefs.push({ headerName: "Value", field: "value" });
 
       if (!isNil(item)) {
