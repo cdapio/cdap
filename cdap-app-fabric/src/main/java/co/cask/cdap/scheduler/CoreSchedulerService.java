@@ -597,33 +597,31 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   private <V, T extends Exception> V execute(StoreTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return TransactionRunners.run(
-      transactionRunner,
-      context -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
-        return runnable.run(store);
-      }, tClass);
+    return TransactionRunners.run(transactionRunner, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+      return runnable.run(store);
+    }, tClass);
   }
 
   @SuppressWarnings("UnusedReturnValue")
   private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
-      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
-      return runnable.run(store, queue);
+      return TransactionRunners.run(transactionRunner, context1 -> {
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context1);
+        JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
+        return runnable.run(store, queue);
+      }, tClass);
     }, tClass);
   }
 
   @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
   private <V, T extends Exception> V execute(StoreAndProfileTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return Transactionals.execute(transactional, context -> {
-      return TransactionRunners.run(transactionRunner, context1 -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-        ProfileStore profileStore = ProfileStore.get(context1);
-        return runnable.run(store, profileStore);
-      }, tClass);
+    return TransactionRunners.run(transactionRunner, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+      ProfileStore profileStore = ProfileStore.get(context);
+      return runnable.run(store, profileStore);
     }, tClass);
   }
 
@@ -632,7 +630,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       return TransactionRunners.run(transactionRunner, context1 -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context1);
         ProfileStore profileStore = ProfileStore.get(context1);
         JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
         return runnable.run(store, queue, profileStore);

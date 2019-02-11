@@ -64,6 +64,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ProfileStore.PROFILE_STORE_TABLE) == null) {
       ProfileStore.createTables(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(ProgramScheduleStore.PROGRAM_TRIGGER_STORE_TABLE) == null) {
+      ProgramScheduleStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -279,7 +282,6 @@ public final class StoreDefinition {
   }
 
   /**
-<<<<<<< HEAD
    * Table schema for profile store.
    */
   public static final class ProfileStore {
