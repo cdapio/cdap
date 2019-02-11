@@ -18,9 +18,9 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 
 import java.io.IOException;
 import java.util.Collections;

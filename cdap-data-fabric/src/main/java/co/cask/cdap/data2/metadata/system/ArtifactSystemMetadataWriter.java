@@ -20,9 +20,9 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;

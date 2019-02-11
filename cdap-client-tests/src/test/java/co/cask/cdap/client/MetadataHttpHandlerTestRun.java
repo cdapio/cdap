@@ -38,7 +38,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
@@ -60,6 +59,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.common.http.HttpRequest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -964,7 +964,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Set<String> tags = ImmutableSet.of("tag1", "tag2");
     ArtifactId artifact = namespace.artifact(AllProgramsApp.class.getSimpleName(), "1.0");
     ApplicationId app = namespace.app(AllProgramsApp.NAME);
-    ProgramId service = app.service(AllProgramsApp.NoOpService.NAME);
     DatasetId datasetInstance = namespace.dataset(AllProgramsApp.DATASET_NAME);
 
     // Add metadata

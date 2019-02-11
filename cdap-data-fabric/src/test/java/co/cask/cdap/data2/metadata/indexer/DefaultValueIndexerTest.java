@@ -17,9 +17,9 @@
 
 package co.cask.cdap.data2.metadata.indexer;
 
-import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 import org.junit.Assert;
 import org.junit.Test;
 

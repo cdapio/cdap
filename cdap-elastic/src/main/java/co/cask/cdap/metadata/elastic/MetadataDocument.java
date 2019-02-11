@@ -18,8 +18,8 @@ package co.cask.cdap.metadata.elastic;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.spi.metadata.Metadata;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.spi.metadata.ScopedName;
 import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
