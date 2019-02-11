@@ -26,7 +26,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.metadata.MetadataConstants;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;

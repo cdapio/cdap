@@ -17,10 +17,10 @@
 package co.cask.cdap.spi.metadata;
 
 import co.cask.cdap.api.metadata.MetadataScope;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -43,8 +43,8 @@ public final class Metadata {
    * @param properties the property names, qualified with their scopes, and values
    */
   public Metadata(Set<ScopedName> tags, Map<ScopedName, String> properties) {
-    this.tags = ImmutableSet.copyOf(tags);
-    this.properties = ImmutableMap.copyOf(properties);
+    this.tags = Collections.unmodifiableSet(new HashSet<>(tags));
+    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
   }
 
   /**

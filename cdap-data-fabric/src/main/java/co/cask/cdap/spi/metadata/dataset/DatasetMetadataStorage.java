@@ -382,7 +382,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
       namespace,
       request.getQuery(),
       request.getTypes() == null ? Collections.emptySet() :
-        request.getTypes().stream().map(EntityTypeSimpleName::valueOf).collect(Collectors.toSet()),
+        request.getTypes().stream().map(EntityTypeSimpleName::valueOfSerializedForm).collect(Collectors.toSet()),
       request.getSorting() == null ? SortInfo.DEFAULT :
         new SortInfo(request.getSorting().getKey(), SortInfo.SortOrder.valueOf(request.getSorting().getOrder().name())),
       request.getOffset(),
