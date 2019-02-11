@@ -1410,6 +1410,22 @@
   </property>
 
   <property>
+    <name>log.buffer.base.dir</name>
+    <value>${local.data.dir}/logs.buffer</value>
+    <description>
+      Base directory for logs buffer
+    </description>
+  </property>
+
+  <property>
+    <name>log.buffer.max.file.size.bytes</name>
+    <value>104857600</value>
+    <description>
+      Maximum size in bytes of a log buffer file
+    </description>
+  </property>
+
+  <property>
     <name>log.kafka.topic</name>
     <value>logs.user-v2</value>
     <description>

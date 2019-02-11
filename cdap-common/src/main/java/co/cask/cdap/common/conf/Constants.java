@@ -772,6 +772,14 @@ public final class Constants {
   }
 
   /**
+   * Configurations for log buffer.
+   */
+  public static final class LogBuffer {
+    public static final String LOG_BUFFER_BASE_DIR = "log.buffer.base.dir";
+    public static final String LOG_BUFFER_MAX_FILE_SIZE_BYTES = "log.buffer.max.file.size.bytes";
+  }
+
+  /**
    * Monitor constants.
    */
   public static final class Monitor {
