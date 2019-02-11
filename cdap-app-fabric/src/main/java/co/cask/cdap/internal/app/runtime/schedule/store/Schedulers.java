@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,9 @@ import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -90,11 +93,13 @@ public class Schedulers {
     }
   }
 
-  public static ProgramScheduleStoreDataset getScheduleStore(DatasetContext context, DatasetFramework dsFramework) {
+  public static ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {
     try {
-      return DatasetsUtil
-        .getOrCreateDataset(context, dsFramework, STORE_DATASET_ID, STORE_TYPE_NAME, DatasetProperties.EMPTY);
-    } catch (DatasetManagementException | IOException e) {
+      return new ProgramScheduleStoreDataset(
+        context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_SCHEDULE_TABLE),
+        context.getTable(StoreDefinition.ProgramScheduleStore.PROGRAM_TRIGGER_TABLE)
+      );
+    } catch (TableNotFoundException e) {
       throw Throwables.propagate(e);
     }
   }

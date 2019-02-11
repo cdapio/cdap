@@ -196,7 +196,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected void processMessages(DatasetContext datasetContext,
+  protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, MetadataMessage>> messages) throws IOException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
@@ -224,7 +224,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case ENTITY_CREATION:
           case ENTITY_DELETION:
             return new ProfileMetadataMessageProcessor(
-              datasetContext, datasetFramework, metadataStore, transactionRunner);
+              datasetContext, datasetFramework, metadataStore, structuredTableContext);
           default:
             return null;
         }

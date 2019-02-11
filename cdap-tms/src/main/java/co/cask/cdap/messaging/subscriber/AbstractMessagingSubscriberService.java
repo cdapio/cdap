@@ -18,7 +18,6 @@ package co.cask.cdap.messaging.subscriber;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
@@ -103,14 +102,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   /**
    * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(DatasetContext, Iterator)}.
+   * for the call to {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}.
    * This exists because certain implementations are still not migrated.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(DatasetContext, Iterator)} has been processed
-   *                  up to.
+   * @param messageId the message id that the {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}
+   *                  has been processed up to.
    * @throws Exception if failed to persist the message id
-   * @see #processMessages(DatasetContext, Iterator)
+   * @see #processMessages(DatasetContext, StructuredTableContext, Iterator)
    */
   protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
 
@@ -128,14 +127,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   /**
    * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(DatasetContext, Iterator)}.
+   * for the call to {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}.
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(DatasetContext, Iterator)}
+   * @param messageId the message id that the {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}
    *                  has been processed
    *                  up to.
    * @throws Exception if failed to persist the message id
-   * @see #processMessages(DatasetContext, Iterator)
+   * @see #processMessages(DatasetContext, StructuredTableContext, Iterator)
    */
   protected abstract void storeMessageId(StructuredTableContext context, String messageId) throws Exception;
 
@@ -155,12 +154,15 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * the messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
+   * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for the transaction
    * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(DatasetContext, String)
    */
+  // TODO: CDAP-14848 Remove DatasetContext parameter after all the datasets are migrated
   protected abstract void processMessages(DatasetContext datasetContext,
+                                          StructuredTableContext structuredTableContext,
                                           Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
@@ -198,25 +200,22 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
         // Process the notifications and record the message id of where the processing is up to.
         // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
         long timeBoundMillis = 900L * curTxTimeout;
-        iterator = Transactionals.execute(getTransactional(), curTxTimeout, context -> {
-          TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
-                                                                                                  timeBoundMillis);
-          MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-          processMessages(context, trackingIterator);
-          String lastMessageId = trackingIterator.getLastMessageId();
+        iterator = Transactionals.execute(getTransactional(), curTxTimeout, context ->
+          TransactionRunners.run(getTransactionRunner(), context1 -> {
+            TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+                                                                                                    timeBoundMillis);
+            MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+            processMessages(context, context1, trackingIterator);
+            String lastMessageId = trackingIterator.getLastMessageId();
 
-          // Persist the message id of the last message being consumed from the iterator
-          if (lastMessageId != null) {
-            storeMessageId(context, lastMessageId);
-            // TODO: CDAP-14848 Remove redundancy
-            if (getTransactionRunner() != null) {
-              TransactionRunners.run(getTransactionRunner(), structuredTableContext -> {
-                storeMessageId(structuredTableContext, lastMessageId);
-              });
+            // Persist the message id of the last message being consumed from the iterator
+            if (lastMessageId != null) {
+              storeMessageId(context, lastMessageId);
+              // TODO: CDAP-14848 Remove redundancy
+              storeMessageId(context1, lastMessageId);
             }
-          }
-          return trackingIterator;
-        });
+            return trackingIterator;
+          }));
         break;
       } catch (Exception e) {
         // we double the tx timeout if we see a tx timeout, stop doubling if it exceeds our max tx timeout
