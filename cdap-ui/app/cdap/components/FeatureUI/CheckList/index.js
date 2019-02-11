@@ -69,7 +69,7 @@ class CheckList extends React.Component {
         <div className='list'>
           {
             isEmpty(listData) ? 'No Data' : (
-              listData.map((item, index) => {
+              listData.map((item) => {
                 return (
                   <div className='list-item' key={item.name}>
                     <label className='check-box-container'>
