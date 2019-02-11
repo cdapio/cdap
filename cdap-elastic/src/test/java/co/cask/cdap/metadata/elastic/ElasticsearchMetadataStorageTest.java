@@ -24,6 +24,7 @@ import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.spi.metadata.MetadataStorageTest;
 import co.cask.cdap.spi.metadata.ScopedName;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
@@ -294,6 +296,10 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
                           Collections.singleton(MetadataKind.PROPERTY),
                           Collections.singleton(MetadataScope.USER),
                           null));
+  }
 
+  @Override
+  protected List<String> getAdditionalTTLQueries() {
+    return ImmutableList.of("ttl:0003600", "TtL:03600", "TtL:03600.00");
   }
 }
