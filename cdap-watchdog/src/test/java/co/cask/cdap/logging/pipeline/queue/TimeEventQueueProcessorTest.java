@@ -41,13 +41,14 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -79,18 +80,15 @@ public class TimeEventQueueProcessorTest {
       createLoggingEvent("test.logger", Level.ERROR, "4", now - 600),
       createLoggingEvent("test.logger", Level.INFO, "6", now - 100));
 
-    ProcessedEventMetadata<TestOffset> metadata = processor.process(0, events.iterator(), getEventConverter());
-    // only 5 events should be processed because max buffer size is 50 and each event is of size 10
-    Assert.assertEquals(5, metadata.getTotalEventsProcessed());
+    ProcessedEventMetadata<TestOffset> metadata = processor.process(0, new TransformingIterator(events.iterator()));
+    // all 6 events should be processed. This is because when the buffer is full after 5 events, time event queue
+    // processor should append existing buffered events and enqueue 6th event
+    Assert.assertEquals(6, metadata.getTotalEventsProcessed());
     for (Map.Entry<Integer, Checkpoint<TestOffset>> entry : metadata.getCheckpoints().entrySet()) {
       Checkpoint<TestOffset> value = entry.getValue();
       // offset should be max offset processed so far
-      Assert.assertEquals(5, value.getOffset().getOffset());
+      Assert.assertEquals(6, value.getOffset().getOffset());
     }
-  }
-
-  private Function<ILoggingEvent, ProcessorEvent<TestOffset>> getEventConverter() {
-    return event -> new ProcessorEvent<>(event, 10, new TestOffset(Long.parseLong(event.getMessage())));
   }
 
   /**
@@ -209,6 +207,37 @@ public class TimeEventQueueProcessorTest {
     @Override
     public int compareTo(TestOffset o) {
       return Long.compare(this.offset, o.offset);
+    }
+  }
+
+  /**
+   * Iterator for testing.
+   */
+  private final class TransformingIterator implements Iterator<ProcessorEvent<TestOffset>> {
+    private final Iterator<ILoggingEvent> iterator;
+
+    TransformingIterator(Iterator<ILoggingEvent> iterator) {
+      this.iterator = iterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+     return iterator.hasNext();
+    }
+
+    @Override
+    public ProcessorEvent<TestOffset> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+
+      ILoggingEvent event = iterator.next();
+      return new ProcessorEvent<>(event, 10, new TestOffset(Long.parseLong(event.getMessage())));
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Delete not supported.");
     }
   }
 }

@@ -30,7 +30,7 @@ public class ProcessedEventMetadata<Offset> {
   private final Map<Integer, Checkpoint<Offset>> checkpoints;
 
   /**
-   * Processed event metadata containing total events processsed and checkpoints for the partitions
+   * Processed event metadata containing total events processed and checkpoints for the partitions
    */
   public ProcessedEventMetadata(int totalEventsProcessed, @Nullable Map<Integer, Checkpoint<Offset>> checkpoints) {
     this.totalEventsProcessed = totalEventsProcessed;
