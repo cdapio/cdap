@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -120,8 +121,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     Set<Integer> partitions = config.getPartitions();
     for (Map.Entry<Integer, Checkpoint<KafkaOffset>> entry : checkpointManager.getCheckpoint(partitions).entrySet()) {
       Checkpoint<KafkaOffset> checkpoint = entry.getValue();
+      KafkaOffset kafkaOffset = checkpoint.getOffset();
       // Skip the partition that doesn't have previous checkpoint.
-      if (checkpoint.getOffset().getNextOffset() >= 0 && checkpoint.getOffset().getNextEventTime() >= 0 &&
+      if (kafkaOffset.getNextOffset() >= 0 && kafkaOffset.getNextEventTime() >= 0 &&
         checkpoint.getMaxEventTime() >= 0) {
         checkpoints.put(entry.getKey(), new MutableCheckpoint(checkpoint));
       }
@@ -169,11 +171,10 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         long now = System.currentTimeMillis();
         long nextCheckpointDelay = trySyncAndPersistCheckpoints(now);
 
-        // If nothing has been processed (e.g. empty fetch from Kafka, fail to append anything to appender),
+        // If nothing has been processed (e.g. fail to append anything to appender),
         // Sleep until the earliest event in the buffer is time to be written out.
         if (!hasMessageProcessed) {
-          long sleepMillis = config.getEventDelayMillis();
-          sleepMillis = Math.min(sleepMillis, nextCheckpointDelay);
+          long sleepMillis = Math.min(config.getEventDelayMillis(), nextCheckpointDelay);
           if (sleepMillis > 0) {
             TimeUnit.MILLISECONDS.sleep(sleepMillis);
           }
@@ -244,8 +245,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
             offsets.put(partition, getLastOffset(partition, kafka.api.OffsetRequest.EarliestTime()));
           } else {
             // Otherwise, validate and find the offset if not valid
-            offsets.put(partition, offsetResolver.getStartOffset(checkpoint.getOffset().nextOffset,
-                                                                 checkpoint.getOffset().nextEventTime, partition));
+            MutableKafkaOffset kafkaOffset = checkpoint.getOffset();
+            offsets.put(partition, offsetResolver.getStartOffset(kafkaOffset.nextOffset, kafkaOffset.nextEventTime,
+                                                                 partition));
           }
           // Remove the partition successfully stored in offsets to avoid unnecessary retry for this partition
           iterator.remove();
@@ -264,7 +266,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   }
 
   /**
-   * Process messages fetched from a given partition.
+   * Processes log messages for given partition. This method will provide events iterator to event queue processor
+   * and update checkpoints and offsets based on events processed by event queue processor. If any of the events are
+   * processed by event queue processor, method returns true, otherwise false.
    */
   private boolean processMessages(String topic, int partition,
                                   Future<Iterable<MessageAndOffset>> future) throws InterruptedException,
@@ -289,34 +293,13 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     }
 
-    return process(topic, partition, messages);
-  }
-
-  private boolean process(String topic, int partition, Iterable<MessageAndOffset> messages) {
-    final byte[] processed = {0};
-
     // process all the messages
-    ProcessedEventMetadata<KafkaOffset> metadata = eventQueueProcessor.process(partition,
-                                                                               messages.iterator(), message -> {
-        ProcessorEvent<KafkaOffset> processorEvent = null;
-        try {
-          ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
-          processorEvent = new ProcessorEvent<>(loggingEvent, message.message().payloadSize(),
-                                                new KafkaOffset(message.nextOffset(), loggingEvent.getTimeStamp()));
-        } catch (IOException e) {
-          // This shouldn't happen. In case it happens (e.g. someone published some garbage), just skip the message.
-          LOG.trace("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
-                    topic, partition, message.offset(), e);
-        }
+    ProcessedEventMetadata<KafkaOffset> metadata = eventQueueProcessor
+      .process(partition, new KafkaMessageTransformIterator(topic, partition, messages.iterator()));
 
-        processed[0] = 1;
-        metricsContext.increment("kafka.bytes.read", message.message().payloadSize());
-        offsets.put(partition, message.nextOffset());
-        return processorEvent;
-      });
-
+    // None of the events were processed.
     if (metadata.getTotalEventsProcessed() <= 0) {
-      return processed[0] == 1;
+      return false;
     }
 
     // only update checkpoints if some events were processed
@@ -331,8 +314,9 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         checkpoint = new MutableCheckpoint(kafkaOffset, checkpointMetadata.getMaxEventTime());
         checkpoints.put(entry.getKey(), checkpoint);
       } else {
-        checkpoint.getOffset().setNextOffset(kafkaOffset.getNextOffset());
-        checkpoint.getOffset().setNextEventTime(kafkaOffset.getNextEventTime());
+        MutableKafkaOffset offset = checkpoint.getOffset();
+        offset.setNextOffset(kafkaOffset.getNextOffset());
+        offset.setNextEventTime(kafkaOffset.getNextEventTime());
         checkpoint.setMaxEventTime(checkpointMetadata.getMaxEventTime());
       }
     }
@@ -350,7 +334,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       }
     }
 
-    return processed[0] == 1;
+    return true;
   }
 
   /**
@@ -602,6 +586,77 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         "nextOffset=" + nextOffset +
         ", nextEventTime=" + nextEventTime +
         '}';
+    }
+  }
+
+  /**
+   * Transforms kafka {@code MessageAndOffset} iterator to {@code ProcessorEvent} iterator.
+   */
+  private final class KafkaMessageTransformIterator implements Iterator<ProcessorEvent<KafkaOffset>> {
+    private final String topic;
+    private final int partition;
+    private final Iterator<MessageAndOffset> kafkaMessageIterator;
+    private ProcessorEvent<KafkaOffset> nextEntry;
+    private MessageAndOffset nextMessage;
+
+    KafkaMessageTransformIterator(String topic, int partition, Iterator<MessageAndOffset> kafkaMessageIterator) {
+      this.topic = topic;
+      this.partition = partition;
+      this.kafkaMessageIterator = kafkaMessageIterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (nextEntry != null) {
+        return true;
+      }
+
+      if (!kafkaMessageIterator.hasNext()) {
+        return false;
+      }
+
+      boolean skipped;
+      do {
+        MessageAndOffset message = kafkaMessageIterator.next();
+        metricsContext.increment("kafka.bytes.read", message.message().payloadSize());
+
+        try {
+          ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
+          nextEntry = new ProcessorEvent<>(loggingEvent, message.message().payloadSize(),
+                                           new KafkaOffset(message.nextOffset(), loggingEvent.getTimeStamp()));
+          nextMessage = message;
+          skipped = false;
+        } catch (IOException e) {
+          skipped = true;
+          // This shouldn't happen. In case it happens (e.g. someone published some garbage), just skip the message.
+          LOG.trace("Fail to decode logging event from {}:{} at offset {}. Skipping it.",
+                    topic, partition, message.offset(), e);
+        }
+      } while (skipped && kafkaMessageIterator.hasNext());
+
+      return nextEntry != null;
+    }
+
+    @Override
+    public ProcessorEvent<KafkaOffset> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+
+      ProcessorEvent<KafkaOffset> next = nextEntry;
+      // update offset when event is actually consumed.
+      offsets.put(partition, nextMessage.nextOffset());
+
+      // next entry is consumed
+      nextEntry = null;
+      nextMessage = null;
+
+      return next;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("Delete not supported.");
     }
   }
 }
