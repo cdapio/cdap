@@ -33,7 +33,6 @@ import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Fields;
 import com.google.common.collect.ImmutableList;
-import scala.collection.mutable.StringBuilder;
 
 import java.io.IOException;
 import java.util.Optional;
