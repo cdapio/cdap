@@ -37,6 +37,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
@@ -70,18 +72,21 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final TransactionSystemClient txClient;
   private final MetricsCollectionService metricsCollectionService;
+  private final TransactionRunner transactionRunner;
   private final List<Service> subscriberServices;
   private ScheduledExecutorService subscriberExecutor;
 
   @Inject
   ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                        MetricsCollectionService metricsCollectionService) {
+                                        MetricsCollectionService metricsCollectionService,
+                                        TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.messagingService = messagingService;
     this.datasetFramework = datasetFramework;
     this.txClient = txClient;
     this.metricsCollectionService = metricsCollectionService;
+    this.transactionRunner = transactionRunner;
     this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(),
                                             new DataEventSubscriberService(),
                                             new ProgramStatusEventSubscriberService());
@@ -126,7 +131,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     AbstractSchedulerSubscriberService(String name, String topic, int fetchSize, boolean transactionalFetch) {
       super(name, cConf, topic, transactionalFetch, fetchSize,
             cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
-            messagingService, datasetFramework, txClient, metricsCollectionService);
+            messagingService, datasetFramework, txClient, metricsCollectionService, transactionRunner);
     }
 
     @Nullable
@@ -141,9 +146,9 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     }
 
     @Override
-    protected void processMessages(DatasetContext datasetContext,
+    protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
                                    Iterator<ImmutablePair<String, Notification>> messages) {
-      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(datasetContext);
+      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(structuredTableContext);
       JobQueueDataset jobQueue = getJobQueue(datasetContext);
 
       while (messages.hasNext()) {
@@ -166,8 +171,8 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       return Schedulers.getJobQueue(datasetContext, datasetFramework, cConf);
     }
 
-    private ProgramScheduleStoreDataset getScheduleStore(DatasetContext datasetContext) {
-      return Schedulers.getScheduleStore(datasetContext, datasetFramework);
+    private ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {
+      return Schedulers.getScheduleStore(context);
     }
   }
 

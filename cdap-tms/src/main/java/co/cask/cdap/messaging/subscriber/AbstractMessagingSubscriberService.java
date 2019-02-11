@@ -27,6 +27,9 @@ import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeBoundIterator;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.AbstractIterator;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.slf4j.Logger;
@@ -81,6 +84,11 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   protected abstract Transactional getTransactional();
 
   /**
+   * Returns the {@link TransactionRunner} for executing tasks in transaction.
+   */
+  protected abstract TransactionRunner getTransactionRunner();
+
+  /**
    * Loads last persisted message id. This method will be called from a transaction.
    * The returned message id will be used as the starting message id (exclusive) for the first fetch.
    *
@@ -94,13 +102,13 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   /**
    * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(DatasetContext, Iterator)}.
+   * for the call to {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(DatasetContext, Iterator)} has been processed
-   *                  up to.
+   * @param messageId the message id that the {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}
+   *                  has been processed up to.
    * @throws Exception if failed to persist the message id
-   * @see #processMessages(DatasetContext, Iterator)
+   * @see #processMessages(DatasetContext, StructuredTableContext, Iterator)
    */
   protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
 
@@ -120,12 +128,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * the messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
+   * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for the transaction
    * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(DatasetContext, String)
    */
   protected abstract void processMessages(DatasetContext datasetContext,
+                                          StructuredTableContext structuredTableContext,
                                           Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
@@ -154,19 +164,20 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
         // Process the notifications and record the message id of where the processing is up to.
         // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
         long timeBoundMillis = 900L * curTxTimeout;
-        iterator = Transactionals.execute(getTransactional(), curTxTimeout, context -> {
-          TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
-                                                                                                  timeBoundMillis);
-          MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-          processMessages(context, trackingIterator);
-          String lastMessageId = trackingIterator.getLastMessageId();
+        iterator = Transactionals.execute(getTransactional(), curTxTimeout, context ->
+          TransactionRunners.run(getTransactionRunner(), context1 -> {
+            TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+                                                                                                    timeBoundMillis);
+            MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+            processMessages(context, context1, trackingIterator);
+            String lastMessageId = trackingIterator.getLastMessageId();
 
-          // Persist the message id of the last message being consumed from the iterator
-          if (lastMessageId != null) {
-            storeMessageId(context, lastMessageId);
-          }
-          return trackingIterator;
-        });
+            // Persist the message id of the last message being consumed from the iterator
+            if (lastMessageId != null) {
+              storeMessageId(context, lastMessageId);
+            }
+            return trackingIterator;
+          }, TransactionNotInProgressException.class));
         break;
       } catch (Exception e) {
         // we double the tx timeout if we see a tx timeout, stop doubling if it exceeds our max tx timeout

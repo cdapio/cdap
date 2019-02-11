@@ -33,6 +33,7 @@ import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -49,13 +50,15 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
   private final String name;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
+  private final TransactionRunner transactionRunner;
 
   @Inject
   protected AbstractNotificationSubscriberService(String name, CConfiguration cConf, String topicName,
                                                   boolean transactionalFetch, int fetchSize, long emptyFetchDelayMillis,
                                                   MessagingService messagingService,
                                                   DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                                  MetricsCollectionService metricsCollectionService) {
+                                                  MetricsCollectionService metricsCollectionService,
+                                                  TransactionRunner transactionRunner) {
     super(NamespaceId.SYSTEM.topic(topicName), transactionalFetch, fetchSize,
           cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
           cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
@@ -70,6 +73,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
           )));
     this.name = name;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
+    this.transactionRunner = transactionRunner;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
@@ -91,6 +95,11 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
   @Override
   protected Transactional getTransactional() {
     return transactional;
+  }
+
+  @Override
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
   }
 
   @Override

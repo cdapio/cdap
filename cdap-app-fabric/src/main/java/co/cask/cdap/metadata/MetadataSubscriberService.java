@@ -61,6 +61,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -152,6 +153,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
+  }
+
+  @Override
   protected MetadataMessage decodeMessage(Message message) {
     return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
   }
@@ -176,7 +182,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected void processMessages(DatasetContext datasetContext,
+  protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, MetadataMessage>> messages) {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
@@ -204,7 +210,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case ENTITY_CREATION:
           case ENTITY_DELETION:
             return new ProfileMetadataMessageProcessor(
-              cConf, datasetContext, datasetFramework, metadataStore, transactionRunner);
+              cConf, datasetContext, datasetFramework, metadataStore, transactionRunner, structuredTableContext);
           default:
             return null;
         }

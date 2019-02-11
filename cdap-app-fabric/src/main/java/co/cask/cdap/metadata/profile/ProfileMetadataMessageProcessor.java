@@ -47,6 +47,7 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
@@ -88,10 +89,11 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   public ProfileMetadataMessageProcessor(CConfiguration cConf, DatasetContext datasetContext,
                                          DatasetFramework datasetFramework, MetadataStore metadataStore,
-                                         TransactionRunner transactionRunner) {
+                                         TransactionRunner transactionRunner,
+                                         StructuredTableContext structuredTableContext) {
     defaultNamespaceStore = new DefaultNamespaceStore(transactionRunner);
     appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
-    scheduleDataset = Schedulers.getScheduleStore(datasetContext, datasetFramework);
+    scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
     preferencesDataset = PreferencesDataset.get(datasetContext, datasetFramework);
     this.metadataStore = metadataStore;
   }

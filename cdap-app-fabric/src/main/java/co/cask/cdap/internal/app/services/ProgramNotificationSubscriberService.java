@@ -49,6 +49,8 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.reporting.ProgramHeartbeatDataset;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -101,11 +103,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                        ProvisionerNotifier provisionerNotifier,
                                        ProgramLifecycleService programLifecycleService,
                                        ProvisioningService provisioningService,
-                                       ProgramStateWriter programStateWriter) {
+                                       ProgramStateWriter programStateWriter,
+                                       TransactionRunner transactionRunner) {
     super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), false,
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
-          messagingService, datasetFramework, txClient, metricsCollectionService);
+          messagingService, datasetFramework, txClient, metricsCollectionService, transactionRunner);
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
@@ -129,7 +132,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   @Override
-  protected void processMessages(DatasetContext datasetContext,
+  protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     AppMetadataStore appMetadataStore = getAppMetadataStore(datasetContext);
     ProgramHeartbeatDataset heartbeatDataset =
