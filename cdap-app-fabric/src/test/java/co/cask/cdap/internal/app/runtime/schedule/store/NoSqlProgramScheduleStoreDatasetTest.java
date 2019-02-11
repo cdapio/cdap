@@ -12,25 +12,18 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- *
  */
 
-package co.cask.cdap.spi.data;
+package co.cask.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.spi.data.table.StructuredTableId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 
 /**
- * Thrown when a table does not exist when it is expected to.
+ *
  */
-public class TableNotFoundException extends RuntimeException {
-  private final StructuredTableId id;
-
-  public TableNotFoundException(StructuredTableId id) {
-    super(String.format("System table '%s' not found.", id));
-    this.id = id;
-  }
-
-  public StructuredTableId getId() {
-    return id;
+public class NoSqlProgramScheduleStoreDatasetTest extends ProgramScheduleStoreDatasetTest {
+  @Override
+  protected TransactionRunner getTransactionRunner() {
+    return getInjector().getInstance(TransactionRunner.class);
   }
 }
