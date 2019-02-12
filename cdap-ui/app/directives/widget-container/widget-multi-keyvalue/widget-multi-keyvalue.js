@@ -207,9 +207,11 @@ angular.module(PKG.name + '.commons')
 
             case PREDEFINED_KEYVALUE_INPUT_TYPE: {
               if(type === 'key') {
-                return myHelpers.objectQuery($scope.config, 'widget-attributes', 'key-options') || [];
+                let options = myHelpers.objectQuery($scope.config, 'widget-attributes', 'key-options') || [];
+                return options.map(option => ({ id: option, label: option }));
               } else if(type === 'value') {
-                return myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-options') || [];
+                let options = myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-options') || [];
+                return options.map(option => ({ id: option, label: option }));
               }
 
               return [];
