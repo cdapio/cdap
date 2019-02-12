@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 Cask Data, Inc.
+ * Copyright 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,7 @@ public class MetadataDatasetDefinition
 
   private final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
 
-  MetadataDatasetDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
+  public MetadataDatasetDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
     super(name);
     this.indexedTableDef = indexedTableDef;
   }

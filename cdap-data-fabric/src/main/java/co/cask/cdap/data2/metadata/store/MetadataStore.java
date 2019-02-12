@@ -23,6 +23,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +38,16 @@ import java.util.Set;
  * </ul>
  */
 public interface MetadataStore {
+
+  /**
+   * Create all tables or indexes required for operations.
+   */
+  void createIndex() throws IOException;
+
+  /**
+   * Drop all tables or indexes required for operations.
+   */
+  void dropIndex() throws IOException;
 
   /**
    * Replaces the metadata for the given entity: All existing properties and tags are

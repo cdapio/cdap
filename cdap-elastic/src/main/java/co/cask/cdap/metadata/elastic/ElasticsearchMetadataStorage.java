@@ -207,8 +207,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
-  @VisibleForTesting
-  void ensureIndexCreated() throws IOException {
+  @Override
+  public void createIndex() throws IOException {
     if (created) {
       return;
     }
@@ -289,8 +289,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       "}").replace('\'', '"');
   }
 
-  @VisibleForTesting
-  void deleteIndex() throws IOException {
+  @Override
+  public void dropIndex() throws IOException {
     synchronized (this) {
       GetIndexRequest request = new GetIndexRequest();
       request.indices(indexName);
@@ -309,7 +309,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public MetadataChange apply(MetadataMutation mutation) throws IOException {
-    ensureIndexCreated();
     MetadataEntity entity = mutation.getEntity();
     Metadata before = readFromIndex(entity);
     Tuple<? extends DocWriteRequest, MetadataChange> intermediary = applyMutation(before, mutation);
@@ -319,7 +318,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException {
-    ensureIndexCreated();
     MultiGetRequest multiGet = new MultiGetRequest();
     for (MetadataMutation mutation : mutations) {
       multiGet.add(indexName, DOC_TYPE, toDocumentId(mutation.getEntity()));
@@ -348,7 +346,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public Metadata read(Read read) throws IOException {
-    ensureIndexCreated();
     Metadata metadata = readFromIndex(read.getEntity());
     return filterMetadata(metadata, KEEP, read.getKinds(), read.getScopes(), read.getSelection());
   }
@@ -356,7 +353,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   @Override
   public co.cask.cdap.spi.metadata.SearchResponse search(SearchRequest request)
     throws IOException {
-    ensureIndexCreated();
     return request.getCursor() != null && !request.getCursor().isEmpty()
       ? doScroll(request) : doSearch(request, request.getOffset(), request.getLimit());
   }

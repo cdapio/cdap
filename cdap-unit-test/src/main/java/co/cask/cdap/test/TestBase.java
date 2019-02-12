@@ -53,6 +53,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -280,6 +281,7 @@ public class TestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
+    injector.getInstance(MetadataStore.class).createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();

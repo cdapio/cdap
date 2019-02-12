@@ -33,6 +33,16 @@ import java.util.Set;
 public class NoOpMetadataStore implements MetadataStore {
 
   @Override
+  public void createIndex() {
+    // no-op
+  }
+
+  @Override
+  public void dropIndex() {
+    // no-op
+  }
+
+  @Override
   public void replaceMetadata(MetadataScope scope, MetadataDataset.Record metadata,
                               Set<String> propertiesToKeep, Set<String> propertiesToPreserve) {
     // NO-OP

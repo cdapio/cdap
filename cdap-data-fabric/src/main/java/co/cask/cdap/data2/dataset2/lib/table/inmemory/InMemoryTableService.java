@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,8 +54,7 @@ public class InMemoryTableService {
 
   public static synchronized void create(String tableName) {
     if (!tables.containsKey(tableName)) {
-      tables.put(tableName, new ConcurrentSkipListMap<byte[],
-        NavigableMap<byte[], NavigableMap<Long, Update>>>(Bytes.BYTES_COMPARATOR));
+      tables.put(tableName, new ConcurrentSkipListMap<>(Bytes.BYTES_COMPARATOR));
     }
   }
 

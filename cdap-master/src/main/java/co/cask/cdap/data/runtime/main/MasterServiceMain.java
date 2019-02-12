@@ -48,6 +48,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.util.hbase.ConfigurationReader;
@@ -636,6 +637,11 @@ public class MasterServiceMain extends DaemonMain {
                                         injector.getInstance(StructuredTableRegistry.class));
       } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Unable to create the system tables.", e);
+      }
+      try {
+        injector.getInstance(MetadataStore.class).createIndex();
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to create the metadata tables.", e);
       }
 
       authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);

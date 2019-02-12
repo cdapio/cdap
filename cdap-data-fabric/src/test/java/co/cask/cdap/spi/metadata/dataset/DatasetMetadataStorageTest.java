@@ -21,11 +21,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -44,10 +41,8 @@ import co.cask.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;
@@ -74,17 +69,9 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
   private static DatasetMetadataStorage storage;
 
   @BeforeClass
-  public static void setup() {
+  public static void setup() throws IOException {
     Injector injector = Guice.createInjector(
       new ConfigModule(),
-      Modules.override(
-        new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // Need the distributed metadata store.
-          bind(MetadataStore.class).to(DefaultMetadataStore.class);
-        }
-      }),
       new LocalLocationModule(),
       new TransactionInMemoryModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
@@ -97,11 +84,13 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     storage = injector.getInstance(DatasetMetadataStorage.class);
+    storage.createIndex();
   }
 
   @AfterClass
-  public static void teardown() {
+  public static void teardown() throws IOException {
     txManager.stopAndWait();
+    storage.dropIndex();
   }
 
   @Override

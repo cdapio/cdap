@@ -85,6 +85,16 @@ public class StorageProviderMetadataStore implements MetadataStore {
   }
 
   @Override
+  public void createIndex() throws IOException {
+    storage.createIndex();
+  }
+
+  @Override
+  public void dropIndex() throws IOException {
+    storage.dropIndex();
+  }
+
+  @Override
   public void replaceMetadata(MetadataScope scope,
                               MetadataDataset.Record metadata,
                               Set<String> propertiesToKeep,

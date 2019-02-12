@@ -24,6 +24,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -179,6 +180,8 @@ public abstract class GatewayTestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
+    injector.getInstance(MetadataStore.class).createIndex();
+
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
