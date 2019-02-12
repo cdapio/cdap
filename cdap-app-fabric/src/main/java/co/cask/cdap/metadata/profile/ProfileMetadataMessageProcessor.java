@@ -51,7 +51,6 @@ import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
-import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
@@ -101,7 +100,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   @Override
-  public void processMessage(MetadataMessage message) {
+  public void processMessage(MetadataMessage message) throws IOException {
     LOG.trace("Processing message: {}", message);
 
     EntityId entityId = message.getEntityId();
@@ -122,14 +121,14 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     }
   }
 
-  private void updateProfileMetadata(EntityId entityId, MetadataMessage message) {
+  private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
     Map<MetadataEntity, Map<String, String>> toUpdate = new HashMap<>();
     collectProfileMetadata(entityId, message, toUpdate);
     metadataStore.addProperties(MetadataScope.SYSTEM, toUpdate);
   }
 
   private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
-                                      Map<MetadataEntity, Map<String, String>> updates) {
+                                      Map<MetadataEntity, Map<String, String>> updates) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         for (NamespaceMeta meta : defaultNamespaceStore.list()) {
@@ -184,9 +183,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
                       "Ignoring the message {}", scheduleId, message);
           return;
-        } catch (IOException e) {
-          // TODO: (poorna) handle exception
-          throw Throwables.propagate(e);
         }
         break;
       default:
@@ -224,7 +220,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
                                          @Nullable ProfileId namespaceProfile,
-                                         Map<MetadataEntity, Map<String, String>> updates) {
+                                         Map<MetadataEntity, Map<String, String>> updates) throws IOException {
     LOG.trace("Updating profile metadata for {}", applicationId);
     ProfileId appProfile = namespaceProfile == null
       ? getResolvedProfileId(applicationId)
@@ -235,20 +231,15 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
-                                             Map<MetadataEntity, Map<String, String>> updates) {
+                                             Map<MetadataEntity, Map<String, String>> updates) throws IOException {
     LOG.trace("Updating profile metadata for {}", programId);
     ProfileId programProfile = appProfile == null
       ? getResolvedProfileId(programId)
       : getProfileId(programId).orElse(appProfile);
     addProfileMetadataUpdate(programId, programProfile, updates);
 
-    try {
-      for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
-        collectScheduleProfileMetadata(schedule, programProfile, updates);
-      }
-    } catch (IOException e) {
-      // TODO: (poorna) handle exception
-      throw Throwables.propagate(e);
+    for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
+      collectScheduleProfileMetadata(schedule, programProfile, updates);
     }
   }
 

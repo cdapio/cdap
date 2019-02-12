@@ -149,7 +149,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     @Override
     protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
-                                   Iterator<ImmutablePair<String, Notification>> messages) {
+                                   Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
       ProgramScheduleStoreDataset scheduleStore = getScheduleStore(structuredTableContext);
       JobQueueDataset jobQueue = getJobQueue(datasetContext);
 
@@ -167,7 +167,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
      * Processes a single {@link Notification}.
      */
     protected abstract void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                                JobQueueDataset jobQueue, Notification notification);
+                                                JobQueueDataset jobQueue, Notification notification) throws IOException;
 
     private JobQueueDataset getJobQueue(DatasetContext datasetContext) {
       return Schedulers.getJobQueue(datasetContext, datasetFramework, cConf);
@@ -191,7 +191,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueDataset jobQueue, Notification notification) {
+                                       JobQueueDataset jobQueue, Notification notification) throws IOException {
 
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
@@ -215,9 +215,6 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       } catch (NotFoundException e) {
         LOG.warn("Ignore notification that doesn't have a schedule {} associated with, {}", scheduleId, notification);
         return;
-      } catch (IOException e) {
-        // TODO: (poorna) handle exception
-        throw Throwables.propagate(e);
       }
       jobQueue.addNotification(record, notification);
     }

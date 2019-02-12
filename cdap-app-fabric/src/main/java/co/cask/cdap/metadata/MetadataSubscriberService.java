@@ -72,6 +72,7 @@ import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -183,7 +184,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) {
+                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) throws IOException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
