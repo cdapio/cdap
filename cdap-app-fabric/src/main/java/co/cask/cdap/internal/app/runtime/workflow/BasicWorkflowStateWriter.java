@@ -16,57 +16,39 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionSystemClient;
 
 /**
  * Implementation of {@link WorkflowStateWriter} that writes to {@link AppMetadataStore} directly.
  */
 public class BasicWorkflowStateWriter implements WorkflowStateWriter {
 
-  private final CConfiguration cConf;
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
 
   @Inject
-  BasicWorkflowStateWriter(CConfiguration cConf, DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this.cConf = cConf;
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+  BasicWorkflowStateWriter(TransactionRunner transactionRunner) {
+    this.transactionRunner = transactionRunner;
   }
 
 
   @Override
   public void setWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
-    Transactionals.execute(transactional, context -> {
-      AppMetadataStore.create(cConf, context, datasetFramework).setWorkflowToken(workflowRunId, token);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore.create(context).setWorkflowToken(workflowRunId, token);
     });
   }
 
   @Override
   public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
-    Transactionals.execute(transactional, context -> {
-      AppMetadataStore.create(cConf, context, datasetFramework).addWorkflowNodeState(workflowRunId, nodeStateDetail);
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore.create(context).addWorkflowNodeState(workflowRunId, nodeStateDetail);
     });
   }
 }

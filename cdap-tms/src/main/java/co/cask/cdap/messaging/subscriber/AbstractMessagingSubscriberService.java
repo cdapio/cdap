@@ -27,6 +27,9 @@ import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.TimeBoundIterator;
 import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.AbstractIterator;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.slf4j.Logger;
@@ -81,8 +84,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   protected abstract Transactional getTransactional();
 
   /**
+   * Returns the {@link TransactionRunner} for executing tasks in transaction.
+   */
+  protected abstract TransactionRunner getTransactionRunner();
+
+  /**
    * Loads last persisted message id. This method will be called from a transaction.
    * The returned message id will be used as the starting message id (exclusive) for the first fetch.
+   * This exists because certain implementations are still not migrated.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances.
    * @return the last persisted message id or {@code null} to have first fetch starts from the first available message
@@ -95,6 +104,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   /**
    * Persists the given message id. This method will be called from a transaction, which is the same transaction
    * for the call to {@link #processMessages(DatasetContext, Iterator)}.
+   * This exists because certain implementations are still not migrated.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
    * @param messageId the message id that the {@link #processMessages(DatasetContext, Iterator)} has been processed
@@ -103,6 +113,31 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * @see #processMessages(DatasetContext, Iterator)
    */
   protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
+
+  /**
+   * Loads last persisted message id. This method will be called from a transaction.
+   * The returned message id will be used as the starting message id (exclusive) for the first fetch.
+   *
+   * @param context the {@link StructuredTableContext} for getting dataset instances.
+   * @return the last persisted message id or {@code null} to have first fetch starts from the first available message
+   *         in the topic.
+   * @throws Exception if failed to load the message id
+   */
+  @Nullable
+  protected abstract String loadMessageId(StructuredTableContext context) throws Exception;
+
+  /**
+   * Persists the given message id. This method will be called from a transaction, which is the same transaction
+   * for the call to {@link #processMessages(DatasetContext, Iterator)}.
+   *
+   * @param context the {@link StructuredTableContext} for getting dataset instances
+   * @param messageId the message id that the {@link #processMessages(DatasetContext, Iterator)}
+   *                  has been processed
+   *                  up to.
+   * @throws Exception if failed to persist the message id
+   * @see #processMessages(DatasetContext, Iterator)
+   */
+  protected abstract void storeMessageId(StructuredTableContext context, String messageId) throws Exception;
 
   /**
    * Whether the message should run in its own transaction because it is expected to be an expensive operation.
@@ -140,7 +175,16 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected final String loadMessageId() {
-    return Transactionals.execute(getTransactional(), (TxCallable<String>) this::loadMessageId);
+    // TODO: CDAP-14848 remove redundant transaction
+    String messageId = Transactionals.execute(getTransactional(), context -> {
+      return loadMessageId(context);
+    });
+    if (messageId == null && getTransactionRunner() != null) {
+      messageId = TransactionRunners.run(getTransactionRunner(), context -> {
+        return loadMessageId(context);
+      });
+    }
+    return messageId;
   }
 
   @Nullable
@@ -164,6 +208,12 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
           // Persist the message id of the last message being consumed from the iterator
           if (lastMessageId != null) {
             storeMessageId(context, lastMessageId);
+            // TODO: CDAP-14848 Remove redundancy
+            if (getTransactionRunner() != null) {
+              TransactionRunners.run(getTransactionRunner(), structuredTableContext -> {
+                storeMessageId(structuredTableContext, lastMessageId);
+              });
+            }
           }
           return trackingIterator;
         });

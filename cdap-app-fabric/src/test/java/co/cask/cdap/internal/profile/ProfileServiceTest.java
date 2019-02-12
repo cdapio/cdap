@@ -46,6 +46,7 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
+import co.cask.cdap.spi.data.transaction.TransactionException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;

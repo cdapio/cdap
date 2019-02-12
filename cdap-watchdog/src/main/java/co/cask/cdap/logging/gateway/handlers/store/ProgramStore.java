@@ -31,6 +31,11 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
@@ -42,20 +47,11 @@ import org.apache.tephra.TransactionSystemClient;
  */
 public class ProgramStore {
 
-  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
 
   @Inject
-  public ProgramStore(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+  public ProgramStore(TransactionRunner transactionRunner) {
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -65,12 +61,10 @@ public class ProgramStore {
    * @return run record for runid
    */
   public RunRecordMeta getRun(ProgramRunId programRunId) {
-    return Transactionals.execute(transactional, context -> {
-      Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
-                                                    Table.class.getName(), DatasetProperties.EMPTY);
+    return TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.AppMetadataStore.RUN_RECORDS);
       AppMetadataStore metaStore = new AppMetadataStore(table);
       return metaStore.getRun(programRunId.getParent(), programRunId.getRun());
-
     });
   }
 }

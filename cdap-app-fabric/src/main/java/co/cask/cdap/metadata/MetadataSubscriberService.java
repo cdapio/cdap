@@ -60,7 +60,10 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.spi.metadata.MetadataConstants;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -71,6 +74,7 @@ import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -152,22 +156,38 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
+  }
+
+  @Override
   protected MetadataMessage decodeMessage(Message message) {
     return GSON.fromJson(message.getPayloadAsString(), MetadataMessage.class);
   }
 
   @Nullable
   @Override
-  protected String loadMessageId(DatasetContext datasetContext) {
-    AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
+  protected String loadMessageId(StructuredTableContext context) throws IOException, TableNotFoundException {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     return appMetadataStore.retrieveSubscriberState(getTopicId().getTopic(), "metadata.writer");
   }
 
   @Override
-  protected void storeMessageId(DatasetContext datasetContext, String messageId) {
-    AppMetadataStore appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
+  protected void storeMessageId(StructuredTableContext context, String messageId)
+    throws IOException, TableNotFoundException {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
     appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
   }
+
+  @Nullable
+  @Override
+  // TODO: CDAP-14848 delete below two methods once migration is complete
+  protected String loadMessageId(DatasetContext context) throws IOException {
+    return null;
+  }
+
+  @Override
+  protected void storeMessageId(DatasetContext context, String messageId) throws IOException {}
 
   @Override
   protected boolean shouldRunInSeparateTx(MetadataMessage message) {
@@ -177,7 +197,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected void processMessages(DatasetContext datasetContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) {
+                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) throws IOException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
@@ -194,7 +214,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
             return new UsageProcessor(datasetContext);
           case WORKFLOW_TOKEN:
           case WORKFLOW_STATE:
-            return new WorkflowProcessor(datasetContext);
+            return new WorkflowProcessor();
           case METADATA_OPERATION:
             return new MetadataOperationProcessor(cConf);
           case DATASET_OPERATION:
@@ -204,7 +224,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case ENTITY_CREATION:
           case ENTITY_DELETION:
             return new ProfileMetadataMessageProcessor(
-              cConf, datasetContext, datasetFramework, metadataStore, transactionRunner);
+              datasetContext, datasetFramework, metadataStore, transactionRunner);
           default:
             return null;
         }
@@ -307,14 +327,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private final class WorkflowProcessor implements MetadataMessageProcessor {
 
-    private final AppMetadataStore appMetadataStore;
-
-    WorkflowProcessor(DatasetContext datasetContext) {
-      this.appMetadataStore = AppMetadataStore.create(cConf, datasetContext, datasetFramework);
-    }
+    WorkflowProcessor() {}
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message) throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
         return;
@@ -324,10 +340,16 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
       switch (message.getType()) {
         case WORKFLOW_TOKEN:
-          appMetadataStore.setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
+          TransactionRunners.run(transactionRunner, context -> {
+            AppMetadataStore.create(context)
+              .setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
+          });
           break;
         case WORKFLOW_STATE:
-          appMetadataStore.addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
+          TransactionRunners.run(transactionRunner, context -> {
+            AppMetadataStore.create(context)
+              .addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
+          });
           break;
         default:
           // This shouldn't happen

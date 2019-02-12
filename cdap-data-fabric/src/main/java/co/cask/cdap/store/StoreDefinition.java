@@ -61,6 +61,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ConfigStore.CONFIGS) == null) {
       ConfigStore.createTable(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(AppMetadataStore.APPLICATION_SPECIFICATIONS) == null) {
+      AppMetadataStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -209,7 +212,6 @@ public final class StoreDefinition {
         .withPrimaryKeys(PARENT_NAMESPACE_FIELD, PARENT_NAME_FIELD, PLUGIN_TYPE_FIELD, PLUGIN_NAME_FIELD,
                          ARTIFACT_NAMESPACE_FIELD, ARTIFACT_NAME_FIELD, ARTIFACT_VER_FIELD)
         .build();
-    
 
     // Universal Plugin Data table
     public static final StructuredTableSpecification UNIV_PLUGIN_DATA_SPEC =
@@ -272,6 +274,126 @@ public final class StoreDefinition {
 
     public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(SECRET_STORE_SPEC);
+    }
+  }
+
+  /**
+   *  Defines schema for AppMetadata tables
+   */
+  public static final class AppMetadataStore {
+    public static final StructuredTableId APPLICATION_SPECIFICATIONS = new StructuredTableId("application_specs");
+    public static final StructuredTableId WORKFLOW_NODE_STATES = new StructuredTableId("workflow_node_states");
+    public static final StructuredTableId RUN_RECORDS = new StructuredTableId("run_records");
+    public static final StructuredTableId WORKFLOWS = new StructuredTableId("workflows");
+    public static final StructuredTableId PROGRAM_COUNTS = new StructuredTableId("program_counts");
+    // TODO: CDAP-14876 Move this table into it's own store, along with associated methods
+    public static final StructuredTableId SUBSCRIBER_STATES = new StructuredTableId("subscriber_state");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String VERSION_FIELD = "version";
+    public static final String APPLICATION_DATA_FIELD = "application_data";
+    public static final String PROGRAM_TYPE_FIELD = "program_type";
+    public static final String PROGRAM_FIELD = "program";
+    public static final String RUN_FIELD = "run";
+    public static final String NODE_ID = "node_id";
+    public static final String NODE_STATE_DATA = "node_state_data";
+    public static final String RUN_STATUS = "run_status";
+    public static final String RUN_START_TIME = "run_start_time";
+    public static final String RUN_RECORD_DATA = "run_record_data";
+    public static final String WORKFLOW_DATA = "workflow_data";
+    public static final String COUNT_TYPE = "count_type";
+    public static final String COUNTS = "counts";
+    public static final String SUBSCRIBER_TOPIC = "subscriber_topic";
+    public static final String SUBSCRIBER_MESSAGE = "subscriber_message";
+    public static final String SUBSCRIBER = "subscriber";
+
+
+    public static final StructuredTableSpecification APPLICATION_SPECIFICATIONS_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(APPLICATION_SPECIFICATIONS)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(APPLICATION_DATA_FIELD))
+        .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD)
+        .build();
+
+    public static final StructuredTableSpecification WORKFLOW_NODE_STATES_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(WORKFLOW_NODE_STATES)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(PROGRAM_TYPE_FIELD),
+                    Fields.stringType(PROGRAM_FIELD),
+                    Fields.stringType(RUN_FIELD),
+                    Fields.stringType(NODE_ID),
+                    Fields.stringType(NODE_STATE_DATA))
+        .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD,
+                         RUN_FIELD, NODE_ID)
+        .build();
+
+    public static final StructuredTableSpecification RUN_RECORDS_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(RUN_RECORDS)
+        .withFields(Fields.stringType(RUN_STATUS),
+                    Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(PROGRAM_TYPE_FIELD),
+                    Fields.stringType(PROGRAM_FIELD),
+                    Fields.longType(RUN_START_TIME),
+                    Fields.stringType(RUN_FIELD),
+                    Fields.stringType(RUN_RECORD_DATA))
+        .withPrimaryKeys(RUN_STATUS, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD,
+                         PROGRAM_FIELD, RUN_START_TIME, RUN_FIELD)
+        .build();
+
+    public static final StructuredTableSpecification WORKFLOWS_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(WORKFLOWS)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(PROGRAM_TYPE_FIELD),
+                    Fields.stringType(PROGRAM_FIELD),
+                    Fields.stringType(RUN_FIELD),
+                    Fields.stringType(WORKFLOW_DATA))
+        .withPrimaryKeys(
+          NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
+        .build();
+
+    public static final StructuredTableSpecification PROGRAM_COUNTS_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(PROGRAM_COUNTS)
+        .withFields(Fields.stringType(COUNT_TYPE),
+                    Fields.stringType(NAMESPACE_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(VERSION_FIELD),
+                    Fields.stringType(PROGRAM_TYPE_FIELD),
+                    Fields.stringType(PROGRAM_FIELD),
+                    Fields.longType(COUNTS))
+        .withPrimaryKeys(
+          COUNT_TYPE, NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD)
+        .build();
+
+    public static final StructuredTableSpecification SUBSCRIBER_STATE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(SUBSCRIBER_STATES)
+        .withFields(Fields.stringType(SUBSCRIBER_TOPIC),
+                    Fields.stringType(SUBSCRIBER),
+                    Fields.stringType(SUBSCRIBER_MESSAGE))
+        .withPrimaryKeys(SUBSCRIBER_TOPIC, SUBSCRIBER)
+        .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(APPLICATION_SPECIFICATIONS_TABLE_SPEC);
+      tableAdmin.create(WORKFLOW_NODE_STATES_SPEC);
+      tableAdmin.create(RUN_RECORDS_SPEC);
+      tableAdmin.create(WORKFLOWS_SPEC);
+      tableAdmin.create(PROGRAM_COUNTS_SPEC);
+      tableAdmin.create(SUBSCRIBER_STATE_SPEC);
     }
   }
 }
