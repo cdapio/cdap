@@ -28,6 +28,16 @@ import java.util.List;
 public interface MetadataStorage extends AutoCloseable {
 
   /**
+   * Create all tables or indexes required for operations.
+   */
+  void createIndex() throws IOException;
+
+  /**
+   * Drop all tables or indexes required for operations.
+   */
+  void dropIndex() throws IOException;
+
+  /**
    * Apply the given mutation to the metadata state.
    *
    * @param mutation the mutation to perform

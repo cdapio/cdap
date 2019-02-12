@@ -36,6 +36,8 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -55,6 +57,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.zookeeper.ZKClientService;
 
@@ -128,7 +131,12 @@ public class ContextManager {
       new NamespaceQueryAdminModule(),
       new ZKDiscoveryModule(),
       new DataFabricModules("cdap.explore.ContextManager").getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
+      Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetadataStore.class).to(NoOpMetadataStore.class);
+        }
+      }),
       new ExploreClientModule(),
       new KafkaClientModule(),
       new AuditModule(),

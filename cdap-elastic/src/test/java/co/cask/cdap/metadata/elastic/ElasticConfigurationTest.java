@@ -70,7 +70,7 @@ public class ElasticConfigurationTest {
                                @Nullable Integer shards, @Nullable Integer replicas, @Nullable Integer windowSize)
     throws IOException {
     try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf)) {
-      store.ensureIndexCreated();
+      store.createIndex();
       try {
         try (RestHighLevelClient client = new RestHighLevelClient(
           RestClient.builder(new HttpHost("localhost", Integer.parseInt(elasticPort))))) {
@@ -85,7 +85,7 @@ public class ElasticConfigurationTest {
           Assert.assertEquals(String.valueOf(shards), response.getSetting(indexName, "index.number_of_shards"));
         }
       } finally {
-        store.deleteIndex();
+        store.dropIndex();
       }
     }
   }

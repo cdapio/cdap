@@ -18,25 +18,24 @@ package co.cask.cdap.spi.metadata.dataset;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
@@ -44,9 +43,12 @@ import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
+import com.google.inject.name.Named;
+import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +64,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
@@ -78,44 +79,164 @@ public class SearchHelper {
   protected static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.business");
   protected static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.system");
 
+  private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
+
   private static final Comparator<Map.Entry<MetadataEntity, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
     // sort in descending order
     (o1, o2) -> o2.getValue() - o1.getValue();
 
+  private final DatasetDefinition<MetadataDataset, DatasetAdmin> metaDatasetDefinition;
+  private final Map<String, DatasetSpecification> datasetSpecs;
   protected final Transactional transactional;
-  protected final DatasetFramework dsFramework;
 
   @Inject
-  public SearchHelper(TransactionSystemClient txClient, DatasetFramework dsFramework) {
-    DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(dsFramework), new TransactionSystemClientAdapter(txClient),
-      NamespaceId.SYSTEM, Collections.emptyMap(), null, null);
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(datasetCache),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
-    this.dsFramework = dsFramework;
+  public SearchHelper(TransactionSystemClient txClient,
+                      @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+    //noinspection unchecked
+    this.metaDatasetDefinition = new MetadataDatasetDefinition(MetadataDataset.TYPE,
+                                                               new IndexedTableDefinition("indexedTable",
+                                                                                          tableDefinition));
+    this.datasetSpecs = ImmutableMap.of(MetadataScope.SYSTEM.name(), createDatasetSpec(metaDatasetDefinition, SYSTEM),
+                                        MetadataScope.USER.name(), createDatasetSpec(metaDatasetDefinition, USER));
+    this.transactional = createTransactional(txClient);
   }
 
-  <T> T execute(TransactionExecutor.Function<MetadataDatasetContext, T> func) {
-    return Transactionals.execute(transactional, context -> {
-      return func.apply(scope -> getMetadataDataset(context, dsFramework, scope));
-    });
-  }
-
-  private static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
-                                                    MetadataScope scope) {
-    try {
-      return DatasetsUtil.getOrCreateDataset(
-        context, dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
-        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
-    } catch (DatasetManagementException | IOException e) {
-      throw Throwables.propagate(e);
+  public void createDatasets() throws IOException {
+    for (MetadataScope scope : MetadataScope.ALL) {
+      DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT, datasetSpecs.get(scope.name()), null);
+      if (!admin.exists()) {
+        admin.create();
+      }
     }
   }
 
-  protected static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
+  public void dropDatasets() throws IOException {
+    for (MetadataScope scope : MetadataScope.ALL) {
+      DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT, datasetSpecs.get(scope.name()), null);
+      if (admin.exists()) {
+        admin.drop();
+      }
+    }
+  }
+
+  private static DatasetSpecification createDatasetSpec(DatasetDefinition def, MetadataScope scope) {
+    return def.configure(getMetadataDatasetInstance(scope).getEntityName(),
+                         DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
+  }
+
+  private static DatasetId getMetadataDatasetInstance(MetadataScope scope) {
     return USER == scope ? BUSINESS_METADATA_INSTANCE_ID : SYSTEM_METADATA_INSTANCE_ID;
+  }
+
+  private class MetaOnlyDatasetContext implements co.cask.cdap.api.data.DatasetContext, AutoCloseable {
+    private final Map<String, MetadataDataset> datasets = new HashMap<>();
+    private final TransactionContext txContext;
+
+    private MetaOnlyDatasetContext(TransactionContext txContext) {
+      this.txContext = txContext;
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String scope) throws DatasetInstantiationException {
+      MetadataDataset dataset = datasets.get(scope);
+      if (dataset == null) {
+        try {
+          dataset = metaDatasetDefinition.getDataset(
+            SYSTEM_CONTEXT, datasetSpecs.get(scope), Collections.emptyMap(), null);
+        } catch (IOException e) {
+          throw Throwables.propagate(e);
+        }
+        datasets.put(scope, dataset);
+        txContext.addTransactionAware(dataset);
+      }
+      @SuppressWarnings("unchecked")
+      T t = (T) dataset;
+      return t;
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String namespace, String name) throws DatasetInstantiationException {
+      throw new UnsupportedOperationException("This class intentionally does not implement this method");
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
+      throw new UnsupportedOperationException("This class intentionally does not implement this method");
+    }
+
+    @Override
+    public <T extends Dataset> T getDataset(String namespace, String name, Map<String, String> arguments) {
+      throw new UnsupportedOperationException("This class intentionally does not implement this method");
+    }
+
+    @Override
+    public void releaseDataset(Dataset dataset) {
+      // no-op
+    }
+
+    @Override
+    public void discardDataset(Dataset dataset) {
+      // no-op
+    }
+
+    @Override
+    public void close() {
+      for (String scope : datasets.keySet()) {
+        Closeables.closeQuietly(datasets.get(scope));
+      }
+      datasets.clear();
+    }
+  }
+
+  /**
+   * Create a transactional for metadata datasets.
+   *
+   * @param txClient transaction client
+   * @return transactional for the metadata tables
+   */
+  private Transactional createTransactional(TransactionSystemClient txClient) {
+    return new Transactional() {
+      @Override
+      public void execute(co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+        TransactionContext txContext = new TransactionContext(txClient);
+        try (MetaOnlyDatasetContext datasetContext = new MetaOnlyDatasetContext(txContext)) {
+          txContext.start();
+          finishExecute(txContext, datasetContext, runnable);
+        } catch (Exception e) {
+          Throwables.propagateIfPossible(e, TransactionFailureException.class);
+        }
+      }
+
+      @Override
+      public void execute(int timeout, co.cask.cdap.api.TxRunnable runnable) throws TransactionFailureException {
+        TransactionContext txContext = new TransactionContext(txClient);
+        try (MetaOnlyDatasetContext datasetContext = new MetaOnlyDatasetContext(txContext)) {
+          txContext.start(timeout);
+          finishExecute(txContext, datasetContext, runnable);
+        } catch (Exception e) {
+          Throwables.propagateIfPossible(e, TransactionFailureException.class);
+        }
+      }
+
+      private void finishExecute(TransactionContext txContext, co.cask.cdap.api.data.DatasetContext dsContext,
+                                 co.cask.cdap.api.TxRunnable runnable)
+        throws TransactionFailureException {
+        try {
+          runnable.run(dsContext);
+        } catch (Exception e) {
+          txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run() " + runnable, e));
+        }
+        // The call the txContext.abort above will always have exception thrown
+        // Hence we'll only reach here if and only if the runnable.run() returns normally.
+        txContext.finish();
+      }
+    };
+  }
+
+  protected <T> T execute(TransactionExecutor.Function<MetadataDatasetContext, T> func) {
+    return Transactionals.execute(transactional, context -> {
+      return func.apply(scope -> context.getDataset(scope.name()));
+    });
   }
 
   public MetadataSearchResponse search(SearchRequest request, @Nullable MetadataScope scope) {

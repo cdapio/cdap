@@ -87,7 +87,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -136,11 +135,10 @@ public class BaseHiveExploreServiceTest {
   }
 
   protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder) throws Exception {
-    initialize(cConf, tmpFolder, false, false);
+    initialize(cConf, tmpFolder, false);
   }
 
-  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean useStandalone,
-                                   boolean enableAuthorization)
+  protected static void initialize(CConfiguration cConf, TemporaryFolder tmpFolder, boolean enableAuthorization)
     throws Exception {
     if (!runBefore) {
       return;
@@ -156,8 +154,7 @@ public class BaseHiveExploreServiceTest {
       cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
       cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     }
-    List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
-      : createInMemoryModules(cConf, hConf, tmpFolder);
+    List<Module> modules = createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
@@ -192,6 +189,7 @@ public class BaseHiveExploreServiceTest {
     } catch (IOException | TableAlreadyExistsException e) {
       throw new RuntimeException("Failed to create the system tables", e);
     }
+
     // create namespaces
     // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
     // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
@@ -355,46 +353,6 @@ public class BaseHiveExploreServiceTest {
               bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class).in(Singleton.class);
             }
           }));
-        }
-      }
-    );
-  }
-
-  // these are needed if we actually want to query streams, as the stream input format looks at the filesystem
-  // to figure out splits.
-  private static List<Module> createStandaloneModules(CConfiguration cConf, Configuration hConf,
-                                                      TemporaryFolder tmpFolder) throws IOException {
-    File localDataDir = tmpFolder.newFolder();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-    cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
-    cConf.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
-
-    hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
-    hConf.set(Constants.AppFabric.OUTPUT_DIR, cConf.get(Constants.AppFabric.OUTPUT_DIR));
-    hConf.set("hadoop.tmp.dir", new File(localDataDir, cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsolutePath());
-
-    return ImmutableList.of(
-      new ConfigModule(cConf, hConf),
-      new IOModule(),
-      new InMemoryDiscoveryModule(),
-      new MessagingServerRuntimeModule().getStandaloneModules(),
-      new NonCustomLocationUnitTestModule(),
-      new DataFabricModules().getStandaloneModules(),
-      new DataSetsModules().getStandaloneModules(),
-      new DataSetServiceModules().getStandaloneModules(),
-      new MetricsClientRuntimeModule().getStandaloneModules(),
-      new ExploreRuntimeModule().getStandaloneModules(),
-      new ExploreClientModule(),
-      new NamespaceAdminTestModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
-          bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
-          bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
         }
       }
     );

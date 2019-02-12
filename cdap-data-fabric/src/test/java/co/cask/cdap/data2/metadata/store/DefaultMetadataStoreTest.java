@@ -26,6 +26,7 @@ import co.cask.cdap.data2.audit.AuditTestModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.util.Modules;
@@ -34,15 +35,18 @@ import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
+
 /**
  * Tests for {@link DefaultMetadataStore} (which calls MetadataDataset directly).
  */
 public class DefaultMetadataStoreTest extends AbstractMetadataStoreTest {
 
   private static TransactionManager txManager;
+  private static DatasetMetadataStorage storage;
 
   @BeforeClass
-  public static void setupDefaultStore() {
+  public static void setupDefaultStore() throws IOException {
     injector = Guice.createInjector(
       new ConfigModule(),
       Modules.override(
@@ -70,8 +74,12 @@ public class DefaultMetadataStoreTest extends AbstractMetadataStoreTest {
   }
 
   @AfterClass
-  public static void teardown() {
-    txManager.stopAndWait();
+  public static void teardown() throws IOException {
+    try {
+      AbstractMetadataStoreTest.commonTearDown();
+    } finally {
+      txManager.stopAndWait();
+    }
   }
 }
 

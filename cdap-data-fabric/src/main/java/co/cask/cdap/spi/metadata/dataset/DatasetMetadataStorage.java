@@ -16,8 +16,10 @@
 
 package co.cask.cdap.spi.metadata.dataset;
 
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
@@ -42,8 +44,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionExecutor;
+import com.google.inject.name.Named;
+import org.apache.tephra.TransactionSystemClient;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -61,17 +65,22 @@ import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
 /**
  * A dataset-based implementation of the Metadata SPI.
  */
-public class DatasetMetadataStorage implements MetadataStorage {
-
-  private final SearchHelper searchHelper;
+public class DatasetMetadataStorage extends SearchHelper implements MetadataStorage {
 
   @Inject
-  DatasetMetadataStorage(SearchHelper searchHelper) {
-    this.searchHelper = searchHelper;
+  DatasetMetadataStorage(TransactionSystemClient txClient,
+                         @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+    super(txClient, tableDefinition);
   }
 
-  private <T> T execute(TransactionExecutor.Function<MetadataDatasetContext, T> func) {
-    return searchHelper.execute(func);
+  @Override
+  public void createIndex() throws IOException {
+    createDatasets();
+  }
+
+  @Override
+  public void dropIndex() throws IOException {
+    dropDatasets();
   }
 
   @Override
@@ -353,7 +362,7 @@ public class DatasetMetadataStorage implements MetadataStorage {
     ImmutablePair<NamespaceId, Set<EntityScope>> namespaceAndScopes =
       determineNamespaceAndScopes(request.getNamespaces());
     CursorAndOffsetInfo cursorOffsetAndLimits = determineCursorOffsetAndLimits(request);
-    MetadataSearchResponse response = searchHelper.search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
+    MetadataSearchResponse response = search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
       namespaceAndScopes.getFirst(),
       request.getQuery(),
       request.getTypes() == null ? Collections.emptySet() :
