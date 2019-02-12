@@ -17,7 +17,6 @@
 package co.cask.cdap.spi.metadata;
 
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -200,7 +199,7 @@ public class SearchRequest {
     }
 
     public Builder addSystemNamespace() {
-      return this.addNamespace(NamespaceId.SYSTEM.getNamespace());
+      return this.addNamespace("system");
     }
 
     public Builder addType(String type) {

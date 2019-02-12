@@ -18,10 +18,6 @@ package co.cask.cdap.spi.metadata;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.data2.metadata.MetadataConstants;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
 import co.cask.cdap.spi.metadata.MetadataMutation.Remove;
 import co.cask.cdap.spi.metadata.MetadataMutation.Update;
@@ -49,9 +45,10 @@ import java.util.stream.Collectors;
 
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
 import static co.cask.cdap.api.metadata.MetadataScope.USER;
-import static co.cask.cdap.data2.metadata.MetadataConstants.CREATION_TIME_KEY;
-import static co.cask.cdap.data2.metadata.MetadataConstants.ENTITY_NAME_KEY;
-import static co.cask.cdap.data2.metadata.MetadataConstants.TTL_KEY;
+
+import static co.cask.cdap.spi.metadata.MetadataConstants.CREATION_TIME_KEY;
+import static co.cask.cdap.spi.metadata.MetadataConstants.ENTITY_NAME_KEY;
+import static co.cask.cdap.spi.metadata.MetadataConstants.TTL_KEY;
 import static co.cask.cdap.spi.metadata.MetadataKind.PROPERTY;
 import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
 
@@ -60,9 +57,11 @@ import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
  */
 public abstract class MetadataStorageTest {
 
-  private static final String TYPE_ARTIFACT = EntityTypeSimpleName.ARTIFACT.name();
-  private static final String TYPE_DATASET = EntityTypeSimpleName.DATASET.name();
-  private static final String TYPE_PROGRAM = EntityTypeSimpleName.PROGRAM.name();
+  private static final String TYPE_ARTIFACT = MetadataEntity.ARTIFACT;
+  private static final String TYPE_DATASET = MetadataEntity.DATASET;
+  private static final String TYPE_PROGRAM = MetadataEntity.PROGRAM;
+  private static final String DEFAULT_NAMESPACE = "default";
+  private static final String SYSTEM_NAMESPACE = "system";
 
   protected abstract MetadataStorage getMetadataStorage();
 
@@ -76,8 +75,7 @@ public abstract class MetadataStorageTest {
   @Test
   public void testMutations() throws IOException {
     MetadataStorage mds = getMetadataStorage();
-
-    MetadataEntity entity = NamespaceId.DEFAULT.dataset("entity").toMetadataEntity();
+    MetadataEntity entity = ofDataset(DEFAULT_NAMESPACE, "entity");
 
     // get metadata for non-existing entity
     verifyMetadata(mds, entity, Metadata.EMPTY);
@@ -268,7 +266,7 @@ public abstract class MetadataStorageTest {
   public void testUpdateRemove() throws IOException {
     MetadataStorage mds = getMetadataStorage();
 
-    MetadataEntity entity = NamespaceId.DEFAULT.dataset("entity").toMetadataEntity();
+    MetadataEntity entity = ofDataset(DEFAULT_NAMESPACE, "entity");
 
     // get metadata for non-existing entity
     verifyMetadata(mds, entity, Metadata.EMPTY);
@@ -349,8 +347,8 @@ public abstract class MetadataStorageTest {
   public void testSearchDescription() throws IOException {
     MetadataStorage mds = getMetadataStorage();
 
-    MetadataEntity app1 = new NamespaceId("ns1").app("app1").toMetadataEntity();
-    MetadataEntity app2 = new NamespaceId("ns2").app("app1").toMetadataEntity();
+    MetadataEntity app1 = ofApp("ns1", "app1");
+    MetadataEntity app2 = ofApp("ns2", "app1");
 
     ScopedName descUser = new ScopedName(USER, "description");
     ScopedName descSystem = new ScopedName(SYSTEM, "description");
@@ -407,7 +405,7 @@ public abstract class MetadataStorageTest {
   public void testSearchOnTTL() throws Exception {
     MetadataStorage mds = getMetadataStorage();
 
-    MetadataEntity ds = new NamespaceId("ns1").dataset("ds").toMetadataEntity();
+    MetadataEntity ds = ofDataset("ns1", "ds");
     Metadata metaWithTTL = new Metadata(SYSTEM, props(TTL_KEY, "3600"));
     MetadataRecord dsRecord = new MetadataRecord(ds, metaWithTTL);
 
@@ -440,15 +438,11 @@ public abstract class MetadataStorageTest {
 
     String ns1 = "ns1";
     String ns2 = "ns2";
-    NamespaceId ns1Id = new NamespaceId(ns1);
-    NamespaceId ns2Id = new NamespaceId(ns2);
-    ApplicationId app1Id = ns1Id.app("app1");
-    ApplicationId app2Id = ns2Id.app("app1");
-    MetadataEntity app1 = app1Id.toMetadataEntity();
-    MetadataEntity app2 = app2Id.toMetadataEntity();
-    MetadataEntity program1 = app1Id.worker("wk1").toMetadataEntity();
-    MetadataEntity dataset1 = ns1Id.dataset("ds1").toMetadataEntity();
-    MetadataEntity dataset2 = ns1Id.dataset("ds2").toMetadataEntity();
+    MetadataEntity app1 = ofApp(ns1, "app1");
+    MetadataEntity app2 = ofApp(ns2, "app1");
+    MetadataEntity program1 = ofWorker(app1, "wk1");
+    MetadataEntity dataset1 = ofDataset(ns1, "ds1");
+    MetadataEntity dataset2 = ofDataset(ns1, "ds2");
     MetadataEntity file1 = MetadataEntity.builder(dataset1).appendAsType("file", "f1").build();
 
     List<MetadataEntity> entities = ImmutableList.of(app1, app2, program1, dataset1, dataset2, file1);
@@ -534,7 +528,7 @@ public abstract class MetadataStorageTest {
   public void testSearchOnTagsUpdate() throws IOException {
     MetadataStorage mds = getMetadataStorage();
 
-    MetadataEntity entity = NamespaceId.DEFAULT.app("appX").workflow("wtf").toMetadataEntity();
+    MetadataEntity entity = ofWorkflow(ofApp(DEFAULT_NAMESPACE, "appX"), "wtf");
     Metadata meta = new Metadata(SYSTEM, tags("tag1", "tag2"));
     mds.apply(new Update(entity, meta));
     Assert.assertEquals(meta.getTags(SYSTEM), mds.read(new Read(entity, SYSTEM)).getTags(SYSTEM));
@@ -566,7 +560,7 @@ public abstract class MetadataStorageTest {
   public void testSearchOnTypes() throws Exception {
     MetadataStorage mds = getMetadataStorage();
 
-    MetadataEntity myDs = NamespaceId.DEFAULT.dataset("myDs").toMetadataEntity();
+    MetadataEntity myDs = ofDataset(DEFAULT_NAMESPACE, "myDs");
     MetadataEntity myField1 = MetadataEntity.builder(myDs).appendAsType("field", "myField1").build();
     MetadataEntity myField2 = MetadataEntity.builder(myDs).appendAsType("field", "myField2").build();
     MetadataRecord record1 = new MetadataRecord(myField1, new Metadata(USER, props("testKey1", "testValue1")));
@@ -589,9 +583,8 @@ public abstract class MetadataStorageTest {
   public void testSearchOnValue() throws Exception {
     MetadataStorage mds = getMetadataStorage();
 
-    NamespaceId nsId = new NamespaceId("ns1");
-    MetadataEntity program = nsId.app("app1").worker("wk1").toMetadataEntity();
-    MetadataEntity dataset = nsId.dataset("ds2").toMetadataEntity();
+    MetadataEntity program = ofWorker(ofApp("ns1", "app1"), "wk1");
+    MetadataEntity dataset = ofDataset("ns1", "ds2");
 
     // Add some metadata
     final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
@@ -645,9 +638,8 @@ public abstract class MetadataStorageTest {
   public void testSearchOnKeyValue() throws Exception {
     MetadataStorage mds = getMetadataStorage();
 
-    NamespaceId nsId = new NamespaceId("ns1");
-    MetadataEntity program = nsId.app("app1").worker("wk1").toMetadataEntity();
-    MetadataEntity dataset = nsId.dataset("ds2").toMetadataEntity();
+    MetadataEntity program = ofWorker(ofApp("ns1", "app1"), "wk1");
+    MetadataEntity dataset = ofDataset("ns1", "ds2");
 
     // add properties for program and dataset
     final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
@@ -706,7 +698,7 @@ public abstract class MetadataStorageTest {
     MetadataStorage mds = getMetadataStorage();
 
     String ns = "ns";
-    MetadataEntity program = new NamespaceId(ns).app("app1").worker("wk1").toMetadataEntity();
+    MetadataEntity program = ofWorker(ofApp(ns, "app1"), "wk1");
 
     Metadata meta = new Metadata(USER, tags("tag1", "tag2"), props("key1", "value1", "key2", "value2"));
     MetadataRecord programRecord = new MetadataRecord(program, meta);
@@ -744,11 +736,10 @@ public abstract class MetadataStorageTest {
 
     String ns1 = "ns1";
     String ns2 = "ns2";
-    ApplicationId appId = new NamespaceId(ns1).app("app1");
-    MetadataEntity program = appId.worker("wk1").toMetadataEntity();
+    MetadataEntity program = ofWorker(ofApp(ns1, "app1"), "wk1");
     // Use the same artifact in two different namespaces - system and ns2
-    MetadataEntity artifact = new NamespaceId(ns2).artifact("artifact", "1.0").toMetadataEntity();
-    MetadataEntity sysArtifact = NamespaceId.SYSTEM.artifact("artifact", "1.0").toMetadataEntity();
+    MetadataEntity artifact = ofArtifact(ns2, "artifact", "1.0");
+    MetadataEntity sysArtifact = ofArtifact(SYSTEM_NAMESPACE, "artifact", "1.0");
 
     final String multiWordKey = "multiword";
     final String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
@@ -805,8 +796,8 @@ public abstract class MetadataStorageTest {
     MetadataStorage mds = getMetadataStorage();
 
     String ns1 = "ns1";
-    MetadataEntity artifact = new NamespaceId(ns1).artifact("artifact", "1.0").toMetadataEntity();
-    MetadataEntity sysArtifact = NamespaceId.SYSTEM.artifact("artifact", "1.0").toMetadataEntity();
+    MetadataEntity artifact = ofArtifact(ns1, "artifact", "1.0");
+    MetadataEntity sysArtifact = ofArtifact(SYSTEM_NAMESPACE, "artifact", "1.0");
 
     String multiWordKey = "multiword";
     String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
@@ -835,14 +826,13 @@ public abstract class MetadataStorageTest {
   public void testCrossNamespaceSearch() throws IOException {
     MetadataStorage mds = getMetadataStorage();
 
-    NamespaceId ns1 = new NamespaceId("ns1");
-    NamespaceId ns2 = new NamespaceId("ns2");
-
-    MetadataEntity ns1app1 = ns1.app("a1").toMetadataEntity();
-    MetadataEntity ns1app2 = ns1.app("a2").toMetadataEntity();
-    MetadataEntity ns1app3 = ns1.app("a3").toMetadataEntity();
-    MetadataEntity ns2app1 = ns2.app("a1").toMetadataEntity();
-    MetadataEntity ns2app2 = ns2.app("a2").toMetadataEntity();
+    String ns1 = "ns1";
+    String ns2 = "ns2";
+    MetadataEntity ns1app1 = ofApp(ns1, "a1");
+    MetadataEntity ns1app2 = ofApp(ns1, "a2");
+    MetadataEntity ns1app3 = ofApp(ns1, "a3");
+    MetadataEntity ns2app1 = ofApp(ns2, "a1");
+    MetadataEntity ns2app2 = ofApp(ns2, "a2");
 
     MetadataRecord
       record11 = new MetadataRecord(ns1app1, new Metadata(USER, tags("v1"), props("k1", "v1"))),
@@ -876,8 +866,8 @@ public abstract class MetadataStorageTest {
   public void testCrossNamespaceDefaultSearch() throws IOException {
     MetadataStorage mds = getMetadataStorage();
 
-    MetadataEntity ns1app = new NamespaceId("ns1").app("a").toMetadataEntity();
-    MetadataEntity ns2app = new NamespaceId("ns2").app("a").toMetadataEntity();
+    MetadataEntity ns1app = ofApp("ns1", "a");
+    MetadataEntity ns2app = ofApp("ns2", "a");
 
     MetadataRecord app1Record = new MetadataRecord(ns1app, new Metadata(USER, props("k1", "v1", "k2", "v2")));
     MetadataRecord app2Record = new MetadataRecord(ns2app, new Metadata(USER, props("k1", "v1")));
@@ -898,8 +888,8 @@ public abstract class MetadataStorageTest {
     MetadataStorage mds = getMetadataStorage();
 
     String appName = "app";
-    MetadataEntity ns1App = new NamespaceId("ns1").app(appName).toMetadataEntity();
-    MetadataEntity ns2App = new NamespaceId("ns2").app(appName).toMetadataEntity();
+    MetadataEntity ns1App = ofApp("ns1", appName);
+    MetadataEntity ns2App = ofApp("ns2", appName);
 
     Metadata meta = new Metadata(SYSTEM, props(ENTITY_NAME_KEY, appName));
     MetadataRecord app1Record = new MetadataRecord(ns1App, meta);
@@ -920,11 +910,12 @@ public abstract class MetadataStorageTest {
     MetadataStorage mds = getMetadataStorage();
 
     String ns = "ns";
-    NamespaceId nsId = new NamespaceId(ns);
-    MetadataEntity service = nsId.app("app").service("service").toMetadataEntity();
-    MetadataEntity worker = nsId.app("app2").worker("worker").toMetadataEntity();
-    MetadataEntity dataset = nsId.dataset("dataset").toMetadataEntity();
-    MetadataEntity hidden = nsId.dataset("_auditLog").toMetadataEntity();
+    MetadataEntity app1 = ofApp(ns, "app");
+    MetadataEntity app2 = ofApp(ns, "app2");
+    MetadataEntity service = ofService(app1, "service");
+    MetadataEntity worker = ofWorker(app2, "worker");
+    MetadataEntity dataset = ofDataset(ns, "dataset");
+    MetadataEntity hidden = ofDataset(ns, "_auditLog");
 
     MetadataRecord serviceRecord = new MetadataRecord(service, new Metadata(USER, tags("tag", "tag1")));
     MetadataRecord workerRecord = new MetadataRecord(worker, new Metadata(USER, tags("tag2", "tag3 tag4")));
@@ -980,7 +971,7 @@ public abstract class MetadataStorageTest {
     NoDupRandom random = new NoDupRandom();
     List<MetadataEntity> entities = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
-      entities.add(MetadataEntity.ofDataset("myns", "ds" + String.valueOf(random.nextInt(1000))));
+      entities.add(ofDataset("myns", "ds" + String.valueOf(random.nextInt(1000))));
     }
 
     long creationTime = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(60);
@@ -1172,4 +1163,47 @@ public abstract class MetadataStorageTest {
   protected static <K, V> Map<K, V>  props(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
     return ImmutableMap.of(k1, v1, k2, v2, k3, v3, k4, v4);
   }
+
+  private static MetadataEntity ofDataset(String ns, String dataset) {
+    return MetadataEntity.ofDataset(ns, dataset);
+  }
+
+  private static MetadataEntity ofApp(String ns, String app) {
+    return MetadataEntity.builder()
+      .append(MetadataEntity.NAMESPACE, ns)
+      .appendAsType(MetadataEntity.APPLICATION, app)
+      .append(MetadataEntity.VERSION, "-SNAPSHOT")
+      .build();
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static MetadataEntity ofArtifact(String ns, String artifact, String version) {
+    return MetadataEntity.builder()
+      .append(MetadataEntity.NAMESPACE, ns)
+      .appendAsType(MetadataEntity.ARTIFACT, artifact)
+      .append(MetadataEntity.VERSION, version)
+      .build();
+  }
+
+  private static MetadataEntity ofProgram(MetadataEntity app, String type, String program) {
+    return MetadataEntity.builder(app)
+      .append(MetadataEntity.TYPE, type)
+      .appendAsType(MetadataEntity.PROGRAM, program)
+      .build();
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static MetadataEntity ofService(MetadataEntity app, String service) {
+    return ofProgram(app, "Service", service);
+  }
+
+  private static MetadataEntity ofWorker(MetadataEntity app, String worker) {
+    return ofProgram(app, "Worker", worker);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static MetadataEntity ofWorkflow(MetadataEntity app, String workflow) {
+    return ofProgram(app, "Workflow", workflow);
+  }
+
 }

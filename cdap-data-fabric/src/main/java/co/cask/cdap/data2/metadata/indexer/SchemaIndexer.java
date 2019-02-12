@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@
 package co.cask.cdap.data2.metadata.indexer;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.data2.metadata.MetadataConstants;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 
 import java.io.IOException;
 import java.util.Collections;

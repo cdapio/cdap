@@ -82,7 +82,8 @@ public class ProgramId extends NamespacedEntityId implements ParentedId<Applicat
   public MetadataEntity toMetadataEntity() {
     return MetadataEntity.builder().append(MetadataEntity.NAMESPACE, namespace)
       .append(MetadataEntity.APPLICATION, application)
-      .append(MetadataEntity.VERSION, version).append(MetadataEntity.TYPE, type.getPrettyName())
+      .append(MetadataEntity.VERSION, version)
+      .append(MetadataEntity.TYPE, type.getPrettyName())
       .appendAsType(MetadataEntity.PROGRAM, program)
       .build();
   }
