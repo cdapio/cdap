@@ -35,7 +35,8 @@ import {
   PIPELINE_RUN_NAME,
   PIPELINE_SCHEMAS,
   CLONE_PIPELINE,
-  GET_PIPE_LINE_DATA
+  GET_PIPE_LINE_DATA,
+  ERROR_MESSAGES
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
@@ -346,8 +347,7 @@ class LandingPage extends React.Component {
   }
 
   handleError(error, type) {
-    console.log(type, error);
-    alert(getErrorMessage(error));
+    alert(getErrorMessage(error, ERROR_MESSAGES[type]));
   }
 
   onWizardClose() {

@@ -19,7 +19,10 @@ const SERVICE_PORT = "11015";
 export const SERVER_IP = (window.location.hostname == "localhost") ? REMOTE_IP : (window.location.protocol + "//" + window.location.hostname + ":" + SERVICE_PORT);
 export const GET_PIPE_LINE_CORRELATED_DATA = "/v3/namespaces/default/apps/FeatureEngineeringApp/services/ManualFeatureSelectionService/methods/featureengineering/features/correlation/matrix/get?pipelineName=";
 
-export const PIPELINE_TYPES = ["All", "Feature Generation Pipeline", "Selected Feature Pipeline"];
+export const FEATURE_GENERATED_PIPELINE = "Feature Generation Pipeline";
+export const FEATURE_SELECTED_PIPELINE = "Selected Feature Pipeline";
+
+export const PIPELINE_TYPES = ["All", FEATURE_GENERATED_PIPELINE , FEATURE_SELECTED_PIPELINE];
 
 export const GET_PIPELINE = "GET_PIPELINE";
 export const GET_SCHEMA = "GET_SCHEMA";
@@ -34,6 +37,21 @@ export const DELETE_PIPELINE = "DELETE_PIPELINE";
 export const GET_PIPE_LINE_DATA = "GET_PIPE_LINE_DATA";
 export const GET_PIPE_LINE_FILTERED = "GET_PIPE_LINE_FILTERED";
 export const GET_FEATURE_CORRELAION = "GET_FEATURE_CORRELAION";
+
+export const ERROR_MESSAGES = {
+  GET_PIPELINE: "Error in getting pipelines",
+  GET_SCHEMA: "Error in getting dataset schemas",
+  GET_PROPERTY: "Error in getting metadata configurations",
+  GET_CONFIGURATION: "Error in getting engine configurations",
+  SAVE_PIPELINE: "Error in saving pipeline",
+  CREATE_PIPELINE: "Error in creating pipeline",
+  READ_PIPELINE: "Error in getting pipeline configurations",
+  EDIT_PIPELINE: "Error in  editing pipelines",
+  DELETE_PIPELINE: "Error in deleting pipeline",
+  GET_PIPE_LINE_DATA: "Error in getting pipeline data",
+  GET_PIPE_LINE_FILTERED: "Error in getting filtered pipeline data",
+  GET_FEATURE_CORRELAION: "Error in getting correlation"
+};
 
 
 export const IS_OFFLINE = false;

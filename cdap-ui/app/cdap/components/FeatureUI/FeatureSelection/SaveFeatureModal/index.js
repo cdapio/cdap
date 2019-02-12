@@ -22,6 +22,7 @@ import FEDataServiceApi from '../../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
 import { isNil } from 'lodash';
 import { checkResponseError,getErrorMessage } from '../../util';
+import { ERROR_MESSAGES, SAVE_PIPELINE } from 'components/FeatureUI/config';
 
 require('./SaveFeatureModal.scss');
 
@@ -64,7 +65,7 @@ class SaveFeatureModal extends React.Component {
       }, this.getSavePipelineRequest(featureGenerationPipelineName)).subscribe(
         result => {
           if (checkResponseError(result)) {
-            const message = getErrorMessage(result, "couldn't save pipeline");
+            const message = getErrorMessage(result, ERROR_MESSAGES[SAVE_PIPELINE]);
             this.setState({hasError:true, errorMessage:message});
           } else {
             this.setState({ name:""});
@@ -72,7 +73,7 @@ class SaveFeatureModal extends React.Component {
           }
         },
         error => {
-          this.setState({hasError:true, errorMessage:getErrorMessage(error, "couldn't save pipeline")});
+          this.setState({hasError:true, errorMessage:getErrorMessage(error, ERROR_MESSAGES[SAVE_PIPELINE])});
         }
       );
 

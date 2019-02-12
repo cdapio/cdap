@@ -18,11 +18,11 @@ import find from 'lodash/find';
 import remove from 'lodash/remove';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
-import {Theme} from '../../services/ThemeHelper';
+import { Theme } from '../../services/ThemeHelper';
 
 export function toCamelCase(value) {
-  return  value.replace(/(\w)(.*?)\b/g,function(result, group1, group2) {
-      return result ? (group1.toUpperCase() + (group2 ? group2:'')): result;
+  return value.replace(/(\w)(.*?)\b/g, function (result, group1, group2) {
+    return result ? (group1.toUpperCase() + (group2 ? group2 : '')) : result;
   });
 }
 
@@ -176,30 +176,30 @@ export function getFeatureObject(props) {
 
 export function checkResponseError(result) {
   return (isNil(result) ||
-  (result.status && result.status > 200) ||
-  (result.statusCode && result.statusCode > 200) ||
-  (result.response && result.response.status && result.response.status > 200));
+    (result.status && result.status > 200) ||
+    (result.statusCode && result.statusCode > 200) ||
+    (result.response && result.response.status && result.response.status > 200));
 }
 
 export function getErrorMessage(error, defaultMessage) {
-  let errorMessage = isEmpty(defaultMessage)? defaultMessage: "Error in retrieving data";
-  if(!isEmpty(error.message)) {
-    errorMessage = error.message;
-  } else if(error.response && !isEmpty(error.response.message)) {
-    errorMessage = error.response.message;
+  let errorMessage = isEmpty(defaultMessage) ? "Error in retrieving data" : defaultMessage;
+  if (!isEmpty(error.message)) {
+    errorMessage = errorMessage + "\n" + error.message;
+  } else if (error.response && !isEmpty(error.response.message)) {
+    errorMessage =  errorMessage + "\n" + error.response.message;
   }
   return errorMessage;
 }
 
-export function getClassNameForHeaderFooter(){
+export function getClassNameForHeaderFooter() {
   let className = '';
-  if(Theme !== undefined){
+  if (Theme !== undefined) {
     if (!Theme.showHeader && !Theme.showFooter) {
-      className =  'no-header-footer';
+      className = 'no-header-footer';
     } else if (!Theme.showHeader) {
-      className =  'no-header';
+      className = 'no-header';
     } else if (!Theme.showFooter) {
-      className =  'no-footer';
+      className = 'no-footer';
     }
   }
   return className;

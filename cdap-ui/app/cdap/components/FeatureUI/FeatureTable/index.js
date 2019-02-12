@@ -16,7 +16,7 @@
 
 /* eslint react/prop-types: 0 */
 import React from 'react';
-import { FAILED, DEPLOYED, SUCCEEDED, RUNNING } from '../config';
+import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE } from '../config';
 require('./FeatureTable.scss');
 
 class FeatureTable extends React.Component {
@@ -112,7 +112,7 @@ class FeatureTable extends React.Component {
   }
 
   isFeatureAvailable(item) {
-    return item && item.status == SUCCEEDED;
+    return item && item.status == SUCCEEDED && item.pipelineType == FEATURE_GENERATED_PIPELINE;
   }
 
   getStatusClass(item) {
