@@ -50,6 +50,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.tools.KeyStores;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.http.HttpRequestConfig;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -105,6 +110,7 @@ public class RuntimeMonitorTest {
   private DatasetFramework datasetFramework;
   private Transactional transactional;
   private MetricsCollectionService metricsCollectionService;
+  private TransactionRunner transactionRunner;
 
   private KeyStore serverKeyStore;
   private KeyStore clientKeyStore;
@@ -114,7 +120,7 @@ public class RuntimeMonitorTest {
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Before
-  public void init() throws IOException {
+  public void init() throws IOException, TableAlreadyExistsException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
@@ -163,9 +169,13 @@ public class RuntimeMonitorTest {
         NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
       org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
     );
+    this.transactionRunner = injector.getInstance(TransactionRunner.class);
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
 
     runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
@@ -224,7 +234,8 @@ public class RuntimeMonitorTest {
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                                       transactionRunner);
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -239,7 +250,8 @@ public class RuntimeMonitorTest {
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                         datasetFramework, transactional, messagingContext, scheduler,
                                         monitorMessage -> { }, profileMetricService,
-                                        new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                        transactionRunner);
     runtimeMonitor.startAndWait();
     // use different configuration for verification
     lastProcessed = verifyPublishedMessages(monitorCConf, 2, lastProcessed);
@@ -295,7 +307,8 @@ public class RuntimeMonitorTest {
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                                       transactionRunner);
     runtimeMonitor.startAndWait();
 
     // Wait and verify messages as being republished by the runtime monitor to the "local" metrics topics
@@ -303,8 +316,8 @@ public class RuntimeMonitorTest {
       // Fetch from each metrics topic and there should be a message inside
       for (int i = 0; i < topicNum; i++) {
         try (CloseableIterator<Message> iterator =
-               messagingContext.getMessageFetcher()
-                 .fetch(NamespaceId.SYSTEM.getNamespace(), newMetricsPrefix + i, 10, null)) {
+          messagingContext.getMessageFetcher()
+            .fetch(NamespaceId.SYSTEM.getNamespace(), newMetricsPrefix + i, 10, null)) {
           Optional<String> message = StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false)
             .map(Message::getPayloadAsString)
@@ -352,7 +365,8 @@ public class RuntimeMonitorTest {
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        datasetFramework, transactional, messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter());
+                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
+                                                       transactionRunner);
 
     runtimeMonitor.startAndWait();
     verifyPublishedMessages(monitorCConf, 2, null);
@@ -382,8 +396,8 @@ public class RuntimeMonitorTest {
         transactional.execute(context -> {
           MessageFetcher fetcher = messagingContext.getMessageFetcher();
           try (CloseableIterator<Message> iter =
-                 fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                               cConfig.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), 100, messageId)) {
+            fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
+                          cConfig.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), 100, messageId)) {
             while (iter.hasNext()) {
               Message message = iter.next();
               lastProcessed[0] = message.getId();

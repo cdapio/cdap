@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.proto.PercentileInformation;
@@ -30,6 +29,7 @@ import co.cask.cdap.spi.data.table.field.Field;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.store.StoreDefinition;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
@@ -57,9 +57,6 @@ import javax.annotation.Nullable;
 public class WorkflowTable {
 
   private static final Gson GSON = new Gson();
-  private static final byte[] RUNID = Bytes.toBytes("r");
-  private static final byte[] TIME_TAKEN = Bytes.toBytes("t");
-  private static final byte[] NODES = Bytes.toBytes("n");
   private static final Type PROGRAM_RUNS_TYPE = new TypeToken<List<ProgramRun>>() { }.getType();
 
   private final StructuredTable table;
@@ -88,6 +85,13 @@ public class WorkflowTable {
       Range.singleton(
         ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, id.getNamespace()),
                          Fields.stringField(StoreDefinition.WorkflowStore.APPLICATION_FIELD, id.getApplication()))));
+  }
+
+  @VisibleForTesting
+  void deleteAll() throws IOException {
+    table.deleteAll(
+      Range.from(ImmutableList.of(Fields.stringField(StoreDefinition.WorkflowStore.NAMESPACE_FIELD, "")),
+                 Range.Bound.INCLUSIVE));
   }
 
   /**
@@ -365,7 +369,7 @@ public class WorkflowTable {
     public String getRunId() {
       return runId;
     }
-    }
+  }
 
   private static List<Field<?>> getPrimaryKeyFields(WorkflowId id, long time) {
     List<Field<?>> fields = new ArrayList<>();

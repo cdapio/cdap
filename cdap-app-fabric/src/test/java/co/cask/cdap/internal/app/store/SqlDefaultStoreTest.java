@@ -29,6 +29,7 @@ import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.StoreDefinition;
@@ -50,16 +51,15 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
     Injector injector = AppFabricTestHelper.getInjector();
     pg = EmbeddedPostgres.start();
     DataSource dataSource = pg.getPostgresDatabase();
+    StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry();
+    structuredTableRegistry.initialize();
     StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
+      new PostgresSqlStructuredTableAdmin(structuredTableRegistry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
+    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, true);
 
-    // TODO(CDAP-14770): fully change this when migrating the rest of DefaultStore
-    store =
-      new DefaultStore(injector.getInstance(CConfiguration.class),
-                       injector.getInstance(DatasetFramework.class),
-                       injector.getInstance(TransactionSystemClient.class),
-                       transactionRunner);
+
+    store = new DefaultStore(transactionRunner);
 
     nsStore = new DefaultNamespaceStore(transactionRunner);
     nsAdmin = new DefaultNamespaceAdmin(
@@ -67,8 +67,6 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
       injector.getProvider(NamespaceResourceDeleter.class), injector.getProvider(StorageProviderNamespaceAdmin.class),
       injector.getInstance(CConfiguration.class), injector.getInstance(Impersonator.class),
       injector.getInstance(AuthorizationEnforcer.class), injector.getInstance(AuthenticationContext.class));
-    StoreDefinition.NamespaceStore.createTable(structuredTableAdmin);
-    StoreDefinition.WorkflowStore.createTables(structuredTableAdmin);
   }
 
   @AfterClass

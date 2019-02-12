@@ -78,7 +78,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
-  private final RunCountUpgradeService runCountUpgradeService;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -102,9 +101,7 @@ public class AppFabricServer extends AbstractIdleService {
                          PluginService pluginService,
                          CoreSchedulerService coreSchedulerService,
                          ProvisioningService provisioningService,
-                         BootstrapService bootstrapService,
-                         // upgrade service is null for standalone cdap
-                         @Nullable RunCountUpgradeService runCountUpgradeService) {
+                         BootstrapService bootstrapService) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -122,7 +119,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
-    this.runCountUpgradeService = runCountUpgradeService;
   }
 
   /**
@@ -177,9 +173,6 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
-    if (runCountUpgradeService != null) {
-      runCountUpgradeService.startAndWait();
-    }
   }
 
   @Override
@@ -193,9 +186,6 @@ public class AppFabricServer extends AbstractIdleService {
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
     provisioningService.stopAndWait();
-    if (runCountUpgradeService != null && runCountUpgradeService.isRunning()) {
-      runCountUpgradeService.stopAndWait();
-    }
   }
 
   private Cancellable startHttpService(final NettyHttpService httpService) throws Exception {
