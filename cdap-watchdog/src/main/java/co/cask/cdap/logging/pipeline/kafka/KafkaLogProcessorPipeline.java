@@ -28,6 +28,7 @@ import co.cask.cdap.logging.pipeline.queue.ProcessedEventMetadata;
 import co.cask.cdap.logging.pipeline.queue.ProcessorEvent;
 import co.cask.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
@@ -54,7 +55,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -512,6 +512,8 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     MutableCheckpoint(Checkpoint<KafkaOffset> other) {
       this(other.getOffset(), other.getMaxEventTime());
+      this.offset = new MutableKafkaOffset(other.getOffset().getNextOffset(), other.getOffset().getNextEventTime());
+      this.maxEventTime = other.getMaxEventTime();
     }
 
     MutableCheckpoint(KafkaOffset offset, long maxEventTime) {
@@ -556,10 +558,14 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
 
     MutableKafkaOffset(KafkaOffset offset) {
       this(offset.getNextOffset(), offset.getNextEventTime());
+      this.nextOffset = offset.getNextOffset();
+      this.nextEventTime = offset.getNextEventTime();
     }
 
     MutableKafkaOffset(long nextOffset, long nextEventTime) {
       super(nextOffset, nextEventTime);
+      this.nextOffset = nextOffset;
+      this.nextEventTime = nextEventTime;
     }
 
     @Override
@@ -592,12 +598,11 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
   /**
    * Transforms kafka {@code MessageAndOffset} iterator to {@code ProcessorEvent} iterator.
    */
-  private final class KafkaMessageTransformIterator implements Iterator<ProcessorEvent<KafkaOffset>> {
+  private final class KafkaMessageTransformIterator extends AbstractIterator<ProcessorEvent<KafkaOffset>> {
     private final String topic;
     private final int partition;
     private final Iterator<MessageAndOffset> kafkaMessageIterator;
-    private ProcessorEvent<KafkaOffset> nextEntry;
-    private MessageAndOffset nextMessage;
+    private Long prevOffset;
 
     KafkaMessageTransformIterator(String topic, int partition, Iterator<MessageAndOffset> kafkaMessageIterator) {
       this.topic = topic;
@@ -606,17 +611,17 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     }
 
     @Override
-    public boolean hasNext() {
-      if (nextEntry != null) {
-        return true;
-      }
-
+    protected ProcessorEvent<KafkaOffset> computeNext() {
       if (!kafkaMessageIterator.hasNext()) {
-        return false;
+        updateOffsets();
+        return endOfData();
       }
 
       boolean skipped;
+      ProcessorEvent<KafkaOffset> nextEntry = null;
+
       do {
+        updateOffsets();
         MessageAndOffset message = kafkaMessageIterator.next();
         metricsContext.increment("kafka.bytes.read", message.message().payloadSize());
 
@@ -624,7 +629,6 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
           ILoggingEvent loggingEvent = serializer.fromBytes(message.message().payload());
           nextEntry = new ProcessorEvent<>(loggingEvent, message.message().payloadSize(),
                                            new KafkaOffset(message.nextOffset(), loggingEvent.getTimeStamp()));
-          nextMessage = message;
           skipped = false;
         } catch (IOException e) {
           skipped = true;
@@ -634,29 +638,19 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
         }
       } while (skipped && kafkaMessageIterator.hasNext());
 
-      return nextEntry != null;
-    }
-
-    @Override
-    public ProcessorEvent<KafkaOffset> next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
+      if (nextEntry == null) {
+        updateOffsets();
+        return endOfData();
       }
 
-      ProcessorEvent<KafkaOffset> next = nextEntry;
-      // update offset when event is actually consumed.
-      offsets.put(partition, nextMessage.nextOffset());
-
-      // next entry is consumed
-      nextEntry = null;
-      nextMessage = null;
-
-      return next;
+      prevOffset = nextEntry.getOffset().getNextOffset();
+      return nextEntry;
     }
 
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("Delete not supported.");
+    private void updateOffsets() {
+      if (prevOffset != null) {
+        offsets.put(partition, prevOffset.longValue());
+      }
     }
   }
 }
