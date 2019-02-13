@@ -18,7 +18,6 @@ package co.cask.cdap.spi.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
@@ -37,13 +36,13 @@ import co.cask.cdap.spi.metadata.ScopedName;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutor;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -350,103 +349,62 @@ public class DatasetMetadataStorage implements MetadataStorage {
 
   @Override
   public SearchResponse search(SearchRequest request) {
-    ImmutablePair<NamespaceId, Set<EntityScope>> namespaceAndScopes =
-      determineNamespaceAndScopes(request.getNamespaces());
-    CursorAndOffsetInfo cursorOffsetAndLimits = determineCursorOffsetAndLimits(request);
+    NamespaceId namespace = null;
+    Set<EntityScope> entityScopes;
+    if (request.getNamespaces() == null || request.getNamespaces().isEmpty()) {
+      entityScopes = EnumSet.allOf(EntityScope.class);
+    } else {
+      boolean hasSystem = false;
+      for (String ns : request.getNamespaces()) {
+        if (ns.equals(NamespaceId.SYSTEM.getNamespace())) {
+          hasSystem = true;
+        } else {
+          if (namespace != null) {
+            throw new UnsupportedOperationException(String.format(
+              "This implementation supports at most one non-system namespace, but %s as well as %s were given",
+              namespace.getNamespace(), ns));
+          }
+          namespace = new NamespaceId(ns);
+        }
+      }
+      if (hasSystem) {
+        if (namespace == null) {
+          namespace = NamespaceId.SYSTEM;
+          entityScopes = Collections.singleton(EntityScope.SYSTEM);
+        } else {
+          entityScopes = EnumSet.allOf(EntityScope.class);
+        }
+      } else {
+        entityScopes = Collections.singleton(EntityScope.USER);
+      }
+    }
     MetadataSearchResponse response = searchHelper.search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
-      namespaceAndScopes.getFirst(),
+      namespace,
       request.getQuery(),
       request.getTypes() == null ? Collections.emptySet() :
         request.getTypes().stream().map(EntityTypeSimpleName::valueOfSerializedForm).collect(Collectors.toSet()),
       request.getSorting() == null ? SortInfo.DEFAULT :
         new SortInfo(request.getSorting().getKey(), SortInfo.SortOrder.valueOf(request.getSorting().getOrder().name())),
-      cursorOffsetAndLimits.getOffsetToRequest(),
-      cursorOffsetAndLimits.getLimitToRequest(),
+      request.getOffset(),
+      request.getLimit(),
       request.isCursorRequested() ? 1 : 0,
-      cursorOffsetAndLimits.getCursor(),
+      request.getCursor(),
       request.isShowHidden(),
-      namespaceAndScopes.getSecond()
+      entityScopes
     ), request.getScope());
-
-    // translate results back and limit them to at most what was requested (see above where we add 1)
-    int limitToRespond = cursorOffsetAndLimits.getLimitToRespond();
-    int offsetToRespond = cursorOffsetAndLimits.getOffsetToRespond();
-    List<MetadataRecord> results =
-      response.getResults().stream().limit(limitToRespond).map(record -> {
-        Metadata metadata = null;
-        for (Map.Entry<MetadataScope, co.cask.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
-          Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(), entry.getValue().getProperties());
-          metadata = metadata == null ? toAdd : mergeDisjointMetadata(metadata, toAdd);
-        }
-        return new MetadataRecord(record.getMetadataEntity(), metadata);
-      }).collect(Collectors.toList());
-
-    String cursorToReturn = null;
-    if (response.getCursors() != null && !response.getCursors().isEmpty()) {
-      // the new cursor's offset is the previous cursor's offset plus the number of results
-      cursorToReturn = new Cursor(offsetToRespond + results.size(), limitToRespond,
-                                  response.getCursors().get(0)).toString();
-    }
-    // adjust the total results by the difference of requested offset and the true offset that we respond back
-    int totalResults = offsetToRespond - cursorOffsetAndLimits.getOffsetToRequest() + response.getTotal();
-    return new SearchResponse(request, cursorToReturn, offsetToRespond, limitToRespond,
-                              totalResults, results);
-  }
-
-  @VisibleForTesting
-  static CursorAndOffsetInfo determineCursorOffsetAndLimits(SearchRequest request) {
-    // limit and offset will be what we request from the datasets
-    int limit = request.getLimit();
-    int offset = request.getOffset();
-    // limitToRespond and offsetToRespond will be what we return in the response
-    int limitToRespond = limit;
-    int offsetToRespond = offset;
-    // if the request has a cursor, then that supersedes the offset and limit
-    String cursor = null;
-    if (request.getCursor() != null) {
-      // deserialize the cursor
-      Cursor c = Cursor.fromString(request.getCursor());
-      cursor = c.getCursor();
-      // request as many as given by the cursor - and that is also returned in the response
-      limit = c.getPageSize();
-      limitToRespond = limit;
-      // we must request offset zero, because the dataset interprets it relative to the cursor
-      offset = 0;
-      offsetToRespond = c.getOffset();
-    } else if (!request.isCursorRequested() && limit < Integer.MAX_VALUE) {
-      // if no cursor is requested, fetch one extra result to determine if there are more results following
-      limit++;
-    }
-    return new CursorAndOffsetInfo(cursor, offset, offsetToRespond, limit, limitToRespond);
-  }
-
-  @VisibleForTesting
-  static ImmutablePair<NamespaceId, Set<EntityScope>> determineNamespaceAndScopes(Set<String> namespaces) {
-    // if the request does not specify namespaces at all, then it searches all, including system
-    if (namespaces == null || namespaces.isEmpty()) {
-      return ImmutablePair.of(null, EnumSet.allOf(EntityScope.class));
-    }
-    boolean hasSystem = false;
-    Set<String> userNamespaces = namespaces;
-    if (namespaces.contains(NamespaceId.SYSTEM.getNamespace())) {
-      userNamespaces = new HashSet<>(namespaces);
-      userNamespaces.remove(NamespaceId.SYSTEM.getNamespace());
-      // if the request only specifies the system namespace, search that namespace and system scope
-      if (userNamespaces.isEmpty()) {
-        return ImmutablePair.of(NamespaceId.SYSTEM, EnumSet.of(EntityScope.SYSTEM));
+    // translate results back
+    List<MetadataRecord> results = new ArrayList<>(response.getResults().size());
+    response.getResults().forEach(record -> {
+      Metadata metadata = null;
+      for (Map.Entry<MetadataScope, co.cask.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
+        Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(), entry.getValue().getProperties());
+        metadata = metadata == null ? toAdd : mergeDisjointMetadata(metadata, toAdd);
       }
-      hasSystem = true;
-    }
-    // we have at least one non-system namespace
-    if (userNamespaces.size() > 1) {
-      throw new UnsupportedOperationException(String.format(
-        "This implementation supports at most one non-system namespace, but %s were requested", userNamespaces));
-    }
-    // we have exactly one non-system namespace
-    NamespaceId namespace = new NamespaceId(userNamespaces.iterator().next());
-    return hasSystem
-      ? ImmutablePair.of(namespace, EnumSet.allOf(EntityScope.class))
-      : ImmutablePair.of(namespace, EnumSet.of(EntityScope.USER));
+      results.add(new MetadataRecord(record.getMetadataEntity(), metadata));
+    });
+    String cursor =
+      response.getCursors() == null || response.getCursors().isEmpty() ? null : response.getCursors().get(0);
+    return new SearchResponse(request, cursor, response.getTotal(), results);
   }
 
   private MetadataChange combineChanges(MetadataEntity entity,
@@ -481,55 +439,5 @@ public class DatasetMetadataStorage implements MetadataStorage {
   @Override
   public void close() {
     // nop-op
-  }
-
-  /**
-   * Helper class to represent adjustments made to the search request parameters
-   * before delegating to the MetadataDataset, based on whether the request has
-   * a cursor and whether it requests a cursor, or not.
-   */
-  static class CursorAndOffsetInfo {
-    private final String cursor;
-    private final int offsetToRequest;
-    private final int offsetToRespond;
-    private final int limitToRequest;
-    private final int limitToRespond;
-
-    /**
-     * @param cursor          the cursor to pass to the metadata dataset
-     * @param offsetToRequest the offset to request from the metadata dataset
-     * @param offsetToRespond the offset to return in the search response
-     * @param limitToRequest  the result limit to request from the metadata dataset
-     * @param limitToRespond  the result limit to return in the search response
-     */
-    CursorAndOffsetInfo(String cursor,
-                        int offsetToRequest, int offsetToRespond,
-                        int limitToRequest, int limitToRespond) {
-      this.cursor = cursor;
-      this.offsetToRequest = offsetToRequest;
-      this.offsetToRespond = offsetToRespond;
-      this.limitToRequest = limitToRequest;
-      this.limitToRespond = limitToRespond;
-    }
-
-    String getCursor() {
-      return cursor;
-    }
-
-    int getOffsetToRequest() {
-      return offsetToRequest;
-    }
-
-    int getOffsetToRespond() {
-      return offsetToRespond;
-    }
-
-    int getLimitToRequest() {
-      return limitToRequest;
-    }
-
-    int getLimitToRespond() {
-      return limitToRespond;
-    }
   }
 }
