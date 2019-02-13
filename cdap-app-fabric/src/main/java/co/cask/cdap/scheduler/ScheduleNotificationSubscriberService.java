@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,6 +50,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -156,9 +157,9 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     }
 
     @Override
-    protected void processMessages(DatasetContext datasetContext,
-                                   Iterator<ImmutablePair<String, Notification>> messages) {
-      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(datasetContext);
+    protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
+                                   Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
+      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(structuredTableContext);
       JobQueueDataset jobQueue = getJobQueue(datasetContext);
 
       while (messages.hasNext()) {
@@ -175,14 +176,14 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
      * Processes a single {@link Notification}.
      */
     protected abstract void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                                JobQueueDataset jobQueue, Notification notification);
+                                                JobQueueDataset jobQueue, Notification notification) throws IOException;
 
     private JobQueueDataset getJobQueue(DatasetContext datasetContext) {
       return Schedulers.getJobQueue(datasetContext, datasetFramework, cConf);
     }
 
-    private ProgramScheduleStoreDataset getScheduleStore(DatasetContext datasetContext) {
-      return Schedulers.getScheduleStore(datasetContext, datasetFramework);
+    private ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {
+      return Schedulers.getScheduleStore(context);
     }
   }
 
@@ -199,7 +200,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueDataset jobQueue, Notification notification) {
+                                       JobQueueDataset jobQueue, Notification notification) throws IOException {
 
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
@@ -241,13 +242,14 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueDataset jobQueue, Notification notification) {
+                                       JobQueueDataset jobQueue, Notification notification) throws IOException {
       String datasetIdString = notification.getProperties().get(Notification.DATASET_ID);
       if (datasetIdString == null) {
         return;
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
-      for (ProgramScheduleRecord schedule : scheduleStore.findSchedules(Schedulers.triggerKeyForPartition(datasetId))) {
+      for (ProgramScheduleRecord schedule :
+        scheduleStore.findSchedules(Schedulers.triggerKeyForPartition(datasetId))) {
         jobQueue.addNotification(schedule, notification);
       }
     }
@@ -266,7 +268,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
     @Override
     protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
-                                       JobQueueDataset jobQueue, Notification notification) {
+                                       JobQueueDataset jobQueue, Notification notification) throws IOException {
       String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
       String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
 

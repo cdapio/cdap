@@ -22,7 +22,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.config.PreferencesDataset;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -47,15 +46,14 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.store.NamespaceStore;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.store.NamespaceTable;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,22 +81,23 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
   private final MetadataStore metadataStore;
-  private final NamespaceStore defaultNamespaceStore;
+  private final NamespaceTable namespaceTable;
+  private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesDataset preferencesDataset;
-  private final TransactionRunner transactionRunner;
 
   public ProfileMetadataMessageProcessor(DatasetContext datasetContext, DatasetFramework datasetFramework,
-                                         MetadataStore metadataStore, TransactionRunner transactionRunner) {
-    defaultNamespaceStore = new DefaultNamespaceStore(transactionRunner);
-    scheduleDataset = Schedulers.getScheduleStore(datasetContext, datasetFramework);
+                                         MetadataStore metadataStore,
+                                         StructuredTableContext structuredTableContext) {
+    namespaceTable = new NamespaceTable(structuredTableContext);
+    appMetadataStore = AppMetadataStore.create(structuredTableContext);
+    scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
     preferencesDataset = PreferencesDataset.get(datasetContext, datasetFramework);
     this.metadataStore = metadataStore;
-    this.transactionRunner = transactionRunner;
   }
 
   @Override
-  public void processMessage(MetadataMessage message) {
+  public void processMessage(MetadataMessage message) throws IOException {
     LOG.trace("Processing message: {}", message);
 
     EntityId entityId = message.getEntityId();
@@ -119,33 +118,31 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     }
   }
 
-  private void updateProfileMetadata(EntityId entityId, MetadataMessage message) {
+  private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
     Map<MetadataEntity, Map<String, String>> toUpdate = new HashMap<>();
     collectProfileMetadata(entityId, message, toUpdate);
     metadataStore.addProperties(MetadataScope.SYSTEM, toUpdate);
   }
 
   private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
-                                      Map<MetadataEntity, Map<String, String>> updates) {
+                                      Map<MetadataEntity, Map<String, String>> updates) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
-        for (NamespaceMeta meta : defaultNamespaceStore.list()) {
+        for (NamespaceMeta meta : namespaceTable.list()) {
           collectProfileMetadata(meta.getNamespaceId(), message, updates);
         }
         break;
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
         // make sure namespace exists before updating
-        if (defaultNamespaceStore.get(namespaceId) == null) {
+        if (namespaceTable.get(namespaceId) == null) {
           LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
                       "updated. Ignoring the message {}", namespaceId, message);
           return;
         }
         LOG.trace("Updating profile metadata for {}", entityId);
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
-        List<ApplicationMeta> applicationMetas = TransactionRunners.run(transactionRunner, context -> {
-          return AppMetadataStore.create(context).getAllApplications(namespaceId.getNamespace());
-        });
+        List<ApplicationMeta> applicationMetas = appMetadataStore.getAllApplications(namespaceId.getNamespace());
         for (ApplicationMeta meta : applicationMetas) {
           collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
         }
@@ -153,10 +150,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case APPLICATION:
         ApplicationId appId = (ApplicationId) entityId;
         // make sure app exists before updating
-        // TODO: CDAP-14848 move transactions back to Metadata subscriber service once migration is complete
-        ApplicationMeta meta = TransactionRunners.run(transactionRunner, context -> {
-          return AppMetadataStore.create(context).getApplication(appId);
-        });
+        ApplicationMeta meta = appMetadataStore.getApplication(appId);
         if (meta == null) {
           LOG.debug("Application {} is not found, so the profile metadata of its programs/schedules will not get " +
                       "updated. Ignoring the message {}", appId, message);
@@ -167,9 +161,12 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
         // make sure the app of the program exists before updating
-        meta = TransactionRunners.run(transactionRunner, context -> {
-          return AppMetadataStore.create(context).getApplication(programId.getParent());
-        });
+        meta = appMetadataStore.getApplication(programId.getParent());
+        if (meta == null) {
+          LOG.debug("Application {} is not found, so the profile metadata of program {} will not get updated. " +
+                      "Ignoring the message {}", programId.getParent(), programId, message);
+          return;
+        }
         if (SystemArguments.isProfileAllowed(programId.getType())) {
           collectProgramProfileMetadata(programId, null, updates);
         }
@@ -221,7 +218,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
                                          @Nullable ProfileId namespaceProfile,
-                                         Map<MetadataEntity, Map<String, String>> updates) {
+                                         Map<MetadataEntity, Map<String, String>> updates) throws IOException {
     LOG.trace("Updating profile metadata for {}", applicationId);
     ProfileId appProfile = namespaceProfile == null
       ? getResolvedProfileId(applicationId)
@@ -232,7 +229,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
-                                             Map<MetadataEntity, Map<String, String>> updates) {
+                                             Map<MetadataEntity, Map<String, String>> updates) throws IOException {
     LOG.trace("Updating profile metadata for {}", programId);
     ProfileId programProfile = appProfile == null
       ? getResolvedProfileId(programId)

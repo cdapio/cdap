@@ -149,7 +149,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   @Override
-  protected void processMessages(DatasetContext datasetContext,
+  protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     ProgramHeartbeatDataset heartbeatDataset =
       ProgramHeartbeatDataset.getOrCreate(datasetContext, datasetFramework, cConf);

@@ -45,7 +45,7 @@ public final class NamespaceTable {
 
   private StructuredTable table;
 
-  NamespaceTable(StructuredTableContext context) throws TableNotFoundException {
+  public NamespaceTable(StructuredTableContext context) throws TableNotFoundException {
     this.table = context.getTable(StoreDefinition.NamespaceStore.NAMESPACES);
   }
 

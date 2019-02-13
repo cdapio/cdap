@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
@@ -138,10 +137,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
       @Override
       protected void startUp() throws Exception {
-        if (!datasetFramework.hasInstance(Schedulers.STORE_DATASET_ID)) {
-          datasetFramework.addInstance(Schedulers.STORE_TYPE_NAME,
-                                       Schedulers.STORE_DATASET_ID, DatasetProperties.EMPTY);
-        }
         timeSchedulerService.startAndWait();
         cleanupJobs();
         constraintCheckerService.startAndWait();
@@ -489,7 +484,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
     checkStarted();
-    execute((StoreAndQueueTxRunnable<Void, RuntimeException>) (store, queue) -> {
+    execute((StoreAndQueueTxRunnable<Void, Exception>) (store, queue) -> {
       store.modifySchedulesTriggeredByDeletedProgram(programId);
       return null;
     }, RuntimeException.class);
@@ -600,33 +595,33 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     V run(ProgramScheduleStoreDataset store, JobQueueDataset jobQueue, ProfileStore profileStore) throws T;
   }
 
-  private <V, T extends Exception> V execute(StoreTxRunnable<V, T> runnable,
+  private <V, T extends Exception> V execute(StoreTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return Transactionals.execute(transactional, context -> {
-      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
+    return TransactionRunners.run(transactionRunner, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
       return runnable.run(store);
     }, tClass);
   }
 
   @SuppressWarnings("UnusedReturnValue")
-  private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, T> runnable,
+  private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
-      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-      JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
-      return runnable.run(store, queue);
+      return TransactionRunners.run(transactionRunner, context1 -> {
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context1);
+        JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
+        return runnable.run(store, queue);
+      }, tClass);
     }, tClass);
   }
 
   @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
   private <V, T extends Exception> V execute(StoreAndProfileTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return Transactionals.execute(transactional, context -> {
-      return TransactionRunners.run(transactionRunner, context1 -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-        ProfileStore profileStore = ProfileStore.get(context1);
-        return runnable.run(store, profileStore);
-      }, tClass);
+    return TransactionRunners.run(transactionRunner, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+      ProfileStore profileStore = ProfileStore.get(context);
+      return runnable.run(store, profileStore);
     }, tClass);
   }
 
@@ -635,7 +630,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                                              Class<? extends T> tClass) throws T {
     return Transactionals.execute(transactional, context -> {
       return TransactionRunners.run(transactionRunner, context1 -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context1);
         ProfileStore profileStore = ProfileStore.get(context1);
         JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
         return runnable.run(store, queue, profileStore);
