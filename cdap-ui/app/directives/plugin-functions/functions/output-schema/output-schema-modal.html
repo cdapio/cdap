@@ -45,6 +45,12 @@
       <p class="text-danger" ng-if="GetSchemaModalController.error">
         Error: {{ GetSchemaModalController.error }}
       </p>
+
+      <ul class="text-danger" ng-if="GetSchemaModalController.stageErrors.length > 0">
+        <li ng-repeat="err in GetSchemaModalController.stageErrors">
+          {{ err }}
+        </li>
+      </ul>
     </div>
   </div>
 </div>
