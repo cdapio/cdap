@@ -50,7 +50,7 @@ public class NoopMetadataStorage implements MetadataStorage {
 
   @Override
   public SearchResponse search(SearchRequest request) {
-    return new SearchResponse(request, null, 0, Collections.emptyList());
+    return new SearchResponse(request, null, 0, 0, 0, Collections.emptyList());
   }
 
   @Override

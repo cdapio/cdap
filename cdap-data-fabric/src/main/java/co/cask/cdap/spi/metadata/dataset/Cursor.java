@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.elastic;
+package co.cask.cdap.spi.metadata.dataset;
 
 /**
  * A cursor for an Elasticsearch search session.
@@ -23,12 +23,12 @@ package co.cask.cdap.metadata.elastic;
 class Cursor {
   private final int offset;
   private final int pageSize;
-  private final String scrollId;
+  private final String cursor;
 
-  Cursor(int offset, int pageSize, String scrollId) {
+  Cursor(int offset, int pageSize, String cursor) {
     this.offset = offset;
     this.pageSize = pageSize;
-    this.scrollId = scrollId;
+    this.cursor = cursor;
   }
 
   int getOffset() {
@@ -39,13 +39,13 @@ class Cursor {
     return pageSize;
   }
 
-  String getScrollId() {
-    return scrollId;
+  String getCursor() {
+    return cursor;
   }
 
   @Override
   public String toString() {
-    return String.format("%d:%d:%s", offset, pageSize, scrollId);
+    return String.format("%d:%d:%s", offset, pageSize, cursor);
   }
 
   /**
@@ -56,7 +56,7 @@ class Cursor {
     String[] parts = str.split(":", 3);
     if (parts.length != 3) {
       throw new IllegalArgumentException(
-        String.format("Unable to parse cursor '%s': it must be of the form 'offset:pageSize:scrollId'", str));
+        String.format("Unable to parse cursor '%s': it must be of the form 'offset:pageSize:cursor'", str));
     }
     int offset;
     try {
