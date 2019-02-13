@@ -27,21 +27,27 @@ public class SearchResponse {
 
   private final SearchRequest request;
   private final String cursor;
+  private final int offset;
+  private final int limit;
   private final int totalResults;
   private final List<MetadataRecord> results;
 
   /**
    * @param request the original request
-   * @param cursor the cursor for the next search, if requested
+   * @param cursor the cursor for the next search, if requested and there are more results
+   * @param offset the offset at which the search results start
+   * @param limit the limit that was applied to this search (the number of results can be less)
    * @param totalResults the total number of results, or an estimate thereof
    * @param results the search results
    */
   public SearchResponse(SearchRequest request,
                         @Nullable String cursor,
-                        int totalResults,
+                        int offset, int limit, int totalResults,
                         List<MetadataRecord> results) {
     this.request = request;
     this.cursor = cursor;
+    this.offset = offset;
+    this.limit = limit;
     this.totalResults = totalResults;
     this.results = results;
   }
@@ -54,18 +60,31 @@ public class SearchResponse {
   }
 
   /**
-   * @return the cursor for the next page of results, if requested
+   * @return the cursor for the next page of results, if requested, or null if there are no more results
    */
-  // TODO (CDAP-14799) clearly explain the semantics of cursors, offsets, and total count
+  @Nullable
   public String getCursor() {
     return cursor;
   }
 
   /**
-   * @return the estimated total number of results
+   * @return the offset at which the results begin
    */
-  // TODO (CDAP-14799) clearly explain the semantics of cursors, offsets, and total count
-  @Nullable
+  public int getOffset() {
+    return offset;
+  }
+
+  /**
+   * @return the limit that was applied to the search (may be greater than the number of results)
+   */
+  public int getLimit() {
+    return limit;
+  }
+
+  /**
+   * @return the estimated total number of results. If this is greater than {@link #getOffset()} plus
+   * the size of {@link #getResults()}, then there are more results.
+   */
   public int getTotalResults() {
     return totalResults;
   }
@@ -82,6 +101,8 @@ public class SearchResponse {
     return "SearchResponse{" +
       "request=" + request +
       ", cursor='" + cursor + '\'' +
+      ", offset=" + offset +
+      ", limit=" + limit +
       ", totalResults=" + totalResults +
       ", results=" + results +
       '}';
@@ -95,15 +116,17 @@ public class SearchResponse {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SearchResponse that = (SearchResponse) o;
-    return totalResults == that.totalResults &&
-      Objects.equals(request, that.request) &&
-      Objects.equals(cursor, that.cursor) &&
-      Objects.equals(results, that.results);
+    SearchResponse response = (SearchResponse) o;
+    return offset == response.offset &&
+      limit == response.limit &&
+      totalResults == response.totalResults &&
+      Objects.equals(request, response.request) &&
+      Objects.equals(cursor, response.cursor) &&
+      Objects.equals(results, response.results);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(request, cursor, totalResults, results);
+    return Objects.hash(request, cursor, offset, limit, totalResults, results);
   }
 }
