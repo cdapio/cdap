@@ -137,7 +137,6 @@ var rules = [
 if (isModeProduction(mode)) {
   plugins.push(
     new UglifyJsPlugin({
-      sourceMap: true,
       uglifyOptions: {
         ie8: false,
         compress: {
@@ -153,6 +152,9 @@ if (isModeProduction(mode)) {
 }
 var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
+  node: {
+    global: false,
+  },
   context: __dirname + '/app/common',
   optimization: {
     splitChunks: {

@@ -233,7 +233,6 @@ gulp.task('js:lib', function() {
       './node_modules/react-dom/umd/react-dom.production.min.js',
       './node_modules/ngreact/ngReact.min.js',
 
-      './node_modules/cdap-avsc/dist/cdap-avsc-lib.js',
       './node_modules/svg4everybody/dist/svg4everybody.min.js',
       './node_modules/sockjs-client/dist/sockjs.js',
     ])

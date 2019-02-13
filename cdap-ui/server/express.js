@@ -17,6 +17,8 @@
 
 /* global require, module, process, __dirname */
 var urlhelper = require('./url-helper');
+const url = require('url');
+const csp = require('helmet-csp');
 
 module.exports = {
   getApp: function() {
@@ -48,7 +50,6 @@ var express = require('express'),
   MARKET_DIST_PATH = path.normalize(__dirname + '/../common_dist'),
   fs = require('fs'),
   objectQuery = require('lodash/get');
-
 var log = log4js.getLogger('default');
 const uiThemePropertyName = 'ui.theme.file';
 
@@ -159,7 +160,6 @@ function extractUITheme(cdapConfig, uiThemePath) {
 
 function makeApp(authAddress, cdapConfig, uiSettings) {
   var app = express();
-
   let uiThemeConfig = {};
   try {
     uiThemeConfig = extractUIThemeWrapper(cdapConfig);
@@ -179,6 +179,22 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(cookieParser());
+
+  if (!isModeDevelopment()) {
+    let marketUrl = url.parse(cdapConfig['market.base.url']);
+    let imgsrc = `${marketUrl.protocol}//${marketUrl.host}`;
+    app.use(
+      csp({
+        directives: {
+          defaultSrc: [`'self'`],
+          imgSrc: [`'self' data: ${imgsrc}`],
+          styleSrc: [`'self' 'unsafe-inline'`],
+          scriptSrc: [`'self'`],
+          workerSrc: [`'self' blob:`],
+        },
+      })
+    );
+  }
 
   app.use(function(err, req, res, next) {
     log.error(err);

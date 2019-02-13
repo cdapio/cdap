@@ -74,6 +74,9 @@ if (isModeProduction(mode)) {
 
 var webpackConfig = {
   mode,
+  node: {
+    global: false,
+  },
   entry: {
     vendor: [
       'react',
