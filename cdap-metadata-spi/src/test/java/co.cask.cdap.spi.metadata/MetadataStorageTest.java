@@ -42,12 +42,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import javax.annotation.Nullable;
 
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
 import static co.cask.cdap.api.metadata.MetadataScope.USER;
+
 import static co.cask.cdap.spi.metadata.MetadataConstants.CREATION_TIME_KEY;
 import static co.cask.cdap.spi.metadata.MetadataConstants.ENTITY_NAME_KEY;
 import static co.cask.cdap.spi.metadata.MetadataConstants.TTL_KEY;
@@ -1043,69 +1041,6 @@ public abstract class MetadataStorageTest {
                                .setCursorRequested(true).setCursor(response.getCursor()).build(),
                              sorted.subList(8, 10));
     Assert.assertNull(response.getCursor());
-  }
-
-  @Test
-  public void testCursorsOffsetsAndTotals() throws IOException {
-    MetadataStorage mds = getMetadataStorage();
-    List<MetadataRecord> records = IntStream.range(0, 20)
-      .mapToObj(i -> new MetadataRecord(ofDataset(DEFAULT_NAMESPACE, "ds" + i),
-                                        new Metadata(SYSTEM, props(ENTITY_NAME_KEY, "ds" + i))))
-      .collect(Collectors.toList());
-    mds.batch(records.stream()
-                .map(record -> new Update(record.getEntity(), record.getMetadata()))
-                .collect(Collectors.toList()));
-
-    // no cursors
-    validateCursorAndOffset(mds, 0, 10, null, false, 10, 0, 10, true, false);
-    validateCursorAndOffset(mds, 5, 10, null, false, 10, 5, 10, true, false);
-    validateCursorAndOffset(mds, 10, 10, null, false, 10, 10, 10, false, false);
-    validateCursorAndOffset(mds, 15, 10, null, false, 5, 15, 10, false, false);
-    validateCursorAndOffset(mds, 20, 10, null, false, 0, 20, 10, false, false);
-    validateCursorAndOffset(mds, 25, 10, null, false, 0, 25, 10, false, false);
-
-    // request cursors, but don't use them
-    validateCursorAndOffset(mds, 0, 10, null, true, 10, 0, 10, true, true);
-    validateCursorAndOffset(mds, 0, 20, null, true, 20, 0, 20, false, false);
-    validateCursorAndOffset(mds, 0, 30, null, true, 20, 0, 30, false, false);
-
-    // request cursor, and use it
-    String cursor = validateCursorAndOffset(mds, 0, 8, null, true, 8, 0, 8, true, true);
-    cursor = validateCursorAndOffset(mds, 0, 8, cursor, true, 8, 8, 8, true, true);
-    validateCursorAndOffset(mds, 0, 8, cursor, true, 4, 16, 8, false, false);
-
-    // request a cursor that matches evenly with the number of results
-    cursor = validateCursorAndOffset(mds, 0, 10, null, true, 10, 0, 10, true, true);
-    validateCursorAndOffset(mds, 0, 10, cursor, true, 10, 10, 10, false, false);
-
-    // ensure that offset and limit are superseded by cursor
-    cursor = validateCursorAndOffset(mds, 0, 4, null, true, 4, 0, 4, true, true);
-    cursor = validateCursorAndOffset(mds, 0, 0, cursor, true, 4, 4, 4, true, true);
-    cursor = validateCursorAndOffset(mds, 10, 100, cursor, true, 4, 8, 4, true, true);
-    cursor = validateCursorAndOffset(mds, 12, 2, cursor, true, 4, 12, 4, true, true);
-    validateCursorAndOffset(mds, 1, 1, cursor, true, 4, 16, 4, false, false);
-
-    // clean up
-    mds.batch(records.stream().map(MetadataRecord::getEntity).map(Drop::new).collect(Collectors.toList()));
-  }
-
-  @Nullable
-  private String validateCursorAndOffset(MetadataStorage mds,
-                                         int offset, int limit, String cursor, boolean requestCursor,
-                                         int expectedReults, int expectedOffset, int expectedLimit,
-                                         boolean expectMore, boolean expectCursor)
-    throws IOException {
-    SearchResponse response = mds.search(SearchRequest.of("*")
-                                           .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC))
-                                           .setOffset(offset).setLimit(limit)
-                                           .setCursor(cursor).setCursorRequested(requestCursor)
-                                           .build());
-    Assert.assertEquals(expectedReults, response.getResults().size());
-    Assert.assertEquals(expectedOffset, response.getOffset());
-    Assert.assertEquals(expectedLimit, response.getLimit());
-    Assert.assertEquals(expectMore, response.getTotalResults() > response.getOffset() + response.getResults().size());
-    Assert.assertEquals(expectCursor, null != response.getCursor());
-    return response.getCursor();
   }
 
   private static class NoDupRandom {

@@ -74,4 +74,18 @@ class Cursor {
     }
     return new Cursor(offset, pageSize, parts[2]);
   }
+
+  /**
+   * An elasticsearch scroll inherits the page size of the original request,
+   * and no offset relative to the scroll is supported. This validates
+   * that a new search request matches the page size of the cursor.
+  */
+  void validate(int offset, int limit) {
+    if (offset != 0) {
+      throw new IllegalArgumentException("Offset must 0 for search requests that have a cursor");
+    }
+    if (limit != this.pageSize) {
+      throw new IllegalArgumentException("Page size must be same as the page size of the original request");
+    }
+  }
 }
