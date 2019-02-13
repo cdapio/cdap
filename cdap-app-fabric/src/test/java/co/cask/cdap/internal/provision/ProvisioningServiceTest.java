@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.provision;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.dataset.table.Table;
@@ -30,12 +28,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -54,14 +47,16 @@ import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.security.FakeSecureStore;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -89,11 +84,10 @@ public class ProvisioningServiceTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static ProvisioningService provisioningService;
-  private static DatasetFramework datasetFramework;
-  private static Transactional transactional;
   private static TransactionManager txManager;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
+  private static ProvisionerStore provisionerStore;
 
   @BeforeClass
   public static void setupClass() throws IOException {
@@ -106,19 +100,20 @@ public class ProvisioningServiceTest {
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     messagingService = injector.getInstance(MessagingService.class);
+    provisionerStore = injector.getInstance(ProvisionerStore.class);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+    try {
+      // Define all StructuredTable before starting any services that need StructuredTable
+      StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                      injector.getInstance(StructuredTableRegistry.class));
+    } catch (IOException | TableAlreadyExistsException e) {
+      throw new RuntimeException("Unable to create the system tables.", e);
+    }
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
-    datasetFramework = injector.getInstance(DatasetFramework.class);
-    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
-    transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+
   }
 
   @AfterClass
@@ -226,20 +221,15 @@ public class ProvisioningServiceTest {
     ProgramRunId programRunId = testProvision(ProvisioningOp.Status.FAILED,
                                               new MockProvisioner.PropertyBuilder().failCreate().build()).programRunId;
 
-    Runnable task = Transactionals.execute(transactional, dsContext -> {
-      return provisioningService.deprovision(programRunId, dsContext);
-    });
+    // TODO: CDAP-14909 once all stores are migrated update the test with transactionals
+    Runnable task = provisioningService.deprovision(programRunId);
     task.run();
+
     // task state should have been cleaned up
-    ProvisioningTaskInfo taskInfo = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      return provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
-    });
+    ProvisioningTaskInfo taskInfo = provisionerStore.
+      getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
     Assert.assertNull("provision task info was not cleaned up", taskInfo);
-    taskInfo = Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      return provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION));
-    });
+    taskInfo =  provisionerStore.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION));
     Assert.assertNull("deprovision task info was not cleaned up", taskInfo);
   }
 
@@ -263,11 +253,7 @@ public class ProvisioningServiceTest {
                                                              op, Locations.toLocation(TEMP_FOLDER.newFolder()).toURI(),
                                                              cluster);
 
-    transactional.execute(dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      provisionerDataset.putTaskInfo(taskInfo);
-    });
-
+    provisionerStore.putTaskInfo(taskInfo);
     provisioningService.resumeTasks(t -> { });
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION);
@@ -275,17 +261,16 @@ public class ProvisioningServiceTest {
   }
 
   @Test
-  public void testCancelProvision() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testCancelProvision() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().waitCreate(1, TimeUnit.MINUTES).build();
     TaskFields taskFields = createTaskInfo(provisionerInfo);
+    ProvisionRequest provisionRequest = new ProvisionRequest(taskFields.programRunId, taskFields.programOptions,
+                                                             taskFields.programDescriptor, "Bob");
 
-    Runnable task = Transactionals.execute(transactional, dsContext -> {
-      ProvisionRequest provisionRequest = new ProvisionRequest(taskFields.programRunId, taskFields.programOptions,
-                                                               taskFields.programDescriptor, "Bob");
-      return provisioningService.provision(provisionRequest, dsContext);
-    });
-
+    // TODO: CDAP-14909 once all stores are migrated update the test with transactionals
+    Runnable task = provisioningService.provision(provisionRequest);
     task.run();
+
     Assert.assertTrue(provisioningService.cancelProvisionTask(taskFields.programRunId).isPresent());
 
     // check that the state of the task is cancelled
@@ -298,10 +283,8 @@ public class ProvisioningServiceTest {
     ProvisionerInfo provisionerInfo = new MockProvisioner.PropertyBuilder().waitDelete(1, TimeUnit.MINUTES).build();
     TaskFields taskFields = testProvision(ProvisioningOp.Status.CREATED, provisionerInfo);
 
-    Runnable task = Transactionals.execute(transactional, dsContext -> {
-      return provisioningService.deprovision(taskFields.programRunId, dsContext, t -> { });
-    });
-
+    // TODO: CDAP-14909 once all stores are migrated update the test with transactionals
+    Runnable task = provisioningService.deprovision(taskFields.programRunId, t -> { });
     task.run();
     Assert.assertTrue(provisioningService.cancelDeprovisionTask(taskFields.programRunId).isPresent());
 
@@ -311,14 +294,12 @@ public class ProvisioningServiceTest {
   }
 
   private TaskFields testProvision(ProvisioningOp.Status expectedState, ProvisionerInfo provisionerInfo)
-    throws InterruptedException, ExecutionException, TimeoutException {
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
     TaskFields taskFields = createTaskInfo(provisionerInfo);
-
-    Runnable task = Transactionals.execute(transactional, dsContext -> {
-      ProvisionRequest provisionRequest = new ProvisionRequest(taskFields.programRunId, taskFields.programOptions,
+    ProvisionRequest provisionRequest = new ProvisionRequest(taskFields.programRunId, taskFields.programOptions,
                                                                taskFields.programDescriptor, "Bob");
-      return provisioningService.provision(provisionRequest, dsContext);
-    });
+    // TODO: CDAP-14909 once all stores are migrated update the test with transactionals
+    Runnable task = provisioningService.provision(provisionRequest);
     task.run();
 
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(taskFields.programRunId, ProvisioningOp.Type.PROVISION);
@@ -327,12 +308,10 @@ public class ProvisioningServiceTest {
   }
 
   private void testDeprovision(ProgramRunId programRunId, ProvisioningOp.Status expectedState)
-    throws InterruptedException, ExecutionException, TimeoutException {
-    Runnable task = Transactionals.execute(transactional, dsContext -> {
-      return provisioningService.deprovision(programRunId, dsContext, t -> { });
-    });
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    // TODO: CDAP-14909 once all stores are migrated update the test with transactionals
+    Runnable task = provisioningService.deprovision(programRunId, t -> { });
     task.run();
-
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION);
     waitForExpectedProvisioningState(taskKey, expectedState);
   }
@@ -359,12 +338,11 @@ public class ProvisioningServiceTest {
   }
 
   private void waitForExpectedProvisioningState(ProvisioningTaskKey taskKey, ProvisioningOp.Status expectedState)
-    throws InterruptedException, ExecutionException, TimeoutException {
-    Tasks.waitFor(expectedState, () -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      ProvisioningTaskInfo provisioningTaskInfo = provisionerDataset.getTaskInfo(taskKey);
+    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    Tasks.waitFor(expectedState, () ->  {
+      ProvisioningTaskInfo provisioningTaskInfo = provisionerStore.getTaskInfo(taskKey);
       return provisioningTaskInfo == null ? null : provisioningTaskInfo.getProvisioningOp().getStatus();
-    }), 60, TimeUnit.SECONDS);
+    }, 60, TimeUnit.SECONDS);
   }
 
   @Test
