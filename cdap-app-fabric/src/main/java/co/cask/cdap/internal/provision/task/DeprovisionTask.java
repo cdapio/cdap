@@ -17,16 +17,14 @@
 
 package co.cask.cdap.internal.provision.task;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
+import co.cask.cdap.internal.provision.ProvisionerStore;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -38,7 +36,7 @@ import java.util.Optional;
 
 /**
  * Performs steps to deprovision a cluster for a program run. Before any operation is performed, state is persisted
- * to the ProvisionerDataset to record what we are doing. This is done in case we crash in the middle of the task
+ * to the ProvisionerStore to record what we are doing. This is done in case we crash in the middle of the task
  * and the task is later restarted. The operation state transition looks like:
  *
  *                                                        |-- (state == NOT_FOUND) --> Deleted
@@ -59,11 +57,11 @@ public class DeprovisionTask extends ProvisioningTask {
   private final ProvisionerNotifier provisionerNotifier;
   private final Location keysDir;
 
-  public DeprovisionTask(ProvisioningTaskInfo initialTaskInfo, Transactional transactional,
-                         DatasetFramework datasetFramework, int retryTimeLimitSecs, Provisioner provisioner,
+  public DeprovisionTask(ProvisioningTaskInfo initialTaskInfo, ProvisionerStore provisionerStore,
+                         int retryTimeLimitSecs, Provisioner provisioner,
                          ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
                          LocationFactory locationFactory) {
-    super(initialTaskInfo, transactional, datasetFramework, retryTimeLimitSecs);
+    super(initialTaskInfo, provisionerStore, retryTimeLimitSecs);
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;

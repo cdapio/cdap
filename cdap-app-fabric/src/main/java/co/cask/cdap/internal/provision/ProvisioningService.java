@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.provision;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.Requirements;
@@ -35,11 +32,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.plugin.MacroParser;
@@ -49,7 +41,6 @@ import co.cask.cdap.internal.provision.task.DeprovisionTask;
 import co.cask.cdap.internal.provision.task.ProvisionTask;
 import co.cask.cdap.internal.provision.task.ProvisioningTask;
 import co.cask.cdap.logging.context.LoggingContextHelper;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
 import co.cask.cdap.runtime.spi.SparkCompat;
@@ -71,7 +62,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
@@ -117,41 +107,36 @@ public class ProvisioningService extends AbstractIdleService {
   private final ProvisionerConfigProvider provisionerConfigProvider;
   private final ProvisionerNotifier provisionerNotifier;
   private final LocationFactory locationFactory;
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
   private final SparkCompat sparkCompat;
   private final SecureStore secureStore;
   private final Consumer<ProgramRunId> taskStateCleanup;
   private final ProgramStateWriter programStateWriter;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
+  private final ProvisionerStore provisionerStore;
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
                       ProvisionerConfigProvider provisionerConfigProvider,
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
-                      DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                      SecureStore secureStore, ProgramStateWriter programStateWriter) {
+                      SecureStore secureStore, ProgramStateWriter programStateWriter,
+                      ProvisionerStore provisionerStore) {
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
     this.locationFactory = locationFactory;
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                                   new TransactionSystemClientAdapter(txClient),
-                                                                   NamespaceId.SYSTEM,
-                                                                   Collections.emptyMap(), null, null)),
-      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
-    );
     this.sparkCompat = SparkCompatReader.get(cConf);
     this.secureStore = secureStore;
     this.programStateWriter = programStateWriter;
-    this.taskStateCleanup = programRunId -> Transactionals.execute(transactional, dsContext -> {
-      ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-      provisionerDataset.deleteTaskInfo(programRunId);
-    });
+    this.provisionerStore = provisionerStore;
+    this.taskStateCleanup = programRunId -> {
+      try {
+        provisionerStore.deleteTaskInfo(programRunId);
+      } catch (IOException e) {
+        LOG.error(String.format("Error cleaning up provisioning task {} {}", programRunId.toString(), e.getMessage()));
+      }
+    };
   }
 
   @Override
@@ -219,11 +204,11 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   /**
-   * Scans the ProvisionerDataset for any tasks that should be in progress but are not being executed and consumes
+   * Scans the ProvisionerStore for any tasks that should be in progress but are not being executed and consumes
    * them.
    */
   @VisibleForTesting
-  void resumeTasks(Consumer<ProgramRunId> taskCleanup) {
+  void resumeTasks(Consumer<ProgramRunId> taskCleanup) throws IOException {
     // TODO: CDAP-13462 read tasks in chunks to avoid tx timeout
     List<ProvisioningTaskInfo> clusterTaskInfos = getInProgressTasks();
 
@@ -251,10 +236,7 @@ public class ProvisioningService extends AbstractIdleService {
         LOG.error("Could not provision cluster for program run {} because provisioner {} no longer exists.",
                   programRunId, provisionerName);
         provisionerNotifier.orphaned(programRunId);
-        Transactionals.execute(transactional, dsContext -> {
-          ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-          provisionerDataset.deleteTaskInfo(provisioningTaskInfo.getProgramRunId());
-        });
+        provisionerStore.deleteTaskInfo(provisioningTaskInfo.getProgramRunId());
         continue;
       }
 
@@ -291,7 +273,7 @@ public class ProvisioningService extends AbstractIdleService {
    * @param programRunId the program run
    * @return the state of the task if it was cancelled
    */
-  public Optional<ProvisioningTaskInfo> cancelProvisionTask(ProgramRunId programRunId) {
+  public Optional<ProvisioningTaskInfo> cancelProvisionTask(ProgramRunId programRunId) throws IOException {
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION);
     return cancelTask(taskKey, programStateWriter::killed);
   }
@@ -304,7 +286,7 @@ public class ProvisioningService extends AbstractIdleService {
    * @param programRunId the program run
    * @return the state of the task if it was cancelled
    */
-  Optional<ProvisioningTaskInfo> cancelDeprovisionTask(ProgramRunId programRunId) {
+  Optional<ProvisioningTaskInfo> cancelDeprovisionTask(ProgramRunId programRunId) throws IOException {
     ProvisioningTaskKey taskKey = new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.DEPROVISION);
     return cancelTask(taskKey, provisionerNotifier::orphaned);
   }
@@ -318,10 +300,9 @@ public class ProvisioningService extends AbstractIdleService {
    * submit the runnable using their own executor.
    *
    * @param provisionRequest the provision request
-   * @param datasetContext dataset context for the transaction
    * @return runnable that will actually execute the cluster provisioning
    */
-  public Runnable provision(ProvisionRequest provisionRequest, DatasetContext datasetContext) {
+  public Runnable provision(ProvisionRequest provisionRequest) throws IOException {
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
     Map<String, String> args = programOptions.getArguments().asMap();
@@ -363,9 +344,7 @@ public class ProvisioningService extends AbstractIdleService {
       new ProvisioningTaskInfo(programRunId, provisionRequest.getProgramDescriptor(), programOptions,
                                properties, name, provisionRequest.getUser(), provisioningOp,
                                createKeysDirectory(programRunId).toURI(), null);
-    ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
-    provisionerDataset.putTaskInfo(provisioningTaskInfo);
-
+    provisionerStore.putTaskInfo(provisioningTaskInfo);
     return createProvisionTask(provisioningTaskInfo, provisioner);
   }
 
@@ -377,22 +356,18 @@ public class ProvisioningService extends AbstractIdleService {
    * tracked by this service. The caller does not need to submit the runnable using their own executor.
    *
    * @param programRunId the program run to deprovision
-   * @param datasetContext dataset context for the transaction
    * @return runnable that will actually execute the cluster deprovisioning
    */
-  public Runnable deprovision(ProgramRunId programRunId, DatasetContext datasetContext) {
-    return deprovision(programRunId, datasetContext, taskStateCleanup);
+  public Runnable deprovision(ProgramRunId programRunId) throws IOException {
+    return deprovision(programRunId, taskStateCleanup);
   }
 
   // This is visible for testing, where we may not want to delete the task information after it completes
   @VisibleForTesting
-  Runnable deprovision(ProgramRunId programRunId, DatasetContext datasetContext,
-                       Consumer<ProgramRunId> taskCleanup) {
-    ProvisionerDataset provisionerDataset = ProvisionerDataset.get(datasetContext, datasetFramework);
-
+  Runnable deprovision(ProgramRunId programRunId, Consumer<ProgramRunId> taskCleanup) throws IOException {
     // look up information for the corresponding provision operation
     ProvisioningTaskInfo existing =
-      provisionerDataset.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
+      provisionerStore.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
     if (existing == null) {
       runWithProgramLogging(programRunId, Collections.emptyMap(),
                             () -> LOG.error("No task state found while deprovisioning the cluster. "
@@ -426,7 +401,7 @@ public class ProvisioningService extends AbstractIdleService {
                                                        ProvisioningOp.Status.REQUESTING_DELETE);
     ProvisioningTaskInfo provisioningTaskInfo = new ProvisioningTaskInfo(existing, provisioningOp,
                                                                          existing.getCluster());
-    provisionerDataset.putTaskInfo(provisioningTaskInfo);
+    provisionerStore.putTaskInfo(provisioningTaskInfo);
 
     return createDeprovisionTask(provisioningTaskInfo, provisioner, taskCleanup);
   }
@@ -566,7 +541,7 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
-    ProvisioningTask task = new ProvisionTask(taskInfo, transactional, datasetFramework, provisioner, context,
+    ProvisioningTask task = new ProvisionTask(taskInfo, provisionerStore, provisioner, context,
                                               provisionerNotifier, programStateWriter, 300);
 
     Runnable runnable = () -> runWithProgramLogging(
@@ -607,7 +582,7 @@ public class ProvisioningService extends AbstractIdleService {
       provisionerNotifier.orphaned(taskInfo.getProgramRunId());
       return () -> { };
     }
-    DeprovisionTask task = new DeprovisionTask(taskInfo, transactional, datasetFramework, 300,
+    DeprovisionTask task = new DeprovisionTask(taskInfo, provisionerStore, 300,
                                                provisioner, context, provisionerNotifier, locationFactory);
 
     Runnable runnable = () -> runWithProgramLogging(
@@ -633,12 +608,9 @@ public class ProvisioningService extends AbstractIdleService {
     return () -> taskExecutor.submit(taskKey, runnable);
   }
 
-  private List<ProvisioningTaskInfo> getInProgressTasks() {
+  private List<ProvisioningTaskInfo> getInProgressTasks() throws IOException {
     return Retries.callWithRetries(
-      () -> Transactionals.execute(transactional, dsContext -> {
-        ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-        return provisionerDataset.listTaskInfo();
-      }),
+      () -> provisionerStore.listTaskInfo(),
       RetryStrategies.fixDelay(6, TimeUnit.SECONDS),
       t -> {
         // don't retry if we were interrupted, or if the service is not running
@@ -785,7 +757,8 @@ public class ProvisioningService extends AbstractIdleService {
    * @param taskKey the key for the task to cancel
    * @return the state of the task when it was cancelled if the task was running
    */
-  private Optional<ProvisioningTaskInfo> cancelTask(ProvisioningTaskKey taskKey, Consumer<ProgramRunId> onCancelled) {
+  private Optional<ProvisioningTaskInfo> cancelTask(ProvisioningTaskKey taskKey,
+                                                    Consumer<ProgramRunId> onCancelled) throws IOException {
     Optional<Future<Void>> taskFuture = taskExecutor.getFuture(taskKey);
     if (!taskFuture.isPresent()) {
       return Optional.empty();
@@ -799,37 +772,20 @@ public class ProvisioningService extends AbstractIdleService {
     LOG.trace("Cancelling {} task for program run {}.", taskKey.getType(), taskKey.getProgramRunId());
     if (future.cancel(true)) {
       LOG.debug("Cancelled {} task for program run {}.", taskKey.getType(), taskKey.getProgramRunId());
+
       // this is the task state after it has been cancelled
-      ProvisioningTaskInfo currentTaskInfo = Transactionals.execute(transactional, dsContext -> {
-        ProvisionerDataset provisionerDataset = ProvisionerDataset.get(dsContext, datasetFramework);
-
-        ProvisioningTaskInfo currentInfo = provisionerDataset.getTaskInfo(taskKey);
-        if (currentInfo == null) {
-          return null;
-        }
-
-        // write that the state has been cancelled. This is in case CDAP dies or is killed before the cluster can
-        // be deprovisioned and the task state cleaned up. When CDAP starts back up, it will see that the task is
-        // cancelled and will not resume the task.
-        ProvisioningOp newOp =
-          new ProvisioningOp(currentInfo.getProvisioningOp().getType(), ProvisioningOp.Status.CANCELLED);
-        ProvisioningTaskInfo newTaskInfo = new ProvisioningTaskInfo(currentInfo, newOp, currentInfo.getCluster());
-        provisionerDataset.putTaskInfo(newTaskInfo);
-        LOG.trace("Recorded cancelled state for {} task for program run {}.",
-                  taskKey.getType(), taskKey.getProgramRunId());
-
-        return currentInfo;
-      });
-
+      ProvisioningTaskInfo currentTaskInfo = provisionerStore.getExistingAndCancel(taskKey);
       // if the task state was gone by the time we cancelled, it's like we did not cancel it, since it's already
       // effectively done.
       if (currentTaskInfo == null) {
         return Optional.empty();
+      } else {
+        // run any action that should happen if it was cancelled, like writing a message to TMS
+        LOG.trace("Recorded cancelled state for {} task for program run {}.",
+                  taskKey.getType(), taskKey.getProgramRunId());
+        onCancelled.accept(currentTaskInfo.getProgramRunId());
+        return Optional.of(currentTaskInfo);
       }
-
-      // run any action that should happen if it was cancelled, like writing a message to TMS
-      onCancelled.accept(currentTaskInfo.getProgramRunId());
-      return Optional.of(currentTaskInfo);
     }
     return Optional.empty();
   }
