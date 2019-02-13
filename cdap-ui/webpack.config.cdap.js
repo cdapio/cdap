@@ -189,7 +189,6 @@ if (isModeProduction(mode)) {
       },
     }),
     new UglifyJsPlugin({
-      sourceMap: true,
       uglifyOptions: {
         ie8: false,
         compress: {
@@ -215,7 +214,9 @@ if (mode === 'development') {
 
 var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
-  devtool: 'source-map',
+  node: {
+    global: false,
+  },
   context: __dirname + '/app/cdap',
   entry: {
     cdap: ['@babel/polyfill', './cdap.js'],

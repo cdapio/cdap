@@ -401,6 +401,9 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.EventPipe.emit('schema.import', data);
     };
   }
+  onSchemaImportLinkClick() {
+    this.$timeout(() => document.getElementById('schema-import-link').click());
+  }
   exportSchema() {
     this.EventPipe.emit('schema.export');
   }

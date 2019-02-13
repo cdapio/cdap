@@ -53,7 +53,7 @@
           tooltip-placement="top"
           tooltip-enable="HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists || HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance"
           tooltip-append-to-body="true">
-          <a href="#" onclick="document.getElementById('schema-import-link').click()">Import</a>
+          <a href="#" ng-click="HydratorPlusPlusNodeConfigCtrl.onSchemaImportLinkClick()">Import</a>
         </li>
         <li
           ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance}"
