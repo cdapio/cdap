@@ -31,6 +31,8 @@ import com.google.common.base.Joiner;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import javax.sql.DataSource;
@@ -39,6 +41,9 @@ import javax.sql.DataSource;
  *
  */
 public class SqlProgramScheduleStoreDatasetTest extends ProgramScheduleStoreDatasetTest {
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static EmbeddedPostgres pg;
   private static TransactionRunner transactionRunner;
 
@@ -49,7 +54,7 @@ public class SqlProgramScheduleStoreDatasetTest extends ProgramScheduleStoreData
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
 
-    pg = EmbeddedPostgres.start();
+    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
     SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry();
     registry.initialize();
