@@ -105,7 +105,10 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
-               ng-class="{'wrangler': node.plugin.name === 'Wrangler'}">
+               ng-class="{
+                 'wrangler': node.plugin.name === 'Wrangler',
+                 'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name
+               }">
           <div class="node"
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
