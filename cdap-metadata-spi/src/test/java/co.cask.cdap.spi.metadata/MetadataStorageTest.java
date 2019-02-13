@@ -17,6 +17,7 @@
 package co.cask.cdap.spi.metadata;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
@@ -432,8 +433,87 @@ public abstract class MetadataStorageTest {
     mds.apply(new Drop(ds));
   }
 
+  /**
+   * Subclasses can override this to add more query strings to test with TTL.
+   */
   protected List<String> getAdditionalTTLQueries() {
     return Collections.emptyList();
+  }
+
+  @Test
+  public void testSearchOnSchema() throws IOException {
+    Schema bytesArraySchema = Schema.arrayOf(Schema.of(Schema.Type.BYTES));
+    Schema stringArraySchema = Schema.arrayOf(Schema.of(Schema.Type.STRING));
+    Schema booleanBytesMapSchema = Schema.mapOf(Schema.of(Schema.Type.BOOLEAN), Schema.of(Schema.Type.BYTES));
+    Schema nestedMapSchema = Schema.mapOf(bytesArraySchema, booleanBytesMapSchema);
+    Schema record22Schema = Schema.recordOf("record22", Schema.Field.of("a", nestedMapSchema));
+    Schema record22ArraySchema = Schema.arrayOf(record22Schema);
+    Schema bytesDoubleMapSchema = Schema.mapOf(Schema.of(Schema.Type.BYTES), Schema.of(Schema.Type.DOUBLE));
+    Schema record21Schema = Schema.recordOf("record21",
+                                            Schema.Field.of("x", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("y", stringArraySchema),
+                                            Schema.Field.of("z", bytesDoubleMapSchema));
+    Schema record21to22MapSchema = Schema.mapOf(record21Schema, record22ArraySchema);
+    Schema nullableIntSchema = Schema.nullableOf(Schema.of(Schema.Type.INT));
+    Schema tripeUnionSchema = Schema.unionOf(Schema.of(Schema.Type.INT), Schema.of(Schema.Type.LONG),
+                                             Schema.of(Schema.Type.NULL));
+    Schema complexSchema = Schema.recordOf("record1",
+                                           Schema.Field.of("map1", record21to22MapSchema),
+                                           Schema.Field.of("i", nullableIntSchema),
+                                           Schema.Field.of("j", tripeUnionSchema));
+    Schema anotherComplexSchema = Schema.arrayOf(Schema.of(Schema.Type.STRING));
+    Schema superComplexSchema = Schema.unionOf(complexSchema, anotherComplexSchema, Schema.of(Schema.Type.NULL));
+
+    String[] expectedTermsInIndex = {
+      "record1", "record1:RECORD",
+      "map1", "map1:MAP",
+      "record21", "record21:RECORD",
+      "x", "x:STRING",
+      "y", "y:ARRAY",
+      "z", "z:MAP",
+      "record22", "record22:RECORD",
+      "a", "a:MAP",
+      "i", "i:INT",
+      "j", "j:UNION",
+    };
+
+    MetadataEntity entity = MetadataEntity.ofDataset("myDs");
+    Metadata meta = new Metadata(SYSTEM, props(MetadataConstants.ENTITY_NAME_KEY, "myDs",
+                                               MetadataConstants.SCHEMA_KEY, superComplexSchema.toString()));
+    MetadataRecord record = new MetadataRecord(entity, meta);
+    MetadataStorage mds = getMetadataStorage();
+
+    mds.apply(new Update(entity, meta));
+    assertResults(mds, SearchRequest.of("myds").build(), record);
+    assertResults(mds, SearchRequest.of("schema:*").build(), record);
+    assertResults(mds, SearchRequest.of("properties:schema").build(), record);
+
+    for (String expectedTerm : expectedTermsInIndex) {
+      assertResults(mds, SearchRequest.of(expectedTerm).build(), record);
+      assertResults(mds, SearchRequest.of("schema:" + expectedTerm).build(), record);
+    }
+
+    // clean up
+    mds.apply(new Drop(entity));
+  }
+
+  @Test
+  public void testSearchWithInvalidSchema() throws IOException {
+    String invalidSchema = "an invalid schema";
+    MetadataEntity entity = MetadataEntity.ofDataset("myDs");
+    Metadata meta = new Metadata(SYSTEM, props(MetadataConstants.ENTITY_NAME_KEY, "myDs",
+                                               MetadataConstants.SCHEMA_KEY, invalidSchema));
+    MetadataRecord record = new MetadataRecord(entity, meta);
+    MetadataStorage mds = getMetadataStorage();
+
+    mds.apply(new Update(entity, meta));
+    assertResults(mds, SearchRequest.of("myds").build(), record);
+    assertResults(mds, SearchRequest.of("schema:*").build(), record);
+    assertResults(mds, SearchRequest.of("properties:schema").build(), record);
+    assertResults(mds, SearchRequest.of("schema:inval*").build(), record);
+
+    // clean up
+    mds.apply(new Drop(entity));
   }
 
   @Test

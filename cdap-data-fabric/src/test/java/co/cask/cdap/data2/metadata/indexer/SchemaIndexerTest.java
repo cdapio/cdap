@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,9 +35,9 @@ public class SchemaIndexerTest {
   private static final String KEY_PREFIX = KEY + ":";
 
   @Test
-  public void testSimpleSchema() throws Exception {
+  public void testSimpleSchema() {
     Schema simpleSchema = Schema.of(Schema.Type.INT);
-    Set<String> expected = Collections.emptySet();
+    Set<String> expected = Collections.singleton("properties:schema");
     SchemaIndexer indexer = new SchemaIndexer();
     DatasetId datasetInstance = new DatasetId("ns1", "ds1");
     Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, simpleSchema.toString()));
@@ -45,7 +45,7 @@ public class SchemaIndexerTest {
   }
 
   @Test
-  public void testSimpleRecord() throws Exception {
+  public void testSimpleRecord() {
     Schema simpleSchema = Schema.recordOf("record1",
                                           // String x
                                           Schema.Field.of("x", Schema.of(Schema.Type.STRING)),
@@ -58,11 +58,11 @@ public class SchemaIndexerTest {
     SchemaIndexer indexer = new SchemaIndexer();
     DatasetId datasetInstance = new DatasetId("ns1", "ds1");
     Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, simpleSchema.toString()));
-    Assert.assertEquals(addKeyPrefix(expected), actual);
+    Assert.assertEquals(addKeyPrefixAndPropertiesField(expected), actual);
   }
 
   @Test
-  public void testComplexRecord() throws Exception {
+  public void testComplexRecord() {
     Schema complexSchema = Schema.recordOf(
       "record1",
       Schema.Field.of(
@@ -98,15 +98,26 @@ public class SchemaIndexerTest {
     SchemaIndexer indexer = new SchemaIndexer();
     DatasetId datasetInstance = new DatasetId("ns1", "ds1");
     Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, superComplexSchema.toString()));
-    Assert.assertEquals(addKeyPrefix(expected), actual);
+    Assert.assertEquals(addKeyPrefixAndPropertiesField(expected), actual);
   }
 
-  private Set<String> addKeyPrefix(Set<String> expectedValues) {
+  @Test
+  public void testInvalidSchema() {
+    String invalidSchema = "an invalid schema";
+    Set<String> expected = ImmutableSet.of("an", "invalid", "schema", "an invalid schema");
+    SchemaIndexer indexer = new SchemaIndexer();
+    DatasetId datasetInstance = new DatasetId("ns1", "ds1");
+    Set<String> actual = indexer.getIndexes(new MetadataEntry(datasetInstance, KEY, invalidSchema));
+    Assert.assertEquals(addKeyPrefixAndPropertiesField(expected), actual);
+  }
+
+  private Set<String> addKeyPrefixAndPropertiesField(Set<String> expectedValues) {
     ImmutableSet.Builder<String> expected = ImmutableSet.<String>builder()
       .addAll(expectedValues);
     for (String expectedValue : expectedValues) {
       expected.add(KEY_PREFIX + expectedValue);
     }
+    expected.add("properties:schema");
     return expected.build();
   }
 }
