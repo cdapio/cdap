@@ -196,6 +196,18 @@ public class TransactionRunners {
   }
 
   /**
+   * Propagates the given {@link TransactionException}. If the {@link TransactionException#getCause()}
+   * doesn't return {@code null}, the cause will be used instead for the propagation. This method will
+   * throw the failure exception as-is the given propagated type if the type matches or as {@link RuntimeException}.
+   *
+   * @param e the {@link TransactionException} to propagate
+   * @return nothing will ever be returned. This return type is only for convenience.
+   */
+  private static RuntimeException propagate(TransactionException e) {
+    throw propagateThrowable(firstNonNull(e.getCause(), e));
+  }
+
+  /**
    * Propagates {@code throwable} as-is if it is an instance of
    * {@link RuntimeException} or {@link Error}, or else as a last resort, wraps
    * it in a {@code RuntimeException} then propagates.
@@ -203,7 +215,7 @@ public class TransactionRunners {
    * @param throwable the Throwable to propagate
    * @return nothing will ever be returned. This return type is only for convenience.
    */
-  private static RuntimeException propagate(Throwable throwable) {
+  private static RuntimeException propagateThrowable(Throwable throwable) {
     propagateIfPossible(requireNonNull(throwable));
     throw new RuntimeException(throwable);
   }
@@ -220,7 +232,7 @@ public class TransactionRunners {
   public static <X extends Throwable> X propagate(TransactionException e, Class<X> propagateType) throws X {
     Throwable cause = firstNonNull(e.getCause(), e);
     propagateIfPossible(cause, propagateType);
-    throw propagate(cause);
+    throw propagateThrowable(cause);
   }
 
   /**
@@ -239,7 +251,7 @@ public class TransactionRunners {
                                                                           Class<X2> propagateType2) throws X1, X2 {
     Throwable cause = firstNonNull(e.getCause(), e);
     propagateIfPossible(cause, propagateType1, propagateType2);
-    throw propagate(cause);
+    throw propagateThrowable(cause);
   }
 
   /**
@@ -263,7 +275,7 @@ public class TransactionRunners {
     Throwable cause = firstNonNull(e.getCause(), e);
     propagateIfPossible(cause, propagateType1, propagateType2);
     propagateIfPossible(cause, propagateType3);
-    throw propagate(cause);
+    throw propagateThrowable(cause);
   }
 
   /**
