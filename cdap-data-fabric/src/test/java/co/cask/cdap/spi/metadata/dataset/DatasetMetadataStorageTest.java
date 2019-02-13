@@ -20,13 +20,11 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
-import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -51,13 +49,10 @@ import com.google.inject.util.Modules;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -213,64 +208,4 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
       new Drop(ns1app1), new Drop(ns1app2), new Drop(ns1app3), new Drop(ns2app1), new Drop(ns2app2)));
   }
 
-  @Test
-  public void testNsScopes() {
-    // no namespace
-    testNsScopes(null, null, EnumSet.allOf(EntityScope.class), false);
-    testNsScopes(Collections.emptySet(), null, EnumSet.allOf(EntityScope.class), false);
-    // system only
-    testNsScopes(ImmutableSet.of("system"), NamespaceId.SYSTEM, EnumSet.of(EntityScope.SYSTEM), false);
-    // user namespace only
-    testNsScopes(ImmutableSet.of("myns"), new NamespaceId("myns"), EnumSet.of(EntityScope.USER), false);
-    // user and system namespace
-    testNsScopes(ImmutableSet.of("myns", "system"), new NamespaceId("myns"), EnumSet.allOf(EntityScope.class), false);
-    // multiple user namespaces
-    testNsScopes(ImmutableSet.of("myns", "yourns"), null, null, true);
-    testNsScopes(ImmutableSet.of("myns", "system", "yourns"), null, null, true);
-  }
-
-  private void testNsScopes(Set<String> namespaces,
-                            NamespaceId expectedNamespace, Set<EntityScope> expectedScopes,
-                            boolean expectUnsupportedOperation) {
-    if (expectUnsupportedOperation) {
-      try {
-        DatasetMetadataStorage.determineNamespaceAndScopes(namespaces);
-        Assert.fail("Expected unsupported operation");
-      } catch (UnsupportedOperationException e) {
-        return; // expected
-      }
-    }
-    ImmutablePair<NamespaceId, Set<EntityScope>> pair = DatasetMetadataStorage.determineNamespaceAndScopes(namespaces);
-    Assert.assertEquals("namespace does not match for " + namespaces, expectedNamespace, pair.getFirst());
-    Assert.assertEquals("scopes don't match for " + namespaces, expectedScopes, pair.getSecond());
-  }
-
-  @Test
-  public void testCursorOffsetAndLimits() {
-    // search without cursor adds one to the limit to determine if there are more results
-    testCursorsOffsetsAndLimits(null, false, 0, 10, null, 0, 0, 11, 10);
-    testCursorsOffsetsAndLimits(null, false, 5, 10, null, 5, 5, 11, 10);
-    // search with request for a cursor does not need to add one - it can tell by the returned cursor
-    testCursorsOffsetsAndLimits(null, true, 0, 10, null, 0, 0, 10, 10);
-    testCursorsOffsetsAndLimits(null, true, 5, 10, null, 5, 5, 10, 10);
-    // search with cursor supersedes offset and limit
-    testCursorsOffsetsAndLimits(new Cursor(10, 5, "x"), false, 20, 50, "x", 0, 10, 5, 5);
-    testCursorsOffsetsAndLimits(new Cursor(10, 5, "x"), true, 20, 50, "x", 0, 10, 5, 5);
-  }
-
-  private void testCursorsOffsetsAndLimits(Cursor cursor, boolean cursorRequested,
-                                           int offsetRequested, int limitRequested,
-                                           String expectedCursor,
-                                           int expectedOffsetToRequest, int expectedOffsetToRespond,
-                                           int expectedLimitToRequest, int expectedLimitToRespond) {
-    SearchRequest request = SearchRequest.of("*")
-      .setCursor(cursor == null ? null : cursor.toString()).setCursorRequested(cursorRequested)
-      .setOffset(offsetRequested).setLimit(limitRequested).build();
-    DatasetMetadataStorage.CursorAndOffsetInfo info = DatasetMetadataStorage.determineCursorOffsetAndLimits(request);
-    Assert.assertEquals(expectedCursor, info.getCursor());
-    Assert.assertEquals(expectedOffsetToRequest, info.getOffsetToRequest());
-    Assert.assertEquals(expectedOffsetToRespond, info.getOffsetToRespond());
-    Assert.assertEquals(expectedLimitToRequest, info.getLimitToRequest());
-    Assert.assertEquals(expectedLimitToRespond, info.getLimitToRespond());
-  }
 }
