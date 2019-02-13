@@ -61,6 +61,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ConfigStore.CONFIGS) == null) {
       ConfigStore.createTable(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(ProvisionerStore.PROVISIONER_TABLE) == null) {
+      ProvisionerStore.createTable(tableAdmin);
+    }
     if (overWrite || tableAdmin.getSpecification(AppMetadataStore.APPLICATION_SPECIFICATIONS) == null) {
       AppMetadataStore.createTables(tableAdmin);
     }
@@ -280,6 +283,38 @@ public final class StoreDefinition {
     }
   }
 
+  /**
+   * Table specification and create table definitions for provisioner store.
+   */
+  public static final class ProvisionerStore {
+    public static final StructuredTableId PROVISIONER_TABLE = new StructuredTableId("provisioner_data");
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String VERSION_FIELD = "version";
+    public static final String PROGRAM_TYPE_FIELD = "program_type";
+    public static final String PROGRAM_FIELD = "program";
+    public static final String RUN_FIELD = "run";
+    public static final String KEY_TYPE = "type";
+    public static final String PROVISIONER_TASK_INFO_FIELD = "provisioner_task_info";
+
+    public static final StructuredTableSpecification PROVISIONER_STORE_SPEC = new StructuredTableSpecification.Builder()
+      .withId(PROVISIONER_TABLE)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(APPLICATION_FIELD),
+                  Fields.stringType(VERSION_FIELD),
+                  Fields.stringType(PROGRAM_TYPE_FIELD),
+                  Fields.stringType(PROGRAM_FIELD),
+                  Fields.stringType(RUN_FIELD),
+                  Fields.stringType(KEY_TYPE),
+                  Fields.stringType(PROVISIONER_TASK_INFO_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD,
+                       PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD, KEY_TYPE)
+      .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(PROVISIONER_STORE_SPEC);
+    }
+  }
   /**
    *  Defines schema for AppMetadata tables
    */

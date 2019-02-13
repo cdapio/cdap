@@ -17,16 +17,14 @@
 
 package co.cask.cdap.internal.provision.task;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
+import co.cask.cdap.internal.provision.ProvisionerStore;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +36,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Performs steps to provision a cluster for a program run. Before any operation is performed, state is persisted
- * to the ProvisionerDataset to record what we are doing. This is done in case we crash in the middle of the task
+ * to the ProvisionerStore to record what we are doing. This is done in case we crash in the middle of the task
  * and the task is later restarted. The operation state transition looks like:
  *
  *         --------------------------------- (state == NOT_FOUND) -------------------------------------|
@@ -70,12 +68,11 @@ public class ProvisionTask extends ProvisioningTask {
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramStateWriter programStateWriter;
 
-  public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, Transactional transactional,
-                       DatasetFramework datasetFramework,
+  public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, ProvisionerStore provisionerStore,
                        Provisioner provisioner, ProvisionerContext provisionerContext,
                        ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
                        int retryTimeLimitSecs) {
-    super(initialTaskInfo, transactional, datasetFramework, retryTimeLimitSecs);
+    super(initialTaskInfo, provisionerStore, retryTimeLimitSecs);
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;

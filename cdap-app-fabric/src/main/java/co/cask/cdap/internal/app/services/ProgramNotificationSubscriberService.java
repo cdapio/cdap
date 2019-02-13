@@ -242,9 +242,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       if (clusterStatus == null) {
         return result;
       }
-      handleClusterEvent(programRunId, clusterStatus, notification,
-                         messageIdBytes, datasetContext, appMetadataStore).ifPresent(result::add);
-      return result;
+
+    handleClusterEvent(programRunId, clusterStatus, notification,
+                       messageIdBytes, appMetadataStore).ifPresent(result::add);
+    return result;
     });
   }
 
@@ -398,8 +399,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
-                                                DatasetContext datasetContext, AppMetadataStore appMetadataStore)
-    throws IOException, TableNotFoundException {
+                                                AppMetadataStore appMetadataStore) throws IOException {
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
@@ -416,7 +416,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
         ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
                                                                  userId);
-        return Optional.of(provisioningService.provision(provisionRequest, datasetContext));
+        return Optional.of(provisioningService.provision(provisionRequest));
       case PROVISIONED:
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
         appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
@@ -453,7 +453,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // If we skipped recording the run status, that means this was a duplicate message,
         // or an invalid state transition. In both cases, we should not try to deprovision the cluster.
         if (recordedMeta != null) {
-          return Optional.of(provisioningService.deprovision(programRunId, datasetContext));
+          return Optional.of(provisioningService.deprovision(programRunId));
         }
         break;
       case DEPROVISIONED:
