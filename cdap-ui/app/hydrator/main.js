@@ -328,17 +328,23 @@ angular
     });
 
     EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading to home');
-      /*
-        TL;DR: We need to reload services to check if backend is up and running.
-        LONGER-VERSION : When node server goes down and then later comes up we used to use ui-router's transitionTo api.
-        This, however reloads the controllers but does not reload the services. As a result our poll for
-        backend services got dropped in the previous node server and the new node server is not polling for
-        backend service (system services & backend heartbeat apis). So we need to force reload the entire app
-        to reload services. Ideally we should have one controller that loaded everything so that we can control
-        the polling in services but unfortunately we are polling for stuff in too many places - StatusFactory, ServiceStatusFactory.
-      */
-      $window.location.reload();
+      $log.log('[DataSource] reconnected.');
+
+      // prevent refresh on pipeline studio
+      if ($state.is('hydrator.create')) {
+        myLoadingService.hideLoadingIcon();
+      } else {
+        /*
+          TL;DR: We need to reload services to check if backend is up and running.
+          LONGER-VERSION : When node server goes down and then later comes up we used to use ui-router's transitionTo api.
+          This, however reloads the controllers but does not reload the services. As a result our poll for
+          backend services got dropped in the previous node server and the new node server is not polling for
+          backend service (system services & backend heartbeat apis). So we need to force reload the entire app
+          to reload services. Ideally we should have one controller that loaded everything so that we can control
+          the polling in services but unfortunately we are polling for stuff in too many places - StatusFactory, ServiceStatusFactory.
+        */
+        $window.location.reload();
+      }
     });
 
     console.timeEnd(PKG.name);
