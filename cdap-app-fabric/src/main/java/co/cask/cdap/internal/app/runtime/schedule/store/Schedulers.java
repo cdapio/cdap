@@ -17,14 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -39,12 +31,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.reflect.TypeToken;
 import org.quartz.CronExpression;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 public class Schedulers {
   public static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getSimpleName();
   public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
-  public static final DatasetId JOB_QUEUE_DATASET_ID = NamespaceId.SYSTEM.dataset("job.queue");
 
   public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
 
@@ -78,19 +67,6 @@ public class Schedulers {
       triggerKeysBuilder.add(triggerKeyForProgramStatus(programId, status));
     }
     return triggerKeysBuilder.build();
-  }
-
-  public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework,
-                                            CConfiguration cConf) {
-    try {
-      return DatasetsUtil.getOrCreateDataset(
-        context, dsFramework, JOB_QUEUE_DATASET_ID, JobQueueDataset.class.getName(),
-        () -> DatasetProperties.of(
-          Collections.singletonMap(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS,
-                                   cConf.get(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS))));
-    } catch (DatasetManagementException | IOException e) {
-      throw Throwables.propagate(e);
-    }
   }
 
   public static ProgramScheduleStoreDataset getScheduleStore(StructuredTableContext context) {

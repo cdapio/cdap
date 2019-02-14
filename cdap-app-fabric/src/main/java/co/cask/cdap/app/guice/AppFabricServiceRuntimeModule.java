@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
@@ -52,7 +51,6 @@ import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import co.cask.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
 import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -103,7 +101,6 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
@@ -285,11 +282,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
           })
       );
-
-      // Bind system datasets defined in App-fabric
-      MapBinder<String, DatasetModule> datasetModuleBinder = MapBinder.newMapBinder(
-        binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
-      datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
 
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);

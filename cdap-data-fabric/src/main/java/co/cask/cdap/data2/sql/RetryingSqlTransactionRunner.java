@@ -30,6 +30,7 @@ import javax.sql.DataSource;
  * This class is based on {@link Transactions#createTransactionalWithRetry}.
  */
 public class RetryingSqlTransactionRunner implements TransactionRunner {
+  // From https://www.postgresql.org/docs/9.6/transaction-iso.html, "40001" is the code for serialization failures
   private static final String TRANSACTION_CONFLICT_SQL_STATE = "40001";
   private static final int MAX_RETRIES = 20;
   private static final long DELAY_MILLIS = 100;

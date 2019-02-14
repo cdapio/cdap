@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,7 +51,8 @@ public class DelayConstraintTest {
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
                                                    ImmutableList.<Constraint>of());
-    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
+    SimpleJob job = new SimpleJob(schedule, 0, now, Collections.<Notification>emptyList(),
+                                  Job.State.PENDING_TRIGGER, 0L);
 
     // test with 10 minute delay
     DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(10, TimeUnit.MINUTES);

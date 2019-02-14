@@ -16,8 +16,6 @@
 
 package co.cask.cdap.scheduler;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
@@ -29,11 +27,6 @@ import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -42,7 +35,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
@@ -57,6 +50,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.runtime.spi.profile.ProfileStatus;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.spi.data.transaction.TransactionException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
@@ -66,9 +60,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,35 +86,25 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private static final Gson GSON = new Gson();
 
   private final CountDownLatch startedLatch;
-  private final Transactional transactional;
   private final Service internalService;
-  private final DatasetFramework datasetFramework;
   private final TimeSchedulerService timeSchedulerService;
   private final AdminEventPublisher adminEventPublisher;
+  private final CConfiguration cConf;
   private final Store appMetaStore;
   private final Impersonator impersonator;
-  private final CConfiguration cConf;
   private final TransactionRunner transactionRunner;
 
   @Inject
-  CoreSchedulerService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                       TimeSchedulerService timeSchedulerService,
+  CoreSchedulerService(TimeSchedulerService timeSchedulerService,
                        ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
                        ConstraintCheckerService constraintCheckerService,
                        MessagingService messagingService,
                        CConfiguration cConf, Store store, Impersonator impersonator,
                        TransactionRunner transactionRunner) {
-    this.cConf = cConf;
     this.startedLatch = new CountDownLatch(1);
-    this.datasetFramework = datasetFramework;
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
-    DynamicDatasetCache datasetCache =
-      new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                  txClient, Schedulers.STORE_DATASET_ID.getParent(),
-                                  Collections.emptyMap(), null, null, messagingContext);
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
     this.timeSchedulerService = timeSchedulerService;
+    this.cConf = cConf;
     this.appMetaStore = store;
     this.impersonator = impersonator;
     this.transactionRunner = transactionRunner;
@@ -136,7 +117,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       }
 
       @Override
-      protected void startUp() throws Exception {
+      protected void startUp() {
         timeSchedulerService.startAndWait();
         cleanupJobs();
         constraintCheckerService.startAndWait();
@@ -162,8 +143,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   // This should only be called at startup.
   private void cleanupJobs() {
     try {
-      transactional.execute(context -> {
-        JobQueueDataset jobQueue = Schedulers.getJobQueue(context, datasetFramework, cConf);
+      TransactionRunners.run(transactionRunner, context -> {
+        JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, cConf);
         try (CloseableIterator<Job> jobIter = jobQueue.fullScan()) {
           LOG.info("Cleaning up jobs in state {}.", Job.State.PENDING_LAUNCH);
           while (jobIter.hasNext()) {
@@ -175,8 +156,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             }
           }
         }
-      });
-    } catch (TransactionFailureException exception) {
+      }, TransactionException.class);
+    } catch (TransactionException exception) {
       LOG.warn("Failed to cleanup jobs upon startup.", exception);
     }
   }
@@ -584,7 +565,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   private interface StoreAndQueueTxRunnable<V, T extends Throwable> {
-    V run(ProgramScheduleStoreDataset store, JobQueueDataset jobQueue) throws T;
+    V run(ProgramScheduleStoreDataset store, JobQueueTable jobQueue) throws T;
   }
 
   private interface StoreAndProfileTxRunnable<V, T extends Throwable> {
@@ -592,7 +573,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   private interface StoreQueueAndProfileTxRunnable<V, T extends Throwable> {
-    V run(ProgramScheduleStoreDataset store, JobQueueDataset jobQueue, ProfileStore profileStore) throws T;
+    V run(ProgramScheduleStoreDataset store, JobQueueTable jobQueue, ProfileStore profileStore) throws T;
   }
 
   private <V, T extends Exception> V execute(StoreTxRunnable<V, ? extends Exception> runnable,
@@ -606,12 +587,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @SuppressWarnings("UnusedReturnValue")
   private <V, T extends Exception> V execute(StoreAndQueueTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return Transactionals.execute(transactional, context -> {
-      return TransactionRunners.run(transactionRunner, context1 -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context1);
-        JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
-        return runnable.run(store, queue);
-      }, tClass);
+    return TransactionRunners.run(transactionRunner, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+      JobQueueTable queue = JobQueueTable.getJobQueue(context, cConf);
+      return runnable.run(store, queue);
     }, tClass);
   }
 
@@ -628,13 +607,11 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @SuppressWarnings("UnusedReturnValue")
   private <V, T extends Exception> V execute(StoreQueueAndProfileTxRunnable<V, ? extends Exception> runnable,
                                              Class<? extends T> tClass) throws T {
-    return Transactionals.execute(transactional, context -> {
-      return TransactionRunners.run(transactionRunner, context1 -> {
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context1);
-        ProfileStore profileStore = ProfileStore.get(context1);
-        JobQueueDataset queue = Schedulers.getJobQueue(context, datasetFramework, cConf);
-        return runnable.run(store, queue, profileStore);
-      }, tClass);
+    return TransactionRunners.run(transactionRunner, context -> {
+      ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
+      ProfileStore profileStore = ProfileStore.get(context);
+      JobQueueTable queue = JobQueueTable.getJobQueue(context, cConf);
+      return runnable.run(store, queue, profileStore);
     }, tClass);
   }
 }

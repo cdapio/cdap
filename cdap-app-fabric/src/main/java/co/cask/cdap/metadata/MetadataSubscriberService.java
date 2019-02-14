@@ -178,16 +178,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     appMetadataStore.persistSubscriberState(getTopicId().getTopic(), "metadata.writer", messageId);
   }
 
-  @Nullable
-  @Override
-  // TODO: CDAP-14848 delete below two methods once migration is complete
-  protected String loadMessageId(DatasetContext context) throws IOException {
-    return null;
-  }
-
-  @Override
-  protected void storeMessageId(DatasetContext context, String messageId) throws IOException {}
-
   @Override
   protected boolean shouldRunInSeparateTx(MetadataMessage message) {
     EntityType entityType = message.getEntityId().getEntityType();

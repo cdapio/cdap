@@ -136,18 +136,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     getAppMetadataStore(context).persistSubscriberState(getTopicId().getTopic(), "", messageId);
   }
 
-  @Nullable
-  @Override
-  // TODO: CDAP-14848 remove below two methods
-  protected String loadMessageId(DatasetContext datasetContext) {
-    return null;
-  }
-
-  @Override
-  protected void storeMessageId(DatasetContext datasetContext, String messageId) {
-    // NO-OP on purpose
-  }
-
   @Override
   protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) throws Exception {

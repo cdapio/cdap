@@ -19,8 +19,6 @@ package co.cask.cdap.scheduler;
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.AppWithMultipleSchedules;
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactSummary;
@@ -43,11 +41,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -58,8 +51,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -86,6 +78,8 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.profile.Profile;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableList;
@@ -96,7 +90,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import org.apache.tephra.RetryStrategies;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -148,31 +141,25 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .create();
 
+  private static CConfiguration cConf;
   private static MessagingService messagingService;
   private static Store store;
   private static TopicId dataEventTopic;
 
   private static Scheduler scheduler;
-  private static Transactional transactional;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
     AppFabricTestBase.beforeClass();
+    cConf = getInjector().getInstance(CConfiguration.class);
     scheduler = getInjector().getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
     messagingService = getInjector().getInstance(MessagingService.class);
     store = getInjector().getInstance(Store.class);
-
-    DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(getInjector().getInstance(DatasetFramework.class)), getTxClient(),
-      NamespaceId.SYSTEM, Collections.emptyMap(), null, null);
-
-    transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(datasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+    transactionRunner = getInjector().getInstance(TransactionRunner.class);
   }
 
   @AfterClass
@@ -615,9 +602,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   @Nullable
   private MessageId getLastMessageId(final TopicId topic) {
-    return Transactionals.execute(transactional, context -> {
-      JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
-                                                    Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
+    return TransactionRunners.run(transactionRunner, context -> {
+      JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, cConf);
       String id = jobQueue.retrieveSubscriberState(topic.getTopic());
       if (id == null) {
         return null;
@@ -639,9 +625,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   private List<Job> getAllJobs() {
-    return Transactionals.execute(transactional, context -> {
-      JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
-                                                    Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
+    return TransactionRunners.run(transactionRunner, context -> {
+      JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, cConf);
       try (CloseableIterator<Job> iterator = jobQueue.fullScan()) {
         return Lists.newArrayList(iterator);
       }

@@ -55,7 +55,6 @@ import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -475,7 +474,6 @@ public class UpgradeTool {
     // Usage registry
     UsageDataset.setupDatasets(datasetFramework);
 
-    JobQueueDataset.setupDatasets(datasetFramework);
     ProgramScheduleStoreDataset.setupDatasets(datasetFramework);
   }
 }

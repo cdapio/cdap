@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ScheduleId;
 
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
@@ -32,7 +33,7 @@ public interface JobQueue {
   /**
    * Returns a {@link CloseableIterator} over all the jobs associated with the given schedule Id.
    */
-  CloseableIterator<Job> getJobsForSchedule(ScheduleId scheduleId);
+  CloseableIterator<Job> getJobsForSchedule(ScheduleId scheduleId) throws IOException;
 
   /**
    * Returns a stored Job, given the scheduleId and the creationTime of it.
@@ -41,14 +42,7 @@ public interface JobQueue {
    * @return the stored Job, or null if there is no Job for the given key.
    */
   @Nullable
-  Job getJob(JobKey jobKey);
-
-  /**
-   * Creates a new Job in the queue or updates an existing Job.
-   *
-   * @param job the new job
-   */
-  void put(Job job);
+  Job getJob(JobKey jobKey) throws IOException;
 
   /**
    * Updates a given Job to have a new {@link Job.State}.
@@ -58,7 +52,7 @@ public interface JobQueue {
    * @return a new, updated Job
    * @throws IllegalArgumentException In the case of an illegal state transition. See {@link Job.State}.
    */
-  Job transitState(Job job, Job.State state) throws IllegalArgumentException;
+  Job transitState(Job job, Job.State state) throws IllegalArgumentException, IOException;
 
   /**
    * Adds the given notification to jobs for the given schedule.
@@ -66,7 +60,7 @@ public interface JobQueue {
    * @param schedule the schedule for which jobs will be update
    * @param notification the new notification to update the schedule jobs with
    */
-  void addNotification(ProgramScheduleRecord schedule, Notification notification);
+  void addNotification(ProgramScheduleRecord schedule, Notification notification) throws IOException;
 
   /**
    * Marks all jobs associated with the given schedule Id for deletion, recording the time of deletion.
@@ -74,14 +68,14 @@ public interface JobQueue {
    * @param scheduleId the scheduledId for which to delete
    * @param deletedTime the timestamp to use for the delete marker
    */
-  void markJobsForDeletion(ScheduleId scheduleId, long deletedTime);
+  void markJobsForDeletion(ScheduleId scheduleId, long deletedTime) throws IOException;
 
   /**
    * Deletes the job associated with the given schedule Id and timestamp.
    *
    * @param job the job to delete
    */
-  void deleteJob(Job job);
+  void deleteJob(Job job) throws IOException;
 
   /**
    * @return the number of partitions in the JobQueue
@@ -93,5 +87,5 @@ public interface JobQueue {
    * @param lastJobProcessed the job to start the scan from (exclusive), or null to indicate scanning from the start
    * @return A {@link CloseableIterator} over all the jobs in the given partition of the JobQueue
    */
-  CloseableIterator<Job> getJobs(int partition, @Nullable Job lastJobProcessed);
+  CloseableIterator<Job> getJobs(int partition, @Nullable Job lastJobProcessed) throws IOException;
 }
