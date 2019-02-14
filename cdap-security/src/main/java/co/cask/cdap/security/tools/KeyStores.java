@@ -32,8 +32,10 @@ import sun.security.x509.X500Name;
 import sun.security.x509.X509CertImpl;
 import sun.security.x509.X509CertInfo;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -47,8 +49,11 @@ import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.function.Supplier;
@@ -79,6 +84,12 @@ public final class KeyStores {
   static final String DISTINGUISHED_NAME = "CN=CDAP, L=Palo Alto, C=US";
   static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
   static final String CERT_ALIAS = "cert";
+
+  private static final String BEGIN_PRIVATE_KEY_LINE = "-----BEGIN RSA PRIVATE KEY-----\n";
+  private static final String END_PRIVATE_KEY_LINE = "-----END RSA PRIVATE KEY-----\n";
+  private static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----\n";
+  private static final String END_CERTIFICATE = "-----END CERTIFICATE-----\n";
+
   private static final int KEY_SIZE = 2048;
   private static final int VALIDITY = 999;
 
@@ -93,14 +104,19 @@ public final class KeyStores {
     return generatedCertKeyStore(sConf.getInt(Constants.Security.SSL.CERT_VALIDITY, VALIDITY), password);
   }
 
+  public static KeyStore generatedCertKeyStore(int validityDays, String password) {
+    return generatedCertKeyStore(validityDays, password, DISTINGUISHED_NAME);
+  }
+
   /**
    * Create a Java key store with a stored self-signed certificate.
    *
    * @param validityDays number of days that the cert will be valid for
    * @param password the password to protect the generated key store
+   * @param distinguishedName distinguished name for the owner of the certificate
    * @return Java keystore which has a self signed X.509 certificate
    */
-  public static KeyStore generatedCertKeyStore(int validityDays, String password) {
+  public static KeyStore generatedCertKeyStore(int validityDays, String password, String distinguishedName) {
     try {
       KeyPairGenerator keyGen = KeyPairGenerator.getInstance(KEY_PAIR_ALGORITHM);
       SecureRandom random = SecureRandom.getInstance(SECURE_RANDOM_ALGORITHM, SECURE_RANDOM_PROVIDER);
@@ -108,7 +124,7 @@ public final class KeyStores {
       // generate a key pair
       KeyPair pair = keyGen.generateKeyPair();
 
-      X509Certificate cert = getCertificate(DISTINGUISHED_NAME, pair, validityDays, SIGNATURE_ALGORITHM);
+      X509Certificate cert = getCertificate(distinguishedName, pair, validityDays, SIGNATURE_ALGORITHM);
 
       KeyStore keyStore = KeyStore.getInstance(SSL_KEYSTORE_TYPE);
       keyStore.load(null, password.toCharArray());
@@ -222,5 +238,36 @@ public final class KeyStores {
     PrivateKey privateKey = pair.getPrivate();
     cert.sign(privateKey, algorithm);
     return cert;
+  }
+
+  /**
+   * Create pem file from java keystore which contains private key and certificate
+   *
+   * @param keyStore instance of java KeyStore
+   * @param password password needed to get private key from keystore
+   * @param outputFile file to write a pem file to
+   */
+  public static void generatePemFileFromKeyStore(KeyStore keyStore, String password, File outputFile) throws
+    UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException,
+    CertificateEncodingException, IOException {
+
+    String encodedString = BEGIN_PRIVATE_KEY_LINE;
+    encodedString += Base64.getEncoder().encodeToString(keyStore.getKey("cert", password.toCharArray()).getEncoded());
+    encodedString += "\n" + END_PRIVATE_KEY_LINE;
+
+    encodedString += BEGIN_CERTIFICATE;
+    encodedString += Base64.getEncoder().encodeToString(keyStore.getCertificate("cert").getEncoded()) + "\n";
+    encodedString += END_CERTIFICATE;
+
+    // set 600 permissions for pem file before writting anything
+    outputFile.createNewFile();
+    outputFile.setReadable(false, false);
+    outputFile.setReadable(true, true);
+    outputFile.setWritable(false, false);
+    outputFile.setWritable(true, true);
+
+    try (PrintWriter out = new PrintWriter(outputFile)) {
+      out.println(encodedString);
+    }
   }
 }
