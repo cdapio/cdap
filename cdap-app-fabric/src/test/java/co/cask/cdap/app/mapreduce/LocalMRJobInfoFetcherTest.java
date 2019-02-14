@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,9 @@ import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -54,9 +57,12 @@ public class LocalMRJobInfoFetcherTest {
     metricStore = injector.getInstance(MetricStore.class);
   }
 
-  public static Injector startMetricsService(CConfiguration conf) {
+  public static Injector startMetricsService(CConfiguration conf) throws Exception {
     Injector injector = Guice.createInjector(new AppFabricTestModule(conf));
     injector.getInstance(TransactionManager.class).startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
     injector.getInstance(DatasetOpExecutor.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
     return injector;

@@ -151,15 +151,14 @@ public class LogHandlerTest {
 
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
-
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
 
     logQueryService = injector.getInstance(LogQueryService.class);
     logQueryService.startAndWait();

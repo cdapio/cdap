@@ -46,6 +46,9 @@ import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.inject.AbstractModule;
@@ -136,7 +139,7 @@ public abstract class MetricsSuiteTestBase {
     metricStore.deleteAll();
   }
 
-  public static Injector startMetricsService(CConfiguration conf) {
+  public static Injector startMetricsService(CConfiguration conf) throws Exception {
     Injector injector = Guice.createInjector(Modules.override(
       new ConfigModule(conf),
       new NonCustomLocationUnitTestModule(),
@@ -164,6 +167,9 @@ public abstract class MetricsSuiteTestBase {
 
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
 
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();

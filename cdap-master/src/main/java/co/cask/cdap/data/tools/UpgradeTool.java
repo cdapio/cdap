@@ -39,8 +39,8 @@ import co.cask.cdap.common.zookeeper.coordination.DiscoverableCodec;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -73,6 +73,7 @@ import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
@@ -231,10 +232,8 @@ public class UpgradeTool {
         @Singleton
         @Named("datasetInstanceManager")
         @SuppressWarnings("unused")
-        public DatasetInstanceManager getDatasetInstanceManager(TransactionSystemClientService txClient,
-                                                                TransactionExecutorFactory txExecutorFactory,
-                                                                @Named("datasetMDS") DatasetFramework framework) {
-          return new DatasetInstanceManager(txClient, txExecutorFactory, framework);
+        public DatasetInstanceManager getDatasetInstanceManager(TransactionRunner transactionRunner) {
+          return new DatasetInstanceManager(transactionRunner);
         }
 
         // This is needed because the LocalApplicationManager
@@ -468,8 +467,6 @@ public class UpgradeTool {
   private void initializeDSFramework(CConfiguration cConf,
                                      DatasetFramework datasetFramework, boolean includeNewDatasets)
     throws IOException, DatasetManagementException {
-    // dataset service
-    DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced
