@@ -519,8 +519,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                     5, TimeUnit.MINUTES);
 
       // check program state and cluster state
-      RunRecord runRecord = getProgramRuns(workflowId, ProgramRunStatus.FAILED).iterator().next();
-      Assert.assertEquals(ProgramRunClusterStatus.DEPROVISIONED, runRecord.getCluster().getStatus());
+      Tasks.waitFor(ProgramRunClusterStatus.DEPROVISIONED, () -> {
+        RunRecord runRecord = getProgramRuns(workflowId, ProgramRunStatus.FAILED).iterator().next();
+        return runRecord.getCluster().getStatus();
+      }, 1, TimeUnit.MINUTES);
 
       // check profile metrics. Though not guaranteed to be set when the program is done, it should be set soon after.
       Tasks.waitFor(failMetricCount + 1, () -> getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_FAILED_RUNS),
