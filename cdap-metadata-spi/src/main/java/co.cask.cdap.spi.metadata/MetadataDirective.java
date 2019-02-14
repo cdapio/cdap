@@ -16,9 +16,12 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * A directive instructing specific behavior when updating metadata.
  */
+@Beta
 public enum MetadataDirective {
   /**
    * Instructs to keep an existing datum even if the update would remove it.

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -23,6 +25,7 @@ import javax.annotation.Nullable;
 /**
  * A response for a search request.
  */
+@Beta
 public class SearchResponse {
 
   private final SearchRequest request;

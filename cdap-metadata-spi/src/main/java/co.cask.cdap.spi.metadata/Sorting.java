@@ -16,11 +16,14 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.util.Objects;
 
 /**
  * Specifies the sorting of metadata search results.
  */
+@Beta
 public class Sorting {
 
   /**

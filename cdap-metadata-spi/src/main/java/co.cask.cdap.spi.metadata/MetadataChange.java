@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataEntity;
 
 import java.util.Objects;
@@ -24,6 +25,7 @@ import java.util.Objects;
  * The change effected by an operation is represented by
  * the metadata before and after the operation.
  */
+@Beta
 public class MetadataChange {
   private final MetadataEntity entity;
   private final Metadata before;

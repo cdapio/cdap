@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 
@@ -27,6 +28,7 @@ import java.util.Set;
 /**
  * A operation that changes metadata.
  */
+@Beta
 public abstract class MetadataMutation {
   protected final Type type;
   protected final MetadataEntity entity;

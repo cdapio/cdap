@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.HashSet;
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
 /**
  * Represents a metadata search request.
  */
+@Beta
 public class SearchRequest {
 
   private final String query;

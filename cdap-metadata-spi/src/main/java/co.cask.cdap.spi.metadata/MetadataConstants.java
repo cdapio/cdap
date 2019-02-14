@@ -16,9 +16,12 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 /**
  * Defines implementation-independent constants for Metadata.
  */
+@Beta
 public class MetadataConstants {
 
   public static final String CREATION_TIME_KEY = "creation-time";
