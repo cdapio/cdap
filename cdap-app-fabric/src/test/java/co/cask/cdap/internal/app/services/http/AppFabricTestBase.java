@@ -232,15 +232,16 @@ public abstract class AppFabricTestBase {
     }
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                                    injector.getInstance(StructuredTableRegistry.class));
-
+                                    structuredTableRegistry);
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
+
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     DiscoveryServiceClient discoveryClient = injector.getInstance(DiscoveryServiceClient.class);
