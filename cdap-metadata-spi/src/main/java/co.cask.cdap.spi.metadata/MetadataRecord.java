@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataEntity;
 
 import java.util.Objects;
@@ -23,6 +24,7 @@ import java.util.Objects;
 /**
  * An entity with its metadata.
  */
+@Beta
 public class MetadataRecord {
   private final MetadataEntity entity;
   private final Metadata metadata;

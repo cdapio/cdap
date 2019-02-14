@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 
@@ -26,6 +27,7 @@ import javax.annotation.Nullable;
 /**
  * A read from the metadata store.
  */
+@Beta
 public class Read {
   private final MetadataEntity entity;
   private final Set<MetadataScope> scopes;

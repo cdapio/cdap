@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.Objects;
@@ -23,6 +24,7 @@ import java.util.Objects;
 /**
  * Identifies a datum (a tag, or property) within a metadata scope.
  */
+@Beta
 public class ScopedName {
   private final MetadataScope scope;
   private final String name;
