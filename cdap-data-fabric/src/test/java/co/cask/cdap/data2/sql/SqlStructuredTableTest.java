@@ -34,7 +34,8 @@ public class SqlStructuredTableTest extends StructuredTableTest {
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    EmbeddedPostgres pg = EmbeddedPostgres.start();
+    EmbeddedPostgres pg = EmbeddedPostgres.builder()
+      .setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     dataSource = pg.getPostgresDatabase();
     tableAdmin = new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
   }

@@ -38,18 +38,23 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import javax.sql.DataSource;
 
 public class SqlDefaultStoreTest extends DefaultStoreTest {
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static EmbeddedPostgres pg;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
-    pg = EmbeddedPostgres.start();
+    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
     StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry();
     structuredTableRegistry.initialize();
