@@ -68,7 +68,7 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
     // TODO: (CDAP-14830) the creation of tables below can be removed after the storage SPI injection is done
     StoreDefinition.createAllTables(structuredTableAdmin, registry);
 
-    injector = AppFabricTestHelper.getInjector(cConf);
+    injector = AppFabricTestHelper.getInjector();
     profileService = new ProfileService(injector.getInstance(MetricsSystemClient.class), transactionRunner);
     defaultStore = new DefaultStore(transactionRunner);
   }
