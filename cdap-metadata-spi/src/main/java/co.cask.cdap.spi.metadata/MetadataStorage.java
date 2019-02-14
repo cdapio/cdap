@@ -16,12 +16,15 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
+
 import java.io.IOException;
 import java.util.List;
 
 /**
  * The Storage Provider API for Metadata.
  */
+@Beta
 public interface MetadataStorage extends AutoCloseable {
 
   /**

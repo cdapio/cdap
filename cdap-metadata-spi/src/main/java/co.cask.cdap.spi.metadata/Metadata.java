@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 /**
  * The metadata for an entity, consisting of tags and properties.
  */
+@Beta
 public final class Metadata {
 
   public static final Metadata EMPTY = new Metadata(Collections.emptySet(), Collections.emptyMap());

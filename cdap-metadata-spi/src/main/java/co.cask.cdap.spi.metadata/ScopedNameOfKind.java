@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataScope;
 
 import java.util.Objects;
@@ -24,6 +25,7 @@ import java.util.Objects;
  * Identifies a named piece of metadata of a specific kind in a given scope,
  * for example, property "schema" in scope SYSTEM, or tag "finance" in scope USER.
  */
+@Beta
 public class ScopedNameOfKind extends ScopedName {
   private final MetadataKind kind;
 

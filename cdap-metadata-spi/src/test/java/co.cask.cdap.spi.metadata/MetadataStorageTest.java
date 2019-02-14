@@ -16,6 +16,7 @@
 
 package co.cask.cdap.spi.metadata;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
@@ -57,6 +58,7 @@ import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
 /**
  * Tests for Metadata SPI implementations.
  */
+@Beta
 public abstract class MetadataStorageTest {
 
   private static final String TYPE_ARTIFACT = MetadataEntity.ARTIFACT;
