@@ -16,7 +16,6 @@
 
 package co.cask.cdap.logging.logbuffer;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.io.Closeables;
@@ -32,6 +31,7 @@ import java.io.File;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -69,11 +69,11 @@ public class LogBufferWriter implements Flushable, Closeable {
     // max file size after which rotation should happen.
     this.maxFileSizeInBytes = maxFileSize;
     this.logEventSerializer = new LoggingEventSerializer();
+
     // scan file names under base dir and get next monotonically increasing file id
     this.currFileId = getNextFileId(baseDir);
     this.currOutputStream = new BufferedOutputStream(locationFactory.create(getFileName(currFileId))
                                                        .getOutputStream());
-    this.currOffset = 0;
   }
 
   /**
@@ -83,28 +83,27 @@ public class LogBufferWriter implements Flushable, Closeable {
    * @return iterator of log buffer file offsets
    * @throws IOException if there is any problem while writing to log buffer
    */
-  public Iterator<LogBufferEvent> write(Iterator<ILoggingEvent> events) throws IOException {
+  public Iterable<LogBufferEvent> write(Iterator<byte[]> events) throws IOException {
     List<LogBufferEvent> offsets = new LinkedList<>();
     while (events.hasNext()) {
-      ILoggingEvent event = events.next();
+      byte[] event = events.next();
       LogBufferFileOffset offset = write(event);
-      offsets.add(new LogBufferEvent(event, offset));
+      offsets.add(new LogBufferEvent(logEventSerializer.fromBytes(ByteBuffer.wrap(event)), offset));
     }
     currOutputStream.flush();
-    return offsets.iterator();
+    return offsets;
   }
 
   /**
    * Writes an event to log buffer file. If the buffer file has reached its max size limit, new file is created with
    * monotonically increasing file name.
    *
-   * @param event event to be written to log buffer
+   * @param eventBytes event to be written to log buffer
    * @return log buffer file offset
    * @throws IOException if there is any problem while writing to log buffer
    */
-  private LogBufferFileOffset write(ILoggingEvent event) throws IOException {
+  private LogBufferFileOffset write(byte[] eventBytes) throws IOException {
     long startOffset = currOffset;
-    byte[] eventBytes = logEventSerializer.toBytes(event);
     // write size of the log event
     currOutputStream.write(Bytes.toBytes(eventBytes.length));
     currOffset = currOffset + Bytes.SIZEOF_INT;
