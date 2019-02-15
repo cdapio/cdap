@@ -1195,27 +1195,30 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     MetadataSearchResponse searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 0, null);
     List<MetadataSearchResultRecord> expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(0, searchResponse.getNumCursors());
     Assert.assertTrue(searchResponse.getCursors().isEmpty());
     // no offset, limit 1, 2 cursors, should return 1st result, with 2 cursors
     searchResponse = searchMetadata(namespace, "*", targets, sort, 0, 1, 2, null);
     expectedResults = ImmutableList.of(new MetadataSearchResultRecord(dataset));
-    List<String> expectedCursors = ImmutableList.of(text.getEntityName(), view.getEntityName());
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
-    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    Assert.assertEquals(1, searchResponse.getNumCursors());
+    Assert.assertEquals(1, searchResponse.getCursors().size());
     // offset 1, limit 1, 2 cursors, should return 2nd result, with only 1 cursor since we don't have enough data
     searchResponse = searchMetadata(namespace, "*", targets, sort, 1, 1, 2, null);
     expectedResults = ImmutableList.of(new MetadataSearchResultRecord(text));
-    expectedCursors = ImmutableList.of(view.getEntityName());
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
-    Assert.assertEquals(expectedCursors, searchResponse.getCursors());
+    Assert.assertEquals(1, searchResponse.getNumCursors());
+    Assert.assertEquals(1, searchResponse.getCursors().size());
     // offset 2, limit 1, 2 cursors, should return 3rd result, with 0 cursors since we don't have enough data
     searchResponse = searchMetadata(namespace, "*", targets, sort, 2, 1, 2, null);
     expectedResults = ImmutableList.of(new MetadataSearchResultRecord(view));
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(0, searchResponse.getNumCursors());
     Assert.assertTrue(searchResponse.getCursors().isEmpty());
     // offset 3, limit 1, 2 cursors, should 0 results, with 0 cursors since we don't have enough data
     searchResponse = searchMetadata(namespace, "*", targets, sort, 3, 1, 2, null);
     Assert.assertTrue(searchResponse.getResults().isEmpty());
+    Assert.assertEquals(0, searchResponse.getNumCursors());
     Assert.assertTrue(searchResponse.getCursors().isEmpty());
     // no offset, no limit, should return everything
     searchResponse = searchMetadata(namespace, "*", targets, sort, 0, Integer.MAX_VALUE, 4, null);
@@ -1225,6 +1228,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       new MetadataSearchResultRecord(view)
     );
     Assert.assertEquals(expectedResults, new ArrayList<>(searchResponse.getResults()));
+    Assert.assertEquals(0, searchResponse.getNumCursors());
     Assert.assertTrue(searchResponse.getCursors().isEmpty());
 
     // cleanup

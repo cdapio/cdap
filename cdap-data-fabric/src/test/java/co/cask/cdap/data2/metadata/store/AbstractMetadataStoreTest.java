@@ -483,7 +483,6 @@ public abstract class AbstractMetadataStoreTest {
   }
 
   // Tests pagination for search results queries that do not have indexes stored in sorted order
-  // The pagination for these queries is done in DefaultMetadataStore, so adding this test here.
   @Test
   public void testSearchPagination() {
     NamespaceId nsId = new NamespaceId("ns");
