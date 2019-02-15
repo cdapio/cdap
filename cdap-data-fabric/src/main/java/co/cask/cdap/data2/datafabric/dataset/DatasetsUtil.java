@@ -32,7 +32,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
-import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -170,9 +170,8 @@ public final class DatasetsUtil {
         props.remove(Table.PROPERTY_SCHEMA);
         props.remove(Table.PROPERTY_SCHEMA_ROW_FIELD);
 
-        // LineageDataset and UsageDataset add the conflict level of none
-      } else if (UsageDataset.class.getSimpleName().equals(type) ||
-        LineageDataset.class.getName().equals(type) || "lineageDataset".equals(type)) {
+        // UsageDataset add the conflict level of none
+      } else if (UsageDataset.class.getSimpleName().equals(type)) {
         props.remove(Table.PROPERTY_CONFLICT_LEVEL);
       }
     }

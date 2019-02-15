@@ -16,48 +16,30 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionSystemClient;
 
 import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Implementation of {@link LineageStoreReader} for reading lineage information from {@link LineageDataset}.
+ * Implementation of {@link LineageStoreReader} for reading lineage information from {@link LineageTable}.
  */
 public class DefaultLineageStoreReader implements LineageStoreReader {
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
-  private final DatasetId lineageDatasetId;
+
+  private final TransactionRunner transactionRunner;
 
   @Inject
-  DefaultLineageStoreReader(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this(datasetFramework, txClient, LineageDataset.LINEAGE_DATASET_ID);
-  }
-
   @VisibleForTesting
-  public DefaultLineageStoreReader(DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                   DatasetId lineageDatasetId) {
-    this.datasetFramework = datasetFramework;
-    this.lineageDatasetId = lineageDatasetId;
-    this.transactional = Transactions.createTransactional(new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-      NamespaceId.SYSTEM, ImmutableMap.of(), null, null));
+  public DefaultLineageStoreReader(TransactionRunner transactionRunner) {
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -98,10 +80,10 @@ public class DefaultLineageStoreReader implements LineageStoreReader {
     return execute(input -> input.getRelations(program, start, end, filter));
   }
 
-  private <T> T execute(TransactionExecutor.Function<LineageDataset, T> func) {
-    return Transactionals.execute(transactional, context -> {
-      LineageDataset lineageDataset = LineageDataset.getLineageDataset(context, datasetFramework, lineageDatasetId);
-      return func.apply(lineageDataset);
+  private <T> T execute(TransactionExecutor.Function<LineageTable, T> func) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      LineageTable lineageTable = LineageTable.create(context);
+      return func.apply(lineageTable);
     });
   }
 }

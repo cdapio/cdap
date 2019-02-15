@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.nosql;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -33,7 +32,6 @@ import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.commons.math3.analysis.function.Add;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +48,7 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   static final String ENTITY_TABLE_NAME = "entity.store";
 
-  private final DatasetDefinition indexTableDefinition;
+  private final NoSqlStructuredTableDatasetDefinition indexTableDefinition;
   private final DatasetSpecification indexTableSpec;
   private final StructuredTableRegistry registry;
 
@@ -59,7 +57,8 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
     @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition,
     StructuredTableRegistry registry) {
     //noinspection unchecked - due to the guice binding we know that the tableDefinition is of the right type
-    this.indexTableDefinition = new IndexedTableDefinition("indexedTable", tableDefinition);
+    this.indexTableDefinition =
+      new NoSqlStructuredTableDatasetDefinition(new IndexedTableDefinition("indexedTable", tableDefinition));
     this.indexTableSpec =
       indexTableDefinition.configure(ENTITY_TABLE_NAME,
                                      DatasetProperties.builder().add(IndexedTable.DYNAMIC_INDEXING, "true").build());

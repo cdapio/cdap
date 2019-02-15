@@ -16,68 +16,60 @@
 
 package co.cask.cdap.data2.metadata.lineage;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
-import org.junit.ClassRule;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Set;
 
 /**
- * Tests storage and retrieval of Dataset accesses by Programs in {@link LineageDataset}.
+ * Tests storage and retrieval of Dataset accesses by Programs in {@link LineageTable}.
  */
-public class LineageDatasetTest {
-  @ClassRule
-  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+public abstract class LineageTableTest {
+  protected static TransactionRunner transactionRunner;
+
+  @Before
+  public void before() {
+    TransactionRunners.run(transactionRunner, context -> {
+      LineageTable lineageTable = LineageTable.create(context);
+      lineageTable.deleteAll();
+    });
+  }
 
   @Test
-  public void testOneRelation() throws Exception {
-    final LineageDataset lineageDataset = getLineageDataset("testOneRelation");
-    Assert.assertNotNull(lineageDataset);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) lineageDataset);
-
+  public void testOneRelation() {
     final RunId runId = RunIds.generate(10000);
     final DatasetId datasetInstance = new DatasetId("default", "dataset1");
     final ProgramId program = new ProgramId("default", "app1", ProgramType.SERVICE, "service1");
     final ProgramRunId run = program.run(runId.getId());
 
     final long accessTimeMillis = System.currentTimeMillis();
-    txnl.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        lineageDataset.addAccess(run, datasetInstance, AccessType.READ, accessTimeMillis);
-      }
-    });
+    TransactionRunners.run(transactionRunner, context -> {
+      LineageTable lineageTable = LineageTable.create(context);
+      lineageTable.addAccess(run, datasetInstance, AccessType.READ, accessTimeMillis);
 
-    txnl.execute(() -> {
       Relation expected = new Relation(datasetInstance, program, AccessType.READ, runId);
-      Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000, x -> true);
+      Set<Relation> relations = lineageTable.getRelations(datasetInstance, 0, 100000, x -> true);
       Assert.assertEquals(1, relations.size());
       Assert.assertEquals(expected, relations.iterator().next());
-      Assert.assertEquals(toSet(program, datasetInstance), lineageDataset.getEntitiesForRun(run));
-      Assert.assertEquals(ImmutableList.of(accessTimeMillis), lineageDataset.getAccessTimesForRun(run));
+      Assert.assertEquals(toSet(program, datasetInstance), lineageTable.getEntitiesForRun(run));
+      Assert.assertEquals(ImmutableList.of(accessTimeMillis), lineageTable.getAccessTimesForRun(run));
     });
   }
 
   @Test
-  public void testMultipleRelations() throws Exception {
-    final LineageDataset lineageDataset = getLineageDataset("testMultipleRelations");
-    Assert.assertNotNull(lineageDataset);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) lineageDataset);
-
+  public void testMultipleRelations() {
     final RunId runId1 = RunIds.generate(10000);
     final RunId runId2 = RunIds.generate(20000);
     final RunId runId3 = RunIds.generate(30000);
@@ -100,17 +92,19 @@ public class LineageDatasetTest {
     final long run22Data2AccessTime = now + 1;
     final long run23Data2AccessTime = now + 3;
     //noinspection UnnecessaryLocalVariable
-    txnl.execute(() -> {
-      lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime);
-      lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
-      lineageDataset.addAccess(run23, datasetInstance2, AccessType.WRITE, run23Data2AccessTime);
-      lineageDataset.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, System.currentTimeMillis());
+    TransactionRunners.run(transactionRunner, context -> {
+      LineageTable lineageTable = LineageTable.create(context);
+      lineageTable.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime);
+      lineageTable.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
+      lineageTable.addAccess(run23, datasetInstance2, AccessType.WRITE, run23Data2AccessTime);
+      lineageTable.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, System.currentTimeMillis());
     });
 
-    txnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
+      LineageTable lineageTable = LineageTable.create(context);
       Assert.assertEquals(
         ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1)),
-        lineageDataset.getRelations(datasetInstance1, 0, 100000, x -> true)
+        lineageTable.getRelations(datasetInstance1, 0, 100000, x -> true)
       );
 
       Assert.assertEquals(
@@ -118,7 +112,7 @@ public class LineageDatasetTest {
                         new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
                         new Relation(datasetInstance2, program3, AccessType.READ_WRITE, runId4)
         ),
-        lineageDataset.getRelations(datasetInstance2, 0, 100000, x -> true)
+        lineageTable.getRelations(datasetInstance2, 0, 100000, x -> true)
       );
 
 
@@ -126,7 +120,7 @@ public class LineageDatasetTest {
         ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
                         new Relation(datasetInstance2, program2, AccessType.WRITE, runId3)
         ),
-        lineageDataset.getRelations(program2, 0, 100000, x -> true)
+        lineageTable.getRelations(program2, 0, 100000, x -> true)
       );
 
       // Reduced time range
@@ -134,18 +128,12 @@ public class LineageDatasetTest {
         ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
                         new Relation(datasetInstance2, program2, AccessType.WRITE, runId3)
         ),
-        lineageDataset.getRelations(datasetInstance2, 0, 35000, x -> true)
+        lineageTable.getRelations(datasetInstance2, 0, 35000, x -> true)
       );
 
-      Assert.assertEquals(toSet(program1, datasetInstance1), lineageDataset.getEntitiesForRun(run11));
-      Assert.assertEquals(ImmutableList.of(run11Data1AccessTime), lineageDataset.getAccessTimesForRun(run11));
+      Assert.assertEquals(toSet(program1, datasetInstance1), lineageTable.getEntitiesForRun(run11));
+      Assert.assertEquals(ImmutableList.of(run11Data1AccessTime), lineageTable.getAccessTimesForRun(run11));
     });
-  }
-
-  private static LineageDataset getLineageDataset(String instanceId) throws Exception {
-    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset(instanceId);
-    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id,
-                                           LineageDataset.class.getName(), DatasetProperties.EMPTY, null);
   }
 
   @SafeVarargs
