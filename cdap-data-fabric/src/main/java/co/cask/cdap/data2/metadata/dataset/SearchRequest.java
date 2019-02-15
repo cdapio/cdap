@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Collections;
@@ -27,6 +26,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 public class SearchRequest {
   private final NamespaceId namespaceId;
   private final String query;
-  private final Set<EntityTypeSimpleName> types;
+  private final Set<String> types;
   private final SortInfo sortInfo;
   private final int offset;
   private final int limit;
@@ -47,7 +47,7 @@ public class SearchRequest {
 
   /**
    * Represents a request for a search for CDAP entities in the specified namespace with the specified search query and
-   * an optional set of {@link EntityTypeSimpleName entity types} in the specified {@link MetadataScope}.
+   * an optional set of entity types in the specified {@link MetadataScope}.
    *
    * @param namespaceId the namespace id to filter the search by. Null if the search is across all namespaces
    * @param query the search query
@@ -65,7 +65,7 @@ public class SearchRequest {
    *                    or not.
    * @param entityScope a set which specifies which scope of entities to display.
    */
-  public SearchRequest(@Nullable NamespaceId namespaceId, String query, Set<EntityTypeSimpleName> types,
+  public SearchRequest(@Nullable NamespaceId namespaceId, String query, Set<String> types,
                        SortInfo sortInfo, int offset, int limit, int numCursors, @Nullable String cursor,
                        boolean showHidden, Set<EntityScope> entityScope) {
     if (query == null || query.isEmpty()) {
@@ -85,7 +85,7 @@ public class SearchRequest {
     }
     this.namespaceId = namespaceId;
     this.query = query;
-    this.types = Collections.unmodifiableSet(new HashSet<>(types));
+    this.types = types.stream().map(String::toLowerCase).collect(Collectors.toSet());
     this.sortInfo = sortInfo;
     this.numCursors = numCursors;
     this.cursor = cursor;
@@ -123,7 +123,7 @@ public class SearchRequest {
    *
    * @return the types of entities to restrict the search to
    */
-  public Set<EntityTypeSimpleName> getTypes() {
+  public Set<String> getTypes() {
     return types;
   }
 

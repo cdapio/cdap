@@ -30,7 +30,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -68,35 +67,7 @@ public abstract class AbstractMetadataStoreTest {
   protected static MetadataStore store;
   private static InMemoryAuditPublisher auditPublisher;
 
-  /**
-   * Subclasses must call this after creating the injector and the store.
-   * The injector must bind the MetadataStore and InMemoryAuditPublisher.
-   */
-  static void commonSetup() throws IOException {
-    // injector and store must be set up by subclasses.
-    cConf = injector.getInstance(CConfiguration.class);
-    store = injector.getInstance(MetadataStore.class);
-    auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
-    store.createIndex();
-  }
-
-  static void commonTearDown() throws IOException {
-    store.dropIndex();
-  }
-
-  @Before
-  public void clearAudit() {
-    auditPublisher.popMessages();
-  }
-
-  @After
-  public void clearMetadata() {
-    MetadataSearchResponse response = store.search(
-      new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
-                        0, Integer.MAX_VALUE, 0, null, true, EnumSet.allOf(EntityScope.class)));
-    response.getResults().forEach(result -> store.removeMetadata(result.getMetadataEntity()));
-  }
-
+  private static final Set<String> ALL_TYPES = Collections.emptySet();
   private static final Map<String, String> EMPTY_PROPERTIES = Collections.emptyMap();
   private static final Set<String> EMPTY_TAGS = Collections.emptySet();
   private static final Map<MetadataScope, Metadata> EMPTY_USER_METADATA =
@@ -168,6 +139,35 @@ public abstract class AbstractMetadataStoreTest {
     auditMessage1, auditMessage2, auditMessage3, auditMessage7,
     auditMessage8, auditMessage9, auditMessage11
   );
+
+  /**
+   * Subclasses must call this after creating the injector and the store.
+   * The injector must bind the MetadataStore and InMemoryAuditPublisher.
+   */
+  static void commonSetup() throws IOException {
+    // injector and store must be set up by subclasses.
+    cConf = injector.getInstance(CConfiguration.class);
+    store = injector.getInstance(MetadataStore.class);
+    auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
+    store.createIndex();
+  }
+
+  static void commonTearDown() throws IOException {
+    store.dropIndex();
+  }
+
+  @Before
+  public void clearAudit() {
+    auditPublisher.popMessages();
+  }
+
+  @After
+  public void clearMetadata() {
+    MetadataSearchResponse response = store.search(
+      new SearchRequest(null, "*", ALL_TYPES, SortInfo.DEFAULT,
+                        0, Integer.MAX_VALUE, 0, null, true, EnumSet.allOf(EntityScope.class)));
+    response.getResults().forEach(result -> store.removeMetadata(result.getMetadataEntity()));
+  }
 
   @Test
   public void testPublishing() {
@@ -381,7 +381,7 @@ public abstract class AbstractMetadataStoreTest {
       new MetadataSearchResultRecord(ns2app2, Collections.singletonMap(MetadataScope.USER, meta));
 
     // everything should match 'v1'
-    SearchRequest request = new SearchRequest(null, "v1", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    SearchRequest request = new SearchRequest(null, "v1", ALL_TYPES, SortInfo.DEFAULT,
                                               0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     MetadataSearchResponse results = store.search(request);
     Set<MetadataSearchResultRecord> expected = new HashSet<>();
@@ -393,7 +393,7 @@ public abstract class AbstractMetadataStoreTest {
     Assert.assertEquals(expected, results.getResults());
 
     // ns1app2, ns2app1, and ns2app2 should match 'v2'
-    request = new SearchRequest(null, "v2", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    request = new SearchRequest(null, "v2", ALL_TYPES, SortInfo.DEFAULT,
                                 0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = store.search(request);
     expected.clear();
@@ -403,7 +403,7 @@ public abstract class AbstractMetadataStoreTest {
     Assert.assertEquals(expected, results.getResults());
 
     // ns1app3 and ns2app2 should match 'v3'
-    request = new SearchRequest(null, "v3", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    request = new SearchRequest(null, "v3", ALL_TYPES, SortInfo.DEFAULT,
                                 0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = store.search(request);
     expected.clear();
@@ -430,7 +430,7 @@ public abstract class AbstractMetadataStoreTest {
     store.addTags(MetadataScope.USER, ns2app2, Collections.singleton("v1"));
 
     // first get everything
-    SearchRequest request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    SearchRequest request = new SearchRequest(null, "*", ALL_TYPES, SortInfo.DEFAULT,
                                               0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     MetadataSearchResponse results = store.search(request);
     Assert.assertEquals(5, results.getResults().size());
@@ -444,7 +444,7 @@ public abstract class AbstractMetadataStoreTest {
     MetadataSearchResultRecord result5 = resultIter.next();
 
     // get 4 results (guaranteed to have at least one from each namespace), offset 1
-    request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    request = new SearchRequest(null, "*", ALL_TYPES, SortInfo.DEFAULT,
                                 1, 4, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = store.search(request);
 
@@ -457,7 +457,7 @@ public abstract class AbstractMetadataStoreTest {
     Assert.assertEquals(expected, actual);
 
     // get the first four
-    request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    request = new SearchRequest(null, "*", ALL_TYPES, SortInfo.DEFAULT,
                                 0, 4, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = store.search(request);
     expected.clear();
@@ -470,7 +470,7 @@ public abstract class AbstractMetadataStoreTest {
     Assert.assertEquals(expected, actual);
 
     // get middle 3
-    request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    request = new SearchRequest(null, "*", ALL_TYPES, SortInfo.DEFAULT,
                                 1, 3, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = store.search(request);
     expected.clear();
@@ -567,6 +567,7 @@ public abstract class AbstractMetadataStoreTest {
     );
   }
 
+  @SuppressWarnings("SameParameterValue")
   private MetadataSearchResponse search(String ns, String searchQuery) {
     return search(ns, searchQuery, 0, Integer.MAX_VALUE, 0);
   }
@@ -579,8 +580,8 @@ public abstract class AbstractMetadataStoreTest {
   private MetadataSearchResponse search(String ns, String searchQuery,
                                         int offset, int limit, int numCursors, boolean showHidden) {
     SearchRequest request =
-      new SearchRequest(new NamespaceId(ns), searchQuery, EnumSet.allOf(EntityTypeSimpleName.class),
-                        SortInfo.DEFAULT, offset, limit, numCursors, "", showHidden, EnumSet.allOf(EntityScope.class));
+      new SearchRequest(new NamespaceId(ns), searchQuery, ALL_TYPES, SortInfo.DEFAULT,
+                        offset, limit, numCursors, "", showHidden, EnumSet.allOf(EntityScope.class));
     return store.search(request);
   }
 

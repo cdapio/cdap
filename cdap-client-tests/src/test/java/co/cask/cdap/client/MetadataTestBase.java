@@ -21,7 +21,6 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
@@ -158,21 +157,21 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<EntityTypeSimpleName> targets) throws Exception {
+                                                           Set<String> targets) throws Exception {
     // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
     // methods, to strip out metadata from search results for easier assertions.
     return metadataClient.searchMetadata(namespaceId, query, targets).getResults();
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<EntityTypeSimpleName> targets,
+                                                           Set<String> targets,
                                                            @Nullable String sort) throws Exception {
     return metadataClient.searchMetadata(namespaceId, query, targets,
                                          sort, 0, Integer.MAX_VALUE, 0, null, false).getResults();
   }
 
   protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
-                                                  Set<EntityTypeSimpleName> targets,
+                                                  Set<String> targets,
                                                   @Nullable String sort, int offset, int limit, int numCursors,
                                                   @Nullable String cursor, boolean showHiddden) throws Exception {
     return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,

@@ -32,7 +32,6 @@ import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -80,6 +79,8 @@ public class MetadataDatasetTest {
   private DatasetAdmin admin;
   private MetadataDataset dataset;
   private TransactionExecutor txnl;
+
+  private static final Set<String> ALL_TYPES = Collections.emptySet();
 
   private final MetadataEntity app1 = new ApplicationId("ns1", "app1").toMetadataEntity();
   private final MetadataEntity appNs2 = new ApplicationId("ns2", "app1").toMetadataEntity();
@@ -379,55 +380,55 @@ public class MetadataDatasetTest {
     // Try to search on all tags
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", "tags:*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+        searchByDefaultIndex("ns1", "tags:*", ALL_TYPES);
       // results tags in ns1 are app1-tag1, tag2, tag3 + program1-tag1 + dataset1-tag3, tag2, tag12-tag33, tag12, tag33
       // + dataset2-tag2, tag4 + fileEntity-tag2, tag5
       Assert.assertEquals(13, results.size());
 
       // Try to search for tag1*
-      results = searchByDefaultIndex("ns1", "tags:tag1*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tags:tag1*", ALL_TYPES);
       Assert.assertEquals(4, results.size());
 
       // Try to search for tag1 with spaces in search query and mixed case of tags keyword
-      results = searchByDefaultIndex("ns1", "  tAGS  :  tag1  ", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "  tAGS  :  tag1  ", ALL_TYPES);
       Assert.assertEquals(2, results.size());
 
       // Try to search for tag5
-      results = searchByDefaultIndex("ns1", "tags:tag5", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tags:tag5", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
       // Try to search for tag2
-      results = searchByDefaultIndex("ns1", "tags:tag2", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tags:tag2", ALL_TYPES);
       Assert.assertEquals(4, results.size());
 
       // Try to search for tag4
-      results = searchByDefaultIndex("ns1", "tags:tag4", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tags:tag4", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
       // Try to search for tag33
-      results = searchByDefaultIndex("ns1", "tags:tag33", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tags:tag33", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
       // Try to search for a tag which has - in it
-      results = searchByDefaultIndex("ns1", "tag12-tag33", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tag12-tag33", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
       // Try to search for tag33 with spaces in query
-      results = searchByDefaultIndex("ns1", "  tag33  ", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "  tag33  ", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
       // Try to search for tag3
-      results = searchByDefaultIndex("ns1", "tags:tag3*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "tags:tag3*", ALL_TYPES);
       Assert.assertEquals(3, results.size());
 
       // try search in another namespace
-      results = searchByDefaultIndex("ns2", "tags:tag1", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns2", "tags:tag1", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
-      results = searchByDefaultIndex("ns2", "tag3", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns2", "tag3", ALL_TYPES);
       Assert.assertEquals(1, results.size());
 
-      results = searchByDefaultIndex("ns2", "tag*", ImmutableSet.of(EntityTypeSimpleName.APP));
+      results = searchByDefaultIndex("ns2", "tag*", ImmutableSet.of(MetadataEntity.APPLICATION));
       // 9 due to matches of type ns2:tag1, ns2:tags:tag1, and splitting of tag3_more
       Assert.assertEquals(9, results.size());
 
@@ -442,7 +443,7 @@ public class MetadataDatasetTest {
     // Search should be empty after deleting tags
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", "tags:tag3*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+        searchByDefaultIndex("ns1", "tags:tag3*", ALL_TYPES);
       Assert.assertEquals(0, results.size());
       Assert.assertEquals(0, dataset.getTags(app1).size());
       Assert.assertEquals(0, dataset.getTags(program1).size());
@@ -469,16 +470,16 @@ public class MetadataDatasetTest {
     // Search for it based on value
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("default", "field:myField1", ImmutableSet.of(EntityTypeSimpleName.ALL));
+        searchByDefaultIndex("default", "field:myField1", ALL_TYPES);
       Assert.assertEquals(ImmutableList.of(myFieldEntry1), results);
 
       // should return both fields
       results =
-        searchByDefaultIndex("default", "field:myFie*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+        searchByDefaultIndex("default", "field:myFie*", ALL_TYPES);
       Assert.assertEquals(ImmutableList.of(myFieldEntry1, myFieldEntry2), results);
 
       results =
-        searchByDefaultIndex("default", "field*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+        searchByDefaultIndex("default", "field*", ALL_TYPES);
       Assert.assertEquals(ImmutableList.of(myFieldEntry1, myFieldEntry2), results);
     });
   }
@@ -499,31 +500,31 @@ public class MetadataDatasetTest {
     // Search for it based on value
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", "value1", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+        searchByDefaultIndex("ns1", "value1", ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(entry), results);
 
       // Search for it based on a word in value with spaces in search query
-      results = searchByDefaultIndex("ns1", "  aV1   ", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+      results = searchByDefaultIndex("ns1", "  aV1   ", ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(multiWordEntry), results);
 
       // Search for it based split patterns to make sure nothing is matched
-      results = searchByDefaultIndex("ns1", "-", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "-", ALL_TYPES);
       Assert.assertTrue(results.isEmpty());
-      results = searchByDefaultIndex("ns1", ",", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", ",", ALL_TYPES);
       Assert.assertTrue(results.isEmpty());
-      results = searchByDefaultIndex("ns1", "_", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "_", ALL_TYPES);
       Assert.assertTrue(results.isEmpty());
-      results = searchByDefaultIndex("ns1", ", ,", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", ", ,", ALL_TYPES);
       Assert.assertTrue(results.isEmpty());
-      results = searchByDefaultIndex("ns1", ", - ,", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", ", - ,", ALL_TYPES);
       Assert.assertTrue(results.isEmpty());
 
       // Search for it based on a word in value
-      results = searchByDefaultIndex("ns1", "av5", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+      results = searchByDefaultIndex("ns1", "av5", ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(multiWordEntry), results);
 
       // Case insensitive
-      results = searchByDefaultIndex("ns1", "ValUe1", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+      results = searchByDefaultIndex("ns1", "ValUe1", ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(entry), results);
 
     });
@@ -531,7 +532,7 @@ public class MetadataDatasetTest {
     txnl.execute(() -> dataset.addProperty(program1, "key3", "value1"));
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", "value1", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+        searchByDefaultIndex("ns1", "value1", ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(2, results.size());
       for (MetadataEntry result : results) {
         Assert.assertEquals("value1", result.getValue());
@@ -542,13 +543,13 @@ public class MetadataDatasetTest {
     txnl.execute(() -> dataset.addProperty(dataset2, "key21", "value21"));
     txnl.execute(() -> {
       List<MetadataEntry> results =
-        searchByDefaultIndex("ns1", "value2*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+        searchByDefaultIndex("ns1", "value2*", ALL_TYPES);
       Assert.assertEquals(2, results.size());
       for (MetadataEntry result : results) {
         Assert.assertTrue(result.getValue().startsWith("value2"));
       }
       // Search based on value prefix in the wrong namespace
-      results = searchByDefaultIndex("ns12", "value2*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns12", "value2*", ALL_TYPES);
       Assert.assertTrue(results.isEmpty());
     });
 
@@ -577,12 +578,12 @@ public class MetadataDatasetTest {
       // Search for it based on value
       List<MetadataEntry> results =
         searchByDefaultIndex("ns1", "key1" + MetadataConstants.KEYVALUE_SEPARATOR + "value1",
-                             ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+                             ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(flowEntry1), results);
 
       // Search for it based on a word in value with spaces in search query
       results = searchByDefaultIndex("ns1", "  multiword" + MetadataConstants.KEYVALUE_SEPARATOR + "aV1   ",
-                                     ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+                                     ImmutableSet.of(MetadataEntity.PROGRAM));
 
       MetadataEntry flowMultiWordEntry = new MetadataEntry(program1, multiWordKey, multiWordValue);
       Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
@@ -590,31 +591,31 @@ public class MetadataDatasetTest {
       // Search for it based on a word in value
       results =
         searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV5",
-                             ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+                             ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
     });
     txnl.execute(() -> dataset.removeProperties(program1, multiWordKey));
     txnl.execute(() -> {
       List<MetadataEntry> results =
         searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV5",
-                             ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+                             ImmutableSet.of(MetadataEntity.PROGRAM));
       // search results should be empty after removing this key as the indexes are deleted
       Assert.assertTrue(results.isEmpty());
 
       // Test wrong ns
       List<MetadataEntry> results2 =
         searchByDefaultIndex("ns12", "key1" + MetadataConstants.KEYVALUE_SEPARATOR + "value1",
-                             ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+                             ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertTrue(results2.isEmpty());
 
       // Test multi word query
-      results = searchByDefaultIndex("ns1", "  value1  av2 ", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "  value1  av2 ", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1), Sets.newHashSet(results));
 
-      results = searchByDefaultIndex("ns1", "  value1  sValue1 ", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "  value1  sValue1 ", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(flowEntry1, streamEntry1, streamEntry2), Sets.newHashSet(results));
 
-      results = searchByDefaultIndex("ns1", "  valu*  sVal* ", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns1", "  valu*  sVal* ", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(flowEntry1, flowEntry2, streamEntry1, streamEntry2),
                           Sets.newHashSet(results));
 
@@ -646,31 +647,29 @@ public class MetadataDatasetTest {
     final MetadataEntry ns2ArtifactEntry = new MetadataEntry(ns2Artifact, multiWordKey, multiWordValue);
 
     txnl.execute(() -> {
-      List<MetadataEntry> results = searchByDefaultIndex("ns1", "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      List<MetadataEntry> results = searchByDefaultIndex("ns1", "aV5", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(flowMultiWordEntry, systemArtifactEntry), Sets.newHashSet(results));
       // search only programs - should only return flow
       results = searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV5",
-                                     ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+                                     ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertEquals(ImmutableList.of(flowMultiWordEntry), results);
       // search only artifacts - should only return system artifact
       results = searchByDefaultIndex("ns1", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + multiWordValue,
-                                     ImmutableSet.of(EntityTypeSimpleName.ARTIFACT));
+                                     ImmutableSet.of(MetadataEntity.ARTIFACT));
       // this query returns the system artifact 4 times, since the dataset returns a list with duplicates for scoring
       // purposes. Convert to a Set for comparison.
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
       // search all entities in namespace 'ns2' - should return the system artifact and the same artifact in ns2
-      results = searchByDefaultIndex("ns2", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV4",
-                                     ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns2", multiWordKey + MetadataConstants.KEYVALUE_SEPARATOR + "aV4", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry, ns2ArtifactEntry), Sets.newHashSet(results));
       // search only programs in a namespace 'ns2'. Should return empty
-      results = searchByDefaultIndex("ns2", "aV*", ImmutableSet.of(EntityTypeSimpleName.PROGRAM));
+      results = searchByDefaultIndex("ns2", "aV*", ImmutableSet.of(MetadataEntity.PROGRAM));
       Assert.assertTrue(results.isEmpty());
       // search all entities in namespace 'ns3'. Should return only the system artifact
-      results = searchByDefaultIndex("ns3", "av*", ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex("ns3", "av*", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
       // search the system namespace for all entities. Should return only the system artifact
-      results = searchByDefaultIndex(NamespaceId.SYSTEM.getEntityName(), "av*",
-                                     ImmutableSet.of(EntityTypeSimpleName.ALL));
+      results = searchByDefaultIndex(NamespaceId.SYSTEM.getEntityName(), "av*", ALL_TYPES);
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
     });
     // clean up
@@ -736,27 +735,27 @@ public class MetadataDatasetTest {
 
     NamespaceId ns1 = new NamespaceId("ns1");
     txnl.execute(() -> {
-      SearchRequest request = new SearchRequest(ns1, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+      SearchRequest request = new SearchRequest(ns1, "aV5", ALL_TYPES,
                                                 SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
                                                 false, EnumSet.of(EntityScope.USER));
       List<MetadataEntry> results = dataset.search(request).getResults();
       // the result should not contain system entities
       Assert.assertEquals(Sets.newHashSet(nsArtifactEntry), Sets.newHashSet(results));
-      request = new SearchRequest(ns1, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+      request = new SearchRequest(ns1, "aV5", ALL_TYPES,
                                   SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
                                   false, EnumSet.of(EntityScope.SYSTEM));
       results = dataset.search(request).getResults();
       // the result should not contain user entities
       Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
 
-      request = new SearchRequest(NamespaceId.SYSTEM, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+      request = new SearchRequest(NamespaceId.SYSTEM, "aV5", ALL_TYPES,
                                   SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
                                   false, EnumSet.of(EntityScope.SYSTEM));
        results = dataset.search(request).getResults();
        // the result should not contain user entities
        Assert.assertEquals(Sets.newHashSet(systemArtifactEntry), Sets.newHashSet(results));
 
-      request = new SearchRequest(ns1, "aV5", ImmutableSet.of(EntityTypeSimpleName.ALL),
+      request = new SearchRequest(ns1, "aV5", ALL_TYPES,
                                   SortInfo.DEFAULT, 0, Integer.MAX_VALUE, 1, null,
                                   false, EnumSet.allOf(EntityScope.class));
       results = dataset.search(request).getResults();
@@ -980,7 +979,7 @@ public class MetadataDatasetTest {
       dataset.addProperty(ns2App, "k1", "v1");
     });
 
-    SearchRequest request1 = new SearchRequest(null, "v1", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    SearchRequest request1 = new SearchRequest(null, "v1", ALL_TYPES, SortInfo.DEFAULT,
                                                0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     SearchResults results = txnl.execute(() -> dataset.search(request1));
     Set<MetadataEntry> actual = new HashSet<>(results.getResults());
@@ -989,12 +988,12 @@ public class MetadataDatasetTest {
     expected.add(new MetadataEntry(ns2App, "k1", "v1"));
     Assert.assertEquals(expected, actual);
 
-    SearchRequest request2 = new SearchRequest(null, "v2", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    SearchRequest request2 = new SearchRequest(null, "v2", ALL_TYPES, SortInfo.DEFAULT,
                                                0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = txnl.execute(() -> dataset.search(request2));
     Assert.assertEquals(Collections.singletonList(new MetadataEntry(ns1App, "k2", "v2")), results.getResults());
 
-    SearchRequest star = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), SortInfo.DEFAULT,
+    SearchRequest star = new SearchRequest(null, "*", ALL_TYPES, SortInfo.DEFAULT,
                                            0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     results = txnl.execute(() -> dataset.search(star));
     expected.add(new MetadataEntry(ns1App, "k2", "v2"));
@@ -1024,7 +1023,7 @@ public class MetadataDatasetTest {
     MetadataEntry ns2app2Entry = new MetadataEntry(ns2app2.toMetadataEntity(), key, ns2app2.getApplication());
     SortInfo nameAsc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
     // first, get the full ordered list in one page
-    SearchRequest request1 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+    SearchRequest request1 = new SearchRequest(null, "*", ALL_TYPES, nameAsc,
                                                0, 10, 1, null, false, EnumSet.allOf(EntityScope.class));
     List<MetadataEntry> actual = txnl.execute(() -> dataset.search(request1).getResults());
     List<MetadataEntry> expected = new ArrayList<>();
@@ -1037,7 +1036,7 @@ public class MetadataDatasetTest {
     Assert.assertEquals(expected, actual);
 
     // now search with 3 pages, 2 results per page
-    SearchRequest request2 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+    SearchRequest request2 = new SearchRequest(null, "*", ALL_TYPES, nameAsc,
                                                0, 2, 3, null, false, EnumSet.allOf(EntityScope.class));
     SearchResults results = txnl.execute(() -> dataset.search(request2));
     // dataset returns all pages, so results should be in same order
@@ -1050,7 +1049,7 @@ public class MetadataDatasetTest {
     Assert.assertEquals(expectedCursors, results.getCursors());
 
     // now search for for 2nd and 3rd pages using the cursor
-    SearchRequest request3 = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+    SearchRequest request3 = new SearchRequest(null, "*", ALL_TYPES, nameAsc,
                                                0, 2, 3, results.getCursors().get(0), false,
                                                EnumSet.allOf(EntityScope.class));
     results = txnl.execute(() -> dataset.search(request3));
@@ -1074,7 +1073,7 @@ public class MetadataDatasetTest {
 
     SortInfo nameAsc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
 
-    SearchRequest request = new SearchRequest(null, "*", EnumSet.allOf(EntityTypeSimpleName.class), nameAsc,
+    SearchRequest request = new SearchRequest(null, "*", ALL_TYPES, nameAsc,
                                               0, 10, 0, null, false, EnumSet.allOf(EntityScope.class));
     SearchResults results = txnl.execute(() -> dataset.search(request));
     List<MetadataEntry> actual = results.getResults();
@@ -1095,13 +1094,12 @@ public class MetadataDatasetTest {
       dataset.addProperty(app1, MetadataConstants.ENTITY_NAME_KEY, appName);
     });
     NamespaceId namespaceId = new NamespaceId(program1.getValue(MetadataEntity.NAMESPACE));
-    EnumSet<EntityTypeSimpleName> targets = EnumSet.allOf(EntityTypeSimpleName.class);
     MetadataEntry flowEntry = new MetadataEntry(program1, MetadataConstants.ENTITY_NAME_KEY, flowName);
     MetadataEntry dsEntry = new MetadataEntry(dataset1, MetadataConstants.ENTITY_NAME_KEY, dsName);
     MetadataEntry appEntry = new MetadataEntry(app1, MetadataConstants.ENTITY_NAME_KEY, appName);
     txnl.execute(() -> {
       // since no sort is to be performed by the dataset, we return all (ignore limit and offset)
-      SearchRequest request = new SearchRequest(namespaceId, "name*", targets, SortInfo.DEFAULT, 0, 3, 1, null,
+      SearchRequest request = new SearchRequest(namespaceId, "name*", ALL_TYPES, SortInfo.DEFAULT, 0, 3, 1, null,
                                                 false, EnumSet.allOf(EntityScope.class));
       SearchResults searchResults = dataset.search(request);
       Assert.assertEquals(
@@ -1115,70 +1113,70 @@ public class MetadataDatasetTest {
       // ascending sort by name. offset and limit should be respected.
       SortInfo nameAsc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.ASC);
       // first 2 in ascending order
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 0, 2, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 0, 2, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
       // return 2 with offset 1 in ascending order
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 1, 2, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 1, 2, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
       // descending sort by name. offset and filter should be respected.
       SortInfo nameDesc = new SortInfo(MetadataConstants.ENTITY_NAME_KEY, SortInfo.SortOrder.DESC);
       // first 2 in descending order
-      request = new SearchRequest(namespaceId, "*", targets, nameDesc, 0, 2, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameDesc, 0, 2, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(appEntry, dsEntry), searchResults.getResults());
       // last 1 in descending order
-      request = new SearchRequest(namespaceId, "*", targets, nameDesc, 2, 1, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameDesc, 2, 1, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getResults());
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 2, 0, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 2, 0, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry), searchResults.getResults());
-      request = new SearchRequest(namespaceId, "*", targets, nameDesc, 1, 0, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameDesc, 1, 0, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(appEntry), searchResults.getResults());
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 4, 0, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 4, 0, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
-      request = new SearchRequest(namespaceId, "*", targets, nameDesc, 100, 0, 0, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameDesc, 100, 0, 0, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(appEntry, dsEntry, flowEntry), searchResults.getResults());
 
       // test cursors
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 0, 1, 3, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 0, 1, 3, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
       Assert.assertEquals(ImmutableList.of(dsName, appName), searchResults.getCursors());
 
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
                                   false, EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(dsEntry, appEntry), searchResults.getResults());
       Assert.assertEquals(ImmutableList.of(appName), searchResults.getCursors());
 
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 0, 1, 3, searchResults.getCursors().get(0),
                                   false, EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(appEntry), searchResults.getResults());
       Assert.assertEquals(ImmutableList.of(), searchResults.getCursors());
 
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 0, 2, 3, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 0, 2, 3, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
       Assert.assertEquals(ImmutableList.of(appName), searchResults.getCursors());
 
-      request = new SearchRequest(namespaceId, "*", targets, nameAsc, 3, 1, 2, null, false,
+      request = new SearchRequest(namespaceId, "*", ALL_TYPES, nameAsc, 3, 1, 2, null, false,
                                   EnumSet.allOf(EntityScope.class));
       searchResults = dataset.search(request);
       Assert.assertEquals(ImmutableList.of(flowEntry, dsEntry, appEntry), searchResults.getResults());
@@ -1434,14 +1432,14 @@ public class MetadataDatasetTest {
   // should be called inside a transaction. This method does not start a transaction on its own, so that you can
   // have multiple invocations in the same transaction.
   private List<MetadataEntry> searchByDefaultIndex(String namespaceId, String searchQuery,
-                                                   Set<EntityTypeSimpleName> types) throws BadRequestException {
+                                                   Set<String> types) throws BadRequestException {
     return searchByDefaultIndex(dataset, namespaceId, searchQuery, types);
   }
 
   // should be called inside a transaction. This method does not start a transaction on its own, so that you can
   // have multiple invocations in the same transaction.
   private List<MetadataEntry> searchByDefaultIndex(MetadataDataset dataset, String namespaceId, String searchQuery,
-                                                   Set<EntityTypeSimpleName> types) throws BadRequestException {
+                                                   Set<String> types) throws BadRequestException {
     SearchRequest request = new SearchRequest(new NamespaceId(namespaceId), searchQuery, types, SortInfo.DEFAULT,
                                               0, Integer.MAX_VALUE, 1, null, false, EnumSet.allOf(EntityScope.class));
     return dataset.search(request).getResults();

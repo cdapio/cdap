@@ -75,8 +75,6 @@ public abstract class MetadataStorageTest {
     assertEmpty(getMetadataStorage(), SearchRequest.of("*").setShowHidden(true).build());
   }
 
-  // TODO (CDAP-14806): Add more tests for custom entities; refactor some of these tests to use custom entities.
-
   @Test
   public void testMutations() throws IOException {
     MetadataStorage mds = getMetadataStorage();
@@ -368,6 +366,7 @@ public abstract class MetadataStorageTest {
                     new Update(app2, app2Record.getMetadata())));
 
     // search with field description:
+    assertEmpty(mds, SearchRequest.of("description:occursnot").setShowHidden(true).build());
     assertResults(mds, SearchRequest.of("description:first").build(), app1Record);
     assertResults(mds, SearchRequest.of("description:this").build(), app1Record, app2Record);
     assertResults(mds, SearchRequest.of("description:app*").build(), app1Record, app2Record);
@@ -514,6 +513,49 @@ public abstract class MetadataStorageTest {
 
     // clean up
     mds.apply(new Drop(entity));
+  }
+
+  @Test
+  public void testCustomEntities() throws IOException {
+    MetadataEntity dataset = MetadataEntity.ofDataset("different", "stuff");
+    MetadataEntity hype = MetadataEntity.builder().append("field", "value").append("hype", "custom").build();
+    MetadataEntity field = MetadataEntity.builder().appendAsType("field", "val").append("hype", "irrel").build();
+
+    Set<String> tags = tags("foo", "bar");
+    MetadataRecord datasetRecord =
+      new MetadataRecord(dataset, new Metadata(SYSTEM, tags, props(ENTITY_NAME_KEY, "stuff")));
+    MetadataRecord hypeRecord =
+      new MetadataRecord(hype, new Metadata(SYSTEM, tags, props(ENTITY_NAME_KEY, "custom")));
+    MetadataRecord fieldRecord =
+      new MetadataRecord(field, new Metadata(SYSTEM, tags, props(ENTITY_NAME_KEY, "irrel")));
+
+    // validate update and read
+    MetadataStorage mds = getMetadataStorage();
+    mds.batch(ImmutableList.of(new Update(dataset, datasetRecord.getMetadata()),
+                               new Update(hype, hypeRecord.getMetadata()),
+                               new Update(field, fieldRecord.getMetadata())));
+    Assert.assertEquals(datasetRecord.getMetadata(), mds.read(new Read(dataset)));
+    Assert.assertEquals(hypeRecord.getMetadata(), mds.read(new Read(hype)));
+    Assert.assertEquals(fieldRecord.getMetadata(), mds.read(new Read(field)));
+
+    // search with type filters
+    assertResults(mds, SearchRequest.of("*").build(), datasetRecord, hypeRecord, fieldRecord);
+    assertResults(mds, SearchRequest.of("*").addType("dataset").build(), datasetRecord);
+    assertResults(mds, SearchRequest.of("*").addType("hype").build(), hypeRecord);
+    assertResults(mds, SearchRequest.of("*").addType("field").build(), fieldRecord);
+    assertResults(mds, SearchRequest.of("*").addType("field").addType("nosuch").build(), fieldRecord);
+    assertResults(mds, SearchRequest.of("*").addType("field").addType("hype").build(), fieldRecord, hypeRecord);
+
+    // search on the type field
+    assertResults(mds, SearchRequest.of("hype:custom").build(), hypeRecord);
+    assertResults(mds, SearchRequest.of("hype:cust*").build(), hypeRecord);
+    assertResults(mds, SearchRequest.of("hype:*").build(), hypeRecord);
+    assertEmpty(mds, SearchRequest.of("field:value").build());
+    assertResults(mds, SearchRequest.of("field:val*").build(), fieldRecord);
+    assertResults(mds, SearchRequest.of("field:*").build(), fieldRecord);
+
+    // clean up
+    mds.batch(batch(new Drop(dataset), new Drop(hype), new Drop(field)));
   }
 
   @Test
@@ -1260,8 +1302,7 @@ public abstract class MetadataStorageTest {
 
 
   private void assertEmpty(MetadataStorage mds, SearchRequest request) throws IOException {
-    List<MetadataRecord> results = mds.search(request).getResults();
-    Assert.assertTrue(results.isEmpty());
+    assertInOrder(mds, request, Collections.emptyList());
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -1269,7 +1310,7 @@ public abstract class MetadataStorageTest {
                                                 List<MetadataRecord> expectedResults)
     throws IOException {
     SearchResponse response = mds.search(request);
-    Assert.assertEquals(expectedResults, response.getResults());
+    Assert.assertEquals("for query '" + request.getQuery() + "':", expectedResults, response.getResults());
     return response;
   }
 
@@ -1284,7 +1325,8 @@ public abstract class MetadataStorageTest {
                                                 MetadataRecord firstResult, MetadataRecord... expectedResults)
     throws IOException {
     SearchResponse response = mds.search(request);
-    Assert.assertEquals(ImmutableSet.<MetadataRecord>builder().add(firstResult).add(expectedResults).build(),
+    Assert.assertEquals("for query '" + request.getQuery() + "':",
+                        ImmutableSet.<MetadataRecord>builder().add(firstResult).add(expectedResults).build(),
                         ImmutableSet.copyOf(response.getResults()));
     return response;
   }

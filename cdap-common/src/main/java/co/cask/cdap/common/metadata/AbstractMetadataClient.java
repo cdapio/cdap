@@ -20,7 +20,6 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.UnauthenticatedException;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -95,12 +94,9 @@ public abstract class AbstractMetadataClient {
    * @return the {@link MetadataSearchResponse} for the given query.
    */
   public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
-                                               @Nullable EntityTypeSimpleName target)
+                                               @Nullable String target)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
-    Set<EntityTypeSimpleName> targets = ImmutableSet.of();
-    if (target != null) {
-      targets = ImmutableSet.of(target);
-    }
+    Set<String> targets = target == null ? ImmutableSet.of() : ImmutableSet.of(target);
     return searchMetadata(namespace, query, targets);
   }
 
@@ -109,11 +105,11 @@ public abstract class AbstractMetadataClient {
    *
    * @param namespace the namespace to search in
    * @param query the query string with which to search
-   * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
+   * @param targets entity types to search. If empty, all possible types will be searched
    * @return the {@link MetadataSearchResponse} for the given query.
    */
   public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
-                                               Set<EntityTypeSimpleName> targets)
+                                               Set<String> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
     return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
   }
@@ -123,7 +119,7 @@ public abstract class AbstractMetadataClient {
    *
    * @param namespace the namespace to search in or null if it is a cross namespace search
    * @param query the query string with which to search
-   * @param targets {@link EntityTypeSimpleName}s to search. If empty, all possible types will be searched
+   * @param targets entity types to search. If empty, all possible types will be searched
    * @param sort specifies sort field and sort order. If {@code null}, the sort order is by relevance
    * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
    * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
@@ -137,7 +133,7 @@ public abstract class AbstractMetadataClient {
    * @return A set of {@link MetadataSearchResponse} for the given query.
    */
   public MetadataSearchResponse searchMetadata(@Nullable NamespaceId namespace, String query,
-                                               Set<EntityTypeSimpleName> targets, @Nullable String sort,
+                                               Set<String> targets, @Nullable String sort,
                                                int offset, int limit, int numCursors,
                                                @Nullable String cursor, boolean showHidden)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
@@ -147,8 +143,7 @@ public abstract class AbstractMetadataClient {
     return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponse.class);
   }
 
-  private HttpResponse searchMetadataHelper(@Nullable NamespaceId namespace, String query,
-                                            Set<EntityTypeSimpleName> targets,
+  private HttpResponse searchMetadataHelper(@Nullable NamespaceId namespace, String query, Set<String> targets,
                                             @Nullable String sort, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden)
     throws IOException, UnauthenticatedException, BadRequestException {
@@ -157,7 +152,7 @@ public abstract class AbstractMetadataClient {
       path.append("namespaces/").append(namespace.getNamespace()).append("/");
     }
     path.append("metadata/search?query=").append(query);
-    for (EntityTypeSimpleName t : targets) {
+    for (String t : targets) {
       path.append("&target=").append(t);
     }
     if (sort != null) {

@@ -19,6 +19,7 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
@@ -31,7 +32,6 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
@@ -42,6 +42,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -57,6 +58,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -141,9 +143,9 @@ public class MetadataAdminAuthorizationTest {
 
     // query for all metadata entity type except schedule
     // TODO: https://issues.cask.co/browse/CDAP-14705, add back schedule type when the JIRA is fixed.
-    EnumSet<EntityTypeSimpleName> types = EnumSet.of(EntityTypeSimpleName.NAMESPACE, EntityTypeSimpleName.ARTIFACT,
-                                                     EntityTypeSimpleName.APP, EntityTypeSimpleName.PROGRAM,
-                                                     EntityTypeSimpleName.DATASET);
+    Set<String> types = ImmutableSet.of(MetadataEntity.NAMESPACE, MetadataEntity.ARTIFACT,
+                                        MetadataEntity.APPLICATION, MetadataEntity.PROGRAM,
+                                        MetadataEntity.DATASET);
     SearchRequest searchRequest =
       new SearchRequest(NamespaceId.DEFAULT, "*", types, SortInfo.DEFAULT, 0,
                         Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class));

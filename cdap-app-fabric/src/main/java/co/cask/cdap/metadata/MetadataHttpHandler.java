@@ -29,7 +29,6 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -37,6 +36,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -61,7 +61,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -85,9 +84,6 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
-
-  private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
-    input -> EntityTypeSimpleName.valueOf(input.toUpperCase());
 
   private final MetadataAdmin metadataAdmin;
   private final LineageAdmin lineageAdmin;
@@ -247,10 +243,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                                   int numCursors, String cursor, boolean showHidden, String entityScope)
     throws BadRequestException, UnsupportedEncodingException {
 
-    Set<EntityTypeSimpleName> types = Collections.emptySet();
-    if (targets != null) {
-      types = targets.stream().map(STRING_TO_TARGET_TYPE).collect(Collectors.toSet());
-    }
+    Set<String> types = targets == null ? Collections.emptySet() : ImmutableSet.copyOf(targets);
 
     SortInfo sortInfo = SortInfo.of(URLDecoder.decode(sort, StandardCharsets.UTF_8.name()));
     if (SortInfo.DEFAULT.equals(sortInfo)) {

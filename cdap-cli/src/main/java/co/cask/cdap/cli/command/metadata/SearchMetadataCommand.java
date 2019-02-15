@@ -21,14 +21,11 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -39,14 +36,6 @@ import java.util.Set;
  * Command for metadata search in CLI.
  */
 public class SearchMetadataCommand extends AbstractCommand {
-
-  private static final Function<String, EntityTypeSimpleName> STRING_TO_TARGET_TYPE =
-    new Function<String, EntityTypeSimpleName>() {
-      @Override
-      public EntityTypeSimpleName apply(String input) {
-        return EntityTypeSimpleName.valueOf(input.toUpperCase());
-      }
-    };
 
   private final MetadataClient metadataClient;
 
@@ -84,11 +73,10 @@ public class SearchMetadataCommand extends AbstractCommand {
       "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.";
   }
 
-  private Set<EntityTypeSimpleName> parseTargetType(String typeString) {
+  private Set<String> parseTargetType(String typeString) {
     if (typeString == null) {
       return ImmutableSet.of();
     }
-
-    return ImmutableSet.copyOf(Iterables.transform(Splitter.on(',').split(typeString), STRING_TO_TARGET_TYPE));
+    return ImmutableSet.copyOf(Splitter.on(',').split(typeString));
   }
 }

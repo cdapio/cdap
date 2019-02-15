@@ -28,7 +28,6 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -255,8 +254,8 @@ public class StorageProviderMetadataStore implements MetadataStore {
       }
       // else search all namespaces
     }
-    if (request.getTypes() != null && !request.getTypes().contains(EntityTypeSimpleName.ALL)) {
-      request.getTypes().forEach(type -> req.addType(type.getSerializedForm()));
+    if (request.getTypes() != null) {
+      request.getTypes().forEach(req::addType);
     }
     if (!request.getSortInfo().equals(SortInfo.DEFAULT)) {
       req.setSorting(new Sorting(request.getSortInfo().getSortBy(),
