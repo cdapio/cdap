@@ -26,15 +26,15 @@ public class LogBufferFileOffset implements Comparable<LogBufferFileOffset> {
   private static final Comparator<LogBufferFileOffset> COMPARATOR = Comparator.comparing(LogBufferFileOffset::getFileId)
     .thenComparing(LogBufferFileOffset::getFilePos);
 
-  private final String fileId;
+  private final long fileId;
   private final long filePos;
 
-  public LogBufferFileOffset(String fileId, long filePos) {
+  public LogBufferFileOffset(long fileId, long filePos) {
     this.fileId = fileId;
     this.filePos = filePos;
   }
 
-  public String getFileId() {
+  public long getFileId() {
     return fileId;
   }
 
