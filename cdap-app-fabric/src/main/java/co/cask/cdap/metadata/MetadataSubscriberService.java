@@ -33,7 +33,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
@@ -106,7 +106,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
 
-  private DatasetId lineageDatasetId = LineageDataset.LINEAGE_DATASET_ID;
   private DatasetId fieldLineageDatasetId = FieldLineageDataset.FIELD_LINEAGE_DATASET_ID;
   private DatasetId usageDatasetId = UsageDataset.USAGE_INSTANCE_ID;
 
@@ -207,7 +206,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
       MetadataMessageProcessor processor = processors.computeIfAbsent(message.getType(), type -> {
         switch (type) {
           case LINEAGE:
-            return new DataAccessLineageProcessor(datasetContext);
+            return new DataAccessLineageProcessor();
           case FIELD_LINEAGE:
             return new FieldLineageProcessor(datasetContext);
           case USAGE:
@@ -246,11 +245,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private final class DataAccessLineageProcessor implements MetadataMessageProcessor {
 
-    private final LineageDataset lineageDataset;
-
-    DataAccessLineageProcessor(DatasetContext datasetContext) {
-      this.lineageDataset = LineageDataset.getLineageDataset(datasetContext, datasetFramework, lineageDatasetId);
-    }
+    DataAccessLineageProcessor() {}
 
     @Override
     public void processMessage(MetadataMessage message) {
@@ -261,9 +256,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
       DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
-
-      lineageDataset.addAccess(programRunId, lineage.getDatasetId(),
-                               lineage.getAccessType(), lineage.getAccessTime(), lineage.getComponentId());
+      TransactionRunners.run(transactionRunner, context -> {
+        LineageTable lineageTable = LineageTable.create(context);
+        lineageTable.addAccess(programRunId, lineage.getDatasetId(), lineage.getAccessType(), lineage.getAccessTime());
+      });
     }
   }
 

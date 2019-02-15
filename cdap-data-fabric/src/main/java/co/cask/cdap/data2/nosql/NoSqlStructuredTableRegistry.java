@@ -60,13 +60,13 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   private static final Gson GSON = new Gson();
   private static final int MAX_CACHE_SIZE = 100;
 
-  private final DatasetDefinition tableDefinition;
+  private final NoSqlStructuredTableDatasetDefinition tableDefinition;
   private final DatasetSpecification entityRegistrySpec;
   private final LoadingCache<StructuredTableId, Optional<StructuredTableSpecification>> specCache;
 
   @Inject
   public NoSqlStructuredTableRegistry(@Named(Constants.Dataset.TABLE_TYPE_NO_TX) DatasetDefinition tableDefinition) {
-    this.tableDefinition = tableDefinition;
+    this.tableDefinition = new NoSqlStructuredTableDatasetDefinition(tableDefinition);
     this.entityRegistrySpec = tableDefinition.configure(ENTITY_REGISTRY, DatasetProperties.EMPTY);
     this.specCache = CacheBuilder.newBuilder()
       .maximumSize(MAX_CACHE_SIZE)

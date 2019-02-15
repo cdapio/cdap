@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,8 @@ import co.cask.cdap.api.annotation.ReadOnly;
 import co.cask.cdap.api.annotation.ReadWrite;
 import co.cask.cdap.api.annotation.WriteOnly;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
@@ -104,7 +106,8 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
    * Helper method to execute a {@link Callable} with a {@link DatasetRuntimeContext}.
    * This method is mainly called from
    * {@link LineageWriterDatasetFramework#getDataset(DatasetId, Map, ClassLoader, DatasetClassLoaderProvider,
-   * Iterable, AccessType)}.
+   * Iterable, AccessType)} and
+   * {@link NoSqlStructuredTableDatasetDefinition#getDataset(DatasetContext, DatasetSpecification, Map, ClassLoader)}
    */
   public static <T> T execute(AuthorizationEnforcer enforcer,
                               DatasetAccessRecorder accessRecorder,

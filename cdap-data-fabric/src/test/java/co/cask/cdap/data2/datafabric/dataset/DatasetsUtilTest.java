@@ -33,7 +33,7 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetServiceTestBase;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.TestObject;
-import co.cask.cdap.data2.metadata.lineage.LineageDataset;
+import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.registry.UsageDataset;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
@@ -70,10 +70,6 @@ public class DatasetsUtilTest extends DatasetServiceTestBase {
               .setRowKeyExploreName("x").setRowKeyExploreType(Schema.Type.STRING)
               .setConflictDetection(ConflictDetection.NONE).build());
 
-    testFix("lineageDataset",
-            DatasetProperties.EMPTY);
-    testFix(LineageDataset.class.getName(),
-            TableProperties.builder().setTTL(1000).build());
     testFix(UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY);
 
     testFix("table",

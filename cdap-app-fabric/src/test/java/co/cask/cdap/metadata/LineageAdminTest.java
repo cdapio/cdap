@@ -27,6 +27,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
+import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
@@ -43,6 +44,8 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
@@ -91,21 +94,19 @@ public class LineageAdminTest extends AppFabricTestBase {
   @After
   public void cleanup() throws Exception {
     deleteNamespace(NamespaceId.DEFAULT.getNamespace());
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    TransactionRunners.run(transactionRunner, context -> {
+      LineageTable table = LineageTable.create(context);
+      table.deleteAll();
+    });
   }
 
   @Test
   public void testSimpleLineage() throws Exception {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
-
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testSimpleLineage");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -208,15 +209,9 @@ public class LineageAdminTest extends AppFabricTestBase {
     //             |<-----------------
     //
 
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testSimpleLoopLineage");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
 
     Store store = getInjector().getInstance(Store.class);
@@ -280,15 +275,9 @@ public class LineageAdminTest extends AppFabricTestBase {
     //
     // D1 <-> P1
     //
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testDirectCycle");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -319,15 +308,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     //
     // D1 <- P1 (run2)
     //
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testDirectCycleTwoRuns");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader =
+      new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -364,15 +348,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     //       |     |           |
     // S1 -->|     ---------------> P4 -> D7
 
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testBranchLineage");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader =
+      new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -439,15 +418,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     //       |     |           |
     // S1 -->|     ---------------> P4 -> D7
 
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testBranchLoopLineage");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader =
+      new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -531,15 +505,10 @@ public class LineageAdminTest extends AppFabricTestBase {
   public void testWorkflowLineage() throws Exception {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
 
-    DatasetId lineageDatasetId = NamespaceId.DEFAULT.dataset("testWorkflowLineage");
-    LineageStoreReader lineageReader = new DefaultLineageStoreReader(getDatasetFramework(),
-                                                                     getTxClient(), lineageDatasetId);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient()) {
-      @Override
-      protected DatasetId getLineageDatasetId() {
-        return lineageDatasetId;
-      }
-    };
+    TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
+    LineageStoreReader lineageReader =
+      new DefaultLineageStoreReader(transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
