@@ -24,6 +24,7 @@ import co.cask.cdap.app.guice.UnsupportedExploreClient;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewHttpServer;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -74,6 +75,7 @@ public class PreviewServiceMain extends AbstractServiceMain {
       new SecureStoreServerModule(),
       new MetadataReaderWriterModules().getStandaloneModules(),
       getDataFabricModule(),
+      new DFSLocationModule(),
       new MetadataServiceModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),

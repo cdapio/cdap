@@ -20,6 +20,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
@@ -71,7 +72,8 @@ public class MetricsServiceMain extends AbstractServiceMain {
       new MetricsStoreModule(),
       new FactoryModuleBuilder().build(MessagingMetricsProcessorServiceFactory.class),
       new MetricsProcessorStatusServiceModule(),
-      new MetricsHandlerModule()
+      new MetricsHandlerModule(),
+      new DFSLocationModule()
     );
   }
 

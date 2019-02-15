@@ -43,7 +43,7 @@ final class RemoteExecutionProgramRunnerModule extends PrivateModule {
     Key<TwillRunnerService> twillRunnerServiceKey = Key.get(TwillRunnerService.class,
                                                             Constants.AppFabric.RemoteExecution.class);
 
-    // Bind the TwillRunner for remote exeuction used in isolated cluster.
+    // Bind the TwillRunner for remote execution used in isolated cluster.
     // The binding is added in here instead of in TwillModule is because this module can be used
     // in standalone env as well and it doesn't require YARN.
     bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);

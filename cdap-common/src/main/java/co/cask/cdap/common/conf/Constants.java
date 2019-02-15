@@ -783,6 +783,9 @@ public final class Constants {
     public static final String ADDRESS = "log.saver.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to collect and store logs.";
+
+    public static final String LOG_SAVER_INSTANCE_ID = "logSaverInstanceId";
+    public static final String LOG_SAVER_INSTANCE_COUNT = "logSaverInstanceCount";
   }
 
   /**
