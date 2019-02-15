@@ -35,4 +35,6 @@ public class LogBufferRequest implements Iterable<byte[]> {
   public Iterator<byte[]> iterator() {
     return logEvents.iterator();
   }
+
+
 }

@@ -19,11 +19,7 @@ package co.cask.cdap.logging.pipeline.kafka;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -33,7 +29,6 @@ import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.utils.Tasks;
@@ -42,7 +37,6 @@ import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.kafka.KafkaTester;
-import co.cask.cdap.logging.appender.ForwardingAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
@@ -53,7 +47,9 @@ import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.KafkaOffset;
 import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
+import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
+import co.cask.cdap.logging.pipeline.MockAppender;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
@@ -79,15 +75,8 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 
 import java.io.File;
-import java.io.Flushable;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -95,20 +84,11 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 /**
  * Unit-test for {@link KafkaLogProcessorPipeline}.
@@ -144,11 +124,12 @@ public class KafkaLogProcessorPipelineTest {
   @Test
   public void testBasicSort() throws Exception {
     String topic = "testPipeline";
-    LoggerContext loggerContext = createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"),
-                                                      TestAppender.class.getName());
-    final TestAppender appender = getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
-                                              "Test", TestAppender.class);
-    TestCheckpointManager checkpointManager = new TestCheckpointManager();
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext("WARN",
+                                                                          ImmutableMap.of("test.logger", "INFO"),
+                                                                          MockAppender.class.getName());
+    final MockAppender appender = LogPipelineTestUtil.getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
+                                                                  "Test", MockAppender.class);
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024L, 300L, 1048576, 500L);
     KAFKA_TESTER.createTopic(topic, 1);
 
@@ -163,12 +144,12 @@ public class KafkaLogProcessorPipelineTest {
     // Publish some log messages to Kafka
     long now = System.currentTimeMillis();
     publishLog(topic, ImmutableList.of(
-      createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
-      createLoggingEvent("test.logger", Level.INFO, "2", now - 700),
-      createLoggingEvent("test.logger", Level.INFO, "3", now - 500),
-      createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
-      createLoggingEvent("test.logger", Level.DEBUG, "hidden", now - 600),
-      createLoggingEvent("test.logger", Level.INFO, "4", now - 100))
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "2", now - 700),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "3", now - 500),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.DEBUG, "hidden", now - 600),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "4", now - 100))
     );
 
     // Since the messages are published in one batch, the processor should be able to fetch all of them,
@@ -186,7 +167,8 @@ public class KafkaLogProcessorPipelineTest {
     now = System.currentTimeMillis();
     for (int i = 0; i < 500; i++) {
       // The event timestamp is 10 seconds in future.
-      events.add(createLoggingEvent("test.large.logger", Level.WARN, "Large logger " + i, now + 10000));
+      events.add(LogPipelineTestUtil.createLoggingEvent("test.large.logger",
+                                                        Level.WARN, "Large logger " + i, now + 10000));
     }
     publishLog(topic, events);
 
@@ -208,11 +190,12 @@ public class KafkaLogProcessorPipelineTest {
   @Test
   public void testRegularFlush() throws Exception {
     String topic = "testFlush";
-    LoggerContext loggerContext = createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"),
-                                                      TestAppender.class.getName());
-    final TestAppender appender = getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
-                                              "Test", TestAppender.class);
-    TestCheckpointManager checkpointManager = new TestCheckpointManager();
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext("WARN",
+                                                                          ImmutableMap.of("test.logger", "INFO"),
+                                                                          MockAppender.class.getName());
+    final MockAppender appender = LogPipelineTestUtil.getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
+                                                                  "Test", MockAppender.class);
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
 
     // Use a longer checkpoint time and a short event delay. Should expect flush called at least once
     // per event delay.
@@ -233,9 +216,9 @@ public class KafkaLogProcessorPipelineTest {
     // Publish some logs
     long now = System.currentTimeMillis();
     publishLog(topic, ImmutableList.of(
-      createLoggingEvent("test.logger", Level.INFO, "0", now - 500),
-      createLoggingEvent("test.logger", Level.INFO, "1", now - 300),
-      createLoggingEvent("test.logger", Level.INFO, "2", now + 100)
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "0", now - 500),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 300),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "2", now + 100)
     ));
 
     // Wait until getting all logs.
@@ -266,7 +249,7 @@ public class KafkaLogProcessorPipelineTest {
     configurator.doConfigure(configURL);
 
     String topic = "metricsPipeline";
-    TestCheckpointManager checkpointManager = new TestCheckpointManager();
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024L, 100L, 1048576, 200L);
     KAFKA_TESTER.createTopic(topic, 1);
 
@@ -285,12 +268,12 @@ public class KafkaLogProcessorPipelineTest {
       new WorkerLoggingContext("default", "app1", "worker1", "run1", "instance1");
     publishLog(topic,
                ImmutableList.of(
-                 createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
-                 createLoggingEvent("test.logger", Level.INFO, "2", now - 700),
-                 createLoggingEvent("test.logger", Level.INFO, "3", now - 500),
-                 createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
-                 createLoggingEvent("test.logger", Level.DEBUG, "hidden", now - 600),
-                 createLoggingEvent("test.logger", Level.INFO, "4", now - 100)),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "2", now - 700),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "3", now - 500),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.DEBUG, "hidden", now - 600),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "4", now - 100)),
                loggingContext
     );
 
@@ -299,9 +282,9 @@ public class KafkaLogProcessorPipelineTest {
 
     publishLog(topic,
                ImmutableList.of(
-                 createLoggingEvent("test.logger", Level.WARN, "0", now - 1000),
-                 createLoggingEvent("test.logger", Level.WARN, "2", now - 700),
-                 createLoggingEvent("test.logger", Level.TRACE, "3", now - 500)),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.WARN, "0", now - 1000),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.WARN, "2", now - 700),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.TRACE, "3", now - 500)),
                workflowProgramLoggingContext
     );
 
@@ -310,10 +293,10 @@ public class KafkaLogProcessorPipelineTest {
                                 Constants.Service.TRANSACTION);
     publishLog(topic,
                ImmutableList.of(
-                 createLoggingEvent("test.logger", Level.ERROR, "0", now - 1000),
-                 createLoggingEvent("test.logger", Level.ERROR, "2", now - 700),
-                 createLoggingEvent("test.logger", Level.ERROR, "3", now - 500),
-                 createLoggingEvent("test.logger", Level.INFO, "1", now - 900)),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.ERROR, "0", now - 1000),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.ERROR, "2", now - 700),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.ERROR, "3", now - 500),
+                 LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 900)),
                serviceLoggingContext
     );
 
@@ -391,7 +374,7 @@ public class KafkaLogProcessorPipelineTest {
     configurator.doConfigure(configURL);
 
     String topic = "testMultiAppenders";
-    TestCheckpointManager checkpointManager = new TestCheckpointManager();
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
     KafkaPipelineConfig config = new KafkaPipelineConfig(topic, Collections.singleton(0), 1024L, 100L, 1048576, 200L);
     KAFKA_TESTER.createTopic(topic, 1);
 
@@ -407,11 +390,11 @@ public class KafkaLogProcessorPipelineTest {
     // Publish some log messages to Kafka using a non-specific logger
     long now = System.currentTimeMillis();
     publishLog(topic, ImmutableList.of(
-      createLoggingEvent("logger.trace", Level.TRACE, "TRACE", now - 1000),
-      createLoggingEvent("logger.debug", Level.DEBUG, "DEBUG", now - 900),
-      createLoggingEvent("logger.info", Level.INFO, "INFO", now - 800),
-      createLoggingEvent("logger.warn", Level.WARN, "WARN", now - 700),
-      createLoggingEvent("logger.error", Level.ERROR, "ERROR", now - 600)
+      LogPipelineTestUtil.createLoggingEvent("logger.trace", Level.TRACE, "TRACE", now - 1000),
+      LogPipelineTestUtil.createLoggingEvent("logger.debug", Level.DEBUG, "DEBUG", now - 900),
+      LogPipelineTestUtil.createLoggingEvent("logger.info", Level.INFO, "INFO", now - 800),
+      LogPipelineTestUtil.createLoggingEvent("logger.warn", Level.WARN, "WARN", now - 700),
+      LogPipelineTestUtil.createLoggingEvent("logger.error", Level.ERROR, "ERROR", now - 600)
     ));
 
     // All logs should get logged to the default.log file
@@ -424,11 +407,11 @@ public class KafkaLogProcessorPipelineTest {
     // Publish some more log messages via the non-additive "test.info" logger.
     now = System.currentTimeMillis();
     publishLog(topic, ImmutableList.of(
-      createLoggingEvent("test.info.trace", Level.TRACE, "TRACE", now - 1000),
-      createLoggingEvent("test.info.debug", Level.DEBUG, "DEBUG", now - 900),
-      createLoggingEvent("test.info", Level.INFO, "INFO", now - 800),
-      createLoggingEvent("test.info.warn", Level.WARN, "WARN", now - 700),
-      createLoggingEvent("test.info.error", Level.ERROR, "ERROR", now - 600)
+      LogPipelineTestUtil.createLoggingEvent("test.info.trace", Level.TRACE, "TRACE", now - 1000),
+      LogPipelineTestUtil.createLoggingEvent("test.info.debug", Level.DEBUG, "DEBUG", now - 900),
+      LogPipelineTestUtil.createLoggingEvent("test.info", Level.INFO, "INFO", now - 800),
+      LogPipelineTestUtil.createLoggingEvent("test.info.warn", Level.WARN, "WARN", now - 700),
+      LogPipelineTestUtil.createLoggingEvent("test.info.error", Level.ERROR, "ERROR", now - 600)
     ));
 
     // Only logs with INFO or above level should get written to the info.log file
@@ -446,7 +429,7 @@ public class KafkaLogProcessorPipelineTest {
     // Publish a log messages via the additive "test.error" logger.
     now = System.currentTimeMillis();
     publishLog(topic, ImmutableList.of(
-      createLoggingEvent("test.error.1.2", Level.ERROR, "ERROR", now - 1000)
+      LogPipelineTestUtil.createLoggingEvent("test.error.1.2", Level.ERROR, "ERROR", now - 1000)
     ));
 
     // Expect the log get appended to both the error.log file as well as the default.log file
@@ -464,30 +447,6 @@ public class KafkaLogProcessorPipelineTest {
 
     pipeline.stopAndWait();
     loggerContext.stop();
-  }
-
-  private <T extends Appender<ILoggingEvent>> T getAppender(Logger logger, String name, Class<T> cls) {
-    Appender<ILoggingEvent> appender = logger.getAppender(name);
-    while (!cls.isAssignableFrom(appender.getClass())) {
-      if (appender instanceof ForwardingAppender) {
-        appender = ((ForwardingAppender<ILoggingEvent>) appender).getDelegate();
-      } else {
-        throw new RuntimeException("Failed to find appender " + name + " of type " + cls.getName());
-      }
-    }
-    return cls.cast(appender);
-  }
-
-  /**
-   * Creates a new {@link ILoggingEvent} with the given information.
-   */
-  private ILoggingEvent createLoggingEvent(String loggerName, Level level, String message, long timestamp) {
-    LoggingEvent event = new LoggingEvent();
-    event.setLevel(level);
-    event.setLoggerName(loggerName);
-    event.setMessage(message);
-    event.setTimeStamp(timestamp);
-    return event;
   }
 
   /**
@@ -509,95 +468,10 @@ public class KafkaLogProcessorPipelineTest {
     preparer.send();
   }
 
-  private LoggerContext createLoggerContext(String rootLevel,
-                                            Map<String, String> loggerLevels,
-                                            String appenderClassName) throws Exception {
-    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-    Element configuration = doc.createElement("configuration");
-    doc.appendChild(configuration);
-
-    Element appender = doc.createElement("appender");
-    appender.setAttribute("name", "Test");
-    appender.setAttribute("class", appenderClassName);
-    configuration.appendChild(appender);
-
-    for (Map.Entry<String, String> entry : loggerLevels.entrySet()) {
-      Element logger = doc.createElement("logger");
-      logger.setAttribute("name", entry.getKey());
-      logger.setAttribute("level", entry.getValue());
-      configuration.appendChild(logger);
-    }
-
-    Element rootLogger = doc.createElement("root");
-    rootLogger.setAttribute("level", rootLevel);
-    Element appenderRef = doc.createElement("appender-ref");
-    appenderRef.setAttribute("ref", "Test");
-    rootLogger.appendChild(appenderRef);
-
-    configuration.appendChild(rootLogger);
-
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    StringWriter writer = new StringWriter();
-    transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
-    LoggerContext context = new LoggerContext();
-    JoranConfigurator configurator = new LogPipelineConfigurator(CConfiguration.create());
-    configurator.setContext(context);
-    configurator.doConfigure(new InputSource(new StringReader(writer.toString())));
-
-    return context;
-  }
-
   /**
-   * Appender for unit-test.
+   * Checkpoint manager for unit tests.
    */
-  public static final class TestAppender extends AppenderBase<ILoggingEvent> implements Flushable, Syncable {
-
-    private final AtomicInteger flushCount = new AtomicInteger();
-    private Queue<ILoggingEvent> pending;
-    private Queue<ILoggingEvent> persisted;
-
-    @Override
-    protected void append(ILoggingEvent event) {
-      pending.add(event);
-    }
-
-    Queue<ILoggingEvent> getEvents() {
-      return persisted;
-    }
-
-    int getFlushCount() {
-      return flushCount.get();
-    }
-
-    @Override
-    public void start() {
-      persisted = new ConcurrentLinkedQueue<>();
-      pending = new LinkedList<>();
-      super.start();
-    }
-
-    @Override
-    public void stop() {
-      persisted = null;
-      pending = null;
-      super.stop();
-    }
-
-    @Override
-    public void flush() throws IOException {
-      flushCount.incrementAndGet();
-    }
-
-    @Override
-    public void sync() throws IOException {
-      persisted.addAll(pending);
-      pending.clear();
-    }
-  }
-
-  private static final class TestCheckpointManager implements CheckpointManager<KafkaOffset> {
-
+  class MockCheckpointManager implements CheckpointManager<KafkaOffset> {
     @Override
     public void saveCheckpoints(Map<Integer, ? extends Checkpoint<KafkaOffset>> checkpoints) throws Exception {
 

@@ -18,42 +18,23 @@ package co.cask.cdap.logging.pipeline.queue;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.LoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.io.Syncable;
 import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
+import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
+import co.cask.cdap.logging.pipeline.MockAppender;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.xml.sax.InputSource;
 
-import java.io.Flushable;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 /**
  * Tests for {@link TimeEventQueueProcessor}.
@@ -63,8 +44,9 @@ public class TimeEventQueueProcessorTest {
 
   @Test
   public void test() throws Exception {
-    LoggerContext loggerContext = createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"),
-                                                      TestAppender.class.getName());
+    LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext("WARN",
+                                                                          ImmutableMap.of("test.logger", "INFO"),
+                                                                          MockAppender.class.getName());
     LogProcessorPipelineContext context = new LogProcessorPipelineContext(CConfiguration.create(),
                                                                           "test", loggerContext, NO_OP_METRICS_CONTEXT,
                                                                           0);
@@ -73,12 +55,12 @@ public class TimeEventQueueProcessorTest {
                                                                                   ImmutableList.of(0));
     long now = System.currentTimeMillis();
     List<ILoggingEvent> events = ImmutableList.of(
-      createLoggingEvent("test.logger", Level.INFO, "1", now - 1000),
-      createLoggingEvent("test.logger", Level.INFO, "3", now - 700),
-      createLoggingEvent("test.logger", Level.INFO, "5", now - 500),
-      createLoggingEvent("test.logger", Level.INFO, "2", now - 900),
-      createLoggingEvent("test.logger", Level.ERROR, "4", now - 600),
-      createLoggingEvent("test.logger", Level.INFO, "6", now - 100));
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 1000),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "3", now - 700),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "5", now - 500),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "2", now - 900),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.ERROR, "4", now - 600),
+      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "6", now - 100));
 
     ProcessedEventMetadata<TestOffset> metadata = processor.process(0, new TransformingIterator(events.iterator()));
     // all 6 events should be processed. This is because when the buffer is full after 5 events, time event queue
@@ -88,105 +70,6 @@ public class TimeEventQueueProcessorTest {
       Checkpoint<TestOffset> value = entry.getValue();
       // offset should be max offset processed so far
       Assert.assertEquals(6, value.getOffset().getOffset());
-    }
-  }
-
-  /**
-   * Creates a new {@link ILoggingEvent} with the given information.
-   */
-  private ILoggingEvent createLoggingEvent(String loggerName, Level level, String message, long timestamp) {
-    LoggingEvent event = new LoggingEvent();
-    event.setLevel(level);
-    event.setLoggerName(loggerName);
-    event.setMessage(message);
-    event.setTimeStamp(timestamp);
-    return event;
-  }
-
-  private LoggerContext createLoggerContext(String rootLevel,
-                                            Map<String, String> loggerLevels,
-                                            String appenderClassName) throws Exception {
-    Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-    Element configuration = doc.createElement("configuration");
-    doc.appendChild(configuration);
-
-    Element appender = doc.createElement("appender");
-    appender.setAttribute("name", "Test");
-    appender.setAttribute("class", appenderClassName);
-    configuration.appendChild(appender);
-
-    for (Map.Entry<String, String> entry : loggerLevels.entrySet()) {
-      Element logger = doc.createElement("logger");
-      logger.setAttribute("name", entry.getKey());
-      logger.setAttribute("level", entry.getValue());
-      configuration.appendChild(logger);
-    }
-
-    Element rootLogger = doc.createElement("root");
-    rootLogger.setAttribute("level", rootLevel);
-    Element appenderRef = doc.createElement("appender-ref");
-    appenderRef.setAttribute("ref", "Test");
-    rootLogger.appendChild(appenderRef);
-
-    configuration.appendChild(rootLogger);
-
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    StringWriter writer = new StringWriter();
-    transformer.transform(new DOMSource(doc), new StreamResult(writer));
-
-    LoggerContext context = new LoggerContext();
-    JoranConfigurator configurator = new LogPipelineConfigurator(CConfiguration.create());
-    configurator.setContext(context);
-    configurator.doConfigure(new InputSource(new StringReader(writer.toString())));
-
-    return context;
-  }
-
-  /**
-   * Appender for unit-test.
-   */
-  public static final class TestAppender extends AppenderBase<ILoggingEvent> implements Flushable, Syncable {
-
-    private final AtomicInteger flushCount = new AtomicInteger();
-    private Queue<ILoggingEvent> pending;
-    private Queue<ILoggingEvent> persisted;
-
-    @Override
-    protected void append(ILoggingEvent event) {
-      pending.add(event);
-    }
-
-    Queue<ILoggingEvent> getEvents() {
-      return persisted;
-    }
-
-    int getFlushCount() {
-      return flushCount.get();
-    }
-
-    @Override
-    public void start() {
-      persisted = new ConcurrentLinkedQueue<>();
-      pending = new LinkedList<>();
-      super.start();
-    }
-
-    @Override
-    public void stop() {
-      persisted = null;
-      pending = null;
-      super.stop();
-    }
-
-    @Override
-    public void flush() throws IOException {
-      flushCount.incrementAndGet();
-    }
-
-    @Override
-    public void sync() throws IOException {
-      persisted.addAll(pending);
-      pending.clear();
     }
   }
 
