@@ -19,31 +19,26 @@ package co.cask.cdap.logging.meta;
 import com.google.common.base.Objects;
 
 /**
- * Represents a checkpoint that can be saved when reading from Kafka.
+ * Represents a checkpoint that can be saved when reading logs.
+ * @param <Offset> type of the offset
  */
-public class Checkpoint {
-  private final long nextOffset;
-  private final long nextEventTime;
+public class Checkpoint<Offset> {
+  private final Offset offset;
   private final long maxEventTime;
 
-  public Checkpoint(long nextOffset, long nextEventTime, long maxEventTime) {
-    this.nextOffset = nextOffset;
-    this.nextEventTime = nextEventTime;
+  /**
+   * Checkpoint containing offset and maxEventTime.
+   */
+  public Checkpoint(Offset offset, long maxEventTime) {
+    this.offset = offset;
     this.maxEventTime = maxEventTime;
   }
 
   /**
-   * Returns the next Kafka offset to restart reading from.
+   * Returns the offset.
    */
-  public long getNextOffset() {
-    return nextOffset;
-  }
-
-  /**
-   * Returns the log event time of the message fetched with the previous offset of {@code nextOffset}.
-   */
-  public long getNextEventTime() {
-    return nextEventTime;
+  public Offset getOffset() {
+    return offset;
   }
 
   /**
@@ -56,7 +51,7 @@ public class Checkpoint {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("nextOffset", nextOffset)
+      .add("Offset", offset)
       .add("maxEventTime", maxEventTime)
       .toString();
   }

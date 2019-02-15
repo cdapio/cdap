@@ -51,6 +51,7 @@ import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
+import co.cask.cdap.logging.meta.KafkaOffset;
 import co.cask.cdap.logging.pipeline.LogPipelineConfigurator;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
@@ -100,7 +101,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,7 +121,7 @@ public class KafkaLogProcessorPipelineTest {
 
   @ClassRule
   public static final KafkaTester KAFKA_TESTER =
-    new KafkaTester(ImmutableMap.<String, String>of(),
+    new KafkaTester(ImmutableMap.of(),
                     ImmutableList.of(
                       new NonCustomLocationUnitTestModule(),
                       new DataSetsModules().getInMemoryModules(),
@@ -174,12 +174,7 @@ public class KafkaLogProcessorPipelineTest {
     // Since the messages are published in one batch, the processor should be able to fetch all of them,
     // hence the sorting order should be deterministic.
     // The DEBUG message should get filtered out
-    Tasks.waitFor(5, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return appender.getEvents().size();
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(5, () -> appender.getEvents().size(), 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     for (int i = 0; i < 5; i++) {
       Assert.assertEquals(Integer.toString(i), appender.getEvents().poll().getMessage());
@@ -195,12 +190,7 @@ public class KafkaLogProcessorPipelineTest {
     }
     publishLog(topic, events);
 
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return !appender.getEvents().isEmpty();
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(true, () -> !appender.getEvents().isEmpty(), 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     events.clear();
     events.addAll(appender.getEvents());
@@ -238,12 +228,7 @@ public class KafkaLogProcessorPipelineTest {
     pipeline.startAndWait();
 
     // Even when there is no event, the flush should still get called.
-    Tasks.waitFor(5, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return appender.getFlushCount();
-      }
-    }, 3, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(5, appender::getFlushCount, 3, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Publish some logs
     long now = System.currentTimeMillis();
@@ -254,12 +239,7 @@ public class KafkaLogProcessorPipelineTest {
     ));
 
     // Wait until getting all logs.
-    Tasks.waitFor(3, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return appender.getEvents().size();
-      }
-    }, 3, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(3, () -> appender.getEvents().size(), 3, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
 
     pipeline.stopAndWait();
 
@@ -344,14 +324,14 @@ public class KafkaLogProcessorPipelineTest {
                                                  "system.app.log.info",
                                                  AggregationFunction.SUM,
                                                  LoggingContextHelper.getMetricsTags(loggingContext),
-                                                 new ArrayList<String>()), 5L);
+                                                 new ArrayList<>()), 5L);
 
       verifyMetricsWithRetry(metricStore,
                              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
                                                  "system.app.log.debug",
                                                  AggregationFunction.SUM,
                                                  LoggingContextHelper.getMetricsTags(loggingContext),
-                                                 new ArrayList<String>()), 1L);
+                                                 new ArrayList<>()), 1L);
 
       verifyMetricsWithRetry(metricStore,
                              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
@@ -362,7 +342,7 @@ public class KafkaLogProcessorPipelineTest {
                                                                  Constants.Metrics.Tag.APP, "app1",
                                                                  Constants.Metrics.Tag.MAPREDUCE, "mr1",
                                                                  Constants.Metrics.Tag.RUN_ID, "mrun1"),
-                                                 new ArrayList<String>()), 2L);
+                                                 new ArrayList<>()), 2L);
       verifyMetricsWithRetry(metricStore,
                              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
                                                  "system.app.log.trace",
@@ -372,13 +352,13 @@ public class KafkaLogProcessorPipelineTest {
                                                                  Constants.Metrics.Tag.APP, "app1",
                                                                  Constants.Metrics.Tag.WORKFLOW, "wflow1",
                                                                  Constants.Metrics.Tag.RUN_ID, "run1"),
-                                                 new ArrayList<String>()), 1L);
+                                                 new ArrayList<>()), 1L);
       verifyMetricsWithRetry(metricStore,
                              new MetricDataQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE,
                                                  "system.services.log.error",
                                                  AggregationFunction.SUM,
                                                  LoggingContextHelper.getMetricsTags(serviceLoggingContext),
-                                                 new ArrayList<String>()), 3L);
+                                                 new ArrayList<>()), 3L);
     } finally {
       pipeline.stopAndWait();
       loggerContext.stop();
@@ -388,15 +368,12 @@ public class KafkaLogProcessorPipelineTest {
 
   private void verifyMetricsWithRetry(final MetricStore metricStore,
                                       final MetricDataQuery metricDataQuery, long expectedValue) throws Exception {
-    Tasks.waitFor(expectedValue, new Callable<Long>() {
-      @Override
-      public Long call() throws Exception {
-        try {
-          return Iterables.getOnlyElement(
-            Iterables.getOnlyElement(metricStore.query(metricDataQuery)).getTimeValues()).getValue();
-        } catch (NoSuchElementException e) {
-          return 0L;
-        }
+    Tasks.waitFor(expectedValue, () -> {
+      try {
+        return Iterables.getOnlyElement(
+          Iterables.getOnlyElement(metricStore.query(metricDataQuery)).getTimeValues()).getValue();
+      } catch (NoSuchElementException e) {
+        return 0L;
       }
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
@@ -438,13 +415,10 @@ public class KafkaLogProcessorPipelineTest {
     ));
 
     // All logs should get logged to the default.log file
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        File logFile = new File(logDir, "default.log");
-        List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
-        return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR").equals(lines);
-      }
+    Tasks.waitFor(true, () -> {
+      File logFile = new File(logDir, "default.log");
+      List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+      return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR").equals(lines);
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Publish some more log messages via the non-additive "test.info" logger.
@@ -458,13 +432,10 @@ public class KafkaLogProcessorPipelineTest {
     ));
 
     // Only logs with INFO or above level should get written to the info.log file
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        File logFile = new File(logDir, "info.log");
-        List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
-        return Arrays.asList("INFO", "WARN", "ERROR").equals(lines);
-      }
+    Tasks.waitFor(true, () -> {
+      File logFile = new File(logDir, "info.log");
+      List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+      return Arrays.asList("INFO", "WARN", "ERROR").equals(lines);
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // The default.log file shouldn't be changed, because the test.info logger is non additive
@@ -479,19 +450,16 @@ public class KafkaLogProcessorPipelineTest {
     ));
 
     // Expect the log get appended to both the error.log file as well as the default.log file
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        File logFile = new File(logDir, "error.log");
-        List<String> lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
-        if (!Collections.singletonList("ERROR").equals(lines)) {
-          return false;
-        }
-
-        logFile = new File(logDir, "default.log");
-        lines = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
-        return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR", "ERROR").equals(lines);
+    Tasks.waitFor(true, () -> {
+      File logFile = new File(logDir, "error.log");
+      List<String> lines1 = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+      if (!Collections.singletonList("ERROR").equals(lines1)) {
+        return false;
       }
+
+      logFile = new File(logDir, "default.log");
+      lines1 = Files.readAllLines(logFile.toPath(), StandardCharsets.UTF_8);
+      return Arrays.asList("TRACE", "DEBUG", "INFO", "WARN", "ERROR", "ERROR").equals(lines1);
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     pipeline.stopAndWait();
@@ -628,21 +596,21 @@ public class KafkaLogProcessorPipelineTest {
     }
   }
 
-  private static final class TestCheckpointManager implements CheckpointManager {
+  private static final class TestCheckpointManager implements CheckpointManager<KafkaOffset> {
 
     @Override
-    public void saveCheckpoints(Map<Integer, ? extends Checkpoint> checkpoints) throws Exception {
+    public void saveCheckpoints(Map<Integer, ? extends Checkpoint<KafkaOffset>> checkpoints) throws Exception {
 
     }
 
     @Override
-    public Map<Integer, Checkpoint> getCheckpoint(Set<Integer> partitions) throws Exception {
+    public Map<Integer, Checkpoint<KafkaOffset>> getCheckpoint(Set<Integer> partitions) throws Exception {
       return Collections.emptyMap();
     }
 
     @Override
-    public Checkpoint getCheckpoint(int partition) throws Exception {
-      return new Checkpoint(-1, -1, -1);
+    public Checkpoint<KafkaOffset> getCheckpoint(int partition) throws Exception {
+      return new Checkpoint<>(new KafkaOffset(-1, -1), -1);
     }
   }
 }
