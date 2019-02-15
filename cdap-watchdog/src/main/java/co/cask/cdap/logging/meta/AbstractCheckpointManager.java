@@ -80,6 +80,7 @@ public abstract class AbstractCheckpointManager<T> implements CheckpointManager<
   }
 
   @Override
+
   public Map<Integer, Checkpoint<T>> getCheckpoint(Set<Integer> partitions) throws IOException {
     return TransactionRunners.run(transactionRunner, context -> {
       Map<Integer, Checkpoint<T>> checkpoints = new HashMap<>();

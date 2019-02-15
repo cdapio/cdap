@@ -77,6 +77,7 @@ public class DistributedLogFramework extends ResourceBalancerService {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   protected Service createService(Set<Integer> partitions) {
     Map<String, LogPipelineSpecification<AppenderContext>> specs = new LogPipelineLoader(cConf).load(contextProvider);
     int pipelineCount = specs.size();

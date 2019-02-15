@@ -53,7 +53,7 @@ public final class TMSLogAppender extends LogAppender {
   @Inject
   TMSLogAppender(CConfiguration cConf, MessagingService messagingService) {
     setName(APPENDER_NAME);
-    int queueSize = cConf.getInt(Constants.Logging.TMS_APPENDER_QUEUE_SIZE);
+    int queueSize = cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE);
     this.tmsLogPublisher = new TMSLogPublisher(cConf, messagingService, queueSize);
   }
 
