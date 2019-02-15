@@ -56,13 +56,12 @@ public class SqlTransactionRunner implements TransactionRunner {
       runnable.run(new SqlStructuredTableContext(admin, connection));
       connection.commit();
     } catch (Exception e) {
-      try {
-        connection.rollback();
-        throw new TransactionException("Failed to execute the sql queries.", e);
-      } catch (SQLException sql) {
-        e.addSuppressed(sql);
-        throw new TransactionException("Failed to execute the sql queries.", e);
+      Throwable cause = e.getCause();
+      if (cause instanceof SQLException) {
+        rollback(connection,
+                 new SqlTransactionException("Failed to execute the sql queries.", (SQLException) cause, e));
       }
+      rollback(connection, new TransactionException("Failed to execute the sql queries.", e));
     } finally {
       try {
         connection.close();
@@ -70,5 +69,14 @@ public class SqlTransactionRunner implements TransactionRunner {
         LOG.warn("Failed to close the sql connection after a transaction", e);
       }
     }
+  }
+
+  private void rollback(Connection connection, TransactionException e) throws TransactionException {
+    try {
+      connection.rollback();
+    } catch (Exception sql) {
+      e.addSuppressed(sql);
+    }
+    throw e;
   }
 }
