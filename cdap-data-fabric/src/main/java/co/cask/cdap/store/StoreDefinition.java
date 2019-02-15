@@ -82,7 +82,6 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(LineageStore.PROGRAM_LINEAGE_TABLE) == null) {
       LineageStore.createTable(tableAdmin);
     }
-
     if (overWrite || tableAdmin.getSpecification(JobQueueStore.JOB_QUEUE_TABLE) == null) {
       JobQueueStore.createTables(tableAdmin);
     }
