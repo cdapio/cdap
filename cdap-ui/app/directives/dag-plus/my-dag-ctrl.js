@@ -59,6 +59,8 @@ angular.module(PKG.name + '.commons')
     vm.comments = [];
     vm.nodeMenuOpen = null;
 
+    vm.selectedNode = null;
+
     var repaintTimeout,
         commentsTimeout,
         nodesTimeout,
@@ -68,6 +70,13 @@ angular.module(PKG.name + '.commons')
         resetTimeout;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
+
+    vm.selectNode = (event, node) => {
+      if (vm.isDisabled) { return; }
+      event.stopPropagation();
+      clearConnectionsSelection();
+      vm.selectedNode = node;
+    };
 
     function repaintEverything() {
       if (repaintTimeout) {
@@ -172,14 +181,17 @@ angular.module(PKG.name + '.commons')
     function bindKeyboardEvents() {
       Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
-      Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
+      Mousetrap.bind(['del', 'backspace'], onKeyboardDelete);
+      Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
       Mousetrap.bind(['command+v', 'ctrl+v'], vm.onNodePaste);
     }
 
     function unbindKeyboardEvents() {
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
+      Mousetrap.unbind(['command+c', 'ctrl+c']);
       Mousetrap.unbind(['command+v', 'ctrl+v']);
+      Mousetrap.unbind(['del', 'backspace']);
     }
 
     function closeMetricsPopover(node) {
@@ -191,6 +203,14 @@ angular.module(PKG.name + '.commons')
         nodeInfo.popover.hide();
         nodeInfo.popover.destroy();
         nodeInfo.popover = null;
+      }
+    }
+
+    function onKeyboardDelete() {
+      if (vm.selectedNode) {
+        vm.onNodeDelete(null, vm.selectedNode);
+      } else {
+        vm.removeSelectedConnections();
       }
     }
 
@@ -505,6 +525,11 @@ angular.module(PKG.name + '.commons')
       };
     };
 
+    vm.handleCanvasClick = () => {
+      vm.toggleNodeMenu();
+      vm.selectedNode = null;
+    };
+
     function addConnection(newConnObj) {
       let connection = {
         from: newConnObj.sourceId,
@@ -586,6 +611,8 @@ angular.module(PKG.name + '.commons')
     function toggleConnections(selectedObj) {
       if (vm.isDisabled) { return; }
 
+      vm.selectedNode = null;
+
       // is connection
       if (selectedObj.sourceId && selectedObj.targetId) {
         toggleConnection(selectedObj);
@@ -625,12 +652,22 @@ angular.module(PKG.name + '.commons')
     }
 
     function toggleConnection(connObj) {
+      vm.selectedNode = null;
+
       if (selectedConnections.indexOf(connObj) === -1) {
         selectedConnections.push(connObj);
       } else {
         selectedConnections.splice(selectedConnections.indexOf(connObj), 1);
       }
       connObj.toggleType('selected');
+    }
+
+    function clearConnectionsSelection() {
+      selectedConnections.forEach((conn) => {
+        conn.toggleType('selected');
+      });
+
+      selectedConnections = [];
     }
 
     function deleteEndpoints(elementId) {
@@ -867,6 +904,7 @@ angular.module(PKG.name + '.commons')
 
     vm.selectEndpoint = function(event, node) {
       if (event.target.className.indexOf('endpoint-circle') === -1) { return; }
+      vm.selectedNode = null;
 
       let sourceElem = node.name;
       let endpoints = vm.instance.getEndpoints(sourceElem);
@@ -972,7 +1010,10 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.onNodeDelete = function (event, node) {
-      event.stopPropagation();
+      if (event) {
+        event.stopPropagation();
+      }
+
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
 
       if (Object.keys(splitterNodesPorts).indexOf(node.name) !== -1) {
@@ -995,6 +1036,8 @@ angular.module(PKG.name + '.commons')
 
       vm.instance.remove(node.name);
       vm.instance.bind('connectionDetached', removeConnection);
+
+      vm.selectedNode = null;
     };
 
     vm.cleanUpGraph = function () {
@@ -1042,16 +1085,17 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
-    vm.toggleNodeMenu = function (nodeName, event) {
+    vm.toggleNodeMenu = function (node, event) {
       if (event) {
         event.preventDefault();
         event.stopPropagation();
       }
 
-      if (vm.nodeMenuOpen === nodeName) {
+      if (!node || vm.nodeMenuOpen === node.name) {
         vm.nodeMenuOpen = null;
       } else {
-        vm.nodeMenuOpen = nodeName;
+        vm.nodeMenuOpen = node.name;
+        vm.selectedNode = node;
       }
     };
 
@@ -1215,7 +1259,7 @@ angular.module(PKG.name + '.commons')
         },
       };
 
-      vm.toggleNodeMenu(node.name); // close node menu
+      vm.nodeMenuOpen = null;
 
       // The idea behind this clipboard object is to replicate the stage config as much as possible.
       // The roadmap is to be able to support copying multiple stages with their connections.
@@ -1225,6 +1269,12 @@ angular.module(PKG.name + '.commons')
 
       navigator.clipboard.writeText(JSON.stringify(clipboardObj));
     };
+
+    function onKeyboardCopy() {
+      if (!vm.selectedNode) { return; }
+
+      vm.onNodeCopy(vm.selectedNode);
+    }
 
     vm.onNodePaste = _.debounce(() => {
       navigator.clipboard.readText().then(handleNodePaste, (err) => {
