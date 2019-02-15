@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,9 +26,9 @@ import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
+import co.cask.cdap.data2.metadata.store.StorageProviderMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -38,6 +38,7 @@ import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.inject.Module;
@@ -114,7 +115,8 @@ public class DataSetsModules extends RuntimeModule {
         bind(DatasetDefinitionRegistryFactory.class)
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
-        bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        bind(MetadataStorage.class).to(DatasetMetadataStorage.class);
+        bind(MetadataStore.class).to(StorageProviderMetadataStore.class);
         expose(MetadataStore.class);
 
         bind(DatasetFramework.class)

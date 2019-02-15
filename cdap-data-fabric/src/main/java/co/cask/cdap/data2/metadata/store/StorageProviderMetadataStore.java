@@ -254,7 +254,7 @@ public class StorageProviderMetadataStore implements MetadataStore {
       // else search all namespaces
     }
     if (request.getTypes() != null && !request.getTypes().contains(EntityTypeSimpleName.ALL)) {
-      request.getTypes().forEach(type -> req.addType(type.name()));
+      request.getTypes().forEach(type -> req.addType(type.getSerializedForm()));
     }
     if (!request.getSortInfo().equals(SortInfo.DEFAULT)) {
       req.setSorting(new Sorting(request.getSortInfo().getSortBy(),

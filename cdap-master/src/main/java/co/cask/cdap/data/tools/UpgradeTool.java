@@ -36,10 +36,8 @@ import co.cask.cdap.common.metrics.NoOpMetricsSystemClient;
 import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.common.zookeeper.coordination.DiscoverableCodec;
-import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -49,15 +47,12 @@ import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.metadata.lineage.LineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
-import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.registry.UsageDataset;
-import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
-import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -74,7 +69,6 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.DefaultOwnerStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -169,16 +163,13 @@ public class UpgradeTool {
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          UpgradeTool.this.stop();
-        } catch (Throwable e) {
-          LOG.error("Failed to upgrade", e);
-        }
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        UpgradeTool.this.stop();
+      } catch (Throwable e) {
+        LOG.error("Failed to upgrade", e);
       }
-    });
+    }));
   }
 
   @VisibleForTesting
@@ -279,7 +270,7 @@ public class UpgradeTool {
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
-    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
+    initializeDSFramework(dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
     coprocessorManager.ensureCoprocessorExists();
   }
@@ -464,17 +455,16 @@ public class UpgradeTool {
    * Whereas during Hbase upgrade (2) we want these new tables to be added so that the co processor of these tables
    * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
-  private void initializeDSFramework(CConfiguration cConf,
-                                     DatasetFramework datasetFramework, boolean includeNewDatasets)
+  private void initializeDSFramework(DatasetFramework datasetFramework, boolean includeNewDatasets)
     throws IOException, DatasetManagementException {
     // Note: do no remove this block even if it's empty. Read the comment below and function doc above
+    //noinspection StatementWithEmptyBody
     if (includeNewDatasets) {
       // Add all new system dataset introduced in the current release in this block. If no new dataset was introduced
       // then leave this block empty but do not remove block so that it can be used in next release if needed
     }
 
     // metadata and lineage
-    DefaultMetadataStore.setupDatasets(datasetFramework);
     LineageDataset.setupDatasets(datasetFramework);
     FieldLineageDataset.setupDatasets(datasetFramework);
     // app metadata

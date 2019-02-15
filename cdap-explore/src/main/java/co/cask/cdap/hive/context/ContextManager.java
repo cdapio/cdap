@@ -51,6 +51,8 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.RemoteUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.inject.AbstractModule;
@@ -134,6 +136,7 @@ public class ContextManager {
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
+          bind(MetadataStorage.class).to(NoopMetadataStorage.class);
           bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),

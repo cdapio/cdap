@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -365,8 +366,16 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     MetadataSearchResponse response = search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
       namespaceAndScopes.getFirst(),
       request.getQuery(),
+      // TODO (CDAP-14806): if all types are non-CDAP types, this will result in an empty list, which return all types
       request.getTypes() == null ? Collections.emptySet() :
-        request.getTypes().stream().map(EntityTypeSimpleName::valueOfSerializedForm).collect(Collectors.toSet()),
+        request.getTypes().stream().map(s -> {
+          try {
+            return EntityTypeSimpleName.valueOfSerializedForm(s);
+          } catch (IllegalArgumentException e) {
+            // not a valid type: MetadataDataset will not be able to search this
+            return null;
+          }
+        }).filter(Objects::nonNull).collect(Collectors.toSet()),
       request.getSorting() == null ? SortInfo.DEFAULT :
         new SortInfo(request.getSorting().getKey(), SortInfo.SortOrder.valueOf(request.getSorting().getOrder().name())),
       cursorOffsetAndLimits.getOffsetToRequest(),

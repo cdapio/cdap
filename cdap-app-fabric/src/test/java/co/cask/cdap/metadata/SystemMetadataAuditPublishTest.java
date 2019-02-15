@@ -24,11 +24,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.audit.AuditTestModule;
 import co.cask.cdap.data2.audit.InMemoryAuditPublisher;
-import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.audit.AuditMessage;
 import co.cask.cdap.proto.audit.AuditPayload;
@@ -67,7 +64,6 @@ public class SystemMetadataAuditPublishTest {
     Injector injector = AppFabricTestHelper.getInjector(cConf, new AbstractModule() {
       @Override
       protected void configure() {
-        bind(MetadataStore.class).to(DefaultMetadataStore.class);
         install(new AuditTestModule());
       }
     });

@@ -65,6 +65,8 @@ import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.tools.KeyStores;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
@@ -134,6 +136,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
         bind(FieldLineageWriter.class).to(MessagingLineageWriter.class);
         bind(UsageWriter.class).to(MessagingUsageWriter.class);
         // Overrides the metadata store to be no-op (programs never access it directly)
+        bind(MetadataStorage.class).to(NoopMetadataStorage.class);
         bind(MetadataStore.class).to(NoOpMetadataStore.class);
       }
     }));
