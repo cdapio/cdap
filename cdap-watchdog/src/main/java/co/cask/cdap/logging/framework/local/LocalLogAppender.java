@@ -29,11 +29,9 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
-import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -94,12 +92,9 @@ public class LocalLogAppender extends LogAppender {
 
     // Load and starts all configured log processing pipelines
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf);
-    Map<String, LogPipelineSpecification<AppenderContext>> specs = pipelineLoader.load(new Provider<AppenderContext>() {
-      @Override
-      public AppenderContext get() {
-        return new LocalAppenderContext(datasetFramework, txClient, locationFactory, metricsCollectionService);
-      }
-    });
+    Map<String, LogPipelineSpecification<AppenderContext>> specs =
+      pipelineLoader.load(() -> new LocalAppenderContext(datasetFramework, txClient, locationFactory,
+                                                         metricsCollectionService));
 
     // Use the event delay as the sync interval
     long syncIntervalMillis = cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
@@ -156,15 +151,6 @@ public class LocalLogAppender extends LogAppender {
     }
   }
 
-  public void appendEvent(ILoggingEvent event) {
-    event.prepareForDeferredProcessing();
-    event.getCallerData();
-
-    for (LocalLogProcessorPipeline pipeline : pipelines) {
-      pipeline.append(event);
-    }
-  }
-
   /**
    * The log processing pipeline for writing logs to configured logger context
    */
@@ -197,12 +183,7 @@ public class LocalLogAppender extends LogAppender {
     protected Executor executor() {
       // Copy from parent, but using a different thread name
       // Can't override the getServiceName() method as it is missing from some Guava version.
-      return new Executor() {
-        @Override
-        public void execute(Runnable command) {
-          new Thread(command, "LocalLogProcessor-" + getName()).start();
-        }
-      };
+      return command -> new Thread(command, "LocalLogProcessor-" + getName()).start();
     }
 
     @Override

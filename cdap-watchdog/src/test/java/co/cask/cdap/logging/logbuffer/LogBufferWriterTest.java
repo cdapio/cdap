@@ -88,7 +88,7 @@ public class LogBufferWriterTest {
       LogBufferEvent bufferEvent = writtenEvents.next();
       Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), "" + i++);
       // There will be one rotation per event.
-      Assert.assertEquals(bufferEvent.getOffset().getFileId(), i + ".buf");
+      Assert.assertEquals(bufferEvent.getOffset().getFileId() + ".buf", i + ".buf");
       Assert.assertEquals(bufferEvent.getOffset().getFilePos(), 0);
     }
   }

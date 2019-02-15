@@ -167,6 +167,8 @@ public class ConcurrentLogBufferWriter implements Closeable {
         // after log events have been sent to log buffer pipeline for processing, set the pending requests to complete
         completeAll(null);
       } catch (Throwable t) {
+        // This will only happen if logs were not written to log buffer(WAL), so the log buffer request must be
+        // retried. So complete all the requests with error.
         completeAll(t);
       }
     }
