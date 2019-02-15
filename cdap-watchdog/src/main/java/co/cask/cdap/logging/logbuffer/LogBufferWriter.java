@@ -88,7 +88,7 @@ public class LogBufferWriter implements Flushable, Closeable {
     while (events.hasNext()) {
       byte[] event = events.next();
       LogBufferFileOffset offset = write(event);
-      offsets.add(new LogBufferEvent(logEventSerializer.fromBytes(ByteBuffer.wrap(event)), offset));
+      offsets.add(new LogBufferEvent(logEventSerializer.fromBytes(ByteBuffer.wrap(event)), event.length, offset));
     }
     currOutputStream.flush();
     return offsets;
@@ -119,7 +119,7 @@ public class LogBufferWriter implements Flushable, Closeable {
       currOutputStream = new BufferedOutputStream(rotateFile(currOutputStream).getOutputStream());
     }
 
-    return new LogBufferFileOffset(getFileName(currFileId), startOffset);
+    return new LogBufferFileOffset(currFileId, startOffset);
   }
 
   @Override
