@@ -60,6 +60,13 @@ import javax.annotation.Nullable;
  */
 public class AppFabricServiceMain extends AbstractServiceMain {
 
+  /**
+   * Main entry point
+   */
+  public static void main(String[] args) throws Exception {
+    main(AppFabricServiceMain.class, args);
+  }
+
   @Override
   protected List<Module> getServiceModules() {
     return Arrays.asList(
