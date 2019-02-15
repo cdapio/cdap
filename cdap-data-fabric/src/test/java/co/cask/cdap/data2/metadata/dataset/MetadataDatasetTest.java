@@ -17,12 +17,16 @@ package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.indexer.InvertedValueIndexer;
@@ -40,6 +44,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
@@ -69,8 +75,9 @@ public class MetadataDatasetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
 
-  private static final DatasetId datasetInstance = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("meta");
-
+  private MetadataDatasetDefinition definition;
+  private DatasetSpecification spec;
+  private DatasetAdmin admin;
   private MetadataDataset dataset;
   private TransactionExecutor txnl;
 
@@ -89,19 +96,32 @@ public class MetadataDatasetTest {
   private final MetadataEntity jarEntity = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "ns1")
     .appendAsType("jar", "jar1").build();
 
+  @SuppressWarnings("unchecked")
   @Before
   public void before() throws Exception {
-    dataset = getDataset(datasetInstance);
+    DatasetContext datasetContext = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
+    if (admin == null) {
+      DatasetDefinition tableDefinition = dsFrameworkUtil.getInjector()
+        .getInstance(Key.get(DatasetDefinition.class, Names.named(Constants.Dataset.TABLE_TYPE)));
+      definition = new MetadataDatasetDefinition(
+        MetadataDataset.TYPE, new IndexedTableDefinition("indexedTable", tableDefinition));
+      String scope = MetadataScope.SYSTEM.name();
+      spec = definition.configure(
+        "testMetadata", DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope).build());
+      admin = definition.getAdmin(datasetContext, spec, null);
+    }
+    if (!admin.exists()) {
+      admin.create();
+    }
+    dataset = definition.getDataset(datasetContext, spec, Collections.emptyMap(), null);
     txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
   }
 
   @After
   public void after() throws Exception {
+    dataset.close();
     dataset = null;
-    DatasetAdmin admin = dsFrameworkUtil.getFramework().getAdmin(datasetInstance, null);
-    if (admin != null) {
-      admin.truncate();
-    }
+    admin.drop();
   }
 
   @Test
@@ -895,9 +915,6 @@ public class MetadataDatasetTest {
 
   @Test
   public void testHistory() throws Exception {
-    MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testHistory"));
-
     doTestHistory(dataset, program1, "f_");
     doTestHistory(dataset, app1, "a_");
     doTestHistory(dataset, dataset1, "d_");
@@ -906,9 +923,6 @@ public class MetadataDatasetTest {
 
   @Test
   public void testMultipleIndexes() throws Exception {
-    final MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testMultipleIndexes"), MetadataScope.SYSTEM);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
     final String value = "value";
     final String body = "body";
     final String schema = Schema.recordOf("schema", Schema.Field.of(body, Schema.of(Schema.Type.BYTES))).toString();
@@ -958,10 +972,6 @@ public class MetadataDatasetTest {
 
   @Test
   public void testCrossNamespaceDefaultSearch() throws Exception {
-    MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("crossNamespaceDefault"), MetadataScope.SYSTEM);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
-
     MetadataEntity ns1App = new NamespaceId("ns1").app("a").toMetadataEntity();
     MetadataEntity ns2App = new NamespaceId("ns2").app("a").toMetadataEntity();
     txnl.execute(() -> {
@@ -993,10 +1003,6 @@ public class MetadataDatasetTest {
 
   @Test
   public void testCrossNamespaceSearchPagination() throws Exception {
-    MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("crossNamespaceDefaultPag"), MetadataScope.SYSTEM);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
-
     ApplicationId ns1app1 = new NamespaceId("ns1").app("a1");
     ApplicationId ns1app2 = new NamespaceId("ns1").app("a2");
     ApplicationId ns1app3 = new NamespaceId("ns1").app("a3");
@@ -1058,10 +1064,6 @@ public class MetadataDatasetTest {
 
   @Test
   public void testCrossNamespaceCustomSearch() throws Exception {
-    MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("crossNamespaceCustom"), MetadataScope.SYSTEM);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
-
     String appName = "app";
     MetadataEntity ns1App = new NamespaceId("ns1").app(appName).toMetadataEntity();
     MetadataEntity ns2App = new NamespaceId("ns2").app(appName).toMetadataEntity();
@@ -1084,9 +1086,6 @@ public class MetadataDatasetTest {
 
   @Test
   public void testPagination() throws Exception {
-    MetadataDataset dataset =
-      getDataset(DatasetFrameworkTestUtil.NAMESPACE_ID.dataset("testPagination"), MetadataScope.SYSTEM);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) dataset);
     String flowName = "name11";
     String dsName = "name21 name22";
     String appName = "name31 name32 name33";
@@ -1446,18 +1445,5 @@ public class MetadataDatasetTest {
     SearchRequest request = new SearchRequest(new NamespaceId(namespaceId), searchQuery, types, SortInfo.DEFAULT,
                                               0, Integer.MAX_VALUE, 1, null, false, EnumSet.allOf(EntityScope.class));
     return dataset.search(request).getResults();
-  }
-
-  private static MetadataDataset getDataset(DatasetId instance) throws Exception {
-    return getDataset(instance, MetadataScope.USER);
-  }
-
-  private static MetadataDataset getDataset(DatasetId instance, MetadataScope scope) throws Exception {
-    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), instance,
-                                           MetadataDataset.class.getName(),
-                                           DatasetProperties.builder()
-                                             .add(MetadataDatasetDefinition.SCOPE_KEY, scope.name())
-                                             .build(),
-                                           null);
   }
 }

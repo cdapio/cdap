@@ -36,6 +36,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.data2.metadata.dataset.SearchResults;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
@@ -46,6 +47,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
@@ -98,7 +100,8 @@ public class SearchHelper {
                                                                                           tableDefinition));
     this.datasetSpecs = ImmutableMap.of(MetadataScope.SYSTEM.name(), createDatasetSpec(metaDatasetDefinition, SYSTEM),
                                         MetadataScope.USER.name(), createDatasetSpec(metaDatasetDefinition, USER));
-    this.transactional = createTransactional(txClient);
+    this.transactional = Transactions.createTransactionalWithRetry(
+      createTransactional(txClient), RetryStrategies.retryOnConflict(20, 100));
   }
 
   public void createDatasets() throws IOException {

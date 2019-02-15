@@ -638,8 +638,6 @@ public abstract class MetadataStorageTest {
     mds.apply(new Drop(entity));
   }
 
-  // TODO: add tests that search by specific fields: namespace, entity name, schema, creation time,
-
   @Test
   public void testSearchOnTypes() throws Exception {
     MetadataStorage mds = getMetadataStorage();
@@ -658,6 +656,9 @@ public abstract class MetadataStorageTest {
     // should return both fields
     assertResults(mds, SearchRequest.of("field:myFie*").build(), record1, record2);
     assertResults(mds, SearchRequest.of("field*").build(), record1, record2);
+
+    // searching an invalid type should return nothing
+    assertEmpty(mds, SearchRequest.of("x*").addType("invalid").build());
 
     // clean up
     mds.batch(batch(new Drop(myField1), new Drop(myField2)));

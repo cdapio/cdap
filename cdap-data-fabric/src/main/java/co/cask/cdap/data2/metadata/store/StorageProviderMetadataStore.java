@@ -70,6 +70,8 @@ import java.util.stream.Collectors;
  */
 public class StorageProviderMetadataStore implements MetadataStore {
 
+  private static final List<String> NO_CURSORS = Collections.emptyList();
+
   private final MetadataStorage storage;
   private AuditPublisher auditPublisher;
 
@@ -254,7 +256,7 @@ public class StorageProviderMetadataStore implements MetadataStore {
       // else search all namespaces
     }
     if (request.getTypes() != null && !request.getTypes().contains(EntityTypeSimpleName.ALL)) {
-      request.getTypes().forEach(type -> req.addType(type.name()));
+      request.getTypes().forEach(type -> req.addType(type.getSerializedForm()));
     }
     if (!request.getSortInfo().equals(SortInfo.DEFAULT)) {
       req.setSorting(new Sorting(request.getSortInfo().getSortBy(),
@@ -281,8 +283,8 @@ public class StorageProviderMetadataStore implements MetadataStore {
       })
       .collect(toLinkedSet());
     return new MetadataSearchResponse(sorting, request.getOffset(), request.getLimit(),
-                                      Math.abs(request.getNumCursors()), result.getTotalResults(), resultRecords,
-                                      result.getCursor() == null ? null : ImmutableList.of(result.getCursor()),
+                                      result.getCursor() == null ? 0 : 1, result.getTotalResults(), resultRecords,
+                                      result.getCursor() == null ? NO_CURSORS : ImmutableList.of(result.getCursor()),
                                       request.shouldShowHidden(), request.getEntityScopes());
   }
 
