@@ -37,6 +37,8 @@ import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import java.io.IOException;
+
 /**
  * Tests for the {@link MetadataStore} that delegates to the metadata storage provider.
  */
@@ -45,7 +47,7 @@ public class StorageProviderMetadataStoreTest extends AbstractMetadataStoreTest 
   private static TransactionManager txManager;
 
   @BeforeClass
-  public static void setupDefaultStore() {
+  public static void setupDefaultStore() throws IOException {
     injector = Guice.createInjector(
       new ConfigModule(),
       Modules.override(
@@ -74,8 +76,12 @@ public class StorageProviderMetadataStoreTest extends AbstractMetadataStoreTest 
   }
 
   @AfterClass
-  public static void teardown() {
-    txManager.stopAndWait();
+  public static void teardown() throws IOException {
+    try {
+      AbstractMetadataStoreTest.commonTearDown();
+    } finally {
+      txManager.stopAndWait();
+    }
   }
 }
 

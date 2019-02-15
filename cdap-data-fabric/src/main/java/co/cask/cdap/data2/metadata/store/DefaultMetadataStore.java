@@ -16,31 +16,29 @@
 
 package co.cask.cdap.data2.metadata.store;
 
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.audit.payload.builder.MetadataPayloadBuilder;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.dataset.MetadataDatasetDefinition;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.spi.metadata.dataset.SearchHelper;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
@@ -65,14 +63,25 @@ public class DefaultMetadataStore extends SearchHelper implements MetadataStore 
   private AuditPublisher auditPublisher;
 
   @Inject
-  DefaultMetadataStore(TransactionSystemClient txClient, DatasetFramework dsFramework) {
-    super(txClient, dsFramework);
+  DefaultMetadataStore(TransactionSystemClient txClient,
+                       @Named(Constants.Dataset.TABLE_TYPE) DatasetDefinition tableDefinition) {
+    super(txClient, tableDefinition);
   }
 
   @SuppressWarnings("unused")
   @Inject(optional = true)
   public void setAuditPublisher(AuditPublisher auditPublisher) {
     this.auditPublisher = auditPublisher;
+  }
+
+  @Override
+  public void createIndex() throws IOException {
+    createDatasets();
+  }
+
+  @Override
+  public void dropIndex() throws IOException {
+    dropDatasets();
   }
 
   @Override
@@ -401,21 +410,7 @@ public class DefaultMetadataStore extends SearchHelper implements MetadataStore 
   }
 
   private <T> T execute(TransactionExecutor.Function<MetadataDataset, T> func, MetadataScope scope) {
-    return Transactionals.execute(transactional, context -> {
-      MetadataDataset metadataDataset = getMetadataDataset(context, dsFramework, scope);
-      return func.apply(metadataDataset);
-    });
-  }
-
-  private static MetadataDataset getMetadataDataset(DatasetContext context, DatasetFramework dsFramework,
-                                                    MetadataScope scope) {
-    try {
-      return DatasetsUtil.getOrCreateDataset(context,
-        dsFramework, getMetadataDatasetInstance(scope), MetadataDataset.class.getName(),
-        DatasetProperties.builder().add(MetadataDatasetDefinition.SCOPE_KEY, scope.name()).build());
-    } catch (DatasetManagementException | IOException e) {
-      throw Throwables.propagate(e);
-    }
+    return execute(context -> func.apply(context.getDataset(scope)));
   }
 
   /**

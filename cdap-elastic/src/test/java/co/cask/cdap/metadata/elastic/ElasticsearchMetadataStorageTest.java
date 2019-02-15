@@ -50,7 +50,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
   }
 
   @BeforeClass
-  public static void createIndex() {
+  public static void createIndex() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_INDEX_NAME,
               "idx" + new Random(System.currentTimeMillis()).nextInt());
@@ -65,13 +65,14 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
       cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
     }
     elasticStore = new ElasticsearchMetadataStorage(cConf);
+    elasticStore.createIndex();
   }
 
   @AfterClass
   public static void dropIndex() throws IOException {
     if (elasticStore != null) {
       try {
-        elasticStore.deleteIndex();
+        elasticStore.dropIndex();
       } finally {
         elasticStore.close();
       }

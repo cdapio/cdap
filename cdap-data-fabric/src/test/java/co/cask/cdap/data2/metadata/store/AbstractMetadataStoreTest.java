@@ -47,6 +47,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -71,11 +72,16 @@ public abstract class AbstractMetadataStoreTest {
    * Subclasses must call this after creating the injector and the store.
    * The injector must bind the MetadataStore and InMemoryAuditPublisher.
    */
-  static void commonSetup() {
+  static void commonSetup() throws IOException {
     // injector and store must be set up by subclasses.
     cConf = injector.getInstance(CConfiguration.class);
     store = injector.getInstance(MetadataStore.class);
     auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
+    store.createIndex();
+  }
+
+  static void commonTearDown() throws IOException {
+    store.dropIndex();
   }
 
   @Before

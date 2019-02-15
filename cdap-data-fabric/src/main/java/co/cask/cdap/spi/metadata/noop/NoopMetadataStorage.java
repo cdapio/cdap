@@ -24,6 +24,7 @@ import co.cask.cdap.spi.metadata.Read;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +33,16 @@ import java.util.stream.Collectors;
  * Metadata storage provider that does nothing.
  */
 public class NoopMetadataStorage implements MetadataStorage {
+
+  @Override
+  public void createIndex() throws IOException {
+    // no-op
+  }
+
+  @Override
+  public void dropIndex() throws IOException {
+    // no-op
+  }
 
   @Override
   public MetadataChange apply(MetadataMutation mutation) {

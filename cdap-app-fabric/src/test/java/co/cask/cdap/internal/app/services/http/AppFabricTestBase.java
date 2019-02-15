@@ -49,6 +49,7 @@ import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -237,6 +238,8 @@ public abstract class AppFabricTestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     structuredTableRegistry);
+    injector.getInstance(MetadataStore.class).createIndex();
+
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);

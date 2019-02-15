@@ -44,6 +44,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -229,6 +230,7 @@ public class StandaloneMain {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
+    injector.getInstance(MetadataStore.class).createIndex();
 
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();

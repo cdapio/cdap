@@ -43,6 +43,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -138,7 +139,6 @@ public class AppFabricTestHelper {
       }
 
       injector.getInstance(TransactionManager.class).startAndWait();
-
       // Register the tables before services will need to use them
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
       StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
@@ -151,6 +151,11 @@ public class AppFabricTestHelper {
         StoreDefinition.createAllTables(tableAdmin, structuredTableRegistry);
       } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
+      }
+      try {
+        injector.getInstance(MetadataStore.class).createIndex();
+      } catch (IOException e) {
+        throw new RuntimeException("Unable to create the metadata tables.", e);
       }
       injector.getInstance(DatasetOpExecutor.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
