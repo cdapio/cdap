@@ -837,8 +837,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       field = split[0].trim();
       term = split[1].trim();
     }
+    QueryBuilder plainQuery = createTermQuery(textField, term);
     if (field == null) {
-      return createTermQuery(textField, term);
+      return plainQuery;
     }
     if (MetadataConstants.TTL_KEY.equals(field)
       && (request.getScope() == null || MetadataScope.SYSTEM == request.getScope())) {
@@ -858,7 +859,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       boolQuery.must(new TermQueryBuilder(NESTED_SCOPE_FIELD, request.getScope().name()).boost(0.0F));
     }
     boolQuery.must(createTermQuery(NESTED_VALUE_FIELD, term));
-    return QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
+    QueryBuilder propertyQuery = QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
+
+    // match either a plain term of the form "field:term" or the word "term" in property "field"
+    return new BoolQueryBuilder().should(plainQuery).should(propertyQuery);
   }
 
   /**

@@ -16,11 +16,14 @@
 
 package co.cask.cdap.metadata.elastic;
 
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.data.schema.SchemaWalker;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.spi.metadata.ScopedName;
+import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,6 +179,7 @@ public class MetadataDocument {
    */
   public static class Builder {
 
+    private static final ScopedName SCHEMA_KEY = new ScopedName(MetadataScope.SYSTEM, MetadataConstants.SCHEMA_KEY);
     private static final ScopedName TTL_KEY = new ScopedName(MetadataScope.SYSTEM, MetadataConstants.TTL_KEY);
     private static final ScopedName CREATION_TIME_KEY = new ScopedName(MetadataScope.SYSTEM,
                                                                        MetadataConstants.CREATION_TIME_KEY);
@@ -220,12 +224,34 @@ public class MetadataDocument {
     private void addProperty(ScopedName key, String value) {
       String name = key.getName().toLowerCase();
       value = value.toLowerCase();
+      if (SCHEMA_KEY.equals(key)) {
+        value = parseSchema(entity, value);
+      }
       MetadataScope scope = key.getScope();
       append(scope, value);
       properties.add(new Property(scope.name(), name, value));
       (MetadataScope.USER == key.getScope() ? userPropertyNames : systemPropertyNames).add(name);
       checkForBuiltInLong(CREATION_TIME_KEY, key, value).ifPresent(x -> created = x);
       checkForBuiltInLong(TTL_KEY, key, value).ifPresent(x -> ttl = x);
+    }
+
+    @VisibleForTesting
+    static String parseSchema(MetadataEntity entity, String schemaStr) {
+      try {
+        Schema schema = Schema.parseJson(schemaStr);
+        StringBuilder builder = new StringBuilder();
+        SchemaWalker.walk(schema, (field, subSchema) -> {
+          if (field != null) {
+            String type = (subSchema.isNullable() ? subSchema.getNonNullable() : subSchema).getType().toString();
+            builder.append(field).append(' ')
+              .append(field).append(MetadataConstants.KEYVALUE_SEPARATOR).append(type).append(' ');
+          }
+        });
+        return builder.toString();
+      } catch (Exception e) {
+        LOG.warn("Unable to parse schema '{}' for entity {}. Indexing as plain text.", schemaStr, entity);
+        return schemaStr;
+      }
     }
 
     Optional<Long> checkForBuiltInLong(ScopedName builtIn, ScopedName key, String value) {
