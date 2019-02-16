@@ -47,6 +47,10 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
@@ -507,6 +511,13 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         addOnPremiseServices(injector, programOptions, metricsCollectionService, services);
         break;
       case ISOLATED:
+        try {
+          // Define all StructuredTable before starting any services that need StructuredTable
+          StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                  injector.getInstance(StructuredTableRegistry.class));
+        } catch (IOException | TableAlreadyExistsException e) {
+          throw new RuntimeException("Unable to create the system tables.", e);
+        }
         addIsolatedServices(injector, services);
         break;
       default:
