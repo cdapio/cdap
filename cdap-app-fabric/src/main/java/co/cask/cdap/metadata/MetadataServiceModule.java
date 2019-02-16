@@ -18,8 +18,6 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import co.cask.http.HttpHandler;
 import com.google.inject.Key;
 import com.google.inject.PrivateModule;

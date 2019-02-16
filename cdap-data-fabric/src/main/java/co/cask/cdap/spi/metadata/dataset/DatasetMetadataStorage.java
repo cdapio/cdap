@@ -380,10 +380,10 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     int offsetToRespond = cursorOffsetAndLimits.getOffsetToRespond();
     List<MetadataRecord> results =
       response.getResults().stream().limit(limitToRespond).map(record -> {
-        Metadata metadata = null;
+        Metadata metadata = Metadata.EMPTY;
         for (Map.Entry<MetadataScope, co.cask.cdap.api.metadata.Metadata> entry : record.getMetadata().entrySet()) {
           Metadata toAdd = new Metadata(entry.getKey(), entry.getValue().getTags(), entry.getValue().getProperties());
-          metadata = metadata == null ? toAdd : mergeDisjointMetadata(metadata, toAdd);
+          metadata = mergeDisjointMetadata(metadata, toAdd);
         }
         return new MetadataRecord(record.getMetadataEntity(), metadata);
       }).collect(Collectors.toList());
