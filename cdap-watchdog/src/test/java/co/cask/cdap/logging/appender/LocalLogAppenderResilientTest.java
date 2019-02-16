@@ -56,9 +56,6 @@ import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
@@ -136,9 +133,6 @@ public class LocalLogAppenderResilientTest {
 
     TransactionManager txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
 
     DatasetOpExecutorService opExecutorService = injector.getInstance(DatasetOpExecutorService.class);
     opExecutorService.startAndWait();

@@ -139,6 +139,15 @@ public class AppFabricTestHelper {
       }
 
       injector.getInstance(TransactionManager.class).startAndWait();
+      try {
+        // Define all StructuredTable before starting any services that need StructuredTable
+        StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
+                                        injector.getInstance(StructuredTableRegistry.class));
+      } catch (IOException | TableAlreadyExistsException e) {
+        throw new RuntimeException("Unable to create the system tables.", e);
+      }
+      injector.getInstance(DatasetOpExecutor.class).startAndWait();
+      injector.getInstance(DatasetService.class).startAndWait();
       // Register the tables before services will need to use them
       StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
       StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
@@ -157,8 +166,6 @@ public class AppFabricTestHelper {
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
-      injector.getInstance(DatasetOpExecutor.class).startAndWait();
-      injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
       injector.getInstance(MetadataSubscriberService.class).startAndWait();
       injector.getInstance(ProgramNotificationSubscriberService.class).startAndWait();

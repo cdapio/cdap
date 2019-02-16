@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,8 +34,9 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
-import co.cask.cdap.data.runtime.StorageModule;
+import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -49,6 +50,7 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -67,10 +69,6 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.store.StoreDefinition;
 import co.cask.common.ContentProvider;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -132,7 +130,6 @@ public abstract class DatasetServiceTestBase {
   protected static DatasetInstanceService instanceService;
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static Injector injector;
-  protected static TransactionRunner transactionRunner;
 
   private static DiscoveryServiceClient discoveryServiceClient;
   private static DatasetOpExecutorService opExecutorService;
@@ -163,7 +160,6 @@ public abstract class DatasetServiceTestBase {
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionInMemoryModule(),
       new AuthorizationTestModule(),
-      new StorageModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
       new AbstractModule() {
@@ -183,17 +179,12 @@ public abstract class DatasetServiceTestBase {
 
     AuthenticationContext authenticationContext = injector.getInstance(AuthenticationContext.class);
 
-    transactionRunner = injector.getInstance(TransactionRunner.class);
-
     DiscoveryService discoveryService = injector.getInstance(DiscoveryService.class);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     dsFramework = injector.getInstance(RemoteDatasetFramework.class);
     // Tx Manager to support working with datasets
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry);
     TransactionSystemClient txSystemClient = injector.getInstance(TransactionSystemClient.class);
     TransactionSystemClientService txSystemClientService =
       new DelegatingTransactionSystemClientService(txSystemClient);
@@ -219,6 +210,7 @@ public abstract class DatasetServiceTestBase {
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
       .putAll(defaultModules)
+      .putAll(DatasetMetaTableUtil.getModules())
       .build();
 
     registryFactory = injector.getInstance(DatasetDefinitionRegistryFactory.class);
@@ -230,14 +222,16 @@ public abstract class DatasetServiceTestBase {
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     ownerAdmin = injector.getInstance(OwnerAdmin.class);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
-    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, impersonator, transactionRunner);
+    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txSystemClient);
+    DatasetTypeManager typeManager = new DatasetTypeManager(cConf, locationFactory, txSystemClientService,
+                                                            txExecutorFactory, inMemoryDatasetFramework, impersonator);
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
-      new DatasetInstanceManager(transactionRunner);
+      new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
 
     DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(
       typeManager, namespaceAdmin, namespacePathLocator,
-      cConf, impersonator, txSystemClientService, transactionRunner, defaultModules);
+      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, defaultModules);
     DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
                                                                          authenticationContext);
 

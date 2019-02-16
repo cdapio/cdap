@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,9 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.module.DatasetType;
 import co.cask.cdap.common.ConflictException;
@@ -31,30 +34,35 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeTable;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetModuleConflictException;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
-import co.cask.cdap.store.StoreDefinition;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -80,11 +88,12 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   private final DatasetTypeManager typeManager;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacePathLocator namespacePathLocator;
-  private final TransactionRunner transactionRunner;
 
   private final CConfiguration cConf;
   private final Impersonator impersonator;
   private final TransactionSystemClientService txClientService;
+  private final DatasetFramework datasetFramework;
+  private final DynamicDatasetCache datasetCache;
   private final Map<String, DatasetModule> defaultModules;
   private final Map<String, DatasetModule> extensionModules;
 
@@ -94,7 +103,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
                                    NamespacePathLocator namespacePathLocator,
                                    CConfiguration cConf, Impersonator impersonator,
                                    TransactionSystemClientService txClientService,
-                                   TransactionRunner transactionRunner,
+                                   @Named("datasetMDS") DatasetFramework datasetFramework,
                                    @Constants.Dataset.Manager.DefaultDatasetModules
                                        Map<String, DatasetModule> modules) {
     this.typeManager = typeManager;
@@ -103,14 +112,27 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     this.cConf = cConf;
     this.impersonator = impersonator;
     this.txClientService = txClientService;
+    this.datasetFramework = datasetFramework;
+    Map<String, String> emptyArgs = Collections.emptyMap();
+    this.datasetCache = new MultiThreadDatasetCache(
+      new SystemDatasetInstantiator(datasetFramework), txClientService, NamespaceId.SYSTEM, emptyArgs, null,
+      ImmutableMap.of(
+        DatasetMetaTableUtil.META_TABLE_NAME, emptyArgs,
+        DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
+      ));
     this.defaultModules = new LinkedHashMap<>(modules);
     this.extensionModules = getExtensionModules(cConf);
-    this.transactionRunner = transactionRunner;
   }
 
   @Override
   protected void startUp() throws Exception {
     txClientService.startAndWait();
+
+    // Bootstrap the meta and instance tables. Make sure the underlying table exists.
+    DatasetsUtil.createIfNotExists(datasetFramework, DatasetMetaTableUtil.META_TABLE_INSTANCE_ID,
+                                   DatasetTypeMDS.class.getName(), DatasetProperties.EMPTY);
+    DatasetsUtil.createIfNotExists(datasetFramework, DatasetMetaTableUtil.INSTANCE_TABLE_INSTANCE_ID,
+                                   DatasetInstanceMDS.class.getName(), DatasetProperties.EMPTY);
     deleteSystemModules();
     deployDefaultModules();
     if (!extensionModules.isEmpty()) {
@@ -351,15 +373,18 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
     };
   }
 
-  private void deleteSystemModules() {
-    TransactionRunners.run(transactionRunner, context -> {
-      DatasetTypeTable datasetTypeTable = DatasetTypeTable.create(context);
-        Collection<DatasetModuleMeta> allDatasets = datasetTypeTable.getModules(NamespaceId.SYSTEM);
-      for (DatasetModuleMeta ds : allDatasets) {
-        if (ds.getJarLocationPath() == null) {
-          LOG.debug("Deleting system dataset module: {}", ds.toString());
-          DatasetModuleId moduleId = NamespaceId.SYSTEM.datasetModule(ds.getName());
-          datasetTypeTable.deleteModule(moduleId);
+  private void deleteSystemModules() throws Exception {
+    Transactions.createTransactional(datasetCache).execute(60, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
+        Collection<DatasetModuleMeta> allDatasets = datasetTypeMDS.getModules(NamespaceId.SYSTEM);
+        for (DatasetModuleMeta ds : allDatasets) {
+          if (ds.getJarLocationPath() == null) {
+            LOG.debug("Deleting system dataset module: {}", ds.toString());
+            DatasetModuleId moduleId = NamespaceId.SYSTEM.datasetModule(ds.getName());
+            datasetTypeMDS.deleteModule(moduleId);
+          }
         }
       }
     });

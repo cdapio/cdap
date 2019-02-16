@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -257,12 +257,12 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   @Override
   protected void startUp() throws Exception {
-    // TODO: CDAP-14838 Ensure preivew has it's own copy of the schema mapping.
-    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, true);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
     datasetService.startAndWait();
+    // TODO: CDAP-14838 Ensure preivew has it's own copy of the schema mapping.
+    StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, true);
 
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.

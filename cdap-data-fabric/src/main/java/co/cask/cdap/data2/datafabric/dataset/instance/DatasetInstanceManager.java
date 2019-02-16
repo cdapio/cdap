@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,14 +17,23 @@
 package co.cask.cdap.data2.datafabric.dataset.instance;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceTable;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -33,11 +42,22 @@ import javax.annotation.Nullable;
  */
 public class DatasetInstanceManager {
 
-  private final TransactionRunner transactionRunner;
+  private final TransactionExecutorFactory txExecutorFactory;
+  private final DynamicDatasetCache datasetCache;
 
   @Inject
-  public DatasetInstanceManager(TransactionRunner transactionRunner) {
-    this.transactionRunner = transactionRunner;
+  public DatasetInstanceManager(TransactionSystemClientService txClientService,
+                                TransactionExecutorFactory txExecutorFactory,
+                                @Named("datasetMDS") DatasetFramework datasetFramework) {
+    this.txExecutorFactory = txExecutorFactory;
+
+    Map<String, String> emptyArgs = Collections.emptyMap();
+    this.datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+                                                    new TransactionSystemClientAdapter(txClientService),
+                                                    NamespaceId.SYSTEM, emptyArgs, null,
+                                                    ImmutableMap.of(
+                                                      DatasetMetaTableUtil.INSTANCE_TABLE_NAME, emptyArgs
+                                                    ));
   }
 
   /**
@@ -46,9 +66,8 @@ public class DatasetInstanceManager {
    * @param spec {@link DatasetSpecification} of the dataset instance to be added
    */
   public void add(final NamespaceId namespaceId, final DatasetSpecification spec) {
-    TransactionRunners.run(transactionRunner, context -> {
-      new DatasetInstanceTable(context).write(namespaceId, spec);
-    });
+    final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.write(namespaceId, spec));
   }
 
   /**
@@ -57,9 +76,8 @@ public class DatasetInstanceManager {
    */
   @Nullable
   public DatasetSpecification get(final DatasetId datasetInstanceId) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return new DatasetInstanceTable(context).get(datasetInstanceId);
-    });
+    final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.get(datasetInstanceId));
   }
 
   /**
@@ -67,9 +85,8 @@ public class DatasetInstanceManager {
    * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace
    */
   public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return new DatasetInstanceTable(context).getAll(namespaceId);
-    });
+    final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.getAll(namespaceId));
   }
 
   /**
@@ -79,9 +96,9 @@ public class DatasetInstanceManager {
    * are having the specified properties
    */
   public Collection<DatasetSpecification> get(final NamespaceId namespaceId, final Map<String, String> properties) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return new DatasetInstanceTable(context).get(namespaceId, properties);
-    });
+    final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    return txExecutorFactory.createExecutor(datasetCache)
+      .executeUnchecked(() -> instanceMDS.get(namespaceId, properties));
   }
 
   /**
@@ -90,8 +107,7 @@ public class DatasetInstanceManager {
    * @return true if deletion succeeded, false otherwise
    */
   public boolean delete(final DatasetId datasetInstanceId) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return new DatasetInstanceTable(context).delete(datasetInstanceId);
-    });
+    final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    return txExecutorFactory.createExecutor(datasetCache).executeUnchecked(() -> instanceMDS.delete(datasetInstanceId));
   }
 }

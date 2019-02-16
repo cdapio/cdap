@@ -96,9 +96,6 @@ public class ExploreDisabledTest {
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
 
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
     dsOpExecutor = injector.getInstance(DatasetOpExecutor.class);
     dsOpExecutor.startAndWait();
 

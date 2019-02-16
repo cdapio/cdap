@@ -160,9 +160,6 @@ public class BaseHiveExploreServiceTest {
     transactionManager.startAndWait();
     transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
 
-    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    structuredTableRegistry.initialize();
-    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
     dsOpService.startAndWait();
 
