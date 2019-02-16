@@ -33,6 +33,7 @@ import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
@@ -217,6 +218,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());
     modules.add(new DataSetServiceModules().getStandaloneModules());
+    modules.add(new StorageModule());
     modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
       @Override
       protected void configure() {
