@@ -82,6 +82,7 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(LineageStore.PROGRAM_LINEAGE_TABLE) == null) {
       LineageStore.createTable(tableAdmin);
     }
+
     if (overWrite || tableAdmin.getSpecification(JobQueueStore.JOB_QUEUE_TABLE) == null) {
       JobQueueStore.createTables(tableAdmin);
     }
@@ -93,6 +94,9 @@ public final class StoreDefinition {
     }
     if (overWrite || tableAdmin.getSpecification(ProgramHeartbeatStore.PROGRAM_HEARTBEATS) == null) {
       ProgramHeartbeatStore.createTables(tableAdmin);
+    }
+    if (overWrite || tableAdmin.getSpecification(LogCheckpointStore.LOG_CHECKPOINT_TABLE) == null) {
+      LogCheckpointStore.createTable(tableAdmin);
     }
   }
 
@@ -635,7 +639,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Schema for {@link LineageTable}.
+   * Schema for lineage table.
    */
   public static final class LineageStore {
     public static final StructuredTableId DATASET_LINEAGE_TABLE = new StructuredTableId("dataset_lineage");
@@ -819,6 +823,29 @@ public final class StoreDefinition {
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(PROGRAM_HEARTBEATS_SPEC);
+    }
+  }
+
+  /**
+   * Schema for log checkpoint store.
+   */
+  public static final class LogCheckpointStore {
+    public static final StructuredTableId LOG_CHECKPOINT_TABLE = new StructuredTableId("log_checkpoints");
+    public static final String ROW_PREFIX_FIELD = "prefix";
+    public static final String PARTITION_FIELD = "partition";
+    public static final String CHECKPOINT_FIELD = "checkpoint";
+
+    public static final StructuredTableSpecification LOG_CHECKPOINT_TABLE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(LOG_CHECKPOINT_TABLE)
+        .withFields(Fields.stringType(ROW_PREFIX_FIELD),
+                    Fields.intType(PARTITION_FIELD),
+                    Fields.bytesType(CHECKPOINT_FIELD))
+        .withPrimaryKeys(ROW_PREFIX_FIELD, PARTITION_FIELD)
+        .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(LOG_CHECKPOINT_TABLE_SPEC);
     }
   }
 }

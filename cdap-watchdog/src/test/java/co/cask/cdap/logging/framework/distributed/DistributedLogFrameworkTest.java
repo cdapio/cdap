@@ -19,7 +19,6 @@ package co.cask.cdap.logging.framework.distributed;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -45,8 +44,9 @@ import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.guice.DistributedLogFrameworkModule;
 import co.cask.cdap.logging.meta.Checkpoint;
-import co.cask.cdap.logging.meta.CheckpointManagerFactory;
+import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
+import co.cask.cdap.logging.meta.KafkaCheckpointManager;
 import co.cask.cdap.logging.meta.KafkaOffset;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
@@ -59,11 +59,14 @@ import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.kafka.client.BrokerService;
@@ -83,7 +86,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -97,7 +99,7 @@ public class DistributedLogFrameworkTest {
   @ClassRule
   public static final KafkaTester KAFKA_TESTER = new KafkaTester(
     Collections.singletonMap(Constants.Logging.NUM_PARTITIONS, "1"),
-    Collections.<Module>emptyList(), 1
+    Collections.emptyList(), 1
   );
 
   private Injector injector;
@@ -116,6 +118,9 @@ public class DistributedLogFrameworkTest {
     injector.getInstance(KafkaClientService.class).startAndWait();
     injector.getInstance(BrokerService.class).startAndWait();
     injector.getInstance(TransactionManager.class).startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
   }
 
   @After
@@ -154,45 +159,48 @@ public class DistributedLogFrameworkTest {
 
     // Read the logs back. They should be sorted by timestamp order.
     final FileMetaDataReader metaDataReader = injector.getInstance(FileMetaDataReader.class);
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        List<LogLocation> locations = metaDataReader.listFiles(new LogPathIdentifier(NamespaceId.SYSTEM.getNamespace(),
-                                                                                      Constants.Logging.COMPONENT_NAME,
-                                                                                     "test"), 0, Long.MAX_VALUE);
-        if (locations.size() != 1) {
-          return false;
-        }
-        LogLocation location = locations.get(0);
-        int i = 0;
-        try {
-          try (CloseableIterator<LogEvent> iter = location.readLog(Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, msgCount)) {
-            while (iter.hasNext()) {
-              String expectedMsg = "Testing " + (msgCount - i - 1);
-              LogEvent event = iter.next();
-              if (!expectedMsg.equals(event.getLoggingEvent().getMessage())) {
-                return false;
-              }
-              i++;
+    Tasks.waitFor(true, () -> {
+      List<LogLocation> locations = metaDataReader.listFiles(new LogPathIdentifier(NamespaceId.SYSTEM.getNamespace(),
+                                                                                    Constants.Logging.COMPONENT_NAME,
+                                                                                   "test"), 0, Long.MAX_VALUE);
+      if (locations.size() != 1) {
+        return false;
+      }
+      LogLocation location = locations.get(0);
+      int i = 0;
+      try {
+        try (CloseableIterator<LogEvent> iter = location.readLog(Filter.EMPTY_FILTER, 0, Long.MAX_VALUE, msgCount)) {
+          while (iter.hasNext()) {
+            String expectedMsg = "Testing " + (msgCount - i - 1);
+            LogEvent event = iter.next();
+            if (!expectedMsg.equals(event.getLoggingEvent().getMessage())) {
+              return false;
             }
-            return i == msgCount;
+            i++;
           }
-        } catch (Exception e) {
-          // It's possible the file is an invalid Avro file due to a race between creation of the meta data
-          // and the time when actual content are flushed to the file
-          return false;
+          return i == msgCount;
         }
+      } catch (Exception e) {
+        // It's possible the file is an invalid Avro file due to a race between creation of the meta data
+        // and the time when actual content are flushed to the file
+        return false;
       }
     }, 10, TimeUnit.SECONDS, msgCount, TimeUnit.MILLISECONDS);
 
     framework.stopAndWait();
 
+    String kafkaTopic = cConf.get(Constants.Logging.KAFKA_TOPIC);
     // Check the checkpoint is persisted correctly. Since all messages are processed,
     // the checkpoint should be the same as the message count.
-    Checkpoint<KafkaOffset> checkpoint = injector.getInstance(CheckpointManagerFactory.class)
-      .create(cConf.get(Constants.Logging.KAFKA_TOPIC), Bytes.toBytes(100))
-      .getCheckpoint(0);
+    CheckpointManager<KafkaOffset> checkpointManager = getCheckpointManager(kafkaTopic);
+    Checkpoint<KafkaOffset> checkpoint = checkpointManager.getCheckpoint(0);
     Assert.assertEquals(msgCount, checkpoint.getOffset().getNextOffset());
+  }
+
+  private CheckpointManager<KafkaOffset> getCheckpointManager(String kafkaTopic) {
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    return new KafkaCheckpointManager(transactionRunner,
+                                      Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + kafkaTopic);
   }
 
   private Injector createInjector() throws IOException {

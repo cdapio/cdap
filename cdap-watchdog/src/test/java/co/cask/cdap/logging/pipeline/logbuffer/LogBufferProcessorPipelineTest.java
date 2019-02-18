@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,7 @@ public class LogBufferProcessorPipelineTest {
     loggerContext.start();
     LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
-      config, checkpointManager);
+      config, checkpointManager, 0);
     // start the pipeline
     pipeline.startAndWait();
 
@@ -114,17 +115,18 @@ public class LogBufferProcessorPipelineTest {
    */
   private static final class MockCheckpointManager implements CheckpointManager<LogBufferFileOffset> {
     @Override
-    public void saveCheckpoints(Map<Integer, ? extends Checkpoint<LogBufferFileOffset>> checkpoints) throws Exception {
+    public void saveCheckpoints(Map<Integer, ? extends Checkpoint<LogBufferFileOffset>> checkpoints)
+      throws IOException {
 
     }
 
     @Override
-    public Map<Integer, Checkpoint<LogBufferFileOffset>> getCheckpoint(Set<Integer> partitions) throws Exception {
+    public Map<Integer, Checkpoint<LogBufferFileOffset>> getCheckpoint(Set<Integer> partitions) throws IOException {
       return Collections.emptyMap();
     }
 
     @Override
-    public Checkpoint<LogBufferFileOffset> getCheckpoint(int partition) throws Exception {
+    public Checkpoint<LogBufferFileOffset> getCheckpoint(int partition) throws IOException {
       return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
     }
   }
