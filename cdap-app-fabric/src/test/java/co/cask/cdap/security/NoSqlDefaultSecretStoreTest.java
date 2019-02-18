@@ -26,7 +26,7 @@ import org.junit.BeforeClass;
 /**
  * Tests for {@link DefaultSecretStore} with NoSql storage implementation.
  */
-public class NoSqlDefaultSecureStoreTest extends DefaultSecretStoreTest {
+public class NoSqlDefaultSecretStoreTest extends DefaultSecretStoreTest {
   @BeforeClass
   public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector(CConfiguration.create());

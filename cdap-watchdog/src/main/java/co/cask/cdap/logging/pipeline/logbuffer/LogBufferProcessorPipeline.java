@@ -28,15 +28,16 @@ import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.queue.ProcessedEventMetadata;
 import co.cask.cdap.logging.pipeline.queue.ProcessorEvent;
 import co.cask.cdap.logging.pipeline.queue.TimeEventQueueProcessor;
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +54,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   private static final int INCOMING_EVENT_QUEUE_SIZE = 10000;
 
   private final String name;
+  private final int instanceId;
   private final LogBufferPipelineConfig config;
   private final LogProcessorPipelineContext context;
   private final CheckpointManager<LogBufferFileOffset> checkpointManager;
@@ -67,14 +69,15 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   private int unSyncedEvents;
 
   public LogBufferProcessorPipeline(LogProcessorPipelineContext context, LogBufferPipelineConfig config,
-                                    CheckpointManager<LogBufferFileOffset> checkpointManager) {
+                                    CheckpointManager<LogBufferFileOffset> checkpointManager, int instanceId) {
     this.name = context.getName();
+    this.instanceId = instanceId;
     this.config = config;
     this.context = context;
     this.checkpointManager = checkpointManager;
     this.metricsContext = context;
     this.eventQueueProcessor = new TimeEventQueueProcessor<>(context, config.getMaxBufferSize(),
-                                                             config.getEventDelayMillis(), ImmutableSet.of(0));
+                                                             config.getEventDelayMillis(), ImmutableSet.of(instanceId));
     this.incomingEventQueue = new ArrayBlockingQueue<>(INCOMING_EVENT_QUEUE_SIZE);
     this.checkpoints = new HashMap<>();
   }
@@ -82,7 +85,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   @Override
   protected void startUp() throws Exception {
     LOG.debug("Starting log processor pipeline for {} with configurations {}", name, config);
-    Checkpoint<LogBufferFileOffset> checkpoint = checkpointManager.getCheckpoint(0);
+    Checkpoint<LogBufferFileOffset> checkpoint = checkpointManager.getCheckpoint(instanceId);
 
     checkpoints.put(0, new MutableLogBufferCheckpoint(checkpoint.getOffset().getFileId(),
                                                       checkpoint.getOffset().getFilePos(),
@@ -161,8 +164,8 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
     unSyncedEvents += metadata.getTotalEventsProcessed();
     // events were processed, so update the checkpoints
-    Checkpoint<LogBufferFileOffset> checkpoint = metadata.getCheckpoints().get(0);
-    MutableLogBufferCheckpoint mutableCheckpoint = checkpoints.get(0);
+    Checkpoint<LogBufferFileOffset> checkpoint = metadata.getCheckpoints().get(instanceId);
+    MutableLogBufferCheckpoint mutableCheckpoint = checkpoints.get(instanceId);
     MutableLogBufferFileOffset offset = mutableCheckpoint.getOffset();
     offset.setFileId(checkpoint.getOffset().getFileId());
     offset.setFilePos(checkpoint.getOffset().getFilePos());
@@ -200,8 +203,10 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
     try {
       checkpointManager.saveCheckpoints(checkpoints);
       LOG.debug("Checkpoint persisted for {} with {}", name, checkpoints);
-    } catch (Exception e) {
-      // Just log as it is non-fatal if failed to save checkpoints
+    } catch (IOException e) {
+      // Just log as it is non-fatal if failed to save checkpoints. If the pipeline stops and checkpoints are not
+      // persisted, there will be duplicate logs. Its ok to have duplicate logs in this error scenario. However, log
+      // events must never be lost.
       OUTAGE_LOG.warn("Failed to persist checkpoint for pipeline {}.", name, e);
     }
   }
@@ -313,49 +318,30 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   /**
    * Iterator to transform LogBufferEvent to ProcessorEvent.
    */
-  private final class LogFileOffsetTransformIterator extends AbstractIterator<ProcessorEvent<LogBufferFileOffset>> {
-    private BlockingQueue<LogBufferEvent> queue;
-    private LogBufferEvent prevLogEvent;
-    int count = 0;
+  private final class LogFileOffsetTransformIterator implements Iterator<ProcessorEvent<LogBufferFileOffset>> {
+    private final BlockingQueue<LogBufferEvent> queue;
+    private int count = 0;
 
     LogFileOffsetTransformIterator(BlockingQueue<LogBufferEvent> queue) {
       this.queue = queue;
     }
 
     @Override
-    protected ProcessorEvent<LogBufferFileOffset> computeNext() {
-      // limit total number of events removed from incomingEventQueue to avoid infinite reading
-      if (count >= config.getBatchSize()) {
-        // if previous event was already processed, that should be removed.
-        removeProcessedEvent();
-        return endOfData();
-      }
-
-      if (queue.peek() == null) {
-        return endOfData();
-      }
-
-      // Remove already processed event from the queue
-      removeProcessedEvent();
-
-      // peek the queue to see if there are any events to be processed at the moment.
-      // If there are any, prevLogEvent will be non-null. So send that event for further processing. We do not remove
-      // the event because if this event is not processed, we want to retry with the same event.
-      // If there are no events in the event queue at the moment, prevLogEvent will be null. So just return endOfData
-      prevLogEvent = queue.peek();
-      if (prevLogEvent != null) {
-        count++;
-        return new ProcessorEvent<>(prevLogEvent.getLogEvent(), prevLogEvent.getEventSize(), prevLogEvent.getOffset());
-      }
-
-      return endOfData();
+    public boolean hasNext() {
+      // if the count has reached batch size or if there are not more elements in the queue at this moment, that
+      // means no more events should be processed. So return false
+      return count < config.getBatchSize() && queue.peek() != null;
     }
 
-    private void removeProcessedEvent() {
-      if (prevLogEvent != null) {
-        queue.poll();
-        prevLogEvent = null;
+    @Override
+    public ProcessorEvent<LogBufferFileOffset> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
       }
+
+      LogBufferEvent nextEvent = queue.poll();
+      count++;
+      return new ProcessorEvent<>(nextEvent.getLogEvent(), nextEvent.getEventSize(), nextEvent.getOffset());
     }
   }
 }

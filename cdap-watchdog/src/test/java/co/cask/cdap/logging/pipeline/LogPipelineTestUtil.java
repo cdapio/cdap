@@ -73,8 +73,8 @@ public final class LogPipelineTestUtil {
    * Creates logger context.
    */
   public static LoggerContext createLoggerContext(String rootLevel,
-                                            Map<String, String> loggerLevels,
-                                            String appenderClassName) throws Exception {
+                                                  Map<String, String> loggerLevels,
+                                                  String appenderClassName) throws Exception {
     Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
     Element configuration = doc.createElement("configuration");
     doc.appendChild(configuration);

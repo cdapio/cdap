@@ -28,6 +28,8 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+
 /**
  * Reads logs in a distributed setup, using kafka for latest logs and files for older logs.
  */
@@ -48,8 +50,9 @@ public final class DistributedLogReader implements LogReader {
                        CheckpointManagerFactory checkpointManagerFactory, StringPartitioner partitioner) {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
-    this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
-                                                             Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
+    this.checkpointManager = checkpointManagerFactory.create(Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX +
+                                                             cConf.get(Constants.Logging.KAFKA_TOPIC),
+                                                             CheckpointManagerFactory.Type.KAFKA);
     this.partitioner = partitioner;
   }
 
@@ -118,7 +121,7 @@ public final class DistributedLogReader implements LogReader {
     int partition = partitioner.partition(loggingContext.getLogPartition(), -1);
     try {
       return checkpointManager.getCheckpoint(partition).getMaxEventTime();
-    } catch (Exception e) {
+    } catch (IOException e) {
       LOG.error("Got exception while reading checkpoint", e);
     }
     return -1;

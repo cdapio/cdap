@@ -89,6 +89,7 @@ public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
       ProcessorEvent<Offset> processorEvent = eventIterator.next();
       eventQueue.add(processorEvent.getEvent(), processorEvent.getEvent().getTimeStamp(), processorEvent.getEventSize(),
                      partition, processorEvent.getOffset());
+
     }
 
     // if event queue is full or all the events have been added to the queue, append all the enqueued events to log
