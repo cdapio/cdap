@@ -99,6 +99,7 @@ public class ConcurrentLogBufferWriterTest {
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(5, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     pipeline.stopAndWait();
+    loggerContext.stop();
   }
 
   @Test
@@ -157,6 +158,7 @@ public class ConcurrentLogBufferWriterTest {
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(100, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     pipeline.stopAndWait();
+    loggerContext.stop();
   }
 
   private ImmutableList<byte[]> getLoggingEvents() {
