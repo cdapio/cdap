@@ -48,8 +48,9 @@ public final class DistributedLogReader implements LogReader {
                        CheckpointManagerFactory checkpointManagerFactory, StringPartitioner partitioner) {
     this.kafkaLogReader = kafkaLogReader;
     this.fileLogReader = fileLogReader;
-    this.checkpointManager = checkpointManagerFactory.create(cConf.get(Constants.Logging.KAFKA_TOPIC),
-                                                             Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
+    this.checkpointManager = checkpointManagerFactory.create(Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX +
+                                                             cConf.get(Constants.Logging.KAFKA_TOPIC),
+                                                             CheckpointManagerFactory.Type.KAFKA);
     this.partitioner = partitioner;
   }
 

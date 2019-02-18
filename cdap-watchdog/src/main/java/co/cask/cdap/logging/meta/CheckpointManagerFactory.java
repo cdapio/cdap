@@ -16,25 +16,37 @@
 
 package co.cask.cdap.logging.meta;
 
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 
 /**
- * Creates {@link DefaultCheckpointManager}s.
+ * Creates {@link CheckpointManager}s.
  */
 public class CheckpointManagerFactory {
+  private final TransactionRunner transactionRunner;
 
-  private final DatasetFramework datasetFramework;
-  private final TransactionSystemClient txClient;
-
+  @VisibleForTesting
   @Inject
-  CheckpointManagerFactory(DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    this.datasetFramework = datasetFramework;
-    this.txClient = txClient;
+  public CheckpointManagerFactory(TransactionRunner transactionRunner) {
+    this.transactionRunner = transactionRunner;
   }
 
-  public CheckpointManager<KafkaOffset> create(String topic, byte[] prefix) {
-    return new DefaultCheckpointManager(datasetFramework, txClient, topic, prefix);
+  public CheckpointManager create(String prefix, Type type) {
+    switch (type) {
+      case KAFKA:
+        return new KafkaCheckpointManager(transactionRunner, prefix);
+      case LOG_BUFFER:
+        return new LogBufferCheckpointManager(transactionRunner, prefix);
+    }
+    throw new IllegalStateException("Checkpoint manager type " + type + " is not supported.");
+  }
+
+  /**
+   * Type of checkpoint manager.
+   */
+  public enum Type {
+    KAFKA,
+    LOG_BUFFER
   }
 }

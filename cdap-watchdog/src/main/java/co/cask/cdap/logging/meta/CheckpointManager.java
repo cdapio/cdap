@@ -16,6 +16,7 @@
 
 package co.cask.cdap.logging.meta;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,17 +29,17 @@ public interface CheckpointManager<Offset> {
   /**
    * Persists the given map of {@link Checkpoint}s.
    */
-  void saveCheckpoints(Map<Integer, ? extends Checkpoint<Offset>> checkpoints) throws Exception;
+  void saveCheckpoints(Map<Integer, ? extends Checkpoint<Offset>> checkpoints) throws IOException;
 
   /**
    * Reads the set of {@link Checkpoint}s for the given set of partitions. If there is no checkpoint for the partition,
-   * a {@link Checkpoint} with both {@link Checkpoint#getMaxEventTime()} returning {@code -1} will be used.
+   * {@code -1} value will be used for maxEventTime and numeric Offset values.
    */
-  Map<Integer, Checkpoint<Offset>> getCheckpoint(Set<Integer> partitions) throws Exception;
+  Map<Integer, Checkpoint<Offset>> getCheckpoint(Set<Integer> partitions) throws IOException;
 
   /**
    * Reads the {@link Checkpoint} for the given partition. If there is no checkpoint for the partition,
-   * a {@link Checkpoint} will be returned with both {@link Checkpoint#getMaxEventTime()} returning {@code -1}.
+   * {@code -1} value will be used for maxEventTime and numeric Offset values.
    */
-  Checkpoint<Offset> getCheckpoint(int partition) throws Exception;
+  Checkpoint<Offset> getCheckpoint(int partition) throws IOException;
 }

@@ -22,7 +22,6 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusChecker;
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
@@ -41,7 +40,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -58,11 +56,8 @@ public class LogPipelineLoader {
   private static final Logger LOG = LoggerFactory.getLogger(LogPipelineLoader.class);
   private static final String SYSTEM_LOG_PIPELINE_CONFIG = "cdap-log-pipeline.xml";
   private static final String SYSTEM_LOG_PIPELINE_NAME = "cdap";
-  private static final Set<byte[]> RESERVED_CHECKPOINT_PREFIX = ImmutableSortedSet.orderedBy(Bytes.BYTES_COMPARATOR)
-    .add(Bytes.toBytes(101))    // This is used by the old metrics log plugin
-    .add(Bytes.toBytes(200))    // This is used by the old file meta data
-    .add(Bytes.toBytes(300))    // This is used by the new file meta data
-    .build();
+  // This is used by the new file meta data
+  private static final Set<String> RESERVED_CHECKPOINT_PREFIX = ImmutableSortedSet.of("log_metadata");
 
   private final CConfiguration cConf;
 
@@ -76,13 +71,10 @@ public class LogPipelineLoader {
    * @throws InvalidPipelineException if any of the pipeline configuration is invalid.
    */
   public void validate() throws InvalidPipelineException {
-    Provider<LoggerContext> contextProvider = new Provider<LoggerContext>() {
-      @Override
-      public LoggerContext get() {
-        LoggerContext context = new LoggerContext();
-        context.putObject(Constants.Logging.PIPELINE_VALIDATION, Boolean.TRUE);
-        return context;
-      }
+    Provider<LoggerContext> contextProvider = () -> {
+      LoggerContext context = new LoggerContext();
+      context.putObject(Constants.Logging.PIPELINE_VALIDATION, Boolean.TRUE);
+      return context;
     };
     doLoad(contextProvider, false);
   }
@@ -117,8 +109,7 @@ public class LogPipelineLoader {
     Provider<T> contextProvider, boolean ignoreOnError) throws InvalidPipelineException {
 
     Map<String, LogPipelineSpecification<T>> result = new HashMap<>();
-    Set<byte[]> checkpointPrefixes = new TreeSet<>(Bytes.BYTES_COMPARATOR);
-    checkpointPrefixes.addAll(RESERVED_CHECKPOINT_PREFIX);
+    Set<String> checkpointPrefixes = new TreeSet<>(RESERVED_CHECKPOINT_PREFIX);
 
     for (URL configURL : getPipelineConfigURLs()) {
       try {
@@ -138,25 +129,12 @@ public class LogPipelineLoader {
           if (!ignoreOnError) {
             // Checkpoint prefix can't be the same, otherwise pipeline checkpoints will be overwriting each other.
             throw new InvalidPipelineException(
-              "Checkpoint prefix " + Bytes.toStringBinary(spec.getCheckpointPrefix()) + " already exists. " +
-                "Please either remove the property " + Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM +
-                " or use a different value."
+              "Checkpoint prefix " + spec.getCheckpointPrefix() + " already exists. Please use a different value."
             );
           }
           LOG.warn("Pipeline {} has checkpoint prefix {} already defined by other pipeline. Ignoring one from {}.",
-                   spec.getName(), Bytes.toStringBinary(spec.getCheckpointPrefix()), spec.getSource());
+                   spec.getName(), spec.getCheckpointPrefix(), spec.getSource());
           continue;
-        }
-
-        if (SYSTEM_LOG_PIPELINE_NAME.equals(spec.getName())) {
-          // Make sure the byte prefix is correct
-          if (!Arrays.equals(spec.getCheckpointPrefix(), Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX)) {
-            // This error cannot be ignored
-            throw new InvalidPipelineException(
-              "System pipeline '" + SYSTEM_LOG_PIPELINE_NAME + "' should have checkpoint prefix set to " +
-                Bytes.toStringBinary(Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX)
-            );
-          }
         }
 
         result.put(spec.getName(), spec);
@@ -235,17 +213,7 @@ public class LogPipelineLoader {
       context.setName(path.substring(startIdx, endIdx));
     }
 
-    byte[] checkpointPrefix = Bytes.toBytes(context.getName());
-    String prefixNum = configurator.getExecutionContext().getProperty(Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM);
-    if (prefixNum != null) {
-      try {
-        checkpointPrefix = Bytes.toBytes(Integer.parseInt(prefixNum));
-      } catch (NumberFormatException e) {
-        LOG.warn("Ignoring invalid {} setting for pipeline in {}",
-                 Constants.Logging.PIPELINE_CHECKPOINT_PREFIX_NUM, configURL);
-      }
-    }
-
+    String checkpointPrefix = context.getName();
     return new LogPipelineSpecification<>(configURL, context,
                                           setupPipelineCConf(configurator, pipelineCConf), checkpointPrefix);
   }

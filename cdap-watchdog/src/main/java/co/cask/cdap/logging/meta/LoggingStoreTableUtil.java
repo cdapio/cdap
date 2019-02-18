@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Utility class for helper functions to setup meta data table used by the logging system.
@@ -39,7 +40,8 @@ public final class LoggingStoreTableUtil {
 
   // The row key prefix for rows that stores CDAP log files metadata.
   public static final byte[] OLD_FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(200);
-  public static final byte[] NEW_FILE_META_ROW_KEY_PREFIX = Bytes.toBytes(300);
+  // TODO CDAP-14770 File meta table will be a separate table after using new storage spi. So for now use temp prefix
+  public static final byte[] NEW_FILE_META_ROW_KEY_PREFIX = "log_metadata".getBytes(StandardCharsets.UTF_8);
   public static final byte[] META_TABLE_COLUMN_KEY = Bytes.toBytes("file");
   private static final DatasetId META_TABLE_DATASET_ID = NamespaceId.SYSTEM.dataset(Constants.Logging.META_TABLE);
 

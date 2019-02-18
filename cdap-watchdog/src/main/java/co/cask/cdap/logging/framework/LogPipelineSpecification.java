@@ -31,9 +31,9 @@ public final class LogPipelineSpecification<T extends LoggerContext> {
   private final URL source;
   private final T context;
   private final CConfiguration cConf;
-  private final byte[] checkpointPrefix;
+  private final String checkpointPrefix;
 
-  LogPipelineSpecification(URL source, T context, CConfiguration cConf, byte[] checkpointPrefix) {
+  LogPipelineSpecification(URL source, T context, CConfiguration cConf, String checkpointPrefix) {
     this.source = source;
     this.context = context;
     this.cConf = cConf;
@@ -71,7 +71,7 @@ public final class LogPipelineSpecification<T extends LoggerContext> {
   /**
    * Returns the prefix to be used in the checkpoint table for this log processing pipeline.
    */
-  public byte[] getCheckpointPrefix() {
+  public String getCheckpointPrefix() {
     return checkpointPrefix;
   }
 }

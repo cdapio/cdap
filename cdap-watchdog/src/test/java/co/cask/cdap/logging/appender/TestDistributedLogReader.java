@@ -30,13 +30,17 @@ import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.framework.local.LocalLogAppender;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
-import co.cask.cdap.logging.meta.CheckpointManagerFactory;
+import co.cask.cdap.logging.meta.KafkaCheckpointManager;
 import co.cask.cdap.logging.meta.KafkaOffset;
 import co.cask.cdap.logging.read.DistributedLogReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.read.LogOffset;
 import co.cask.cdap.logging.read.ReadRange;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -94,6 +98,10 @@ public class TestDistributedLogReader extends KafkaTestBase {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
 
     // Generate logs for LOGGING_CONTEXT_BOTH, that contains logs in file, both file and kafka, and only in kafka
     LoggingContextAccessor.setLoggingContext(LOGGING_CONTEXT_BOTH);
@@ -284,9 +292,10 @@ public class TestDistributedLogReader extends KafkaTestBase {
     Assert.assertEquals(numExpectedEvents, events.size());
 
     // Save checkpoint (time of last event)
-    CheckpointManagerFactory checkpointManagerFactory = injector.getInstance(CheckpointManagerFactory.class);
-    CheckpointManager<KafkaOffset> checkpointManager =
-      checkpointManagerFactory.create(kafkaTopic, Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    CheckpointManager<KafkaOffset> checkpointManager = new KafkaCheckpointManager(transactionRunner,
+                                      Constants.Logging.SYSTEM_PIPELINE_CHECKPOINT_PREFIX + kafkaTopic);
+
     long checkpointTime = events.get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
     checkpointManager.saveCheckpoints(ImmutableMap.of(
       stringPartitioner.partition(loggingContext.getLogPartition(), -1),
