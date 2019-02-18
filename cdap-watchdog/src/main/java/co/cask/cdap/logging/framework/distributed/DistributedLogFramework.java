@@ -101,7 +101,8 @@ public class DistributedLogFramework extends ResourceBalancerService {
         () -> new KafkaLogProcessorPipeline(
           new LogProcessorPipelineContext(cConf, context.getName(), context,
                                           context.getMetricsContext(), context.getInstanceId()),
-          checkpointManagerFactory.create(topic, pipelineSpec.getCheckpointPrefix()), brokerService, config),
+          checkpointManagerFactory.create(pipelineSpec.getCheckpointPrefix() + topic,
+                                          CheckpointManagerFactory.Type.KAFKA), brokerService, config),
         retryStrategy));
     }
 

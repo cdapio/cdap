@@ -21,8 +21,8 @@
   <!-- Shouldn't change -->
   <contextName>cdap</contextName>
 
-  <!-- This is for backward compatibility for <= 4.0, since it was hardcoded to Bytes.toBytes(100). Don't modify. -->
-  <property name="log.process.pipeline.checkpoint.prefix.num" value="100"/>
+  <!-- CDAP system log pipeline prefix. Don't modify. -->
+  <property name="log.process.pipeline.checkpoint.prefix" value="cdap_log_pipeline_prefix:"/>
 
   <appender name="CDAP" class="co.cask.cdap.logging.appender.system.CDAPLogAppender">
     <dirPermissions>${dir.permissions}</dirPermissions>

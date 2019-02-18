@@ -35,7 +35,7 @@ import javax.sql.DataSource;
 /**
  * Tests {@link DefaultSecretStore} with Sql storage implementation.
  */
-public class SqlDefaultSecureStoreTest extends DefaultSecretStoreTest {
+public class SqlDefaultSecretStoreTest extends DefaultSecretStoreTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();

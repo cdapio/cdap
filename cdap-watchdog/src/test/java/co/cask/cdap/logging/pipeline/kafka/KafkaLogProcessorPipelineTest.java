@@ -77,6 +77,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -473,17 +474,17 @@ public class KafkaLogProcessorPipelineTest {
    */
   class MockCheckpointManager implements CheckpointManager<KafkaOffset> {
     @Override
-    public void saveCheckpoints(Map<Integer, ? extends Checkpoint<KafkaOffset>> checkpoints) throws Exception {
+    public void saveCheckpoints(Map<Integer, ? extends Checkpoint<KafkaOffset>> checkpoints) throws IOException {
 
     }
 
     @Override
-    public Map<Integer, Checkpoint<KafkaOffset>> getCheckpoint(Set<Integer> partitions) throws Exception {
+    public Map<Integer, Checkpoint<KafkaOffset>> getCheckpoint(Set<Integer> partitions) throws IOException {
       return Collections.emptyMap();
     }
 
     @Override
-    public Checkpoint<KafkaOffset> getCheckpoint(int partition) throws Exception {
+    public Checkpoint<KafkaOffset> getCheckpoint(int partition) throws IOException {
       return new Checkpoint<>(new KafkaOffset(-1, -1), -1);
     }
   }
