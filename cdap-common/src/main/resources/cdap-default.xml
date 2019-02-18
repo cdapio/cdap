@@ -1529,6 +1529,14 @@
   </property>
 
   <property>
+    <name>log.buffer.recovery.batch.size</name>
+    <value>1000</value>
+    <description>
+      Log buffer recovery batch size to recover log buffer files in batches
+    </description>
+  </property>
+
+  <property>
     <name>log.kafka.topic</name>
     <value>logs.user-v2</value>
     <description>

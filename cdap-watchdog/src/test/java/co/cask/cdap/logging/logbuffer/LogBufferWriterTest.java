@@ -59,7 +59,7 @@ public class LogBufferWriterTest {
     // verify if correct offsets were set without file rotation
     while (writtenEvents.hasNext()) {
       LogBufferEvent bufferEvent = writtenEvents.next();
-      Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), "" + i++);
+      Assert.assertEquals("" + i++, bufferEvent.getLogEvent().getMessage());
       // There will not be any rotation.
       Assert.assertEquals(bufferEvent.getOffset().getFilePos(), startPos);
       startPos = startPos + Bytes.SIZEOF_INT + serializer.toBytes(bufferEvent.getLogEvent()).length;
@@ -86,10 +86,10 @@ public class LogBufferWriterTest {
     // verify if correct offsets and file id were set with file rotation
     while (writtenEvents.hasNext()) {
       LogBufferEvent bufferEvent = writtenEvents.next();
-      Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), "" + i++);
-      // There will be one rotation per event.
-      Assert.assertEquals(bufferEvent.getOffset().getFileId() + ".buf", i + ".buf");
-      Assert.assertEquals(bufferEvent.getOffset().getFilePos(), 0);
+      Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), "" + i);
+      // There will be 2 events in one file.
+      Assert.assertEquals(i++ + ".buf", bufferEvent.getOffset().getFileId() + ".buf");
+      Assert.assertEquals(0, bufferEvent.getOffset().getFilePos());
     }
   }
 

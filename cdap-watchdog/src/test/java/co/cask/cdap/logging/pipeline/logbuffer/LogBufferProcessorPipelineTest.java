@@ -75,7 +75,7 @@ public class LogBufferProcessorPipelineTest {
     AtomicInteger i = new AtomicInteger(0);
     List<LogBufferEvent> bufferEvents = events.stream().map(event -> {
       LogBufferEvent lbe = new LogBufferEvent(event, serializer.toBytes(event).length,
-                         new LogBufferFileOffset(0, i.get()));
+                                              new LogBufferFileOffset(0, i.get()));
       i.incrementAndGet();
       return lbe;
     }).collect(Collectors.toList());
@@ -97,6 +97,7 @@ public class LogBufferProcessorPipelineTest {
     Tasks.waitFor(200, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     executorService.shutdown();
     pipeline.stopAndWait();
+    loggerContext.stop();
   }
 
   private ImmutableList<ILoggingEvent> getLoggingEvents() {

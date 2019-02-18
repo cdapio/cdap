@@ -55,8 +55,6 @@ import javax.annotation.concurrent.ThreadSafe;
  * 7. Set the AtomicBoolean flag back to false.
  * 8. If the PendingLogBufferRequest enqueued by this thread is NOT COMPLETED, go back to step 2.
  * </pre>
- *
- * TODO: CDAP-14937 Restore unprocessed log events from LogBuffer(WAL).
  */
 @ThreadSafe
 public class ConcurrentLogBufferWriter implements Closeable {

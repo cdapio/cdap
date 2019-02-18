@@ -57,8 +57,7 @@ public class LogBufferFileOffset implements Comparable<LogBufferFileOffset> {
     }
 
     LogBufferFileOffset that = (LogBufferFileOffset) o;
-
-    return filePos == that.filePos && Objects.equals(fileId, that.fileId);
+    return fileId == that.fileId && filePos == that.filePos;
   }
 
   @Override
@@ -68,8 +67,8 @@ public class LogBufferFileOffset implements Comparable<LogBufferFileOffset> {
 
   @Override
   public String toString() {
-    return "FileOffset{" +
-      "fileId='" + fileId + '\'' +
+    return "LogBufferFileOffset{" +
+      "fileId=" + fileId +
       ", filePos=" + filePos +
       '}';
   }

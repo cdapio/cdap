@@ -815,10 +815,14 @@ public final class Constants {
    * Configurations for log buffer.
    */
   public static final class LogBuffer {
+    // log buffer writer configs
     public static final String LOG_BUFFER_BASE_DIR = "log.buffer.base.dir";
     public static final String LOG_BUFFER_MAX_FILE_SIZE_BYTES = "log.buffer.max.file.size.bytes";
+    // log buffer recovery configs
+    public static final String LOG_BUFFER_RECOVERY_BATCH_SIZE = "log.buffer.recovery.batch.size";
     // number of events to be sent to time event queue processor from incoming queue
-    public static final String LOG_BUFFER_PIPELINE_BATCHSIZE = "log.buffer.pipeline.batch.size";
+    public static final String LOG_BUFFER_PIPELINE_BATCH_SIZE = "log.buffer.pipeline.batch.size";
+    // log buffer server configs
     public static final String LOG_BUFFER_SERVER_BIND_ADDRESS = "log.buffer.server.bind.address";
     public static final String LOG_BUFFER_SERVER_BIND_PORT = "log.buffer.server.bind.port";
   }

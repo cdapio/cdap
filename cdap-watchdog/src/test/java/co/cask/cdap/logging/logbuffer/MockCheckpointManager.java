@@ -21,6 +21,7 @@ import co.cask.cdap.logging.meta.CheckpointManager;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,10 +29,13 @@ import java.util.Set;
  * Checkpoint manager for unit tests.
  */
 public class MockCheckpointManager implements CheckpointManager<LogBufferFileOffset> {
-  @Override
-  public void saveCheckpoints(Map<Integer, ? extends Checkpoint<LogBufferFileOffset>> checkpoints)
-    throws IOException {
+  private final Map<Integer, Checkpoint<LogBufferFileOffset>> map = new HashMap<>();
 
+  @Override
+  public void saveCheckpoints(Map<Integer, ? extends Checkpoint<LogBufferFileOffset>> checkpoints) throws IOException {
+    for (Map.Entry<Integer, ? extends Checkpoint<LogBufferFileOffset>> entry : checkpoints.entrySet()) {
+      map.put(entry.getKey(), entry.getValue());
+    }
   }
 
   @Override
@@ -41,6 +45,10 @@ public class MockCheckpointManager implements CheckpointManager<LogBufferFileOff
 
   @Override
   public Checkpoint<LogBufferFileOffset> getCheckpoint(int partition) throws IOException {
-    return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
+    if (!map.containsKey(partition)) {
+      return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
+    }
+
+    return map.get(partition);
   }
 }
