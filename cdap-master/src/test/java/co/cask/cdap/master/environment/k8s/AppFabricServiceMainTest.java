@@ -17,8 +17,6 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ProgramType;
@@ -28,8 +26,6 @@ import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
-import org.apache.twill.discovery.Discoverable;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -38,10 +34,8 @@ import org.junit.Test;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Unit test for {@link AppFabricServiceMain}.
@@ -51,23 +45,11 @@ public class AppFabricServiceMainTest extends MasterServiceMainTestBase {
   @Test
   public void testAppFabricService() throws Exception {
 
-    AppFabricServiceMain main = getServiceMainInstance(AppFabricServiceMain.class);
-
-    // Discovery the app-fabric endpoint
-    DiscoveryServiceClient discoveryClient = main.getInjector().getInstance(DiscoveryServiceClient.class);
-    Discoverable appFabricEndpoint = new RandomEndpointStrategy(
-      () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP)).pick(20, TimeUnit.SECONDS);
-
-    Assert.assertNotNull(appFabricEndpoint);
-
     // Deploy an app
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
 
-    InetSocketAddress addr = appFabricEndpoint.getSocketAddress();
-    URI baseURI = URI.create(String.format("http://%s:%d/v3/namespaces/default/",
-                                           addr.getHostName(), addr.getPort()));
-
+    URI baseURI = getRouterBaseURI().resolve("/v3/namespaces/default/");
     URL url = baseURI.resolve("apps").toURL();
     HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0);
     HttpResponse response = HttpRequests.execute(

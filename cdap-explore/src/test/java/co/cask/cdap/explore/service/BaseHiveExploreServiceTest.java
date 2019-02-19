@@ -30,7 +30,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
@@ -119,7 +119,7 @@ public class BaseHiveExploreServiceTest {
   protected static TransactionManager transactionManager;
   protected static TransactionSystemClient transactionSystemClient;
   protected static DatasetFramework datasetFramework;
-  protected static DatasetOpExecutor dsOpService;
+  protected static DatasetOpExecutorService dsOpService;
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
@@ -163,7 +163,7 @@ public class BaseHiveExploreServiceTest {
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
-    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);

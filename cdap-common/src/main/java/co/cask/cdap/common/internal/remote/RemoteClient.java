@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,12 +56,8 @@ public class RemoteClient {
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     // Use a supplier to delay the discovery until the first time it is being used.
-    this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
-      }
-    });
+    this.endpointStrategySupplier = Suppliers.memoize(
+      () -> new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName)));
     String cleanBasePath = basePath.startsWith("/") ? basePath : "/" + basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
   }

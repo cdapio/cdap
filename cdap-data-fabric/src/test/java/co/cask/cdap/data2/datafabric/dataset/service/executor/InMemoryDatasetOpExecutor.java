@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -37,7 +36,7 @@ import java.io.IOException;
 /**
  * In-memory implementation of {@link DatasetOpExecutor}.
  */
-public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
+public class InMemoryDatasetOpExecutor implements DatasetOpExecutor {
 
   private final RemoteDatasetFramework client;
 
@@ -114,16 +113,6 @@ public class InMemoryDatasetOpExecutor extends AbstractIdleService implements Da
   @Override
   public void upgrade(DatasetId datasetInstanceId) throws Exception {
     getAdmin(datasetInstanceId).upgrade();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-
   }
 
   private DatasetAdmin getAdmin(DatasetId datasetInstanceId) throws IOException, DatasetManagementException {

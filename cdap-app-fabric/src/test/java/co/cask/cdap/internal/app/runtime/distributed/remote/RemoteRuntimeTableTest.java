@@ -21,6 +21,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
@@ -62,6 +63,7 @@ public class RemoteRuntimeTableTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static TransactionManager txManager;
+  private static DatasetOpExecutorService dsOpExecService;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
   private static TransactionRunner transactionRunner;
@@ -79,6 +81,8 @@ public class RemoteRuntimeTableTest {
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
+    dsOpExecService = injector.getInstance(DatasetOpExecutorService.class);
+    dsOpExecService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
     messagingService = injector.getInstance(MessagingService.class);
@@ -94,6 +98,7 @@ public class RemoteRuntimeTableTest {
       ((Service) messagingService).stopAndWait();
     }
     datasetService.stopAndWait();
+    dsOpExecService.stopAndWait();
     txManager.stopAndWait();
   }
 

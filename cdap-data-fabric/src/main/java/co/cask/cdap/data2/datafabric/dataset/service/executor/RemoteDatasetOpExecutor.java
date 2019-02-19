@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,12 +21,9 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.HandlerException;
-import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
@@ -35,7 +32,6 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -44,61 +40,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
-public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
+public class RemoteDatasetOpExecutor implements DatasetOpExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetOpExecutor.class);
 
   private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final RemoteClient remoteClient;
   private final AuthenticationContext authenticationContext;
 
   @Inject
-  RemoteDatasetOpExecutor(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
-                          AuthenticationContext authenticationContext) {
-    this.cConf = cConf;
+  public RemoteDatasetOpExecutor(DiscoveryServiceClient discoveryClient, AuthenticationContext authenticationContext) {
     this.authenticationContext = authenticationContext;
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.DATASET_EXECUTOR,
                                          new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    // wait for dataset executor to be discoverable
-    LOG.info("Starting DatasetOpExecutor.");
-    int timeout = cConf.getInt(Constants.Startup.STARTUP_SERVICE_TIMEOUT);
-    if (timeout > 0) {
-      try {
-        Tasks.waitFor(true, () -> {
-          try {
-            remoteClient.resolve("");
-          } catch (ServiceUnavailableException e) {
-            return false;
-          }
-          return true;
-        }, timeout, TimeUnit.SECONDS, Math.min(timeout, Math.max(10, timeout / 10)), TimeUnit.SECONDS);
-        LOG.info("DatasetOpExecutor started.");
-      } catch (TimeoutException e) {
-        // its not a nice message... throw one with a better message
-        throw new TimeoutException(String.format("Timed out waiting to discover the %s service. " +
-                                                   "Check the container logs then try restarting the service.",
-                                                 Constants.Service.DATASET_EXECUTOR));
-      } catch (InterruptedException e) {
-        throw new RuntimeException(String.format("Interrupted while waiting to discover the %s service.",
-                                                 Constants.Service.DATASET_EXECUTOR));
-      } catch (ExecutionException e) {
-        throw new RuntimeException(String.format("Error while waiting to discover the %s service.",
-                                                 Constants.Service.DATASET_EXECUTOR), e);
-      }
-    }
   }
 
   @Override

@@ -26,8 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DefaultDatasetTypeService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.YarnDatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
@@ -89,7 +88,7 @@ public class DataSetServiceModules extends RuntimeModule {
             bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
             expose(DatasetOpExecutorService.class);
 
-            bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+            bind(DatasetOpExecutor.class).to(RemoteDatasetOpExecutor.class);
             expose(DatasetOpExecutor.class);
 
             bind(DatasetTypeService.class)
@@ -138,7 +137,7 @@ public class DataSetServiceModules extends RuntimeModule {
             bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
             expose(DatasetOpExecutorService.class);
 
-            bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
+            bind(DatasetOpExecutor.class).to(RemoteDatasetOpExecutor.class);
             expose(DatasetOpExecutor.class);
 
             bind(DatasetTypeService.class)
@@ -189,7 +188,7 @@ public class DataSetServiceModules extends RuntimeModule {
             bind(DatasetOpExecutorService.class).in(Scopes.SINGLETON);
             expose(DatasetOpExecutorService.class);
 
-            bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
+            bind(DatasetOpExecutor.class).to(RemoteDatasetOpExecutor.class);
             expose(DatasetOpExecutor.class);
 
             bind(DatasetTypeService.class)

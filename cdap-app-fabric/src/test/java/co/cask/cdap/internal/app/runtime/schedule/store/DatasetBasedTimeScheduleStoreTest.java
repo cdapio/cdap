@@ -27,7 +27,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -96,7 +96,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   private static Injector injector;
   private static Scheduler scheduler;
   private static TransactionManager txService;
-  private static DatasetOpExecutor dsOpsService;
+  private static DatasetOpExecutorService dsOpsService;
   private static DatasetService dsService;
   private static DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
   private static TransactionRunner transactionRunner;
@@ -131,7 +131,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
-    dsOpsService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpsService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpsService.startAndWait();
     dsService = injector.getInstance(DatasetService.class);
     dsService.startAndWait();

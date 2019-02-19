@@ -29,6 +29,8 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -44,9 +46,13 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.store.SecureStoreService;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
@@ -109,8 +115,10 @@ public class AppFabricServiceMain extends AbstractServiceMain {
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources) {
     closeableResources.add(injector.getInstance(AuthorizerInstantiator.class));
+    services.add(injector.getInstance(StorageCreationService.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
+    services.add(injector.getInstance(DatasetOpExecutorService.class));
 
     // Only starts the remote TwillRunnerService, not the regular TwillRunnerService
     TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
@@ -127,6 +135,35 @@ public class AppFabricServiceMain extends AbstractServiceMain {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.APP_FABRIC_HTTP);
+  }
+
+  /**
+   * A Guava {@link Service} for creating storages.
+   */
+  private static final class StorageCreationService extends AbstractIdleService {
+
+    private final StructuredTableAdmin tableAdmin;
+    private final StructuredTableRegistry tableRegistry;
+    private final MetadataStore metadataStore;
+
+    @Inject
+    StorageCreationService(StructuredTableAdmin tableAdmin,
+                           StructuredTableRegistry tableRegistry, MetadataStore metadataStore) {
+      this.tableAdmin = tableAdmin;
+      this.tableRegistry = tableRegistry;
+      this.metadataStore = metadataStore;
+    }
+
+    @Override
+    protected void startUp() throws Exception {
+      StoreDefinition.createAllTables(tableAdmin, tableRegistry);
+      metadataStore.createIndex();
+    }
+
+    @Override
+    protected void shutDown() {
+      // no-op
+    }
   }
 
   /**

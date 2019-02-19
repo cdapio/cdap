@@ -38,8 +38,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTP
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.InMemoryDatasetOpExecutor;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.LocalDatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
 import co.cask.cdap.data2.dataset2.AbstractDatasetFrameworkTest;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -95,7 +94,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
   private RemoteDatasetFramework framework;
-  private TransactionRunner transactionRunner;
 
   @Before
   public void before() throws Exception {
@@ -133,7 +131,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     // Tx Manager to support working with datasets
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    transactionRunner = injector.getInstance(TransactionRunner.class);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry);
@@ -170,8 +168,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                                                          authenticationContext);
 
 
-    DatasetOpExecutor opExecutor = new LocalDatasetOpExecutor(cConf, discoveryServiceClient, opExecutorService,
-                                                              authenticationContext);
+    DatasetOpExecutor opExecutor = new RemoteDatasetOpExecutor(discoveryServiceClient, authenticationContext);
     DatasetInstanceService instanceService = new DatasetInstanceService(cConf,
                                                                         typeService, noAuthTypeService,
                                                                         instanceManager, opExecutor,
@@ -181,7 +178,7 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     instanceService.setAuditPublisher(inMemoryAuditPublisher);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
-                                 new InMemoryDatasetOpExecutor(framework), new HashSet<>(),
+                                 new HashSet<>(),
                                  typeService, instanceService);
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();

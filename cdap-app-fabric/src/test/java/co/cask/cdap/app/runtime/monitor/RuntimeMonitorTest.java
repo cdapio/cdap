@@ -30,6 +30,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
@@ -106,6 +107,7 @@ public class RuntimeMonitorTest {
   private RuntimeMonitorServer runtimeServer;
   private MultiThreadMessagingContext messagingContext;
   private TransactionManager txManager;
+  private DatasetOpExecutorService dsOpExecService;
   private DatasetService datasetService;
   private DatasetFramework datasetFramework;
   private Transactional transactional;
@@ -174,6 +176,9 @@ public class RuntimeMonitorTest {
     );
     this.transactionRunner = injector.getInstance(TransactionRunner.class);
 
+    dsOpExecService = injector.getInstance(DatasetOpExecutorService.class);
+    dsOpExecService.startAndWait();
+
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
 
@@ -188,6 +193,7 @@ public class RuntimeMonitorTest {
   public void stop() {
     runtimeServer.stopAndWait();
     datasetService.stopAndWait();
+    dsOpExecService.stopAndWait();
     txManager.stopAndWait();
 
     if (messagingService instanceof Service) {

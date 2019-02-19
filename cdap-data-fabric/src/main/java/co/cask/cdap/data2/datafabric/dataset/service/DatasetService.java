@@ -22,12 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.metrics.MetricsReporterHook;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
 import co.cask.http.ChannelPipelineModifier;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Objects;
@@ -49,7 +44,6 @@ import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -65,7 +59,6 @@ public class DatasetService extends AbstractExecutionThreadService {
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final DatasetOpExecutor opExecutorClient;
   private final Set<DatasetMetricsReporter> metricReporters;
   private final DatasetTypeService typeService;
   private final CConfiguration cConf;
@@ -80,7 +73,6 @@ public class DatasetService extends AbstractExecutionThreadService {
                         DiscoveryService discoveryService,
                         DiscoveryServiceClient discoveryServiceClient,
                         MetricsCollectionService metricsCollectionService,
-                        DatasetOpExecutor opExecutorClient,
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetTypeService datasetTypeService,
                         DatasetInstanceService datasetInstanceService) {
@@ -119,7 +111,6 @@ public class DatasetService extends AbstractExecutionThreadService {
       .build();
     this.discoveryService = discoveryService;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.opExecutorClient = opExecutorClient;
     this.metricReporters = metricReporters;
   }
 
@@ -127,7 +118,6 @@ public class DatasetService extends AbstractExecutionThreadService {
   protected void startUp() throws Exception {
     LOG.info("Starting DatasetService...");
     typeService.startAndWait();
-    opExecutorClient.startAndWait();
     httpService.start();
 
     // setting watch for ops executor service that we need to be running to operate correctly
@@ -233,7 +223,6 @@ public class DatasetService extends AbstractExecutionThreadService {
     }
 
     httpService.stop();
-    opExecutorClient.stopAndWait();
   }
 
   @Override
