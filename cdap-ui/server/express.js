@@ -43,6 +43,7 @@ var express = require('express'),
   uuidV4 = require('uuid/v4'),
   log4js = require('log4js'),
   bodyParser = require('body-parser'),
+  ejs = require('ejs'),
   DLL_PATH = path.normalize(__dirname + '/../dll'),
   DIST_PATH = path.normalize(__dirname + '/../dist'),
   LOGIN_DIST_PATH = path.normalize(__dirname + '/../login_dist'),
@@ -50,6 +51,8 @@ var express = require('express'),
   MARKET_DIST_PATH = path.normalize(__dirname + '/../common_dist'),
   fs = require('fs'),
   objectQuery = require('lodash/get');
+
+ejs.delimiter = '_';
 var log = log4js.getLogger('default');
 const uiThemePropertyName = 'ui.theme.file';
 
@@ -160,6 +163,22 @@ function extractUITheme(cdapConfig, uiThemePath) {
 
 function makeApp(authAddress, cdapConfig, uiSettings) {
   var app = express();
+  /**
+   * Express template setup
+   */
+  app.engine('html', ejs.renderFile);
+  app.set('view engine', 'html');
+  app.set('views', [
+    `${CDAP_DIST_PATH}/cdap_assets`,
+    LOGIN_DIST_PATH,
+    DLL_PATH,
+    DIST_PATH,
+    MARKET_DIST_PATH,
+  ]);
+
+  /**
+   * Adding favicon to serveFavicon middleware
+   */
   let uiThemeConfig = {};
   try {
     uiThemeConfig = extractUIThemeWrapper(cdapConfig);
@@ -183,19 +202,35 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   if (!isModeDevelopment()) {
     let marketUrl = url.parse(cdapConfig['market.base.url']);
     let imgsrc = `${marketUrl.protocol}//${marketUrl.host}`;
+    /**
+     * Adding nonce to every response pipe.
+     */
+    app.use((req, res, next) => {
+      res.locals.nonce = uuidV4();
+      next();
+    });
     app.use(
       csp({
         directives: {
-          defaultSrc: [`'self'`],
           imgSrc: [`'self' data: ${imgsrc}`],
-          styleSrc: [`'self' 'unsafe-inline'`],
-          scriptSrc: [`'self'`],
+          scriptSrc: [
+            (req, res) => `'nonce-${res.locals.nonce}'`,
+            `'unsafe-inline'`,
+            `'unsafe-eval'`,
+            `'strict-dynamic' https: http:`,
+          ],
+          baseUri: [`'self'`],
+          objectSrc: [`'none'`],
           workerSrc: [`'self' blob:`],
+          reportUri: `https://csp.withgoogle.com/csp/cdap/6.0`,
         },
       })
     );
   }
 
+  /**
+   * Adding default 500 error handler
+   */
   app.use(function(err, req, res, next) {
     log.error(err);
     res.status(500).send(err);
@@ -478,7 +513,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         res.redirect('/');
         return;
       }
-      res.sendFile(LOGIN_DIST_PATH + '/login_assets/login.html');
+      res.render('login', { nonceVal: res.locals.nonce });
     },
   ]);
 
@@ -663,7 +698,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         } else {
           res.cookie('bcookie', req.cookies.bcookie, { expires: date });
         }
-        res.sendFile(DIST_PATH + '/hydrator.html');
+        res.render('hydrator', { nonceVal: res.locals.nonce });
       },
     ]
   );
@@ -681,7 +716,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         } else {
           res.cookie('bcookie', req.cookies.bcookie, { expires: date });
         }
-        res.sendFile(DIST_PATH + '/tracker.html');
+        res.render('tracker', { nonceVal: res.locals.nonce });
       },
     ]
   );
@@ -700,7 +735,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         } else {
           res.cookie('bcookie', req.cookies.bcookie, { expires: date });
         }
-        res.sendFile(DIST_PATH + '/logviewer.html');
+        res.render('logviewer', { nonceVal: res.locals.nonce });
       },
     ]
   );
@@ -709,7 +744,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     ['/', '/cdap', '/cdap*'],
     [
       function(req, res) {
-        res.sendFile(CDAP_DIST_PATH + '/cdap_assets/cdap.html');
+        res.render('cdap', { nonceVal: `${res.locals.nonce}` });
       },
     ]
   );
