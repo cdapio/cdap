@@ -195,27 +195,14 @@ public abstract class AbstractMetadataClient {
     throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
     // for new getMetadata which takes MetadataEntity we don't want to do any aggregation of metadata for runId
     // CDAP-13721
-    return getMetadata(metadataEntity, scope, false);
-  }
-
-  /**
-   * @param metadataEntity the {@link MetadataEntity} for which to retrieve metadata
-   * @param scope the {@link MetadataScope} to retrieve the metadata from. If null, this method retrieves
-   *              metadata from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
-   * @return The metadata for the entity.
-   */
-  public Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope,
-                                         boolean aggregateRuns)
-    throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
-    HttpResponse response = getMetadataHelper(metadataEntity, scope, aggregateRuns);
+    HttpResponse response = getMetadataHelper(metadataEntity, scope);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
   }
 
-  private HttpResponse getMetadataHelper(MetadataEntity metadataEntity, @Nullable MetadataScope scope,
-                                         boolean aggregateRuns)
+  private HttpResponse getMetadataHelper(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, BadRequestException {
     String path = String.format("%s/metadata", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, scope, aggregateRuns);
+    path = addQueryParams(path, metadataEntity, scope);
     return makeRequest(path, HttpMethod.GET, null);
   }
 
@@ -238,7 +225,7 @@ public abstract class AbstractMetadataClient {
   public Set<String> getTags(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws BadRequestException, UnauthenticatedException, IOException, UnauthorizedException {
     String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, scope, true);
+    path = addQueryParams(path, metadataEntity, scope);
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
@@ -250,7 +237,7 @@ public abstract class AbstractMetadataClient {
   public void addTags(MetadataEntity metadataEntity, Set<String> tags) throws BadRequestException,
     UnauthenticatedException, IOException, UnauthorizedException {
     String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.POST, GSON.toJson(tags));
   }
 
@@ -272,7 +259,7 @@ public abstract class AbstractMetadataClient {
   public Map<String, String> getProperties(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, scope, false);
+    path = addQueryParams(path, metadataEntity, scope);
     HttpResponse response = makeRequest(path, HttpMethod.GET, null);
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
@@ -286,7 +273,7 @@ public abstract class AbstractMetadataClient {
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.POST, GSON.toJson(properties));
   }
 
@@ -299,7 +286,7 @@ public abstract class AbstractMetadataClient {
   public void removeProperty(MetadataEntity metadataEntity, String propertyToRemove)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties/%s", constructPath(metadataEntity), propertyToRemove);
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -311,7 +298,7 @@ public abstract class AbstractMetadataClient {
   public void removeProperties(MetadataEntity metadataEntity)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/properties", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -323,7 +310,7 @@ public abstract class AbstractMetadataClient {
   public void removeTag(MetadataEntity metadataEntity, String tagToRemove)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/tags/%s", constructPath(metadataEntity), tagToRemove);
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -335,7 +322,7 @@ public abstract class AbstractMetadataClient {
   public void removeTags(MetadataEntity metadataEntity)
     throws IOException, UnauthenticatedException, BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata/tags", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -347,7 +334,7 @@ public abstract class AbstractMetadataClient {
   public void removeMetadata(MetadataEntity metadataEntity) throws IOException, UnauthenticatedException,
     BadRequestException, UnauthorizedException {
     String path = String.format("%s/metadata", constructPath(metadataEntity));
-    path = addQueryParams(path, metadataEntity, null, false);
+    path = addQueryParams(path, metadataEntity, null);
     makeRequest(path, HttpMethod.DELETE, null);
   }
 
@@ -384,8 +371,7 @@ public abstract class AbstractMetadataClient {
     return builder.toString();
   }
 
-  private String addQueryParams(String path, MetadataEntity metadataEntity, @Nullable  MetadataScope scope,
-                                boolean aggregateRun) {
+  private String addQueryParams(String path, MetadataEntity metadataEntity, @Nullable MetadataScope scope) {
     StringBuilder builder = new StringBuilder(path);
     String prefix = "?";
     if (!Iterables.getLast(metadataEntity.getKeys()).equalsIgnoreCase(metadataEntity.getType())) {
@@ -393,13 +379,6 @@ public abstract class AbstractMetadataClient {
       builder.append(prefix);
       builder.append("type=");
       builder.append(metadataEntity.getType());
-      prefix = "&";
-    }
-    // the default value of aggregateRun is true so in the case it is false we need to include it as query param
-    if (!aggregateRun) {
-      builder.append(prefix);
-      builder.append("aggregateRun=");
-      builder.append(false);
       prefix = "&";
     }
     if (scope == null) {

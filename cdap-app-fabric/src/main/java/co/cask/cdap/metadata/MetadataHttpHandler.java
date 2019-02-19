@@ -29,7 +29,6 @@ import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
@@ -86,22 +85,19 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
   private final MetadataAdmin metadataAdmin;
-  private final LineageAdmin lineageAdmin;
 
   @Inject
-  MetadataHttpHandler(MetadataAdmin metadataAdmin, LineageAdmin lineageAdmin) {
+  MetadataHttpHandler(MetadataAdmin metadataAdmin) {
     this.metadataAdmin = metadataAdmin;
-    this.lineageAdmin = lineageAdmin;
   }
 
   @GET
   @Path("/**/metadata")
   public void getMetadata(HttpRequest request, HttpResponder responder,
-                          @QueryParam("scope") String scope, @QueryParam("type") String type,
-                          @DefaultValue("true") @QueryParam("aggregateRun") boolean aggregateRun)
+                          @QueryParam("scope") String scope, @QueryParam("type") String type)
     throws BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
-    Set<MetadataRecord> metadata = getMetadata(metadataEntity, scope, aggregateRun);
+    Set<MetadataRecord> metadata = getMetadata(metadataEntity, scope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(metadata, SET_METADATA_RECORD_TYPE));
   }
 
@@ -381,20 +377,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity,
-                                          @Nullable String scope, boolean aggregateRun) throws BadRequestException {
-    // the lineage admin handles the metadata call for program runs so delegate the call to that
-    Set<MetadataRecord> metadata;
-    if (aggregateRun && metadataEntity.getType().equals(MetadataEntity.PROGRAM_RUN)) {
-      // CDAP-13721 for backward compatibility we need to support metadata aggregation of runId.
-      metadata = lineageAdmin.getMetadataForRun(EntityId.fromMetadataEntity(metadataEntity));
-    } else {
-      if (scope == null) {
-        metadata = metadataAdmin.getMetadata(metadataEntity);
-      } else {
-        metadata = metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
-      }
-    }
-    return metadata;
+                                          @Nullable String scope) throws BadRequestException {
+    return scope == null ? metadataAdmin.getMetadata(metadataEntity)
+      : metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
   }
 
   private Map<String, String> getProperties(MetadataEntity metadataEntity,

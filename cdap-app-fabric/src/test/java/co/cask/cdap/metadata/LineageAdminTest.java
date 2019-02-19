@@ -17,11 +17,8 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
@@ -29,7 +26,6 @@ import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -38,7 +34,6 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProfileId;
@@ -102,41 +97,14 @@ public class LineageAdminTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testSimpleLineage() throws Exception {
+  public void testSimpleLineage() {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
-
-    // Define metadata
-    MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
-                                                    toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
-                                                        toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
-                                                      toMap("dk1", "dk1"), toSet("dt1"));
-    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
-                                                      toMap("dk2", "dk2"), toSet("dt2"));
-
-    // Add metadata
-    metadataStore.addProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
-                                run1AppMeta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(), run1AppMeta.getTags());
-    metadataStore.addProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getTags());
-    metadataStore.addProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getTags());
-    metadataStore.addProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getTags());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
@@ -186,23 +154,16 @@ public class LineageAdminTest extends AppFabricTestBase {
       ),
       oneLevelLineage.getRelations());
 
-    // Assert metadata
-    Assert.assertEquals(toSet(run1AppMeta, run1ProgramMeta, run1Data1Meta, run1Data2Meta),
-                        lineageAdmin.getMetadataForRun(run1));
-
     // Assert that in a different namespace both lineage and metadata should be empty
     NamespaceId customNamespace = new NamespaceId("custom_namespace");
     DatasetId customDataset1 = customNamespace.dataset(dataset1.getEntityName());
-    ProgramRunId customRun1 = customNamespace.app(program1.getApplication()).program(program1.getType(),
-                               program1.getEntityName()).run(run1.getEntityName());
     Assert.assertEquals(new Lineage(ImmutableSet.of()),
                         lineageAdmin.computeLineage(customDataset1, 500,
                                                     System.currentTimeMillis() + 10000, 100));
-    Assert.assertTrue(lineageAdmin.getMetadataForRun(customRun1).isEmpty());
   }
 
   @Test
-  public void testSimpleLoopLineage() throws Exception {
+  public void testSimpleLoopLineage() {
     // Lineage for D1 -> P1 -> D2 -> P2 -> D3 -> P3 -> D4
     //             |                 |
     //             |                 V
@@ -213,12 +174,8 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
-
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
-
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add access
     addRuns(store, run1, run2, run3, run4, run5);
@@ -270,7 +227,7 @@ public class LineageAdminTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testDirectCycle() throws Exception {
+  public void testDirectCycle() {
     // Lineage for:
     //
     // D1 <-> P1
@@ -280,9 +237,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -301,7 +256,7 @@ public class LineageAdminTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testDirectCycleTwoRuns() throws Exception {
+  public void testDirectCycleTwoRuns() {
     // Lineage for:
     //
     // D1 -> P1 (run1)
@@ -314,9 +269,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -337,7 +290,7 @@ public class LineageAdminTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testBranchLineage() throws Exception {
+  public void testBranchLineage() {
     // Lineage for:
     //
     //       ->D4        -> D5 -> P3 -> D6
@@ -354,9 +307,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -404,7 +355,7 @@ public class LineageAdminTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testBranchLoopLineage() throws Exception {
+  public void testBranchLoopLineage() {
     // Lineage for:
     //
     //  |-------------------------------------|
@@ -424,9 +375,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -502,7 +451,7 @@ public class LineageAdminTest extends AppFabricTestBase {
 
 
   @Test
-  public void testWorkflowLineage() throws Exception {
+  public void testWorkflowLineage() {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
 
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
@@ -511,34 +460,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store, metadataStore,
-                                                 new NoOpEntityExistenceVerifier());
-
-    // Define metadata
-    MetadataRecord run1AppMeta = new MetadataRecord(program1.getParent(), MetadataScope.USER,
-                                                    toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
-                                                        toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
-                                                      toMap("dk1", "dk1"), toSet("dt1"));
-    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
-                                                      toMap("dk2", "dk2"), toSet("dt2"));
-
-    // Add metadata
-    metadataStore.addProperties(MetadataScope.USER, program1.getParent().toMetadataEntity(),
-                                run1AppMeta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.getParent().toMetadataEntity(), run1AppMeta.getTags());
-    metadataStore.addProperties(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, program1.toMetadataEntity(), run1ProgramMeta.getTags());
-    metadataStore.addProperties(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset1.toMetadataEntity(), run1Data1Meta.getTags());
-    metadataStore.addProperties(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getProperties());
-    //noinspection ToArrayCallWithZeroLengthArrayArgument
-    metadataStore.addTags(MetadataScope.USER, dataset2.toMetadataEntity(), run1Data2Meta.getTags());
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageReader, store);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1 <-> P3
     // We need to use current time here as metadata store stores access time using current time
@@ -642,21 +564,12 @@ public class LineageAdminTest extends AppFabricTestBase {
       ),
       oneLevelLineage.getRelations());
     
-    // Assert metadata
-    Assert.assertEquals(toSet(run1AppMeta, run1ProgramMeta, run1Data1Meta, run1Data2Meta),
-                        lineageAdmin.getMetadataForRun(run1));
-
     // Assert that in a different namespace both lineage and metadata should be empty
     NamespaceId customNamespace = new NamespaceId("custom_namespace");
     DatasetId customDataset1 = customNamespace.dataset(dataset1.getEntityName());
-    ProgramRunId customRun1 = customNamespace.app(
-      program1.getApplication()).program(program1.getType(),
-                                         program1.getEntityName()).run(run1.getEntityName()
-    );
     Assert.assertEquals(new Lineage(ImmutableSet.of()),
                         lineageAdmin.computeLineage(customDataset1, 500,
                                                     System.currentTimeMillis() + 10000, 100));
-    Assert.assertTrue(lineageAdmin.getMetadataForRun(customRun1).isEmpty());
   }
 
   @Test
@@ -734,15 +647,6 @@ public class LineageAdminTest extends AppFabricTestBase {
     }
   }
 
-  @SafeVarargs
-  private static <T> Set<T> toSet(T... elements) {
-    return ImmutableSet.copyOf(elements);
-  }
-
-  private Map<String, String> toMap(String key, String value) {
-    return ImmutableMap.of(key, value);
-  }
-
   private static Set<NamespacedEntityId> emptySet() {
     return Collections.emptySet();
   }
@@ -753,12 +657,5 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private DatasetFramework getDatasetFramework() {
     return getInjector().getInstance(DatasetFramework.class);
-  }
-
-  private static final class NoOpEntityExistenceVerifier implements EntityExistenceVerifier<EntityId> {
-    @Override
-    public void ensureExists(EntityId entityId) {
-      // no-op
-    }
   }
 }

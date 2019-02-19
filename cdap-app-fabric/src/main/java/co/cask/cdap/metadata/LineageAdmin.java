@@ -16,24 +16,16 @@
 
 package co.cask.cdap.metadata;
 
-import co.cask.cdap.api.metadata.MetadataEntity;
-import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.entity.EntityExistenceVerifier;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -41,7 +33,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -51,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,7 +49,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -84,16 +73,11 @@ public class LineageAdmin {
 
   private final LineageStoreReader lineageStoreReader;
   private final Store store;
-  private final MetadataStore metadataStore;
-  private final EntityExistenceVerifier<EntityId> entityExistenceVerifier;
 
   @Inject
-  LineageAdmin(LineageStoreReader lineageStoreReader, Store store, MetadataStore metadataStore,
-               EntityExistenceVerifier<EntityId> entityExistenceVerifier) {
+  LineageAdmin(LineageStoreReader lineageStoreReader, Store store) {
     this.lineageStoreReader = lineageStoreReader;
     this.store = store;
-    this.metadataStore = metadataStore;
-    this.entityExistenceVerifier = entityExistenceVerifier;
   }
 
   /**
@@ -107,7 +91,7 @@ public class LineageAdmin {
    * @return lineage for sourceDataset
    */
   public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis,
-                                int levels, String rollup) throws NotFoundException {
+                                int levels, String rollup) {
     return doComputeLineage(sourceDataset, startMillis, endMillis, levels, rollup);
   }
 
@@ -120,39 +104,8 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceDataset
    */
-  public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis,
-                                int levels) throws NotFoundException {
+  public Lineage computeLineage(final DatasetId sourceDataset, long startMillis, long endMillis, int levels) {
     return doComputeLineage(sourceDataset, startMillis, endMillis, levels, null);
-  }
-
-  /**
-   * @return metadata associated with a run
-   */
-  public Set<MetadataRecord> getMetadataForRun(ProgramRunId run) {
-    try {
-      entityExistenceVerifier.ensureExists(run);
-    } catch (NotFoundException e) {
-      // metadata apis does not support not found as they cannot perform existence check for custom entity so just
-      // return an empty set
-      return Collections.emptySet();
-    }
-
-    Set<MetadataEntity> runEntities = lineageStoreReader.getEntitiesForRun(run).stream()
-      .map(NamespacedEntityId::toMetadataEntity)
-      .collect(Collectors.toSet());
-
-    // No entities associated with the run, but run exists.
-    if (runEntities.isEmpty()) {
-      return ImmutableSet.of();
-    }
-
-    RunId runId = RunIds.fromString(run.getRun());
-
-    // The entities returned by lineageStore does not contain application
-    ApplicationId application = run.getParent().getParent();
-    runEntities.add(application.toMetadataEntity());
-    return metadataStore.getSnapshotBeforeTime(MetadataScope.USER, runEntities,
-                                               RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
   @Nullable
@@ -203,8 +156,8 @@ public class LineageAdmin {
     return relationsNew;
   }
 
-  private Set<String> getWorkflowIds (Multimap<RelationKey, Relation> relations,
-                                      Map<ProgramRunId, RunRecordMeta> runRecordMap) throws NotFoundException {
+  private Set<String> getWorkflowIds(Multimap<RelationKey, Relation> relations,
+                                     Map<ProgramRunId, RunRecordMeta> runRecordMap) {
 
     final Set<String> workflowIDs = new HashSet<>();
     for (Relation relation : Iterables.concat(relations.values())) {
@@ -221,8 +174,7 @@ public class LineageAdmin {
     return workflowIDs;
   }
 
-  private Multimap<RelationKey, Relation> doComputeRollupLineage(Multimap<RelationKey,
-    Relation> relations) throws NotFoundException {
+  private Multimap<RelationKey, Relation> doComputeRollupLineage(Multimap<RelationKey, Relation> relations) {
 
     // Make a set of all ProgramIDs in the relations
     Set<ProgramRunId> programRunIdSet = new HashSet<>();
@@ -254,8 +206,9 @@ public class LineageAdmin {
     return getRollupRelations(relations, runRecordMap, workflowIdMap);
   }
 
-  private Lineage doComputeLineage(final NamespacedEntityId sourceData, long startMillis, long endMillis,
-                                   int levels, @Nullable String rollup) throws NotFoundException {
+  private Lineage doComputeLineage(final NamespacedEntityId sourceData,
+                                   long startMillis, long endMillis,
+                                   int levels, @Nullable String rollup) {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
 

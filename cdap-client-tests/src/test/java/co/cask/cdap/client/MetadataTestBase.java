@@ -25,7 +25,6 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
@@ -94,11 +93,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
 
   protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity) throws Exception {
     return getMetadata(metadataEntity, null);
-  }
-
-  protected Set<MetadataRecord> getMetadataForRun(MetadataEntity metadataEntity)
-    throws Exception {
-    return metadataClient.getMetadata(metadataEntity, null, true);
   }
 
   protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
@@ -229,11 +223,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected LineageRecord fetchLineage(DatasetId datasetInstance, String start, String end,
                                        int levels) throws Exception {
     return lineageClient.getLineage(datasetInstance, start, end, levels);
-  }
-
-  protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {
-    Set<MetadataRecord> metadataRecords = getMetadataForRun(run.toMetadataEntity());
-    Assert.assertEquals(0, metadataRecords.size());
   }
 
   private <T> void expectException(Callable<T> callable, Class<? extends Exception> expectedExceptionClass) {
