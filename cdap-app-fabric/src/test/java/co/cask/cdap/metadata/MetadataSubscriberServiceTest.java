@@ -116,17 +116,17 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   @Test
   public void testSubscriber() throws InterruptedException, ExecutionException, TimeoutException {
 
-    // Write out some lineage information
-    LineageWriter lineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
-    ProgramRunId run1 = service1.run(RunIds.generate());
-    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
-    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
-
     LineageStoreReader lineageReader = getInjector().getInstance(LineageStoreReader.class);
+    ProgramRunId run1 = service1.run(RunIds.generate());
 
     // Try to read lineage, which should be empty since we haven't start the MetadataSubscriberService yet.
     Set<NamespacedEntityId> entities = lineageReader.getEntitiesForRun(run1);
     Assert.assertTrue(entities.isEmpty());
+
+    // Write out some lineage information
+    LineageWriter lineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
+    lineageWriter.addAccess(run1, dataset1, AccessType.READ);
+    lineageWriter.addAccess(run1, dataset2, AccessType.WRITE);
 
     // Write the field level lineage
     FieldLineageWriter fieldLineageWriter = getInjector().getInstance(MessagingLineageWriter.class);
