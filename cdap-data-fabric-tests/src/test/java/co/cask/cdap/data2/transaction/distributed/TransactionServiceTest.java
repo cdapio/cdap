@@ -33,8 +33,6 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTable;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -140,7 +138,6 @@ public class TransactionServiceTest {
         @Override
         protected void configure() {
           bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-          bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),
       new AuthorizationTestModule(),
@@ -212,23 +209,20 @@ public class TransactionServiceTest {
                                final String verifyGet, final String toPut)
     throws TransactionFailureException, InterruptedException {
 
-    txExecutor.execute(new TransactionExecutor.Subroutine() {
-      @Override
-      public void apply() throws Exception {
-        byte[] existing = table.get(Bytes.toBytes("row"), Bytes.toBytes("col"));
-        Assert.assertTrue((verifyGet == null && existing == null) ||
-                            Arrays.equals(Bytes.toBytes(verifyGet), existing));
-        table.put(Bytes.toBytes("row"), Bytes.toBytes("col"), Bytes.toBytes(toPut));
-      }
+    txExecutor.execute(() -> {
+      byte[] existing = table.get(Bytes.toBytes("row"), Bytes.toBytes("col"));
+      Assert.assertTrue((verifyGet == null && existing == null) ||
+                          Arrays.equals(Bytes.toBytes(verifyGet), existing));
+      table.put(Bytes.toBytes("row"), Bytes.toBytes("col"), Bytes.toBytes(toPut));
     });
   }
 
-  private Table createTable(String tableName) throws Exception {
+  private Table createTable(String tableName) {
     InMemoryTableService.create(tableName);
     return new InMemoryTable(tableName);
   }
 
-  private void dropTable(String tableName) throws Exception {
+  private void dropTable(String tableName) {
     InMemoryTableService.drop(tableName);
   }
 

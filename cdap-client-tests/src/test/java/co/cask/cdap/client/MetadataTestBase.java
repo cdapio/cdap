@@ -25,15 +25,15 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
-import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Before;
 
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -96,11 +96,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
     return getMetadata(metadataEntity, null);
   }
 
-  protected Set<MetadataRecord> getMetadataForRun(MetadataEntity metadataEntity)
-    throws Exception {
-    return metadataClient.getMetadata(metadataEntity, null, true);
-  }
-
   protected Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity, @Nullable MetadataScope scope)
     throws Exception {
     return metadataClient.getMetadata(metadataEntity, scope);
@@ -156,25 +151,19 @@ public abstract class MetadataTestBase extends ClientTestBase {
     }, expectedExceptionClass);
   }
 
-  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<String> targets) throws Exception {
-    // Note: Can't delegate this to the next method. This is because MetadataHttpHandlerTestRun overrides these two
-    // methods, to strip out metadata from search results for easier assertions.
-    return metadataClient.searchMetadata(namespaceId, query, targets).getResults();
-  }
-
-  protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query,
-                                                           Set<String> targets,
-                                                           @Nullable String sort) throws Exception {
-    return metadataClient.searchMetadata(namespaceId, query, targets,
-                                         sort, 0, Integer.MAX_VALUE, 0, null, false).getResults();
-  }
-
   protected MetadataSearchResponse searchMetadata(NamespaceId namespaceId, String query,
                                                   Set<String> targets,
                                                   @Nullable String sort, int offset, int limit, int numCursors,
                                                   @Nullable String cursor, boolean showHiddden) throws Exception {
-    return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,
+    return searchMetadata(namespaceId == null ? null : ImmutableList.of(namespaceId),
+                          query, targets, sort, offset, limit, numCursors, cursor, showHiddden);
+  }
+
+  protected MetadataSearchResponse searchMetadata(List<NamespaceId> namespaceIds, String query,
+                                                  Set<String> targets,
+                                                  @Nullable String sort, int offset, int limit, int numCursors,
+                                                  @Nullable String cursor, boolean showHiddden) throws Exception {
+    return metadataClient.searchMetadata(namespaceIds, query, targets, sort, offset, limit, numCursors,
                                          cursor, showHiddden);
   }
 
@@ -229,11 +218,6 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected LineageRecord fetchLineage(DatasetId datasetInstance, String start, String end,
                                        int levels) throws Exception {
     return lineageClient.getLineage(datasetInstance, start, end, levels);
-  }
-
-  protected void assertRunMetadataNotFound(ProgramRunId run) throws Exception {
-    Set<MetadataRecord> metadataRecords = getMetadataForRun(run.toMetadataEntity());
-    Assert.assertEquals(0, metadataRecords.size());
   }
 
   private <T> void expectException(Callable<T> callable, Class<? extends Exception> expectedExceptionClass) {

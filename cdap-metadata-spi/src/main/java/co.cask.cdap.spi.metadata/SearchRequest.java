@@ -58,16 +58,16 @@ public class SearchRequest {
    *                        not support cursors will not respect this parameter and never return a cursor.
    * @param sorting if non-null, how to sort the results, otherwise by relevance
    */
-  public SearchRequest(String query,
-                       @Nullable MetadataScope scope,
-                       @Nullable Set<String> namespaces,
-                       @Nullable Set<String> types,
-                       boolean showHidden,
-                       int offset,
-                       int limit,
-                       @Nullable String cursor,
-                       boolean cursorRequested,
-                       @Nullable Sorting sorting) {
+  private SearchRequest(String query,
+                        @Nullable MetadataScope scope,
+                        @Nullable Set<String> namespaces,
+                        @Nullable Set<String> types,
+                        boolean showHidden,
+                        int offset,
+                        int limit,
+                        @Nullable String cursor,
+                        boolean cursorRequested,
+                        @Nullable Sorting sorting) {
     this.query = query;
     this.scope = scope;
     this.namespaces = namespaces;
@@ -100,7 +100,6 @@ public class SearchRequest {
     return showHidden;
   }
 
-  // TODO (CDAP-14799) clearly explain the semantics of cursors, offsets, and total count
   public int getOffset() {
     return offset;
   }

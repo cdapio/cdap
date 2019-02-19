@@ -43,7 +43,6 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
@@ -59,6 +58,8 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.plugin.TestMacroEvaluator;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.Read;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -110,7 +111,7 @@ public class ArtifactRepositoryTest {
   private static File systemArtifactsDir2;
   private static ArtifactRepository artifactRepository;
   private static ProgramClassLoader appClassLoader;
-  private static MetadataStore metadataStore;
+  private static MetadataStorage metadataStorage;
   private static File appArtifactFile;
 
   private static final Gson GSON = new GsonBuilder()
@@ -129,7 +130,7 @@ public class ArtifactRepositoryTest {
               systemArtifactsDir1.getAbsolutePath() + ";" + systemArtifactsDir2.getAbsolutePath());
     Injector injector =  AppFabricTestHelper.getInjector(cConf);
     artifactRepository = injector.getInstance(ArtifactRepository.class);
-    metadataStore = injector.getInstance(MetadataStore.class);
+    metadataStorage = injector.getInstance(MetadataStorage.class);
 
     appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
                                    createManifest(ManifestFields.EXPORT_PACKAGE,
@@ -155,13 +156,15 @@ public class ArtifactRepositoryTest {
 
   @Test
   public void testDeletingArtifact() throws Exception {
-    Tasks.waitFor(false, () -> metadataStore.getMetadata(MetadataScope.SYSTEM,
-                                                         APP_ARTIFACT_ID.toEntityId().toMetadataEntity())
-      .getProperties().isEmpty(), 5, TimeUnit.SECONDS);
+    Tasks.waitFor(false,
+                  () -> metadataStorage.read(new Read(
+                    APP_ARTIFACT_ID.toEntityId().toMetadataEntity(), MetadataScope.SYSTEM)).getProperties().isEmpty(),
+                  5, TimeUnit.SECONDS);
     artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
-    Tasks.waitFor(true, () -> metadataStore.getMetadata(MetadataScope.SYSTEM,
-                                                        APP_ARTIFACT_ID.toEntityId().toMetadataEntity())
-      .getProperties().isEmpty(), 5, TimeUnit.SECONDS);
+    Tasks.waitFor(true,
+                  () -> metadataStorage.read(new Read(
+                    APP_ARTIFACT_ID.toEntityId().toMetadataEntity(), MetadataScope.SYSTEM)).getProperties().isEmpty(),
+                  5, TimeUnit.SECONDS);
   }
 
   @Test(expected = InvalidArtifactException.class)

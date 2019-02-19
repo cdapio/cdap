@@ -34,8 +34,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
@@ -137,7 +135,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
         bind(UsageWriter.class).to(MessagingUsageWriter.class);
         // Overrides the metadata store to be no-op (programs never access it directly)
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-        bind(MetadataStore.class).to(NoOpMetadataStore.class);
       }
     }));
   }
