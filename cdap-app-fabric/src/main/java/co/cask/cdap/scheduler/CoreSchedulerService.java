@@ -208,7 +208,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
    *
    * @throws ServiceUnavailableException if the scheduler is not yet functional
    */
-  private void checkStarted() {
+  public void checkStarted() {
     if (!Uninterruptibles.awaitUninterruptibly(startedLatch, 0, TimeUnit.SECONDS)) {
       throw new ServiceUnavailableException("Core scheduler");
     }

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -41,6 +42,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -59,6 +61,7 @@ import javax.annotation.Nullable;
 /**
  * AppFabric Server.
  */
+@Singleton
 public class AppFabricServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AppFabricServer.class);
@@ -186,6 +189,21 @@ public class AppFabricServer extends AbstractIdleService {
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
     provisioningService.stopAndWait();
+  }
+
+  /**
+   * Check if underlying services are running. This is needed since the {@link CoreSchedulerService} is not
+   * guaranteed to be running since it uses an internal RetryOnStartFailureService.
+   *
+   * @return true if the underlying services are
+   */
+  public boolean isServiceAvailable() {
+    try {
+      coreSchedulerService.checkStarted();
+      return true;
+    } catch (ServiceUnavailableException e) {
+      return false;
+    }
   }
 
   private Cancellable startHttpService(final NettyHttpService httpService) throws Exception {

@@ -21,6 +21,7 @@ import ch.qos.logback.classic.LoggerContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.common.zookeeper.election.LeaderElectionInfoService;
+import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.inject.Inject;
@@ -49,14 +50,18 @@ public class AppFabricServiceManager implements MasterServiceManager {
   private static final long ELECTION_PARTICIPANTS_TIMEOUT_MS = 2000L;
 
   private final InetAddress hostname;
-  private LeaderElectionInfoService electionInfoService;
   private final Map<String, LogEntry.Level> oldLogLevels;
+  private final AppFabricServer appFabricServer;
+
+  private LeaderElectionInfoService electionInfoService;
 
   @Inject
-  public AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
+  public AppFabricServiceManager(@Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                                 AppFabricServer appFabricServer) {
     this.hostname = hostname;
     // this is to remember old log levels, will be used during reset
-    this.oldLogLevels = Collections.synchronizedMap(new HashMap<String, LogEntry.Level>());
+    this.oldLogLevels = Collections.synchronizedMap(new HashMap<>());
+    this.appFabricServer = appFabricServer;
   }
 
   @Inject(optional = true)
@@ -127,7 +132,7 @@ public class AppFabricServiceManager implements MasterServiceManager {
 
   @Override
   public boolean isServiceAvailable() {
-    return true;
+    return appFabricServer.isServiceAvailable();
   }
 
   @Override
