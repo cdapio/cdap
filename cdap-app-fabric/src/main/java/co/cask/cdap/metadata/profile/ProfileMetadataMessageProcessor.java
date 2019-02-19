@@ -18,11 +18,9 @@
 package co.cask.cdap.metadata.profile;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.config.PreferencesTable;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -45,16 +43,22 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.metadata.Metadata;
+import co.cask.cdap.spi.metadata.MetadataKind;
+import co.cask.cdap.spi.metadata.MetadataMutation;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import co.cask.cdap.store.NamespaceTable;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +73,8 @@ import javax.annotation.Nullable;
 public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileMetadataMessageProcessor.class);
   private static final String PROFILE_METADATA_KEY = "profile";
-  private static final Set<String> PROFILE_METADATA_KEY_SET = Collections.singleton(PROFILE_METADATA_KEY);
+  private static final Set<ScopedNameOfKind> PROFILE_METADATA_KEY_SET = Collections.singleton(
+    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, PROFILE_METADATA_KEY));
   private static final Set<ProgramType> PROFILE_ALLOWED_PROGRAM_TYPES =
     Arrays.stream(ProgramType.values())
       .filter(SystemArguments::isProfileAllowed)
@@ -78,18 +83,19 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
-  private final MetadataStore metadataStore;
+  private final MetadataStorage metadataStorage;
   private final NamespaceTable namespaceTable;
   private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesTable preferencesTable;
 
-  public ProfileMetadataMessageProcessor(MetadataStore metadataStore, StructuredTableContext structuredTableContext) {
+  public ProfileMetadataMessageProcessor(MetadataStorage metadataStorage,
+                                         StructuredTableContext structuredTableContext) {
     namespaceTable = new NamespaceTable(structuredTableContext);
     appMetadataStore = AppMetadataStore.create(structuredTableContext);
     scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
     preferencesTable = new PreferencesTable(structuredTableContext);
-    this.metadataStore = metadataStore;
+    this.metadataStorage = metadataStorage;
   }
 
   @Override
@@ -115,13 +121,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
-    Map<MetadataEntity, Map<String, String>> toUpdate = new HashMap<>();
-    collectProfileMetadata(entityId, message, toUpdate);
-    metadataStore.addProperties(MetadataScope.SYSTEM, toUpdate);
+    List<MetadataMutation> updates = new ArrayList<>();
+    collectProfileMetadata(entityId, message, updates);
+    metadataStorage.batch(updates);
   }
 
   private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
-                                      Map<MetadataEntity, Map<String, String>> updates) throws IOException {
+                                      List<MetadataMutation> updates) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         for (NamespaceMeta meta : namespaceTable.list()) {
@@ -189,32 +195,31 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   /**
    * Remove the profile metadata according to the message, currently only meant for application and schedule.
    */
-  private void removeProfileMetadata(MetadataMessage message) {
+  private void removeProfileMetadata(MetadataMessage message) throws IOException {
     EntityId entity = message.getEntityId();
-    Map<MetadataEntity, Set<String>> toRemove = new HashMap<>();
+    List<MetadataMutation> deletes = new ArrayList<>();
 
     // We only care about application and schedules.
     if (entity.getEntityType().equals(EntityType.APPLICATION)) {
       ApplicationId appId = (ApplicationId) message.getEntityId();
       ApplicationSpecification appSpec = message.getPayload(GSON, ApplicationSpecification.class);
       for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, appId)) {
-        toRemove.put(programId.toMetadataEntity(), PROFILE_METADATA_KEY_SET);
+        addProfileMetadataDelete(programId, deletes);
       }
       for (ScheduleId scheduleId : getSchedulesInApp(appId, appSpec.getProgramSchedules())) {
-        toRemove.put(scheduleId.toMetadataEntity(), PROFILE_METADATA_KEY_SET);
+        addProfileMetadataDelete(scheduleId, deletes);
       }
     } else if (entity.getEntityType().equals(EntityType.SCHEDULE)) {
-      toRemove.put(entity.toMetadataEntity(), PROFILE_METADATA_KEY_SET);
+      addProfileMetadataDelete((NamespacedEntityId) entity, deletes);
     }
-
-    if (!toRemove.isEmpty()) {
-      metadataStore.removeProperties(MetadataScope.SYSTEM, toRemove);
+    if (!deletes.isEmpty()) {
+      metadataStorage.batch(deletes);
     }
   }
 
   private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
                                          @Nullable ProfileId namespaceProfile,
-                                         Map<MetadataEntity, Map<String, String>> updates) throws IOException {
+                                         List<MetadataMutation> updates) throws IOException {
     LOG.trace("Updating profile metadata for {}", applicationId);
     ProfileId appProfile = namespaceProfile == null
       ? getResolvedProfileId(applicationId)
@@ -225,7 +230,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
-                                             Map<MetadataEntity, Map<String, String>> updates) throws IOException {
+                                             List<MetadataMutation> updates) throws IOException {
     LOG.trace("Updating profile metadata for {}", programId);
     ProfileId programProfile = appProfile == null
       ? getResolvedProfileId(programId)
@@ -238,7 +243,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void collectScheduleProfileMetadata(ProgramSchedule schedule, ProfileId programProfile,
-                                              Map<MetadataEntity, Map<String, String>> updates) {
+                                              List<MetadataMutation> updates) {
     ScheduleId scheduleId = schedule.getScheduleId();
     LOG.trace("Updating profile metadata for {}", scheduleId);
     // if we are able to get profile from preferences or schedule properties, use it
@@ -250,9 +255,17 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   private void addProfileMetadataUpdate(NamespacedEntityId entityId, ProfileId profileId,
-                                        Map<MetadataEntity, Map<String, String>> updates) {
+                                        List<MetadataMutation> updates) {
     LOG.trace("Setting profile metadata for {} to {}", entityId, profileId);
-    updates.put(entityId.toMetadataEntity(), Collections.singletonMap(PROFILE_METADATA_KEY, profileId.getScopedName()));
+    updates.add(new MetadataMutation.Update(entityId.toMetadataEntity(),
+                                            new Metadata(MetadataScope.SYSTEM,
+                                                         ImmutableMap.of(PROFILE_METADATA_KEY,
+                                                                         profileId.getScopedName()))));
+  }
+
+  private void addProfileMetadataDelete(NamespacedEntityId entityId, List<MetadataMutation> deletes) {
+    LOG.trace("Deleting profile metadata for {}", entityId);
+    deletes.add(new MetadataMutation.Remove(entityId.toMetadataEntity(), PROFILE_METADATA_KEY_SET));
   }
 
   /**

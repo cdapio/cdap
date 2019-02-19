@@ -32,11 +32,9 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
@@ -64,7 +62,13 @@ import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataConstants;
+import co.cask.cdap.spi.metadata.MetadataDirective;
+import co.cask.cdap.spi.metadata.MetadataKind;
+import co.cask.cdap.spi.metadata.MetadataMutation;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -77,6 +81,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -96,12 +101,18 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
 
-  private static final Set<String> DESCRIPTION_SET = Collections.singleton(MetadataConstants.DESCRIPTION_KEY);
-  private static final Set<String> CREATION_TIME_SET = Collections.singleton(MetadataConstants.CREATION_TIME_KEY);
+  // directives for (re-)creation of system metadata:
+  // - keep description if new metadata does not contain it
+  // - preserve creation-time if it exists in current metadata
+  private static final Map<ScopedNameOfKind, MetadataDirective> CREATE_DIRECTIVES = ImmutableMap.of(
+    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.DESCRIPTION_KEY),
+    MetadataDirective.KEEP,
+    new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, MetadataConstants.CREATION_TIME_KEY),
+    MetadataDirective.PRESERVE);
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
-  private final MetadataStore metadataStore; // TODO: Refactor metadataStore to run within existing transaction
+  private final MetadataStorage metadataStorage;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
@@ -113,7 +124,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             DatasetFramework datasetFramework, TransactionSystemClient txClient,
                             MetricsCollectionService metricsCollectionService,
-                            MetadataStore metadataStore,
+                            MetadataStorage metadataStorage,
                             TransactionRunner transactionRunner) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
@@ -134,7 +145,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.datasetFramework = datasetFramework;
-    this.metadataStore = metadataStore;
+    this.metadataStorage = metadataStorage;
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
@@ -212,7 +223,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(metadataStore, structuredTableContext);
+            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext);
           default:
             return null;
         }
@@ -315,7 +326,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     WorkflowProcessor() {}
 
     @Override
-    public void processMessage(MetadataMessage message) throws IOException {
+    public void processMessage(MetadataMessage message) {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
         return;
@@ -354,41 +365,34 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     }
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message) throws IOException {
       MetadataOperation operation = message.getPayload(GSON, MetadataOperation.class);
       MetadataEntity entity = operation.getEntity();
       LOG.trace("Received {}", operation);
       // TODO: Authorize that the operation is allowed. Currently MetadataMessage does not carry user info
       switch (operation.getType()) {
         case CREATE: {
-          MetadataOperation.Create create = (MetadataOperation.Create) operation;
           // all the new metadata is in System scope - no validation
-          metadataStore.replaceMetadata(MetadataScope.SYSTEM,
-                                        new MetadataDataset.Record(entity, create.getProperties(), create.getTags()),
-                                        DESCRIPTION_SET, CREATION_TIME_SET);
+          MetadataOperation.Create create = (MetadataOperation.Create) operation;
+          MetadataMutation mutation = new MetadataMutation.Create(
+            entity, new Metadata(MetadataScope.SYSTEM, create.getTags(), create.getProperties()), CREATE_DIRECTIVES);
+          metadataStorage.apply(mutation);
           break;
         }
         case DROP: {
-          metadataStore.removeMetadata(operation.getEntity());
+          metadataStorage.apply(new MetadataMutation.Drop(operation.getEntity()));
           break;
         }
         case PUT: {
           MetadataOperation.Put put = (MetadataOperation.Put) operation;
           try {
-            boolean hasProperties, hasTags;
+            Set<String> tags = put.getTags() != null ? put.getTags() : Collections.emptySet();
+            Map<String, String> props = put.getProperties() != null ? put.getProperties() : Collections.emptyMap();
             if (MetadataScope.USER.equals(put.getScope())) {
-              hasProperties = validateProperties(put.getEntity(), put.getProperties());
-              hasTags = validateTags(put.getEntity(), put.getTags());
-            } else {
-              hasProperties = put.getProperties() != null && !put.getProperties().isEmpty();
-              hasTags = put.getTags() != null && !put.getTags().isEmpty();
+              validateProperties(entity, props);
+              validateTags(entity, tags);
             }
-            if (hasProperties) {
-              metadataStore.addProperties(put.getScope(), entity, put.getProperties());
-            }
-            if (hasTags) {
-              metadataStore.addTags(put.getScope(), entity, put.getTags());
-            }
+            metadataStorage.apply(new MetadataMutation.Update(entity, new Metadata(put.getScope(), tags, props)));
           } catch (InvalidMetadataException e) {
             LOG.warn("Ignoring invalid metadata operation {} from TMS: {}", operation,
                      GSON.toJson(message.getRawPayload()), e);
@@ -397,24 +401,31 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         }
         case DELETE: {
           MetadataOperation.Delete delete = (MetadataOperation.Delete) operation;
-          if (delete.getProperties() != null && !delete.getProperties().isEmpty()) {
-            metadataStore.removeProperties(delete.getScope(), entity, delete.getProperties());
+          Set<ScopedNameOfKind> toDelete = new HashSet<>();
+          if (delete.getProperties() != null) {
+            delete.getProperties().forEach(
+              name -> toDelete.add(new ScopedNameOfKind(MetadataKind.PROPERTY, delete.getScope(), name)));
           }
-          if (delete.getTags() != null && !delete.getTags().isEmpty()) {
-            metadataStore.removeTags(delete.getScope(), entity, delete.getTags());
+          if (delete.getTags() != null) {
+            delete.getTags().forEach(
+              name -> toDelete.add(new ScopedNameOfKind(MetadataKind.TAG, delete.getScope(), name)));
           }
+          metadataStorage.apply(new MetadataMutation.Remove(entity, toDelete));
           break;
         }
         case DELETE_ALL: {
-          metadataStore.removeMetadata(((MetadataOperation.DeleteAll) operation).getScope(), entity);
+          MetadataScope scope = ((MetadataOperation.DeleteAll) operation).getScope();
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope));
           break;
         }
         case DELETE_ALL_PROPERTIES: {
-          metadataStore.removeProperties(((MetadataOperation.DeleteAllProperties) operation).getScope(), entity);
+          MetadataScope scope = ((MetadataOperation.DeleteAllProperties) operation).getScope();
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.PROPERTY));
           break;
         }
         case DELETE_ALL_TAGS: {
-          metadataStore.removeTags(((MetadataOperation.DeleteAllTags) operation).getScope(), entity);
+          MetadataScope scope = ((MetadataOperation.DeleteAllTags) operation).getScope();
+          metadataStorage.apply(new MetadataMutation.Remove(entity, scope, MetadataKind.TAG));
           break;
         }
         default:
