@@ -90,6 +90,22 @@ public final class StoreDefinition {
   }
 
   /**
+   * Create system tables used by Dataset Service.
+   *
+   * @param tableAdmin the table admin to create the table
+   */
+  public static void createDatasetServiceTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry,
+                                                boolean overWrite) throws IOException, TableAlreadyExistsException {
+    registry.initialize();
+    if (overWrite || tableAdmin.getSpecification(DatasetInstanceStore.DATASET_INSTANCES) == null) {
+      DatasetInstanceStore.createTables(tableAdmin);
+    }
+    if (overWrite || tableAdmin.getSpecification(DatasetTypeStore.DATASET_TYPES) == null) {
+      DatasetTypeStore.createTables(tableAdmin);
+    }
+  }
+
+  /**
    * Namespace store schema
    */
   public static final class NamespaceStore {

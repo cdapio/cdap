@@ -512,9 +512,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         break;
       case ISOLATED:
         try {
-          // Define all StructuredTable before starting any services that need StructuredTable
-          StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
-                  injector.getInstance(StructuredTableRegistry.class));
+          // Define the relevant StructuredTable before starting any services that need StructuredTable
+          StoreDefinition.createDatasetServiceTables(injector.getInstance(StructuredTableAdmin.class),
+                                                     injector.getInstance(StructuredTableRegistry.class), false);
         } catch (IOException | TableAlreadyExistsException e) {
           throw new RuntimeException("Unable to create the system tables.", e);
         }
