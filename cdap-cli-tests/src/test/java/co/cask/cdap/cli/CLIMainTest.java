@@ -716,7 +716,7 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
                                                  FakeApp.class.getSimpleName()), FAKE_ARTIFACT_ID.toString());
     testCommandOutputContains(cli, "search metadata appKey:appValue", FAKE_APP_ID.toString());
-    testCommandOutputContains(cli, "search metadata fake* filtered by target-type app", FAKE_APP_ID.toString());
+    testCommandOutputContains(cli, "search metadata fake* filtered by target-type application", FAKE_APP_ID.toString());
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
     List<String> expected = ImmutableList.of("Entity", FAKE_WORKFLOW_ID.toString(), FAKE_SPARK_ID.toString());
@@ -724,7 +724,8 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type dataset", FAKE_DS_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s", FakeApp.TIME_SCHEDULE_NAME),
                               FAKE_APP_ID.toString());
-    testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type app", PingService.NAME),
+    testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type application",
+                                                 PingService.NAME),
                               FAKE_APP_ID.toString());
     testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type program",
                                                  PrefixedEchoHandler.NAME), PREFIXED_ECHO_HANDLER_ID.toString());
@@ -736,7 +737,7 @@ public class CLIMainTest extends CLITestBase {
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_SPARK_ID.toString(), FAKE_WORKFLOW_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));
-    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,app");
+    output = getCommandOutput(cli, "search metadata fake* filtered by target-type dataset,application");
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", FAKE_DS_ID.toString(), FAKE_APP_ID.toString());
     Assert.assertTrue(lines.containsAll(expected) && expected.containsAll(lines));

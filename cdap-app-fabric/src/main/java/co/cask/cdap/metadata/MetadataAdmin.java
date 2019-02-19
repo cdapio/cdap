@@ -21,7 +21,6 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 
 import java.util.Map;
@@ -135,7 +134,7 @@ public interface MetadataAdmin {
 
   /**
    * Executes a search for CDAP entities in the specified namespace with the specified search query and
-   * an optional set of {@link EntityTypeSimpleName entity types} in the specified {@link MetadataScope}.
+   * an optional set of entity types in the specified {@link MetadataScope}.
    *
    * @param request the search request
    * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters

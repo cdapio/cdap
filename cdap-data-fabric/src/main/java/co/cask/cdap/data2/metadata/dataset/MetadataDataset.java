@@ -40,7 +40,6 @@ import co.cask.cdap.data2.metadata.indexer.ValueOnlyIndexer;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
-import co.cask.cdap.proto.element.EntityTypeSimpleName;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -53,7 +52,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -565,7 +563,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  public Set<Record> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis) {
+  Set<Record> getSnapshotBeforeTime(Set<MetadataEntity> metadataEntitys, long timeMillis) {
     ImmutableSet.Builder<Record> builder = ImmutableSet.builder();
     for (MetadataEntity namespacedEntityId : metadataEntitys) {
       builder.add(getSnapshotBeforeTime(namespacedEntityId, timeMillis));
@@ -666,7 +664,7 @@ public class MetadataDataset extends AbstractDataset {
 
   /**
    * Searches entities that match the specified search query in the specified namespace and {@link NamespaceId#SYSTEM}
-   * for the specified {@link EntityTypeSimpleName}.
+   * for the specified types.
    * When using default sorting, limits, cursors, and offset are ignored and all results are returned.
    * When using custom sorting, at most offset + limit * (numCursors + 1) results are returned.
    * When using default sorting, results are returned in whatever order is determined by the underlying storage.
@@ -790,7 +788,7 @@ public class MetadataDataset extends AbstractDataset {
   // there may not be a MetadataEntry in the row or it may for a different targetType (entityFilter),
   // so return an Optional
   private Optional<MetadataEntry> parseRow(Row rowToProcess, String indexColumn,
-                                           Set<EntityTypeSimpleName> entityFilter, boolean showHidden) {
+                                           Set<String> entityFilter, boolean showHidden) {
     String rowValue = rowToProcess.getString(indexColumn);
     if (rowValue == null) {
       return Optional.empty();
@@ -800,8 +798,7 @@ public class MetadataDataset extends AbstractDataset {
     String targetType = MetadataKey.extractTargetType(rowKey);
 
     // Filter on target type if not set to include all types
-    boolean includeAllTypes = entityFilter.isEmpty() || entityFilter.contains(EntityTypeSimpleName.ALL);
-    if (!includeAllTypes && !entityFilter.contains(EntityTypeSimpleName.valueOfSerializedForm(targetType))) {
+    if (!entityFilter.isEmpty() && !entityFilter.contains(targetType)) {
       return Optional.empty();
     }
 
@@ -1290,13 +1287,6 @@ public class MetadataDataset extends AbstractDataset {
      */
     public Record getLatest() {
       return latest;
-    }
-
-    /**
-     * @return Properties which were deleted during the operation
-     */
-    public Map<String, String> getDeletedProperties() {
-      return Maps.difference(existing.getProperties(), latest.getProperties()).entriesOnlyOnLeft();
     }
   }
 }

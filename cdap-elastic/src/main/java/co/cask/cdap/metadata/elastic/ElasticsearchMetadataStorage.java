@@ -76,6 +76,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
@@ -281,7 +282,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       "    'analyzer': {" +
       "      'text_analyzer': {" +
       "        'type': 'pattern'," +
-      "        'pattern': '\\\\W|_'," + // this reflects the tokenization performed by MetadataDataset
+      "        'pattern': '[-_,;.\\\\s]+'," + // this reflects the tokenization performed by MetadataDataset
       "        'lowercase': true" +
       "      }" +
       "    }" +
@@ -750,7 +751,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
     List<QueryBuilder> conditions = new ArrayList<>();
     // if the request asks only for a subset of entity types, add a boolean clause for that
-    if (request.getTypes() != null) {
+    if (request.getTypes() != null && !request.getTypes().isEmpty()) {
       addCondition(conditions, request.getTypes().stream().map(
         type -> QueryBuilders.termQuery(TYPE_FIELD, type.toLowerCase()).boost(0.0F)).collect(Collectors.toList()));
     }
@@ -812,7 +813,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (termQueries.size() == 1) {
       return termQueries.get(0);
     }
-    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+    BoolQueryBuilder boolQuery = QueryBuilders.boolQuery().minimumShouldMatch(1);
     termQueries.forEach(boolQuery::should);
     return boolQuery;
   }
@@ -827,13 +828,17 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     // determine if the term has a field qualifier
     String field = null;
     term = term.trim().toLowerCase();
+    // Create a term query on the term as is. This would include a field: prefix if the term hs one.
+    // This is important for the case of schema search: If the schema contains a field f of type t,
+    // then we index "f:t" in the plain text as well as in the "schema" property. If the query is
+    // just "f:t", we must search the plain text field for that.
+    QueryBuilder plainQuery = createTermQuery(textField, term);
     if (term.contains(MetadataConstants.KEYVALUE_SEPARATOR)) {
       // split the search term in two parts on first occurrence of KEYVALUE_SEPARATOR and trim the key and value
       String[] split = term.split(MetadataConstants.KEYVALUE_SEPARATOR, 2);
       field = split[0].trim();
       term = split[1].trim();
     }
-    QueryBuilder plainQuery = createTermQuery(textField, term);
     if (field == null) {
       return plainQuery;
     }
@@ -857,8 +862,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     boolQuery.must(createTermQuery(NESTED_VALUE_FIELD, term));
     QueryBuilder propertyQuery = QueryBuilders.nestedQuery(PROPS_FIELD, boolQuery, ScoreMode.Max);
 
-    // match either a plain term of the form "field:term" or the word "term" in property "field"
-    return new BoolQueryBuilder().should(plainQuery).should(propertyQuery);
+    // match either a plain term of the form "f:t" or the word "t" in property "f"
+    return new BoolQueryBuilder().should(plainQuery).should(propertyQuery).minimumShouldMatch(1);
   }
 
   /**
@@ -869,7 +874,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private QueryBuilder createTermQuery(String field, String term) {
     return term.contains("*") || term.contains("?")
       ? new WildcardQueryBuilder(field, term)
-      : new MatchQueryBuilder(field, term);
+      // the term should not get split in to multiple words, but in case it does, let's require all words
+      : new MatchQueryBuilder(field, term).operator(Operator.AND);
   }
 
   /**

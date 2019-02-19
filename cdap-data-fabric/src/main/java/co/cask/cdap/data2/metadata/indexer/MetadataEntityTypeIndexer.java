@@ -32,7 +32,7 @@ public class MetadataEntityTypeIndexer implements Indexer {
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     Set<String> indexes = new HashSet<>();
-    indexes.add(entry.getMetadataEntity().getType() + MetadataConstants.KEYVALUE_SEPARATOR +
+    indexes.add(entry.getMetadataEntity().getType().toLowerCase() + MetadataConstants.KEYVALUE_SEPARATOR +
                   entry.getMetadataEntity().getValue(entry.getMetadataEntity().getType()));
     return indexes;
   }
