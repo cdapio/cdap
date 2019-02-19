@@ -39,7 +39,7 @@ public class Sorting {
    * @param order whether to sort ascending or descending
    */
   public Sorting(String key, Order order) {
-    this.key = key;
+    this.key = key.toLowerCase();
     this.order = order;
   }
 
@@ -71,9 +71,19 @@ public class Sorting {
 
   @Override
   public String toString() {
-    return "Sorting{" +
-      "key='" + key + '\'' +
-      ", order=" + order +
-      '}';
+    return key + ' ' + order;
   }
+
+  public static Sorting of(String str) {
+    String[] parts = str.trim().split("\\s+");
+    if (parts.length == 1 && !parts[0].isEmpty()) {
+      return new Sorting(parts[0], Order.ASC);
+    } else if (parts.length == 2) {
+      return new Sorting(parts[0], Order.valueOf(parts[1].toUpperCase()));
+    } else {
+      throw new IllegalArgumentException(
+        String.format("Invalid value '%s' for Sorting. It must be of the form '<fieldname> [ ASC | DESC ]'", str));
+    }
+  }
+
 }
