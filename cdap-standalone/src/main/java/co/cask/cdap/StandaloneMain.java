@@ -45,7 +45,6 @@ import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -81,6 +80,7 @@ import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.cdap.security.store.SecureStoreService;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -233,7 +233,7 @@ public class StandaloneMain {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
-    injector.getInstance(MetadataStore.class).createIndex();
+    injector.getInstance(MetadataStorage.class).createIndex();
 
     metricsCollectionService.startAndWait();
     datasetOpExecutorService.startAndWait();

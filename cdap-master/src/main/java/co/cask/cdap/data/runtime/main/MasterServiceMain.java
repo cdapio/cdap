@@ -48,7 +48,6 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.util.hbase.ConfigurationReader;
@@ -80,6 +79,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
@@ -639,7 +639,7 @@ public class MasterServiceMain extends DaemonMain {
         throw new RuntimeException("Unable to create the system tables.", e);
       }
       try {
-        injector.getInstance(MetadataStore.class).createIndex();
+        injector.getInstance(MetadataStorage.class).createIndex();
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
