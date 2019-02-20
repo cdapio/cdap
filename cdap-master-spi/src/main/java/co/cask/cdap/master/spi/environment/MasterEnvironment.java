@@ -59,4 +59,5 @@ public interface MasterEnvironment {
    * Returns a {@link Supplier} of {@link DiscoveryServiceClient} for service discovery purpose.
    */
   Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier();
+
 }

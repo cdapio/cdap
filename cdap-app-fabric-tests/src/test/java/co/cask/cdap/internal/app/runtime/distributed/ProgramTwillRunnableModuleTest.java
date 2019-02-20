@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.test.MockTwillContext;
@@ -30,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;

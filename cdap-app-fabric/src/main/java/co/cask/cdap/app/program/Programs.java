@@ -21,6 +21,8 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
+import co.cask.cdap.master.spi.program.Program;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;

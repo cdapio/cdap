@@ -16,16 +16,16 @@
 
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.app.program.StateChangeListener;
 import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
+import co.cask.cdap.master.spi.program.Program;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.Injector;

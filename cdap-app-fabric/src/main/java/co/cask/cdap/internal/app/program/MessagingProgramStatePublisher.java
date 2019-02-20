@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.app.program;
 
 import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.master.spi.program.Arguments;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Notification;

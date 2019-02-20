@@ -20,12 +20,7 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -50,6 +45,11 @@ import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramOptions;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.ProgramHistory;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -76,8 +76,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -100,6 +98,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -541,63 +540,21 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Stops the specified run of the specified program.
-   *
-   * @param programId the {@link ProgramId program} to stop
-   * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
-   *              {@link ProgramRuntimeService} are stopped.
-   * @throws NotFoundException if the app, program or run was not found
-   * @throws BadRequestException if an attempt is made to stop a program that is either not running or
-   *                             was started by a workflow
-   * @throws InterruptedException if there was a problem while waiting for the stop call to complete
-   * @throws ExecutionException if there was a problem while waiting for the stop call to complete
-   */
-  public void stop(ProgramId programId, @Nullable String runId) throws Exception {
-    List<ListenableFuture<ProgramRunId>> futures = issueStop(programId, runId);
-
-    // Block until all stop requests completed. This call never throw ExecutionException
-    Futures.successfulAsList(futures).get();
-
-    Throwable failureCause = null;
-    for (ListenableFuture<ProgramRunId> f : futures) {
-      try {
-        f.get();
-      } catch (ExecutionException e) {
-        // If the program is stopped in between the time listing runs and issuing stops of the program,
-        // an IllegalStateException will be throw, which we can safely ignore
-        if (!(e.getCause() instanceof IllegalStateException)) {
-          if (failureCause == null) {
-            failureCause = e.getCause();
-          } else {
-            failureCause.addSuppressed(e.getCause());
-          }
-        }
-      }
-    }
-    if (failureCause != null) {
-      throw new ExecutionException(String.format("%d out of %d runs of the program %s failed to stop",
-                                                 failureCause.getSuppressed().length + 1, futures.size(), programId),
-                                   failureCause);
-    }
-  }
-
-  /**
-   * Issues a command to stop the specified {@link RunId} of the specified {@link ProgramId} and returns a
-   * {@link ListenableFuture} with the {@link ProgramRunId} for the runs that were stopped.
-   * Clients can wait for completion of the {@link ListenableFuture}.
+   * Stops the specified {@link RunId} of the specified {@link ProgramId} and returns the {@link ProgramRunId}
+   * for the runs that were stopped.
    *
    * @param programId the {@link ProgramId program} to issue a stop for
    * @param runId the runId of the program run to stop. If null, all runs of the program as returned by
    *              {@link ProgramRuntimeService} are stopped.
-   * @return a list of {@link ListenableFuture} with the {@link ProgramRunId} that clients can wait on for stop
-   *         to complete.
+   * @return a list of {@link ProgramStopResult} with the {@link ProgramRunId} and failure reason if it could
+   *   not be stopped.
    * @throws NotFoundException if the app, program or run was not found
    * @throws BadRequestException if an attempt is made to stop a program that is either not running or
    *                             was started by a workflow
    * @throws UnauthorizedException if the user issuing the command is not authorized to stop the program. To stop a
    *                               program, a user requires {@link Action#EXECUTE} permission on the program.
    */
-  public List<ListenableFuture<ProgramRunId>> issueStop(ProgramId programId, @Nullable String runId) throws Exception {
+  public List<ProgramStopResult> stop(ProgramId programId, @Nullable String runId) throws Exception {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
 
     // See if the program is running as per the runtime service
@@ -623,7 +580,7 @@ public class ProgramLifecycleService {
                                              activeRunRecords.keySet().stream().map(ProgramRunId::getRun))
                                       .collect(Collectors.toSet());
 
-    List<ListenableFuture<ProgramRunId>> futures = new ArrayList<>();
+    Map<ProgramRunId, Future<ProgramController>> futures = new HashMap<>();
     Stopwatch stopwatch = new Stopwatch().start();
 
     Set<ProgramRunId> cancelledProvisionRuns = new HashSet<>();
@@ -647,8 +604,7 @@ public class ProgramLifecycleService {
         RuntimeInfo runtimeInfo = runtimeService.lookup(programId, RunIds.fromString(activeRunId.getRun()));
         // if there is a runtimeInfo, the run is in the 'starting' state or later
         if (runtimeInfo != null) {
-          ListenableFuture<ProgramController> future = runtimeInfo.getController().stop();
-          futures.add(Futures.transform(future, ProgramController::getProgramRunId));
+          futures.put(activeRunId, runtimeInfo.getController().stop());
           iterator.remove();
           // if it was in this set, it means we cancelled a task, but it had already sent a PROVISIONED message
           // by the time we cancelled it. We then waited for it to show up in the runtime service and got here.
@@ -700,12 +656,28 @@ public class ProgramLifecycleService {
       }
     }
 
+    List<ProgramStopResult> results = new ArrayList<>();
+    for (Map.Entry<ProgramRunId, Future<ProgramController>> f : futures.entrySet()) {
+      try {
+        f.getValue().get();
+        results.add(new ProgramStopResult(f.getKey(), null));
+      } catch (ExecutionException e) {
+        Throwable failureCause = null;
+        // If the program is stopped in between the time listing runs and issuing stops of the program,
+        // an IllegalStateException will be throw, which we can safely ignore
+        if (!(e.getCause() instanceof IllegalStateException)) {
+          failureCause = e.getCause();
+        }
+        results.add(new ProgramStopResult(f.getKey(), failureCause));
+      }
+    }
+
     for (ProgramRunId cancelledProvisionRun : cancelledProvisionRuns) {
       SettableFuture<ProgramRunId> future = SettableFuture.create();
       future.set(cancelledProvisionRun);
-      futures.add(future);
+      results.add(new ProgramStopResult(cancelledProvisionRun, null));
     }
-    return futures;
+    return results;
   }
 
   /**
@@ -836,7 +808,7 @@ public class ProgramLifecycleService {
     return EnumSet.of(ProgramType.WORKFLOW, ProgramType.MAPREDUCE, ProgramType.SPARK).contains(type);
   }
 
-  private Map<RunId, ProgramRuntimeService.RuntimeInfo> findRuntimeInfo(
+  private Map<RunId, RuntimeInfo> findRuntimeInfo(
     ProgramId programId, @Nullable String runId) throws BadRequestException {
 
     if (runId != null) {
@@ -846,14 +818,14 @@ public class ProgramLifecycleService {
       } catch (IllegalArgumentException e) {
         throw new BadRequestException("Error parsing run-id.", e);
       }
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.lookup(programId, run);
+      RuntimeInfo runtimeInfo = runtimeService.lookup(programId, run);
       return runtimeInfo == null ? Collections.emptyMap() : Collections.singletonMap(run, runtimeInfo);
     }
     return new HashMap<>(runtimeService.list(programId));
   }
 
   @Nullable
-  private ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId) throws BadRequestException {
+  private RuntimeInfo findRuntimeInfo(ProgramId programId) throws BadRequestException {
     return findRuntimeInfo(programId, null).values().stream().findFirst().orElse(null);
   }
 
@@ -941,7 +913,7 @@ public class ProgramLifecycleService {
     int oldInstances = store.getWorkerInstances(programId);
     if (oldInstances != instances) {
       store.setWorkerInstances(programId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+      RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                             ImmutableMap.of("runnable", programId.getProgram(),
@@ -956,7 +928,7 @@ public class ProgramLifecycleService {
     int oldInstances = store.getServiceInstances(programId);
     if (oldInstances != instances) {
       store.setServiceInstances(programId, instances);
-      ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+      RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
       if (runtimeInfo != null) {
         runtimeInfo.getController().command(ProgramOptionConstants.INSTANCES,
                                             ImmutableMap.of("runnable", programId.getProgram(),
@@ -971,7 +943,7 @@ public class ProgramLifecycleService {
    */
   private void updateLogLevels(ProgramId programId, Map<String, LogEntry.Level> logLevels,
                                @Nullable String runId) throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
+    RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
                                                                                      .findFirst().orElse(null);
     if (runtimeInfo != null) {
       LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);
@@ -983,7 +955,7 @@ public class ProgramLifecycleService {
    * Helper method to reset log levels for Worker or Service.
    */
   private void resetLogLevels(ProgramId programId, Set<String> loggerNames, @Nullable String runId) throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
+    RuntimeInfo runtimeInfo = findRuntimeInfo(programId, runId).values().stream()
                                                                                      .findFirst().orElse(null);
     if (runtimeInfo != null) {
       LogLevelUpdater logLevelUpdater = getLogLevelUpdater(runtimeInfo);

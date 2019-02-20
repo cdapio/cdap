@@ -16,7 +16,8 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramRunId;
 

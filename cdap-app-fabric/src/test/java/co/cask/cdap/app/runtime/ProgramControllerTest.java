@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import co.cask.cdap.master.spi.program.ProgramController;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;

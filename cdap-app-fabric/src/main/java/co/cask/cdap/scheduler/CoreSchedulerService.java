@@ -17,7 +17,6 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
@@ -40,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreData
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.profile.AdminEventPublisher;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.ProgramType;

@@ -18,7 +18,6 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
@@ -29,6 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.LocalDatasetDeleterRunnable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;

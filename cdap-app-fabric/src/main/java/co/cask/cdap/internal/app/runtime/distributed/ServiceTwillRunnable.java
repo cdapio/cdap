@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.guice.DistributedArtifactManagerModule;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Module;
 import com.google.inject.util.Modules;

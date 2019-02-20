@@ -18,8 +18,6 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -37,6 +35,8 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.provision.ProvisionRequest;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
 import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;

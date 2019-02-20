@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
@@ -26,6 +25,7 @@ import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.logging.context.LoggingContextHelper;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import co.cask.cdap.security.tools.KeyStores;

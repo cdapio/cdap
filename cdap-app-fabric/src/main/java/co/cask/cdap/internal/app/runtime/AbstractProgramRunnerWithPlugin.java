@@ -16,10 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.internal.ServiceListenerAdapter;

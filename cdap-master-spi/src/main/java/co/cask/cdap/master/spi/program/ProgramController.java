@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package co.cask.cdap.master.spi.program;
 
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
@@ -136,13 +136,13 @@ public interface ProgramController {
 
   /**
    * Suspend the running {@link ProgramRunner}.
-   * @return A {@link ListenableFuture} that will be completed when the program is actually suspended.
+   * @return A {@link Future} that will be completed when the program is actually suspended.
    */
-  ListenableFuture<ProgramController> suspend();
+  Future<ProgramController> suspend();
 
-  ListenableFuture<ProgramController> resume();
+  Future<ProgramController> resume();
 
-  ListenableFuture<ProgramController> stop();
+  Future<ProgramController> stop();
 
   /**
    * @return The current state of the program at the time when this method is called.
@@ -168,9 +168,9 @@ public interface ProgramController {
    * Sends a command to the program. It's up to the program on how to handle it.
    * @param name Name of the command.
    * @param value Value of the command.
-   * @return A {@link ListenableFuture} that would be completed when the command is handled or ignored.
+   * @return A {@link Future} that would be completed when the command is handled or ignored.
    */
-  ListenableFuture<ProgramController> command(String name, Object value);
+  Future<ProgramController> command(String name, Object value);
 
   /**
    * Listener for getting callbacks on state changed on {@link ProgramController}.

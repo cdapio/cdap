@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.deploy.pipeline;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;

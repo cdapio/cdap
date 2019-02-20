@@ -16,8 +16,8 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.app.runtime.LogLevelUpdater;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.master.spi.program.ProgramController;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.Futures;
 import org.apache.twill.api.RunId;

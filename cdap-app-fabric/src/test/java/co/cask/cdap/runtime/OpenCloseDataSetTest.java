@@ -18,8 +18,6 @@ package co.cask.cdap.runtime;
 
 import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.TrackingTable;
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -29,6 +27,8 @@ import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;

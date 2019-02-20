@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
-import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;

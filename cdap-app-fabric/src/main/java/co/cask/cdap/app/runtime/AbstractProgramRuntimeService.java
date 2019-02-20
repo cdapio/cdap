@@ -19,8 +19,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
@@ -40,6 +38,12 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.master.spi.program.Program;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramOptions;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
@@ -424,21 +428,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         return info.getProgramId().equals(program);
       }
     });
-  }
-
-  @Override
-  public List<RuntimeInfo> listAll(ProgramType... types) {
-    List<RuntimeInfo> runningPrograms = new ArrayList<>();
-    for (ProgramType type : types) {
-      for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
-        ProgramController.State programState = entry.getValue().getController().getState();
-        if (programState.isDone()) {
-          continue;
-        }
-        runningPrograms.add(entry.getValue());
-      }
-    }
-    return runningPrograms;
   }
 
   @Override

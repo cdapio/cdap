@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.provision.ProvisioningService;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.Cluster;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;

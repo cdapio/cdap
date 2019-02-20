@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.internal.lang.MethodVisitor;
 import com.google.common.collect.ImmutableSet;

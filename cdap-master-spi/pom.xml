@@ -33,8 +33,17 @@
 
   <dependencies>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-proto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
+      <artifactId>twill-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>

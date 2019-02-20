@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.twill.TwillAppNames;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;

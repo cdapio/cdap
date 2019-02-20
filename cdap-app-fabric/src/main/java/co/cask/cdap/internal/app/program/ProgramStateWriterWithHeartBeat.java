@@ -15,9 +15,6 @@
  */
 package co.cask.cdap.internal.app.program;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -26,6 +23,9 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.master.spi.program.Arguments;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;

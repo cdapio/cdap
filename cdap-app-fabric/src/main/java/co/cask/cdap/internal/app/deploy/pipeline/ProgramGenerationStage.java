@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;

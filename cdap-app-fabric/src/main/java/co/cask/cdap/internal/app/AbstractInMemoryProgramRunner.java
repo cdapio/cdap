@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app;
 
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -28,23 +25,24 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import com.google.common.base.Function;
+import co.cask.cdap.master.spi.program.Program;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -89,13 +87,13 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       LOG.error("Failed to start all program instances", t);
       try {
         // Need to stop all started components
-        Futures.successfulAsList(
-          Iterables.transform(components.values(), new Function<ProgramController, ListenableFuture<?>>() {
-            @Override
-            public ListenableFuture<?> apply(ProgramController controller) {
-              return controller.stop();
-            }
-          })).get();
+        List<Future> futures = new ArrayList<>(components.size());
+        for (ProgramController controller : components.values()) {
+          futures.add(controller.stop());
+        }
+        for (Future f : futures) {
+          f.get();
+        }
 
         throw Throwables.propagate(t);
       } catch (Exception e) {
@@ -189,13 +187,13 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       LOG.info("Stopping Program: {}", program.getName());
       lock.lock();
       try {
-        Futures.successfulAsList(
-          Iterables.transform(components.values(), new Function<ProgramController, ListenableFuture<?>>() {
-            @Override
-            public ListenableFuture<?> apply(ProgramController input) {
-              return input.stop();
-            }
-          })).get();
+        List<Future> futures = new ArrayList<>(components.size());
+        for (ProgramController programController : components.values()) {
+          futures.add(programController.stop());
+        }
+        for (Future f : futures) {
+          f.get();
+        }
       } finally {
         lock.unlock();
       }
@@ -241,11 +239,13 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
       // stop any extra runnables
       if (liveCount > newCount) {
-        List<ListenableFuture<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
+        List<Future<ProgramController>> futures = Lists.newArrayListWithCapacity(liveCount - newCount);
         for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
           futures.add(components.remove(runnableName, instanceId).stop());
         }
-        Futures.allAsList(futures).get();
+        for (Future f : futures) {
+          f.get();
+        }
       }
 
       // create more runnable instances, if necessary.

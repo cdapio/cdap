@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.codec;
 
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.master.spi.program.Arguments;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;

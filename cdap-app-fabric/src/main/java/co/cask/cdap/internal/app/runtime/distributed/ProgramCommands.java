@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import org.apache.twill.api.Command;
 
 /**

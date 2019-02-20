@@ -16,27 +16,22 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.twill.TwillAppNames;
-import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
@@ -53,17 +48,11 @@ import com.google.common.collect.Table;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.yarn.api.records.NodeReport;
-import org.apache.hadoop.yarn.api.records.NodeState;
-import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,15 +77,13 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   private final TwillRunner twillRunner;
   private final Store store;
-  private final ProgramResourceReporter resourceReporter;
   private final Impersonator impersonator;
   private final ProgramStateWriter programStateWriter;
 
   @Inject
-  DistributedProgramRuntimeService(CConfiguration cConf, Configuration hConf,
+  DistributedProgramRuntimeService(CConfiguration cConf,
                                    ProgramRunnerFactory programRunnerFactory,
                                    TwillRunner twillRunner, Store store,
-                                   MetricsCollectionService metricsCollectionService,
                                    // for running a program, we only need EXECUTE on the program, there should be no
                                    // privileges needed for artifacts
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
@@ -105,7 +92,6 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     super(cConf, programRunnerFactory, noAuthArtifactRepository);
     this.twillRunner = twillRunner;
     this.store = store;
-    this.resourceReporter = new ClusterResourceReporter(metricsCollectionService, hConf);
     this.impersonator = impersonator;
     this.programStateWriter = programStateWriter;
   }
@@ -285,119 +271,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     return super.getLiveInfo(program);
   }
 
-  /**
-   * Reports resource usage of the cluster and all the app masters of running twill programs.
-   */
-  private class ClusterResourceReporter extends AbstractResourceReporter {
-
-    private final YarnClient yarnClient;
-
-    ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
-      super(metricsCollectionService.getContext(ImmutableMap.of()));
-
-      YarnClient yarnClient = YarnClient.createYarnClient();
-      yarnClient.init(hConf);
-      this.yarnClient = yarnClient;
-    }
-
-    @Override
-    protected void startUp() throws Exception {
-      super.startUp();
-      yarnClient.start();
-    }
-
-    @Override
-    protected void shutDown() throws Exception {
-      yarnClient.stop();
-      super.shutDown();
-    }
-
-    @Override
-    public void reportResources() {
-      for (TwillRunner.LiveInfo info : twillRunner.lookupLive()) {
-        Map<String, String> metricContext = getMetricContext(info);
-        if (metricContext == null) {
-          continue;
-        }
-
-        // will have multiple controllers if there are multiple runs of the same application
-        for (TwillController controller : info.getControllers()) {
-          ResourceReport report = controller.getResourceReport();
-          if (report == null) {
-            continue;
-          }
-          int memory = report.getAppMasterResources().getMemoryMB();
-          int vcores = report.getAppMasterResources().getVirtualCores();
-
-          Map<String, String> runContext = ImmutableMap.<String, String>builder()
-            .putAll(metricContext)
-            .put(Constants.Metrics.Tag.RUN_ID, controller.getRunId().getId()).build();
-
-          sendMetrics(runContext, 1, memory, vcores);
-        }
-      }
-      reportYarnResources();
-    }
-
-    private void reportYarnResources() {
-      try {
-        long totalMemory = 0L;
-        long totalVCores = 0L;
-        long usedMemory = 0L;
-        long usedVCores = 0L;
-
-        for (NodeReport nodeReport : yarnClient.getNodeReports(NodeState.RUNNING)) {
-          Resource capability = nodeReport.getCapability();
-          Resource used = nodeReport.getUsed();
-
-          totalMemory += capability.getMemory();
-          totalVCores += YarnUtils.getVirtualCores(capability);
-
-          usedMemory += used.getMemory();
-          usedVCores += YarnUtils.getVirtualCores(used);
-        }
-
-        MetricsContext collector = getCollector();
-
-        LOG.trace("YARN Cluster memory total={}MB, used={}MB", totalMemory, usedMemory);
-        collector.gauge("resources.total.memory", totalMemory);
-        collector.gauge("resources.used.memory", usedMemory);
-        collector.gauge("resources.available.memory", totalMemory - usedMemory);
-
-        LOG.trace("YARN Cluster vcores total={}, used={}", totalVCores, usedVCores);
-        collector.gauge("resources.total.vcores", totalVCores);
-        collector.gauge("resources.used.vcores", usedVCores);
-        collector.gauge("resources.available.vcores", totalVCores - usedVCores);
-
-      } catch (Exception e) {
-        LOG.warn("Failed to gather YARN NodeReports", e);
-      }
-    }
-
-    private Map<String, String> getMetricContext(TwillRunner.LiveInfo info) {
-      ProgramId programId = TwillAppNames.fromTwillAppName(info.getApplicationName(), false);
-      if (programId == null) {
-        return null;
-      }
-
-      return getMetricsContext(programId.getType(), programId);
-    }
-  }
-
-  private static Map<String, String> getMetricsContext(ProgramType type, ProgramId programId) {
-    return ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, programId.getNamespace(),
-                           Constants.Metrics.Tag.APP, programId.getApplication(),
-                           ProgramTypeMetricTag.getTagName(type), programId.getProgram());
-  }
-
   @Override
   protected void startUp() {
-    resourceReporter.start();
     LOG.debug("started distributed program runtime service");
   }
 
-  @Override
-  protected void shutDown() {
-    resourceReporter.stop();
-  }
 }

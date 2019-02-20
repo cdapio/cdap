@@ -26,8 +26,6 @@ import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ConflictException;
@@ -45,6 +43,9 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -128,7 +129,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                  @PathParam("workflow-name") String workflowName,
                                  @PathParam("run-id") String runId) throws Exception {
     ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
       throw new NotFoundException(id.run(runId));
     }
@@ -148,7 +149,7 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                 @PathParam("run-id") String runId) throws Exception {
 
     ProgramId id = new ProgramId(namespaceId, appId, ProgramType.WORKFLOW, workflowName);
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
+    RuntimeInfo runtimeInfo = runtimeService.list(id).get(RunIds.fromString(runId));
     if (runtimeInfo == null) {
       throw new NotFoundException(id.run(runId));
     }

@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
@@ -48,8 +47,10 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.ProgramStopResult;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramCount;
 import co.cask.cdap.proto.BatchProgramHistory;
@@ -82,13 +83,10 @@ import co.cask.cdap.scheduler.ProgramScheduleService;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -1048,42 +1046,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
 
-    List<ListenableFuture<BatchProgramResult>> issuedStops = new ArrayList<>(programs.size());
+    List<BatchProgramResult> stops = new ArrayList<>(programs.size());
     for (final BatchProgram program : programs) {
       ProgramId programId = new ProgramId(namespaceId, program.getAppId(), program.getProgramType(),
                                          program.getProgramId());
       try {
-        List<ListenableFuture<ProgramRunId>> stops = lifecycleService.issueStop(programId, null);
-        for (ListenableFuture<ProgramRunId> stop : stops) {
-          ListenableFuture<BatchProgramResult> issuedStop =
-            Futures.transform(stop, (Function<ProgramRunId, BatchProgramResult>) input ->
-              new BatchProgramResult(program, HttpResponseStatus.OK.code(), null, input.getRun()));
-          issuedStops.add(issuedStop);
+        List<ProgramStopResult> programStops = lifecycleService.stop(programId, null);
+        for (ProgramStopResult stopResult : programStops) {
+          if (stopResult.getFailure() != null) {
+            stops.add(new BatchProgramResult(program, HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
+                                             stopResult.getFailure().getMessage()));
+          } else {
+            stops.add(new BatchProgramResult(program, HttpResponseStatus.OK.code(), null,
+                                             stopResult.getProgramRunId().getRun()));
+          }
         }
       } catch (NotFoundException e) {
-        issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage())));
+        stops.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.code(), e.getMessage()));
       } catch (BadRequestException e) {
-        issuedStops.add(Futures.immediateFuture(
-          new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage())));
+        stops.add(new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.code(), e.getMessage()));
       }
     }
 
-    List<BatchProgramResult> output = new ArrayList<>(programs.size());
-    // need to keep this index in case there is an exception getting the future, since we won't have the program
-    // information in that scenario
-    int i = 0;
-    for (ListenableFuture<BatchProgramResult> issuedStop : issuedStops) {
-      try {
-        output.add(issuedStop.get());
-      } catch (Throwable t) {
-        LOG.warn(t.getMessage(), t);
-        output.add(new BatchProgramResult(programs.get(i), HttpResponseStatus.INTERNAL_SERVER_ERROR.code(),
-                                          t.getMessage()));
-      }
-      i++;
-    }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(output));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(stops));
   }
 
   /**

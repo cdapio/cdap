@@ -21,7 +21,6 @@ import co.cask.cdap.api.plugin.InvalidPluginConfigException;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;

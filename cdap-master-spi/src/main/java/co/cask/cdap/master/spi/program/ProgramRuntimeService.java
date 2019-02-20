@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,37 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package co.cask.cdap.master.spi.program;
 
-import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Service for interacting with the runtime system.
  */
-public interface ProgramRuntimeService extends Service {
+public interface ProgramRuntimeService {
 
-  /**
-   * Represents information of a running program.
-   */
-  interface RuntimeInfo {
-    ProgramController getController();
-
-    ProgramType getType();
-
-    ProgramId getProgramId();
-
-    @Nullable
-    RunId getTwillRunId();
-  }
 
   /**
    * Starts the given program and return a {@link RuntimeInfo} about the running program.
@@ -87,13 +71,4 @@ public interface ProgramRuntimeService extends Service {
    * YARN application id and the container information for each runnable. For in-memory, it may be empty.
    */
   ProgramLiveInfo getLiveInfo(ProgramId programId);
-
-  /**
-   * Get information about running programs.
-   * Protected only to support v2 APIs
-   *
-   * @param types Types of program to check
-   * returns List of info about running programs.
-   */
-  List<RuntimeInfo> listAll(ProgramType... types);
 }

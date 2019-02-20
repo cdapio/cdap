@@ -18,17 +18,16 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
@@ -40,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -77,7 +77,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
     LOG.info("Stopping all running programs.");
 
-    List<ListenableFuture<ProgramController>> futures = Lists.newLinkedList();
+    List<Future<ProgramController>> futures = Lists.newLinkedList();
     for (ProgramType type : ProgramType.values()) {
       for (Map.Entry<RunId, RuntimeInfo> entry : list(type).entrySet()) {
         RuntimeInfo runtimeInfo = entry.getValue();
@@ -88,7 +88,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     }
     // unchecked because we cannot do much if it fails. We will still shutdown the standalone CDAP instance.
     try {
-      Futures.successfulAsList(futures).get(60, TimeUnit.SECONDS);
+      for (Future f : futures) {
+        f.get(60, TimeUnit.SECONDS);
+      }
       LOG.info("All programs have been stopped.");
     } catch (ExecutionException e) {
       // note this should not happen because we wait on a successfulAsList

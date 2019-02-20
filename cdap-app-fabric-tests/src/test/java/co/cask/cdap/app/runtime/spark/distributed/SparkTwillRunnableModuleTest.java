@@ -17,7 +17,6 @@
 package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.app.guice.ClusterMode;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.spark.SparkProgramRunner;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import co.cask.cdap.common.app.RunIds;
@@ -28,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ImmutableMap;

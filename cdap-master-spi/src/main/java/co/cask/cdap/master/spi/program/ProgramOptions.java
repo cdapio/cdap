@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,32 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime;
+package co.cask.cdap.master.spi.program;
 
-import co.cask.cdap.master.spi.program.Program;
-import co.cask.cdap.master.spi.program.ProgramController;
-import co.cask.cdap.master.spi.program.ProgramOptions;
+import co.cask.cdap.proto.id.ProgramId;
 
 /**
- *
+ * Represents options for a program execution.
  */
-public interface ProgramRunner {
+public interface ProgramOptions {
 
   /**
-   * Runs the {@link Program} with the given {@link ProgramOptions}.
-   * This method must returns immediately and have the {@link ProgramController} returned
-   * state management.
-   *
-   * @param program
-   * @param options
-   * @return
+   * Returns the unique identifier for a program.
    */
-  ProgramController run(Program program, ProgramOptions options);
+  ProgramId getProgramId();
+
+  /**
+   * Returns the system arguments. It is for storing arguments used by the runtime system.
+   */
+  Arguments getArguments();
+
+  /**
+   * Returns the user arguments.
+   */
+  Arguments getUserArguments();
+
+  /**
+   * Returns {@code true} if executing in debug mode.
+   */
+  boolean isDebug();
 }

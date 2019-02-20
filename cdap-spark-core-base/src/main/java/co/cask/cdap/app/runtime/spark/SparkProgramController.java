@@ -19,10 +19,10 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.WorkflowDataProvider;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.master.spi.program.ProgramController;
 import com.google.common.util.concurrent.Service;
 
 import java.util.Set;

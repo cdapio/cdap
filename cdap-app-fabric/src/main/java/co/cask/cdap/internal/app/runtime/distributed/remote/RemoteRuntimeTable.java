@@ -17,10 +17,10 @@
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.app.runtime.Arguments;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import co.cask.cdap.master.spi.program.Arguments;
+import co.cask.cdap.master.spi.program.ProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramRunId;

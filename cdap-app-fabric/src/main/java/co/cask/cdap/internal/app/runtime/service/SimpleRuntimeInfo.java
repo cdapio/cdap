@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.master.spi.program.ProgramController;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Objects;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  *
  */
-public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInfo {
+public final class SimpleRuntimeInfo implements RuntimeInfo {
 
   private final ProgramController controller;
   private final ProgramId programId;
@@ -67,7 +67,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(ProgramRuntimeService.RuntimeInfo.class)
+    return Objects.toStringHelper(RuntimeInfo.class)
       .add("programId", programId)
       .add("twillRunId", twillRunId)
       .toString();

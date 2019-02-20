@@ -16,12 +16,12 @@
 
 package co.cask.cdap.gateway.handlers.util;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
+import co.cask.cdap.master.spi.program.RuntimeInfo;
 import co.cask.cdap.proto.Instances;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -119,12 +119,12 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     return args;
   }
 
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(ProgramId programId,
-                                                              ProgramRuntimeService runtimeService) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType()).values();
+  protected RuntimeInfo findRuntimeInfo(ProgramId programId,
+                                        ProgramRuntimeService runtimeService) {
+    Collection<RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType()).values();
     Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
 
-    for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
+    for (RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {
         return info;
       }

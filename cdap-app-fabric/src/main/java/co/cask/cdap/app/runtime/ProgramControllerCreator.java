@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.master.spi.program.ProgramController;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;

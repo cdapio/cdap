@@ -18,7 +18,6 @@ package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
@@ -26,6 +25,7 @@ import co.cask.cdap.common.logging.RedirectedPrintStream;
 import co.cask.cdap.internal.asm.Classes;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
+import co.cask.cdap.master.spi.program.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;

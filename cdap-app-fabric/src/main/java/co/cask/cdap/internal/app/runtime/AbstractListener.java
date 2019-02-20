@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.master.spi.program.ProgramController;
 
 import javax.annotation.Nullable;
 

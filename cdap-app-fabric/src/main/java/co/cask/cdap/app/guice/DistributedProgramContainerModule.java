@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.guice;
 
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -50,6 +49,7 @@ import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import co.cask.cdap.logging.guice.KafkaLogAppenderModule;
 import co.cask.cdap.logging.guice.TMSLogAppenderModule;
+import co.cask.cdap.master.spi.program.Arguments;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;

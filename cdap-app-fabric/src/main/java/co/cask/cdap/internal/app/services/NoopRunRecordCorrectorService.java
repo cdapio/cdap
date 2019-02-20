@@ -16,12 +16,12 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import com.google.inject.Inject;
 
 /**

@@ -18,10 +18,10 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowInfo;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.master.spi.program.Arguments;
 import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 

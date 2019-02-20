@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.program;
+package co.cask.cdap.master.spi.program;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * Provides information about a program.
@@ -33,10 +33,9 @@ public class ProgramDescriptor {
   private final ArtifactId artifactId;
 
   public ProgramDescriptor(ProgramId programId, ApplicationSpecification appSpec) {
-    this(programId, appSpec, Artifacts.toArtifactId(programId.getNamespaceId(), appSpec.getArtifactId()));
+    this(programId, appSpec, toArtifactId(programId, appSpec));
   }
 
-  @VisibleForTesting
   public ProgramDescriptor(ProgramId programId, ApplicationSpecification appSpec, ArtifactId artifactId) {
     this.programId = programId;
     this.appSpec = appSpec;
@@ -87,5 +86,12 @@ public class ProgramDescriptor {
    */
   public ApplicationSpecification getApplicationSpecification() {
     return appSpec;
+  }
+
+  private static ArtifactId toArtifactId(ProgramId programId, ApplicationSpecification appSpec) {
+    ArtifactScope scope = appSpec.getArtifactId().getScope();
+    NamespaceId artifactNamespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : programId.getNamespaceId();
+    return artifactNamespace.artifact(appSpec.getArtifactId().getName(),
+                                      appSpec.getArtifactId().getVersion().getVersion());
   }
 }

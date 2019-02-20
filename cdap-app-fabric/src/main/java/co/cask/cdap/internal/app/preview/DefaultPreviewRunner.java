@@ -22,8 +22,6 @@ import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.app.preview.PreviewRequest;
 import co.cask.cdap.app.preview.PreviewRunner;
 import co.cask.cdap.app.preview.PreviewStatus;
-import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -39,6 +37,7 @@ import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
+import co.cask.cdap.master.spi.program.ProgramController;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
@@ -87,7 +86,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final DatasetService datasetService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final ApplicationLifecycleService applicationLifecycleService;
-  private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
   private final PreviewStore previewStore;
   private final DataTracerFactory dataTracerFactory;
@@ -110,7 +108,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   DefaultPreviewRunner(MessagingService messagingService, DatasetService datasetService,
                        LogAppenderInitializer logAppenderInitializer,
                        ApplicationLifecycleService applicationLifecycleService,
-                       ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin, ProgramStore programStore,
@@ -118,12 +115,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
-                       StructuredTableRegistry structuredTableRegistry) throws Exception {
+                       StructuredTableRegistry structuredTableRegistry) {
     this.messagingService = messagingService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
-    this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
     this.previewStore = previewStore;
     this.status = null;
@@ -273,7 +269,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                                                                        Constants.Service.PREVIEW_HTTP));
     Futures.allAsList(
       applicationLifecycleService.start(),
-      programRuntimeService.start(),
       metricsCollectionService.start(),
       programNotificationSubscriberService.start()
     ).get();
@@ -293,7 +288,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     if (timer != null) {
       timer.cancel();
     }
-    programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();

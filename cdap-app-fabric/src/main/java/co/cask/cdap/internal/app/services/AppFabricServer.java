@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
@@ -65,7 +64,6 @@ public class AppFabricServer extends AbstractIdleService {
 
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
-  private final ProgramRuntimeService programRuntimeService;
   private final ApplicationLifecycleService applicationLifecycleService;
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
@@ -92,7 +90,6 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
-                         ProgramRuntimeService programRuntimeService,
                          RunRecordCorrectorService runRecordCorrectorService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
@@ -108,7 +105,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.cConf = cConf;
     this.sConf = sConf;
     this.metricsCollectionService = metricsCollectionService;
-    this.programRuntimeService = programRuntimeService;
     this.servicesNames = servicesNames;
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -134,7 +130,6 @@ public class AppFabricServer extends AbstractIdleService {
         provisioningService.start(),
         applicationLifecycleService.start(),
         bootstrapService.start(),
-        programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
         pluginService.start(),
@@ -180,7 +175,6 @@ public class AppFabricServer extends AbstractIdleService {
     coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
     cancelHttpService.cancel();
-    programRuntimeService.stopAndWait();
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();

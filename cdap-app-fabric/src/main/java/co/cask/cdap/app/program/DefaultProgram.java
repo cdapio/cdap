@@ -16,6 +16,8 @@
 package co.cask.cdap.app.program;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.master.spi.program.Program;
+import co.cask.cdap.master.spi.program.ProgramDescriptor;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import org.apache.twill.filesystem.Location;
