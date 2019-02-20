@@ -22,13 +22,18 @@ import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.security.server.LDAPLoginModule;
-import com.google.common.base.Supplier;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Suppliers;
 import com.google.common.util.concurrent.Service;
-import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.Assert;
@@ -36,8 +41,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLSocket;
 
 /**
@@ -47,25 +53,20 @@ public class AppFabricServerTest {
 
   @Test
   public void startStopServer() throws Exception {
-    Injector injector = AppFabricTestHelper.getInjector();
+    Injector injector = getInjector(CConfiguration.create(), null);
     AppFabricServer server = injector.getInstance(AppFabricServer.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Service.State state = server.startAndWait();
-    Assert.assertTrue(state == Service.State.RUNNING);
+    Assert.assertEquals(Service.State.RUNNING, state);
 
     final EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
       () -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
     Assert.assertNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS));
 
     state = server.stopAndWait();
-    Assert.assertTrue(state == Service.State.TERMINATED);
+    Assert.assertEquals(Service.State.TERMINATED, state);
 
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return endpointStrategy.pick() == null;
-      }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(true, () -> endpointStrategy.pick() == null, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -74,24 +75,15 @@ public class AppFabricServerTest {
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
     cConf.setInt(Constants.AppFabric.SERVER_SSL_PORT, 0);
     SConfiguration sConf = SConfiguration.create();
-    final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf, new AbstractModule() {
-      @Override
-      protected void configure() {
-        // no overrides
-      }
-    });
+    Injector injector = getInjector(cConf, sConf);
 
     final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AppFabricServer appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     Assert.assertTrue(appFabricServer.isRunning());
 
-    Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
-      @Override
-      public EndpointStrategy get() {
-        return new RandomEndpointStrategy(() -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP));
-      }
-    });
+    Supplier<EndpointStrategy> endpointStrategySupplier = Suppliers.memoize(
+      () -> new RandomEndpointStrategy(() -> discoveryServiceClient.discover(Constants.Service.APP_FABRIC_HTTP)))::get;
     Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
     Assert.assertNotNull(discoverable);
     Assert.assertArrayEquals(Constants.Security.SSL_URI_SCHEME.getBytes(), discoverable.getPayload());
@@ -104,5 +96,25 @@ public class AppFabricServerTest {
     // "javax.net.ssl.SSLException: Unrecognized SSL message, plaintext connection?"
     socket.startHandshake();
     appFabricServer.stopAndWait();
+  }
+
+  private Injector getInjector(CConfiguration cConf, @Nullable SConfiguration sConf) {
+    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf, sConf));
+    injector.getInstance(TransactionManager.class).startAndWait();
+    // Register the tables before services will need to use them
+    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    try {
+      structuredTableRegistry.initialize();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    try {
+      StoreDefinition.createAllTables(tableAdmin, structuredTableRegistry);
+    } catch (IOException | TableAlreadyExistsException e) {
+      throw new RuntimeException("Failed to create the system tables", e);
+    }
+    injector.getInstance(DatasetService.class).startAndWait();
+    return injector;
   }
 }
