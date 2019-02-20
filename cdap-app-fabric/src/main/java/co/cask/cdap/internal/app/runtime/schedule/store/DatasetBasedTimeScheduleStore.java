@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,18 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.spi.data.table.field.Range;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -29,8 +35,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.commons.lang.SerializationUtils;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutorFactory;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
 import org.quartz.JobPersistenceException;
@@ -48,30 +52,29 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * ScheduleStore extends from RAMJobStore and persists the trigger and schedule information into datasets.
  */
 public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetBasedTimeScheduleStore.class);
-  private static final byte[] JOB_KEY = Bytes.toBytes("jobs");
-  private static final byte[] TRIGGER_KEY = Bytes.toBytes("trigger");
+  private static final String JOB_KEY = "job";
+  private static final String TRIGGER_KEY = "trigger";
 
-  private final TransactionExecutorFactory factory;
-  private final ScheduleStoreTableUtil tableUtil;
+  private final TransactionRunner transactionRunner;
 
   private final CConfiguration cConf;
-  private Table table;
 
   @Inject
-  DatasetBasedTimeScheduleStore(TransactionExecutorFactory factory, ScheduleStoreTableUtil tableUtil,
-                                CConfiguration cConf) {
-    this.tableUtil = tableUtil;
-    this.factory = factory;
+  DatasetBasedTimeScheduleStore(TransactionRunner transactionRunner, CConfiguration cConf) {
+    this.transactionRunner = transactionRunner;
     this.cConf = cConf;
   }
 
@@ -81,17 +84,10 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     try {
       // See CDAP-7116
       setMisfireThreshold(cConf.getLong(Constants.Scheduler.CFG_SCHEDULER_MISFIRE_THRESHOLD_MS));
-      initializeScheduleTable();
       readSchedulesFromPersistentStore();
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }
-  }
-
-  private void initializeScheduleTable() throws IOException, DatasetManagementException {
-    table = tableUtil.getMetaTable();
-    Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
-                               ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
   }
 
   @Override
@@ -159,10 +155,16 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     }
   }
 
+  @VisibleForTesting
+  static StructuredTable getTimeScheduleStructuredTable(StructuredTableContext context) {
+    return context.getTable(StoreDefinition.TimeScheduleStore.SCHEDULES);
+  }
+
   private void executeDelete(final TriggerKey triggerKey) {
     try {
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(() -> removeTrigger(table, triggerKey));
+      TransactionRunners.run(transactionRunner, context -> {
+        delete(getTimeScheduleStructuredTable(context), TRIGGER_KEY, triggerKey.getName());
+      });
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }
@@ -170,8 +172,9 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
 
   private void executeDelete(final JobKey jobKey) {
     try {
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(() -> removeJob(table, jobKey));
+      TransactionRunners.run(transactionRunner, context -> {
+        delete(getTimeScheduleStructuredTable(context), JOB_KEY, jobKey.getName());
+      });
     } catch (Throwable t) {
       throw Throwables.propagate(t);
     }
@@ -180,18 +183,18 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   private void persistChangeOfState(final TriggerKey triggerKey, final Trigger.TriggerState newTriggerState) {
     try {
       Preconditions.checkNotNull(triggerKey);
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(() -> {
-          TriggerStatusV2 storedTriggerStatus = readTrigger(table, triggerKey);
-          if (storedTriggerStatus != null) {
-            // its okay to persist the same trigger back again since during pause/resume
-            // operation the trigger does not change. We persist it here with just the new trigger state
-            persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
-          } else {
-            LOG.warn("Trigger key {} was not found in {} while trying to persist its state to {}.",
-                     triggerKey, ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME, newTriggerState);
-          }
-        });
+      TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = getTimeScheduleStructuredTable(context);
+        TriggerStatusV2 storedTriggerStatus = readTrigger(table, triggerKey);
+        if (storedTriggerStatus != null) {
+          // its okay to persist the same trigger back again since during pause/resume
+          // operation the trigger does not change. We persist it here with just the new trigger state
+          persistTrigger(table, storedTriggerStatus.trigger, newTriggerState);
+        } else {
+          LOG.warn("Trigger key {} was not found while trying to persist its state to {}.",
+                   triggerKey, newTriggerState);
+        }
+      });
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }
@@ -204,70 +207,73 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         triggerState = super.getTriggerState(newTrigger.getKey());
       }
       final Trigger.TriggerState finalTriggerState = triggerState;
-      factory.createExecutor(ImmutableList.of((TransactionAware) table))
-        .execute(() -> {
-          if (newJob != null) {
-            persistJob(table, newJob);
-            LOG.debug("Schedule: stored job with key {}", newJob.getKey());
-          }
-          if (newTrigger != null) {
-            persistTrigger(table, newTrigger, finalTriggerState);
-            LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
-          }
-        });
+      TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = getTimeScheduleStructuredTable(context);
+        if (newJob != null) {
+          persistJob(table, newJob);
+          LOG.debug("Schedule: stored job with key {}", newJob.getKey());
+        }
+        if (newTrigger != null) {
+          persistTrigger(table, newTrigger, finalTriggerState);
+          LOG.debug("Schedule: stored trigger with key {}", newTrigger.getKey());
+        }
+      });
     } catch (Throwable th) {
       throw Throwables.propagate(th);
     }
   }
 
   // Persist the job information to dataset
-  private void persistJob(Table table, JobDetail job) {
-    byte[][] cols = new byte[1][];
-    byte[][] values = new byte[1][];
-
-    cols[0] = Bytes.toBytes(job.getKey().toString());
-    values[0] = SerializationUtils.serialize(job);
-    table.put(JOB_KEY, cols, values);
+  private void persistJob(StructuredTable table, JobDetail job) throws IOException {
+    upsert(table, JOB_KEY, job.getKey().getName(), SerializationUtils.serialize(job));
   }
 
-  @VisibleForTesting
-  void removeJob(Table table, JobKey key) {
-    byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.toString());
-    table.delete(JOB_KEY, col);
+  private void delete(StructuredTable table, String type, String name) throws IOException {
+    table.delete(getPrimaryKeys(type, name));
   }
 
-  private void removeTrigger(Table table, TriggerKey key) {
-    byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName());
-    table.delete(TRIGGER_KEY, col);
-  }
 
-  @VisibleForTesting
-  TriggerStatusV2 readTrigger(Table table, TriggerKey key) {
-    byte[][] col = new byte[1][];
-    col[0] = Bytes.toBytes(key.getName());
-    Row result = table.get(TRIGGER_KEY, col);
-    byte[] bytes = null;
-    if (!result.isEmpty()) {
-      bytes = result.get(col[0]);
+  @Nullable
+  private byte[] get(StructuredTable table, String type, String name) throws IOException {
+    Optional<StructuredRow> row = table.read(getPrimaryKeys(type, name));
+    if (!row.isPresent()) {
+      return null;
     }
-    if (bytes != null) {
-      return (TriggerStatusV2) SerializationUtils.deserialize(bytes);
+    return row.get().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD);
+  }
+
+  private List<Field<?>> getPrimaryKeys(String type, String name) {
+    List<Field<?>> fields = new ArrayList<>();
+    fields.add(Fields.stringField(StoreDefinition.TimeScheduleStore.TYPE_FIELD, type));
+    fields.add(Fields.stringField(StoreDefinition.TimeScheduleStore.NAME_FIELD, name));
+    return fields;
+  }
+
+  @VisibleForTesting
+  @Nullable
+  TriggerStatusV2 readTrigger(StructuredTable table, TriggerKey key) throws IOException {
+    byte [] result = get(table, TRIGGER_KEY, key.getName());
+    if (result != null) {
+      return (TriggerStatusV2) SerializationUtils.deserialize(result);
     } else {
       return null;
     }
   }
 
-  // Persist the trigger information to dataset
-  private void persistTrigger(Table table, OperableTrigger trigger,
-                              Trigger.TriggerState state) {
-    byte[][] cols = new byte[1][];
-    byte[][] values = new byte[1][];
+  private void upsert(StructuredTable table, String type, String name, byte[] data) throws IOException {
+    List<Field<?>> fields = getPrimaryKeys(type, name);
+    fields.add(Fields.bytesField(StoreDefinition.TimeScheduleStore.VALUE_FIELD, data));
+    table.upsert(fields);
+  }
 
-    cols[0] = Bytes.toBytes(trigger.getKey().getName());
-    values[0] = SerializationUtils.serialize(new TriggerStatusV2(trigger, state));
-    table.put(TRIGGER_KEY, cols, values);
+  private void persistTrigger(StructuredTable table, OperableTrigger trigger,
+                              Trigger.TriggerState state) throws IOException {
+    byte[] data = SerializationUtils.serialize(new TriggerStatusV2(trigger, state));
+    upsert(table, TRIGGER_KEY, trigger.getKey().getName(), data);
+  }
+
+  private List<Field<?>> getScanPrefix(String type) {
+    return ImmutableList.of(Fields.stringField(StoreDefinition.TimeScheduleStore.TYPE_FIELD, type));
   }
 
   // Get schedule information from persistent store
@@ -275,37 +281,36 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
     final List<JobDetail> jobs = Lists.newArrayList();
     final List<TriggerStatusV2> triggers = Lists.newArrayList();
 
-    factory.createExecutor(ImmutableList.of((TransactionAware) table))
-      .execute(() -> {
-        Row result = table.get(JOB_KEY);
-        if (!result.isEmpty()) {
-          for (byte[] bytes : result.getColumns().values()) {
-            JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
-
-            LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
-            jobs.add(jobDetail);
-          }
-        } else {
-          LOG.debug("Schedule: No Jobs found in Job store");
+    TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = getTimeScheduleStructuredTable(context);
+      try (CloseableIterator<StructuredRow> iterator =
+        table.scan(Range.singleton(getScanPrefix(JOB_KEY)), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          JobDetail jobDetail =
+            (JobDetail) SerializationUtils.deserialize(
+              iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
+          LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
+          jobs.add(jobDetail);
         }
+      }
 
-        result = table.get(TRIGGER_KEY);
-        if (!result.isEmpty()) {
-          for (byte[] bytes : result.getColumns().values()) {
-            TriggerStatusV2 trigger = (TriggerStatusV2) SerializationUtils.deserialize(bytes);
-            if (trigger.state.equals(Trigger.TriggerState.NORMAL) ||
-              trigger.state.equals(Trigger.TriggerState.PAUSED)) {
-              triggers.add(trigger);
-              LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
-            } else {
-              LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
-                        trigger.state);
-            }
+      try (CloseableIterator<StructuredRow> iterator =
+        table.scan(Range.singleton(getScanPrefix(TRIGGER_KEY)), Integer.MAX_VALUE)) {
+        while (iterator.hasNext()) {
+          TriggerStatusV2 trigger =
+            (TriggerStatusV2) SerializationUtils.deserialize(
+              iterator.next().getBytes(StoreDefinition.TimeScheduleStore.VALUE_FIELD));
+          if (trigger.state.equals(Trigger.TriggerState.NORMAL) ||
+            trigger.state.equals(Trigger.TriggerState.PAUSED)) {
+            triggers.add(trigger);
+            LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
+          } else {
+            LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
+                      trigger.state);
           }
-        } else {
-          LOG.debug("Schedule: No triggers found in job store");
         }
-      });
+      }
+    });
 
     Set<JobKey> jobKeys = new HashSet<>();
     for (JobDetail job : jobs) {
