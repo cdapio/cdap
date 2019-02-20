@@ -36,6 +36,7 @@ import com.google.inject.Injector;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -50,10 +51,12 @@ import javax.net.ssl.SSLSocket;
  *
  */
 public class AppFabricServerTest {
+  private DatasetService datasetService;
+  private TransactionManager transactionManager;
 
   @Test
   public void startStopServer() throws Exception {
-    Injector injector = getInjector(CConfiguration.create(), null);
+    Injector injector = getInjectorAndStartServices(CConfiguration.create(), null);
     AppFabricServer server = injector.getInstance(AppFabricServer.class);
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     Service.State state = server.startAndWait();
@@ -75,7 +78,7 @@ public class AppFabricServerTest {
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
     cConf.setInt(Constants.AppFabric.SERVER_SSL_PORT, 0);
     SConfiguration sConf = SConfiguration.create();
-    Injector injector = getInjector(cConf, sConf);
+    Injector injector = getInjectorAndStartServices(cConf, sConf);
 
     final DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     AppFabricServer appFabricServer = injector.getInstance(AppFabricServer.class);
@@ -98,9 +101,20 @@ public class AppFabricServerTest {
     appFabricServer.stopAndWait();
   }
 
-  private Injector getInjector(CConfiguration cConf, @Nullable SConfiguration sConf) {
+  @After
+  public void stopServices() {
+    if (transactionManager != null) {
+      transactionManager.stopAndWait();
+    }
+    if (datasetService != null) {
+      datasetService.stopAndWait();
+    }
+  }
+
+  private Injector getInjectorAndStartServices(CConfiguration cConf, @Nullable SConfiguration sConf) {
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf, sConf));
-    injector.getInstance(TransactionManager.class).startAndWait();
+    transactionManager = injector.getInstance(TransactionManager.class);
+    transactionManager.startAndWait();
     // Register the tables before services will need to use them
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
@@ -114,7 +128,8 @@ public class AppFabricServerTest {
     } catch (IOException | TableAlreadyExistsException e) {
       throw new RuntimeException("Failed to create the system tables", e);
     }
-    injector.getInstance(DatasetService.class).startAndWait();
+    datasetService = injector.getInstance(DatasetService.class);
+    datasetService.startAndWait();
     return injector;
   }
 }
