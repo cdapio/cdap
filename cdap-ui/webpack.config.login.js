@@ -67,6 +67,7 @@ var plugins = [
     title: 'CDAP',
     template: './login.html',
     filename: 'login.html',
+    inject: false,
     hash: true,
     hashId: uuidV4(),
     mode: isModeProduction(mode) ? '' : 'development.',

@@ -88,6 +88,7 @@ var plugins = [
     template: './cdap.html',
     filename: 'cdap.html',
     hash: true,
+    inject: false,
     hashId: uuidV4(),
     mode: isModeProduction(mode) ? '' : 'development.',
   }),
