@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -29,7 +28,6 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -45,17 +43,15 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.store.StoreDefinition;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -99,18 +95,17 @@ public class DatasetBasedTimeScheduleStoreTest {
 
   private static Injector injector;
   private static Scheduler scheduler;
-  private static TransactionExecutorFactory factory;
-  private static DatasetFramework dsFramework;
   private static TransactionManager txService;
   private static DatasetOpExecutor dsOpsService;
   private static DatasetService dsService;
   private static DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
-  private static ScheduleStoreTableUtil tableUtil;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
+    // TODO: CDAP-14780 create sql based test by passing in cconf with sql parameter
     injector = Guice.createInjector(new ConfigModule(conf),
                                     new NonCustomLocationUnitTestModule(),
                                     new InMemoryDiscoveryModule(),
@@ -140,8 +135,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     dsOpsService.startAndWait();
     dsService = injector.getInstance(DatasetService.class);
     dsService.startAndWait();
-    dsFramework = injector.getInstance(DatasetFramework.class);
-    factory = injector.getInstance(TransactionExecutorFactory.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
   @AfterClass
@@ -155,8 +149,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     JobStore js;
     if (enablePersistence) {
       CConfiguration conf = injector.getInstance(CConfiguration.class);
-      tableUtil = new ScheduleStoreTableUtil(dsFramework, conf);
-      datasetBasedTimeScheduleStore = new DatasetBasedTimeScheduleStore(factory, tableUtil, conf);
+      datasetBasedTimeScheduleStore = new DatasetBasedTimeScheduleStore(transactionRunner, conf);
       js = datasetBasedTimeScheduleStore;
     } else {
       js = new RAMJobStore();
@@ -252,7 +245,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   }
 
   @Test
-  public void testSchedulerWithoutPersistence() throws SchedulerException, UnsupportedTypeException {
+  public void testSchedulerWithoutPersistence() throws SchedulerException {
     JobKey jobKey = scheduleJobWithTrigger(false);
 
     verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.NORMAL);
@@ -270,7 +263,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   }
 
   @Test
-  public void testSchedulerWithPersistenceAcrossRestarts() throws SchedulerException, UnsupportedTypeException {
+  public void testSchedulerWithPersistenceAcrossRestarts() throws SchedulerException {
     JobKey jobKey = scheduleJobWithTrigger(true);
 
     verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.NORMAL);
@@ -286,7 +279,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   }
 
   @Test
-  public void testPausedTriggersAcrossRestarts() throws SchedulerException, UnsupportedTypeException {
+  public void testPausedTriggersAcrossRestarts() throws SchedulerException {
     JobKey jobKey = scheduleJobWithTrigger(true);
 
     List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
@@ -359,19 +352,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
 
     // Delete the row corresponding to the Job MR1 to create inconsistency
-    final Table table = tableUtil.getMetaTable();
-
-    factory.createExecutor(ImmutableList.of((TransactionAware) table))
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          datasetBasedTimeScheduleStore.removeJob(table, job1.getKey());
-        }
-      });
-
-    // Make sure Jobs and Triggers are setup correctly
-    verifyJobAndTriggers(job1.getKey(), 1, Trigger.TriggerState.NORMAL);
-    verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
+    datasetBasedTimeScheduleStore.removeJob(job1.getKey());
 
     // Restart the scheduler it should not throw exception
     schedulerTearDown();
@@ -389,15 +370,12 @@ public class DatasetBasedTimeScheduleStoreTest {
     Assert.assertNull(trigger);
 
     // Make sure we actually deleted the entry from the persistent store as well for the Trigger
-    factory.createExecutor(ImmutableList.of((TransactionAware) table))
-      .execute(new TransactionExecutor.Subroutine() {
-        @Override
-        public void apply() throws Exception {
-          DatasetBasedTimeScheduleStore.TriggerStatusV2 triggerStatusV2
-            = datasetBasedTimeScheduleStore.readTrigger(table, job1Trigger.getKey());
-          Assert.assertNull(triggerStatusV2);
-        }
-      });
+    TransactionRunners.run(transactionRunner, context -> {
+      DatasetBasedTimeScheduleStore.TriggerStatusV2 triggerStatusV2
+        = datasetBasedTimeScheduleStore.readTrigger(
+          DatasetBasedTimeScheduleStore.getTimeScheduleStructuredTable(context), job1Trigger.getKey());
+      Assert.assertNull(triggerStatusV2);
+    });
     schedulerTearDown();
   }
 
@@ -417,7 +395,7 @@ public class DatasetBasedTimeScheduleStoreTest {
     }
   }
 
-  private JobKey scheduleJobWithTrigger(boolean enablePersistence) throws UnsupportedTypeException, SchedulerException {
+  private JobKey scheduleJobWithTrigger(boolean enablePersistence) throws SchedulerException {
     //start scheduler with given persistence setting
     schedulerSetup(enablePersistence);
     JobDetail jobDetail = getJobDetail("mapreduce1");
@@ -455,7 +433,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   }
 
   @AfterClass
-  public static void cleanup() throws SchedulerException, InterruptedException {
+  public static void cleanup() throws SchedulerException {
     schedulerTearDown();
   }
 }

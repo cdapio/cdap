@@ -85,6 +85,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(JobQueueStore.JOB_QUEUE_TABLE) == null) {
       JobQueueStore.createTables(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(TimeScheduleStore.SCHEDULES) == null) {
+      TimeScheduleStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -704,6 +707,31 @@ public final class StoreDefinition {
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(JOB_QUEUE_STORE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for time schedules.
+   */
+  public static final class TimeScheduleStore {
+
+    public static final StructuredTableId SCHEDULES = new StructuredTableId("schedules");
+
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String VALUE_FIELD = "value";
+
+    public static final StructuredTableSpecification SCHEDULES_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(SCHEDULES)
+        .withFields(Fields.stringType(TYPE_FIELD),
+                    Fields.stringType(NAME_FIELD),
+                    Fields.bytesType(VALUE_FIELD))
+        .withPrimaryKeys(TYPE_FIELD, NAME_FIELD)
+        .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(SCHEDULES_SPEC);
     }
   }
 }
