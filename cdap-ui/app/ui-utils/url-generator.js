@@ -172,13 +172,13 @@ window.getTrackerUrl = function(navigationObj = {}) {
 };
 window.getHydratorUrl = function(navigationObj = {}) {
   let { stateName, stateParams } = navigationObj;
-  let uiApp = 'pipelines';
+  let uiApp = stateName === 'hydrator.list' ? 'cdap' : 'pipelines';
   let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
   let stateToUrlMap = {
     hydrator: '',
     'hydrator.create': '/studio',
     'hydrator.detail': '/view/:pipelineId',
-    'hydrator.list': '',
+    'hydrator.list': '/pipelines',
   };
   let url = baseUrl + stateToUrlMap[stateName || 'pipelines'];
   url = buildCustomUrl(url, stateParams);
