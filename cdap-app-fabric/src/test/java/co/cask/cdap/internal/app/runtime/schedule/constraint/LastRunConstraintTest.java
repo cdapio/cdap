@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -85,7 +84,7 @@ public class LastRunConstraintTest {
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
                                                    ImmutableList.of());
-    SimpleJob job = new SimpleJob(schedule, now, Collections.emptyList(), Job.State.PENDING_TRIGGER, 0L);
+    SimpleJob job = new SimpleJob(schedule, 0, now, Collections.emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // require 1 hour since last run
     LastRunConstraint lastRunConstraint = new LastRunConstraint(1, TimeUnit.HOURS);

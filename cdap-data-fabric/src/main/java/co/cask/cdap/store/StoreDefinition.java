@@ -82,6 +82,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(LineageStore.PROGRAM_LINEAGE_TABLE) == null) {
       LineageStore.createTable(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(JobQueueStore.JOB_QUEUE_TABLE) == null) {
+      JobQueueStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -659,6 +662,48 @@ public final class StoreDefinition {
     public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(DATASET_LINEAGE_SPEC);
       tableAdmin.create(PROGRAM_LINEAGE_SPEC);
+    }
+  }
+
+  /**
+   * Table schema for job queue.
+   */
+  public static final class JobQueueStore {
+    public static final StructuredTableId JOB_QUEUE_TABLE =
+      new StructuredTableId("job_queue_store");
+
+    public static final String PARTITION_ID = "partition_id";
+    public static final String SCHEDULE_ID = "schedule_id";
+    public static final String GENERATION_ID = "generation_id";
+    public static final String ROW_TYPE = "row_type";
+    public static final String JOB = "job";
+    public static final String DELETE_TIME = "delete_time";
+    public static final String OBSOLETE_TIME = "obsolete_time";
+
+    /**
+     * Specifies the type of the data in a row. This is used as part of the primary key
+     */
+    public enum RowType {
+      JOB, // row contains the serialized job
+      DELETE, // if the job is marked for deletion, the row contains the time when the job was marked for deletion
+      OBSOLETE // if the job has timed out, the row contains the time when the job was marked as obsolete
+    }
+
+    public static final StructuredTableSpecification JOB_QUEUE_STORE_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(JOB_QUEUE_TABLE)
+        .withFields(Fields.intType(PARTITION_ID),
+                    Fields.stringType(SCHEDULE_ID),
+                    Fields.intType(GENERATION_ID),
+                    Fields.stringType(ROW_TYPE),
+                    Fields.stringType(JOB),
+                    Fields.longType(DELETE_TIME),
+                    Fields.longType(OBSOLETE_TIME))
+        .withPrimaryKeys(PARTITION_ID, SCHEDULE_ID, GENERATION_ID, ROW_TYPE)
+        .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(JOB_QUEUE_STORE_SPEC);
     }
   }
 }

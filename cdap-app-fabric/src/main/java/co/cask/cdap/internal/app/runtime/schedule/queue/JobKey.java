@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,11 +24,11 @@ import com.google.common.base.Objects;
  */
 public class JobKey {
   private final ScheduleId scheduleId;
-  private final long creationTime;
+  private final int generationId;
 
-  public JobKey(ScheduleId scheduleId, long creationTime) {
+  public JobKey(ScheduleId scheduleId, int generationId) {
     this.scheduleId = scheduleId;
-    this.creationTime = creationTime;
+    this.generationId = generationId;
   }
 
   /**
@@ -39,10 +39,10 @@ public class JobKey {
   }
 
   /**
-   * @return the creation time of the Job for this key.
+   * @return the generation Id of the Job for this key.
    */
-  public long getCreationTime() {
-    return creationTime;
+  public int getGenerationId() {
+    return generationId;
   }
 
   @Override
@@ -57,19 +57,19 @@ public class JobKey {
     JobKey that = (JobKey) o;
 
     return Objects.equal(this.scheduleId, that.scheduleId) &&
-      Objects.equal(this.creationTime, that.creationTime);
+      Objects.equal(this.generationId, that.generationId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(scheduleId, creationTime);
+    return Objects.hashCode(scheduleId, generationId);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("scheduleId", scheduleId)
-      .add("creationTime", creationTime)
+      .add("generationId", generationId)
       .toString();
   }
 }

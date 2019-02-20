@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,7 @@ import java.util.List;
  */
 public final class SimpleJob implements Job {
   private final ProgramSchedule schedule;
+  private final long creationTime;
   private final JobKey jobKey;
   private final List<Notification> notifications;
   private final State state;
@@ -39,10 +40,11 @@ public final class SimpleJob implements Job {
    *                                This serves as a way to detect whether the schedule was changed later-on, and
    *                                hence, the job would be obsolete in that case.
    */
-  public SimpleJob(ProgramSchedule schedule, long creationTime, List<Notification> notifications, State state,
-                   long scheduleLastUpdatedTime) {
+  public SimpleJob(ProgramSchedule schedule, int generationId, long creationTime, List<Notification> notifications,
+                   State state, long scheduleLastUpdatedTime) {
     this.schedule = schedule;
-    this.jobKey = new JobKey(schedule.getScheduleId(), creationTime);
+    this.creationTime = creationTime;
+    this.jobKey = new JobKey(schedule.getScheduleId(), generationId);
     this.notifications = ImmutableList.copyOf(notifications);
     this.state = state;
     this.scheduleLastUpdatedTime = scheduleLastUpdatedTime;
@@ -54,13 +56,18 @@ public final class SimpleJob implements Job {
   }
 
   @Override
+  public int getGenerationId() {
+    return jobKey.getGenerationId();
+  }
+
+  @Override
   public long getScheduleLastUpdatedTime() {
     return scheduleLastUpdatedTime;
   }
 
   @Override
   public long getCreationTime() {
-    return jobKey.getCreationTime();
+    return creationTime;
   }
 
   @Override
@@ -90,6 +97,7 @@ public final class SimpleJob implements Job {
     SimpleJob that = (SimpleJob) o;
 
     return Objects.equal(this.schedule, that.schedule) &&
+      Objects.equal(this.creationTime, that.creationTime) &&
       Objects.equal(this.jobKey, that.jobKey) &&
       Objects.equal(this.notifications, that.notifications) &&
       Objects.equal(this.state, that.state) &&
@@ -99,13 +107,15 @@ public final class SimpleJob implements Job {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(schedule, jobKey, notifications, state, scheduleLastUpdatedTime, deleteTimeMillis);
+    return Objects.hashCode(schedule, creationTime, jobKey, notifications, state, scheduleLastUpdatedTime,
+                            deleteTimeMillis);
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("schedule", schedule)
+      .add("creationTime", creationTime)
       .add("jobKey", jobKey)
       .add("notifications", notifications)
       .add("state", state)
@@ -124,7 +134,7 @@ public final class SimpleJob implements Job {
     return deleteTimeMillis;
   }
 
-  public void setToBeDeleted(long timestamp) {
+  void setToBeDeleted(long timestamp) {
     this.deleteTimeMillis = timestamp;
   }
 }

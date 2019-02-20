@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.preview;
 
-import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -40,7 +39,6 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.preview.PreviewDataModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
@@ -71,7 +69,6 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
@@ -226,12 +223,6 @@ public class DefaultPreviewManager implements PreviewManager {
       new AbstractModule() {
         @Override
         protected void configure() {
-          // Bind system datasets defined in App-fabric.
-          // Have to do it here as public binding, instead of inside PreviewRunnerModule due to Guice 3
-          // doesn't support exporting multi-binder from private module
-          MapBinder<String, DatasetModule> datasetModuleBinder = MapBinder.newMapBinder(
-            binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
-          datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
           bind(ArtifactRepository.class)
             .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
             .to(DefaultArtifactRepository.class)

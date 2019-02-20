@@ -16,8 +16,6 @@
 
 package co.cask.cdap.data.tools;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.schedule.Trigger;
@@ -34,21 +32,17 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueue;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -58,15 +52,15 @@ import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.impersonation.SecurityUtil;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -83,11 +77,9 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -110,28 +102,17 @@ public class JobQueueDebugger extends AbstractIdleService {
     .create();
 
   private final ZKClientService zkClientService;
+  private final TransactionRunner transactionRunner;
   private final CConfiguration cConf;
-  private final Transactional transactional;
-  private final MultiThreadDatasetCache multiThreadDatasetCache;
-  private final DatasetFramework datasetFramework;
 
   private JobQueueScanner jobQueueScanner;
 
   @Inject
   public JobQueueDebugger(CConfiguration cConf, ZKClientService zkClientService,
-                          DatasetFramework datasetFramework,
-                          TransactionSystemClient txClient) {
+                          TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.zkClientService = zkClientService;
-
-    this.datasetFramework = datasetFramework;
-    multiThreadDatasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework), txClient,
-      NamespaceId.SYSTEM, ImmutableMap.of(), null, null);
-    transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(multiThreadDatasetCache),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -146,13 +127,12 @@ public class JobQueueDebugger extends AbstractIdleService {
 
   private JobQueueScanner getJobQueueScanner() {
     if (jobQueueScanner == null) {
-      jobQueueScanner = new JobQueueScanner(cConf, transactional,
-                                            Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework, cConf));
+      jobQueueScanner = new JobQueueScanner(cConf, transactionRunner);
     }
     return jobQueueScanner;
   }
 
-  private void printTopicMessageIds() throws TransactionFailureException {
+  private void printTopicMessageIds() {
     getJobQueueScanner().printTopicMessageIds();
   }
 
@@ -165,26 +145,25 @@ public class JobQueueDebugger extends AbstractIdleService {
   }
 
   /**
-   * Scans over the JobQueueDataset and collects statistics about the Jobs.
+   * Scans over the JobQueueTable and collects statistics about the Jobs.
    */
   private static final class JobQueueScanner {
     private final CConfiguration cConf;
-    private final Transactional transactional;
-    private final JobQueueDataset jobQueue;
+    private final TransactionRunner transactionRunner;
     private final int numPartitions;
 
     private Job lastJobConsumed;
 
-    JobQueueScanner(CConfiguration cConf, Transactional transactional, JobQueueDataset jobQueue) {
+    JobQueueScanner(CConfiguration cConf, TransactionRunner transactionRunner) {
       this.cConf = cConf;
-      this.transactional = transactional;
-      this.jobQueue = jobQueue;
-      this.numPartitions = jobQueue.getNumPartitions();
+      this.transactionRunner = transactionRunner;
+      this.numPartitions = cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS);
     }
 
-    private void printTopicMessageIds() throws TransactionFailureException {
-      transactional.execute(context -> {
+    private void printTopicMessageIds() {
+      TransactionRunners.run(transactionRunner, context -> {
         System.out.println("Getting notification subscriber messageIds.");
+        JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, cConf);
         List<String> topics = ImmutableList.of(cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
                                                cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
         for (String topic : topics) {
@@ -214,7 +193,8 @@ public class JobQueueDebugger extends AbstractIdleService {
       final JobStatistics jobStatistics = new JobStatistics(trace);
       boolean moreJobs = true;
       while (moreJobs) {
-        moreJobs = Transactionals.execute(transactional, context -> {
+        moreJobs = TransactionRunners.run(transactionRunner, context -> {
+          JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, cConf);
           return scanJobQueue(jobQueue, partition, jobStatistics);
         });
       }
@@ -227,7 +207,7 @@ public class JobQueueDebugger extends AbstractIdleService {
     }
 
     // returns true if there are more Jobs in the partitions
-    private boolean scanJobQueue(JobQueue jobQueue, int partition, JobStatistics jobStatistics) {
+    private boolean scanJobQueue(JobQueue jobQueue, int partition, JobStatistics jobStatistics) throws IOException {
       try (CloseableIterator<Job> jobs = jobQueue.getJobs(partition, lastJobConsumed)) {
         Stopwatch stopwatch = new Stopwatch().start();
         while (stopwatch.elapsedMillis() < 1000) {
@@ -396,7 +376,7 @@ public class JobQueueDebugger extends AbstractIdleService {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
         JobQueueDebugger.class.getName(),
-        "Scans the JobQueueDataset and prints statistics about the Jobs in it.",
+        "Scans the JobQueueTable and prints statistics about the Jobs in it.",
         options, "");
       System.exit(0);
     }

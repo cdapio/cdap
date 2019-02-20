@@ -90,32 +90,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   /**
    * Loads last persisted message id. This method will be called from a transaction.
    * The returned message id will be used as the starting message id (exclusive) for the first fetch.
-   * This exists because certain implementations are still not migrated.
-   *
-   * @param datasetContext the {@link DatasetContext} for getting dataset instances.
-   * @return the last persisted message id or {@code null} to have first fetch starts from the first available message
-   *         in the topic.
-   * @throws Exception if failed to load the message id
-   */
-  @Nullable
-  protected abstract String loadMessageId(DatasetContext datasetContext) throws Exception;
-
-  /**
-   * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}.
-   * This exists because certain implementations are still not migrated.
-   *
-   * @param datasetContext the {@link DatasetContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}
-   *                  has been processed up to.
-   * @throws Exception if failed to persist the message id
-   * @see #processMessages(DatasetContext, StructuredTableContext, Iterator)
-   */
-  protected abstract void storeMessageId(DatasetContext datasetContext, String messageId) throws Exception;
-
-  /**
-   * Loads last persisted message id. This method will be called from a transaction.
-   * The returned message id will be used as the starting message id (exclusive) for the first fetch.
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances.
    * @return the last persisted message id or {@code null} to have first fetch starts from the first available message
@@ -150,7 +124,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   /**
    * Processes the give list of messages. This method will be called from the same transaction as the
-   * {@link #storeMessageId(DatasetContext, String)} call. If {@link Exception} is raised from this method,
+   * {@link #storeMessageId(StructuredTableContext, String)} call. If {@link Exception} is raised from this method,
    * the messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
    * @param datasetContext the {@link DatasetContext} for getting dataset instances
@@ -158,7 +132,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @throws Exception if failed to process the messages
-   * @see #storeMessageId(DatasetContext, String)
+   * @see #storeMessageId(StructuredTableContext, String)
    */
   // TODO: CDAP-14848 Remove DatasetContext parameter after all the datasets are migrated
   protected abstract void processMessages(DatasetContext datasetContext,
@@ -177,16 +151,9 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected final String loadMessageId() {
-    // TODO: CDAP-14848 remove redundant transaction
-    String messageId = Transactionals.execute(getTransactional(), context -> {
+    return TransactionRunners.run(getTransactionRunner(), context -> {
       return loadMessageId(context);
     });
-    if (messageId == null && getTransactionRunner() != null) {
-      messageId = TransactionRunners.run(getTransactionRunner(), context -> {
-        return loadMessageId(context);
-      });
-    }
-    return messageId;
   }
 
   @Nullable
@@ -200,6 +167,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
         // Process the notifications and record the message id of where the processing is up to.
         // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
         long timeBoundMillis = 900L * curTxTimeout;
+        // TODO: CDAP-14848 Remove redundancy
         iterator = Transactionals.execute(getTransactional(), curTxTimeout, context ->
           TransactionRunners.run(getTransactionRunner(), context1 -> {
             TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
@@ -210,8 +178,6 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
             // Persist the message id of the last message being consumed from the iterator
             if (lastMessageId != null) {
-              storeMessageId(context, lastMessageId);
-              // TODO: CDAP-14848 Remove redundancy
               storeMessageId(context1, lastMessageId);
             }
             return trackingIterator;

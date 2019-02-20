@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,41 +16,36 @@
 
 package co.cask.cdap.scheduler;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueue;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.data.transaction.TransactionException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -63,14 +58,12 @@ import java.util.concurrent.TimeUnit;
 class ConstraintCheckerService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ConstraintCheckerService.class);
 
-  private final Transactional transactional;
-  private final DatasetFramework datasetFramework;
-  private final MultiThreadDatasetCache multiThreadDatasetCache;
   private final Store store;
   private final ProgramLifecycleService lifecycleService;
   private final PropertiesResolver propertiesResolver;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
+  private final TransactionRunner transactionRunner;
   private ScheduleTaskRunner taskRunner;
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping = false;
@@ -80,21 +73,13 @@ class ConstraintCheckerService extends AbstractIdleService {
                            ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
                            NamespaceQueryAdmin namespaceQueryAdmin,
                            CConfiguration cConf,
-                           DatasetFramework datasetFramework,
-                           TransactionSystemClient txClient) {
+                           TransactionRunner transactionRunner) {
     this.store = store;
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.cConf = cConf;
-    this.multiThreadDatasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework), txClient,
-      NamespaceId.SYSTEM, ImmutableMap.of(), null, null);
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(multiThreadDatasetCache),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
-    this.datasetFramework = datasetFramework;
+    this.transactionRunner = transactionRunner;
   }
 
   @Override
@@ -104,7 +89,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task-%d").build()));
     taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver, namespaceQueryAdmin, cConf);
 
-    int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework, cConf).getNumPartitions();
+    int numPartitions = cConf.getInt(Constants.Scheduler.JOB_QUEUE_NUM_PARTITIONS);
     for (int partition = 0; partition < numPartitions; partition++) {
       taskExecutorService.submit(new ConstraintCheckerThread(partition));
     }
@@ -133,7 +118,6 @@ class ConstraintCheckerService extends AbstractIdleService {
     private final RetryStrategy scheduleStrategy;
     private final int partition;
     private final Deque<Job> readyJobs = new ArrayDeque<>();
-    private JobQueueDataset jobQueue;
     private Job lastConsumed;
     private int failureCount;
 
@@ -147,7 +131,6 @@ class ConstraintCheckerService extends AbstractIdleService {
     @Override
     public void run() {
       // TODO: how to retry the same jobs upon txConflict?
-      jobQueue = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework, cConf);
 
       while (!stopping) {
         try {
@@ -170,8 +153,8 @@ class ConstraintCheckerService extends AbstractIdleService {
     private long checkJobQueue() {
       boolean emptyFetch = false;
       try {
-        emptyFetch = Transactionals.execute(transactional, context -> {
-          return checkJobConstraints();
+        emptyFetch = TransactionRunners.run(transactionRunner, context -> {
+          return checkJobConstraints(JobQueueTable.getJobQueue(context, cConf));
         });
 
         // run any ready jobs
@@ -192,7 +175,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       return emptyFetch && readyJobs.isEmpty() ? 2000L : 0L;
     }
 
-    private boolean checkJobConstraints() {
+    private boolean checkJobConstraints(JobQueue jobQueue) throws IOException {
       boolean emptyScan = true;
 
       try (CloseableIterator<Job> jobQueueIter = jobQueue.getJobs(partition, lastConsumed)) {
@@ -212,7 +195,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       return emptyScan;
     }
 
-    private void checkAndUpdateJob(JobQueueDataset jobQueue, Job job) {
+    private void checkAndUpdateJob(JobQueue jobQueue, Job job) throws IOException {
       long now = System.currentTimeMillis();
       if (job.isToBeDeleted()) {
         // only delete jobs that are pending trigger or pending constraint. If pending launch, the launcher will delete
@@ -254,8 +237,10 @@ class ConstraintCheckerService extends AbstractIdleService {
       while (readyJobsIter.hasNext() && !stopping) {
         final Job job = readyJobsIter.next();
         try {
-          transactional.execute(context -> runReadyJob(job));
-        } catch (TransactionFailureException e) {
+          TransactionRunners.run(transactionRunner, context -> {
+            runReadyJob(JobQueueTable.getJobQueue(context, cConf), job);
+          }, TransactionException.class);
+        } catch (TransactionException e) {
           LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
                    job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
         }
@@ -264,7 +249,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     }
 
     // return whether or not the job should be removed from the readyJobs in-memory Deque
-    private boolean runReadyJob(Job job) {
+    private boolean runReadyJob(JobQueue jobQueue, Job job) throws IOException {
       // We should check the stored job's state (whether it actually is PENDING_LAUNCH), because
       // the schedule could have gotten deleted in the meantime or the transaction that marked it as PENDING_LAUNCH
       // may have failed / rolled back.
