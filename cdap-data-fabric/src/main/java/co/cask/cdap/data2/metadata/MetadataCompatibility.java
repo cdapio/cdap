@@ -28,12 +28,12 @@ import co.cask.cdap.spi.metadata.Sorting;
 
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -75,14 +75,15 @@ public final class MetadataCompatibility {
    * Convert a {@link Metadata} to a 5.x map from scope to {@link co.cask.cdap.api.metadata.Metadata}.
    */
   public static Map<MetadataScope, co.cask.cdap.api.metadata.Metadata> toV5Metadata(Metadata metadata) {
-    Map<MetadataScope, co.cask.cdap.api.metadata.Metadata> scopes = new HashMap<>();
-    for (MetadataScope scope : MetadataScope.ALL) {
-      co.cask.cdap.api.metadata.Metadata meta = toV5Metadata(metadata, scope);
-      if (!meta.getTags().isEmpty() && !meta.getProperties().isEmpty()) {
-        scopes.put(scope, meta);
-      }
-    }
-    return scopes;
+    return MetadataScope.ALL.stream().collect(Collectors.toMap(
+      scope -> scope, scope -> toV5Metadata(metadata, scope)));
+  }
+
+  /**
+   * Convert a {@link Metadata} to a 5.x {@link co.cask.cdap.api.metadata.Metadata} for a given scope.
+   */
+  public static co.cask.cdap.api.metadata.Metadata toV5Metadata(Metadata metadata, MetadataScope scope) {
+    return new co.cask.cdap.api.metadata.Metadata(metadata.getProperties(scope), metadata.getTags(scope));
   }
 
   /**
@@ -99,12 +100,5 @@ public final class MetadataCompatibility {
       }
     }
     return result;
-  }
-
-  /**
-   * Convert a {@link Metadata} to a 5.x {@link co.cask.cdap.api.metadata.Metadata} for a given scope.
-   */
-  public static co.cask.cdap.api.metadata.Metadata toV5Metadata(Metadata metadata, MetadataScope scope) {
-    return new co.cask.cdap.api.metadata.Metadata(metadata.getProperties(scope), metadata.getTags(scope));
   }
 }
