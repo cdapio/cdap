@@ -78,8 +78,8 @@ public class SearchHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SearchHelper.class);
 
-  protected static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.business");
-  protected static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.system");
+  private static final DatasetId BUSINESS_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.business");
+  private static final DatasetId SYSTEM_METADATA_INSTANCE_ID = NamespaceId.SYSTEM.dataset("meta.system");
 
   private static final DatasetContext SYSTEM_CONTEXT = DatasetContext.from(NamespaceId.SYSTEM.getNamespace());
 
@@ -104,7 +104,7 @@ public class SearchHelper {
       createTransactional(txClient), RetryStrategies.retryOnConflict(20, 100));
   }
 
-  public void createDatasets() throws IOException {
+  void createDatasets() throws IOException {
     for (MetadataScope scope : MetadataScope.ALL) {
       DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT, datasetSpecs.get(scope.name()), null);
       if (!admin.exists()) {
@@ -113,7 +113,7 @@ public class SearchHelper {
     }
   }
 
-  public void dropDatasets() throws IOException {
+  void dropDatasets() throws IOException {
     for (MetadataScope scope : MetadataScope.ALL) {
       DatasetAdmin admin = metaDatasetDefinition.getAdmin(SYSTEM_CONTEXT, datasetSpecs.get(scope.name()), null);
       if (admin.exists()) {
