@@ -101,7 +101,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     Metadata metadata = getMetadata(metadataEntity, scope);
     MetadataRecord record = new MetadataRecord(metadataEntity, metadata);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-      "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(record) : record));
+      "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(record, scope) : record));
   }
 
   @GET

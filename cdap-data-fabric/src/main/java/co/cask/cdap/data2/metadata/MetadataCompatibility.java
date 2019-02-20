@@ -88,12 +88,13 @@ public final class MetadataCompatibility {
   /**
    * Convert a {@link Metadata} to a 5.x map from scope to {@link co.cask.cdap.api.metadata.Metadata}.
    */
-  public static Set<co.cask.cdap.common.metadata.MetadataRecord> toV5MetadataRecords(MetadataRecord record) {
+  public static Set<co.cask.cdap.common.metadata.MetadataRecord>
+  toV5MetadataRecords(MetadataRecord record, @Nullable String requestedScope) {
     Set<co.cask.cdap.common.metadata.MetadataRecord> result = new HashSet<>();
     for (MetadataScope scope : MetadataScope.ALL) {
       Set<String> tags = record.getMetadata().getTags(scope);
       Map<String, String> properties = record.getMetadata().getProperties(scope);
-      if (!tags.isEmpty() && !properties.isEmpty()) {
+      if (requestedScope == null || scope.name().equalsIgnoreCase(requestedScope)) {
         result.add(new co.cask.cdap.common.metadata.MetadataRecord(record.getEntity(), scope, properties, tags));
       }
     }
