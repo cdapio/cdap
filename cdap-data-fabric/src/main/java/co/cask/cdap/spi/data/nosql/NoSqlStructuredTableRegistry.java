@@ -32,9 +32,6 @@ import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -43,7 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -58,24 +54,14 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
   private static final byte[] SCHEMA_COL_BYTES = Bytes.toBytes("schema");
   private static final byte[][] SCHEMA_COL_BYTES_ARRAY = new byte[][] {SCHEMA_COL_BYTES};
   private static final Gson GSON = new Gson();
-  private static final int MAX_CACHE_SIZE = 100;
 
   private final NoSqlStructuredTableDatasetDefinition tableDefinition;
   private final DatasetSpecification entityRegistrySpec;
-  private final LoadingCache<StructuredTableId, Optional<StructuredTableSpecification>> specCache;
 
   @Inject
   public NoSqlStructuredTableRegistry(@Named(Constants.Dataset.TABLE_TYPE_NO_TX) DatasetDefinition tableDefinition) {
     this.tableDefinition = new NoSqlStructuredTableDatasetDefinition(tableDefinition);
     this.entityRegistrySpec = tableDefinition.configure(ENTITY_REGISTRY, DatasetProperties.EMPTY);
-    this.specCache = CacheBuilder.newBuilder()
-      .maximumSize(MAX_CACHE_SIZE)
-      .build(new CacheLoader<StructuredTableId, Optional<StructuredTableSpecification>>() {
-        @Override
-        public Optional<StructuredTableSpecification> load(StructuredTableId tableId) {
-          return getSpecificationFromStorage(tableId);
-        }
-      });
   }
 
   @Override
@@ -105,23 +91,18 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
     } finally {
       closeRegistryTable(table);
     }
-    specCache.invalidate(tableId);
   }
 
   @Nullable
   @Override
   public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-    Optional<StructuredTableSpecification> optional = specCache.getUnchecked(tableId);
-    if (optional.isPresent()) {
-      return optional.get();
+    MetricsTable table = getRegistryTable();
+    try {
+      byte[] serialized = table.get(getRowKeyBytes(tableId), SCHEMA_COL_BYTES);
+      return serialized == null ? null : GSON.fromJson(Bytes.toString(serialized), StructuredTableSpecification.class);
+    } finally {
+      closeRegistryTable(table);
     }
-    // If spec is not available in cache, then check storage to see if the table is now created
-    optional = getSpecificationFromStorage(tableId);
-    if (optional.isPresent()) {
-      // Table is now created, refresh the cache
-      specCache.invalidate(tableId);
-    }
-    return optional.orElse(null);
   }
 
   @Override
@@ -133,7 +114,6 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
     } finally {
       closeRegistryTable(table);
     }
-    specCache.invalidate(tableId);
   }
 
   @Override
@@ -143,19 +123,6 @@ public class NoSqlStructuredTableRegistry implements StructuredTableRegistry {
       try (Scanner scanner = table.scan(TABLE_ROWKEY_PREFIX, Bytes.stopKeyForPrefix(TABLE_ROWKEY_PREFIX), null)) {
         return scanner.next() == null;
       }
-    } finally {
-      closeRegistryTable(table);
-    }
-  }
-
-  private Optional<StructuredTableSpecification> getSpecificationFromStorage(StructuredTableId tableId) {
-    MetricsTable table = getRegistryTable();
-    try {
-      byte[] serialized = table.get(getRowKeyBytes(tableId), SCHEMA_COL_BYTES);
-      if (serialized == null) {
-        return Optional.empty();
-      }
-      return Optional.of(GSON.fromJson(Bytes.toString(serialized), StructuredTableSpecification.class));
     } finally {
       closeRegistryTable(table);
     }
