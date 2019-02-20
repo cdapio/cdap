@@ -26,7 +26,6 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.Specifications;
@@ -35,6 +34,9 @@ import co.cask.cdap.metadata.MetadataSubscriberService;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.metadata.MetadataKind;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.Read;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -60,14 +62,14 @@ import java.util.concurrent.TimeUnit;
 public class SystemMetadataWriterStageTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-  private static MetadataStore metadataStore;
+  private static MetadataStorage metadataStorage;
   private static MetadataPublisher metadataPublisher;
   private static MetadataSubscriberService metadataSubcriber;
 
   @BeforeClass
   public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector();
-    metadataStore = injector.getInstance(MetadataStore.class);
+    metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataPublisher = injector.getInstance(MetadataPublisher.class);
     metadataSubcriber = injector.getInstance(MetadataSubscriberService.class);
     metadataSubcriber.startAndWait();
@@ -92,19 +94,21 @@ public class SystemMetadataWriterStageTest {
     systemMetadataWriterStage.process(appWithPrograms);
 
     // verify that the workflow is not tagged with the fork node name. First wait for tags to show up
-    Tasks.waitFor(false, () -> metadataStore.getTags(
-      MetadataScope.SYSTEM, appId.workflow(workflowName).toMetadataEntity()).isEmpty(), 5, TimeUnit.SECONDS);
-    Set<String> workflowSystemTags = metadataStore.getTags(MetadataScope.SYSTEM,
-                                                           appId.workflow(workflowName).toMetadataEntity());
+    Tasks.waitFor(false, () -> metadataStorage.read(new Read(appId.workflow(workflowName).toMetadataEntity(),
+                                                             MetadataScope.SYSTEM, MetadataKind.TAG)).isEmpty(),
+                  5, TimeUnit.SECONDS);
+    Set<String> workflowSystemTags = metadataStorage
+      .read(new Read(appId.workflow(workflowName).toMetadataEntity())).getTags(MetadataScope.SYSTEM);
     Sets.SetView<String> intersection = Sets.intersection(workflowSystemTags, getWorkflowForkNodes(workflowSpec));
     Assert.assertTrue("Workflows should not be tagged with fork node names, but found the following fork nodes " +
                         "in the workflow's system tags: " + intersection, intersection.isEmpty());
 
     // verify that metadata was added for the workflow's schedule. First wait for the metadata to show up
-    Tasks.waitFor(false, () -> metadataStore.getProperties(
-      MetadataScope.SYSTEM, appId.toMetadataEntity()).isEmpty(), 5, TimeUnit.SECONDS);
-    Map<String, String> metadataProperties = metadataStore.getMetadata(MetadataScope.SYSTEM,
-                                                                       appId.toMetadataEntity()).getProperties();
+    Tasks.waitFor(false, () -> metadataStorage.read(new Read(appId.toMetadataEntity(),
+                                                             MetadataScope.SYSTEM, MetadataKind.TAG)).isEmpty(),
+                  5, TimeUnit.SECONDS);
+    Map<String, String> metadataProperties = metadataStorage
+      .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
     Assert.assertEquals(WorkflowAppWithFork.SCHED_NAME + ":testDescription",
                         metadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
   }
