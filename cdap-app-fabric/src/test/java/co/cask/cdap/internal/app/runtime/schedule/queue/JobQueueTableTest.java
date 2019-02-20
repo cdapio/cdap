@@ -430,7 +430,7 @@ public abstract class JobQueueTableTest {
                                                                   ImmutableList.of());
 
         Job jobWithTimeout = new SimpleJob(scheduleWithTimeout, 0,
-                                           System.currentTimeMillis() - Schedulers.JOB_QUEUE_TIMEOUT_MILLIS,
+                                           System.currentTimeMillis() - (Schedulers.JOB_QUEUE_TIMEOUT_MILLIS + 1),
                                            Lists.newArrayList(),
                                            Job.State.PENDING_TRIGGER, 0L);
         jobQueue.put(jobWithTimeout);
