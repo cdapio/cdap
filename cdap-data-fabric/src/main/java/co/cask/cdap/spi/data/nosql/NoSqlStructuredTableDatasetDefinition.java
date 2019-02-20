@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.nosql;
+package co.cask.cdap.spi.data.nosql;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;

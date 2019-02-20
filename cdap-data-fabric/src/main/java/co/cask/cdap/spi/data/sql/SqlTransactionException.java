@@ -14,20 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.data2.nosql.dataset;
+package co.cask.cdap.spi.data.sql;
 
-import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.spi.data.transaction.TransactionException;
 
-import java.io.IOException;
-import java.util.Map;
+import java.sql.SQLException;
 
 /**
- * Interface to supply the dataset for entity tables.
+ * Encapsulates the SQLException that caused the transaction to fail.
  */
-public interface TableDatasetSupplier {
-  /**
-   * @return the dataset for the given entity table name and arguments
-   * @throws IOException on errors when instantiating the dataset for the entity table
-   */
-  <T extends Dataset> T getTableDataset(String name, Map<String, String> arguments) throws IOException;
+class SqlTransactionException extends TransactionException {
+  private final SQLException sqlException;
+
+  SqlTransactionException(String message, SQLException sqlException, Throwable cause) {
+    super(message, cause);
+    this.sqlException = sqlException;
+  }
+
+  SQLException getSqlException() {
+    return sqlException;
+  }
 }

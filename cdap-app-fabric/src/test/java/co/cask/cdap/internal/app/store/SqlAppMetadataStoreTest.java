@@ -16,11 +16,11 @@
 
 package co.cask.cdap.internal.app.store;
 
-import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.data2.sql.SqlTransactionRunner;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
 import co.cask.cdap.store.StoreDefinition;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;

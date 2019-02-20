@@ -14,35 +14,41 @@
  * the License.
  */
 
-package co.cask.cdap.data2.sql;
 
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableRegistryTest;
+package co.cask.cdap.spi.data.sql;
+
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.StructuredTableTest;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
 
 import javax.sql.DataSource;
 
 /**
- *
+ * Test for SQL structured table.
  */
-public class SqlStructuredTableRegistryTest extends StructuredTableRegistryTest {
-  @ClassRule
-  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-
-  private static StructuredTableRegistry registry;
+public class SqlStructuredTableTest extends StructuredTableTest {
+  private static DataSource dataSource;
+  private static PostgresSqlStructuredTableAdmin tableAdmin;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     EmbeddedPostgres pg = EmbeddedPostgres.builder()
       .setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
-    DataSource dataSource = pg.getPostgresDatabase();
-    registry = new SqlStructuredTableRegistry(dataSource);
+    dataSource = pg.getPostgresDatabase();
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    registry.initialize();
+    tableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
   }
+
   @Override
-  protected StructuredTableRegistry getStructuredTableRegistry() {
-    return registry;
+  protected StructuredTableAdmin getStructuredTableAdmin() {
+    return tableAdmin;
+  }
+
+  @Override
+  protected TransactionRunner getTransactionRunner() {
+    return new SqlTransactionRunner(tableAdmin, dataSource);
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.nosql;
+package co.cask.cdap.spi.data.nosql;
 
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
