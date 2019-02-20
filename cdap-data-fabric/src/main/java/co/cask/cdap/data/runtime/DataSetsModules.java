@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
@@ -36,13 +38,17 @@ import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
 import co.cask.cdap.data2.registry.BasicUsageRegistry;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.registry.UsageWriter;
+import co.cask.cdap.metadata.elastic.ElasticsearchMetadataStorage;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorage;
 import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import co.cask.cdap.store.DefaultOwnerStore;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 
@@ -115,7 +121,7 @@ public class DataSetsModules extends RuntimeModule {
         bind(DatasetDefinitionRegistryFactory.class)
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
-        bind(MetadataStorage.class).to(DatasetMetadataStorage.class);
+        bind(MetadataStorage.class).toProvider(MetadataStorageProvider.class);
         bind(MetadataStore.class).to(StorageProviderMetadataStore.class);
         expose(MetadataStorage.class);
         expose(MetadataStore.class);
@@ -151,5 +157,34 @@ public class DataSetsModules extends RuntimeModule {
         expose(OwnerStore.class);
       }
     };
+  }
+}
+
+// TODO (CDAP-14918): Move binding for MetadataStorage out of DatasetsModules,
+// TODO (CDAP-14918): so that data-fabric does not need to depend on metadata.
+class MetadataStorageProvider implements Provider<MetadataStorage> {
+
+  private final Injector injector;
+  private final CConfiguration cConf;
+
+  @Inject
+  MetadataStorageProvider(CConfiguration cConf, Injector injector) {
+    this.cConf = cConf;
+    this.injector = injector;
+  }
+
+  @Override
+  public MetadataStorage get() {
+    String config = cConf.get(Constants.Metadata.STORAGE_PROVIDER_IMPLEMENTATION,
+                              Constants.Metadata.STORAGE_PROVIDER_NOSQL);
+    if (Constants.Metadata.STORAGE_PROVIDER_NOSQL.equalsIgnoreCase(config)) {
+      return injector.getInstance(DatasetMetadataStorage.class);
+    }
+    if (Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH.equalsIgnoreCase(config)) {
+      return injector.getInstance(ElasticsearchMetadataStorage.class);
+    }
+    throw new IllegalArgumentException("Unsupported MetadataStorage '" + config + "'. Only '" +
+                                         Constants.Metadata.STORAGE_PROVIDER_NOSQL + "' and '" +
+                                         Constants.Metadata.STORAGE_PROVIDER_ELASTICSEARCH + "' are allowed.");
   }
 }

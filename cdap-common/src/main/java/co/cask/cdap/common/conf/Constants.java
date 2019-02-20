@@ -1226,6 +1226,9 @@ public final class Constants {
     public static final String MESSAGING_FETCH_SIZE = "metadata.messaging.fetch.size";
     public static final String MESSAGING_POLL_DELAY_MILLIS = "metadata.messaging.poll.delay.millis";
 
+    public static final String STORAGE_PROVIDER_IMPLEMENTATION = "metadata.storage.implementation";
+    public static final String STORAGE_PROVIDER_NOSQL = "nosql";
+    public static final String STORAGE_PROVIDER_ELASTICSEARCH = "elastic";
   }
 
   /**

@@ -72,7 +72,7 @@ public class StorageModule extends PrivateModule {
     public TransactionRunner get() {
       String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
       if (storageImpl == null) {
-        throw new IllegalStateException("No storage implentation is specified in the configuration file");
+        throw new IllegalStateException("No storage implementation is specified in the configuration file");
       }
 
       storageImpl = storageImpl.toLowerCase();
