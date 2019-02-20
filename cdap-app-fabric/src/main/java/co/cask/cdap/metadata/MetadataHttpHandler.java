@@ -78,6 +78,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(MetadataHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(NamespacedEntityId.class, new NamespacedEntityIdCodec())
+    .registerTypeAdapter(Metadata.class, new MetadataCodec())
     .create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
