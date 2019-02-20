@@ -35,8 +35,6 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import javax.sql.DataSource;
@@ -54,8 +52,10 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
 
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    registry.initialize();
     StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
+      new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     artifactStore = new ArtifactStore(cConf,
                                       injector.getInstance(NamespacePathLocator.class),

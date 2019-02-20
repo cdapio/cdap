@@ -35,7 +35,6 @@ import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -56,7 +55,7 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
     Injector injector = AppFabricTestHelper.getInjector();
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry();
+    StructuredTableRegistry structuredTableRegistry = new SqlStructuredTableRegistry(dataSource);
     structuredTableRegistry.initialize();
     StructuredTableAdmin structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(structuredTableRegistry, dataSource);

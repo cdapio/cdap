@@ -64,7 +64,7 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
 
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry();
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();
     structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(registry, dataSource);

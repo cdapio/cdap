@@ -42,7 +42,7 @@ public class SqlLineageTableTest extends LineageTableTest {
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry registry = new SqlStructuredTableRegistry();
+    StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);

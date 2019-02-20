@@ -23,7 +23,6 @@ import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.base.Joiner;
-import org.apache.commons.math3.analysis.function.Add;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,25 +54,23 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
     try (Connection connection = dataSource.getConnection()) {
-      DatabaseMetaData metaData = connection.getMetaData();
-      ResultSet rs = metaData.getTables(null, null,
-                                        spec.getTableId().getName(), null);
-      if (rs.next()) {
+      if (tableExistsInternal(connection, spec.getTableId())) {
         throw new TableAlreadyExistsException(spec.getTableId());
       }
+
       // Create table
       LOG.info("Creating table {}", spec);
-      Statement statement = connection.createStatement();
-      statement.execute(getCreateStatement(spec));
+      try (Statement statement = connection.createStatement()) {
+        statement.execute(getCreateStatement(spec));
 
-      // Create indexes
-      for (String indexStatement : getCreateIndexStatements(spec)) {
-        LOG.debug("Create index statement: {}", indexStatement);
-        statement.execute(indexStatement);
+        // Create indexes
+        for (String indexStatement : getCreateIndexStatements(spec)) {
+          LOG.debug("Create index statement: {}", indexStatement);
+          statement.execute(indexStatement);
+        }
+
+        registry.registerSpecification(spec);
       }
-
-      registry.registerSpecification(spec);
-      statement.close();
     } catch (SQLException e) {
       throw new IOException(String.format("Error creating table %s", spec.getTableId()), e);
     }
@@ -90,12 +87,28 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     LOG.info("Dropping table {}", tableId);
     String sqlQuery = getDeleteStatement(tableId.getName());
     try (Connection connection = dataSource.getConnection()) {
-      Statement statement = connection.createStatement();
-      statement.execute(sqlQuery);
+      try (Statement statement = connection.createStatement()) {
+        statement.execute(sqlQuery);
+      }
       registry.removeSpecification(tableId);
       // All indexes on a table are dropped when a table is dropped.
     } catch (SQLException e) {
       throw new IOException(String.format("Error dropping table %s", tableId), e);
+    }
+  }
+
+  boolean tableExists(StructuredTableId tableId) throws IOException {
+    try (Connection connection = dataSource.getConnection()) {
+      return tableExistsInternal(connection, tableId);
+    } catch (SQLException e) {
+      throw new IOException(String.format("Error checking whether table %s exists", tableId.getName()), e);
+    }
+  }
+
+  private boolean tableExistsInternal(Connection connection, StructuredTableId tableId) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    try (ResultSet rs = metaData.getTables(null, null, tableId.getName(), null)) {
+      return rs.next();
     }
   }
 
