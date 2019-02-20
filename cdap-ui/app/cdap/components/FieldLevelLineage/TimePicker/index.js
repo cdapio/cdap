@@ -67,7 +67,9 @@ class TimePickerView extends Component {
     return (
       <div className="time-picker-dropdown">
         <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
-          <DropdownToggle caret>{T.translate(`${PREFIX}.${this.props.selections}`)}</DropdownToggle>
+          <DropdownToggle caret>
+            <h5>{T.translate(`${PREFIX}.${this.props.selections}`)}</h5>
+          </DropdownToggle>
 
           <DropdownMenu>
             {TIME_OPTIONS.map((option) => {

@@ -1379,8 +1379,10 @@ features:
     Headers:
       datasetName: Dataset name
       fieldName: Field name
+    incomingOperations: Incoming operations
     noFields: "Field level lineage is not available for the dataset '{datasetId}' in the selected time interval"
     noLineage: No field level lineage available for this field
+    noSearchFields: No fields matching the search query
     OperationsModal:
       lastExecution: "Last executed by '{app}' on {time}"
       summaryText: "Operations between {sources} and {targets}"
@@ -1394,7 +1396,12 @@ features:
       Title:
         incoming: "Cause operations for field '{fieldName}'"
         outgoing: "Impact operations for field '{fieldName}'"
+    outgoingOperations: Outgoing operations
     searchPlaceholder: Search by field name
+    SectionTitle:
+      incoming: Cause for
+      outgoing: Impact for
+      self: Dataset
     Summary:
       datasetCount:
         1: "{context} Dataset"
@@ -1415,6 +1422,10 @@ features:
       lastMonth: Last month
       lastYear: Last 12 months
     title: '{productName} | Field Level Lineage | {datasetId}'
+    TopPanel:
+      subtitle: Explore root cause and impact for each of the fields of the dataset
+      timePickerCaption: View field level info in the
+      title: Field level lineage
 
   FileBrowser:
     directory: Directory

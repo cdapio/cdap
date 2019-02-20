@@ -62,6 +62,13 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
       fontFamily: 'var(--font-family)',
       useNextVariants: true,
     },
+    overrides: {
+      MuiTypography: {
+        caption: {
+          fontSize: '0.92rem',
+        },
+      },
+    },
   } as ThemeOptions);
   public render() {
     let Component;

@@ -16,9 +16,9 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import classnames from 'classnames';
 import SummaryRow from 'components/FieldLevelLineage/LineageSummary/SummaryRow';
-import { getOperations } from 'components/FieldLevelLineage/store/ActionCreator';
+import SectionTitle from 'components/FieldLevelLineage/SectionTitle';
+import Typography from '@material-ui/core/Typography';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage.Summary';
@@ -26,68 +26,56 @@ const HEADERS_PREFIX = 'features.FieldLevelLineage.Headers';
 
 require('./LineageSummary.scss');
 
-const handleViewOperationsClick = (direction, summary) => {
-  if (summary.length === 0) {
-    return;
-  }
-
-  getOperations(direction);
-};
-
 export default function LineageSummary({ activeField, datasetId, summary, direction }) {
+  let content = null;
   const datasetFieldTitle = `${datasetId}: ${activeField}`;
 
+  const empty = (
+    <div className="lineage-summary-empty-container">
+      <span>{T.translate(`${PREFIX}.Empty.${direction}`, { fieldId: datasetFieldTitle })}</span>
+    </div>
+  );
+
+  const noActiveField = (
+    <div className="lineage-summary-empty-container">
+      <span>{T.translate(`${PREFIX}.noFieldSelected`)}</span>
+    </div>
+  );
+
+  const lineageFields = (
+    <div className="lineage-fields-body">
+      {summary.map((entity, i) => {
+        return <SummaryRow key={i} entity={entity} index={i} />;
+      })}
+    </div>
+  );
+
   if (activeField && summary.length === 0) {
-    return (
-      <div className="lineage-summary-empty-container">
-        <span>{T.translate(`${PREFIX}.Empty.${direction}`, { fieldId: datasetFieldTitle })}</span>
-      </div>
-    );
+    content = empty;
   } else if (!activeField) {
-    return (
-      <div className="lineage-summary-empty-container">
-        <span>{T.translate(`${PREFIX}.noFieldSelected`)}</span>
-      </div>
-    );
+    content = noActiveField;
+  } else {
+    content = lineageFields;
   }
 
   return (
     <div className="lineage-summary-container">
+      <SectionTitle entityId={activeField} parentId={datasetId} direction={direction} />
+
       <div className="field-lineage-info">
-        <div className="title">
-          <strong>{T.translate(`${PREFIX}.Title.${direction}`)}</strong>
-
-          <span className="dataset-field truncate" title={datasetFieldTitle}>
-            {datasetFieldTitle}
-          </span>
-        </div>
-
-        <div className="lineage-count">
+        <Typography variant="caption" className="lineage-count">
           {T.translate(`${PREFIX}.datasetCount`, { context: summary.length })}
-        </div>
+        </Typography>
       </div>
 
       <div className="lineage-fields">
-        <div className="lineage-column lineage-fields-header">
+        <div className="lineage-row lineage-fields-header">
           <div className="index" />
           <div className="dataset-name">{T.translate(`${HEADERS_PREFIX}.datasetName`)}</div>
           <div className="field-name">{T.translate(`${HEADERS_PREFIX}.fieldName`)}</div>
         </div>
 
-        <div className="lineage-fields-body">
-          {summary.map((entity, i) => {
-            return <SummaryRow key={i} entity={entity} index={i} />;
-          })}
-        </div>
-      </div>
-
-      <div className="view-operations">
-        <span
-          className={classnames({ disabled: summary.length === 0 })}
-          onClick={handleViewOperationsClick.bind(null, direction, summary)}
-        >
-          {T.translate(`${PREFIX}.viewOperations`)}
-        </span>
+        {content}
       </div>
     </div>
   );

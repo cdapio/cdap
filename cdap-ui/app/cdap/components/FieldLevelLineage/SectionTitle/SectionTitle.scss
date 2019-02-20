@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,22 +16,14 @@
 
 @import '~styles/colors.scss';
 
-$lineage-count-color: $grey-02;
+$bg-color: $grey-06;
 
-.field-level-lineage-container {
-  padding-left: 50px;
-  padding-right: 50px;
+.field-level-lineage .section-title {
+  background-color: $bg-color;
+  padding: 3px 5px;
+  margin-bottom: 0;
 
-  .field-lineage-info {
-    height: 35px;
-    display: flex;
-    align-items: center;
-
-    > * { width: 50%; }
-
-    .lineage-count {
-      padding-left: 5px;
-      color: $lineage-count-color;
-    }
+  & > *:not(:last-child) {
+    margin-right: 5px;
   }
 }
