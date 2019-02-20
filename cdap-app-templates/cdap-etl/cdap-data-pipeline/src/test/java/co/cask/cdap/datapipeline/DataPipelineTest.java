@@ -37,7 +37,6 @@ import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
@@ -99,6 +98,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.WorkflowId;
+import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
@@ -2928,20 +2928,14 @@ public class DataPipelineTest extends HydratorTestBase {
     waitForMetadataProcessing(metadataAdmin, 2);
 
     // verify metadata written by the pipeline
-    Set<MetadataRecord> actual =
+    Metadata actual =
       metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
 
     Assert.assertNotNull(actual);
     Assert.assertTrue(!actual.isEmpty());
-    for (MetadataRecord actualRecord : actual) {
-      if (actualRecord.getScope() == MetadataScope.USER) {
-        // verify the user properties
-        Assert.assertTrue(!actualRecord.getProperties().isEmpty());
-        Assert.assertTrue(!actualRecord.getTags().isEmpty());
-        Assert.assertEquals(inputPropToAdd, actualRecord.getProperties());
-        Assert.assertEquals(inputTagsToAdd, actualRecord.getTags());
-      }
-    }
+    // verify the user properties
+    Assert.assertEquals(inputPropToAdd, actual.getProperties(MetadataScope.USER));
+    Assert.assertEquals(inputTagsToAdd, actual.getTags(MetadataScope.USER));
 
     // delete some properties and tag
     op = new MetadataOperation.Delete(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
@@ -2956,26 +2950,17 @@ public class DataPipelineTest extends HydratorTestBase {
 
     Assert.assertNotNull(actual);
     Assert.assertTrue(!actual.isEmpty());
-    for (MetadataRecord actualRecord : actual) {
-      if (actualRecord.getScope() == MetadataScope.USER) {
-        // verify the user properties
-        Assert.assertEquals(Collections.singletonMap("kTwo", "vTwo"), actualRecord.getProperties());
-        Assert.assertEquals(Collections.singleton("tTwo"), actualRecord.getTags());
-      }
-    }
+    // verify the user properties
+    Assert.assertEquals(Collections.singletonMap("kTwo", "vTwo"), actual.getProperties(MetadataScope.USER));
+    Assert.assertEquals(Collections.singleton("tTwo"), actual.getTags(MetadataScope.USER));
   }
 
   private void waitForMetadataProcessing(MetadataAdmin metadataAdmin, int expectedTagSize)
     throws TimeoutException, InterruptedException, java.util.concurrent.ExecutionException {
     Tasks.waitFor(true, () -> {
-      Set<MetadataRecord> metadataRecords =
+      Metadata metadata =
         metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
-      for (MetadataRecord actualRecord : metadataRecords) {
-        if (actualRecord.getScope() == MetadataScope.USER) {
-          return actualRecord.getTags().size() == expectedTagSize;
-        }
-      }
-      return false;
+      return metadata.getTags(MetadataScope.USER).size() == expectedTagSize;
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 

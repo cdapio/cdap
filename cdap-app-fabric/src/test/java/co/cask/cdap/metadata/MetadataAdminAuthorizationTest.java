@@ -26,11 +26,8 @@ import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
-import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -42,7 +39,7 @@ import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import com.google.common.collect.ImmutableSet;
+import co.cask.cdap.spi.metadata.SearchRequest;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -57,8 +54,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -141,15 +136,19 @@ public class MetadataAdminAuthorizationTest {
 
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
 
-    // query for all metadata entity type except schedule
-    // TODO: https://issues.cask.co/browse/CDAP-14705, add back schedule type when the JIRA is fixed.
-    Set<String> types = ImmutableSet.of(MetadataEntity.NAMESPACE, MetadataEntity.ARTIFACT,
-                                        MetadataEntity.APPLICATION, MetadataEntity.PROGRAM,
-                                        MetadataEntity.DATASET);
-    SearchRequest searchRequest =
-      new SearchRequest(NamespaceId.DEFAULT, "*", types, SortInfo.DEFAULT, 0,
-                        Integer.MAX_VALUE, 0, null, false, EnumSet.allOf(EntityScope.class));
-
+    SearchRequest searchRequest = SearchRequest.of("*")
+      .addSystemNamespace()
+      .addNamespace(NamespaceId.DEFAULT.getNamespace())
+      // query for all metadata entity type except schedule
+      // TODO (CDAP-14705): add back schedule type when the JIRA is fixed.
+      .addType(MetadataEntity.NAMESPACE)
+      .addType(MetadataEntity.ARTIFACT)
+      .addType(MetadataEntity.APPLICATION)
+      .addType(MetadataEntity.PROGRAM)
+      .addType(MetadataEntity.DATASET)
+      .setOffset(0)
+      .setLimit(Integer.MAX_VALUE)
+      .build();
     Tasks.waitFor(false, () -> metadataAdmin.search(searchRequest).getResults().isEmpty(), 5, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId("bob");
     Assert.assertTrue(metadataAdmin.search(searchRequest).getResults().isEmpty());
