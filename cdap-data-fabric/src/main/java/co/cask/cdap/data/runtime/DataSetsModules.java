@@ -28,9 +28,6 @@ import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
-import co.cask.cdap.data2.metadata.store.StorageProviderMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -68,8 +65,7 @@ public class DataSetsModules extends RuntimeModule {
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-        bind(MetadataStore.class).to(NoOpMetadataStore.class);
-        expose(MetadataStore.class);
+        expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
@@ -122,9 +118,7 @@ public class DataSetsModules extends RuntimeModule {
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).toProvider(MetadataStorageProvider.class);
-        bind(MetadataStore.class).to(StorageProviderMetadataStore.class);
         expose(MetadataStorage.class);
-        expose(MetadataStore.class);
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))

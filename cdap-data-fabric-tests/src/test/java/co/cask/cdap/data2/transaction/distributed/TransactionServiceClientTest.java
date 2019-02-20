@@ -28,8 +28,6 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -80,12 +78,12 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   private static Injector injector;
 
   @Override
-  protected TransactionSystemClient getClient() throws Exception {
+  protected TransactionSystemClient getClient() {
     return injector.getInstance(TransactionSystemClient.class);
   }
 
   @Override
-  protected TransactionStateStorage getStateStorage() throws Exception {
+  protected TransactionStateStorage getStateStorage() {
     return txStateStorage;
   }
 
@@ -140,7 +138,6 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
         @Override
         protected void configure() {
           bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-          bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),
       new AuthorizationTestModule(),
@@ -155,7 +152,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   }
 
   @AfterClass
-  public static void afterClass() throws Exception {
+  public static void afterClass() {
     try {
       try {
         server.stopAndWait();
@@ -170,7 +167,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
   }
 
   @Before
-  public void resetState() throws Exception {
+  public void resetState() {
     TransactionSystemClient txClient = getClient();
     txClient.resetState();
   }
