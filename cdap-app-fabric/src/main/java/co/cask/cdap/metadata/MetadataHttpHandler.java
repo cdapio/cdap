@@ -99,9 +99,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     throws BadRequestException, IOException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     Metadata metadata = getMetadata(metadataEntity, scope);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson("v5".equals(responseFormat)
-                                                            ? MetadataCompatibility.toV5Metadata(metadata)
-                                                            : new MetadataRecord(metadataEntity, metadata)));
+    MetadataRecord record = new MetadataRecord(metadataEntity, metadata);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(record) : record));
   }
 
   @GET

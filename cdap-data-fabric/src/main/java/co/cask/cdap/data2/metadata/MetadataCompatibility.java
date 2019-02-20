@@ -17,16 +17,19 @@
 package co.cask.cdap.data2.metadata;
 
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataRecord;
 import co.cask.cdap.spi.metadata.SearchResponse;
+import co.cask.cdap.spi.metadata.Sorting;
 
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +47,8 @@ public final class MetadataCompatibility {
    * Convert a {@link SearchResponse} to 5.x {@link MetadataSearchResponse}.
    */
   public static MetadataSearchResponse toV5Response(SearchResponse response, @Nullable String scope) {
-    return new MetadataSearchResponse(response.getRequest().getSorting().toString(),
+    Sorting sorting = response.getRequest().getSorting();
+    return new MetadataSearchResponse(sorting != null ? sorting.toString() : SortInfo.DEFAULT.toString(),
                                       response.getOffset(), response.getLimit(),
                                       response.getCursor() == null ? 0 : 1,
                                       response.getTotalResults(),
@@ -79,6 +83,21 @@ public final class MetadataCompatibility {
       }
     }
     return scopes;
+  }
+
+  /**
+   * Convert a {@link Metadata} to a 5.x map from scope to {@link co.cask.cdap.api.metadata.Metadata}.
+   */
+  public static Set<co.cask.cdap.common.metadata.MetadataRecord> toV5MetadataRecords(MetadataRecord record) {
+    Set<co.cask.cdap.common.metadata.MetadataRecord> result = new HashSet<>();
+    for (MetadataScope scope : MetadataScope.ALL) {
+      Set<String> tags = record.getMetadata().getTags(scope);
+      Map<String, String> properties = record.getMetadata().getProperties(scope);
+      if (!tags.isEmpty() && !properties.isEmpty()) {
+        result.add(new co.cask.cdap.common.metadata.MetadataRecord(record.getEntity(), scope, properties, tags));
+      }
+    }
+    return result;
   }
 
   /**
