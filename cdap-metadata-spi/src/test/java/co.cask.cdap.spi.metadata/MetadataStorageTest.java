@@ -72,7 +72,8 @@ public abstract class MetadataStorageTest {
 
   @After
   public void ensureCleanUp() throws Exception {
-    assertEmpty(getMetadataStorage(), SearchRequest.of("*").setShowHidden(true).build());
+    assertEmpty(getMetadataStorage(), SearchRequest.of("*")
+      .setSorting(new Sorting(ENTITY_NAME_KEY, Sorting.Order.ASC)).setShowHidden(true).build());
   }
 
   @Test
