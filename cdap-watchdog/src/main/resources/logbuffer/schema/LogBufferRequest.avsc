@@ -1,0 +1,8 @@
+{
+  "type" : "record",
+  "name" : "LogBufferRequest",
+  "fields" : [
+    { "name" : "partition", "type" : "int" },
+    { "name" : "events", "type" : { "type" : "array", "items" : "bytes" } }
+  ]
+}

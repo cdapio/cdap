@@ -38,6 +38,13 @@ public final class LogSchema {
     public static final Schema SCHEMA = loadSchema("logging/schema/LoggingEvent.avsc");
   }
 
+  /**
+   * Contains {@link Schema} for logging event.
+   */
+  public static final class LogBufferRequest {
+    public static final Schema SCHEMA = loadSchema("logbuffer/schema/LogBufferRequest.avsc");
+  }
+
   private static Schema loadSchema(String resource) {
     URL url = LogSchema.class.getClassLoader().getResource(resource);
     if (url == null) {
