@@ -18,12 +18,10 @@
 package co.cask.cdap.metadata.profile;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.config.PreferencesDataset;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.config.PreferencesTable;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -84,15 +82,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private final NamespaceTable namespaceTable;
   private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
-  private final PreferencesDataset preferencesDataset;
+  private final PreferencesTable preferencesTable;
 
-  public ProfileMetadataMessageProcessor(DatasetContext datasetContext, DatasetFramework datasetFramework,
-                                         MetadataStore metadataStore,
-                                         StructuredTableContext structuredTableContext) {
+  public ProfileMetadataMessageProcessor(MetadataStore metadataStore, StructuredTableContext structuredTableContext) {
     namespaceTable = new NamespaceTable(structuredTableContext);
     appMetadataStore = AppMetadataStore.create(structuredTableContext);
     scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
-    preferencesDataset = PreferencesDataset.get(datasetContext, datasetFramework);
+    preferencesTable = new PreferencesTable(structuredTableContext);
     this.metadataStore = metadataStore;
   }
 
@@ -267,10 +263,10 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    * @return the profile id which will be used by this entity id, default profile if not find
    */
   // TODO: CDAP-13579 consider preference key starts with [scope].[name].system.profile.name
-  private ProfileId getResolvedProfileId(EntityId entityId) {
+  private ProfileId getResolvedProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesDataset.getResolvedPreference(entityId, SystemArguments.PROFILE_NAME);
+    String profileName = preferencesTable.getResolvedPreference(entityId, SystemArguments.PROFILE_NAME);
     return profileName == null ? ProfileId.NATIVE : ProfileId.fromScopedName(namespaceId, profileName);
   }
 
@@ -280,10 +276,10 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    * @param entityId entity id to lookup the profile id
    * @return the profile id configured for this entity id, if any
    */
-  private Optional<ProfileId> getProfileId(EntityId entityId) {
+  private Optional<ProfileId> getProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesDataset.getPreferences(entityId).get(SystemArguments.PROFILE_NAME);
+    String profileName = preferencesTable.getPreferences(entityId).get(SystemArguments.PROFILE_NAME);
     return profileName == null ? Optional.empty() : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
   }
 

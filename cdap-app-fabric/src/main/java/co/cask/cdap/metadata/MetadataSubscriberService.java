@@ -212,8 +212,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(
-              datasetContext, datasetFramework, metadataStore, structuredTableContext);
+            return new ProfileMetadataMessageProcessor(metadataStore, structuredTableContext);
           default:
             return null;
         }
