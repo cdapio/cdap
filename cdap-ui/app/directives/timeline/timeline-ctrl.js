@@ -182,6 +182,11 @@ function TimelineController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myL
       }
       this.apiSettings.metric.startTime = res.starting;
       this.apiSettings.metric.endTime = res.end;
+
+      if (!LogViewerStore.getState().startTime) {
+        this.updateStartTimeInStore(this.apiSettings.metric.startTime);
+      }
+
       $scope.renderSearchCircles([]);
       this.pollForMetadata();
     },
