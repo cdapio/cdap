@@ -51,7 +51,7 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
-import co.cask.cdap.data2.registry.UsageDataset;
+import co.cask.cdap.data2.registry.UsageTable;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -467,9 +467,6 @@ public class UpgradeTool {
     DefaultStore.setupDatasets(datasetFramework);
     // logs metadata
     LoggingStoreTableUtil.setupDatasets(datasetFramework);
-
-    // Usage registry
-    UsageDataset.setupDatasets(datasetFramework);
 
     ProgramScheduleStoreDataset.setupDatasets(datasetFramework);
   }

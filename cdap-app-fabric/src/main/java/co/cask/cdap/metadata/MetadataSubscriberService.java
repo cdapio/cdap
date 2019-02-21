@@ -42,7 +42,7 @@ import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import co.cask.cdap.data2.registry.DatasetUsage;
-import co.cask.cdap.data2.registry.UsageDataset;
+import co.cask.cdap.data2.registry.UsageTable;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
@@ -107,7 +107,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final TransactionRunner transactionRunner;
 
   private DatasetId fieldLineageDatasetId = FieldLineageDataset.FIELD_LINEAGE_DATASET_ID;
-  private DatasetId usageDatasetId = UsageDataset.USAGE_INSTANCE_ID;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -200,7 +199,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case FIELD_LINEAGE:
             return new FieldLineageProcessor(datasetContext);
           case USAGE:
-            return new UsageProcessor(datasetContext);
+            return new UsageProcessor();
           case WORKFLOW_TOKEN:
           case WORKFLOW_STATE:
             return new WorkflowProcessor();
@@ -225,7 +224,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         continue;
       }
 
-      processor.processMessage(message);
+      processor.processMessage(message, structuredTableContext);
     }
   }
 
@@ -237,7 +236,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     DataAccessLineageProcessor() {}
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the lineage access information. Ignoring the message {}", message);
         return;
@@ -245,10 +244,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
       DataAccessLineage lineage = message.getPayload(GSON, DataAccessLineage.class);
       ProgramRunId programRunId = (ProgramRunId) message.getEntityId();
-      TransactionRunners.run(transactionRunner, context -> {
-        LineageTable lineageTable = LineageTable.create(context);
-        lineageTable.addAccess(programRunId, lineage.getDatasetId(), lineage.getAccessType(), lineage.getAccessTime());
-      });
+      LineageTable lineageTable = LineageTable.create(context);
+      lineageTable.addAccess(programRunId, lineage.getDatasetId(), lineage.getAccessType(), lineage.getAccessTime());
     }
   }
 
@@ -265,7 +262,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     }
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message, StructuredTableContext context) {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the field lineage information. Ignoring the message {}", message);
         return;
@@ -289,21 +286,18 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private final class UsageProcessor implements MetadataMessageProcessor {
 
-    private final UsageDataset usageDataset;
-
-    UsageProcessor(DatasetContext datasetContext) {
-      this.usageDataset = UsageDataset.getUsageDataset(datasetContext, datasetFramework, usageDatasetId);
-    }
+    UsageProcessor() {}
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
       if (!(message.getEntityId() instanceof ProgramId)) {
         LOG.warn("Missing program id from the usage information. Ignoring the message {}", message);
         return;
       }
       DatasetUsage usage = message.getPayload(GSON, DatasetUsage.class);
       ProgramId programId = (ProgramId) message.getEntityId();
-      usageDataset.register(programId, usage.getDatasetId());
+      UsageTable usageTable = new UsageTable(context);
+      usageTable.register(programId, usage.getDatasetId());
     }
   }
 
@@ -315,7 +309,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     WorkflowProcessor() {}
 
     @Override
-    public void processMessage(MetadataMessage message) throws IOException {
+    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the workflow state information. Ignoring the message {}", message);
         return;
@@ -325,16 +319,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
       switch (message.getType()) {
         case WORKFLOW_TOKEN:
-          TransactionRunners.run(transactionRunner, context -> {
-            AppMetadataStore.create(context)
-              .setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
-          });
+          AppMetadataStore.create(context)
+            .setWorkflowToken(programRunId, message.getPayload(GSON, BasicWorkflowToken.class));
           break;
         case WORKFLOW_STATE:
-          TransactionRunners.run(transactionRunner, context -> {
-            AppMetadataStore.create(context)
-              .addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
-          });
+          AppMetadataStore.create(context)
+            .addWorkflowNodeState(programRunId, message.getPayload(GSON, WorkflowNodeStateDetail.class));
           break;
         default:
           // This shouldn't happen
@@ -354,7 +344,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     }
 
     @Override
-    public void processMessage(MetadataMessage message) {
+    public void processMessage(MetadataMessage message, StructuredTableContext context) {
       MetadataOperation operation = message.getPayload(GSON, MetadataOperation.class);
       MetadataEntity entity = operation.getEntity();
       LOG.trace("Received {}", operation);
