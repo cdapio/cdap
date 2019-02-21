@@ -17,11 +17,11 @@
 package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
-import co.cask.cdap.data2.nosql.NoSqlStructuredTableAdmin;
-import co.cask.cdap.data2.nosql.NoSqlStructuredTableRegistry;
-import co.cask.cdap.data2.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
+import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
+import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.store.StoreDefinition;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

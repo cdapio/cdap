@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.sql;
+package co.cask.cdap.spi.data.sql;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.spi.data.StructuredRow;

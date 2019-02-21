@@ -14,12 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.data2.nosql;
+package co.cask.cdap.spi.data.nosql;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;

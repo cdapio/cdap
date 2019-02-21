@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.data2.nosql;
+package co.cask.cdap.spi.data.nosql;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.data2.nosql.dataset.NoSQLTransactionals;
-import co.cask.cdap.data2.nosql.dataset.TableDatasetSupplier;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.spi.data.nosql.dataset.NoSQLTransactionals;
+import co.cask.cdap.spi.data.nosql.dataset.TableDatasetSupplier;
 import co.cask.cdap.spi.data.transaction.TransactionException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TxRunnable;
