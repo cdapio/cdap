@@ -19,7 +19,6 @@ package co.cask.cdap.logging.pipeline.logbuffer;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.logging.logbuffer.ConcurrentLogBufferWriter;
 import co.cask.cdap.logging.logbuffer.LogBufferEvent;
 import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
 import co.cask.cdap.logging.meta.Checkpoint;
@@ -40,11 +39,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Log processing pipeline to process log events from log buffer. Events are pushed to this pipeline from
- * {@link ConcurrentLogBufferWriter}.
+ * Log processing pipeline to process log events from log buffer. Log events are pushed to this pipeline for further
+ * processing.
  */
 public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(LogBufferProcessorPipeline.class);
@@ -62,8 +62,8 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   private final TimeEventQueueProcessor<LogBufferFileOffset> eventQueueProcessor;
   private final BlockingQueue<LogBufferEvent> incomingEventQueue;
   private final Map<Integer, MutableLogBufferCheckpoint> checkpoints;
+  private final CountDownLatch stopLatch;
 
-  private volatile Thread runThread;
   private volatile boolean stopped;
   private long lastCheckpointTime;
   private int unSyncedEvents;
@@ -80,6 +80,7 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
                                                              config.getEventDelayMillis(), ImmutableSet.of(instanceId));
     this.incomingEventQueue = new ArrayBlockingQueue<>(INCOMING_EVENT_QUEUE_SIZE);
     this.checkpoints = new HashMap<>();
+    this.stopLatch = new CountDownLatch(1);
   }
 
   @Override
@@ -96,36 +97,28 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    runThread = Thread.currentThread();
+    lastCheckpointTime = System.currentTimeMillis();
+    while (!stopped) {
+      boolean hasEventProcessed = processEvents(incomingEventQueue);
+      long now = System.currentTimeMillis();
+      long nextCheckpointDelay = trySyncAndPersistCheckpoints(now);
 
-    try {
-      lastCheckpointTime = System.currentTimeMillis();
-      while (!stopped) {
-        boolean hasEventProcessed = processEvents(incomingEventQueue);
-        long now = System.currentTimeMillis();
-        long nextCheckpointDelay = trySyncAndPersistCheckpoints(now);
-
-        // If nothing has been processed (e.g. fail to append anything to appender),
-        // Sleep until min(next checkpoint delay, next event delay).
-        if (!hasEventProcessed) {
-          long sleepMillis = config.getEventDelayMillis();
-          sleepMillis = Math.min(sleepMillis, nextCheckpointDelay);
-          if (sleepMillis > 0) {
-            TimeUnit.MILLISECONDS.sleep(sleepMillis);
-          }
+      // If nothing has been processed (e.g. fail to append anything to appender),
+      // Wait until min(next checkpoint delay, next event delay).
+      if (!hasEventProcessed) {
+        long sleepMillis = config.getEventDelayMillis();
+        sleepMillis = Math.min(sleepMillis, nextCheckpointDelay);
+        if (sleepMillis > 0) {
+          stopLatch.await(sleepMillis, TimeUnit.MILLISECONDS);
         }
       }
-    } catch (InterruptedException e) {
-      // Interruption means stopping the service.
     }
   }
 
   @Override
   protected void triggerShutdown() {
     stopped = true;
-    if (runThread != null) {
-      runThread.interrupt();
-    }
+    stopLatch.countDown();
   }
 
   @Override
@@ -134,14 +127,12 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
 
     try {
       context.stop();
-      // Persist the checkpoints. It can only be done after successfully stopping the appenders.
-      // Since persistCheckpoint never throw, putting it inside try is ok.
-      persistCheckpoints();
     } catch (Exception e) {
       // Just log, not to fail the shutdown
       LOG.warn("Exception raised when stopping pipeline {}", name, e);
     }
 
+    persistCheckpoints();
     LOG.info("Log processor pipeline for {} stopped with latest checkpoint {}", name, checkpoints);
   }
 
@@ -175,19 +166,15 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   }
 
   /**
-   * This method is called from {@link ConcurrentLogBufferWriter} to push log events.
+   * Pushes log events to blocking queue to be processed by processor pipeline.
    *
    * @param events log events to be processed
    */
   public void processLogEvents(Iterator<LogBufferEvent> events) {
     // Don't accept any log events if the pipeline is not running
-    if (!isRunning()) {
-      return;
-    }
-
-    while (events.hasNext()) {
+    while (!stopped && events.hasNext()) {
       try {
-        // This call will block ConcurrentLogBufferWriter thread until the queue has free space.
+        // This call will block caller thread until the queue has free space.
         incomingEventQueue.put(events.next());
       } catch (InterruptedException e) {
         // Just ignore the exception and reset the flag

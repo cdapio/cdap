@@ -23,7 +23,6 @@ import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.store.StoreDefinition;
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +48,7 @@ public abstract class AbstractCheckpointManager<T> implements CheckpointManager<
 
   private Map<Integer, Checkpoint<T>> lastCheckpoint;
 
-  @VisibleForTesting
-  public AbstractCheckpointManager(TransactionRunner transactionRunner, String prefix) {
+  AbstractCheckpointManager(TransactionRunner transactionRunner, String prefix) {
     this.rowKeyPrefix = prefix;
     this.lastCheckpoint = new HashMap<>();
     this.transactionRunner = transactionRunner;
@@ -125,8 +123,7 @@ public abstract class AbstractCheckpointManager<T> implements CheckpointManager<
   protected abstract byte[] serializeCheckpoint(Checkpoint<T> checkpoint) throws IOException;
 
   /**
-   * Deserialize the checkpoint bytes. If checkpoint bytes are null, then return {@code -1} for all the numeric
-   * values of checkpoint such as maxEventTime.
+   * Deserialize the checkpoint bytes.
    * @param checkpoint checkpoint bytes to be deserialized
    * @return deserialized checkpoint
    * @throws IOException if error while deserializing checkpoint bytes
