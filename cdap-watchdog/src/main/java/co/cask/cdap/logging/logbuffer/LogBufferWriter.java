@@ -103,7 +103,9 @@ public class LogBufferWriter implements Flushable, Closeable {
    * @throws IOException if there is any problem while writing to log buffer
    */
   private LogBufferFileOffset write(byte[] eventBytes) throws IOException {
+    long startFileId = currFileId;
     long startOffset = currOffset;
+
     // write size of the log event
     currOutputStream.write(Bytes.toBytes(eventBytes.length));
     currOffset = currOffset + Bytes.SIZEOF_INT;
@@ -119,7 +121,8 @@ public class LogBufferWriter implements Flushable, Closeable {
       currOutputStream = new BufferedOutputStream(rotateFile(currOutputStream).getOutputStream());
     }
 
-    return new LogBufferFileOffset(currFileId, startOffset);
+    // the file id and file pos in offset is where current event is written.
+    return new LogBufferFileOffset(startFileId, startOffset);
   }
 
   @Override
