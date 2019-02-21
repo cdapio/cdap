@@ -95,7 +95,7 @@
 
 <div class="my-js-dag"
     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'normal-cursor': disableNodeClick, 'preview-mode': previewMode }"
-    ng-click="DAGPlusPlusCtrl.toggleNodeMenu(); DAGPlusPlusCtrl.openDagMenu(false);">
+    ng-click="DAGPlusPlusCtrl.handleCanvasClick()">
     <div id="diagram-container">
       <div id="dag-container" ng-style="DAGPlusPlusCtrl.panning.style">
         <!--
@@ -107,8 +107,10 @@
                id="{{node.name}}"
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
-                 'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name
-               }">
+                 'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
+                 'selected': DAGPlusPlusCtrl.selectedNode.name === node.name,
+               }"
+               ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
           <div class="node"
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
@@ -237,7 +239,7 @@
               <span ng-if="DAGPlusPlusCtrl.nodeMenuOpen !== node.name"
                     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                     class="menu-icon menu-icon-node fa fa-bars float-xs-right"
-                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
+                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleNodeMenu(node, $event)">
               </span>
             </div>
           </div>

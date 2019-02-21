@@ -52,6 +52,35 @@
   }
 }
 
+.set-node-color(@node-color) {
+  color: @node-color;
+
+  &.selected {
+    border-color: @node-color;
+    color: white;
+    .node {
+      background-color: @node-color;
+
+      .node-configure-btn {
+        background-color: transparent;
+        &:hover {
+          background-color: darken(@node-color, 10%);
+        }
+
+        .node-configure-btn-label {
+          color: white;
+        }
+      }
+
+      &:not(.disabled):hover {
+        .menu-icon-node {
+          color: white;
+        }
+      }
+    }
+  }
+}
+
 my-dag-plus {
   .zoom-control {
     z-index: 998;
@@ -143,10 +172,10 @@ my-dag-plus {
       width: @node-box-width;
       z-index: 2;
       .border-color-hover(@node-box-height-big);
+      left: 30vw;
 
       // Setting default node color
-      color: @transform-plugins-color;
-      left: 30vw;
+      .set-node-color(@transform-plugins-color);
 
       &.node-menu-open {
         z-index: 3;
@@ -385,10 +414,6 @@ my-dag-plus {
 
           &:hover {
             background-color: @configure-btn-bg-hover-color;
-
-            .node-configure-btn-label {
-              color: @configure-btn-label-hover-color;
-            }
           }
 
           &:focus {
@@ -426,23 +451,23 @@ my-dag-plus {
       &.realtimesource,
       &.streamingsource,
       &.batchsource {
-        color: @source-plugins-color;
+        .set-node-color(@source-plugins-color);
         left: 10vw;
       }
 
       &.realtimesink,
       &.batchsink,
       &.sparksink {
-        color: @sink-plugins-color;
+        .set-node-color(@sink-plugins-color);
       }
 
       &.errortransform {
-        color: @error-transform;
+        .set-node-color(@error-transform);
         left: 50vw;
       }
 
       &.alertpublisher {
-        color: @alertpublisher-plugins-color;
+        .set-node-color(@alertpublisher-plugins-color);
         left: 50vw;
       }
 
@@ -453,14 +478,14 @@ my-dag-plus {
       }
 
       &.action {
-        color: @action-plugins-color;
+        .set-node-color(@action-plugins-color);
       }
 
       &.sparkprogram {
-        color: @spark-plugins-color;
+        .set-node-color(@spark-plugins-color);
       }
       &.condition {
-        color: @condition-plugin-color;
+        .set-node-color(@condition-plugin-color);
         left: 30vw;
 
         width: @condition-box-width;
@@ -525,6 +550,8 @@ my-dag-plus {
             .node-metadata {
               transform: initial;
               margin: initial;
+              padding: 0 7px;
+              white-space: nowrap;
             }
           }
 
@@ -552,7 +579,7 @@ my-dag-plus {
       z-index: 1000;
       position: absolute;
       right: -54px;
-      top: 52px;
+      top: 65px;
 
       .menu-icon {
         color: @hamburger-hover-color;
