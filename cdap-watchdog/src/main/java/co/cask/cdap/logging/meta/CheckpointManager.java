@@ -22,24 +22,22 @@ import java.util.Set;
 
 /**
  * Manages reading/writing of checkpoint information for a topic and partition.
- * @param <Offset> type of the offset
+ * @param <OFFSET> type of the offset
  */
-public interface CheckpointManager<Offset> {
+public interface CheckpointManager<OFFSET> {
 
   /**
    * Persists the given map of {@link Checkpoint}s.
    */
-  void saveCheckpoints(Map<Integer, ? extends Checkpoint<Offset>> checkpoints) throws IOException;
+  void saveCheckpoints(Map<Integer, ? extends Checkpoint<OFFSET>> checkpoints) throws IOException;
 
   /**
-   * Reads the set of {@link Checkpoint}s for the given set of partitions. If there is no checkpoint for the partition,
-   * {@code -1} value will be used for maxEventTime and numeric Offset values.
+   * Reads the set of {@link Checkpoint}s for the given set of partitions.
    */
-  Map<Integer, Checkpoint<Offset>> getCheckpoint(Set<Integer> partitions) throws IOException;
+  Map<Integer, Checkpoint<OFFSET>> getCheckpoint(Set<Integer> partitions) throws IOException;
 
   /**
-   * Reads the {@link Checkpoint} for the given partition. If there is no checkpoint for the partition,
-   * {@code -1} value will be used for maxEventTime and numeric Offset values.
+   * Reads the {@link Checkpoint} for the given partition.
    */
-  Checkpoint<Offset> getCheckpoint(int partition) throws IOException;
+  Checkpoint<OFFSET> getCheckpoint(int partition) throws IOException;
 }

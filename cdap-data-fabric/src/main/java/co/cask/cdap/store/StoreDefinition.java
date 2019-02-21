@@ -16,7 +16,6 @@
 
 package co.cask.cdap.store;
 
-import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableId;
@@ -621,7 +620,7 @@ public final class StoreDefinition {
   }
 
   /**
-   * Schema for {@link LineageTable}.
+   * Schema for lineage table.
    */
   public static final class LineageStore {
     public static final StructuredTableId DATASET_LINEAGE_TABLE = new StructuredTableId("dataset_lineage");

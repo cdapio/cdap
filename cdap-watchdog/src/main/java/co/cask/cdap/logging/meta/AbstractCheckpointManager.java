@@ -125,8 +125,7 @@ public abstract class AbstractCheckpointManager<T> implements CheckpointManager<
   protected abstract byte[] serializeCheckpoint(Checkpoint<T> checkpoint) throws IOException;
 
   /**
-   * Deserialize the checkpoint bytes. If checkpoint bytes are null, then return {@code -1} for all the numeric
-   * values of checkpoint such as maxEventTime.
+   * Deserialize the checkpoint bytes.
    * @param checkpoint checkpoint bytes to be deserialized
    * @return deserialized checkpoint
    * @throws IOException if error while deserializing checkpoint bytes

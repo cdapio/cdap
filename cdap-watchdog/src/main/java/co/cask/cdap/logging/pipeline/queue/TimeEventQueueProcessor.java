@@ -33,15 +33,15 @@ import java.util.Map;
 
 /**
  * The {@link TimeEventQueue} processor to enqueue the log events to {@link TimeEventQueue}, and process them.
- * @param <Offset> type of the offset
+ * @param <OFFSET> type of the offset
  */
-public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
+public class TimeEventQueueProcessor<OFFSET extends Comparable<OFFSET>> {
   private static final Logger LOG = LoggerFactory.getLogger(TimeEventQueueProcessor.class);
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =
     Loggers.sampling(LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(60000)));
   private static final double MIN_FREE_FACTOR = 0.5d;
-  private final TimeEventQueue<ILoggingEvent, Offset> eventQueue;
+  private final TimeEventQueue<ILoggingEvent, OFFSET> eventQueue;
   private final LogProcessorPipelineContext context;
   private final MetricsContext metricsContext;
   private final long maxBufferSize;
@@ -67,9 +67,9 @@ public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
    *
    * @return processed event metadata
    */
-  public ProcessedEventMetadata<Offset> process(int partition, Iterator<ProcessorEvent<Offset>> eventIterator) {
+  public ProcessedEventMetadata<OFFSET> process(int partition, Iterator<ProcessorEvent<OFFSET>> eventIterator) {
     int totalEvents = 0;
-    Map<Integer, Checkpoint<Offset>> checkpoints = new HashMap<>();
+    Map<Integer, Checkpoint<OFFSET>> checkpoints = new HashMap<>();
 
     // iterate through all the events if buffer size has not reached max
     while (eventIterator.hasNext()) {
@@ -78,7 +78,7 @@ public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
 
         // Event queue is full. So try to append events to log appenders. If none of the events are appended to log
         // appenders, then do not enqueue any more events.
-        ProcessedEventMetadata<Offset> eventsMetadata = append();
+        ProcessedEventMetadata<OFFSET> eventsMetadata = append();
         if (eventsMetadata.getTotalEventsProcessed() <= 0) {
           break;
         }
@@ -86,15 +86,14 @@ public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
         checkpoints.putAll(eventsMetadata.getCheckpoints());
       }
 
-      ProcessorEvent<Offset> processorEvent = eventIterator.next();
+      ProcessorEvent<OFFSET> processorEvent = eventIterator.next();
       eventQueue.add(processorEvent.getEvent(), processorEvent.getEvent().getTimeStamp(), processorEvent.getEventSize(),
                      partition, processorEvent.getOffset());
-
     }
 
     // if event queue is full or all the events have been added to the queue, append all the enqueued events to log
     // appenders.
-    ProcessedEventMetadata<Offset> eventsMetadata = append();
+    ProcessedEventMetadata<OFFSET> eventsMetadata = append();
     if (eventsMetadata.getTotalEventsProcessed() > 0) {
       totalEvents += eventsMetadata.getTotalEventsProcessed();
       checkpoints.putAll(eventsMetadata.getCheckpoints());
@@ -103,7 +102,7 @@ public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
     return new ProcessedEventMetadata<>(totalEvents, checkpoints);
   }
 
-  private ProcessedEventMetadata<Offset> append() {
+  private ProcessedEventMetadata<OFFSET> append() {
     long minEventTime = System.currentTimeMillis() - eventDelayMillis;
     long maxRetainSize = eventQueue.getEventSize() >= maxBufferSize ?
       (long) (maxBufferSize * MIN_FREE_FACTOR) : Long.MAX_VALUE;
@@ -111,9 +110,9 @@ public class TimeEventQueueProcessor<Offset extends Comparable<Offset>> {
     int eventsAppended = 0;
     long minDelay = Long.MAX_VALUE;
     long maxDelay = -1;
-    Map<Integer, Checkpoint<Offset>> metadata = new HashMap<>();
+    Map<Integer, Checkpoint<OFFSET>> metadata = new HashMap<>();
 
-    TimeEventQueue.EventIterator<ILoggingEvent, Offset> iterator = eventQueue.iterator();
+    TimeEventQueue.EventIterator<ILoggingEvent, OFFSET> iterator = eventQueue.iterator();
     while (iterator.hasNext()) {
       ILoggingEvent event = iterator.next();
 
