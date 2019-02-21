@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.service;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.common.async.Futures;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -41,7 +42,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A {@link ProgramRuntimeService} for in memory mode. It is used for unit-test as well as in Standalone.
@@ -88,19 +88,25 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
     }
     // unchecked because we cannot do much if it fails. We will still shutdown the standalone CDAP instance.
     try {
-      for (Future f : futures) {
-        f.get(60, TimeUnit.SECONDS);
-      }
+      Futures.allAsList(futures, 60, TimeUnit.SECONDS);
       LOG.info("All programs have been stopped.");
     } catch (ExecutionException e) {
-      // note this should not happen because we wait on a successfulAsList
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        if (cause instanceof InterruptedException) {
+          LOG.warn("Got interrupted exception while waiting for all programs to stop", e);
+          Thread.currentThread().interrupt();
+          return;
+        }
+        for (Throwable suppressed : cause.getSuppressed()) {
+          if (suppressed instanceof InterruptedException) {
+            LOG.warn("Got interrupted exception while waiting for all programs to stop", e);
+            Thread.currentThread().interrupt();
+            return;
+          }
+        }
+      }
       LOG.warn("Got exception while waiting for all programs to stop", e.getCause());
-    } catch (InterruptedException e) {
-      LOG.warn("Got interrupted exception while waiting for all programs to stop", e);
-      Thread.currentThread().interrupt();
-    } catch (TimeoutException e) {
-      // can't do much more than log it. We still want to exit.
-      LOG.warn("Timeout while waiting for all programs to stop.");
     }
   }
 }

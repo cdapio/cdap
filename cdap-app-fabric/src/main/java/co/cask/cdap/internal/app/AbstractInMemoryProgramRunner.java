@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app;
 
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.common.async.Futures;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -87,13 +88,11 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       LOG.error("Failed to start all program instances", t);
       try {
         // Need to stop all started components
-        List<Future> futures = new ArrayList<>(components.size());
+        List<Future<ProgramController>> futures = new ArrayList<>(components.size());
         for (ProgramController controller : components.values()) {
           futures.add(controller.stop());
         }
-        for (Future f : futures) {
-          f.get();
-        }
+        Futures.successfulAsList(futures);
 
         throw Throwables.propagate(t);
       } catch (Exception e) {
@@ -187,13 +186,11 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
       LOG.info("Stopping Program: {}", program.getName());
       lock.lock();
       try {
-        List<Future> futures = new ArrayList<>(components.size());
+        List<Future<ProgramController>> futures = new ArrayList<>(components.size());
         for (ProgramController programController : components.values()) {
           futures.add(programController.stop());
         }
-        for (Future f : futures) {
-          f.get();
-        }
+        Futures.successfulAsList(futures);
       } finally {
         lock.unlock();
       }
@@ -243,9 +240,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         for (int instanceId = liveCount - 1; instanceId >= newCount; instanceId--) {
           futures.add(components.remove(runnableName, instanceId).stop());
         }
-        for (Future f : futures) {
-          f.get();
-        }
+        Futures.allAsList(futures);
       }
 
       // create more runnable instances, if necessary.
