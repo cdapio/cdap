@@ -20,10 +20,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableTest;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.hadoop.conf.Configuration;
@@ -72,10 +75,13 @@ public class NoSqlStructuredTableTest extends StructuredTableTest {
     Configuration txConf = HBaseConfiguration.create();
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
+
+    CConfiguration cConf = dsFrameworkUtil.getConfiguration();
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
     noSqlTableAdmin = dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableAdmin.class);
     transactionRunner = dsFrameworkUtil.getInjector().getInstance(NoSqlTransactionRunner.class);
-    NoSqlStructuredTableRegistry registry =
-      dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
+    StructuredTableRegistry registry =
+      dsFrameworkUtil.getInjector().getInstance(StructuredTableRegistry.class);
     registry.initialize();
   }
 

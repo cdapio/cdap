@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.common.CachedStructuredTableRegistry;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
 import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
@@ -158,11 +159,13 @@ public class StorageModule extends PrivateModule {
 
       storageImpl = storageImpl.toLowerCase();
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
-        return injector.getInstance(NoSqlStructuredTableRegistry.class);
+        NoSqlStructuredTableRegistry registry = injector.getInstance(NoSqlStructuredTableRegistry.class);
+        return new CachedStructuredTableRegistry(registry);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
         // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
-        return new SqlStructuredTableRegistry(null);
+        SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(null);
+        return new CachedStructuredTableRegistry(registry);
       }
       throw new UnsupportedOperationException(
         String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
