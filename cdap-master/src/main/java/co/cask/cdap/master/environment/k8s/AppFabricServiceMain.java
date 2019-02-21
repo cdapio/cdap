@@ -18,8 +18,10 @@ package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
-import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.guice.DistributedProgramRunnerModule;
+import co.cask.cdap.app.guice.RemoteExecutionProgramRunnerModule;
 import co.cask.cdap.app.guice.TwillModule;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
@@ -32,7 +34,10 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.operations.OperationalStatsService;
@@ -48,11 +53,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import org.apache.twill.api.TwillRunnerService;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -68,7 +75,20 @@ public class AppFabricServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv) {
+    Supplier<ProgramRuntimeService> runtimeServiceSupplier = masterEnv.getProgramRuntimeServiceSupplier();
+    Module programRuntimeModule;
+    if (runtimeServiceSupplier.get() == null) {
+      programRuntimeModule = new DistributedProgramRunnerModule();
+    } else {
+      programRuntimeModule = new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(ProgramRuntimeService.class).toProvider(new SupplierProviderBridge<>(runtimeServiceSupplier));
+        }
+      };
+    }
+
     return Arrays.asList(
       // Always use local table implementations, which use LevelDB.
       // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
@@ -83,7 +103,8 @@ public class AppFabricServiceMain extends AbstractServiceMain {
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
-      new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new RemoteExecutionProgramRunnerModule(),
+      programRuntimeModule,
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
       getDataFabricModule(),
@@ -92,6 +113,9 @@ public class AppFabricServiceMain extends AbstractServiceMain {
         protected void configure() {
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
+
+          // Bind ProgramStateWriter
+          bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class).in(Scopes.SINGLETON);
         }
       }
     );

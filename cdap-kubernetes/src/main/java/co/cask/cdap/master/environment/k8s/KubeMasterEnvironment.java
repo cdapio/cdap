@@ -17,8 +17,10 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.k8s.discovery.KubeDiscoveryService;
+import co.cask.cdap.k8s.program.KubeProgramRuntimeService;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -39,11 +41,14 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String POD_LABELS_PATH = "master.environment.k8s.pod.labels.path";
+  private static final String RUNTIME_IMAGE = "master.environment.k8s.runtime.image";
+  private static final String RUNTIME_CLASSPATH = "master.environment.k8s.runtime.classpath";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_POD_LABELS_PATH = "/etc/podinfo/pod.labels.properties";
 
   private KubeDiscoveryService discoveryService;
+  private KubeProgramRuntimeService runtimeService;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException {
@@ -58,7 +63,18 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     Map<String, String> podLabels = properties.stringPropertyNames().stream()
       .collect(Collectors.toMap(k -> k, properties::getProperty));
 
-    discoveryService = new KubeDiscoveryService(conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE), podLabels);
+    String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
+    discoveryService = new KubeDiscoveryService(namespace, podLabels);
+    // default this to same value once there is a public image available.
+    String runtimeImage = conf.get(RUNTIME_IMAGE);
+    if (runtimeImage == null) {
+      throw new IllegalStateException(String.format(
+        "No Kubernetes program runtime image was specified. Please specify on by setting %s in cdap-site.xml",
+        RUNTIME_IMAGE));
+    }
+    // classpath is temporarily configurable until the image is finalized
+    runtimeService = new KubeProgramRuntimeService(namespace, runtimeImage, conf.get(RUNTIME_CLASSPATH),
+                                                   context.getSerDe());
   }
 
   @Override
@@ -74,5 +90,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
+  }
+
+  @Override
+  public Supplier<ProgramRuntimeService> getProgramRuntimeServiceSupplier() {
+    return () -> runtimeService;
   }
 }

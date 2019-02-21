@@ -16,6 +16,7 @@
 
 package co.cask.cdap.master.spi.environment;
 
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -59,5 +60,10 @@ public interface MasterEnvironment {
    * Returns a {@link Supplier} of {@link DiscoveryServiceClient} for service discovery purpose.
    */
   Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier();
+
+  /**
+   * Returns a {@link Supplier} of {@link ProgramRuntimeService} for running programs.
+   */
+  Supplier<ProgramRuntimeService> getProgramRuntimeServiceSupplier();
 
 }

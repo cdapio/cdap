@@ -34,7 +34,7 @@ import org.apache.twill.api.TwillRunner;
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
  */
-final class DistributedProgramRunnerModule extends PrivateModule {
+public final class DistributedProgramRunnerModule extends PrivateModule {
 
   @Override
   protected void configure() {

@@ -163,7 +163,7 @@ public abstract class AbstractServiceMain extends DaemonMain {
         bind(LogAppender.class).to(SysOutLogAppender.class).in(Scopes.SINGLETON);
       }
     });
-    modules.addAll(getServiceModules());
+    modules.addAll(getServiceModules(masterEnv));
 
     injector = Guice.createInjector(modules);
 
@@ -249,7 +249,7 @@ public abstract class AbstractServiceMain extends DaemonMain {
   /**
    * Returns a {@link List} of Guice {@link Module} that this specific for this master service.
    */
-  protected abstract List<Module> getServiceModules();
+  protected abstract List<Module> getServiceModules(MasterEnvironment masterEnv);
 
   /**
    * Adds {@link Service} to run.
@@ -286,11 +286,11 @@ public abstract class AbstractServiceMain extends DaemonMain {
    *
    * @param <T> type of the object provided by this {@link Provider}
    */
-  private static final class SupplierProviderBridge<T> implements Provider<T> {
+  protected static final class SupplierProviderBridge<T> implements Provider<T> {
 
     private final Supplier<T> supplier;
 
-    private SupplierProviderBridge(Supplier<T> supplier) {
+    SupplierProviderBridge(Supplier<T> supplier) {
       this.supplier = supplier;
     }
 

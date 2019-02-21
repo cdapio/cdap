@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.master.spi.program.AbstractProgramController;
 import co.cask.cdap.master.spi.program.ProgramController;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;

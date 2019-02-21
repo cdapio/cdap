@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -47,7 +48,7 @@ public class MessagingServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv) {
     // We use the "local" module in K8s, as PV will be used as the persistent storage.
     return Arrays.asList(
       new NamespaceQueryAdminModule(),

@@ -40,7 +40,7 @@
     <logger name="co.cask.cdap.data2.datafabric.dataset.service.executor.RemoteDatasetOpExecutor" level="TRACE"/>
     <logger name="co.cask.cdap.explore" level="TRACE"/>
     <logger name="co.cask.cdap.hive" level="DEBUG"/>
-    <logger name="co.cask.cdap.internal.app.runtime.AbstractProgramController" level="TRACE"/>
+    <logger name="co.cask.cdap.master.spi.program.AbstractProgramController" level="TRACE"/>
 
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>

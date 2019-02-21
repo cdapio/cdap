@@ -14,24 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.master.spi.environment;
+package co.cask.cdap.master.environment;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.master.spi.program.SerDe;
-
-import java.util.Map;
+import com.google.gson.Gson;
 
 /**
- * Context object available to {@link MasterEnvironment} for access to CDAP resources.
+ * A Gson based SerDe.
  */
-public interface MasterEnvironmentContext {
+public class GsonSerDe implements SerDe {
+  private final Gson gson;
 
-  /**
-   * Returns a {@link Map} that contains all CDAP configurations.
-   */
-  Map<String, String> getConfigurations();
+  public GsonSerDe(Gson gson) {
+    this.gson = gson;
+  }
 
-  /**
-   * Returns a SerDe that can be used to serialize and deserialize objects.
-   */
-  SerDe getSerDe();
+  @Override
+  public <T> byte[] serialize(T object) {
+    return Bytes.toBytes(gson.toJson(object));
+  }
+
+  @Override
+  public <T> T deserialize(byte[] bytes, Class<T> objectClass) {
+    return gson.fromJson(Bytes.toString(bytes), objectClass);
+  }
 }

@@ -24,6 +24,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
@@ -59,7 +60,7 @@ public class MetricsServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv) {
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),

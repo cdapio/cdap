@@ -18,7 +18,15 @@ package co.cask.cdap.master.environment;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
+import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import co.cask.cdap.master.spi.program.Arguments;
+import co.cask.cdap.master.spi.program.ProgramOptions;
+import co.cask.cdap.master.spi.program.SerDe;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.Map;
 
@@ -26,15 +34,25 @@ import java.util.Map;
  * Default implementation of {@link MasterEnvironmentContext} that reflects the actual master runtime environment.
  */
 public class DefaultMasterEnvironmentContext implements MasterEnvironmentContext {
-
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .create();
   private final Map<String, String> configuration;
+  private final SerDe serDe;
 
   public DefaultMasterEnvironmentContext(CConfiguration cConf) {
     this.configuration = CConfigurationUtil.asMap(cConf);
+    this.serDe = new GsonSerDe(GSON);
   }
 
   @Override
   public Map<String, String> getConfigurations() {
     return configuration;
+  }
+
+  @Override
+  public SerDe getSerDe() {
+    return serDe;
   }
 }

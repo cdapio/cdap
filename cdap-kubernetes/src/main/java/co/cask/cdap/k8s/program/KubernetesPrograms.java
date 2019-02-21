@@ -14,24 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.master.spi.environment;
+package co.cask.cdap.k8s.program;
 
-import co.cask.cdap.master.spi.program.SerDe;
-
-import java.util.Map;
+import co.cask.cdap.proto.id.ProgramRunId;
 
 /**
- * Context object available to {@link MasterEnvironment} for access to CDAP resources.
+ * Utilities for Kubernetes programs.
  */
-public interface MasterEnvironmentContext {
+public class KubernetesPrograms {
+
+  private KubernetesPrograms() {
+    // no-op
+  }
 
   /**
-   * Returns a {@link Map} that contains all CDAP configurations.
+   * @return name of any resource that needs to be created for a program run.
    */
-  Map<String, String> getConfigurations();
-
-  /**
-   * Returns a SerDe that can be used to serialize and deserialize objects.
-   */
-  SerDe getSerDe();
+  public static String getResourceName(ProgramRunId programRunId) {
+    return String.format("%s-%s", programRunId.getProgram().toLowerCase(), programRunId.getRun());
+  }
 }

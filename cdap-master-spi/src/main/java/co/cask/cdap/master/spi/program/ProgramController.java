@@ -135,7 +135,7 @@ public interface ProgramController {
   String getComponentName();
 
   /**
-   * Suspend the running {@link ProgramRunner}.
+   * Suspend the running ProgramRunner.
    * @return A {@link Future} that will be completed when the program is actually suspended.
    */
   Future<ProgramController> suspend();

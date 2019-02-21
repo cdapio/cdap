@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime;
+package co.cask.cdap.master.spi.program;
 
-import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.master.spi.program.ProgramController;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
@@ -33,8 +25,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -70,7 +66,7 @@ public abstract class AbstractProgramController implements ProgramController {
     this.state = new AtomicReference<>(State.STARTING);
     this.programRunId = programRunId;
     this.programId = programRunId.getParent();
-    this.runId = RunIds.fromString(programRunId.getRun());
+    this.runId = org.apache.twill.internal.RunIds.fromString(programRunId.getRun());
     this.componentName = componentName;
     this.listeners = new HashMap<>();
     this.caller = new MultiListenerCaller();
@@ -101,66 +97,69 @@ public abstract class AbstractProgramController implements ProgramController {
   }
 
   @Override
-  public final ListenableFuture<ProgramController> suspend() {
+  public final Future<ProgramController> suspend() {
     LOG.trace("Suspend program {}", programId);
+    CompletableFuture<ProgramController> future = new CompletableFuture<>();
     if (!state.compareAndSet(State.ALIVE, State.SUSPENDING)) {
-      return Futures.immediateFailedFuture(
+      future.completeExceptionally(
         new IllegalStateException("Suspension not allowed for " + programId + " in " + state.get()));
+      return future;
     }
-    final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
       try {
         caller.suspending();
         doSuspend();
         state.set(State.SUSPENDED);
-        result.set(AbstractProgramController.this);
+        future.complete(AbstractProgramController.this);
         caller.suspended();
       } catch (Throwable t) {
-        error(t, result);
+        error(t, future);
       }
     });
 
-    return result;
+    return future;
   }
 
   @Override
-  public final ListenableFuture<ProgramController> resume() {
+  public final Future<ProgramController> resume() {
     LOG.trace("Resume program {}", programId);
+    CompletableFuture<ProgramController> future = new CompletableFuture<>();
     if (!state.compareAndSet(State.SUSPENDED, State.RESUMING)) {
-      return Futures.immediateFailedFuture(
+      future.completeExceptionally(
         new IllegalStateException("Resumption not allowed for " + name + " in " + state.get()));
+      return future;
     }
-    final SettableFuture<ProgramController> result = SettableFuture.create();
     executor.execute(() -> {
       try {
         caller.resuming();
         doResume();
         state.set(State.ALIVE);
-        result.set(AbstractProgramController.this);
+        future.complete(AbstractProgramController.this);
         caller.alive();
       } catch (Throwable t) {
-        error(t, result);
+        error(t, future);
       }
     });
-    return result;
+    return future;
   }
 
   @Override
-  public final ListenableFuture<ProgramController> stop() {
+  public final Future<ProgramController> stop() {
     LOG.trace("Stop program {}", programId);
     if (!state.compareAndSet(State.STARTING, State.STOPPING)
       && !state.compareAndSet(State.ALIVE, State.STOPPING)
       && !state.compareAndSet(State.SUSPENDED, State.STOPPING)) {
-      return Futures.immediateFailedFuture(
-        new IllegalStateException("Stopping not allowed for " + name + " in " + state.get()));
+      CompletableFuture<ProgramController> f = new CompletableFuture<>();
+      f.completeExceptionally(new IllegalStateException("Stopping not allowed for " + name + " in " + state.get()));
+      return f;
     }
-    final SettableFuture<ProgramController> result = SettableFuture.create();
+    CompletableFuture<ProgramController> result = new CompletableFuture<>();
     executor.execute(() -> {
       try {
         caller.stopping();
         doStop();
         state.set(State.KILLED);
-        result.set(AbstractProgramController.this);
+        result.complete(AbstractProgramController.this);
         caller.killed();
       } catch (Throwable t) {
         error(t, result);
@@ -196,15 +195,23 @@ public abstract class AbstractProgramController implements ProgramController {
 
   @Override
   public final Cancellable addListener(Listener listener, final Executor listenerExecutor) {
-    Preconditions.checkNotNull(listener, "Listener shouldn't be null.");
-    Preconditions.checkNotNull(listenerExecutor, "Executor shouldn't be null.");
+    if (listener == null) {
+      throw new NullPointerException("Listener shouldn't be null.");
+    }
+    if (listenerExecutor == null) {
+      throw new NullPointerException("Executor shouldn't be null.");
+    }
 
     final ListenerCaller caller = new ListenerCaller(listener, listenerExecutor);
     final Cancellable cancellable = () -> {
       // Simply remove the listener from the map through the executor and block on the completion
-      Futures.getUnchecked(executor.submit(() -> {
-        listeners.remove(caller);
-      }));
+      Future f = executor.submit(() -> listeners.remove(caller));
+      try {
+        getUninterruptibly(f);
+      } catch (ExecutionException e) {
+        // should never never happen
+        throw new RuntimeException(e.getCause());
+      }
     };
 
     try {
@@ -228,17 +235,22 @@ public abstract class AbstractProgramController implements ProgramController {
       // Not expecting exception since the Callable only do action on Map and calling caller.init, which
       // already have exceptions handled inside the method. Also, we never shutdown the executor explicitly,
       // there shouldn't be interrupted exception as well.
-      throw Throwables.propagate(Throwables.getRootCause(e));
+      Throwable t = getRootCause(e);
+      if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      } else {
+        throw new RuntimeException(t);
+      }
     }
   }
 
   @Override
-  public final ListenableFuture<ProgramController> command(final String name, final Object value) {
-    final SettableFuture<ProgramController> result = SettableFuture.create();
+  public final Future<ProgramController> command(final String name, final Object value) {
+    CompletableFuture<ProgramController> result = new CompletableFuture<>();
     executor.execute(() -> {
       try {
         doCommand(name, value);
-        result.set(AbstractProgramController.this);
+        result.complete(AbstractProgramController.this);
       } catch (Throwable t) {
         error(t, result);
       }
@@ -292,14 +304,43 @@ public abstract class AbstractProgramController implements ProgramController {
    * This method should only be called from the single thread executor of this class.
    * @param t The failure cause
    */
-  private <V> void error(Throwable t, SettableFuture<V> future) {
+  private <V> void error(Throwable t, CompletableFuture<V> future) {
     LOG.trace("Program {} forced to error", programId, t);
     failureCause = t;
     state.set(State.ERROR);
     if (future != null) {
-      future.setException(t);
+      future.completeExceptionally(t);
     }
     caller.error(t);
+  }
+
+  private static Throwable getRootCause(Throwable throwable) {
+    Throwable cause;
+    while ((cause = throwable.getCause()) != null) {
+      throwable = cause;
+    }
+    return throwable;
+  }
+
+  /**
+   * Invokes {@code future.}{@link Future#get() get()} uninterruptibly.
+   */
+  private static <V> V getUninterruptibly(Future<V> future)
+    throws ExecutionException {
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          return future.get();
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   /**
@@ -450,12 +491,12 @@ public abstract class AbstractProgramController implements ProgramController {
 
       // Only compare with the listener
       ListenerCaller other = (ListenerCaller) o;
-      return Objects.equal(listener, other.listener);
+      return Objects.equals(listener, other.listener);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(listener);
+      return Objects.hash(listener);
     }
   }
 }

@@ -29,7 +29,6 @@ import javax.annotation.Nullable;
  */
 public interface ProgramRuntimeService {
 
-
   /**
    * Starts the given program and return a {@link RuntimeInfo} about the running program.
    *

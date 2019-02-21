@@ -17,8 +17,10 @@
 package co.cask.cdap.master.environment;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import co.cask.cdap.master.spi.program.ProgramRuntimeService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
@@ -61,5 +63,10 @@ public class MockMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
+  }
+
+  @Override
+  public Supplier<ProgramRuntimeService> getProgramRuntimeServiceSupplier() {
+    return () -> null;
   }
 }

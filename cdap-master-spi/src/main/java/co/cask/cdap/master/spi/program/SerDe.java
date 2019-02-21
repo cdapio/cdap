@@ -14,24 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.master.spi.environment;
-
-import co.cask.cdap.master.spi.program.SerDe;
-
-import java.util.Map;
+package co.cask.cdap.master.spi.program;
 
 /**
- * Context object available to {@link MasterEnvironment} for access to CDAP resources.
+ * Serializes and deserializes objects.
  */
-public interface MasterEnvironmentContext {
+public interface SerDe {
 
   /**
-   * Returns a {@link Map} that contains all CDAP configurations.
+   * @return the serialized object
    */
-  Map<String, String> getConfigurations();
+  <T> byte[] serialize(T object);
 
   /**
-   * Returns a SerDe that can be used to serialize and deserialize objects.
+   * @return the deserialized object
    */
-  SerDe getSerDe();
+  <T> T deserialize(byte[] bytes, Class<T> objectClass);
 }
