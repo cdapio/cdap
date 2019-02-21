@@ -49,7 +49,9 @@ public class SqlUserConfigStoreTest extends UserConfigStoreTest {
 
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
-    admin = new PostgresSqlStructuredTableAdmin(new SqlStructuredTableRegistry(), dataSource);
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    registry.initialize();
+    admin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(admin, dataSource);
     configStore = new DefaultConfigStore(transactionRunner);
   }

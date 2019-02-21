@@ -55,7 +55,7 @@ public class SqlJobQueueTableTest extends JobQueueTableTest {
 
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry();
+    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
 
@@ -65,12 +65,16 @@ public class SqlJobQueueTableTest extends JobQueueTableTest {
 
   @Override
   protected synchronized TransactionRunner newTransactionRunner() {
-    DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry();
-    registry.initialize();
-    StructuredTableAdmin structuredTableAdmin =
-      new PostgresSqlStructuredTableAdmin(registry, dataSource);
-    return new RetryingSqlTransactionRunner(structuredTableAdmin, dataSource);
+    try {
+      DataSource dataSource = pg.getPostgresDatabase();
+      SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+      registry.initialize();
+      StructuredTableAdmin structuredTableAdmin =
+        new PostgresSqlStructuredTableAdmin(registry, dataSource);
+      return new RetryingSqlTransactionRunner(structuredTableAdmin, dataSource);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

@@ -47,7 +47,8 @@ public class SqlOwnerStoreTest extends OwnerStoreTest {
   public static void setup() throws Exception {
     pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
     DataSource dataSource = pg.getPostgresDatabase();
-    StructuredTableRegistry registry = new SqlStructuredTableRegistry();
+    StructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
+    registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     StoreDefinition.OwnerStore.createTables(structuredTableAdmin);

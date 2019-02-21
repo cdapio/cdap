@@ -162,7 +162,7 @@ public class StorageModule extends PrivateModule {
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
         // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
-        return new SqlStructuredTableRegistry();
+        return new SqlStructuredTableRegistry(null);
       }
       throw new UnsupportedOperationException(
         String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
