@@ -32,6 +32,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
+import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
@@ -48,6 +50,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.util.Modules;
 import org.apache.twill.api.TwillRunnerService;
 
 import java.util.Arrays;
@@ -82,7 +85,12 @@ public class AppFabricServiceMain extends AbstractServiceMain {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new TwillModule(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
+      Modules.override(new AppFabricServiceRuntimeModule().getDistributedModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
+        }
+      }),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
