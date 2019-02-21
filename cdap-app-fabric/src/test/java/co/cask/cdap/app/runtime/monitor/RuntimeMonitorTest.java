@@ -232,7 +232,7 @@ public class RuntimeMonitorTest {
       new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       datasetFramework, transactional, messagingContext, scheduler,
+                                                       messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
                                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                                        transactionRunner);
@@ -248,7 +248,7 @@ public class RuntimeMonitorTest {
     verifyPublishedMessages(cConf, 2, lastProcessed);
 
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                        datasetFramework, transactional, messagingContext, scheduler,
+                                        messagingContext, scheduler,
                                         monitorMessage -> { }, profileMetricService,
                                         new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                         transactionRunner);
@@ -305,7 +305,7 @@ public class RuntimeMonitorTest {
                                                                   runtimeServer::getBindAddress, Proxy.NO_PROXY);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       datasetFramework, transactional, messagingContext, scheduler,
+                                                       messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
                                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                                        transactionRunner);
@@ -363,7 +363,7 @@ public class RuntimeMonitorTest {
       new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       datasetFramework, transactional, messagingContext, scheduler,
+                                                       messagingContext, scheduler,
                                                        monitorMessage -> { }, profileMetricService,
                                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                                        transactionRunner);

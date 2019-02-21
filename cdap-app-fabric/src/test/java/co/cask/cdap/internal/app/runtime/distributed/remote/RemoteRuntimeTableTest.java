@@ -16,39 +16,27 @@
 
 package co.cask.cdap.internal.app.runtime.distributed.remote;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.store.StoreDefinition;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -57,7 +45,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,9 +54,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Unit tests for the {@link RemoteRuntimeDataset}.
+ * Unit tests for the {@link RemoteRuntimeTable}.
  */
-public class RemoteRuntimeDatasetTest {
+public class RemoteRuntimeTableTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -77,9 +64,7 @@ public class RemoteRuntimeDatasetTest {
   private static TransactionManager txManager;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
-  private static DatasetFramework datasetFramework;
-  private static Transactional transactional;
-  private static DynamicDatasetCache datasetCache;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -87,6 +72,7 @@ public class RemoteRuntimeDatasetTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
 
+    // TODO CDAP-14780 pass in cconf for sql test
     Injector injector = Guice.createInjector(new AppFabricTestModule(cConf));
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
@@ -99,20 +85,7 @@ public class RemoteRuntimeDatasetTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
-    datasetFramework = injector.getInstance(DatasetFramework.class);
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-    StructuredTableRegistry registry = injector.getInstance(StructuredTableRegistry.class);
-    try {
-      StoreDefinition.createAllTables(tableAdmin, registry);
-    } catch (IOException | TableAlreadyExistsException e) {
-      throw new RuntimeException("Failed to create the system tables", e);
-    }
-    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
-    datasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-      NamespaceId.SYSTEM, ImmutableMap.of(), null, null);
-    transactional = Transactions.createTransactionalWithRetry(Transactions.createTransactional(datasetCache),
-                                                              RetryStrategies.retryOnConflict(20, 100));
+    transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
   @AfterClass
@@ -125,9 +98,11 @@ public class RemoteRuntimeDatasetTest {
   }
 
   @After
-  public void resetTest() throws IOException, DatasetManagementException {
-    datasetCache.invalidate();
-    datasetFramework.deleteInstance(AppMetadataStore.APP_META_INSTANCE_ID);
+  public void resetTest() {
+    TransactionRunners.run(transactionRunner, context -> {
+      RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
+      dataset.deleteAll();
+    });
   }
 
   @Test
@@ -139,14 +114,14 @@ public class RemoteRuntimeDatasetTest {
                                                           new BasicArguments(Collections.singletonMap("x", "y")));
 
     // Write the state
-    Transactionals.execute(transactional, context -> {
-      RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+    TransactionRunners.run(transactionRunner, context -> {
+      RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
       dataset.write(programRunId, programOpts);
     });
 
     // Use scan to read it back
-    Optional<Map.Entry<ProgramRunId, ProgramOptions>> result = Transactionals.execute(transactional, context -> {
-      RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+    Optional<Map.Entry<ProgramRunId, ProgramOptions>> result = TransactionRunners.run(transactionRunner, context -> {
+      RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
       return dataset.scan(1, null).stream().findFirst();
     });
 
@@ -167,8 +142,8 @@ public class RemoteRuntimeDatasetTest {
                                                             new BasicArguments(Collections.singletonMap("x", "y" + i)));
       expected.put(programRunId, programOpts);
 
-      Transactionals.execute(transactional, context -> {
-        RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+      TransactionRunners.run(transactionRunner, context -> {
+        RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
         dataset.write(programRunId, programOpts);
       });
     }
@@ -179,8 +154,8 @@ public class RemoteRuntimeDatasetTest {
     boolean scanCompleted = false;
 
     while (!scanCompleted) {
-      scanCompleted = Transactionals.execute(transactional, context -> {
-        RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+      scanCompleted = TransactionRunners.run(transactionRunner, context -> {
+        RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
         List<Map.Entry<ProgramRunId, ProgramOptions>> scanResult = dataset.scan(2, lastProgramRunId.get());
         for (Map.Entry<ProgramRunId, ProgramOptions> entry : scanResult) {
           result.put(entry.getKey(), entry.getValue());
@@ -205,20 +180,20 @@ public class RemoteRuntimeDatasetTest {
                                                           new BasicArguments(Collections.singletonMap("x", "y")));
 
     // Write a task info
-    Transactionals.execute(transactional, context -> {
-      RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+    TransactionRunners.run(transactionRunner, context -> {
+      RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
       dataset.write(programRunId, programOpts);
     });
 
     // Delete the task info
-    Transactionals.execute(transactional, context -> {
-      RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+    TransactionRunners.run(transactionRunner, context -> {
+      RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
       dataset.delete(programRunId);
     });
 
     // Scan should be empty
-    boolean result = Transactionals.execute(transactional, context -> {
-      RemoteRuntimeDataset dataset = RemoteRuntimeDataset.create(context, datasetFramework);
+    boolean result = TransactionRunners.run(transactionRunner, context -> {
+      RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
       return dataset.scan(1, null).isEmpty();
     });
 

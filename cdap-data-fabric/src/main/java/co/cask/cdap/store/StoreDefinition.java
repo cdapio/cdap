@@ -88,6 +88,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(TimeScheduleStore.SCHEDULES) == null) {
       TimeScheduleStore.createTables(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(RemoteRuntimeStore.RUNTIMES) == null) {
+      RemoteRuntimeStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -672,6 +675,7 @@ public final class StoreDefinition {
    * Table schema for job queue.
    */
   public static final class JobQueueStore {
+
     public static final StructuredTableId JOB_QUEUE_TABLE =
       new StructuredTableId("job_queue_store");
 
@@ -732,6 +736,37 @@ public final class StoreDefinition {
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(SCHEDULES_SPEC);
+    }
+  }
+
+  /**
+   * Schema for remote runtime
+   */
+  public static final class RemoteRuntimeStore {
+    public static final StructuredTableId RUNTIMES = new StructuredTableId("runtimes");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String VERSION_FIELD = "version";
+    public static final String PROGRAM_TYPE_FIELD = "program_type";
+    public static final String PROGRAM_FIELD = "program";
+    public static final String RUN_FIELD = "run";
+    public static final String PROGRAM_OPTIONS_FIELD = "program_options";
+
+    public static final StructuredTableSpecification RUNTIMES_SPEC = new StructuredTableSpecification.Builder()
+      .withId(RUNTIMES)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(APPLICATION_FIELD),
+                  Fields.stringType(VERSION_FIELD),
+                  Fields.stringType(PROGRAM_TYPE_FIELD),
+                  Fields.stringType(PROGRAM_FIELD),
+                  Fields.stringType(RUN_FIELD),
+                  Fields.stringType(PROGRAM_OPTIONS_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, APPLICATION_FIELD, VERSION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
+      .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(RUNTIMES_SPEC);
     }
   }
 }
