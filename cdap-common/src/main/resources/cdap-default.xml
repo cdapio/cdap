@@ -1017,6 +1017,14 @@
   </property>
 
   <property>
+    <name>dataset.executor.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Dataset executor HTTP service bind address
+    </description>
+  </property>
+
+  <property>
     <name>dataset.executor.bind.port</name>
     <value>0</value>
     <description>
