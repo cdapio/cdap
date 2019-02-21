@@ -14,48 +14,55 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.logbuffer;
+package co.cask.cdap.logging.logbuffer;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
-import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
+import co.cask.cdap.logging.appender.LogMessage;
+import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.MockAppender;
+import co.cask.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
+import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
- * Tests for {@link LogBufferProcessorPipeline}.
+ * Tests for {@link LogBufferReaderService}.
  */
-public class LogBufferProcessorPipelineTest {
+public class LogBufferReaderServiceTest {
   private static final LoggingEventSerializer serializer = new LoggingEventSerializer();
   private static final MetricsContext NO_OP_METRICS_CONTEXT = new NoopMetricsContext();
 
+  @ClassRule
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+
   @Test
-  public void testSingleAppender() throws Exception {
+  public void testLogReaderService() throws Exception {
+    String absolutePath = TMP_FOLDER.newFolder().getAbsolutePath();
+
+    // create and start pipeline
     LoggerContext loggerContext = LogPipelineTestUtil.createLoggerContext("WARN",
                                                                           ImmutableMap.of("test.logger", "INFO"),
                                                                           MockAppender.class.getName());
@@ -67,47 +74,25 @@ public class LogBufferProcessorPipelineTest {
     LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
       new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
+
     // start the pipeline
     pipeline.startAndWait();
 
-    // start thread to write to incomingEventQueue
-    List<ILoggingEvent> events = getLoggingEvents();
-    AtomicInteger i = new AtomicInteger(0);
-    List<LogBufferEvent> bufferEvents = events.stream().map(event -> {
-      LogBufferEvent lbe = new LogBufferEvent(event, serializer.toBytes(event).length,
-                                              new LogBufferFileOffset(0, i.get()));
-      i.incrementAndGet();
-      return lbe;
-    }).collect(Collectors.toList());
+    // write directly to log buffer
+    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250);
+    ImmutableList<byte[]> events = getLoggingEvents();
+    writer.write(events.iterator()).iterator();
+    writer.close();
 
-    // start a thread to send log buffer events to pipeline
-    ExecutorService executorService = Executors.newSingleThreadExecutor();
-    executorService.execute(() -> {
-      for (int count = 0; count < 40; count++) {
-        pipeline.processLogEvents(bufferEvents.iterator());
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          // should not happen
-        }
-      }
-    });
+    // start log buffer reader to read log events from files
+    LogBufferReaderService service = new LogBufferReaderService(ImmutableList.of(pipeline), absolutePath, 2);
+    service.startAndWait();
 
-    // wait for pipeline to append all the logs to appender. The DEBUG message should get filtered out.
-    Tasks.waitFor(200, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-    executorService.shutdown();
+    Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    service.stopAndWait();
     pipeline.stopAndWait();
-  }
-
-  private ImmutableList<ILoggingEvent> getLoggingEvents() {
-    long now = System.currentTimeMillis();
-    return ImmutableList.of(
-      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "0", now - 1000),
-      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "1", now - 900),
-      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "2", now - 700),
-      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.DEBUG, "3", now - 600),
-      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "4", now - 500),
-      LogPipelineTestUtil.createLoggingEvent("test.logger", Level.INFO, "5", now - 100));
+    loggerContext.stop();
   }
 
   /**
@@ -129,5 +114,28 @@ public class LogBufferProcessorPipelineTest {
     public Checkpoint<LogBufferFileOffset> getCheckpoint(int partition) throws IOException {
       return new Checkpoint<>(new LogBufferFileOffset(-1, -1), -1);
     }
+  }
+
+  private ImmutableList<byte[]> getLoggingEvents() {
+    WorkerLoggingContext loggingContext =
+      new WorkerLoggingContext("default", "app1", "worker1", "run1", "instance1");
+    long now = System.currentTimeMillis();
+    return ImmutableList.of(
+      serializer.toBytes(createLoggingEvent("test.logger", Level.INFO, "0", now - 1000, loggingContext)),
+      serializer.toBytes(createLoggingEvent("test.logger", Level.INFO, "1", now - 900, loggingContext)),
+      serializer.toBytes(createLoggingEvent("test.logger", Level.INFO, "2", now - 700, loggingContext)),
+      serializer.toBytes(createLoggingEvent("test.logger", Level.DEBUG, "3", now - 600, loggingContext)),
+      serializer.toBytes(createLoggingEvent("test.logger", Level.INFO, "4", now - 500, loggingContext)),
+      serializer.toBytes(createLoggingEvent("test.logger", Level.INFO, "5", now - 100, loggingContext)));
+  }
+
+  private ILoggingEvent createLoggingEvent(String loggerName, Level level, String message, long timestamp,
+                                           LoggingContext loggingContext) {
+    LoggingEvent event = new LoggingEvent();
+    event.setLevel(level);
+    event.setLoggerName(loggerName);
+    event.setMessage(message);
+    event.setTimeStamp(timestamp);
+    return new LogMessage(event, loggingContext);
   }
 }

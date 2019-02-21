@@ -166,24 +166,6 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
   }
 
   /**
-   * Pushes log events to blocking queue to be processed by processor pipeline.
-   *
-   * @param events log events to be processed
-   */
-  public void processLogEvents(Iterator<LogBufferEvent> events) {
-    // Don't accept any log events if the pipeline is not running
-    while (!stopped && events.hasNext()) {
-      try {
-        // This call will block caller thread until the queue has free space.
-        incomingEventQueue.put(events.next());
-      } catch (InterruptedException e) {
-        // Just ignore the exception and reset the flag
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-
-  /**
    * Persists the checkpoints.
    */
   private void persistCheckpoints() {
@@ -224,6 +206,31 @@ public class LogBufferProcessorPipeline extends AbstractExecutionThreadService {
       OUTAGE_LOG.warn("Failed to sync in pipeline {}. Will be retried.", name, e);
     }
     return config.getCheckpointIntervalMillis();
+  }
+
+  /**
+   * Pushes log events to blocking queue to be processed by processor pipeline.
+   *
+   * @param events log events to be processed
+   */
+  public void processLogEvents(Iterator<LogBufferEvent> events) {
+    // Don't accept any log events if the pipeline is not running
+    while (!stopped && events.hasNext()) {
+      try {
+        // This call will block caller thread until the queue has free space.
+        incomingEventQueue.put(events.next());
+      } catch (InterruptedException e) {
+        // Just ignore the exception and reset the flag
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
+
+  /**
+   * Returns smallest checkpoint offset for this pipeline.
+   */
+  public LogBufferFileOffset getSmallestCheckpointOffset() throws IOException {
+    return checkpointManager.getCheckpoint(instanceId).getOffset();
   }
 
   /**
