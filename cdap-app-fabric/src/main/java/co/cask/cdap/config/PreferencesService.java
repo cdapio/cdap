@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,10 @@
 
 package co.cask.cdap.config;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.store.profile.ProfileStore;
 import co.cask.cdap.internal.profile.AdminEventPublisher;
@@ -45,12 +39,8 @@ import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -58,41 +48,31 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * This class is to manage preference related functions. It will wrap the {@link PreferencesDataset} operation
+ * This class is to manage preference related functions. It will wrap the {@link PreferencesTable} operation
  * in transaction in each method
  */
 public class PreferencesService {
 
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
   private final AdminEventPublisher adminEventPublisher;
   private final TransactionRunner transactionRunner;
 
   @Inject
-  public PreferencesService(DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                            MessagingService messagingService,
+  public PreferencesService(MessagingService messagingService,
                             CConfiguration cConf, TransactionRunner transactionRunner) {
-    this.datasetFramework = datasetFramework;
     MultiThreadMessagingContext messagingContext = new MultiThreadMessagingContext(messagingService);
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-        txClient, NamespaceId.SYSTEM,
-        Collections.emptyMap(), null, null, messagingContext)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
     this.adminEventPublisher = new AdminEventPublisher(cConf, messagingContext);
     this.transactionRunner = transactionRunner;
   }
 
   private Map<String, String> getConfigProperties(EntityId entityId) {
-    return Transactionals.execute(transactional, context -> {
-      return PreferencesDataset.get(context, datasetFramework).getPreferences(entityId);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return new PreferencesTable(context).getPreferences(entityId);
     });
   }
 
   private Map<String, String> getConfigResolvedProperties(EntityId entityId) {
-    return Transactionals.execute(transactional, context -> {
-      return PreferencesDataset.get(context, datasetFramework).getResolvedPreferences(entityId);
+    return TransactionRunners.run(transactionRunner, context -> {
+      return new PreferencesTable(context).getResolvedPreferences(entityId);
     });
   }
 
@@ -102,32 +82,17 @@ public class PreferencesService {
   private void setConfig(EntityId entityId,
                          Map<String, String> propertyMap)
     throws NotFoundException, ProfileConflictException, BadRequestException {
-    try {
-      transactional.execute(context -> {
-        TransactionRunners.run(transactionRunner, context1 -> {
-          ProfileStore profileStore = ProfileStore.get(context1);
-          PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
-          setConfig(profileStore, preferencesDataset, entityId, propertyMap);
-        }, NotFoundException.class, ProfileConflictException.class, BadRequestException.class);
-      });
-    } catch (TransactionFailureException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof NotFoundException) {
-        throw (NotFoundException) cause;
-      }
-      if (cause instanceof ProfileConflictException) {
-        throw (ProfileConflictException) cause;
-      }
-      if (cause instanceof BadRequestException) {
-        throw (BadRequestException) cause;
-      }
-    }
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore profileStore = ProfileStore.get(context);
+      PreferencesTable preferencesTable = new PreferencesTable(context);
+      setConfig(profileStore, preferencesTable, entityId, propertyMap);
+    }, NotFoundException.class, ProfileConflictException.class, BadRequestException.class);
   }
 
   /**
    * Validate the profile status is enabled and set the preferences
    */
-  private void setConfig(ProfileStore profileStore, PreferencesDataset preferencesDataset, EntityId entityId,
+  private void setConfig(ProfileStore profileStore, PreferencesTable preferencesTable, EntityId entityId,
                          Map<String, String> propertyMap)
     throws NotFoundException, ProfileConflictException, BadRequestException, IOException {
 
@@ -158,10 +123,10 @@ public class PreferencesService {
     }
 
     // need to get old property and check if it contains profile information
-    Map<String, String> oldProperties = preferencesDataset.getPreferences(entityId);
+    Map<String, String> oldProperties = preferencesTable.getPreferences(entityId);
     // get the old profile information from the previous properties
     Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
-    preferencesDataset.setPreferences(entityId, propertyMap);
+    preferencesTable.setPreferences(entityId, propertyMap);
 
     // After everything is set, publish the update message and add the association if profile is present
     if (profile.isPresent()) {
@@ -182,8 +147,8 @@ public class PreferencesService {
 
 
   private void deleteConfig(EntityId entityId) {
-    Transactionals.execute(transactional, context -> {
-      PreferencesDataset dataset = PreferencesDataset.get(context, datasetFramework);
+    TransactionRunners.run(transactionRunner, context -> {
+      PreferencesTable dataset = new PreferencesTable(context);
       Map<String, String> oldProp = dataset.getPreferences(entityId);
       NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
         NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
@@ -192,9 +157,7 @@ public class PreferencesService {
 
       // if there is profile properties, publish the message to update metadata and remove the assignment
       if (oldProfile.isPresent()) {
-        TransactionRunners.run(transactionRunner, context1 -> {
-          ProfileStore.get(context1).removeProfileAssignment(oldProfile.get(), entityId);
-        });
+        ProfileStore.get(context).removeProfileAssignment(oldProfile.get(), entityId);
         adminEventPublisher.publishProfileUnAssignment(entityId);
       }
     });
@@ -275,32 +238,17 @@ public class PreferencesService {
     InstanceId instanceId = new InstanceId("");
 
     Set<String> added = new HashSet<>();
-    try {
-      transactional.execute(context -> {
-        TransactionRunners.run(transactionRunner, context1 -> {
-          ProfileStore profileStore = ProfileStore.get(context1);
-          PreferencesDataset preferencesDataset = PreferencesDataset.get(context, datasetFramework);
-          Map<String, String> oldProperties = preferencesDataset.getPreferences(instanceId);
-          Map<String, String> newProperties = new HashMap<>(properties);
+    TransactionRunners.run(transactionRunner, context -> {
+      ProfileStore profileStore = ProfileStore.get(context);
+      PreferencesTable preferencesTable = new PreferencesTable(context);
+      Map<String, String> oldProperties = preferencesTable.getPreferences(instanceId);
+      Map<String, String> newProperties = new HashMap<>(properties);
 
-          added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
-          newProperties.putAll(oldProperties);
+      added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
+      newProperties.putAll(oldProperties);
 
-          setConfig(profileStore, preferencesDataset, instanceId, newProperties);
-        });
-      });
-    } catch (TransactionFailureException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof NotFoundException) {
-        throw (NotFoundException) cause;
-      }
-      if (cause instanceof ProfileConflictException) {
-        throw (ProfileConflictException) cause;
-      }
-      if (cause instanceof BadRequestException) {
-        throw (BadRequestException) cause;
-      }
-    }
+      setConfig(profileStore, preferencesTable, instanceId, newProperties);
+    }, NotFoundException.class, ProfileConflictException.class, BadRequestException.class);
     return added;
   }
 
