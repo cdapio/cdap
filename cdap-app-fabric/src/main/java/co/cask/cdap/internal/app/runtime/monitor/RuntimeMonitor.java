@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.MessagingContext;
@@ -29,10 +27,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteProcessController;
-import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeDataset;
+import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeTable;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.messaging.data.MessageId;
@@ -79,8 +76,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final long pollTimeMillis;
   private final long gracefulShutdownMillis;
   private final Deque<MonitorMessage> lastProgramStateMessages;
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
   private final RemoteExecutionLogProcessor logProcessor;
@@ -93,7 +88,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private long programFinishTime;
 
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf, RuntimeMonitorClient monitorClient,
-                        DatasetFramework datasetFramework, Transactional transactional,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
                         RemoteExecutionLogProcessor logProcessor,
                         ProfileMetricService metricScheduledService,
@@ -108,9 +102,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.topicsToRequest = new HashMap<>();
-    this.datasetFramework = datasetFramework;
     this.messagingContext = messagingContext;
-    this.transactional = transactional;
     this.scheduledExecutorService = scheduledExecutorService;
     this.logProcessor = logProcessor;
     this.programFinishTime = -1L;
@@ -389,15 +381,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
           store.deleteSubscriberState(topicConf, programRunId.getRun());
         }
 
-      }, RetryableException.class), getRetryStrategy());
-    } catch (Exception e) {
-      // Just log the exception. The state remained won't affect normal operation.
-      LOG.warn("Exception raised when clearing runtime monitor states", e);
-    }
-    // TODO: CDAP-14848 merge transactions back together
-    try {
-      Retries.runWithRetries(() -> Transactionals.execute(transactional, context->  {
-        RemoteRuntimeDataset runtimeDataset = RemoteRuntimeDataset.create(context, datasetFramework);
+        RemoteRuntimeTable runtimeDataset = RemoteRuntimeTable.create(context);
         runtimeDataset.delete(programRunId);
       }, RetryableException.class), getRetryStrategy());
     } catch (Exception e) {
