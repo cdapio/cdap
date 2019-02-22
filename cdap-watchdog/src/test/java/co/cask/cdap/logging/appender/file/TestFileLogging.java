@@ -46,6 +46,9 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -109,6 +112,10 @@ public class TestFileLogging {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
 
     LogAppender appender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");

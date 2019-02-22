@@ -103,6 +103,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(FieldLineageStore.SUMMARY_FIELDS_TABLE) == null) {
       FieldLineageStore.createTables(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(LogFileMetaStore.LOG_FILE_META) == null) {
+      LogFileMetaStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -800,7 +803,6 @@ public final class StoreDefinition {
   }
 
   /**
-<<<<<<< HEAD
    * Schema for program heartbeat.
    */
   public static final class ProgramHeartbeatStore {
@@ -958,6 +960,31 @@ public final class StoreDefinition {
       tableAdmin.create(OPERATIONS_SPEC);
       tableAdmin.create(DESTINATION_FIELDS_SPEC);
       tableAdmin.create(SUMMARY_FIELDS_SPEC);
+    }
+  }
+
+  /**
+   * Schema for log file meta.
+   */
+  public static final class LogFileMetaStore {
+    public static final StructuredTableId LOG_FILE_META = new StructuredTableId("logfile_meta");
+
+    public static final String LOGGING_CONTEXT_FIELD = "logging_context";
+    public static final String EVENT_TIME_FIELD = "event_time";
+    public static final String CREATION_TIME_FIELD = "creation_time";
+    public static final String FILE_FIELD = "file";
+
+    public static final StructuredTableSpecification LOG_FILE_META_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(LOG_FILE_META)
+        .withFields(Fields.stringType(LOGGING_CONTEXT_FIELD),
+                    Fields.longType(EVENT_TIME_FIELD),
+                    Fields.longType(CREATION_TIME_FIELD),
+                    Fields.stringType(FILE_FIELD))
+        .withPrimaryKeys(LOGGING_CONTEXT_FIELD, EVENT_TIME_FIELD, CREATION_TIME_FIELD).build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(LOG_FILE_META_SPEC);
     }
   }
 }

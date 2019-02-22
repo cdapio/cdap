@@ -34,7 +34,6 @@ import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
@@ -50,13 +49,16 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -112,6 +114,10 @@ public class CDAPLogAppenderTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
@@ -131,9 +137,8 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setFilePermissions("600");
     cdapLogAppender.setFileRetentionDurationDays(1);
     cdapLogAppender.setLogCleanupIntervalMins(10);
-    cdapLogAppender.setFileCleanupTransactionTimeout(30);
-    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                       injector.getInstance(TransactionSystemClient.class),
+    cdapLogAppender.setfileCleanupBatchSize(100);
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                        injector.getInstance(LocationFactory.class),
                                                        new NoOpMetricsCollectionService());
     context.start();
@@ -189,8 +194,7 @@ public class CDAPLogAppenderTest {
     int syncInterval = 1024 * 1024;
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
-    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                       injector.getInstance(TransactionSystemClient.class),
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                        injector.getInstance(LocationFactory.class),
                                                        new NoOpMetricsCollectionService());
     context.start();
@@ -202,7 +206,7 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setFilePermissions("640");
     cdapLogAppender.setFileRetentionDurationDays(1);
     cdapLogAppender.setLogCleanupIntervalMins(10);
-    cdapLogAppender.setFileCleanupTransactionTimeout(30);
+    cdapLogAppender.setfileCleanupBatchSize(100);
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 
@@ -261,8 +265,7 @@ public class CDAPLogAppenderTest {
     int syncInterval = 1024 * 1024;
     FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
     CDAPLogAppender cdapLogAppender = new CDAPLogAppender();
-    AppenderContext context = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                       injector.getInstance(TransactionSystemClient.class),
+    AppenderContext context = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                        injector.getInstance(LocationFactory.class),
                                                        new NoOpMetricsCollectionService());
     context.start();
@@ -274,7 +277,7 @@ public class CDAPLogAppenderTest {
     cdapLogAppender.setFilePermissions("640");
     cdapLogAppender.setFileRetentionDurationDays(1);
     cdapLogAppender.setLogCleanupIntervalMins(10);
-    cdapLogAppender.setFileCleanupTransactionTimeout(30);
+    cdapLogAppender.setfileCleanupBatchSize(100);
     cdapLogAppender.setContext(context);
     cdapLogAppender.start();
 

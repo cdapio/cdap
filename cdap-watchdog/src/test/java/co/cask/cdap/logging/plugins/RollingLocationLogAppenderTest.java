@@ -33,7 +33,6 @@ import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
@@ -46,13 +45,13 @@ import co.cask.cdap.security.impersonation.NoOpOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -124,8 +123,7 @@ public class RollingLocationLogAppenderTest {
   @Test
   public void testRollingLocationLogAppender() throws Exception {
     // assume SLF4J is bound to logback in the current environment
-    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                               injector.getInstance(TransactionSystemClient.class),
+    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                                injector.getInstance(LocationFactory.class),
                                                                new NoOpMetricsCollectionService());
 
@@ -168,8 +166,7 @@ public class RollingLocationLogAppenderTest {
   @Test
   public void testRollOver() throws Exception {
     // assume SLF4J is bound to logback in the current environment
-    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                               injector.getInstance(TransactionSystemClient.class),
+    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                                injector.getInstance(LocationFactory.class),
                                                                new NoOpMetricsCollectionService());
 
@@ -218,8 +215,7 @@ public class RollingLocationLogAppenderTest {
   @Test
   public void testFileClose() throws Exception {
     // assume SLF4J is bound to logback in the current environment
-    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                               injector.getInstance(TransactionSystemClient.class),
+    AppenderContext appenderContext = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                                injector.getInstance(LocationFactory.class),
                                                                new NoOpMetricsCollectionService());
 

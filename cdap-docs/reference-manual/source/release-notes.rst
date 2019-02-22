@@ -1882,7 +1882,7 @@ API Changes
   - ``hbase.client.retries.number``
   - ``hbase.rpc.timeout``
   - ``log.pipeline.cdap.dir.permissions``
-  - ``log.pipeline.cdap.file.cleanup.interval.mins``
+  - ``log.pipeline.cdap.file.cleanup.batch.size``
   - ``log.pipeline.cdap.file.cleanup.transaction.timeout``
   - ``log.pipeline.cdap.file.max.lifetime.ms``
   - ``log.pipeline.cdap.file.max.size.bytes``

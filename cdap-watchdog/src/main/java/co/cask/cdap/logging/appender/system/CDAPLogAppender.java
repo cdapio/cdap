@@ -64,7 +64,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   private ScheduledExecutorService scheduledExecutorService;
   private int logCleanupIntervalMins;
   private int fileRetentionDurationDays;
-  private int fileCleanupTransactionTimeout;
+  private int fileCleanupBatchSize;
 
   public CDAPLogAppender() {
     setName(getClass().getName());
@@ -121,10 +121,10 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   }
 
   /**
-   * Sets transaction timeout used by file cleanup
+   * Sets batch size for file cleanup
    */
-  public void setFileCleanupTransactionTimeout(int transactionTimeout) {
-    this.fileCleanupTransactionTimeout = transactionTimeout;
+  public void setfileCleanupBatchSize(int batchSize) {
+    this.fileCleanupBatchSize = batchSize;
   }
 
 
@@ -138,23 +138,21 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
     Preconditions.checkState(maxFileSizeInBytes > 0, "Property maxFileSizeInBytes must be > 0");
     Preconditions.checkState(fileRetentionDurationDays > 0, "Property fileRetentionDurationDays must be > 0");
     Preconditions.checkState(logCleanupIntervalMins > 0, "Property logCleanupIntervalMins must be > 0");
-    Preconditions.checkState(fileCleanupTransactionTimeout > Constants.Logging.TX_TIMEOUT_DISCOUNT_SECS,
-                             String.format("Property fileCleanupTransactionTimeout must be greater than %s seconds",
-                                           Constants.Logging.TX_TIMEOUT_DISCOUNT_SECS));
+    Preconditions.checkState(fileCleanupBatchSize > 0, "Property fileCleanupBatchSize must be > 0");
 
     if (context instanceof AppenderContext) {
       AppenderContext context = (AppenderContext) this.context;
       logFileManager = new LogFileManager(dirPermissions, filePermissions, maxFileLifetimeMs, maxFileSizeInBytes,
                                           syncIntervalBytes,
-                                          new FileMetaDataWriter(context.getDatasetManager(), context),
+                                          new FileMetaDataWriter(context.getTransactionRunner()),
                                           context.getLocationFactory());
       if (context.getInstanceId() == 0) {
         scheduledExecutorService =
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("log-clean-up"));
-        FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(context.getDatasetManager(), context);
+        FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(context.getTransactionRunner());
         LogCleaner logCleaner = new LogCleaner(fileMetadataCleaner, context.getLocationFactory(),
                                                TimeUnit.DAYS.toMillis(fileRetentionDurationDays),
-                                               fileCleanupTransactionTimeout);
+                                               fileCleanupBatchSize);
         scheduledExecutorService.scheduleAtFixedRate(logCleaner, 10, logCleanupIntervalMins, TimeUnit.MINUTES);
       }
     } else if (!Boolean.TRUE.equals(context.getObject(Constants.Logging.PIPELINE_VALIDATION))) {

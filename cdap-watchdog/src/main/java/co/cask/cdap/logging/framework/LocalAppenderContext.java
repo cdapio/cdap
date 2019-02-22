@@ -19,6 +19,7 @@ package co.cask.cdap.logging.framework;
 import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -27,11 +28,10 @@ import org.apache.twill.filesystem.LocationFactory;
  */
 public class LocalAppenderContext extends AbstractAppenderContext {
 
-  public LocalAppenderContext(DatasetFramework datasetFramework,
-                              TransactionSystemClient txClient,
+  public LocalAppenderContext(TransactionRunner transactionRunner,
                               LocationFactory locationFactory,
                               MetricsCollectionService metricsCollectionService) {
-    super(datasetFramework, txClient, locationFactory, metricsCollectionService);
+    super(transactionRunner, locationFactory, metricsCollectionService);
   }
 
   @Override

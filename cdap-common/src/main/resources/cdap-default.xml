@@ -1514,11 +1514,10 @@
   </property>
 
   <property>
-    <name>log.pipeline.cdap.file.cleanup.transaction.timeout</name>
-    <value>60</value>
+    <name>log.pipeline.cdap.file.cleanup.batch.size</name>
+    <value>10000</value>
     <description>
-      Transaction timeout in seconds used by the log cleanup thread. This
-      should not be greater than ${data.tx.max.timeout}.
+      Batch size to clean up metadata table.
     </description>
   </property>
 

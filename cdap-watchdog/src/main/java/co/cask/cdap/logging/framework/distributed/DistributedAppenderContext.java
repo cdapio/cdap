@@ -18,10 +18,9 @@ package co.cask.cdap.logging.framework.distributed;
 
 import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.framework.AbstractAppenderContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -33,12 +32,11 @@ public class DistributedAppenderContext extends AbstractAppenderContext {
   private final TwillContext twillContext;
 
   @Inject
-  DistributedAppenderContext(DatasetFramework datasetFramework,
-                             TransactionSystemClient txClient,
+  DistributedAppenderContext(TransactionRunner transactionRunner,
                              LocationFactory locationFactory,
                              MetricsCollectionService metricsCollectionService,
                              TwillContext twillContext) {
-    super(datasetFramework, txClient, locationFactory, metricsCollectionService);
+    super(transactionRunner, locationFactory, metricsCollectionService);
     this.twillContext = twillContext;
   }
 

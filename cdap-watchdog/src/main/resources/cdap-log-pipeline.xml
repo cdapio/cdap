@@ -29,7 +29,7 @@
     <maxFileSizeInBytes>${file.max.size.bytes}</maxFileSizeInBytes>
     <logCleanupIntervalMins>${file.cleanup.interval.mins}</logCleanupIntervalMins>
     <fileRetentionDurationDays>${file.retention.duration.days}</fileRetentionDurationDays>
-    <fileCleanupTransactionTimeout>${file.cleanup.transaction.timeout}</fileCleanupTransactionTimeout>
+    <fileCleanupBatchSize>${file.cleanup.batch.size}</fileCleanupBatchSize>
   </appender>
 
   <appender name="METRICS" class="co.cask.cdap.logging.appender.system.MetricsLogAppender"/>

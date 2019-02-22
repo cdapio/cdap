@@ -55,8 +55,6 @@ public class LogPipelineLoader {
   private static final Logger LOG = LoggerFactory.getLogger(LogPipelineLoader.class);
   private static final String SYSTEM_LOG_PIPELINE_CONFIG = "cdap-log-pipeline.xml";
   private static final String SYSTEM_LOG_PIPELINE_NAME = "cdap";
-  // This is used by the new file meta data
-  private static final String RESERVED_CHECKPOINT_PREFIX = "log_metadata";
 
   private final CConfiguration cConf;
 
@@ -109,7 +107,6 @@ public class LogPipelineLoader {
 
     Map<String, LogPipelineSpecification<T>> result = new HashMap<>();
     Set<String> checkpointPrefixes = new TreeSet<>();
-    checkpointPrefixes.add(RESERVED_CHECKPOINT_PREFIX);
 
     for (URL configURL : getPipelineConfigURLs()) {
       try {
