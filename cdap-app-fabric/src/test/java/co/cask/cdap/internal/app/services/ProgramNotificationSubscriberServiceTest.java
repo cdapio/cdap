@@ -52,7 +52,7 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.reporting.ProgramHeartbeatDataset;
+import co.cask.cdap.reporting.ProgramHeartbeatTable;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
@@ -82,8 +82,6 @@ public class ProgramNotificationSubscriberServiceTest {
   private static final String SYSTEM_METRIC_PREFIX = "system.";
 
   private static Injector injector;
-  private static ProgramHeartbeatDataset programHeartbeatDataset;
-  private static TransactionExecutor heartBeatTxnl;
   private static ProgramStateWriter programStateWriter;
   private static TransactionRunner transactionRunner;
 
@@ -93,17 +91,7 @@ public class ProgramNotificationSubscriberServiceTest {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     // we only want to process and check program status messages processed by heart beat store, so set high value
     cConf.set(Constants.ProgramHeartbeat.HEARTBEAT_INTERVAL_SECONDS, String.valueOf(TimeUnit.HOURS.toSeconds(1)));
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
-    DatasetId storeTable = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-
-    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
-    Table heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
-                                                           DatasetProperties.EMPTY, Collections.emptyMap());
-
-    programHeartbeatDataset = new ProgramHeartbeatDataset(heartbeatTable);
-    heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
     programStateWriter = injector.getInstance(ProgramStateWriter.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
   }
@@ -209,12 +197,12 @@ public class ProgramNotificationSubscriberServiceTest {
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.start(runId, programOptions, null, programDescriptor);
     });
     checkProgramStatus(artifactId, runId, ProgramRunStatus.STARTING);
     long startTime = System.currentTimeMillis();
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.running(runId, null);
     });
 
@@ -223,7 +211,7 @@ public class ProgramNotificationSubscriberServiceTest {
     heartbeatDatasetStatusCheck(startTime, ProgramRunStatus.RUNNING);
 
     long suspendTime = System.currentTimeMillis();
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.suspend(runId);
     });
     // perform scan on heart beat store - ensure latest message notification is suspended
@@ -231,7 +219,7 @@ public class ProgramNotificationSubscriberServiceTest {
     heartbeatDatasetStatusCheck(suspendTime, ProgramRunStatus.SUSPENDED);
 
     long resumeTime = System.currentTimeMillis();
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.resume(runId);
     });
     // app metadata records as RUNNING
@@ -241,19 +229,19 @@ public class ProgramNotificationSubscriberServiceTest {
     heartbeatDatasetStatusCheck(resumeTime, ProgramRunStatus.RUNNING);
     // killed status check after error
     long stopTime = System.currentTimeMillis();
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.error(runId, new Throwable("Testing"));
     });
     checkProgramStatus(artifactId, runId, ProgramRunStatus.FAILED);
     heartbeatDatasetStatusCheck(stopTime, ProgramRunStatus.FAILED);
 
     ProgramRunId runId2 = programId.run(RunIds.generate());
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.start(runId2, programOptions, null, programDescriptor);
     });
     checkProgramStatus(artifactId, runId2, ProgramRunStatus.STARTING);
     startTime = System.currentTimeMillis();
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.running(runId2, null);
     });
 
@@ -263,7 +251,7 @@ public class ProgramNotificationSubscriberServiceTest {
     // completed status check
     stopTime = System.currentTimeMillis();
 
-    heartBeatTxnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
       programStateWriter.completed(runId2);
     });
     checkProgramStatus(artifactId, runId2, ProgramRunStatus.COMPLETED);
@@ -286,10 +274,10 @@ public class ProgramNotificationSubscriberServiceTest {
 
   private void heartbeatDatasetStatusCheck(long startTime, ProgramRunStatus expectedStatus)
     throws InterruptedException, ExecutionException, TimeoutException {
-    Tasks.waitFor(expectedStatus, () -> heartBeatTxnl.execute(() -> {
+    Tasks.waitFor(expectedStatus, () -> TransactionRunners.run(transactionRunner, context -> {
       Collection<RunRecordMeta> runRecordMetas =
-        // programHeartbeatDataset uses seconds for timeunit for recording runrecords
-        programHeartbeatDataset.scan(
+        // programHeartbeatTable uses seconds for timeunit for recording runrecords
+        new ProgramHeartbeatTable(context).scan(
           TimeUnit.MILLISECONDS.toSeconds(startTime), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
           ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
       if (runRecordMetas.size() == 0) {
