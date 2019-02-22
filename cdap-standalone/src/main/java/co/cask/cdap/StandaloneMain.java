@@ -43,6 +43,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.client.ExploreClient;
@@ -128,6 +129,7 @@ public class StandaloneMain {
   private final boolean sslEnabled;
   private final CConfiguration cConf;
   private final DatasetService datasetService;
+  private final DatasetOpExecutorService datasetOpExecutorService;
   private final ExploreClient exploreClient;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final MessagingService messagingService;
@@ -158,6 +160,7 @@ public class StandaloneMain {
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     datasetService = injector.getInstance(DatasetService.class);
+    datasetOpExecutorService = injector.getInstance(DatasetOpExecutorService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     operationalStatsService = injector.getInstance(OperationalStatsService.class);
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
@@ -233,6 +236,7 @@ public class StandaloneMain {
     injector.getInstance(MetadataStore.class).createIndex();
 
     metricsCollectionService.startAndWait();
+    datasetOpExecutorService.startAndWait();
     datasetService.startAndWait();
     serviceStore.startAndWait();
 
@@ -311,6 +315,7 @@ public class StandaloneMain {
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
+      datasetOpExecutorService.stopAndWait();
 
       logQueryService.stopAndWait();
 

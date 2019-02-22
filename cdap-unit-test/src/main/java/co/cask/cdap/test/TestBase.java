@@ -52,7 +52,7 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -175,7 +175,7 @@ public class TestBase {
   private static Scheduler scheduler;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
-  private static DatasetOpExecutor dsOpService;
+  private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static MetricsManager metricsManager;
@@ -283,7 +283,7 @@ public class TestBase {
                                     injector.getInstance(StructuredTableRegistry.class));
     injector.getInstance(MetadataStore.class).createIndex();
 
-    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();

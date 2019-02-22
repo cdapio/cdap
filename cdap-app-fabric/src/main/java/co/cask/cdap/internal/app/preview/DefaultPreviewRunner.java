@@ -30,6 +30,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -84,6 +85,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   };
 
   private final MessagingService messagingService;
+  private final DatasetOpExecutorService dsOpExecService;
   private final DatasetService datasetService;
   private final LogAppenderInitializer logAppenderInitializer;
   private final ApplicationLifecycleService applicationLifecycleService;
@@ -107,7 +109,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private Timer timer;
 
   @Inject
-  DefaultPreviewRunner(MessagingService messagingService, DatasetService datasetService,
+  DefaultPreviewRunner(MessagingService messagingService,
+                       DatasetOpExecutorService dsOpExecService,
+                       DatasetService datasetService,
                        LogAppenderInitializer logAppenderInitializer,
                        ApplicationLifecycleService applicationLifecycleService,
                        ProgramRuntimeService programRuntimeService,
@@ -118,8 +122,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
-                       StructuredTableRegistry structuredTableRegistry) throws Exception {
+                       StructuredTableRegistry structuredTableRegistry) {
     this.messagingService = messagingService;
+    this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -262,6 +267,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+    dsOpExecService.startAndWait();
     datasetService.startAndWait();
 
     // It is recommended to initialize log appender after datasetService is started,
@@ -283,6 +289,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   protected void shutDown() throws Exception {
     shutDownUnrequiredServices();
     datasetService.stopAndWait();
+    dsOpExecService.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }

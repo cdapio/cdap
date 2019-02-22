@@ -55,7 +55,7 @@ public class RetryOnStartFailureService extends AbstractService {
   public RetryOnStartFailureService(Supplier<Service> delegate, RetryStrategy retryStrategy) {
     this.delegate = delegate;
     this.currentDelegate = delegate.get();
-    this.delegateServiceName = currentDelegate.getClass().getSimpleName();
+    this.delegateServiceName = getDelegateServiceName(currentDelegate.getClass());
     this.retryStrategy = retryStrategy;
   }
 
@@ -152,5 +152,17 @@ public class RetryOnStartFailureService extends AbstractService {
   @Nullable
   Service getStartedService() {
     return startedService;
+  }
+
+  /**
+   * Returns the name of the delegating service class.
+   */
+  private static String getDelegateServiceName(Class<?> delegateClass) {
+    Class<?> cls = delegateClass;
+    while (cls != null && cls.isAnonymousClass()) {
+      cls = cls.getEnclosingClass();
+    }
+    // cls shouldn't be null.
+    return cls == null ? "UnknownService" : cls.getSimpleName();
   }
 }

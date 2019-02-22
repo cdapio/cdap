@@ -28,7 +28,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -81,7 +81,7 @@ public class InMemoryExploreServiceTest {
 
   private static TransactionManager transactionManager;
   private static ExploreService exploreService;
-  private static DatasetOpExecutor dsOpService;
+  private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static NamespaceAdmin namespaceAdmin;
 
@@ -121,7 +121,7 @@ public class InMemoryExploreServiceTest {
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
-    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);

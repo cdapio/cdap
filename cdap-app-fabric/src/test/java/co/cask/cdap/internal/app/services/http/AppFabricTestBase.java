@@ -48,7 +48,7 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -190,7 +190,7 @@ public abstract class AppFabricTestBase {
   private static TransactionManager txManager;
   private static AppFabricServer appFabricServer;
   private static MetricsCollectionService metricsCollectionService;
-  private static DatasetOpExecutor dsOpService;
+  private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static ServiceStore serviceStore;
@@ -240,7 +240,7 @@ public abstract class AppFabricTestBase {
                                     structuredTableRegistry);
     injector.getInstance(MetadataStore.class).createIndex();
 
-    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();

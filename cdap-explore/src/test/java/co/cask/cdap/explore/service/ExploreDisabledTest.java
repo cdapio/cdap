@@ -33,7 +33,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
@@ -85,7 +85,7 @@ public class ExploreDisabledTest {
 
   private static TransactionManager transactionManager;
   private static DatasetFramework datasetFramework;
-  private static DatasetOpExecutor dsOpExecutor;
+  private static DatasetOpExecutorService dsOpExecutor;
   private static DatasetService datasetService;
   private static ExploreClient exploreClient;
   private static NamespaceAdmin namespaceAdmin;
@@ -99,7 +99,7 @@ public class ExploreDisabledTest {
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
-    dsOpExecutor = injector.getInstance(DatasetOpExecutor.class);
+    dsOpExecutor = injector.getInstance(DatasetOpExecutorService.class);
     dsOpExecutor.startAndWait();
 
     datasetService = injector.getInstance(DatasetService.class);

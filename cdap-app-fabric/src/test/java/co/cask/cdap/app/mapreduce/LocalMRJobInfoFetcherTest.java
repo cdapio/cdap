@@ -24,7 +24,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.proto.MRJobInfo;
 import co.cask.cdap.proto.MRTaskInfo;
@@ -63,7 +63,7 @@ public class LocalMRJobInfoFetcherTest {
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
-    injector.getInstance(DatasetOpExecutor.class).startAndWait();
+    injector.getInstance(DatasetOpExecutorService.class).startAndWait();
     injector.getInstance(DatasetService.class).startAndWait();
     return injector;
   }

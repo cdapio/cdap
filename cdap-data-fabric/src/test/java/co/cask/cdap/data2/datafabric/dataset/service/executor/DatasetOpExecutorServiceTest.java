@@ -38,7 +38,6 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -101,6 +100,7 @@ public class DatasetOpExecutorServiceTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
+  private DatasetOpExecutorService dsOpExecService;
   private DatasetService managerService;
   private DatasetFramework dsFramework;
   private EndpointStrategy endpointStrategy;
@@ -152,6 +152,9 @@ public class DatasetOpExecutorServiceTest {
     structuredTableRegistry.initialize();
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
 
+    dsOpExecService = injector.getInstance(DatasetOpExecutorService.class);
+    dsOpExecService.startAndWait();
+
     managerService = injector.getInstance(DatasetService.class);
     managerService.startAndWait();
 
@@ -176,6 +179,9 @@ public class DatasetOpExecutorServiceTest {
   @After
   public void tearDown() throws Exception {
     dsFramework = null;
+
+    dsOpExecService.stopAndWait();
+    dsOpExecService = null;
 
     managerService.stopAndWait();
     managerService = null;

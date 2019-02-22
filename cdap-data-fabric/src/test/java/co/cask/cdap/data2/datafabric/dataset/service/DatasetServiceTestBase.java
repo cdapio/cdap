@@ -247,7 +247,7 @@ public abstract class DatasetServiceTestBase {
                                                  authenticationContext, new NoOpMetadataPublisher());
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,
-                                 opExecutor, new HashSet<>(), typeService, instanceService);
+                                 new HashSet<>(), typeService, instanceService);
 
     // Start dataset service, wait for it to be discoverable
     service.startAndWait();

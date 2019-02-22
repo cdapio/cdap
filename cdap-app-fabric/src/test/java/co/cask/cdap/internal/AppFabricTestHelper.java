@@ -42,7 +42,7 @@ import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -157,7 +157,7 @@ public class AppFabricTestHelper {
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
-      injector.getInstance(DatasetOpExecutor.class).startAndWait();
+      injector.getInstance(DatasetOpExecutorService.class).startAndWait();
       injector.getInstance(DatasetService.class).startAndWait();
       injector.getInstance(MetricsCollectionService.class).startAndWait();
       injector.getInstance(MetadataSubscriberService.class).startAndWait();

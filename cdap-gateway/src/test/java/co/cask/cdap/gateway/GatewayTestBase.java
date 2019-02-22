@@ -23,7 +23,7 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
-import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
@@ -110,7 +110,7 @@ public abstract class GatewayTestBase {
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static TransactionManager txService;
-  private static DatasetOpExecutor dsOpService;
+  private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
   protected static NamespaceAdmin namespaceAdmin;
@@ -182,7 +182,7 @@ public abstract class GatewayTestBase {
                                     injector.getInstance(StructuredTableRegistry.class));
     injector.getInstance(MetadataStore.class).createIndex();
 
-    dsOpService = injector.getInstance(DatasetOpExecutor.class);
+    dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();

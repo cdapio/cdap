@@ -85,6 +85,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
 
     // Set the host name to the one provided by Twill
     cConf.set(Constants.Dataset.Executor.ADDRESS, context.getHost().getHostName());
+    cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, context.getHost().getHostName());
 
     String txClientId = String.format("cdap.service.%s.%d", Constants.Service.DATASET_EXECUTOR,
                                       context.getInstanceId());

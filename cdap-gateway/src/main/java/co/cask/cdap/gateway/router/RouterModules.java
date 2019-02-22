@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.common.utils.Networks;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 
 import java.net.InetAddress;
@@ -51,6 +52,7 @@ public class RouterModules extends RuntimeModule {
     return new AbstractModule() {
       @Override
       protected void configure() {
+        bind(NettyRouter.class).in(Scopes.SINGLETON);
       }
 
       @Provides
