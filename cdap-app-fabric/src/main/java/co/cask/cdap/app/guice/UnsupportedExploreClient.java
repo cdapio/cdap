@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  * A {@link ExploreClient} implementation that throws {@link UnsupportedOperationException} on
  * every method call. This is used in runtime environment that explore is not supported.
  */
-final class UnsupportedExploreClient implements ExploreClient {
+public final class UnsupportedExploreClient implements ExploreClient {
   @Override
   public void ping() throws UnauthenticatedException, ServiceUnavailableException, ExploreException {
     throw new UnsupportedOperationException("Explore is not supported. This method should not be called.");

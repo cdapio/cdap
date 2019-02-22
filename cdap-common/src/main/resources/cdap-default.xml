@@ -2802,6 +2802,54 @@
   </property>
 
   <property>
+    <name>preview.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The bind address for the preview service.
+    </description>
+  </property>
+
+  <property>
+    <name>preview.bind.port</name>
+    <value>0</value>
+    <description>
+      The port to bind the preview service to.
+    </description>
+  </property>
+
+  <property>
+    <name>preview.connection.backlog</name>
+    <value>20000</value>
+    <description>
+      The connection backlog in the CDAP Preview service
+    </description>
+  </property>
+
+  <property>
+    <name>preview.exec.threads</name>
+    <value>10</value>
+    <description>
+      The number of executor threads for the preview service
+    </description>
+  </property>
+
+  <property>
+    <name>preview.boss.threads</name>
+    <value>1</value>
+    <description>
+      The number of boss threads for the preview service
+    </description>
+  </property>
+
+  <property>
+    <name>preview.worker.threads</name>
+    <value>10</value>
+    <description>
+      The number of worker threads in the CDAP Router service
+    </description>
+  </property>
+
+  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
