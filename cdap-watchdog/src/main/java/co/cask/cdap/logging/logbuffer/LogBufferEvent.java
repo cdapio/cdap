@@ -25,15 +25,21 @@ import java.util.Objects;
  */
 public final class LogBufferEvent {
   private final ILoggingEvent logEvent;
+  private final int eventSize;
   private final LogBufferFileOffset offset;
 
-  public LogBufferEvent(ILoggingEvent logEvent, LogBufferFileOffset offset) {
+  public LogBufferEvent(ILoggingEvent logEvent, int eventSize, LogBufferFileOffset offset) {
     this.logEvent = logEvent;
+    this.eventSize = eventSize;
     this.offset = offset;
   }
 
   public ILoggingEvent getLogEvent() {
     return logEvent;
+  }
+
+  public int getEventSize() {
+    return eventSize;
   }
 
   public LogBufferFileOffset getOffset() {
@@ -48,19 +54,22 @@ public final class LogBufferEvent {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    LogBufferEvent that = (LogBufferEvent) o;
-    return Objects.equals(logEvent, that.logEvent) && Objects.equals(offset, that.offset);
+    LogBufferEvent event = (LogBufferEvent) o;
+    return eventSize == event.eventSize &&
+      Objects.equals(logEvent, event.logEvent) &&
+      Objects.equals(offset, event.offset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(logEvent, offset);
+    return Objects.hash(logEvent, eventSize, offset);
   }
 
   @Override
   public String toString() {
-    return "BufferLogEvent{" +
+    return "LogBufferEvent{" +
       "logEvent=" + logEvent +
+      ", eventSize=" + eventSize +
       ", offset=" + offset +
       '}';
   }

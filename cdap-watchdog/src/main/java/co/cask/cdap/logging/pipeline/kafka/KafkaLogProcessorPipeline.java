@@ -361,7 +361,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
       return config.getCheckpointIntervalMillis();
     }
     if (currentTimeMillis - config.getCheckpointIntervalMillis() < lastCheckpointTime) {
-      return config.getCheckpointIntervalMillis() - currentTimeMillis + lastCheckpointTime;
+      return lastCheckpointTime + config.getCheckpointIntervalMillis() - currentTimeMillis;
     }
 
     // Sync the appender and persists checkpoints
@@ -386,7 +386,7 @@ public final class KafkaLogProcessorPipeline extends AbstractExecutionThreadServ
     try {
       checkpointManager.saveCheckpoints(checkpoints);
       LOG.debug("Checkpoint persisted for {} with {}", name, checkpoints);
-    } catch (Exception e) {
+    } catch (IOException e) {
       // Just log as it is non-fatal if failed to save checkpoints
       OUTAGE_LOG.warn("Failed to persist checkpoints for pipeline {}.", name, e);
     }

@@ -27,14 +27,14 @@ import javax.annotation.concurrent.NotThreadSafe;
 /**
  * A queue for storing time based events with offsets association.
  *
- * @param <Event> Type of event stored in the queue.
- * @param <Offset> Type of event offset associated with the event.
+ * @param <EVENT> Type of event stored in the queue.
+ * @param <OFFSET> Type of event offset associated with the event.
  */
 @NotThreadSafe
-public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> implements Iterable<Event> {
+public final class TimeEventQueue<EVENT, OFFSET extends Comparable<OFFSET>> implements Iterable<EVENT> {
 
-  private final SortedSet<TimeEvent<Event, Offset>> events;
-  private final Int2ObjectMap<SortedSet<Offset>> partitionOffsets;
+  private final SortedSet<TimeEvent<EVENT, OFFSET>> events;
+  private final Int2ObjectMap<SortedSet<OFFSET>> partitionOffsets;
   private long totalSize;
 
   public TimeEventQueue(Iterable<Integer> partitions) {
@@ -46,9 +46,9 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
     }
   }
 
-  public void add(Event event, long eventTimestamp, int eventSize, int partition, Offset offset) {
-    SortedSet<Offset> offsets = getOffsets(partition);
-    TimeEvent<Event, Offset> timeEvent = new TimeEvent<>(eventTimestamp, partition, offset, event, eventSize);
+  public void add(EVENT event, long eventTimestamp, int eventSize, int partition, OFFSET offset) {
+    SortedSet<OFFSET> offsets = getOffsets(partition);
+    TimeEvent<EVENT, OFFSET> timeEvent = new TimeEvent<>(eventTimestamp, partition, offset, event, eventSize);
     if (events.add(timeEvent)) {
       if (!offsets.add(offset)) {
         events.remove(timeEvent);
@@ -63,7 +63,7 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
   /**
    * Returns the event in the queue with the smallest timestamp.
    */
-  public Event first() {
+  public EVENT first() {
     return events.first().getEvent();
   }
 
@@ -98,8 +98,8 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
   /**
    * Returns the smallest offset stored for the given partition.
    */
-  public Offset getSmallestOffset(int partition) {
-    SortedSet<Offset> offsets = getOffsets(partition);
+  public OFFSET getSmallestOffset(int partition) {
+    SortedSet<OFFSET> offsets = getOffsets(partition);
     if (offsets.isEmpty()) {
       throw new IllegalStateException("Queue is empty");
     }
@@ -107,11 +107,11 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
   }
 
   @Override
-  public EventIterator<Event, Offset> iterator() {
-    final Iterator<TimeEvent<Event, Offset>> iterator = events.iterator();
-    return new EventIterator<Event, Offset>() {
+  public EventIterator<EVENT, OFFSET> iterator() {
+    final Iterator<TimeEvent<EVENT, OFFSET>> iterator = events.iterator();
+    return new EventIterator<EVENT, OFFSET>() {
 
-      private TimeEvent<Event, Offset> currentEvent;
+      private TimeEvent<EVENT, OFFSET> currentEvent;
 
       @Override
       public boolean hasNext() {
@@ -119,7 +119,7 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
       }
 
       @Override
-      public Event next() {
+      public EVENT next() {
         currentEvent = iterator.next();
         return currentEvent.getEvent();
       }
@@ -136,7 +136,7 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
       }
 
       @Override
-      public Offset getOffset() {
+      public OFFSET getOffset() {
         if (currentEvent == null) {
           throw new IllegalStateException("The next() method must be called first.");
         }
@@ -153,8 +153,8 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
     };
   }
 
-  private SortedSet<Offset> getOffsets(int partition) {
-    SortedSet<Offset> offsets = partitionOffsets.get(partition);
+  private SortedSet<OFFSET> getOffsets(int partition) {
+    SortedSet<OFFSET> offsets = partitionOffsets.get(partition);
     if (offsets == null) {
       throw new IllegalArgumentException("Partition " + partition +
                                            " is not in allowed partitions " + partitionOffsets.keySet());
@@ -165,15 +165,15 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
   /**
    * An {@link Iterator} for iterating over events inserted to the {@link TimeEventQueue}.
    *
-   * @param <Event> type of element
-   * @param <Offset> Type of event offset associated with the event.
+   * @param <EVENT> type of element
+   * @param <OFFSET> Type of event offset associated with the event.
    */
-  public interface EventIterator<Event, Offset> extends Iterator<Event> {
+  public interface EventIterator<EVENT, OFFSET> extends Iterator<EVENT> {
 
     /**
      * Returns the offset provided at the insertion time of the last element returned by this iterator.
      */
-    Offset getOffset();
+    OFFSET getOffset();
 
     /**
      * Returns the partition provided at the insertion time of the last element returned by this iterator.
@@ -184,15 +184,15 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
   /**
    * This class represent an event stored in the event set.
    */
-  private static final class TimeEvent<Event, Offset extends Comparable<Offset>>
-                        implements Comparable<TimeEvent<Event, Offset>> {
+  private static final class TimeEvent<EVENT, OFFSET extends Comparable<OFFSET>>
+                        implements Comparable<TimeEvent<EVENT, OFFSET>> {
     private final long eventTime;
     private final int partition;
-    private final Offset offset;
-    private final Event event;
+    private final OFFSET offset;
+    private final EVENT event;
     private final int eventSize;
 
-    TimeEvent(long eventTime, int partition, Offset offset, Event event, int eventSize) {
+    TimeEvent(long eventTime, int partition, OFFSET offset, EVENT event, int eventSize) {
       this.eventTime = eventTime;
       this.partition = partition;
       this.offset = offset;
@@ -208,11 +208,11 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
       return partition;
     }
 
-    Offset getOffset() {
+    OFFSET getOffset() {
       return offset;
     }
 
-    Event getEvent() {
+    EVENT getEvent() {
       return event;
     }
 
@@ -221,7 +221,7 @@ public final class TimeEventQueue<Event, Offset extends Comparable<Offset>> impl
     }
 
     @Override
-    public int compareTo(TimeEvent<Event, Offset> other) {
+    public int compareTo(TimeEvent<EVENT, OFFSET> other) {
       // Compare by event time, then by partition, then by offset
       // Combination of them are guaranteed to be unique.
 

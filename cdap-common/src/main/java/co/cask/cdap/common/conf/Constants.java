@@ -16,7 +16,6 @@
 
 package co.cask.cdap.common.conf;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.BindingAnnotation;
@@ -836,14 +835,10 @@ public final class Constants {
     public static final String PIPELINE_LOGGER_CACHE_SIZE = "log.process.pipeline.logger.cache.size";
     public static final String PIPELINE_LOGGER_CACHE_EXPIRATION_MS = "log.process.pipeline.logger.cache.expiration.ms";
 
-    // This is a pipeline property only for backward compatibility purpose in 4.1, due to prior to 4.1,
-    // the kafka offset prefix is hardcoded to Bytes.toBytes(100)
-    public static final String PIPELINE_CHECKPOINT_PREFIX_NUM = "log.process.pipeline.checkpoint.prefix.num";
-
     // Property key in the logger context to indicate it is performing pipeline validation
     public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
 
-    public static final byte[] SYSTEM_PIPELINE_CHECKPOINT_PREFIX = Bytes.toBytes(100);
+    public static final String SYSTEM_PIPELINE_CHECKPOINT_PREFIX = "cdap";
 
     // Constants
     // Table used to store log metadata
