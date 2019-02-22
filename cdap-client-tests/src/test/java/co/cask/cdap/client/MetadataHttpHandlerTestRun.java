@@ -88,6 +88,7 @@ import javax.annotation.Nullable;
 /**
  * Tests for {@link MetadataHttpHandler}
  */
+@SuppressWarnings("WeakerAccess")
 public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   private final ApplicationId application = NamespaceId.DEFAULT.app(AppWithDataset.class.getSimpleName());
@@ -688,12 +689,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // with no target type
     Assert.assertEquals(
       ImmutableSet.of(new MetadataSearchResultRecord(systemId)),
-      searchMetadata(NamespaceId.DEFAULT, "system*")
+      searchMetadata(ImmutableList.of(NamespaceId.DEFAULT, NamespaceId.SYSTEM), "system*")
     );
     // with target type as artifact
     Assert.assertEquals(
       ImmutableSet.of(new MetadataSearchResultRecord(systemId)),
-      searchMetadata(NamespaceId.DEFAULT, "system*", MetadataEntity.ARTIFACT)
+      searchMetadata(ImmutableList.of(NamespaceId.DEFAULT, NamespaceId.SYSTEM), "system*", MetadataEntity.ARTIFACT)
     );
 
     // verify that user metadata can be deleted for system-scope artifacts
@@ -835,9 +836,10 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Map<MetadataEntity, Metadata> expectedUserMetadataV2 = new HashMap<>();
     expectedUserMetadataV2.put(metadataEntity, new Metadata(props, tags));
 
-    Set<MetadataSearchResultRecord> resultsV2 = super.searchMetadata(NamespaceId.DEFAULT, "fValue*",
-                                                                     ImmutableSet.of(), null, 0, Integer.MAX_VALUE,
-                                                                     0, null, false).getResults();
+    Set<MetadataSearchResultRecord> resultsV2 =
+      super.searchMetadata(ImmutableList.of(NamespaceId.DEFAULT), "fValue*",
+                           ImmutableSet.of(), null, 0, Integer.MAX_VALUE,
+                           0, null, false).getResults();
 
     // Verify results
     Assert.assertEquals(expectedUserMetadataV2.keySet(), getMetadataEntities(resultsV2));
@@ -872,7 +874,7 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
       ApplicationId app2Id = namespace2.app(AllProgramsApp.NAME);
       addProperties(app2Id, props);
 
-      MetadataSearchResponse results = super.searchMetadata(null, "value*", Collections.emptySet(),
+      MetadataSearchResponse results = super.searchMetadata(ImmutableList.of(), "value*", Collections.emptySet(),
                                                             null, 0, 10, 0, null, false);
 
       Map<MetadataEntity, Metadata> expected = new HashMap<>();
@@ -980,10 +982,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
   @Test
   public void testInvalidSearchParams() throws Exception {
+    // TODO (CDAP-14946): Find a better way to determine allowed combinations of search parameters
     NamespaceId namespace = new NamespaceId("invalid");
     Set<String> targets = Collections.emptySet();
     try {
-      searchMetadata(namespace, "*", targets, MetadataConstants.ENTITY_NAME_KEY);
+      searchMetadata(namespace, "*", targets, MetadataConstants.ENTITY_NAME_KEY + " ascending");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -1016,14 +1019,6 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     // search with cursor for relevance sort
     try {
       searchMetadata(NamespaceId.DEFAULT, "search*", targets, null, 0, Integer.MAX_VALUE, 0, "cursor");
-      Assert.fail();
-    } catch (BadRequestException e) {
-      // expected
-    }
-
-    // search with invalid query
-    try {
-      searchMetadata(NamespaceId.DEFAULT, "");
       Assert.fail();
     } catch (BadRequestException e) {
       // expected
@@ -1538,8 +1533,18 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     return searchMetadata(namespaceId, query, ImmutableSet.of(target));
   }
 
+  private Set<MetadataSearchResultRecord> searchMetadata(List<NamespaceId> namespaceIds, String query,
+                                                         String target) throws Exception {
+    return searchMetadata(namespaceIds, query, ImmutableSet.of(target));
+  }
+
   private Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query) throws Exception {
     return searchMetadata(namespaceId, query, ImmutableSet.of());
+  }
+
+  private Set<MetadataSearchResultRecord> searchMetadata(List<NamespaceId> namespaceIds, String query)
+    throws Exception {
+    return searchMetadata(namespaceIds, query, ImmutableSet.of());
   }
 
   /**
@@ -1554,10 +1559,28 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   /**
    * strips metadata from search results
    */
+  protected Set<MetadataSearchResultRecord> searchMetadata(List<NamespaceId> namespaceIds, String query,
+                                                           Set<String> targets) throws Exception {
+    return searchMetadata(namespaceIds, query, targets, null);
+  }
+
+  /**
+   * strips metadata from search results
+   */
   @Override
   protected Set<MetadataSearchResultRecord> searchMetadata(NamespaceId namespaceId, String query, Set<String> targets,
                                                            @Nullable String sort) throws Exception {
     return searchMetadata(namespaceId, query, targets, sort, 0, Integer.MAX_VALUE, 0, null).getResults();
+  }
+
+  /**
+   * strips metadata from search results
+   */
+  @SuppressWarnings("SameParameterValue")
+  protected Set<MetadataSearchResultRecord> searchMetadata(List<NamespaceId> namespaceIds, String query,
+                                                           Set<String> targets, @Nullable String sort)
+    throws Exception {
+    return searchMetadata(namespaceIds, query, targets, sort, 0, Integer.MAX_VALUE, 0, null).getResults();
   }
 
   /**
@@ -1568,11 +1591,23 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                                   @Nullable String sort, int offset, int limit,
                                                   int numCursors, @Nullable String cursor, boolean showHidden)
     throws Exception {
-    MetadataSearchResponse searchResponse = super.searchMetadata(namespaceId, query, targets, sort, offset,
+    return searchMetadata(namespaceId == null ? null : ImmutableList.of(namespaceId),
+                          query, targets, sort, offset, limit, numCursors, cursor, showHidden);
+  }
+
+  /**
+   * strips metadata from search results
+   */
+  @Override
+  protected MetadataSearchResponse searchMetadata(List<NamespaceId> namespaceIds, String query, Set<String> targets,
+                                                  @Nullable String sort, int offset, int limit,
+                                                  int numCursors, @Nullable String cursor, boolean showHidden)
+    throws Exception {
+    MetadataSearchResponse searchResponse = super.searchMetadata(namespaceIds, query, targets, sort, offset,
                                                                  limit, numCursors, cursor, showHidden);
     Set<MetadataSearchResultRecord> transformed = new LinkedHashSet<>();
     for (MetadataSearchResultRecord result : searchResponse.getResults()) {
-      transformed.add(new MetadataSearchResultRecord(result.getEntityId()));
+      transformed.add(new MetadataSearchResultRecord(result.getMetadataEntity()));
     }
     return new MetadataSearchResponse(searchResponse.getSort(), searchResponse.getOffset(), searchResponse.getLimit(),
                                       searchResponse.getNumCursors(), searchResponse.getTotal(), transformed,
@@ -1584,6 +1619,13 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
                                                 @Nullable String sort, int offset, int limit,
                                                 int numCursors, @Nullable String cursor) throws Exception {
     return searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors, cursor, false);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private MetadataSearchResponse searchMetadata(List<NamespaceId> namespaceIds, String query, Set<String> targets,
+                                                @Nullable String sort, int offset, int limit,
+                                                int numCursors, @Nullable String cursor) throws Exception {
+    return searchMetadata(namespaceIds, query, targets, sort, offset, limit, numCursors, cursor, false);
   }
 
   private Set<MetadataRecord> removeCreationTime(Set<MetadataRecord> original) {

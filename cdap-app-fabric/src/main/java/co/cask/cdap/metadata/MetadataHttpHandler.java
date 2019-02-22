@@ -29,6 +29,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.spi.metadata.Metadata;
+import co.cask.cdap.spi.metadata.MetadataConstants;
 import co.cask.cdap.spi.metadata.MetadataRecord;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
@@ -36,6 +37,7 @@ import co.cask.cdap.spi.metadata.Sorting;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -200,7 +202,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/metadata/search")
   public void searchMetadata(HttpRequest request, HttpResponder responder,
-                             @Nullable @QueryParam("namespaces") String namespaces,
+                             @Nullable @QueryParam("namespaces") List<String> namespaces,
                              @Nullable @QueryParam("scope") String scope,
                              @Nullable @QueryParam("query") String searchQuery,
                              @Nullable @QueryParam("target") List<String> targets,
@@ -242,8 +244,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                               @Nullable @QueryParam("entityScope") String entityScope,
                               @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
     throws Exception {
-    SearchRequest searchRequest = getValidatedSearchRequest(scope, namespaceId, searchQuery, targets, sort,
-                                                            offset, limit, numCursors, cursorRequested, cursor,
+    SearchRequest searchRequest = getValidatedSearchRequest(scope, ImmutableList.of(namespaceId), searchQuery, targets,
+                                                            sort, offset, limit, numCursors, cursorRequested, cursor,
                                                             showHidden, entityScope);
     SearchResponse response = metadataAdmin.search(searchRequest);
     responder.sendJson(HttpResponseStatus.OK,
@@ -251,48 +253,70 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                      ? MetadataCompatibility.toV5Response(response, entityScope) : response));
   }
 
+  // TODO (CDAP-14946): Find a better way to determine allowed combinations of search parameters
   private SearchRequest getValidatedSearchRequest(@Nullable String scope,
-                                                  @Nullable String namespaces, @Nullable String searchQuery,
-                                                  @Nullable List<String> targets, @Nullable String sort,
+                                                  @Nullable List<String> namespaces,
+                                                  @Nullable String searchQuery,
+                                                  @Nullable List<String> targets,
+                                                  @Nullable String sort,
                                                   int offset, int limit,
-                                                  @Nullable Integer numCursors, boolean cursorRequested,
-                                                  @Nullable String cursor, boolean showHidden,
+                                                  @Nullable Integer numCursors,
+                                                  boolean cursorRequested,
+                                                  @Nullable String cursor,
+                                                  boolean showHidden,
                                                   @Nullable String entityScope) throws BadRequestException {
-
-    SearchRequest.Builder builder = SearchRequest.of(searchQuery == null ? "*" : searchQuery);
-    if (scope != null) {
-      builder.setScope(validateScope(scope));
-    }
-    if (EntityScope.SYSTEM == validateEntityScope(entityScope)) {
-      builder.addNamespace(entityScope.toLowerCase());
-    } else if (namespaces != null) {
-      for (String namespace : namespaces.split(",")) {
-        builder.addNamespace(namespace.trim().toLowerCase());
+    try {
+      SearchRequest.Builder builder = SearchRequest.of(searchQuery == null ? "*" : searchQuery);
+      if (scope != null) {
+        builder.setScope(validateScope(scope));
       }
-    }
-    if (targets != null) {
-      targets.forEach(builder::addType);
-    }
-    if (sort != null) {
-      try {
-        builder.setSorting(Sorting.of(URLDecoder.decode(sort, StandardCharsets.UTF_8.name())));
-      } catch (UnsupportedEncodingException e) {
-        // this cannot happen because UTF_8 is always supported
-        throw new IllegalStateException(e);
+      if (EntityScope.SYSTEM == validateEntityScope(entityScope)) {
+        builder.addNamespace(entityScope.toLowerCase());
+      } else if (namespaces != null) {
+        for (String namespace : namespaces) {
+          builder.addNamespace(namespace);
+        }
       }
+      if (targets != null) {
+        targets.forEach(builder::addType);
+      }
+      if (sort != null) {
+        Sorting sorting;
+        try {
+          sorting = Sorting.of(URLDecoder.decode(sort, StandardCharsets.UTF_8.name()));
+        } catch (UnsupportedEncodingException e) {
+          // this cannot happen because UTF_8 is always supported
+          throw new IllegalStateException(e);
+        }
+        if (!MetadataConstants.ENTITY_NAME_KEY.equalsIgnoreCase(sorting.getKey()) &&
+          !MetadataConstants.CREATION_TIME_KEY.equalsIgnoreCase(sorting.getKey())) {
+          throw new IllegalArgumentException("Sorting is only supported on fields: " +
+                                               MetadataConstants.ENTITY_NAME_KEY + ", " +
+                                               MetadataConstants.CREATION_TIME_KEY);
+        }
+        builder.setSorting(sorting);
+      }
+      builder.setOffset(offset);
+      builder.setLimit(limit);
+      if (cursorRequested || (numCursors != null && numCursors > 0)) {
+        if (sort == null) {
+          throw new IllegalArgumentException("Cursors may only be requested in conjunction with sorting");
+        }
+        builder.setCursorRequested(true);
+      }
+      if (cursor != null) {
+        if (sort == null) {
+          throw new IllegalArgumentException("Cursors are only allowed in conjunction with sorting");
+        }
+        builder.setCursor(cursor);
+      }
+      builder.setShowHidden(showHidden);
+      SearchRequest request = builder.build();
+      LOG.trace("Received search request {}", request);
+      return request;
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage(), e);
     }
-    builder.setOffset(offset);
-    builder.setLimit(limit);
-    if (cursorRequested || (numCursors != null && numCursors > 0)) {
-      builder.setCursorRequested(true);
-    }
-    if (cursor != null) {
-      builder.setCursor(cursor);
-    }
-    builder.setShowHidden(showHidden);
-    SearchRequest request = builder.build();
-    LOG.trace("Received search request {}", request);
-    return request;
   }
 
   private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable String entityType, String suffix) {

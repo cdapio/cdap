@@ -25,6 +25,7 @@ import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataRecord;
 import co.cask.cdap.spi.metadata.SearchResponse;
 import co.cask.cdap.spi.metadata.Sorting;
+import com.google.common.collect.Maps;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -45,6 +46,8 @@ public final class MetadataCompatibility {
 
   /**
    * Convert a {@link SearchResponse} to 5.x {@link MetadataSearchResponse}.
+   *
+   * The 5.x convention was that the results only contain non-empty records.
    */
   public static MetadataSearchResponse toV5Response(SearchResponse response, @Nullable String scope) {
     Sorting sorting = response.getRequest().getSorting();
@@ -62,17 +65,23 @@ public final class MetadataCompatibility {
 
   /**
    * Convert a list of {@link MetadataRecord}s to an ordered set of 5.x {@link MetadataSearchResultRecord}s.
+   *
+   * The 5.x convention was that the results only contain non-empty records.
    */
   private static Set<MetadataSearchResultRecord> toV5Results(List<MetadataRecord> results) {
     Set<MetadataSearchResultRecord> records = new LinkedHashSet<>();
     for (MetadataRecord record : results) {
-     records.add(new MetadataSearchResultRecord(record.getEntity(), toV5Metadata(record.getMetadata())));
+     Map<MetadataScope, co.cask.cdap.api.metadata.Metadata> map = toV5Metadata(record.getMetadata());
+     records.add(new MetadataSearchResultRecord(record.getEntity(), Maps.filterValues(
+       map, meta -> meta != null && !(meta.getProperties().isEmpty() && meta.getTags().isEmpty()))));
     }
     return records;
   }
 
   /**
    * Convert a {@link Metadata} to a 5.x map from scope to {@link co.cask.cdap.api.metadata.Metadata}.
+   *
+   * The 5.x convention was that the map contains all scopes even if their metadata is empty.
    */
   public static Map<MetadataScope, co.cask.cdap.api.metadata.Metadata> toV5Metadata(Metadata metadata) {
     return MetadataScope.ALL.stream().collect(Collectors.toMap(

@@ -29,10 +29,12 @@ import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
+import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Before;
 
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -168,7 +170,15 @@ public abstract class MetadataTestBase extends ClientTestBase {
                                                   Set<String> targets,
                                                   @Nullable String sort, int offset, int limit, int numCursors,
                                                   @Nullable String cursor, boolean showHiddden) throws Exception {
-    return metadataClient.searchMetadata(namespaceId, query, targets, sort, offset, limit, numCursors,
+    return searchMetadata(namespaceId == null ? null : ImmutableList.of(namespaceId),
+                          query, targets, sort, offset, limit, numCursors, cursor, showHiddden);
+  }
+
+  protected MetadataSearchResponse searchMetadata(List<NamespaceId> namespaceIds, String query,
+                                                  Set<String> targets,
+                                                  @Nullable String sort, int offset, int limit, int numCursors,
+                                                  @Nullable String cursor, boolean showHiddden) throws Exception {
+    return metadataClient.searchMetadata(namespaceIds, query, targets, sort, offset, limit, numCursors,
                                          cursor, showHiddden);
   }
 

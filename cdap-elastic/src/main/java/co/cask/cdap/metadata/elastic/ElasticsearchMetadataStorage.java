@@ -793,7 +793,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * Creates the (sub-)query for Elasticsearch from the terms in the query string.
    */
   private QueryBuilder createMainQuery(SearchRequest request) {
-    if (request.getQuery().equals("*")) {
+    if (request.getQuery() == null || request.getQuery().isEmpty() || request.getQuery().equals("*")) {
       return QueryBuilders.matchAllQuery();
     }
     // the indexed document contains three text fields: one for each scope and for all scopes combined.

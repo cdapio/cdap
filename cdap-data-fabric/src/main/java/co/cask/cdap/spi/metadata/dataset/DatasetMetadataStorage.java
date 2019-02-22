@@ -363,7 +363,7 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     CursorAndOffsetInfo cursorOffsetAndLimits = determineCursorOffsetAndLimits(request);
     MetadataSearchResponse response = search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
       namespaceAndScopes.getFirst(),
-      request.getQuery(),
+      request.getQuery() == null || request.getQuery().isEmpty() ? "*" : request.getQuery(),
       request.getTypes() == null ? Collections.emptySet() : request.getTypes(),
       request.getSorting() == null ? SortInfo.DEFAULT :
         new SortInfo(request.getSorting().getKey(), SortInfo.SortOrder.valueOf(request.getSorting().getOrder().name())),

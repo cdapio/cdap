@@ -28,6 +28,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
@@ -40,6 +41,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -111,7 +113,21 @@ public abstract class AbstractMetadataClient {
   public MetadataSearchResponse searchMetadata(NamespaceId namespace, String query,
                                                Set<String> targets)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
-    return searchMetadata(namespace, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
+    return searchMetadata(namespace == null ? null : ImmutableList.of(namespace), query, targets);
+  }
+
+  /**
+   * Searches entities in the specified namespace whose metadata matches the specified query.
+   *
+   * @param namespaces the namespaces to search in
+   * @param query the query string with which to search
+   * @param targets entity types to search. If empty, all possible types will be searched
+   * @return the {@link MetadataSearchResponse} for the given query.
+   */
+  public MetadataSearchResponse searchMetadata(List<NamespaceId> namespaces, String query,
+                                               Set<String> targets)
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+    return searchMetadata(namespaces, query, targets, null, 0, Integer.MAX_VALUE, 0, null, false);
   }
 
   /**
@@ -138,20 +154,53 @@ public abstract class AbstractMetadataClient {
                                                @Nullable String cursor, boolean showHidden)
     throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
 
-    HttpResponse response = searchMetadataHelper(namespace, query, targets, sort, offset, limit, numCursors, cursor,
+    return searchMetadata(namespace == null ? null : ImmutableList.of(namespace),
+                          query, targets, sort, offset, limit, numCursors, cursor, showHidden);
+  }
+
+  /**
+   * Searches entities in the specified namespace whose metadata matches the specified query.
+   *
+   * @param namespaces the namespaces to search in or null if it is across all namespaces
+   * @param query the query string with which to search
+   * @param targets entity types to search. If empty, all possible types will be searched
+   * @param sort specifies sort field and sort order. If {@code null}, the sort order is by relevance
+   * @param offset the index to start with in the search results. To return results from the beginning, pass {@code 0}
+   * @param limit the number of results to return, starting from #offset. To return all, pass {@link Integer#MAX_VALUE}
+   * @param numCursors the number of cursors to return in the response. A cursor identifies the first index of the
+   *                   next page for pagination purposes
+   * @param cursor the cursor that acts as the starting index for the requested page. This is only applicable when
+   *               #sortInfo is not default. If offset is also specified, it is applied starting at
+   *               the cursor. If {@code null}, the first row is used as the cursor
+   * @param showHidden boolean which specifies whether to display hidden entities (entity whose name start with "_")
+   *                    or not.
+   * @return A set of {@link MetadataSearchResponse} for the given query.
+   */
+  public MetadataSearchResponse searchMetadata(@Nullable List<NamespaceId> namespaces, String query,
+                                               Set<String> targets, @Nullable String sort,
+                                               int offset, int limit, int numCursors,
+                                               @Nullable String cursor, boolean showHidden)
+    throws IOException, UnauthenticatedException, UnauthorizedException, BadRequestException {
+
+    HttpResponse response = searchMetadataHelper(namespaces, query, targets, sort, offset, limit, numCursors, cursor,
                                                  showHidden);
     return GSON.fromJson(response.getResponseBodyAsString(), MetadataSearchResponse.class);
   }
 
-  private HttpResponse searchMetadataHelper(@Nullable NamespaceId namespace, String query, Set<String> targets,
+  private HttpResponse searchMetadataHelper(@Nullable List<NamespaceId> namespaces, String query, Set<String> targets,
                                             @Nullable String sort, int offset, int limit, int numCursors,
                                             @Nullable String cursor, boolean showHidden)
     throws IOException, UnauthenticatedException, BadRequestException {
     StringBuilder path = new StringBuilder();
-    if (namespace != null) {
-      path.append("namespaces/").append(namespace.getNamespace()).append("/");
+    if (namespaces != null && namespaces.size() == 1) {
+      path.append("namespaces/").append(namespaces.get(0).getNamespace()).append("/");
     }
     path.append("metadata/search?query=").append(query);
+    if (namespaces != null && namespaces.size() > 1) {
+      for (NamespaceId namespace : namespaces) {
+        path.append("&namespace=").append(namespace.getNamespace());
+      }
+    }
     for (String t : targets) {
       path.append("&target=").append(t);
     }
