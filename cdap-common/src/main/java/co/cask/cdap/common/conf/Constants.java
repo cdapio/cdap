@@ -435,7 +435,15 @@ public final class Constants {
 
     public static final String DATA_STORAGE_IMPLEMENTATION = "data.storage.implementation";
     public static final String DATA_STORAGE_NOSQL = "nosql";
-    public static final String DATA_STORAGE_SQL = "postgressql";
+    public static final String DATA_STORAGE_SQL = "postgresql";
+    public static final String DATA_STORAGE_SQL_DRIVER_DIRECTORY = "data.storage.sql.driver.directory";
+    public static final String DATA_STORAGE_SQL_JDBC_DRIVER_NAME = "data.storage.sql.jdbc.driver.name";
+
+    // the jdbc connection related properties should be from cdap-security.xml
+    public static final String DATA_STORAGE_SQL_JDBC_CONNECTION_URL = "data.storage.sql.jdbc.connection.url";
+    public static final String DATA_STORAGE_SQL_USERNAME = "data.storage.sql.username";
+    public static final String DATA_STORAGE_SQL_PASSWORD = "data.storage.sql.password";
+    public static final String DATA_STORAGE_SQL_PROPERTY_PREFIX = "data.storage.sql.property.";
 
     // used for Guice named bindings
     public static final String TABLE_TYPE = "table.type";

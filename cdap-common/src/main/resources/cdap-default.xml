@@ -735,6 +735,38 @@
   </property>
 
   <property>
+    <name>data.storage.sql.driver.directory</name>
+    <value></value>
+    <description>
+      The sql driver directory which contains the driver jar and
+      other necessary jars to connect to the sql instance.
+      This config can only be used when the stroage implementation is sql.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.driver.name</name>
+    <value></value>
+    <description>
+      The jdbc driver name to connect to the sql instance. The jdbc url,
+      username, password, connection properties can be set using
+      cdap-security.xml.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.connection.url</name>
+    <value></value>
+    <description>
+      The jdbc url to connect to the sql instance. No sensitive information
+      should be provided using the jdbc url. The username and password can
+      be specified in cdap-security.xml. For non-sensitive properties, it can be
+      specified by adding a property with name prefixed with "data.storage.sql.property.",
+      followed by the sql property name.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.bind.address</name>
     <value>0.0.0.0</value>
     <description>

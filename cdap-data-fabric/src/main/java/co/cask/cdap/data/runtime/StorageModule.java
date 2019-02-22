@@ -28,6 +28,7 @@ import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
 import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
+import co.cask.cdap.spi.data.sql.jdbc.DataSourceInstantiator;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Inject;
@@ -47,9 +48,11 @@ public class StorageModule extends PrivateModule {
     bind(TransactionRunner.class).toProvider(TransactionRunnerProvider.class);
     bind(StructuredTableAdmin.class).toProvider(StructuredTableAdminProvider.class);
     bind(StructuredTableRegistry.class).toProvider(StructuredTableRegistryProvider.class);
+    bind(DataSourceInstantiator.class).in(Singleton.class);
     expose(TransactionRunner.class);
     expose(StructuredTableAdmin.class);
     expose(StructuredTableRegistry.class);
+    expose(DataSourceInstantiator.class);
   }
 
   /**
@@ -83,14 +86,13 @@ public class StorageModule extends PrivateModule {
       }
 
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
         return new SqlTransactionRunner(injector.getInstance(StructuredTableAdmin.class),
-                                        null);
+                                        injector.getInstance(DataSourceInstantiator.class).get());
       }
 
-      throw new UnsupportedOperationException(String.format("%s is not a supported storage implementation, the " +
-                                                              "supported implementations are NoSql and PostgresSql.",
-                                                            storageImpl));
+      throw new UnsupportedOperationException(
+        String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
+                      storageImpl, Constants.Dataset.DATA_STORAGE_NOSQL, Constants.Dataset.DATA_STORAGE_SQL));
     }
   }
 
@@ -123,9 +125,8 @@ public class StorageModule extends PrivateModule {
         return injector.getInstance(NoSqlStructuredTableAdmin.class);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
         return new PostgresSqlStructuredTableAdmin(injector.getInstance(StructuredTableRegistry.class),
-                                                   null);
+                                                   injector.getInstance(DataSourceInstantiator.class).get());
       }
       throw new UnsupportedOperationException(
         String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
@@ -163,8 +164,8 @@ public class StorageModule extends PrivateModule {
         return new CachedStructuredTableRegistry(registry);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        // TODO: CDAP-14780, connect to the sql using the connection, user name and password from the sConf
-        SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(null);
+        SqlStructuredTableRegistry registry =
+          new SqlStructuredTableRegistry(injector.getInstance(DataSourceInstantiator.class).get());
         return new CachedStructuredTableRegistry(registry);
       }
       throw new UnsupportedOperationException(
