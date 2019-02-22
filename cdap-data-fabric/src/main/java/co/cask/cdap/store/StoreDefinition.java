@@ -803,18 +803,19 @@ public final class StoreDefinition {
     public static final String RUN_FIELD = "run";
     public static final String RUN_RECORD = "run_record";
 
-    public static final StructuredTableSpecification PROGRAM_HEARTBEATS_SPEC = new StructuredTableSpecification.Builder()
-      .withId(PROGRAM_HEARTBEATS)
-      .withFields(Fields.stringType(NAMESPACE_FIELD),
-                  Fields.longType(TIMESTAMP_SECONDS_FIELD),
-                  Fields.stringType(APPLICATION_FIELD),
-                  Fields.stringType(PROGRAM_TYPE_FIELD),
-                  Fields.stringType(PROGRAM_FIELD),
-                  Fields.stringType(RUN_FIELD),
-                  Fields.stringType(RUN_RECORD))
-      .withPrimaryKeys(
-        NAMESPACE_FIELD, TIMESTAMP_SECONDS_FIELD, APPLICATION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
-      .build();
+    public static final StructuredTableSpecification PROGRAM_HEARTBEATS_SPEC =
+      new StructuredTableSpecification.Builder()
+        .withId(PROGRAM_HEARTBEATS)
+        .withFields(Fields.stringType(NAMESPACE_FIELD),
+                    Fields.longType(TIMESTAMP_SECONDS_FIELD),
+                    Fields.stringType(APPLICATION_FIELD),
+                    Fields.stringType(PROGRAM_TYPE_FIELD),
+                    Fields.stringType(PROGRAM_FIELD),
+                    Fields.stringType(RUN_FIELD),
+                    Fields.stringType(RUN_RECORD))
+        .withPrimaryKeys(
+          NAMESPACE_FIELD, TIMESTAMP_SECONDS_FIELD, APPLICATION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
+        .build();
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(PROGRAM_HEARTBEATS_SPEC);

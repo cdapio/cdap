@@ -16,17 +16,13 @@
 
 package co.cask.cdap.reporting;
 
-import co.cask.cdap.data2.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.data2.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.data2.sql.SqlTransactionRunner;
-import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
+import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.StoreDefinition;
-import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
