@@ -45,7 +45,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -461,9 +460,6 @@ public class UpgradeTool {
       // then leave this block empty but do not remove block so that it can be used in next release if needed
     }
 
-    // metadata and lineage
-    FieldLineageDataset.setupDatasets(datasetFramework);
-    // app metadata
     DefaultStore.setupDatasets(datasetFramework);
     // logs metadata
     LoggingStoreTableUtil.setupDatasets(datasetFramework);

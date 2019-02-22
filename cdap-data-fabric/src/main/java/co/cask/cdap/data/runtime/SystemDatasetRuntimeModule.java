@@ -49,7 +49,6 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDatasetModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -194,7 +193,6 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     mapBinder.addBinding(PartitionedFileSet.TYPE).toInstance(new PartitionedFileSetModule());
     mapBinder.addBinding(ObjectMappedTable.TYPE).toInstance(new ObjectMappedTableModule());
     mapBinder.addBinding(Cube.TYPE).toInstance(new CubeModule());
-    mapBinder.addBinding("fieldLineage").toInstance(new FieldLineageDatasetModule());
     mapBinder.addBinding(ExternalDataset.TYPE).toInstance(new ExternalDatasetModule());
   }
 }

@@ -34,8 +34,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageTable;
-import co.cask.cdap.data2.metadata.lineage.field.FieldLineageDataset;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import co.cask.cdap.data2.metadata.lineage.field.FieldLineageTable;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.DataAccessLineage;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
@@ -55,7 +55,6 @@ import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.codec.OperationTypeAdapter;
 import co.cask.cdap.proto.element.EntityType;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -63,7 +62,6 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.cdap.spi.metadata.MetadataConstants;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
@@ -105,8 +103,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
-
-  private DatasetId fieldLineageDatasetId = FieldLineageDataset.FIELD_LINEAGE_DATASET_ID;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -197,7 +193,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case LINEAGE:
             return new DataAccessLineageProcessor();
           case FIELD_LINEAGE:
-            return new FieldLineageProcessor(datasetContext);
+            return new FieldLineageProcessor();
           case USAGE:
             return new UsageProcessor();
           case WORKFLOW_TOKEN:
@@ -254,15 +250,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
    */
   private final class FieldLineageProcessor implements MetadataMessageProcessor {
 
-    private final FieldLineageDataset fieldLineageDataset;
+    FieldLineageProcessor() {}
 
-    FieldLineageProcessor(DatasetContext datasetContext) {
-      this.fieldLineageDataset = FieldLineageDataset.getFieldLineageDataset(datasetContext, datasetFramework,
-                                                                            fieldLineageDatasetId);
-    }
 
     @Override
-    public void processMessage(MetadataMessage message, StructuredTableContext context) {
+    public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
         LOG.warn("Missing program run id from the field lineage information. Ignoring the message {}", message);
         return;
@@ -277,7 +269,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
                  message, t);
         return;
       }
-      fieldLineageDataset.addFieldLineageInfo(programRunId, info);
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
+      fieldLineageTable.addFieldLineageInfo(programRunId, info);
     }
   }
 
