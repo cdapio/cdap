@@ -170,7 +170,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   app.set('view engine', 'html');
   app.set('views', [
     `${CDAP_DIST_PATH}/cdap_assets`,
-    LOGIN_DIST_PATH,
+    `${LOGIN_DIST_PATH}/login_assets`,
     DLL_PATH,
     DIST_PATH,
     MARKET_DIST_PATH,
