@@ -37,6 +37,13 @@ import javax.annotation.Nullable;
  */
 public class RouterServiceMain extends AbstractServiceMain {
 
+  /**
+   * Main entry point
+   */
+  public static void main(String[] args) throws Exception {
+    main(RouterServiceMain.class, args);
+  }
+
   @Override
   protected List<Module> getServiceModules() {
     return Arrays.asList(

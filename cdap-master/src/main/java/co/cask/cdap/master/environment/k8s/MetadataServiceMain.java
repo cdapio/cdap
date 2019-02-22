@@ -58,6 +58,13 @@ import javax.annotation.Nullable;
  */
 public class MetadataServiceMain extends AbstractServiceMain {
 
+  /**
+   * Main entry point
+   */
+  public static void main(String[] args) throws Exception {
+    main(MetadataServiceMain.class, args);
+  }
+
   @Override
   protected List<Module> getServiceModules() {
     return Arrays.asList(
