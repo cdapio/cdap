@@ -26,7 +26,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -35,6 +34,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.Lists;
 import com.google.inject.AbstractModule;
@@ -173,7 +173,7 @@ public class MasterServiceMainTestBase {
     StructuredTableAdmin tableAdmin = new NoSqlStructuredTableAdmin(tableDef, tableRegistry);
     StoreDefinition.createAllTables(tableAdmin, tableRegistry);
 
-    injector.getInstance(MetadataStore.class).createIndex();
+    injector.getInstance(MetadataStorage.class).createIndex();
     injector.getInstance(LevelDBTableService.class).close();
 
     // Write the "cdap-site.xml" and pass the directory to the main service
