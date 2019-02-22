@@ -91,6 +91,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(RemoteRuntimeStore.RUNTIMES) == null) {
       RemoteRuntimeStore.createTables(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(ProgramHeartbeatStore.PROGRAM_HEARTBEATS) == null) {
+      ProgramHeartbeatStore.createTables(tableAdmin);
+    }
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
@@ -783,6 +786,38 @@ public final class StoreDefinition {
 
     public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(RUNTIMES_SPEC);
+    }
+  }
+
+  /**
+   * Schema for program heartbeat.
+   */
+  public static final class ProgramHeartbeatStore {
+    public static final StructuredTableId PROGRAM_HEARTBEATS = new StructuredTableId("program_heartbeats");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TIMESTAMP_SECONDS_FIELD = "timestamp";
+    public static final String APPLICATION_FIELD = "application";
+    public static final String PROGRAM_TYPE_FIELD = "program_type";
+    public static final String PROGRAM_FIELD = "program";
+    public static final String RUN_FIELD = "run";
+    public static final String RUN_RECORD = "run_record";
+
+    public static final StructuredTableSpecification PROGRAM_HEARTBEATS_SPEC = new StructuredTableSpecification.Builder()
+      .withId(PROGRAM_HEARTBEATS)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.longType(TIMESTAMP_SECONDS_FIELD),
+                  Fields.stringType(APPLICATION_FIELD),
+                  Fields.stringType(PROGRAM_TYPE_FIELD),
+                  Fields.stringType(PROGRAM_FIELD),
+                  Fields.stringType(RUN_FIELD),
+                  Fields.stringType(RUN_RECORD))
+      .withPrimaryKeys(
+        NAMESPACE_FIELD, TIMESTAMP_SECONDS_FIELD, APPLICATION_FIELD, PROGRAM_TYPE_FIELD, PROGRAM_FIELD, RUN_FIELD)
+      .build();
+
+    public static void createTables(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(PROGRAM_HEARTBEATS_SPEC);
     }
   }
 }

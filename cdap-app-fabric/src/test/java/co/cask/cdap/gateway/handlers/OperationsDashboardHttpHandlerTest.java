@@ -19,8 +19,6 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
@@ -30,8 +28,6 @@ import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultTriggeringScheduleInfo;
@@ -46,14 +42,15 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
-import co.cask.cdap.reporting.ProgramHeartbeatDataset;
+import co.cask.cdap.reporting.ProgramHeartbeatTable;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -61,9 +58,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionExecutorFactory;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -99,39 +93,32 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   private static Impersonator impersonator;
   private static final byte[] SOURCE_ID = Bytes.toBytes("sourceId");
 
-  private static ProgramHeartbeatDataset programHeartbeatDataset;
-  private static TransactionExecutor heartBeatTxnl;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setup() {
     Injector injector = getInjector();
-    TransactionExecutorFactory txExecutorFactory =
-      injector.getInstance(TransactionExecutorFactory.class);
     scheduler = getInjector().getInstance(Scheduler.class);
     impersonator = injector.getInstance(Impersonator.class);
     store = getInjector().getInstance(DefaultStore.class);
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetId heartbeatDataset = NamespaceId.SYSTEM.dataset(Constants.ProgramHeartbeat.TABLE);
-    Table heartbeatTable = DatasetsUtil.getOrCreateDataset(datasetFramework, heartbeatDataset, Table.class.getName(),
-                                                           DatasetProperties.EMPTY, Collections.emptyMap());
-    programHeartbeatDataset = new ProgramHeartbeatDataset(heartbeatTable);
-    heartBeatTxnl = txExecutorFactory.createExecutor(Collections.singleton(programHeartbeatDataset));
+    transactionRunner = injector.getInstance(TransactionRunner.class);
   }
 
   /**
    * writes heart beat messages starting from startTime + interval up to endTime, each heartbeat separated by interval
    */
   private void setUpProgramHeartBeats(RunRecordMeta runRecordMeta,
-                                      long startTime, long endTime, long interval)
-    throws TransactionFailureException, InterruptedException {
+                                      long startTime, long endTime, long interval) {
     for (long time = startTime + interval; time < endTime; time += interval) {
       writeRunRecordMeta(runRecordMeta, time);
     }
   }
 
   private void writeRunRecordMeta(RunRecordMeta runRecordMeta,
-                                  long timestampInMillis) throws InterruptedException, TransactionFailureException {
-    heartBeatTxnl.execute(() -> programHeartbeatDataset.writeRunRecordMeta(runRecordMeta, timestampInMillis));
+                                  long timestampInMillis) {
+    TransactionRunners.run(transactionRunner, context -> {
+      new ProgramHeartbeatTable(context).writeRunRecordMeta(runRecordMeta, timestampInMillis);
+    });
   }
 
   /**
