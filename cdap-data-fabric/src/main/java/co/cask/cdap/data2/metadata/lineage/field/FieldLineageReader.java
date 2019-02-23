@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Interface for reading the {@link FieldLineageDataset} store.
+ * Interface for reading the {@link FieldLineageTable} store.
  */
 public interface FieldLineageReader {
   /**

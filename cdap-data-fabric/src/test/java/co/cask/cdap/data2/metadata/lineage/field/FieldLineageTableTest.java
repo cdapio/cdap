@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.metadata.lineage.field;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.lineage.field.EndPoint;
 import co.cask.cdap.api.lineage.field.InputField;
 import co.cask.cdap.api.lineage.field.Operation;
@@ -24,18 +23,15 @@ import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
-import org.junit.ClassRule;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -48,16 +44,20 @@ import java.util.Set;
 /**
  * Test for storage and retrieval of the field lineage operations.
  */
-public class FieldLineageDatasetTest {
-  @ClassRule
-  public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+public abstract class FieldLineageTableTest {
+
+  protected static TransactionRunner transactionRunner;
+
+  @Before
+  public void before() {
+    TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable lineageTable = FieldLineageTable.create(context);
+      lineageTable.deleteAll();
+    });
+  }
 
   @Test
-  public void testSimpleOperations() throws Exception {
-    final FieldLineageDataset fieldLineageDataset = getFieldLineageDataset("testSimpleOperations");
-    Assert.assertNotNull(fieldLineageDataset);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) fieldLineageDataset);
-
+  public void testSimpleOperations() {
     RunId runId = RunIds.generate(10000);
     ProgramId program = new ProgramId("default", "app1", ProgramType.WORKFLOW, "workflow1");
     final ProgramRunId programRun1 = program.run(runId.getId());
@@ -69,84 +69,91 @@ public class FieldLineageDatasetTest {
     final FieldLineageInfo info1 = new FieldLineageInfo(generateOperations(false));
     final FieldLineageInfo info2 = new FieldLineageInfo(generateOperations(true));
 
-    txnl.execute(() -> fieldLineageDataset.addFieldLineageInfo(programRun1, info1));
-    txnl.execute(() -> fieldLineageDataset.addFieldLineageInfo(programRun2, info2));
+    TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
+      fieldLineageTable.addFieldLineageInfo(programRun1, info1);
+      fieldLineageTable.addFieldLineageInfo(programRun2, info2);
+    });
 
     runId = RunIds.generate(12000);
     program = new ProgramId("default", "app1", ProgramType.WORKFLOW, "workflow3");
     final ProgramRunId programRun3 = program.run(runId.getId());
 
-    txnl.execute(() -> fieldLineageDataset.addFieldLineageInfo(programRun3, info2));
+    TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
+      fieldLineageTable.addFieldLineageInfo(programRun3, info2);
+    });
 
-    txnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
       EndPoint source = EndPoint.of("ns1", "endpoint1");
       EndPoint destination = EndPoint.of("myns", "another_file");
 
       // end time 10000 should return empty set since its exclusive and run was added at time 10000
-      Assert.assertEquals(Collections.EMPTY_SET, fieldLineageDataset.getFields(source, 0, 10000));
-      Assert.assertEquals(Collections.EMPTY_SET, fieldLineageDataset.getFields(destination, 0, 10000));
+      Assert.assertEquals(Collections.EMPTY_SET, fieldLineageTable.getFields(source, 0, 10000));
+      Assert.assertEquals(Collections.EMPTY_SET, fieldLineageTable.getFields(destination, 0, 10000));
 
       Set<String> expectedDestinationFields = new HashSet<>(Arrays.asList("offset", "name"));
       Set<String> expectedSourceFields = new HashSet<>(Arrays.asList("offset", "body"));
       // end time 10001 should return the data for the run which was added at time 10000
-      Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 0, 10001));
-      Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 0, 10001));
+      Assert.assertEquals(expectedDestinationFields, fieldLineageTable.getFields(destination, 0, 10001));
+      Assert.assertEquals(expectedSourceFields, fieldLineageTable.getFields(source, 0, 10001));
       // providing start time as 10000 and endtime as 11000 should still return the same set of fields
-      Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 10000, 11000));
-      Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 10000, 10001));
+      Assert.assertEquals(expectedDestinationFields, fieldLineageTable.getFields(destination, 10000, 11000));
+      Assert.assertEquals(expectedSourceFields, fieldLineageTable.getFields(source, 10000, 10001));
 
       // setting endtime to 11001 should include the information for from programRun2 as well, which added additional
       // field to the dataset.
       expectedDestinationFields.add("file_name");
       expectedSourceFields.add("file_name");
-      Assert.assertEquals(expectedDestinationFields, fieldLineageDataset.getFields(destination, 10000, 11001));
-      Assert.assertEquals(expectedSourceFields, fieldLineageDataset.getFields(source, 10000, 11001));
+      Assert.assertEquals(expectedDestinationFields, fieldLineageTable.getFields(destination, 10000, 11001));
+      Assert.assertEquals(expectedSourceFields, fieldLineageTable.getFields(source, 10000, 11001));
 
       // end time 10000 should return empty set since its exclusive and run was added at time 10000
       Assert.assertEquals(Collections.EMPTY_SET,
-              fieldLineageDataset.getIncomingSummary(new EndPointField(destination, "offset"), 0, 10000));
+                          fieldLineageTable.getIncomingSummary(new EndPointField(destination, "offset"), 0, 10000));
 
       EndPointField expectedEndPointField = new EndPointField(source, "offset");
       Set<EndPointField> actualEndPointFields
-              = fieldLineageDataset.getIncomingSummary(new EndPointField(destination, "offset"), 0, 10001);
+              = fieldLineageTable.getIncomingSummary(new EndPointField(destination, "offset"), 0, 10001);
       Assert.assertEquals(expectedEndPointField, actualEndPointFields.iterator().next());
 
       expectedEndPointField = new EndPointField(source, "body");
-      actualEndPointFields = fieldLineageDataset.getIncomingSummary(new EndPointField(destination, "name"), 0, 10001);
+      actualEndPointFields = fieldLineageTable.getIncomingSummary(new EndPointField(destination, "name"), 0, 10001);
       Assert.assertEquals(expectedEndPointField, actualEndPointFields.iterator().next());
 
       // end time is 10001, file_name is not written yet
-      actualEndPointFields = fieldLineageDataset.getIncomingSummary(new EndPointField(destination, "file_name"), 0,
-                                                                    10001);
+      actualEndPointFields = fieldLineageTable.getIncomingSummary(new EndPointField(destination, "file_name"), 0,
+                                                                  10001);
       Assert.assertEquals(Collections.EMPTY_SET, actualEndPointFields);
 
       // end time 10000 should return empty set since its exclusive and run was added at time 10000
       Assert.assertEquals(Collections.EMPTY_SET,
-              fieldLineageDataset.getOutgoingSummary(new EndPointField(destination, "offset"), 0, 10000));
+                          fieldLineageTable.getOutgoingSummary(new EndPointField(destination, "offset"), 0, 10000));
 
       expectedEndPointField = new EndPointField(destination, "offset");
-      actualEndPointFields = fieldLineageDataset.getOutgoingSummary(new EndPointField(source, "offset"), 0, 10001);
+      actualEndPointFields = fieldLineageTable.getOutgoingSummary(new EndPointField(source, "offset"), 0, 10001);
       Assert.assertEquals(expectedEndPointField, actualEndPointFields.iterator().next());
 
       expectedEndPointField = new EndPointField(destination, "name");
-      actualEndPointFields = fieldLineageDataset.getOutgoingSummary(new EndPointField(source, "body"), 0, 10001);
+      actualEndPointFields = fieldLineageTable.getOutgoingSummary(new EndPointField(source, "body"), 0, 10001);
       Assert.assertEquals(expectedEndPointField, actualEndPointFields.iterator().next());
 
       // no outgoing summary should exist for the field file_name at time 10001
-      actualEndPointFields = fieldLineageDataset.getOutgoingSummary(new EndPointField(source, "file_name"), 0, 10001);
+      actualEndPointFields = fieldLineageTable.getOutgoingSummary(new EndPointField(source, "file_name"), 0, 10001);
       Assert.assertEquals(Collections.EMPTY_SET, actualEndPointFields);
 
       // no outgoing summary should exist for the field file_name at end time time 11000 since end time is exclusive
-      actualEndPointFields = fieldLineageDataset.getOutgoingSummary(new EndPointField(source, "file_name"), 0, 11000);
+      actualEndPointFields = fieldLineageTable.getOutgoingSummary(new EndPointField(source, "file_name"), 0, 11000);
       Assert.assertEquals(Collections.EMPTY_SET, actualEndPointFields);
 
       // outgoing summary should exist for file_name at 11001, since the corresponding run executed at 11000
       expectedEndPointField = new EndPointField(destination, "file_name");
-      actualEndPointFields = fieldLineageDataset.getOutgoingSummary(new EndPointField(source, "file_name"), 0, 11001);
+      actualEndPointFields = fieldLineageTable.getOutgoingSummary(new EndPointField(source, "file_name"), 0, 11001);
       Assert.assertEquals(expectedEndPointField, actualEndPointFields.iterator().next());
 
-      Set<ProgramRunOperations> incomingOperations = fieldLineageDataset.getIncomingOperations(destination, 0, 10001);
-      Set<ProgramRunOperations> outgoingOperations = fieldLineageDataset.getOutgoingOperations(source, 0, 10001);
+      Set<ProgramRunOperations> incomingOperations = fieldLineageTable.getIncomingOperations(destination, 0, 10001);
+      Set<ProgramRunOperations> outgoingOperations = fieldLineageTable.getOutgoingOperations(source, 0, 10001);
       Assert.assertEquals(1, incomingOperations.size());
       Assert.assertEquals(incomingOperations, outgoingOperations);
 
@@ -155,8 +162,8 @@ public class FieldLineageDatasetTest {
       Assert.assertEquals(Collections.singleton(programRun1), programRunOperations.getProgramRunIds());
 
       // test with bigger time range for incoming and outgoing operations
-      incomingOperations = fieldLineageDataset.getIncomingOperations(destination, 10000, 12001);
-      outgoingOperations = fieldLineageDataset.getOutgoingOperations(source, 10000, 12001);
+      incomingOperations = fieldLineageTable.getIncomingOperations(destination, 10000, 12001);
+      outgoingOperations = fieldLineageTable.getOutgoingOperations(source, 10000, 12001);
 
       Assert.assertEquals(2, incomingOperations.size());
       Assert.assertEquals(incomingOperations, outgoingOperations);
@@ -172,11 +179,7 @@ public class FieldLineageDatasetTest {
   }
 
   @Test
-  public void testMergeSummaries() throws Exception {
-    final FieldLineageDataset fieldLineageDataset = getFieldLineageDataset("testMergeDataset");
-    Assert.assertNotNull(fieldLineageDataset);
-    TransactionExecutor txnl = dsFrameworkUtil.newInMemoryTransactionExecutor((TransactionAware) fieldLineageDataset);
-
+  public void testMergeSummaries() {
     RunId runId = RunIds.generate(10000);
     ProgramId program = new ProgramId("default", "app1", ProgramType.WORKFLOW, "workflow1");
     final ProgramRunId programRun1 = program.run(runId.getId());
@@ -201,11 +204,14 @@ public class FieldLineageDatasetTest {
     operations.add(anotherRead);
     operations.add(anotherWrite);
     final FieldLineageInfo info2 = new FieldLineageInfo(operations);
+    TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
+      fieldLineageTable.addFieldLineageInfo(programRun1, info1);
+      fieldLineageTable.addFieldLineageInfo(programRun2, info2);
+    });
 
-    txnl.execute(() -> fieldLineageDataset.addFieldLineageInfo(programRun1, info1));
-    txnl.execute(() -> fieldLineageDataset.addFieldLineageInfo(programRun2, info2));
-
-    txnl.execute(() -> {
+    TransactionRunners.run(transactionRunner, context -> {
+      FieldLineageTable fieldLineageTable = FieldLineageTable.create(context);
       EndPoint source1 = EndPoint.of("ns1", "endpoint1");
       EndPoint source2 = EndPoint.of("ns1", "endpoint2");
       EndPoint destination = EndPoint.of("ns", "endpoint3");
@@ -214,15 +220,9 @@ public class FieldLineageDatasetTest {
       expected.add(new EndPointField(source1, "body"));
       expected.add(new EndPointField(source2, "body"));
       Set<EndPointField> actualEndPointFields
-              = fieldLineageDataset.getIncomingSummary(new EndPointField(destination, "body"), 0, 11001);
+              = fieldLineageTable.getIncomingSummary(new EndPointField(destination, "body"), 0, 11001);
       Assert.assertEquals(expected, actualEndPointFields);
     });
-  }
-
-  private static FieldLineageDataset getFieldLineageDataset(String instanceId) throws Exception {
-    DatasetId id = DatasetFrameworkTestUtil.NAMESPACE_ID.dataset(instanceId);
-    return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), id, FieldLineageDataset.class.getName(),
-                                           DatasetProperties.EMPTY, null);
   }
 
   private List<Operation> generateOperations(boolean addAditionalField) {

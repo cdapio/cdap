@@ -106,7 +106,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     // Lineage for D3 -> P2 -> D2 -> P1 -> D1
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -211,7 +211,7 @@ public class LineageAdminTest extends AppFabricTestBase {
 
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
 
     Store store = getInjector().getInstance(Store.class);
@@ -277,7 +277,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     //
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader = new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -311,7 +311,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -351,7 +351,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -421,7 +421,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -508,7 +508,7 @@ public class LineageAdminTest extends AppFabricTestBase {
     TransactionRunner transactionRunner = getInjector().getInstance(TransactionRunner.class);
     LineageStoreReader lineageReader =
       new DefaultLineageStoreReader(transactionRunner);
-    LineageWriter lineageWriter = new BasicLineageWriter(getDatasetFramework(), getTxClient(), transactionRunner);
+    LineageWriter lineageWriter = new BasicLineageWriter(transactionRunner);
 
     Store store = getInjector().getInstance(Store.class);
     MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
@@ -749,10 +749,6 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private RunId twillRunId(ProgramRunId run) {
     return RunIds.fromString(run.getEntityName());
-  }
-
-  private DatasetFramework getDatasetFramework() {
-    return getInjector().getInstance(DatasetFramework.class);
   }
 
   private static final class NoOpEntityExistenceVerifier implements EntityExistenceVerifier<EntityId> {
