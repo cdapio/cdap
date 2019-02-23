@@ -735,7 +735,7 @@
   </property>
 
   <property>
-    <name>data.storage.sql.driver.directory</name>
+    <name>data.storage.sql.jdbc.driver.directory</name>
     <value></value>
     <description>
       The sql driver directory which contains the driver jar and
@@ -761,8 +761,16 @@
       The jdbc url to connect to the sql instance. No sensitive information
       should be provided using the jdbc url. The username and password can
       be specified in cdap-security.xml. For non-sensitive properties, it can be
-      specified by adding a property with name prefixed with "data.storage.sql.property.",
+      specified by adding a property with name prefixed with "data.storage.sql.jdbc.property.",
       followed by the sql property name.
+    </description>
+  </property>
+
+  <property>
+    <name>data.storage.sql.jdbc.connection.pool.size</name>
+    <value>800</value>
+    <description>
+      The max number of connections for the sql connection pool.
     </description>
   </property>
 
