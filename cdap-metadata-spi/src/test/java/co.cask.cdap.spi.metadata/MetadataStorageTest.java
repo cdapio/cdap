@@ -1223,7 +1223,7 @@ public abstract class MetadataStorageTest {
   @Nullable
   private String validateCursorAndOffset(MetadataStorage mds,
                                          int offset, int limit, String cursor, boolean requestCursor,
-                                         int expectedReults, int expectedOffset, int expectedLimit,
+                                         int expectedResults, int expectedOffset, int expectedLimit,
                                          boolean expectMore, boolean expectCursor)
     throws IOException {
     SearchResponse response = mds.search(SearchRequest.of("*")
@@ -1231,13 +1231,25 @@ public abstract class MetadataStorageTest {
                                            .setOffset(offset).setLimit(limit)
                                            .setCursor(cursor).setCursorRequested(requestCursor)
                                            .build());
-    Assert.assertEquals(expectedReults, response.getResults().size());
+    Assert.assertEquals(expectedResults, response.getResults().size());
     Assert.assertEquals(expectedOffset, response.getOffset());
     Assert.assertEquals(expectedLimit, response.getLimit());
     Assert.assertEquals(expectMore, response.getTotalResults() > response.getOffset() + response.getResults().size());
     Assert.assertEquals(expectCursor, null != response.getCursor());
+    if (expectCursor) {
+      validateCursor(response.getCursor(), expectedOffset + expectedLimit, expectedLimit);
+    }
     return response.getCursor();
   }
+
+  /**
+   * Subclasses must override this with implementation-specific code
+   * to validate that the new cursor reflects the correct offset and page size:
+   *
+   * @param expectedOffset the expected offset of the cursor
+   * @param expectedPageSize the expected pagesize/limit of the cursor
+   */
+  protected abstract void validateCursor(String cursor, int expectedOffset, int expectedPageSize);
 
   private static class NoDupRandom {
     private final Random random = new Random(System.currentTimeMillis());

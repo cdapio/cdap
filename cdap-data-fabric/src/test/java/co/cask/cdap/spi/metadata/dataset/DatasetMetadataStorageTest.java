@@ -112,6 +112,13 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     return storage;
   }
 
+  @Override
+  protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
+    Cursor c = Cursor.fromString(cursor);
+    Assert.assertEquals(expectedOffset, c.getOffset());
+    Assert.assertEquals(expectedPageSize, c.getPageSize());
+  }
+
   // this tests is not in MetadataStorageTest,
   // because it tests result scoring and sorting specific to the dataset-based implementation
   @Test

@@ -150,6 +150,11 @@ public class AuditMetadataStorageTest extends MetadataStorageTest {
     return storage;
   }
 
+  @Override
+  protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
+    // no-op - this is tested in DatasetMetadataStorageTest
+  }
+
   @Test
   public void testPublishing() throws IOException {
     generateMetadataUpdates();
