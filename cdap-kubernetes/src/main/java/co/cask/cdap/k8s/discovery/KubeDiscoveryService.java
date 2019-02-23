@@ -58,12 +58,12 @@ import javax.annotation.Nullable;
 /**
  * Implementation of {@link DiscoveryService} and {@link DiscoveryServiceClient} that uses Kubernetes API to
  * announce and discover service locations.
- * This service assumes kubernetes services are created with two labels, "app=cdap" and "service=[service-name]",
+ * This service assumes kubernetes services are created with label, "cdap.service=[service-name]",
  * where [service-name] is the CDAP service name.
  * On registering service via the {@link #register(Discoverable)} method, a new k8s Service with name
- * "cdap-[transformed-service-name]" will be created with labels "app=cdap" and "service=[service-name]".
+ * "cdap-[transformed-service-name]" will be created with label "cdap.service=[service-name]".
  * The [transformed-service-name] is the CDAP service name with "." replaced with "-" to conform to the naming
- * requirement in K8s. The service selector will be set to include the current pod labels of keys "app" and "container".
+ * requirement in K8s. The service selector will be set to include the current pod labels.
  */
 public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceClient, AutoCloseable {
 
@@ -201,8 +201,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
       ApiClient client = Config.defaultClient();
 
-      // Turn off timeout, otherwise the watch will throw SocketTimeoutException while watching.
-      client.getHttpClient().setReadTimeout(0, TimeUnit.MILLISECONDS);
+      // Set a reasonable timeout for the watch.
+      client.getHttpClient().setReadTimeout(5, TimeUnit.MINUTES);
 
       coreApi = api = new CoreV1Api(client);
       return api;
@@ -221,7 +221,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   private Optional<V1Service> getV1Service(CoreV1Api api,
                                            String serviceName, String discoveryName) throws ApiException {
     V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null, null,
-                                                          "app=cdap,service=" + discoveryName, 1, null, null, null);
+                                                          "cdap.service=" + discoveryName, 1, null, null, null);
     // Find the service with the given name
     return serviceList.getItems().stream()
       .filter(service -> serviceName.equals(service.getMetadata().getName()))
@@ -242,7 +242,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     V1Service service = new V1Service();
     V1ObjectMeta meta = new V1ObjectMeta();
     meta.setName(serviceName);
-    meta.setLabels(ImmutableMap.of("app", "cdap", "service", discoverable.getName()));
+    meta.setLabels(ImmutableMap.of("cdap.service", discoverable.getName()));
     service.setMetadata(meta);
 
     V1ServicePort port = new V1ServicePort();
@@ -256,6 +256,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     try {
       api.createNamespacedService(namespace, service, null);
+      LOG.info("Service created in kubernetes with name {} and port {}", serviceName, port.getPort());
     } catch (ApiException e) {
       // It means the service already exists. In this case we update the port if it is not the same.
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
@@ -291,15 +292,18 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
       }
     }
 
-    // Otherwise update the port
+    // Otherwise update the port and label selector
     V1ServicePort port = new V1ServicePort();
     port.setPort(discoverable.getSocketAddress().getPort());
 
     V1Service service = new V1ServiceBuilder(currentService).build();
     service.getSpec().setPorts(Collections.singletonList(port));
+    service.getSpec().setSelector(podLabels);
 
     try {
       api.replaceNamespacedService(service.getMetadata().getName(), namespace, service, null);
+      LOG.info("Service updated in kubernetes with name {} and port {}",
+               currentService.getMetadata().getName(), port.getPort());
     } catch (ApiException e) {
       if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
         return false;
@@ -374,7 +378,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
           // The hasNext() will block until there are new data or watch is closed
           while (!stopped && watch.hasNext()) {
             Watch.Response<V1Service> response = watch.next();
-            String serviceName = response.object.getMetadata().getLabels().get("service");
+            String serviceName = response.object.getMetadata().getLabels().get("cdap.service");
             if (serviceName == null) {
               continue;
             }
@@ -466,9 +470,9 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
         // There is only single thread (the run thread) that will call this method,
         // hence if the watch was null outside of this sync block, it will stay as null here.
-        String labelSelector = String.format("app=cdap,service in (%s)",
+        String labelSelector = String.format("cdap.service in (%s)",
                                              services.stream().collect(Collectors.joining(",")));
-        LOG.info("Creating watch with label selector {}", labelSelector);
+        LOG.debug("Creating watch with label selector {}", labelSelector);
         CoreV1Api coreApi = getCoreApi();
         Call call = coreApi.listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
                                                       null, null, null, true, null, null);

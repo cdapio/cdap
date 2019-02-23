@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.IncompatibleUpdateException;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSampler;
@@ -29,7 +30,9 @@ import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
@@ -49,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class HBaseMetricsTableDefinition extends AbstractTableDefinition<MetricsTable, DatasetAdmin> {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseMetricsTableDefinition.class);
+  private static final Gson GSON = new Gson();
 
   // A logger for logging the incompatible config change for number of splits.
   // We only log it once per message (hence per table).
@@ -87,8 +91,24 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
+    TableProperties.Builder props = TableProperties.builder();
+    props.addAll(properties.getProperties());
+
+    // Extra properties for HBase table
+    // for efficient counters
+    props.setReadlessIncrementSupport(true);
+
+    // Disable auto split
+    props.add(HBaseTableAdmin.SPLIT_POLICY,
+              cConf.get(Constants.Metrics.METRICS_TABLE_HBASE_SPLIT_POLICY));
+    // configuring pre-splits
+    props.add(HBaseTableAdmin.PROPERTY_SPLITS,
+              GSON.toJson(getMetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
+    props.add(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
+              cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
+
     return DatasetSpecification.builder(name, getName())
-      .properties(properties.getProperties())
+      .properties(props.build().getProperties())
       .property(Constants.Dataset.TABLE_TX_DISABLED, "true")
       .build();
   }
@@ -121,6 +141,12 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
   public DatasetSpecification reconfigure(String instanceName, DatasetProperties properties,
                                           DatasetSpecification currentSpec) throws IncompatibleUpdateException {
     throw new IncompatibleUpdateException("System Metrics Table properties can not be changed after creation.");
+  }
+
+  private static byte[][] getMetricsTableSplits(int splits) {
+    RowKeyDistributorByHashPrefix rowKeyDistributor = new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
+    return rowKeyDistributor.getSplitKeys(splits, splits);
   }
 
   /**

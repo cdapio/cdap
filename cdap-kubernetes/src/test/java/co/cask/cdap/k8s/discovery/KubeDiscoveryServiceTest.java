@@ -46,7 +46,7 @@ public class KubeDiscoveryServiceTest {
 
   @Test
   public void testDiscoveryService() throws Exception {
-    Map<String, String> podLabels = ImmutableMap.of("app", "cdap", "container", "test");
+    Map<String, String> podLabels = ImmutableMap.of("cdap.container", "test");
     try (KubeDiscoveryService service = new KubeDiscoveryService("default", podLabels)) {
       // Watch for changes
       ServiceDiscovered serviceDiscovered = service.discover("test.service");

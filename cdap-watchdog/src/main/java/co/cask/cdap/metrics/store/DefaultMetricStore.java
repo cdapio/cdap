@@ -72,7 +72,7 @@ import javax.annotation.Nullable;
  * Default implementation of {@link MetricStore}.
  */
 public class DefaultMetricStore implements MetricStore {
-  static final Map<String, Aggregation> AGGREGATIONS;
+  public static final Map<String, Aggregation> AGGREGATIONS;
 
   private static final int TOTALS_RESOLUTION = Integer.MAX_VALUE;
   private static final String BY_NAMESPACE = "namespace";

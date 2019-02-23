@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package co.cask.cdap.logging.pipeline.kafka;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -30,9 +29,7 @@ import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -40,7 +37,6 @@ import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.kafka.client.Compression;
@@ -85,13 +81,12 @@ public class KafkaOffsetResolverTest {
                       new AuthorizationTestModule(),
                       new AuthorizationEnforcementModule().getInMemoryModules(),
                       new AuthenticationContextModules().getNoOpModule(),
+                      new MetricsStoreModule(),
                       new StorageModule(),
                       new AbstractModule() {
                         @Override
                         protected void configure() {
                           bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class);
-                          bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
-                          bind(MetricStore.class).to(DefaultMetricStore.class);
                         }
                       }),
                     1);

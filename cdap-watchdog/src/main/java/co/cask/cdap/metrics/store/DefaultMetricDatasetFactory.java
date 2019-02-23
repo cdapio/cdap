@@ -25,17 +25,14 @@ import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -48,8 +45,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * {@link MetricsTable} instances.
  */
 public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
-
-  private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final DatasetDefinition<MetricsTable, DatasetAdmin> metricsTableDefinition;
@@ -85,16 +80,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
         props.setTTL(ttl);
       }
     }
-    // for efficient counters
-    props.setReadlessIncrementSupport(true);
-    // configuring pre-splits
-    props.add(HBaseTableAdmin.PROPERTY_SPLITS,
-              GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
-    // Disable auto split
-    props.add(HBaseTableAdmin.SPLIT_POLICY,
-              cConf.get(Constants.Metrics.METRICS_TABLE_HBASE_SPLIT_POLICY));
 
-    MetricsTable table = getOrCreateResolutionMetricsTable(tableName, props, resolution);
+    MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
@@ -105,22 +92,10 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return new MetricsConsumerMetaTable(table);
   }
 
-  MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
+  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
     try {
       // metrics tables are in the system namespace
       return getOrCreateTable(NamespaceId.SYSTEM.dataset(tableName), props);
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-  }
-
-  MetricsTable getOrCreateResolutionMetricsTable(String tableName, TableProperties.Builder props, int resolution) {
-    try {
-      props.add(HBaseTableAdmin.PROPERTY_SPLITS,
-                GSON.toJson(getMetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
-      props.add(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
-                cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
-      return getOrCreateTable(NamespaceId.SYSTEM.dataset(tableName), props.build());
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -143,12 +118,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     }
 
     return metricsTableDefinition.getDataset(datasetContext, spec, Collections.emptyMap(), getClass().getClassLoader());
-  }
-
-  private static byte[][] getMetricsTableSplits(int splits) {
-    RowKeyDistributorByHashPrefix rowKeyDistributor = new RowKeyDistributorByHashPrefix(
-      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
-    return rowKeyDistributor.getSplitKeys(splits, splits);
   }
 
   private int getRollTime(int resolution) {

@@ -17,7 +17,6 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
-import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -33,10 +32,8 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -93,8 +90,7 @@ public class MetricsAdminSubscriberServiceTest {
           install(new MetricsHandlerModule());
           expose(MetricsQueryService.class);
 
-          bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
-          bind(MetricStore.class).to(DefaultMetricStore.class);
+          install(new MetricsStoreModule());
 
           bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
           expose(MetricsCollectionService.class);
