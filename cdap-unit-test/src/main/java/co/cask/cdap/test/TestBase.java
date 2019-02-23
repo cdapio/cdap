@@ -427,6 +427,7 @@ public class TestBase {
     cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
+    cConf.set(Constants.Preview.ADDRESS, localhost);
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
