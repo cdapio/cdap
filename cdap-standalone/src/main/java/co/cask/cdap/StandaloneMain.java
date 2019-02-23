@@ -22,6 +22,7 @@ import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.preview.PreviewHttpModule;
+import co.cask.cdap.app.preview.PreviewHttpServer;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.app.MainClassLoader;
@@ -138,6 +139,7 @@ public class StandaloneMain {
   private final MetadataSubscriberService metadataSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final SecureStoreService secureStoreService;
+  private final PreviewHttpServer previewHttpServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -166,6 +168,7 @@ public class StandaloneMain {
     remoteExecutionTwillRunnerService = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    previewHttpServer = injector.getInstance(PreviewHttpServer.class);
 
     if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -255,6 +258,7 @@ public class StandaloneMain {
       throw new Exception("Failed to start Application Fabric");
     }
 
+    previewHttpServer.startAndWait();
     metricsQueryService.startAndWait();
     logQueryService.startAndWait();
     router.startAndWait();
@@ -311,6 +315,7 @@ public class StandaloneMain {
       metadataService.stopAndWait();
       remoteExecutionTwillRunnerService.stop();
       serviceStore.stopAndWait();
+      previewHttpServer.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now

@@ -71,34 +71,35 @@ public class MasterServiceMainTestBase {
 
   private static InMemoryZKServer zkServer;
   private static Map<Class<?>, ServiceMainManager<?>> serviceManagers = new LinkedHashMap<>();
+  private static CConfiguration originalCConf;
 
   @BeforeClass
   public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setAutoCleanDataDir(false).setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    CConfiguration cConf = CConfiguration.create();
+    originalCConf = CConfiguration.create();
 
     // Set the HDFS directory as well as we are using DFSLocationModule in the master services
-    cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
+    originalCConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
+    originalCConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
     // Set all bind address to localhost
     String localhost = InetAddress.getLoopbackAddress().getHostName();
     StreamSupport.stream(CConfiguration.create().spliterator(), false)
       .map(Map.Entry::getKey)
       .filter(s -> s.endsWith(".bind.address"))
-      .forEach(key -> cConf.set(key, localhost));
+      .forEach(key -> originalCConf.set(key, localhost));
 
     // Set router to bind to random port
-    cConf.setInt(Constants.Router.ROUTER_PORT, 0);
+    originalCConf.setInt(Constants.Router.ROUTER_PORT, 0);
 
     // Start the master main services
-    serviceManagers.put(RouterServiceMain.class, runMain(RouterServiceMain.class, cConf));
-    serviceManagers.put(MessagingServiceMain.class, runMain(MessagingServiceMain.class, cConf));
-    serviceManagers.put(MetricsServiceMain.class, runMain(MetricsServiceMain.class, cConf));
-    serviceManagers.put(MetadataServiceMain.class, runMain(MetadataServiceMain.class, cConf));
-    serviceManagers.put(AppFabricServiceMain.class, runMain(AppFabricServiceMain.class, cConf));
+    serviceManagers.put(RouterServiceMain.class, runMain(RouterServiceMain.class));
+    serviceManagers.put(MessagingServiceMain.class, runMain(MessagingServiceMain.class));
+    serviceManagers.put(MetricsServiceMain.class, runMain(MetricsServiceMain.class));
+    serviceManagers.put(MetadataServiceMain.class, runMain(MetadataServiceMain.class));
+    serviceManagers.put(AppFabricServiceMain.class, runMain(AppFabricServiceMain.class));
   }
 
   @AfterClass
@@ -130,22 +131,34 @@ public class MasterServiceMainTestBase {
     return (T) instance;
   }
 
+
+  protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(Class<T> serviceMainClass)
+    throws Exception {
+    return runMain(serviceMainClass, serviceMainClass.getSimpleName());
+  }
+
   /**
    * Instantiate and start the given service main class.
    *
    * @param serviceMainClass the service main class to start
-   * @param originalCConf the base {@link CConfiguration} for the service
+   * @param dataDir the directory to use for data.
    * @param <T> type of the service main class
    * @return A {@link ServiceMainManager} to interface with the service instance
    * @throws Exception if failed to start the service
    */
-  private static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(Class<T> serviceMainClass,
-                                                                               CConfiguration originalCConf)
+  protected static <T extends AbstractServiceMain> ServiceMainManager<T> runMain(Class<T> serviceMainClass,
+                                                                                 String dataDir)
     throws Exception {
 
     // Set a unique local data directory for each service
     CConfiguration cConf = CConfiguration.copy(originalCConf);
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder(serviceMainClass.getSimpleName()).getAbsolutePath());
+    File dataDirFolder = new File(TEMP_FOLDER.getRoot(), dataDir);
+    boolean dataAlreadyExists = true;
+    if (!dataDirFolder.exists()) {
+      dataDirFolder = TEMP_FOLDER.newFolder(dataDir);
+      dataAlreadyExists = false;
+    }
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, dataDirFolder.getAbsolutePath());
 
     // Create StructuredTable stores before starting the main.
     // The registry will be preserved and pick by the main class.
@@ -171,7 +184,9 @@ public class MasterServiceMainTestBase {
                                                               Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)));
     StructuredTableRegistry tableRegistry = new NoSqlStructuredTableRegistry(tableDef);
     StructuredTableAdmin tableAdmin = new NoSqlStructuredTableAdmin(tableDef, tableRegistry);
-    StoreDefinition.createAllTables(tableAdmin, tableRegistry);
+    if (!dataAlreadyExists) {
+      StoreDefinition.createAllTables(tableAdmin, tableRegistry);
+    }
 
     injector.getInstance(MetadataStore.class).createIndex();
     injector.getInstance(LevelDBTableService.class).close();

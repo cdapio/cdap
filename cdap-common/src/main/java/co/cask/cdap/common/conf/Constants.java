@@ -327,6 +327,11 @@ public final class Constants {
      * Guice named bindings.
      */
     public static final String ADDRESS = "preview.bind.address";
+    public static final String PORT = "preview.bind.port";
+    public static final String BACKLOG_CONNECTIONS = "preview.connection.backlog";
+    public static final String EXEC_THREADS = "preview.exec.threads";
+    public static final String BOSS_THREADS = "preview.boss.threads";
+    public static final String WORKER_THREADS = "preview.worker.threads";
 
     public static final String PREVIEW_CACHE_SIZE = "preview.cache.size";
   }
