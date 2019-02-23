@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.spi.data.StructuredTableContext;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ final class DatasetOperationMessageProcessor implements MetadataMessageProcessor
   }
 
   @Override
-  public void processMessage(MetadataMessage message) {
+  public void processMessage(MetadataMessage message, StructuredTableContext context) {
     EntityId entityId = message.getEntityId();
     DatasetInstanceOperation operation = message.getPayload(GSON, DatasetInstanceOperation.class);
     Principal principal = operation.getPrincipal();

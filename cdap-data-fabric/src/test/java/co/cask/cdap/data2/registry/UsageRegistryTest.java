@@ -18,18 +18,17 @@ package co.cask.cdap.data2.registry;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import org.apache.tephra.TransactionSystemClient;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class UsageRegistryTest extends UsageDatasetTest {
+
+public class UsageRegistryTest extends NoSqlUsageTableTest {
 
   @Test
   public void testUsageRegistry() {
 
     // instantiate a usage registry
-    UsageRegistry registry = new BasicUsageRegistry(
-      dsFrameworkUtil.getFramework(), dsFrameworkUtil.getInjector().getInstance(TransactionSystemClient.class));
+    UsageRegistry registry = new BasicUsageRegistry(transactionRunner);
 
     // register usage for a dataset for single and multiple "owners", including a non-program
     registry.register(worker1, datasetInstance1);

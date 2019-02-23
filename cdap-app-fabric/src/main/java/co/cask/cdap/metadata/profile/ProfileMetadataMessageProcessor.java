@@ -93,7 +93,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   @Override
-  public void processMessage(MetadataMessage message) throws IOException {
+  public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
     LOG.trace("Processing message: {}", message);
 
     EntityId entityId = message.getEntityId();
