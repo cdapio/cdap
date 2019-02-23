@@ -18,7 +18,7 @@ import T from 'i18n-react';
 const DEFAULT_SEARCH_FILTER_OPTIONS = [
   {
     displayName: T.translate('commons.entity.application.plural'),
-    id: 'app',
+    id: 'application',
   },
   {
     displayName: T.translate('commons.entity.artifact.plural'),

@@ -109,7 +109,7 @@ export default class JustAddedSection extends Component {
     let numColumns = SearchStore.getState().search.numColumns;
     const params = {
       namespace,
-      target: ['app', 'artifact', 'dataset'],
+      target: ['application', 'artifact', 'dataset'],
       limit: numColumns,
       query: '*',
       sort: 'creation-time desc',

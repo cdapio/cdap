@@ -95,7 +95,7 @@ export default class NamespacesAccordion extends Component {
 
   getNamespaceData(namespaces) {
     let searchParams = {
-      target: ['dataset', 'app'],
+      target: ['dataset', 'application'],
       query: '*',
       sort: 'entity-name asc',
       showCustom: true,
