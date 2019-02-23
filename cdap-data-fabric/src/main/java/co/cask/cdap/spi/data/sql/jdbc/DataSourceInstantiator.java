@@ -28,7 +28,6 @@ import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
 import org.apache.commons.dbcp2.PoolingDataSource;
-import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +72,8 @@ public class DataSourceInstantiator implements Supplier<DataSource> {
       return dataSource;
     }
     if (!cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-      throw new IllegalArgumentException("Cannot instantiate the data source if the storage implementation is nosql.");
+      throw new IllegalArgumentException(String.format("The storage implementation is not %s, cannot create the " +
+                                                         "DataSource", Constants.Dataset.DATA_STORAGE_SQL));
     }
 
     loadJDBCDriver();
@@ -89,8 +89,9 @@ public class DataSourceInstantiator implements Supplier<DataSource> {
     PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
     // The GenericObjectPool is thread safe according to the javadoc,
     // the PoolingDataSource will be thread safe as long as the connectin pool is thread-safe
-    ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
+    GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
     poolableConnectionFactory.setPool(connectionPool);
+    connectionPool.setMaxTotal(cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_SIZE));
     dataSource = new PoolingDataSource<>(connectionPool);
     return dataSource;
   }
