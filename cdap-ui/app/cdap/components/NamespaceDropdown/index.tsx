@@ -215,7 +215,7 @@ export default class NamespaceDropdown extends React.PureComponent<
     this.setState({ numMetricsLoading: true });
     const params = {
       namespace: NamespaceStore.getState().selectedNamespace,
-      target: ['app', 'dataset'],
+      target: ['application', 'dataset'],
       query: '*',
       sort: 'entity-name asc',
       showCustom: true,

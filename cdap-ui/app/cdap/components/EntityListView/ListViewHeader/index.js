@@ -32,9 +32,6 @@ export default function ListViewHeader() {
 
   const getActiveFilterStrings = () => {
     return activeFilters.map((filter) => {
-      if (filter === 'app') {
-        filter = 'application';
-      }
       return T.translate(`commons.entity.${filter}.plural`);
     });
   };

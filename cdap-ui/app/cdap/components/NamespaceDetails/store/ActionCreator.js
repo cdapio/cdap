@@ -76,7 +76,7 @@ function getData() {
 
   let searchParams = {
     namespace,
-    target: ['dataset', 'app'],
+    target: ['dataset', 'application'],
     query: '*',
     sort: 'entity-name asc',
     showCustom: true,
