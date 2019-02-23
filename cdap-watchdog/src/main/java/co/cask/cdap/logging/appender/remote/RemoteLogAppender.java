@@ -26,7 +26,6 @@ import co.cask.cdap.logging.appender.AbstractLogPublisher;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.appender.kafka.LogPartitionType;
-import co.cask.cdap.logging.serialize.LogSchema;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -34,9 +33,8 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.hash.Hashing;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
-import org.apache.avro.generic.GenericData;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
@@ -52,22 +50,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Remote log appender to push logs to log saver.
  */
 public class RemoteLogAppender extends LogAppender {
   private static final String APPENDER_NAME = "RemoteLogAppender";
-  private final RemoteClient remoteClient;
   private final RemoteLogPublisher publisher;
 
   @Inject
   public RemoteLogAppender(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
     setName(APPENDER_NAME);
-    this.publisher = new RemoteLogPublisher(cConf);
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.LOG_BUFFER_SERVICE,
-                                         new DefaultHttpRequestConfig(), "/v1/");
+    this.publisher = new RemoteLogPublisher(cConf, discoveryServiceClient);
   }
 
   @Override
@@ -99,43 +93,47 @@ public class RemoteLogAppender extends LogAppender {
   /**
    * Publisher service to publish logs to log saver.
    */
-  private final class RemoteLogPublisher extends AbstractLogPublisher<Map.Entry<Integer, byte[]>> {
+  private final class RemoteLogPublisher extends AbstractLogPublisher<Map.Entry<Integer, ByteBuffer>> {
 
     private final int numPartitions;
     private final LoggingEventSerializer loggingEventSerializer;
     private final LogPartitionType logPartitionType;
-    private final DatumWriter<GenericRecord> datumWriter;
+    private final DatumWriter<List<ByteBuffer>> datumWriter;
+    private final RemoteClient remoteClient;
 
-    private RemoteLogPublisher(CConfiguration cConf) {
+    private RemoteLogPublisher(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
       super(cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE, 512),
             RetryStrategies.fromConfiguration(cConf, "system.log.process."));
       this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
       this.loggingEventSerializer = new LoggingEventSerializer();
       this.logPartitionType =
         LogPartitionType.valueOf(cConf.get(Constants.Logging.LOG_PUBLISH_PARTITION_KEY).toUpperCase());
-      datumWriter = new GenericDatumWriter<>(LogSchema.LogBufferRequest.SCHEMA);
+      datumWriter = new GenericDatumWriter<>(Schema.createArray(Schema.create(Schema.Type.BYTES)));
+      this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.LOG_BUFFER_SERVICE,
+                                           new DefaultHttpRequestConfig(), "/v1/logs");
     }
 
     @Override
-    protected Map.Entry<Integer, byte[]> createMessage(LogMessage logMessage) {
+    protected Map.Entry<Integer, ByteBuffer> createMessage(LogMessage logMessage) {
       String partitionKey = logPartitionType.getPartitionKey(logMessage.getLoggingContext());
       int partition = partition(partitionKey, numPartitions);
-      return new AbstractMap.SimpleEntry<>(partition, loggingEventSerializer.toBytes(logMessage));
+      return new AbstractMap.SimpleEntry<>(partition, ByteBuffer.wrap(loggingEventSerializer.toBytes(logMessage)));
     }
 
     @Override
-    protected void publish(List<Map.Entry<Integer, byte[]>> logMessages) throws Exception {
+    protected void publish(List<Map.Entry<Integer, ByteBuffer>> logMessages) throws Exception {
       // Group the log messages by partition and then publish all messages to their respective partitions
-      Map<Integer, List<byte[]>> partitionedMessages = new HashMap<>();
-      for (Map.Entry<Integer, byte[]> logMessage : logMessages) {
-        List<byte[]> messages = partitionedMessages.computeIfAbsent(logMessage.getKey(), k -> new ArrayList<>());
+      Map<Integer, List<ByteBuffer>> partitionedMessages = new HashMap<>();
+      for (Map.Entry<Integer, ByteBuffer> logMessage : logMessages) {
+        List<ByteBuffer> messages = partitionedMessages.computeIfAbsent(logMessage.getKey(), k -> new ArrayList<>());
         messages.add(logMessage.getValue());
       }
 
       try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-        for (Map.Entry<Integer, List<byte[]>> partition : partitionedMessages.entrySet()) {
-          encodeEvents(os, datumWriter, partition.getKey(), partition.getValue());
-          HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "process")
+        for (Map.Entry<Integer, List<ByteBuffer>> partition : partitionedMessages.entrySet()) {
+          encodeEvents(os, datumWriter, partition.getValue());
+          HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST,
+                                                            "/partitions/" + partition.getKey() + "/publish")
             .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
             .withBody(ByteBuffer.wrap(os.toByteArray())).build();
           HttpResponse response = remoteClient.execute(request);
@@ -163,12 +161,9 @@ public class RemoteLogAppender extends LogAppender {
     return Math.abs(Hashing.md5().hashString(key).asInt()) % numPartitions;
   }
 
-  private void encodeEvents(OutputStream os, DatumWriter<GenericRecord> datumWriter,
-                            int partition, List<byte[]> events) throws IOException {
-    GenericRecord record = new GenericData.Record(LogSchema.LogBufferRequest.SCHEMA);
-    record.put("partition", partition);
-    record.put("events", events.stream().map(ByteBuffer::wrap).collect(Collectors.toList()));
+  private void encodeEvents(OutputStream os, DatumWriter<List<ByteBuffer>> datumWriter,
+                            List<ByteBuffer> events) throws IOException {
     Encoder encoder = EncoderFactory.get().directBinaryEncoder(os, null);
-    datumWriter.write(record, encoder);
+    datumWriter.write(events, encoder);
   }
 }

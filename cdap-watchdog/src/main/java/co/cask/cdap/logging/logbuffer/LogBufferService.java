@@ -89,7 +89,7 @@ public class LogBufferService extends AbstractIdleService {
     this.concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines);
 
     // create and start http service
-    this.httpService = getHttpService();
+    this.httpService = createHttpService();
     this.httpService.start();
     cancellable = discoveryService.register(
       ResolvingDiscoverable.of(new Discoverable(Constants.Service.LOG_BUFFER_SERVICE, httpService.getBindAddress())));
@@ -187,7 +187,7 @@ public class LogBufferService extends AbstractIdleService {
     return bufferSize > 0 ? bufferSize : 1L;
   }
 
-  private NettyHttpService getHttpService() {
+  private NettyHttpService createHttpService() {
     return new CommonNettyHttpServiceBuilder(cConf, Constants.Service.LOG_BUFFER_SERVICE)
       .setHttpHandlers(new LogBufferHandler(concurrentWriter))
       .setExceptionHandler(new HttpExceptionHandler())

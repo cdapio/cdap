@@ -73,7 +73,6 @@ public class LogBufferHandlerTest {
     LogBufferProcessorPipeline pipeline = getLogPipeline(loggerContext);
     pipeline.startAndWait();
 
-
     ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline));
 
     NettyHttpService httpService = NettyHttpService.builder("RemoteAppenderTest")
