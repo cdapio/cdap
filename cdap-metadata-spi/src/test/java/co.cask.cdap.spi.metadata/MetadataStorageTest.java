@@ -20,9 +20,11 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.spi.metadata.MetadataMutation.Create;
 import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
 import co.cask.cdap.spi.metadata.MetadataMutation.Remove;
 import co.cask.cdap.spi.metadata.MetadataMutation.Update;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -51,6 +53,7 @@ import javax.annotation.Nullable;
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
 import static co.cask.cdap.api.metadata.MetadataScope.USER;
 import static co.cask.cdap.spi.metadata.MetadataConstants.CREATION_TIME_KEY;
+import static co.cask.cdap.spi.metadata.MetadataConstants.DESCRIPTION_KEY;
 import static co.cask.cdap.spi.metadata.MetadataConstants.ENTITY_NAME_KEY;
 import static co.cask.cdap.spi.metadata.MetadataConstants.TTL_KEY;
 import static co.cask.cdap.spi.metadata.MetadataKind.PROPERTY;
@@ -122,7 +125,7 @@ public abstract class MetadataStorageTest {
                       new ScopedName(SYSTEM, "sp2"), "sv2",
                       new ScopedName(USER,   "up1"), "uv1",
                       new ScopedName(USER,   "up2"), "uv2"));
-    MetadataMutation create = new MetadataMutation.Create(entity, metadata, Collections.emptyMap());
+    MetadataMutation create = new Create(entity, metadata, Collections.emptyMap());
     change = mds.apply(create);
     Assert.assertEquals(new MetadataChange(entity, previousMetadata, metadata), change);
 
@@ -148,7 +151,7 @@ public abstract class MetadataStorageTest {
       ImmutableSet.of(new ScopedName(SYSTEM, "nst0")),
       ImmutableMap.of(new ScopedName(SYSTEM, "sp1"),  "nsv1",
                       new ScopedName(SYSTEM, "nsp0"), "sv0"));
-    MetadataMutation recreate = new MetadataMutation.Create(entity, recreatedMetadata, ImmutableMap.of(
+    MetadataMutation recreate = new Create(entity, recreatedMetadata, ImmutableMap.of(
       new ScopedNameOfKind(MetadataKind.TAG, SYSTEM, "st1"), MetadataDirective.KEEP,
       new ScopedNameOfKind(MetadataKind.TAG, SYSTEM, "st2"), MetadataDirective.PRESERVE,
       new ScopedNameOfKind(PROPERTY, SYSTEM, "sp1"), MetadataDirective.PRESERVE,
@@ -176,7 +179,7 @@ public abstract class MetadataStorageTest {
       ImmutableMap.of(new ScopedName(SYSTEM, "sp1"),  "nsv1",
                       new ScopedName(SYSTEM, "nsp2"), "sv2",
                       new ScopedName(USER,   "up3"),  "uv3"));
-    recreate = new MetadataMutation.Create(entity, recreatedMetadata, ImmutableMap.of(
+    recreate = new Create(entity, recreatedMetadata, ImmutableMap.of(
       new ScopedNameOfKind(MetadataKind.TAG, SYSTEM, "st1"), MetadataDirective.KEEP,
       new ScopedNameOfKind(MetadataKind.TAG, SYSTEM, "st2"), MetadataDirective.PRESERVE,
       new ScopedNameOfKind(PROPERTY, SYSTEM, "sp1"), MetadataDirective.PRESERVE,
@@ -263,6 +266,67 @@ public abstract class MetadataStorageTest {
     change = mds.apply(new Drop(entity));
     Assert.assertEquals(new MetadataChange(entity, Metadata.EMPTY, Metadata.EMPTY), change);
     verifyMetadata(mds, entity, Metadata.EMPTY);
+  }
+
+  @Test
+  public void testEmptyBatch() throws IOException {
+    getMetadataStorage().batch(new ArrayList<>());
+  }
+
+  @Test
+  public void testBatch() throws IOException {
+    MetadataEntity entity = MetadataEntity.ofDataset("a", "b");
+    Map<ScopedNameOfKind, MetadataDirective> directives = ImmutableMap.of(
+      new ScopedNameOfKind(PROPERTY, SYSTEM, CREATION_TIME_KEY), MetadataDirective.PRESERVE,
+      new ScopedNameOfKind(PROPERTY, SYSTEM, DESCRIPTION_KEY), MetadataDirective.KEEP);
+    MetadataStorage mds = getMetadataStorage();
+    Create create = new Create(entity, new Metadata(SYSTEM, tags("batch"), props(
+      CREATION_TIME_KEY, "12345678",
+      DESCRIPTION_KEY, "hello",
+      "other", "value")), directives);
+    MetadataChange change = mds.apply(create);
+    Assert.assertEquals(Metadata.EMPTY, change.getBefore());
+    Assert.assertEquals(create.getMetadata(), change.getAfter());
+
+    List<MetadataMutation> mutations = ImmutableList.of(
+      new Update(entity, new Metadata(USER, tags("tag1", "tag2"))),
+      new Drop(entity),
+      new Create(entity, new Metadata(SYSTEM, tags("batch"), props(
+        CREATION_TIME_KEY, "23456789",
+        "other", "different")), directives),
+      new Update(entity, new Metadata(USER, tags("tag3"), props("key", "value"))),
+      new Remove(entity, ImmutableSet.of(
+        new ScopedNameOfKind(PROPERTY, SYSTEM, "other"),
+        new ScopedNameOfKind(TAG, USER, "tag2"))),
+      new Create(entity, new Metadata(SYSTEM, tags("realtime"), props(
+        CREATION_TIME_KEY, "33456789",
+        DESCRIPTION_KEY, "new description",
+        "other", "yet other")), directives)
+    );
+
+    // apply all mutations in sequence
+    List<MetadataChange> changes = mutations.stream().map(mutation -> {
+      try {
+        return mds.apply(mutation);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }).collect(Collectors.toList());
+
+    // drop and recreate the entity
+    mds.apply(new Drop(entity));
+    change = mds.apply(create);
+    Assert.assertEquals(Metadata.EMPTY, change.getBefore());
+    Assert.assertEquals(create.getMetadata(), change.getAfter());
+
+    // apply all mutations in batch
+    List<MetadataChange> batchChanges = mds.batch(mutations);
+
+    // make sure the same mutations were applied
+    Assert.assertEquals(changes, batchChanges);
+
+    // clean up
+    mds.apply(new Drop(entity));
   }
 
   @Test
