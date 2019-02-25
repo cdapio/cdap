@@ -45,14 +45,20 @@ public class AppFabricServiceMainTest extends MasterServiceMainTestBase {
   @Test
   public void testAppFabricService() throws Exception {
 
+    // Query the system services endpoint
+    URL url = getRouterBaseURI().resolve("/v3/system/services").toURL();
+    HttpResponse response = HttpRequests.execute(HttpRequest.get(url).build());
+
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
     // Deploy an app
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, AllProgramsApp.class);
 
     URI baseURI = getRouterBaseURI().resolve("/v3/namespaces/default/");
-    URL url = baseURI.resolve("apps").toURL();
+    url = baseURI.resolve("apps").toURL();
     HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0);
-    HttpResponse response = HttpRequests.execute(
+    response = HttpRequests.execute(
       HttpRequest
         .post(url)
         .withBody((ContentProvider<? extends InputStream>) deploymentJar::getInputStream)

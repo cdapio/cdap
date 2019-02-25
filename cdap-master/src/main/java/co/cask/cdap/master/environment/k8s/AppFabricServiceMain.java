@@ -18,7 +18,9 @@ package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
+import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
+import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
@@ -93,6 +95,7 @@ public class AppFabricServiceMain extends AbstractServiceMain {
         }
       }),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new MonitorHandlerModule(false),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
       getDataFabricModule(),
@@ -117,6 +120,7 @@ public class AppFabricServiceMain extends AbstractServiceMain {
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
+    services.add(injector.getInstance(ServiceStore.class));
 
     // Only starts the remote TwillRunnerService, not the regular TwillRunnerService
     TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
