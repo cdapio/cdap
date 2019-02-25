@@ -16,33 +16,10 @@
 
 package co.cask.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.StorageModule;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.Lists;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
@@ -163,33 +140,9 @@ public class MasterServiceMainTestBase {
     // Create StructuredTable stores before starting the main.
     // The registry will be preserved and pick by the main class.
     // Also try to create metadata tables.
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      // We actually only need the MetadataStore createIndex.
-      // But due to the DataSetsModules, we need to pull in more modules.
-      new DataSetsModules().getStandaloneModules(),
-      new InMemoryDiscoveryModule(),
-      new StorageModule(),
-      new AuthenticationContextModules().getNoOpModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
-          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
-        }
-      }
-    );
-    DatasetDefinition tableDef = injector.getInstance(Key.get(DatasetDefinition.class,
-                                                              Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)));
-    StructuredTableRegistry tableRegistry = new NoSqlStructuredTableRegistry(tableDef);
-    StructuredTableAdmin tableAdmin = new NoSqlStructuredTableAdmin(tableDef, tableRegistry);
     if (!dataAlreadyExists) {
-      StoreDefinition.createAllTables(tableAdmin, tableRegistry);
+      new StorageMain().createStorage(cConf);
     }
-
-    injector.getInstance(MetadataStorage.class).createIndex();
-    injector.getInstance(LevelDBTableService.class).close();
 
     // Write the "cdap-site.xml" and pass the directory to the main service
     File confDir = TEMP_FOLDER.newFolder();
