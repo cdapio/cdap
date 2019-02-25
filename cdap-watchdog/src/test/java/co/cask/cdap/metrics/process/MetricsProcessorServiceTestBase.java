@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,9 +34,7 @@ import co.cask.cdap.data2.metadata.writer.NoOpMetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.metrics.MetricsTestBase;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -48,7 +46,6 @@ import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,6 +137,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       new DataSetServiceModules().getInMemoryModules(),
       new ExploreClientModule(),
       new NamespaceAdminTestModule(),
+      new MetricsStoreModule(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule()
@@ -148,8 +146,6 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       protected void configure() {
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
-        bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
-        bind(MetricStore.class).to(DefaultMetricStore.class).in(Scopes.SINGLETON);
         bind(MetadataPublisher.class).to(NoOpMetadataPublisher.class);
       }
     }));

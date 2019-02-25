@@ -19,7 +19,6 @@ package co.cask.cdap.master.environment.k8s;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
-import co.cask.cdap.app.guice.TwillModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
@@ -30,7 +29,6 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -46,17 +44,15 @@ import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreServerModule;
 import co.cask.cdap.security.store.SecureStoreService;
-import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.table.StructuredTableRegistry;
-import co.cask.cdap.store.StoreDefinition;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 
 import java.util.Arrays;
@@ -90,7 +86,6 @@ public class AppFabricServiceMain extends AbstractServiceMain {
       new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
-      new TwillModule(),
       Modules.override(new AppFabricServiceRuntimeModule().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
@@ -104,6 +99,10 @@ public class AppFabricServiceMain extends AbstractServiceMain {
       new AbstractModule() {
         @Override
         protected void configure() {
+          // We don't use Twill in k8s. Bind to no-op twill implementation.
+          bind(TwillRunnerService.class).to(NoopTwillRunnerService.class).in(Scopes.SINGLETON);
+          bind(TwillRunner.class).to(TwillRunnerService.class);
+
           // TODO (CDAP-14677): find a better way to inject metadata publisher
           bind(MetadataPublisher.class).to(MessagingMetadataPublisher.class);
         }
@@ -135,35 +134,6 @@ public class AppFabricServiceMain extends AbstractServiceMain {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.APP_FABRIC_HTTP);
-  }
-
-  /**
-   * A Guava {@link Service} for creating storages.
-   */
-  private static final class StorageCreationService extends AbstractIdleService {
-
-    private final StructuredTableAdmin tableAdmin;
-    private final StructuredTableRegistry tableRegistry;
-    private final MetadataStore metadataStore;
-
-    @Inject
-    StorageCreationService(StructuredTableAdmin tableAdmin,
-                           StructuredTableRegistry tableRegistry, MetadataStore metadataStore) {
-      this.tableAdmin = tableAdmin;
-      this.tableRegistry = tableRegistry;
-      this.metadataStore = metadataStore;
-    }
-
-    @Override
-    protected void startUp() throws Exception {
-      StoreDefinition.createAllTables(tableAdmin, tableRegistry);
-      metadataStore.createIndex();
-    }
-
-    @Override
-    protected void shutDown() {
-      // no-op
-    }
   }
 
   /**

@@ -102,6 +102,7 @@ public class MetadataServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources) {
+    services.add(injector.getInstance(StorageCreationService.class));
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
   }

@@ -33,7 +33,7 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -70,7 +70,7 @@ public class MetricHBaseTableUtilTest {
     // Verify new metric datasets are properly recognized as 2.8+ version from now on
     HBaseMetricsTableDefinition definition =
       new HBaseMetricsTableDefinition("foo", TEST_HBASE.getConfiguration(), () -> hBaseTableUtil,
-                                      new LocalLocationFactory(TMP_FOLDER.newFolder()), cConf);
+                                      new FileContextLocationFactory(TEST_HBASE.getConfiguration()), cConf);
     DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 
     DatasetAdmin admin = definition.getAdmin(DatasetContext.from(NamespaceId.SYSTEM.getNamespace()), spec, null);

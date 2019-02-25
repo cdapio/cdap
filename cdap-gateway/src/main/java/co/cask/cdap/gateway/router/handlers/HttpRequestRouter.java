@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,6 +98,16 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
       ChannelFutureListener writeCompletedListener = getFailureResponseListener(inboundChannel);
 
       if (msg instanceof HttpRequest) {
+        HttpRequest request = (HttpRequest) msg;
+
+        // For "/" request, response with 200. This is for load balancer health check
+        if ("/".equals(request.uri())) {
+          HttpResponse response = new DefaultFullHttpResponse(request.protocolVersion(), HttpResponseStatus.OK);
+          HttpUtil.setContentLength(response, 0L);
+          inboundChannel.writeAndFlush(response);
+          return;
+        }
+
         inflightRequests++;
         if (inflightRequests != 1) {
           // This means there is concurrent request via HTTP pipelining.
@@ -119,7 +129,7 @@ public class HttpRequestRouter extends ChannelDuplexHandler {
             }
           }
         };
-        HttpRequest request = (HttpRequest) msg;
+
         currentMessageSender = getMessageSender(
           inboundChannel, getDiscoverable(request)
         );

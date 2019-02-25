@@ -24,9 +24,6 @@ import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.process.DirectMetricsSystemClient;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
-import co.cask.cdap.metrics.store.DefaultMetricStore;
-import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.Module;
 import com.google.inject.PrivateBinder;
 import com.google.inject.PrivateModule;
@@ -81,8 +78,7 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
   private void addLocalBindings(PrivateBinder binder) {
     // Install the MetricsStoreModule as private bindings and expose the MetricStore.
     // Both LocalMetricsCollectionService and the AppFabricService needs it
-    binder.bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
-    binder.bind(MetricStore.class).to(DefaultMetricStore.class);
+    binder.install(new MetricsStoreModule());
     binder.expose(MetricStore.class);
 
     binder.bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
