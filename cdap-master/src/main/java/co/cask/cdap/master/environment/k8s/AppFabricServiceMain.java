@@ -114,7 +114,6 @@ public class AppFabricServiceMain extends AbstractServiceMain {
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources) {
     closeableResources.add(injector.getInstance(AuthorizerInstantiator.class));
-    services.add(injector.getInstance(StorageCreationService.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
