@@ -19,6 +19,7 @@ package co.cask.cdap.master.environment;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ZKDiscoveryService;
@@ -33,6 +34,7 @@ public class MockMasterEnvironment implements MasterEnvironment {
 
   private ZKClientService zkClient;
   private ZKDiscoveryService discoveryService;
+  private TwillRunnerService twillRunnerService;
 
   @Override
   public void initialize(MasterEnvironmentContext context) {
@@ -40,6 +42,7 @@ public class MockMasterEnvironment implements MasterEnvironment {
     zkClient.startAndWait();
 
     discoveryService = new ZKDiscoveryService(zkClient);
+    twillRunnerService = new NoopTwillRunnerService();
   }
 
   @Override
@@ -62,4 +65,11 @@ public class MockMasterEnvironment implements MasterEnvironment {
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
   }
+
+  @Override
+  public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
+    return () -> twillRunnerService;
+  }
+
+
 }

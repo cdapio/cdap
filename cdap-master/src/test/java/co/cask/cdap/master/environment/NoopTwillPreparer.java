@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.master.environment.k8s;
+package co.cask.cdap.master.environment;
 
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.SecureStore;

@@ -17,6 +17,7 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.k8s.discovery.KubeDiscoveryService;
+import co.cask.cdap.k8s.runtime.KubeTwillRunnerService;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentTask;
@@ -26,6 +27,7 @@ import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1OwnerReference;
 import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.util.Config;
+import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -36,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,15 +57,18 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
-  private static final String POD_NAME_PATH = "master.environment.k8s.pod.name.path";
-  private static final String POD_LABELS_PATH = "master.environment.k8s.pod.labels.path";
+  private static final String POD_INFO_DIR = "master.environment.k8s.pod.info.dir";
+  private static final String POD_NAME_FILE = "master.environment.k8s.pod.name.file";
+  private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
+  private static final String RUNNER_IMAGE = "master.environment.k8s.runner.image";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
-  private static final String DEFAULT_POD_NAME_PATH = "/etc/podinfo/pod.name";
-  private static final String DEFAULT_POD_LABELS_PATH = "/etc/podinfo/pod.labels.properties";
+  private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
+  private static final String DEFAULT_POD_NAME_FILE = "pod.name";
+  private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
   private static final String DEFAULT_POD_KILLER_SELECTOR = "cdap.container=preview";
   private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
 
@@ -72,6 +76,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
+  private KubeTwillRunnerService twillRunner;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException {
@@ -80,20 +85,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     Map<String, String> conf = context.getConfigurations();
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
-    Map<String, String> podLabels = new HashMap<>();
-    String podLabelsPath = conf.getOrDefault(POD_LABELS_PATH, DEFAULT_POD_LABELS_PATH);
-    try (BufferedReader reader = Files.newBufferedReader(new File(podLabelsPath).toPath(), StandardCharsets.UTF_8)) {
-      String line = reader.readLine();
-      while (line != null) {
-        Matcher matcher = LABEL_PATTERN.matcher(line);
-        if (matcher.matches()) {
-          podLabels.put(matcher.group(1), matcher.group(2));
-        }
-        line = reader.readLine();
-      }
-    }
+    PodInfo podInfo = getPodInfo(conf);
+    Map<String, String> podLabels = podInfo.getLabels();
 
-    String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
+    String namespace = podInfo.getNamespace();
 
     // Get the instance label to setup prefix for K8s services
     String instanceLabel = conf.getOrDefault(INSTANCE_LABEL, DEFAULT_INSTANCE_LABEL);
@@ -102,12 +97,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       throw new IllegalStateException("Missing instance label '" + instanceLabel + "' from pod labels.");
     }
 
-    // Get the OwnerReference. This is for setting the owner of K8s objects created by this environment
-    List<V1OwnerReference> ownerReferences = getOwnerReference(conf.getOrDefault(POD_NAME_PATH, DEFAULT_POD_NAME_PATH),
-                                                               namespace);
-
     // Services are publish to K8s with a prefix
-    discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels, ownerReferences);
+    String resourcePrefix = "cdap-" + instanceName + "-";
+    discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels,
+                                                podInfo.getOwnerReferences());
 
     // Optionally creates the pod killer task
     String podKillerSelector = conf.getOrDefault(POD_KILLER_SELECTOR, DEFAULT_POD_KILLER_SELECTOR);
@@ -133,6 +126,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
+    String runnerImage = conf.get(RUNNER_IMAGE);
+    if (runnerImage == null) {
+      throw new IllegalStateException(
+        String.format("No image found for the program runner. Please set %s in cdap-site.xml.", RUNNER_IMAGE));
+    }
+    twillRunner = new KubeTwillRunnerService(namespace, runnerImage, discoveryService, podInfo, resourcePrefix,
+                                             Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -158,24 +158,51 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   }
 
   @Override
+  public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
+    return () -> twillRunner;
+  }
+
+  @Override
   public Optional<MasterEnvironmentTask> getTask() {
     return Optional.ofNullable(podKillerTask);
   }
 
-  /**
-   * Query the owner reference based on the instance label.
-   */
-  private List<V1OwnerReference> getOwnerReference(String podNamePath, String namespace) {
+  private PodInfo getPodInfo(Map<String, String> conf) throws IOException {
+    String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
+
+    File podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
+    if (!podInfoDir.isDirectory()) {
+      throw new IllegalArgumentException(String.format("%s is not a directory.", podInfoDir.getAbsolutePath()));
+    }
+
+    // Load the pod labels from the configured path. It should be setup by the CDAP operator
+    Map<String, String> podLabels = new HashMap<>();
+    File podLabelsFile = new File(podInfoDir, conf.getOrDefault(POD_LABELS_FILE, DEFAULT_POD_LABELS_FILE));
+    try (BufferedReader reader = Files.newBufferedReader(podLabelsFile.toPath(), StandardCharsets.UTF_8)) {
+      String line = reader.readLine();
+      while (line != null) {
+        Matcher matcher = LABEL_PATTERN.matcher(line);
+        if (matcher.matches()) {
+          podLabels.put(matcher.group(1), matcher.group(2));
+        }
+        line = reader.readLine();
+      }
+    }
+
+    File podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
+    String podName;
+    List<V1OwnerReference> ownerReferences = Collections.emptyList();
     try {
-      String podName = Files.lines(Paths.get(podNamePath)).findFirst().orElse(null);
+      podName = Files.lines(podNameFile.toPath()).findFirst().orElse(null);
       if (podName == null) {
-        LOG.warn("Failed to get pod name from path {}. No owner reference will be used.", podNamePath);
-        return Collections.emptyList();
+        LOG.warn("Failed to get pod name from path {}. No owner reference will be used.",
+                 podNameFile.getAbsolutePath());
       }
 
+      // Query the owner reference based on the instance label.
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1Pod pod = api.readNamespacedPod(podName, namespace, null, null, null);
-      return pod.getMetadata().getOwnerReferences();
+      ownerReferences = pod.getMetadata().getOwnerReferences();
     } catch (IOException e) {
       // If the CRD or CR is not available, just log and return null.
       // Missing owner reference won't affect functionality of CDAP.
@@ -185,7 +212,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       LOG.warn("API error when fetching the owner reference. Code: {}, Message: {}",
                e.getCode(), e.getResponseBody(), e);
     }
-
-    return Collections.emptyList();
+    return new PodInfo(podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
+                       podNameFile.getName(), namespace, podLabels, ownerReferences);
   }
 }

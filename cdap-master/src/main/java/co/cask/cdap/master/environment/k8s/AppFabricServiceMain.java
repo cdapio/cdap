@@ -106,8 +106,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
       new AbstractModule() {
         @Override
         protected void configure() {
-          // We don't use Twill in k8s. Bind to no-op twill implementation.
-          bind(TwillRunnerService.class).to(NoopTwillRunnerService.class).in(Scopes.SINGLETON);
+          bind(TwillRunnerService.class).toProvider(
+            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
           bind(TwillRunner.class).to(TwillRunnerService.class);
 
           // TODO (CDAP-14677): find a better way to inject metadata publisher
@@ -128,10 +128,11 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(ServiceStore.class));
 
-    // Only starts the remote TwillRunnerService, not the regular TwillRunnerService
+    // Start both the remote TwillRunnerService and regular TwillRunnerService
     TwillRunnerService remoteTwillRunner = injector.getInstance(Key.get(TwillRunnerService.class,
                                                                         Constants.AppFabric.RemoteExecution.class));
     services.add(new TwillRunnerServiceWrapper(remoteTwillRunner));
+    services.add(new TwillRunnerServiceWrapper(injector.getInstance(TwillRunnerService.class)));
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
