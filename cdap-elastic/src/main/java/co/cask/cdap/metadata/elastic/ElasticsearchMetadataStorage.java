@@ -92,6 +92,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -319,9 +320,26 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException {
+    if (mutations.isEmpty()) {
+      return Collections.emptyList();
+    }
+    Set<MetadataEntity> entities = new HashSet<>();
     MultiGetRequest multiGet = new MultiGetRequest();
+    boolean duplicate = false;
     for (MetadataMutation mutation : mutations) {
+      if (!entities.add(mutation.getEntity())) {
+        duplicate = true;
+        break;
+      }
       multiGet.add(indexName, DOC_TYPE, toDocumentId(mutation.getEntity()));
+    }
+    if (duplicate) {
+      // if there are multiple mutations for the same entity, execute all in sequence
+      List<MetadataChange> changes = new ArrayList<>(mutations.size());
+      for (MetadataMutation mutation : mutations) {
+        changes.add(apply(mutation));
+      }
+      return changes;
     }
     MultiGetResponse multiGetResponse = client.mget(multiGet, RequestOptions.DEFAULT);
     // responses are in the same order as the original requests
