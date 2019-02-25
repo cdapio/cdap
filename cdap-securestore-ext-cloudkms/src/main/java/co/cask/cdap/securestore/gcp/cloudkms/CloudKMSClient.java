@@ -55,7 +55,6 @@ class CloudKMSClient implements Closeable {
   // When created in the global location, Cloud KMS resources are available from zones spread around the world.
   private static final String LOCATION_ID = "global";
   // All the crypto keys are created under keyring named cdap
-  private static final String KEYRING_ID = "cdap";
   private static final String ENCRYPT_DECRYPT = "ENCRYPT_DECRYPT";
   private static final String CLOUD_KMS = "cloudkms";
   private static final String PROJECT_ID = "project.id";
@@ -63,9 +62,13 @@ class CloudKMSClient implements Closeable {
   private static final String METADATA_SERVER_API = "metadata.server.api";
   private static final String DEFAULT_METADATA_SERVER_API = "http://metadata.google.internal/computeMetadata" +
     "/v1/project/project-id";
+  private static final String KEYRING_ID = "keyring.id";
+  private static final String DEFAULT_KEYRING_ID = "cdap";
+
 
   private final CloudKMS cloudKMS;
   private final String projectId;
+  private final String keyringId;
   // In-memory cache to hold created crypto keys, this is to avoid checking if a given crypto key exists.
   private final Set<String> knownCryptoKeys;
 
@@ -80,6 +83,7 @@ class CloudKMSClient implements Closeable {
       getSystemProjectId(metadataServerApi);
     String serviceAccountFile = properties.getOrDefault(SERVICE_ACCOUNT_FILE, null);
     this.cloudKMS = createCloudKMS(serviceAccountFile);
+    this.keyringId = properties.getOrDefault(KEYRING_ID, DEFAULT_KEYRING_ID);
     this.knownCryptoKeys = new HashSet<>();
   }
 
@@ -138,19 +142,20 @@ class CloudKMSClient implements Closeable {
    */
   void createKeyRingIfNotExists() throws IOException {
     String parent = String.format("projects/%s/locations/%s", projectId, LOCATION_ID);
+    LOG.debug("Creating key ring with id {}.", keyringId);
 
     try {
       cloudKMS.projects().locations().keyRings()
         .create(parent, new KeyRing())
-        .setKeyRingId(KEYRING_ID)
+        .setKeyRingId(keyringId)
         .execute();
     } catch (GoogleJsonResponseException e) {
       // if key ring already exists, then do not throw any exception.
       if (e.getDetails() != null && e.getDetails().getCode() == 409) {
-        LOG.trace(String.format("Key ring %s already exists", KEYRING_ID));
+        LOG.trace(String.format("Key ring %s already exists", keyringId));
         return;
       }
-      throw new IOException(String.format("Exception occurred while creating key ring %s", KEYRING_ID), e);
+      throw new IOException(String.format("Exception occurred while creating key ring %s", keyringId), e);
     }
   }
 
@@ -166,7 +171,7 @@ class CloudKMSClient implements Closeable {
       return;
     }
 
-    String parent = String.format("projects/%s/locations/%s/keyRings/%s", projectId, LOCATION_ID, KEYRING_ID);
+    String parent = String.format("projects/%s/locations/%s/keyRings/%s", projectId, LOCATION_ID, keyringId);
 
     CryptoKey cryptoKey = new CryptoKey();
     // This will allow the API access to the key for symmetric encryption and decryption.
@@ -201,7 +206,7 @@ class CloudKMSClient implements Closeable {
    */
   byte[] encrypt(String cryptoKeyId, byte[] secret) throws IOException {
     String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s", projectId, LOCATION_ID,
-                                        KEYRING_ID, cryptoKeyId);
+                                        keyringId, cryptoKeyId);
     // secret must not be longer than 64KiB.
     EncryptRequest request = new EncryptRequest().encodePlaintext(secret);
     EncryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
@@ -226,7 +231,7 @@ class CloudKMSClient implements Closeable {
    */
   byte[] decrypt(String cryptoKeyId, byte[] encryptedSecret) throws IOException {
     String resourceName = String.format("projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s",
-                                        projectId, LOCATION_ID, KEYRING_ID, cryptoKeyId);
+                                        projectId, LOCATION_ID, keyringId, cryptoKeyId);
 
     DecryptRequest request = new DecryptRequest().encodeCiphertext(encryptedSecret);
     DecryptResponse response = cloudKMS.projects().locations().keyRings().cryptoKeys()
