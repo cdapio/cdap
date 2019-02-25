@@ -44,6 +44,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.http.HttpHost;
 import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
@@ -642,8 +643,13 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (request.isCursorRequested()) {
       scrollRequest.scroll(scrollTimeout);
     }
-    SearchResponse searchResponse =
-      client.scroll(scrollRequest, RequestOptions.DEFAULT);
+    SearchResponse searchResponse;
+    try {
+      searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
+    } catch (ElasticsearchStatusException e) {
+      // scroll invalid or timed out
+      return doSearch(request, cursor.getOffset(), cursor.getPageSize());
+    }
     if (searchResponse.isTimedOut()) {
       // scroll had expired, we have to search again
       return doSearch(request, cursor.getOffset(), cursor.getPageSize());
@@ -678,8 +684,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       client.search(searchRequest, RequestOptions.DEFAULT);
     SearchHits hits = searchResponse.getHits();
     List<MetadataRecord> results = fromHits(hits);
-    String newCursor = computeCursor(searchResponse, request.getOffset(), request.getLimit());
-    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, offset, request.getLimit(),
+    String newCursor = computeCursor(searchResponse, offset, limit);
+    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, offset, limit,
                                                         (int) hits.getTotalHits(), results);
   }
 

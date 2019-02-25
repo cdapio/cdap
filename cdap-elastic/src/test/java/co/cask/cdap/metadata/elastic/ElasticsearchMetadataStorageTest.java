@@ -16,14 +16,20 @@
 
 package co.cask.cdap.metadata.elastic;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataKind;
+import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
+import co.cask.cdap.spi.metadata.MetadataMutation.Update;
+import co.cask.cdap.spi.metadata.MetadataRecord;
 import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.spi.metadata.MetadataStorageTest;
 import co.cask.cdap.spi.metadata.ScopedName;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
+import co.cask.cdap.spi.metadata.SearchRequest;
+import co.cask.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.junit.AfterClass;
@@ -37,6 +43,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
 
@@ -302,5 +311,47 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
   @Override
   protected List<String> getAdditionalTTLQueries() {
     return ImmutableList.of("ttl:0003600", "TtL:03600", "TtL:03600.00");
+  }
+
+  @Test
+  public void testScrollTimeout() throws IOException, InterruptedException {
+    MetadataStorage mds = getMetadataStorage();
+
+    List<MetadataRecord> records = IntStream.range(0, 20).boxed().map(i -> new MetadataRecord(
+      MetadataEntity.ofDataset("ns" + i, "ds" + i),
+      new Metadata(MetadataScope.USER, tags("tag", "t" + i), props("p", "v" + i)))).collect(Collectors.toList());
+    mds.batch(records.stream().map(r -> new Update(r.getEntity(), r.getMetadata())).collect(Collectors.toList()));
+
+    SearchRequest request = SearchRequest.of("t*").setCursorRequested(true).setLimit(5).build();
+    SearchResponse response = mds.search(request);
+    Assert.assertEquals(5, response.getResults().size());
+    Assert.assertNotNull(response.getCursor());
+
+    SearchRequest request2 = SearchRequest.of("t*").setCursor(response.getCursor()).build();
+    SearchResponse response2 = mds.search(request2);
+    Assert.assertEquals(5, response.getResults().size());
+
+    // sleep 1 sec longer than the configured scroll timeout to invalidate cursor
+    TimeUnit.SECONDS.sleep(3);
+    SearchResponse response3 = mds.search(request2);
+    Assert.assertEquals(response2, response3);
+
+    // create a nonsense cursor and search with that
+    Cursor cursor = Cursor.fromString(response.getCursor());
+    cursor = new Cursor(cursor.getOffset(), cursor.getPageSize(), "nosuchcursor");
+    SearchRequest request4 = SearchRequest.of("t*").setCursor(cursor.toString()).build();
+    SearchResponse response4 = mds.search(request4);
+    // compare only the results, not the entire response (the cursor is different)
+    Assert.assertEquals(response2.getResults(), response4.getResults());
+
+    // clean up
+    mds.batch(records.stream().map(MetadataRecord::getEntity).map(Drop::new).collect(Collectors.toList()));
+  }
+
+  @Override
+  protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
+    Cursor c = Cursor.fromString(cursor);
+    Assert.assertEquals(expectedOffset, c.getOffset());
+    Assert.assertEquals(expectedPageSize, c.getPageSize());
   }
 }
