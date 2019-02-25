@@ -736,10 +736,12 @@
 
   <property>
     <name>data.storage.sql.jdbc.driver.directory</name>
-    <value></value>
+    <value>/opt/cdap/master/ext/jdbc</value>
     <description>
-      The sql driver directory which contains the driver jar and
-      other necessary jars to connect to the sql instance.
+      The base directory for storing JDBC driver jars.
+      Sub-directory with the name that matches with the value of "data.storage.implementation" setting
+      will be searched for the corresponding JDBC driver and
+      dependencies jars to connect to the configured sql instance.
       This config can only be used when the stroage implementation is sql.
     </description>
   </property>
@@ -748,7 +750,7 @@
     <name>data.storage.sql.jdbc.driver.name</name>
     <value></value>
     <description>
-      The jdbc driver name to connect to the sql instance. The jdbc url,
+      The jdbc driver class name to connect to the sql instance. The jdbc url,
       username, password, connection properties can be set using
       cdap-security.xml.
     </description>

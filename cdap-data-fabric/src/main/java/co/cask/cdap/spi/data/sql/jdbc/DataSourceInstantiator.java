@@ -71,12 +71,13 @@ public class DataSourceInstantiator implements Supplier<DataSource> {
     if (dataSource != null) {
       return dataSource;
     }
-    if (!cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL)) {
+    String storageImpl = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION);
+    if (!storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
       throw new IllegalArgumentException(String.format("The storage implementation is not %s, cannot create the " +
                                                          "DataSource", Constants.Dataset.DATA_STORAGE_SQL));
     }
 
-    loadJDBCDriver();
+    loadJDBCDriver(storageImpl);
 
     String jdbcUrl = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL);
     if (jdbcUrl == null) {
@@ -119,16 +120,22 @@ public class DataSourceInstantiator implements Supplier<DataSource> {
     return properties;
   }
 
-  private void loadJDBCDriver() {
+  private void loadJDBCDriver(String storageImpl) {
     String driverExtensionPath = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_DIRECTORY);
     String driverName = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_DRIVER_NAME);
     if (driverExtensionPath == null || driverName == null) {
       throw new IllegalArgumentException("The JDBC driver directory and driver name must be specified.");
     }
-    DirectoryClassLoader directoryClassLoader =
-      new DirectoryClassLoader(new File(driverExtensionPath), DataSourceInstantiator.class.getClassLoader());
+
+    File driverExtensionDir = new File(driverExtensionPath, storageImpl);
+    if (!driverExtensionDir.exists()) {
+      throw new IllegalArgumentException("The JDBC driver driver " + driverExtensionDir + " does not exist.");
+    }
+
+    // Create a separate classloader for the JDBC driver, which doesn't have any CDAP dependencies in it.
+    ClassLoader driverClassLoader = new DirectoryClassLoader(driverExtensionDir, null);
     try {
-      Driver driver = (Driver) Class.forName(driverName, true, directoryClassLoader).newInstance();
+      Driver driver = (Driver) Class.forName(driverName, true, driverClassLoader).newInstance();
 
       // wrap the driver class and register it ourselves since the driver manager will not use driver from other
       // classloader
