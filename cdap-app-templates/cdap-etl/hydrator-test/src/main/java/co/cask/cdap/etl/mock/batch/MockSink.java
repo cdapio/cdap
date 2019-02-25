@@ -46,6 +46,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Mock sink that writes records to a Table and has a utility method for getting all records written.
@@ -57,6 +58,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
+  private final AtomicLong inputCounter = new AtomicLong();
   private final Config config;
 
   public MockSink(Config config) {
@@ -94,8 +96,8 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
-    byte[] ts = Bytes.toBytes(System.currentTimeMillis());
-    byte[] rowkey = Bytes.concat(ts, Bytes.toBytes(UUID.randomUUID()));
+    byte[] prefix = Bytes.toBytes(inputCounter.incrementAndGet());
+    byte[] rowkey = Bytes.concat(prefix, Bytes.toBytes(UUID.randomUUID()));
     Put put = new Put(rowkey);
     put.add(SCHEMA_COL, input.getSchema().toString());
     put.add(RECORD_COL, StructuredRecordStringConverter.toJsonString(input));
