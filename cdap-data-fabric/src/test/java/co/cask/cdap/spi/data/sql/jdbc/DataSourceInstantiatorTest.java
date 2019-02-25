@@ -26,6 +26,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
@@ -45,10 +46,14 @@ public class DataSourceInstantiatorTest {
   public void testInstantiate() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
-    cConf.set(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_DIRECTORY, TEMP_FOLDER.getRoot().getPath());
+    cConf.set(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_DIRECTORY, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.Dataset.DATA_STORAGE_SQL_JDBC_DRIVER_NAME, NoopDriver.class.getName());
     cConf.set(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL, "jdbc:noop://");
-    AppJarHelper.createDeploymentJar(new LocalLocationFactory(TEMP_FOLDER.getRoot()), NoopDriver.class);
+
+    File driverDir = new File(cConf.get(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_DIRECTORY),
+                              cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION));
+    driverDir.mkdirs();
+    AppJarHelper.createDeploymentJar(new LocalLocationFactory(driverDir), NoopDriver.class);
 
     SConfiguration sConf = SConfiguration.create();
 
