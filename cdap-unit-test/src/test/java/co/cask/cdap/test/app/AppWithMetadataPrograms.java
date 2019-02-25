@@ -100,6 +100,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }
@@ -120,6 +121,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }
@@ -139,6 +141,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }
@@ -157,6 +160,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }
@@ -175,6 +179,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }
@@ -193,6 +198,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }
@@ -212,6 +218,7 @@ public class AppWithMetadataPrograms extends AbstractApplication {
         }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       } catch (Exception e) {
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.code());
+        return;
       }
       responder.sendStatus(HttpResponseStatus.OK.code());
     }

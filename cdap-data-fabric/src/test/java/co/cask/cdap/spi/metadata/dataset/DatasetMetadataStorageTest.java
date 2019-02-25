@@ -38,11 +38,13 @@ import co.cask.cdap.spi.metadata.MetadataStorageTest;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;
@@ -54,6 +56,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,26 +68,37 @@ import static co.cask.cdap.spi.metadata.MetadataKind.TAG;
 
 public class DatasetMetadataStorageTest extends MetadataStorageTest {
 
+  @VisibleForTesting
+  public static DatasetMetadataStorage storage;
   private static TransactionManager txManager;
-  private static DatasetMetadataStorage storage;
 
   @BeforeClass
   public static void setup() throws IOException {
-    Injector injector = Guice.createInjector(
-      new ConfigModule(),
-      new LocalLocationModule(),
-      new TransactionInMemoryModule(),
-      new SystemDatasetRuntimeModule().getInMemoryModules(),
-      new NamespaceAdminTestModule(),
-      new AuthorizationTestModule(),
-      new AuthorizationEnforcementModule().getInMemoryModules(),
-      new AuthenticationContextModules().getMasterModule(),
-      new StorageModule()
-    );
+    doSetup();
+  }
+
+  public static Injector doSetup(Module ... additionalModules) throws IOException {
+    List<Module> modules = ImmutableList.<Module>builder()
+      .add(
+        new ConfigModule(),
+        new LocalLocationModule(),
+        new TransactionInMemoryModule(),
+        new SystemDatasetRuntimeModule().getInMemoryModules(),
+        new NamespaceAdminTestModule(),
+        new AuthorizationTestModule(),
+        new AuthorizationEnforcementModule().getInMemoryModules(),
+        new AuthenticationContextModules().getMasterModule(),
+        new StorageModule())
+      .add(additionalModules)
+      .build();
+
+    Injector injector = Guice.createInjector(modules);
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     storage = injector.getInstance(DatasetMetadataStorage.class);
     storage.createIndex();
+
+    return injector;
   }
 
   @AfterClass

@@ -18,19 +18,19 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metadata.MetadataException;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.MetadataCompatibility;
+import co.cask.cdap.spi.metadata.MetadataStorage;
 import com.google.inject.Inject;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>{@link MetadataReader} which should be used in local/in-memory mode where {@link MetadataAdmin} can be accessed
- * directly i.e. the process is running as cdap system user and it can access the {@link MetadataStore} which belongs
+ * directly i.e. the process is running as cdap system user and it can access the {@link MetadataStorage} which belongs
  * to cdap user.</p>
  *
  * <p>This implementation should not be used in distributed program container or any process which is not running as
@@ -45,22 +45,20 @@ public class DefaultMetadataReader implements MetadataReader {
   }
 
   @Override
-  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) {
-    Map<MetadataScope, Metadata> scopeMetadata = new HashMap<>();
-    Set<MetadataRecord> metadata = metadataAdmin.getMetadata(metadataEntity);
-    metadata.forEach(record -> scopeMetadata.put(record.getScope(),
-                                                 new Metadata(record.getProperties(), record.getTags())));
-    return scopeMetadata;
+  public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
+    try {
+      return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity));
+    } catch (IOException e) {
+      throw new MetadataException(e);
+    }
   }
 
   @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) {
-    final Metadata[] metadata = new Metadata[1];
-    metadataAdmin.getMetadata(scope, metadataEntity).forEach(record -> {
-      if (record.getScope() == scope) {
-        metadata[0] = new Metadata(record.getProperties(), record.getTags());
-      }
-    });
-    return metadata[0];
+  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
+    try {
+      return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(scope, metadataEntity), scope);
+    } catch (IOException e) {
+      throw new MetadataException(e);
+    }
   }
 }

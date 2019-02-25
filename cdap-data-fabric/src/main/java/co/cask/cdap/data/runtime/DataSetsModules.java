@@ -24,13 +24,11 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.metadata.AuditMetadataStorage;
 import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
-import co.cask.cdap.data2.metadata.store.StorageProviderMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -58,6 +56,7 @@ import com.google.inject.name.Names;
 public class DataSetsModules extends RuntimeModule {
 
   public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
+  public static final String SPI_BASE_IMPL = "spiBaseImplementation";
 
   @Override
   public Module getInMemoryModules() {
@@ -68,8 +67,7 @@ public class DataSetsModules extends RuntimeModule {
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-        bind(MetadataStore.class).to(NoOpMetadataStore.class);
-        expose(MetadataStore.class);
+        expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))
@@ -121,10 +119,9 @@ public class DataSetsModules extends RuntimeModule {
         bind(DatasetDefinitionRegistryFactory.class)
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
-        bind(MetadataStorage.class).toProvider(MetadataStorageProvider.class);
-        bind(MetadataStore.class).to(StorageProviderMetadataStore.class);
+        bind(MetadataStorage.class).annotatedWith(Names.named(SPI_BASE_IMPL)).toProvider(MetadataStorageProvider.class);
+        bind(MetadataStorage.class).to(AuditMetadataStorage.class);
         expose(MetadataStorage.class);
-        expose(MetadataStore.class);
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(BASE_DATASET_FRAMEWORK))

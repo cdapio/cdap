@@ -36,8 +36,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.hive.datasets.DatasetSerDe;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -137,7 +135,6 @@ public class ContextManager {
         @Override
         protected void configure() {
           bind(MetadataStorage.class).to(NoopMetadataStorage.class);
-          bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),
       new ExploreClientModule(),

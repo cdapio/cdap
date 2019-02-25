@@ -19,10 +19,11 @@ package co.cask.cdap.metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
-import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.cdap.data2.metadata.dataset.SearchRequest;
-import co.cask.cdap.proto.metadata.MetadataSearchResponse;
+import co.cask.cdap.spi.metadata.Metadata;
+import co.cask.cdap.spi.metadata.SearchRequest;
+import co.cask.cdap.spi.metadata.SearchResponse;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,7 +43,8 @@ public interface MetadataAdmin {
    *
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) throws InvalidMetadataException;
+  void addProperties(MetadataEntity metadataEntity, Map<String, String> properties)
+    throws InvalidMetadataException, IOException;
 
   /**
    * Adds the specified tags to specified {@link MetadataEntity}. This API only supports adding tags in
@@ -50,45 +52,42 @@ public interface MetadataAdmin {
    *
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException;
+  void addTags(MetadataEntity metadataEntity, Set<String> tags) throws InvalidMetadataException, IOException;
 
   /**
-   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the
-   * specified {@link MetadataEntity} in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
+   * Returns all metadata (including properties and tags) for the specified {@link MetadataEntity}
+   * in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Set<MetadataRecord> getMetadata(MetadataEntity metadataEntity);
+  Metadata getMetadata(MetadataEntity metadataEntity) throws IOException;
 
   /**
-   * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the
-   * specified {@link MetadataEntity} in the specified {@link MetadataScope}.
+   * Returns the metadata (including properties and tags) for the specified {@link MetadataEntity}
+   * in the specified {@link MetadataScope}.
    */
-  // TODO: Should this return a single metadata record instead or is a set of one record ok?
-  Set<MetadataRecord> getMetadata(MetadataScope scope, MetadataEntity metadataEntity);
+  Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in both
    * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}
    */
-  // TODO: This should perhaps return a Map<MetadataScope, Map<String, String>>
-  Map<String, String> getProperties(MetadataEntity metadataEntity);
+  Map<String, String> getProperties(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in the specified
    * {@link MetadataScope}
    */
-  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity);
+  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return all the tags for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}
    */
-  // TODO: This should perhaps return a Map<MetadataScope, Set<String>>
-  Set<String> getTags(MetadataEntity metadataEntity);
+  Set<String> getTags(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return all the tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}
    */
-  Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity);
+  Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
 
   /**
    * Removes all the metadata (including properties and tags) for the specified {@link MetadataEntity}. This
@@ -96,7 +95,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove metadata for
    */
-  void removeMetadata(MetadataEntity metadataEntity);
+  void removeMetadata(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * Removes all properties from the metadata of the specified {@link MetadataEntity}. This API only supports
@@ -104,7 +103,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove properties for
    */
-  void removeProperties(MetadataEntity metadataEntity);
+  void removeProperties(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * Removes the specified keys from the metadata properties of the specified {@link MetadataEntity}. This API only
@@ -113,7 +112,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove
    */
-  void removeProperties(MetadataEntity metadataEntity, Set<String> keys);
+  void removeProperties(MetadataEntity metadataEntity, Set<String> keys) throws IOException;
 
   /**
    * Removes all tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -121,7 +120,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove tags for
    */
-  void removeTags(MetadataEntity metadataEntity);
+  void removeTags(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * Removes the specified tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -130,14 +129,13 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tags the tags to remove
    */
-  void removeTags(MetadataEntity metadataEntity, Set<String> tags);
+  void removeTags(MetadataEntity metadataEntity, Set<String> tags) throws IOException;
 
   /**
-   * Executes a search for CDAP entities in the specified namespace with the specified search query and
-   * an optional set of entity types in the specified {@link MetadataScope}.
+   * Executes a search for CDAP entities.
    *
    * @param request the search request
-   * @return the {@link MetadataSearchResponse} containing search results for the specified search query and filters
+   * @return the {@link SearchResponse} containing the results for the request
    */
-  MetadataSearchResponse search(SearchRequest request) throws Exception;
+  SearchResponse search(SearchRequest request) throws Exception;
 }

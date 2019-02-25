@@ -20,7 +20,6 @@ import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.client.app.AllProgramsApp;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
@@ -47,8 +46,6 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -141,43 +138,13 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
           toSet(CollapseType.ACCESS));
       Assert.assertEquals(expected, lineage);
 
-      // Assert metadata
-      // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
-      ProgramId programForWorker = new ProgramId(worker.getNamespace(), worker.getApplication(), worker.getType(),
-                                                 worker.getEntityName());
-      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, emptyMap(), emptySet()),
-                                new MetadataRecord(programForWorker, MetadataScope.USER, emptyMap(),
-                                                   workerTags),
-                                new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
-                                                   emptySet())),
-                          getMetadataForRun(worker.run(workerRunId.getId()).toMetadataEntity()));
-
-      // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
-      ProgramId programForSpark = new ProgramId(spark.getNamespace(), spark.getApplication(), spark.getType(),
-                                                spark.getEntityName());
-      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, emptyMap(), emptySet()),
-                                new MetadataRecord(programForSpark, MetadataScope.USER, emptyMap(),
-                                                   sparkTags),
-                                new MetadataRecord(dataset, MetadataScope.USER, datasetProperties,
-                                                   emptySet()),
-                                new MetadataRecord(dataset2, MetadataScope.USER, emptyMap(), emptySet()),
-                                new MetadataRecord(dataset3, MetadataScope.USER, emptyMap(), emptySet())),
-                          getMetadataForRun(spark.run(sparkRunId.getId()).toMetadataEntity()));
     } finally {
       namespaceClient.delete(namespace);
     }
   }
 
   @Test
-  public void testLineageInNonExistingNamespace() throws Exception {
-    NamespaceId namespace = new NamespaceId("nonExistent");
-    ApplicationId app = namespace.app(AllProgramsApp.NAME);
-    ProgramId mr = app.mr(AllProgramsApp.NoOpMR.NAME);
-    assertRunMetadataNotFound(mr.run(RunIds.generate(1000).getId()));
-  }
-
-  @Test
-  public void testLineageForNonExistingEntity() throws Exception {
+  public void testLineageForNonExistingEntity() {
     DatasetId datasetInstance = NamespaceId.DEFAULT.dataset("dummy");
     fetchLineage(datasetInstance, -100, 200, 10, BadRequestException.class);
     fetchLineage(datasetInstance, 100, -200, 10, BadRequestException.class);
@@ -222,13 +189,5 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
   @SafeVarargs
   private static <T> Set<T> toSet(T... elements) {
     return ImmutableSet.copyOf(elements);
-  }
-
-  private Set<String> emptySet() {
-    return Collections.emptySet();
-  }
-
-  private Map<String, String> emptyMap() {
-    return Collections.emptyMap();
   }
 }

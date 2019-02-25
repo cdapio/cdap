@@ -33,7 +33,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -41,7 +40,6 @@ import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.EndPointField;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.MessagingLineageWriter;
@@ -79,7 +77,11 @@ import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.proto.metadata.lineage.ProgramRunOperations;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.scheduler.ProgramScheduleService;
+import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataConstants;
+import co.cask.cdap.spi.metadata.MetadataMutation;
+import co.cask.cdap.spi.metadata.MetadataStorage;
+import co.cask.cdap.spi.metadata.Read;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -87,6 +89,7 @@ import com.google.inject.Injector;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -98,6 +101,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * Unit test for {@link MetadataSubscriberService} and corresponding writers.
@@ -247,13 +251,13 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testMetadata() throws InterruptedException, TimeoutException, ExecutionException {
+  public void testMetadata() throws InterruptedException, TimeoutException, ExecutionException, IOException {
     ProgramRunId workflowRunId = workflow1.run(RunIds.generate());
     MetadataEntity entity = MetadataEntity.ofDataset("myns", "myds");
 
     // Try to read, should have nothing
-    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
-    MetadataRecord meta = metadataStore.getMetadata(MetadataScope.USER, entity);
+    MetadataStorage metadataStorage = getInjector().getInstance(MetadataStorage.class);
+    Metadata meta = metadataStorage.read(new Read(entity, MetadataScope.USER));
     Assert.assertTrue(meta.getProperties().isEmpty());
     Assert.assertTrue(meta.getTags().isEmpty());
 
@@ -267,36 +271,37 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     metadataPublisher.publish(NamespaceId.SYSTEM, new MetadataOperation.Create(entity, props, tags));
 
     // wait until meta data is written
-    waitForSystemMetadata(entity, metadataStore, 3, 1);
+    waitForSystemMetadata(entity, metadataStorage, 3, 1);
 
     // validate correctness of meta data after create
-    meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-    Assert.assertEquals(props, meta.getProperties());
-    Assert.assertEquals(tags, meta.getTags());
+    meta = metadataStorage.read(new Read(entity, MetadataScope.SYSTEM));
+    Assert.assertEquals(props, meta.getProperties(MetadataScope.SYSTEM));
+    Assert.assertEquals(tags, meta.getTags(MetadataScope.SYSTEM));
 
     // publish another create event with different create time, no description, different tags
     Set<String> tags2 = ImmutableSet.of("another", "two");
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
       entity, ImmutableMap.of(creationTimeKey, "9876543", "new", "prop"), tags2));
     // wait until meta data is written
-    waitForSystemMetadata(entity, metadataStore, 3, 2);
+    waitForSystemMetadata(entity, metadataStorage, 3, 2);
 
     // validate correctness of meta data: creation time and description unchanged, other new property there
-    meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
+    meta = metadataStorage.read(new Read(entity, MetadataScope.SYSTEM));
     Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "desc1", "new", "prop"),
-                        meta.getProperties());
-    Assert.assertEquals(tags2, meta.getTags());
+                        meta.getProperties(MetadataScope.SYSTEM));
+    Assert.assertEquals(tags2, meta.getTags(MetadataScope.SYSTEM));
 
     // publish another create event without create time, different description, no tags
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Create(
       entity, ImmutableMap.of(descriptionKey, "some"), Collections.emptySet()));
     // wait until meta data is written
-    waitForSystemMetadata(entity, metadataStore, 2, 0);
+    waitForSystemMetadata(entity, metadataStorage, 2, 0);
 
     // validate correctness of meta data: same creation time, updated description and other props and tags
-    meta = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-    Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "some"), meta.getProperties());
-    Assert.assertEquals(Collections.emptySet(), meta.getTags());
+    meta = metadataStorage.read(new Read(entity, MetadataScope.SYSTEM));
+    Assert.assertEquals(ImmutableMap.of(creationTimeKey, "123456", descriptionKey, "some"),
+                        meta.getProperties(MetadataScope.SYSTEM));
+    Assert.assertEquals(Collections.emptySet(), meta.getTags(MetadataScope.SYSTEM));
 
     // publish metadata put
     Map<String, String> propertiesToAdd = ImmutableMap.of("a", "x", "b", "z");
@@ -304,24 +309,24 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 2, 2);
+    waitForMetadata(entity, metadataStorage, 2, 2);
 
     // validate correctness of meta data written
-    meta = metadataStore.getMetadata(MetadataScope.USER, entity);
-    Assert.assertEquals(propertiesToAdd, meta.getProperties());
-    Assert.assertEquals(tagsToAdd, meta.getTags());
+    meta = metadataStorage.read(new Read(entity, MetadataScope.USER));
+    Assert.assertEquals(propertiesToAdd, meta.getProperties(MetadataScope.USER));
+    Assert.assertEquals(tagsToAdd, meta.getTags(MetadataScope.USER));
 
     // publish metadata delete
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Delete(
       entity, Collections.singleton("a"), ImmutableSet.of("t1", "t3")));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 1, 1);
+    waitForMetadata(entity, metadataStorage, 1, 1);
 
     // validate correctness of meta data after delete
-    meta = metadataStore.getMetadata(MetadataScope.USER, entity);
-    Assert.assertEquals(ImmutableMap.of("b", "z"), meta.getProperties());
-    Assert.assertEquals(ImmutableSet.of("t2"), meta.getTags());
+    meta = metadataStorage.read(new Read(entity, MetadataScope.USER));
+    Assert.assertEquals(ImmutableMap.of("b", "z"), meta.getProperties(MetadataScope.USER));
+    Assert.assertEquals(ImmutableSet.of("t2"), meta.getTags(MetadataScope.USER));
 
     // publish metadata put properties
     metadataPublisher.publish(workflowRunId,
@@ -329,50 +334,50 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     // wait until meta data is written
     // one of the property key already exist so for that value will be just overwritten hence size is 2
-    waitForMetadata(entity, metadataStore, 2, 1);
+    waitForMetadata(entity, metadataStorage, 2, 1);
 
     // publish metadata put tags
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, Collections.emptyMap(), tagsToAdd));
 
     // wait until meta data is written
     // one of the tags already exists hence size is 2
-    waitForMetadata(entity, metadataStore, 2, 2);
+    waitForMetadata(entity, metadataStorage, 2, 2);
 
     // publish delete all properties
     metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllProperties(entity));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 0, 2);
+    waitForMetadata(entity, metadataStorage, 0, 2);
 
     // publish delete all tags
     metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAllTags(entity));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 0, 0);
+    waitForMetadata(entity, metadataStorage, 0, 0);
 
     // publish metadata put tags
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 2, 2);
+    waitForMetadata(entity, metadataStorage, 2, 2);
 
     // publish delete all
     metadataPublisher.publish(workflowRunId, new MetadataOperation.DeleteAll(entity));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 0, 0);
+    waitForMetadata(entity, metadataStorage, 0, 0);
 
     // publish metadata put tags
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Put(entity, propertiesToAdd, tagsToAdd));
 
     // wait until meta data is written
-    waitForMetadata(entity, metadataStore, 2, 2);
+    waitForMetadata(entity, metadataStorage, 2, 2);
 
     // publish drop entity
     metadataPublisher.publish(workflowRunId, new MetadataOperation.Drop(entity));
     // wait until meta data is deleted
-    waitForSystemMetadata(entity, metadataStore, 0, 0);
-    waitForMetadata(entity, metadataStore, 0, 0);
+    waitForSystemMetadata(entity, metadataStorage, 0, 0);
+    waitForMetadata(entity, metadataStorage, 0, 0);
   }
 
   @Test
@@ -385,9 +390,9 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ScheduleId scheduleId = appId.schedule("tsched1");
 
     // get the mds should be empty property since we haven't started the MetadataSubscriberService
-    MetadataStore mds = injector.getInstance(MetadataStore.class);
-    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
-    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(scheduleId.toMetadataEntity()));
+    MetadataStorage mds = injector.getInstance(MetadataStorage.class);
+    Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(workflowId.toMetadataEntity())).getProperties());
+    Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(scheduleId.toMetadataEntity())).getProperties());
 
     // add a app with workflow to app meta store
     // note: since we bypass the app-fabric when adding this app, no ENTITY_CREATION message
@@ -426,11 +431,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     try {
       // Verify the workflow profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
-                    () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+                    () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
-                    () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
+                    () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
 
@@ -439,10 +444,10 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                        Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile"));
 
       // Verify the workflow profile metadata is updated to my profile
-      Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to my profile
-      Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // set app level to use my profile 2
@@ -454,30 +459,30 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                                                 ProfileId.NATIVE.getScopedName()));
 
       // Verify the workflow profile metadata is updated to MyProfile2 which is at app level
-      Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to MyProfile2 which is at app level
-      Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove the preferences at instance level, should not affect the metadata
       preferencesService.deleteProperties();
 
       // Verify the workflow profile metadata is updated to default profile
-      Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
-      Tasks.waitFor(myProfile2.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove app level pref should let the programs/schedules use ns level pref
       preferencesService.deleteProperties(appId);
 
       // Verify the workflow profile metadata is updated to MyProfile
-      Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to MyProfile
-      Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove ns level pref so no pref is there
@@ -485,11 +490,11 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
       // Verify the workflow profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
-                    () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+                    () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
-                    () -> mds.getProperties(scheduleId.toMetadataEntity()).get("profile"),
+                    () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       // stop and clean up the store
@@ -501,8 +506,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       profileService.disableProfile(myProfile);
       profileService.disableProfile(myProfile2);
       profileService.deleteAllProfiles(myProfile.getNamespaceId());
-      mds.removeMetadata(workflowId.toMetadataEntity());
-      mds.removeMetadata(scheduleId.toMetadataEntity());
+      mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()));
+      mds.apply(new MetadataMutation.Drop(scheduleId.toMetadataEntity()));
     }
   }
 
@@ -523,8 +528,8 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ProgramId workflowId = appId.workflow("SampleWorkflow");
 
     // get the metadata - should be empty since we haven't deployed the app
-    MetadataStore mds = injector.getInstance(MetadataStore.class);
-    Assert.assertEquals(Collections.emptyMap(), mds.getProperties(workflowId.toMetadataEntity()));
+    MetadataStorage mds = injector.getInstance(MetadataStorage.class);
+    Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(workflowId.toMetadataEntity())).getProperties());
 
     Store store = injector.getInstance(DefaultStore.class);
     store.addApplication(appId, appSpec);
@@ -537,15 +542,14 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     try {
       // Verify the workflow profile metadata is updated to my profile
-      Tasks.waitFor(myProfile.getScopedName(), () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // Set the property without profile is a replacement of the preference, so it is same as deletion of the profile
       preferencesService.setProperties(NamespaceId.DEFAULT, Collections.emptyMap());
 
       // Verify the workflow profile metadata is updated to default profile
-      Tasks.waitFor(ProfileId.NATIVE.getScopedName(),
-                    () -> mds.getProperties(workflowId.toMetadataEntity()).get("profile"),
+      Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     } finally {
       // stop and clean up the store
@@ -553,22 +557,29 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       store.removeAllApplications(NamespaceId.DEFAULT);
       profileService.disableProfile(myProfile);
       profileService.deleteProfile(myProfile);
-      mds.removeMetadata(workflowId.toMetadataEntity());
+      mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()));
     }
   }
-  private void waitForMetadata(MetadataEntity entity, MetadataStore metadataStore, int propertiesSize,
+
+  @Nullable
+  private String getProfileProperty(MetadataStorage mds, NamespacedEntityId workflowId) throws IOException {
+    return mds.read(new Read(workflowId.toMetadataEntity()))
+      .getProperties(MetadataScope.SYSTEM).get("profile");
+  }
+
+  private void waitForMetadata(MetadataEntity entity, MetadataStorage metadataStorage, int propertiesSize,
                                int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
     Tasks.waitFor(true, () -> {
-      MetadataRecord record = metadataStore.getMetadata(MetadataScope.USER, entity);
-      return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
+      Metadata meta = metadataStorage.read(new Read(entity, MetadataScope.USER));
+      return meta.getProperties().size() == propertiesSize && meta.getTags().size() == tagSize;
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
-  private void waitForSystemMetadata(MetadataEntity entity, MetadataStore metadataStore, int propertiesSize,
+  private void waitForSystemMetadata(MetadataEntity entity, MetadataStorage metadataStorage, int propertiesSize,
                                      int tagSize) throws TimeoutException, InterruptedException, ExecutionException {
     Tasks.waitFor(true, () -> {
-      MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, entity);
-      return record.getProperties().size() == propertiesSize && record.getTags().size() == tagSize;
+      Metadata meta = metadataStorage.read(new Read(entity, MetadataScope.SYSTEM));
+      return meta.getProperties().size() == propertiesSize && meta.getTags().size() == tagSize;
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
@@ -584,7 +595,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
     // get the mds and put some workflow metadata in that, the publish of app deletion message should get the metadata
     // deleted
-    MetadataStore mds = injector.getInstance(MetadataStore.class);
+    MetadataStorage mds = injector.getInstance(MetadataStorage.class);
 
     // use an app with all program types to get all specification tested
     ApplicationId appId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
@@ -593,16 +604,17 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
 
     // need to put metadata on workflow since we currently only set or delete workflow metadata
-    mds.addProperties(MetadataScope.SYSTEM, workflowId.toMetadataEntity(),
-                      Collections.singletonMap("profile", ProfileId.NATIVE.getScopedName()));
-    Assert.assertEquals(ProfileId.NATIVE.getScopedName(),
-                        mds.getProperties(workflowId.toMetadataEntity()).get("profile"));
+    mds.apply(new MetadataMutation.Update(workflowId.toMetadataEntity(),
+                                          new Metadata(MetadataScope.SYSTEM,
+                                                       Collections.singletonMap("profile",
+                                                                                ProfileId.NATIVE.getScopedName()))));
+    Assert.assertEquals(ProfileId.NATIVE.getScopedName(), getProfileProperty(mds, workflowId));
 
     // publish app deletion message
     publisher.publishAppDeletion(appId, appSpec);
 
     // Verify the workflow profile metadata is removed because of the publish app deletion message
-    Tasks.waitFor(Collections.emptyMap(), () -> mds.getProperties(workflowId.toMetadataEntity()),
+    Tasks.waitFor(true, () -> mds.read(new Read(workflowId.toMetadataEntity())).isEmpty(),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 }

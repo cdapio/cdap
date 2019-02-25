@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 /**
  * Utility to validate metadata keys and values.
  */
-public class MetadataValidator {
+class MetadataValidator {
 
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
@@ -50,23 +50,22 @@ public class MetadataValidator {
   /**
    * Constructor only takes the configuration to determine the maximal allowed length for a key.
    */
-  public MetadataValidator(CConfiguration cConf) {
+  MetadataValidator(CConfiguration cConf) {
     maxCharacters = cConf.getInt(Constants.Metadata.MAX_CHARS_ALLOWED);
   }
 
   /**
-   * Validate metadata properties and return whether any properties are present.
+   * Validate metadata properties.
    *
    * @param metadataEntity the target entity
    * @param properties the properties to be set
-   * @return true if properties is non-null and not empty
    * @throws InvalidMetadataException if any of the keys or values are invalid
    */
-  public boolean validateProperties(MetadataEntity metadataEntity,
-                                    @Nullable Map<String, String> properties) throws InvalidMetadataException {
+  void validateProperties(MetadataEntity metadataEntity,
+                          @Nullable Map<String, String> properties) throws InvalidMetadataException {
 
     if (null == properties || properties.isEmpty()) {
-      return false;
+      return;
     }
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       // validate key
@@ -78,27 +77,24 @@ public class MetadataValidator {
       validateValueFormat(metadataEntity, entry.getValue());
       validateLength(metadataEntity, entry.getValue());
     }
-    return true;
   }
 
   /**
-   * Validate metadata tags and return whether any properties are present.
+   * Validate metadata tags.
    *
    * @param metadataEntity the target entity
    * @param tags the tags to be set
-   * @return true if tags is non-null and not empty
    * @throws InvalidMetadataException if any of the keys or values are invalid
    */
-  public boolean validateTags(MetadataEntity metadataEntity,
-                              @Nullable Set<String> tags) throws InvalidMetadataException {
+  void validateTags(MetadataEntity metadataEntity,
+                    @Nullable Set<String> tags) throws InvalidMetadataException {
     if (null == tags || tags.isEmpty()) {
-      return false;
+      return;
     }
     for (String tag : tags) {
       validateKeyAndTagsFormat(metadataEntity, tag);
       validateLength(metadataEntity, tag);
     }
-    return true;
   }
 
   /**

@@ -25,8 +25,6 @@ import co.cask.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.LineageStoreReader;
 import co.cask.cdap.data2.metadata.lineage.field.DefaultFieldLineageReader;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageReader;
-import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.StorageProviderMetadataStore;
 import co.cask.cdap.data2.metadata.writer.FieldLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
@@ -73,8 +71,7 @@ public class PreviewDataModules {
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
         bind(MetadataStorage.class).to(DatasetMetadataStorage.class);
-        bind(MetadataStore.class).to(StorageProviderMetadataStore.class);
-        expose(MetadataStore.class);
+        expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)
           .annotatedWith(Names.named("localDatasetFramework"))

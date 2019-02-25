@@ -16,9 +16,9 @@
 
 package co.cask.cdap.master.environment.k8s;
 
-import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -31,20 +31,20 @@ final class StorageCreationService extends AbstractIdleService {
 
   private final StructuredTableAdmin tableAdmin;
   private final StructuredTableRegistry tableRegistry;
-  private final MetadataStore metadataStore;
+  private final MetadataStorage metadataStorage;
 
   @Inject
   StorageCreationService(StructuredTableAdmin tableAdmin,
-                         StructuredTableRegistry tableRegistry, MetadataStore metadataStore) {
+                         StructuredTableRegistry tableRegistry, MetadataStorage metadataStorage) {
     this.tableAdmin = tableAdmin;
     this.tableRegistry = tableRegistry;
-    this.metadataStore = metadataStore;
+    this.metadataStorage = metadataStorage;
   }
 
   @Override
   protected void startUp() throws Exception {
     StoreDefinition.createAllTables(tableAdmin, tableRegistry);
-    metadataStore.createIndex();
+    metadataStorage.createIndex();
   }
 
   @Override
