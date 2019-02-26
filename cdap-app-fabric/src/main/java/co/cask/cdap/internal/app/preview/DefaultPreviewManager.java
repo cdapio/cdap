@@ -198,6 +198,8 @@ public class DefaultPreviewManager implements PreviewManager {
     previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
+    // Use No-SQL store for preview data
+    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf),
