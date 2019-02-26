@@ -59,6 +59,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -121,6 +122,9 @@ public abstract class AbstractServiceMain extends DaemonMain {
   @Override
   public final void init(String[] args) throws MalformedURLException {
     LOG.info("Initializing master service class {}", getClass().getName());
+
+    // Intercept JUL loggers
+    SLF4JBridgeHandler.install();
 
     ConfigOptions opts = new ConfigOptions();
     OptionsParser.init(opts, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
