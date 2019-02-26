@@ -16,6 +16,7 @@
 
 package co.cask.cdap.store;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.StructuredRow;
@@ -30,7 +31,6 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -41,7 +41,6 @@ import javax.annotation.Nullable;
  */
 public final class NamespaceTable {
   private static final Gson GSON = new Gson();
-  private static final String SMALLEST_POSSIBLE_STRING = "";
 
   private StructuredTable table;
 
@@ -96,16 +95,13 @@ public final class NamespaceTable {
    * @return list of all namespace metas
    */
   public List<NamespaceMeta> list() throws IOException {
-    Iterator<StructuredRow> iterator = table.scan(
-      Range.from(ImmutableList.of(
-        Fields.stringField(
-          StoreDefinition.NamespaceStore.NAMESPACE_FIELD, SMALLEST_POSSIBLE_STRING)),
-                 Range.Bound.INCLUSIVE), Integer.MAX_VALUE);
     List<NamespaceMeta> result = new ArrayList<>();
-    while (iterator.hasNext()) {
-      result.add(
-        GSON.fromJson(
-          iterator.next().getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD), NamespaceMeta.class));
+    try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        result.add(
+          GSON.fromJson(
+            iterator.next().getString(StoreDefinition.NamespaceStore.NAMESPACE_METADATA_FIELD), NamespaceMeta.class));
+      }
     }
     return result;
   }
