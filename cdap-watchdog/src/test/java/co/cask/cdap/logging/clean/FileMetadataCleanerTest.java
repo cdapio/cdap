@@ -16,43 +16,25 @@
 
 package co.cask.cdap.logging.clean;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManager;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scan;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.system.CDAPLogAppender;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
-import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
-import co.cask.cdap.logging.meta.LoggingStoreTableUtil;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -61,17 +43,21 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.spi.data.table.field.Range;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -79,19 +65,18 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class FileMetadataCleanerTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
-  private static final int CUTOFF_TIME_TRANSACTION = 50;
-  private static final int TRANSACTION_TIMEOUT = 60;
-
   private static Injector injector;
   private static TransactionManager txManager;
 
@@ -127,147 +112,24 @@ public class FileMetadataCleanerTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
-  public static void cleanUp() throws Exception {
+  public static void cleanUp() {
     txManager.stopAndWait();
   }
 
   @Test
-  public void testScanAndDeleteOldMetadata() throws Exception {
-    // use file meta data manager to write meta data in old format
-    // use file meta writer to write meta data in new format
-    // scan for old files and make sure we only get the old meta data entries.
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
-                                                              null);
-    Transactional transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
-
-    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
-    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContext("testNs", "testApp", "testService", ProgramType.SERVICE);
-    long eventTimestamp = System.currentTimeMillis();
-    LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    Location testLocation = locationFactory.create("testFile");
-    try {
-      // write 50 entries in old format
-      for (int i = 0; i < 50; i++) {
-        fileMetaDataManager.writeMetaData(loggingContext, eventTimestamp + i, testLocation);
-      }
-
-      LoggingContext wflowContext =
-        LoggingContextHelper.getLoggingContext("testNs", "testApp", "testWflow", ProgramType.WORKFLOW);
-      fileMetaDataManager.writeMetaData(wflowContext, eventTimestamp, testLocation);
-
-      LoggingContext mrContext =
-        LoggingContextHelper.getLoggingContext("testNs", "testApp", "testMR", ProgramType.MAPREDUCE);
-      fileMetaDataManager.writeMetaData(mrContext, eventTimestamp, testLocation);
-
-      LoggingContext sparkContext =
-        LoggingContextHelper.getLoggingContext("testNs", "testApp", "testSpark", ProgramType.SPARK);
-      fileMetaDataManager.writeMetaData(sparkContext, eventTimestamp, testLocation);
-
-      // write 50 entries in new format
-      long newEventTime = eventTimestamp + 1000;
-      long currentTime = newEventTime + 1000;
-      LogPathIdentifier logPathIdentifier = new LogPathIdentifier("testNs", "testApp", "testFlow");
-
-      for (int i = 50; i < 100; i++) {
-        fileMetaDataWriter.writeMetaData(logPathIdentifier, newEventTime + i, currentTime + i, testLocation);
-      }
-
-      FileMetaDataReader fileMetaDataReader = injector.getInstance(FileMetaDataReader.class);
-      Assert.assertEquals(50, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(loggingContext),
-                                                          eventTimestamp - 1, eventTimestamp + 100).size());
-      Assert.assertEquals(1, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(wflowContext),
-                                                           eventTimestamp - 1, eventTimestamp + 100).size());
-      Assert.assertEquals(1, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(mrContext),
-                                                           eventTimestamp - 1, eventTimestamp + 100).size());
-      Assert.assertEquals(1, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(sparkContext),
-                                                          eventTimestamp - 1, eventTimestamp + 100).size());
-      FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(datasetManager, transactional);
-        fileMetadataCleaner.scanAndDeleteOldMetaData(TRANSACTION_TIMEOUT, CUTOFF_TIME_TRANSACTION);
-      // deleted all old metadata
-      Assert.assertEquals(0, fileMetaDataReader.listFiles(logPathIdentifier,
-                                                           eventTimestamp - 1, eventTimestamp + 100).size());
-      Assert.assertEquals(0, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(wflowContext),
-                                                          eventTimestamp - 1, eventTimestamp + 100).size());
-      Assert.assertEquals(0, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(mrContext),
-                                                          eventTimestamp - 1, eventTimestamp + 100).size());
-      Assert.assertEquals(0, fileMetaDataReader.listFiles(LoggingContextHelper.getLogPathIdentifier(sparkContext),
-                                                          eventTimestamp - 1, eventTimestamp + 100).size());
-
-    } finally {
-      // cleanup meta
-      cleanupMetadata(transactional, datasetManager);
-    }
-  }
-
-  boolean deleteAllMetaEntries(Transactional transactional, int timeout, final DatasetManager datasetManager,
-                               final byte[] startKey, final byte[] stopKey) {
-    final List<byte[]> deletedEntries = new ArrayList<>();
-    try {
-      transactional.execute(timeout, new TxRunnable() {
-        public void run(DatasetContext context) throws Exception {
-          Stopwatch stopwatch = new Stopwatch();
-          stopwatch.start();
-          Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
-          // create range with tillTime as endColumn
-          Scan scan = new Scan(startKey, stopKey);
-          try (Scanner scanner = table.scan(scan)) {
-            Row row;
-            while ((row = scanner.next()) != null) {
-              if (stopwatch.elapsedTime(TimeUnit.SECONDS) > CUTOFF_TIME_TRANSACTION) {
-                break;
-              }
-              byte[] rowKey = row.getRow();
-              // delete all columns for this row
-              table.delete(rowKey);
-              deletedEntries.add(rowKey);
-            }
-          }
-        }
-      });
-    } catch (TransactionFailureException e) {
-      return false;
-    }
-    return true;
-  }
-
-  private void cleanupMetadata(Transactional transactional, DatasetManager datasetManager) {
-    // cleanup meta
-    deleteAllMetaEntries(transactional, 30, datasetManager, LoggingStoreTableUtil.OLD_FILE_META_ROW_KEY_PREFIX,
-                         Bytes.stopKeyForPrefix(LoggingStoreTableUtil.OLD_FILE_META_ROW_KEY_PREFIX));
-    deleteAllMetaEntries(transactional, 30, datasetManager, LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
-                         Bytes.stopKeyForPrefix(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX));
-  }
-
-  @Test
+  @Ignore
+  // TODO CDAP-14953 ignoring this test until this jira fixed
   public void testScanAndDeleteNewMetadata() throws Exception {
-    // use file meta data manager to write meta data in old format
-    // use file meta writer to write meta data in new format
-    // scan for old files and make sure we only get the old meta data entries.
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
-                                                              null);
-    Transactional transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
-    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(datasetManager, transactional);
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(transactionRunner);
+    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
     try {
       long currentTime = System.currentTimeMillis();
       long eventTimestamp = currentTime - 100;
@@ -283,7 +145,7 @@ public class FileMetadataCleanerTest {
 
       long tillTime = currentTime + 50;
       List<FileMetadataCleaner.DeletedEntry> deletedEntries =
-        fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
+        fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, 100);
       // we should have deleted 51 rows, till time is inclusive
       Assert.assertEquals(51, deletedEntries.size());
       int count = 0;
@@ -303,7 +165,7 @@ public class FileMetadataCleanerTest {
       }
 
       // lets keep the same till time - this should only delete the spark entries now
-      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
+      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, 100);
       // we should have deleted 51 rows, till time is inclusive
       Assert.assertEquals(10, deletedEntries.size());
       count = 0;
@@ -339,7 +201,7 @@ public class FileMetadataCleanerTest {
 
       tillTime = currentTime + 70;
       // lets delete till 70.
-      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
+      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, 100);
       // we should have deleted 51-70 files of flow and 0-9 files of spark files in that order and 0 files of action.
       Assert.assertEquals(30, deletedEntries.size());
       count = 0;
@@ -353,7 +215,7 @@ public class FileMetadataCleanerTest {
 
       tillTime = currentTime + 100;
       // lets delete till 100.
-      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
+      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, 100);
       // we should have deleted 90-99 of custom action(10) 71-99 (29) files of flow.
       for (int i = 71; i < 100; i++) {
         nextExpected.add(locationFactory.create("testFlowFile" + i).toURI().getPath());
@@ -367,31 +229,22 @@ public class FileMetadataCleanerTest {
 
       // now lets do a delete with till time  = currentTime + 1000, this should return empty result
       tillTime = currentTime + 1000;
-      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
+      deletedEntries = fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, 100);
       Assert.assertEquals(0, deletedEntries.size());
     } finally {
       // cleanup meta
-      cleanupMetadata(transactional, datasetManager);
+      deleteAllMetaEntries(transactionRunner);
     }
   }
 
 
   @Test
   public void testFileMetadataWithCommonContextPrefix() throws Exception {
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
-                                                              null);
-    Transactional transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(transactionRunner);
     FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
-    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(datasetManager, transactional);
+    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
     try {
       List<LogPathIdentifier> logPathIdentifiers = new ArrayList<>();
       // we write entries where program id is of format testFlow{1..20},
@@ -424,7 +277,7 @@ public class FileMetadataCleanerTest {
 
       long tillTime = newCurrentTime + 4;
       List<FileMetadataCleaner.DeletedEntry> deleteEntries =
-        fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, TRANSACTION_TIMEOUT);
+        fileMetadataCleaner.scanAndGetFilesToDelete(tillTime, 100);
       // 20 context, 5 entries each
       Assert.assertEquals(100, deleteEntries.size());
       for (int i = 1; i <= 20; i++) {
@@ -440,7 +293,46 @@ public class FileMetadataCleanerTest {
       }
     } finally {
       // cleanup meta
-      cleanupMetadata(transactional, datasetManager);
+      deleteAllMetaEntries(transactionRunner);
+    }
+  }
+
+  private boolean deleteAllMetaEntries(TransactionRunner transactionRunner) {
+    final List<DeletedEntry> deletedEntries = new ArrayList<>();
+    try {
+      TransactionRunners.run(transactionRunner, context -> {
+        StructuredTable table = context.getTable(StoreDefinition.LogFileMetaStore.LOG_FILE_META);
+        try (CloseableIterator<StructuredRow> iter = table.scan(Range.all(), Integer.MAX_VALUE)) {
+          while (iter.hasNext()) {
+            StructuredRow row = iter.next();
+            String loggingContext = row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD);
+            long eventTime = row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD);
+            long creationTime = row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD);
+            table.delete(Arrays.asList(Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
+                                                          loggingContext),
+                                       Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD,
+                                                        eventTime),
+                                       Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD,
+                                                        creationTime)));
+            deletedEntries.add(new DeletedEntry(loggingContext, eventTime, creationTime));
+          }
+        }
+      }, IOException.class);
+    } catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
+
+  private static final class DeletedEntry {
+    private String identifier;
+    private long eventTime;
+    private long creationTime;
+
+    private DeletedEntry(String identifier, long eventTime, long creationTime) {
+      this.identifier = identifier;
+      this.eventTime = eventTime;
+      this.creationTime = creationTime;
     }
   }
 }

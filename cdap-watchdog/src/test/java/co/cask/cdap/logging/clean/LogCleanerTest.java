@@ -16,8 +16,6 @@
 
 package co.cask.cdap.logging.clean;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -26,21 +24,15 @@ import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.system.CDAPLogAppender;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
@@ -48,15 +40,16 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -106,33 +99,24 @@ public class LogCleanerTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
-  public static void cleanUp() throws Exception {
+  public static void cleanUp() {
     txManager.stopAndWait();
   }
 
   @Test
   public void testLogCleanup() throws Exception {
-    // use file meta data manager to write meta data in old format
-    // use file meta writer to write meta data in new format
-    // scan for old files and make sure we only get the old meta data entries.
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
-                                                              null);
-    Transactional transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
-    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(datasetManager, transactional);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    FileMetadataCleaner fileMetadataCleaner = new FileMetadataCleaner(transactionRunner);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     long currentTime = System.currentTimeMillis();
     LogPathIdentifier logPathIdentifier = new LogPathIdentifier("testNs", "testApp", "testEntity");
-    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(transactionRunner);
     long startTime = currentTime - 5000;
     Location dirLocation = locationFactory.create("logs");
     dirLocation.mkdirs();

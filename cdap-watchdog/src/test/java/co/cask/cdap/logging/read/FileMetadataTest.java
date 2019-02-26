@@ -16,33 +16,23 @@
 
 package co.cask.cdap.logging.read;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.system.CDAPLogAppender;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
-import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.meta.FileMetaDataReader;
 import co.cask.cdap.logging.meta.FileMetaDataWriter;
-import co.cask.cdap.logging.write.FileMetaDataManager;
 import co.cask.cdap.logging.write.LogLocation;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -52,15 +42,16 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.spi.data.StructuredTableAdmin;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.store.StoreDefinition;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionManager;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -112,27 +103,20 @@ public class FileMetadataTest {
 
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
+    StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    structuredTableRegistry.initialize();
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
   }
 
   @AfterClass
-  public static void cleanUp() throws Exception {
+  public static void cleanUp() {
     txManager.stopAndWait();
   }
 
   @Test
   public void testFileMetadataReadWrite() throws Exception {
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
-                                                              null);
-    Transactional transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
-
-    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(transactionRunner);
     LogPathIdentifier logPathIdentifier =
       new LogPathIdentifier(NamespaceId.DEFAULT.getNamespace(), "testApp", "testFlow");
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
@@ -170,33 +154,13 @@ public class FileMetadataTest {
 
   @Test
   public void testFileMetadataReadWriteAcrossFormats() throws Exception {
-    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
-    DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
-                                                              null);
-    Transactional transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
-    FileMetaDataManager fileMetaDataManager = injector.getInstance(FileMetaDataManager.class);
-    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(datasetManager, transactional);
+    TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
+    FileMetaDataWriter fileMetaDataWriter = new FileMetaDataWriter(transactionRunner);
     LogPathIdentifier logPathIdentifier =
       new LogPathIdentifier(NamespaceId.DEFAULT.getNamespace(), "testApp", "testFlow");
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
     Location location = locationFactory.create(TMP_FOLDER.newFolder().getPath()).append("/logs");
     long currentTime = System.currentTimeMillis();
-
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContext(NamespaceId.DEFAULT.getNamespace(), "testApp", "testFlow");
-
-    // 10 files in old format
-    for (int i = 1; i <= 10; i++) {
-      // i is the event time
-      fileMetaDataManager.writeMetaData(loggingContext, currentTime + i,
-                                       location.append("testFile" + Integer.toString(i)));
-    }
 
     long eventTime = currentTime + 20;
     long newCurrentTime = currentTime + 100;
@@ -207,16 +171,9 @@ public class FileMetadataTest {
     }
     // reader test
     FileMetaDataReader fileMetadataReader = injector.getInstance(FileMetaDataReader.class);
-    // scan only in old files time range
-    List<LogLocation> locations = fileMetadataReader.listFiles(logPathIdentifier, currentTime + 2, currentTime + 6);
-    // should include files from currentTime (1..6)
-    Assert.assertEquals(6, locations.size());
-    for (LogLocation logLocation : locations) {
-      Assert.assertEquals(LogLocation.VERSION_0, logLocation.getFrameworkVersion());
-    }
 
     // scan only in new files time range
-    locations = fileMetadataReader.listFiles(logPathIdentifier, eventTime + 2, eventTime + 6);
+    List<LogLocation> locations = fileMetadataReader.listFiles(logPathIdentifier, eventTime + 2, eventTime + 6);
     // should include files from currentTime (1..6)
     Assert.assertEquals(6, locations.size());
     for (LogLocation logLocation : locations) {
@@ -225,17 +182,12 @@ public class FileMetadataTest {
 
     // scan time range across formats
     locations = fileMetadataReader.listFiles(logPathIdentifier, currentTime + 2, eventTime + 6);
-    // should include files from old range (1..10) and new range (1..6)
-    Assert.assertEquals(16, locations.size());
+    // should include files from new range (1..6)
+    Assert.assertEquals(6, locations.size());
 
     for (int i = 0; i < locations.size(); i++) {
-      if (i < 10) {
-        Assert.assertEquals(LogLocation.VERSION_0, locations.get(i).getFrameworkVersion());
-        Assert.assertEquals(location.append("testFile" + Integer.toString(i + 1)), locations.get(i).getLocation());
-      } else {
-        Assert.assertEquals(LogLocation.VERSION_1, locations.get(i).getFrameworkVersion());
-        Assert.assertEquals(location.append("testFileNew" + Integer.toString(i - 9)), locations.get(i).getLocation());
-      }
+      Assert.assertEquals(LogLocation.VERSION_1, locations.get(i).getFrameworkVersion());
+      Assert.assertEquals(location.append("testFileNew" + Integer.toString(i + 1)), locations.get(i).getLocation());
     }
   }
 }

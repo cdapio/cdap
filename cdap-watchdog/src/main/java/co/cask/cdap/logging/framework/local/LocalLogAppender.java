@@ -23,16 +23,15 @@ import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.framework.LocalAppenderContext;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
@@ -60,8 +59,7 @@ public class LocalLogAppender extends LogAppender {
   private static final int EVENT_QUEUE_SIZE = 65536;
 
   private final CConfiguration cConf;
-  private final DatasetFramework datasetFramework;
-  private final TransactionSystemClient txClient;
+  private final TransactionRunner transactionRunner;
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final List<LocalLogProcessorPipeline> pipelines;
@@ -70,11 +68,10 @@ public class LocalLogAppender extends LogAppender {
   private final Set<Thread> pipelineThreads;
 
   @Inject
-  LocalLogAppender(CConfiguration cConf, DatasetFramework datasetFramework, TransactionSystemClient txClient,
+  LocalLogAppender(CConfiguration cConf, TransactionRunner transactionRunner,
                    LocationFactory locationFactory, MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
-    this.datasetFramework = datasetFramework;
-    this.txClient = txClient;
+    this.transactionRunner = transactionRunner;
     this.locationFactory = locationFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.pipelines = new ArrayList<>();
@@ -93,8 +90,7 @@ public class LocalLogAppender extends LogAppender {
     // Load and starts all configured log processing pipelines
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf);
     Map<String, LogPipelineSpecification<AppenderContext>> specs =
-      pipelineLoader.load(() -> new LocalAppenderContext(datasetFramework, txClient, locationFactory,
-                                                         metricsCollectionService));
+      pipelineLoader.load(() -> new LocalAppenderContext(transactionRunner, locationFactory, metricsCollectionService));
 
     // Use the event delay as the sync interval
     long syncIntervalMillis = cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS);

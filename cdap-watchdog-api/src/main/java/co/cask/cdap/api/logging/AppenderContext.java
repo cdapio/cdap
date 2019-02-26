@@ -19,15 +19,14 @@ package co.cask.cdap.api.logging;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.Context;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.dataset.DatasetManager;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Context provided to {@link Appender} via the {@link Appender#setContext(Context)} method.
  */
-public abstract class AppenderContext extends LoggerContext implements Transactional {
+public abstract class AppenderContext extends LoggerContext {
 
   /**
    * Returns the current instance id of the log framework.
@@ -40,9 +39,9 @@ public abstract class AppenderContext extends LoggerContext implements Transacti
   public abstract int getInstanceCount();
 
   /**
-   * Returns a {@link DatasetManager} for interacting with the dataset system.
+   * Returns a {@link TransactionRunner} to interact with system tables.
    */
-  public abstract DatasetManager getDatasetManager();
+  public abstract TransactionRunner getTransactionRunner();
 
   /**
    * Returns a {@link LocationFactory} that the log framework is running on.

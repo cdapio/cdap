@@ -301,7 +301,7 @@ public final class NoSqlStructuredTable implements StructuredTable {
     byte[] begin = convertKeyToBytes(keyRange.getBegin(), true);
     byte[] end = convertKeyToBytes(keyRange.getEnd(), true);
 
-    // Table.scan() start key is inclusive by default, and if it is EXCLUSTIVE, we want to ensure the start keys are
+    // Table.scan() start key is inclusive by default, and if it is EXCLUSIVE, we want to ensure the start keys are
     // not empty so that we do not scan from the start of some other table
     if (!keyRange.getBegin().isEmpty() && keyRange.getBeginBound() == Range.Bound.EXCLUSIVE) {
       begin = Bytes.stopKeyForPrefix(begin);

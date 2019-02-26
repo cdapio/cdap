@@ -16,19 +16,20 @@
 
 package co.cask.cdap.logging.meta;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManager;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
+import com.google.common.collect.ImmutableList;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Class for writing log file meta data.
@@ -37,12 +38,10 @@ public class FileMetaDataWriter {
 
   private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataWriter.class);
 
-  private final Transactional transactional;
-  private final DatasetManager datasetManager;
+  private final TransactionRunner transactionRunner;
 
-  public FileMetaDataWriter(DatasetManager datasetManager, Transactional transactional) {
-    this.transactional = transactional;
-    this.datasetManager = datasetManager;
+  public FileMetaDataWriter(TransactionRunner transactionRunner) {
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -59,20 +58,16 @@ public class FileMetaDataWriter {
                             final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
               identifier.getRowkey(), eventTimeMs, currentTimeMs, location);
-    Transactionals.execute(transactional, new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
-        table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
-                  LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
-      }
-    }, Exception.class);
-  }
+    TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.LogFileMetaStore.LOG_FILE_META);
 
-  private byte[] getRowKey(LogPathIdentifier identifier, long eventTime, long currentTime) {
-    return Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
-                        identifier.getRowkey().getBytes(StandardCharsets.UTF_8),
-                        Bytes.toBytes(eventTime),
-                        Bytes.toBytes(currentTime));
+      List<Field<?>> fields =
+        ImmutableList.of(Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
+                                            identifier.getRowkey()),
+                         Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, eventTimeMs),
+                         Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD, currentTimeMs),
+                         Fields.stringField(StoreDefinition.LogFileMetaStore.FILE_FIELD, location.toURI().getPath()));
+      table.upsert(fields);
+    }, IOException.class);
   }
 }

@@ -35,7 +35,6 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.GenericLoggingContext;
@@ -58,12 +57,13 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import org.apache.tephra.TransactionSystemClient;
+
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.kafka.client.Compression;
@@ -232,8 +232,7 @@ public class KafkaLogProcessorPipelineTest {
     Injector injector = KAFKA_TESTER.getInjector();
     MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
     collectionService.startAndWait();
-    LoggerContext loggerContext = new LocalAppenderContext(injector.getInstance(DatasetFramework.class),
-                                                           injector.getInstance(TransactionSystemClient.class),
+    LoggerContext loggerContext = new LocalAppenderContext(injector.getInstance(TransactionRunner.class),
                                                            injector.getInstance(LocationFactory.class),
                                                            injector.getInstance(MetricsCollectionService.class));
     final File logDir = TEMP_FOLDER.newFolder();

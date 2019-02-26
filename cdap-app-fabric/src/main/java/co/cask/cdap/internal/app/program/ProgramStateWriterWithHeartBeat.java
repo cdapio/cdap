@@ -119,7 +119,7 @@ public class ProgramStateWriterWithHeartBeat {
 
   /**
    * If executor service isn't initialized or if its shutdown
-   * create a new exector service and schedule a heartbeat thread
+   * create a new executor service and schedule a heartbeat thread
    */
   private void scheduleHeartBeatThread() {
     if (scheduledExecutorService == null || scheduledExecutorService.isShutdown()) {

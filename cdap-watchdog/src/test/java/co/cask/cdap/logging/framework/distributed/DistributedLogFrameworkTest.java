@@ -124,7 +124,7 @@ public class DistributedLogFrameworkTest {
   }
 
   @After
-  public void afterTest() throws Exception {
+  public void afterTest() {
     injector.getInstance(TransactionManager.class).stopAndWait();
     injector.getInstance(BrokerService.class).stopAndWait();
     injector.getInstance(KafkaClientService.class).stopAndWait();

@@ -16,188 +16,112 @@
 
 package co.cask.cdap.logging.meta;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.table.Row;
-import co.cask.cdap.api.dataset.table.Scanner;
-import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.appender.system.LogPathIdentifier;
 import co.cask.cdap.logging.write.LogLocation;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.spi.data.StructuredRow;
+import co.cask.cdap.spi.data.StructuredTable;
+import co.cask.cdap.spi.data.table.field.Field;
+import co.cask.cdap.spi.data.table.field.Fields;
+import co.cask.cdap.spi.data.table.field.Range;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.store.StoreDefinition;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.inject.Inject;
-import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import static co.cask.cdap.api.Transactionals.execute;
 
 /**
  * class to read log meta data table
  */
 public class FileMetaDataReader {
-  private static final Logger LOG = LoggerFactory.getLogger(FileMetaDataReader.class);
-
-  private static final Comparator<LogLocation> LOG_LOCATION_COMPARATOR = new Comparator<LogLocation>() {
-    @Override
-    public int compare(LogLocation o1, LogLocation o2) {
-      int cmp = Longs.compare(o1.getEventTimeMs(), o2.getEventTimeMs());
-      if (cmp != 0) {
-        return cmp;
-      }
-      // when two log files have same timestamp, we order them by the file creation time
-      return Longs.compare(o1.getFileCreationTimeMs(), o2.getFileCreationTimeMs());
+  private static final Comparator<LogLocation> LOG_LOCATION_COMPARATOR = (o1, o2) -> {
+    int cmp = Longs.compare(o1.getEventTimeMs(), o2.getEventTimeMs());
+    if (cmp != 0) {
+      return cmp;
     }
+    // when two log files have same timestamp, we order them by the file creation time
+    return Longs.compare(o1.getFileCreationTimeMs(), o2.getFileCreationTimeMs());
   };
 
-  private final DatasetFramework datasetFramework;
-  private final Transactional transactional;
+  private final TransactionRunner transactionRunner;
   private final LocationFactory locationFactory;
   private final Impersonator impersonator;
 
   @Inject
-  FileMetaDataReader(final DatasetFramework datasetFramework,
-                     final TransactionSystemClient transactionSystemClient,
-                     final LocationFactory locationFactory, final Impersonator impersonator) {
-    this.datasetFramework = datasetFramework;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), transactionSystemClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
-      RetryStrategies.retryOnConflict(20, 100)
-    );
+  FileMetaDataReader(TransactionRunner transactionRunner, final LocationFactory locationFactory,
+                     final Impersonator impersonator) {
+    this.transactionRunner = transactionRunner;
     this.locationFactory = locationFactory;
     this.impersonator = impersonator;
   }
+
   /**
    * Returns a list of log files for a logging context.
    *
    * @param logPathIdentifier logging context identifier.
-   * @param startTimestampMs starting timestamp in milli seconds
-   * @param endTimestampMs ending timestamp in milli seconds
+   * @param startTimestampMs  starting timestamp in milli seconds
+   * @param endTimestampMs    ending timestamp in milli seconds
    * @return List of {@link LogLocation}
    */
   public List<LogLocation> listFiles(final LogPathIdentifier logPathIdentifier,
-                                     final long startTimestampMs, final long endTimestampMs) throws Exception {
-    List<LogLocation> endTimestampFilteredList = execute(transactional, context -> {
-      Table table = LoggingStoreTableUtil.getMetadataTable(datasetFramework, context);
-      List<LogLocation> files = new ArrayList<>();
-      // get and add files in old format
-      files.addAll(getFilesInOldFormat(table, logPathIdentifier, endTimestampMs));
+                                     final long startTimestampMs, final long endTimestampMs) throws IOException {
+    List<LogLocation> endTimestampFilteredList = TransactionRunners.run(transactionRunner, context -> {
+      StructuredTable table = context.getTable(StoreDefinition.LogFileMetaStore.LOG_FILE_META);
       // get add files from new format
-      files.addAll(getFilesInNewFormat(table, logPathIdentifier, endTimestampMs));
-      return files;
-    }, Exception.class);
+      return getFiles(table, logPathIdentifier, endTimestampMs);
+    }, IOException.class);
+
     // performing extra filtering (based on start timestamp) outside the transaction
     return getFilesInRange(endTimestampFilteredList, startTimestampMs);
   }
 
-  private List<LogLocation> getFilesInOldFormat(
-    Table metaTable, LogPathIdentifier logPathIdentifier, long endTimestampMs) throws Exception {
-    List<LogLocation> files = new ArrayList<>();
-    final Row cols = metaTable.get(getOldRowKey(logPathIdentifier));
-    for (final Map.Entry<byte[], byte[]> entry : cols.getColumns().entrySet()) {
-      // old rowkey format length is 8 bytes (just the event timestamp is the column key)
-      if (entry.getKey().length == 8) {
-        long eventTimestamp = Bytes.toLong(entry.getKey());
-        if (eventTimestamp <= endTimestampMs) {
-          Location fileLocation =
-            impersonator.doAs(new NamespaceId(logPathIdentifier.getNamespaceId()),
-                              new Callable<Location>() {
-                                @Override
-                                public Location call() throws Exception {
-                                  // we stored uri in old format
-                                  return Locations.getLocationFromAbsolutePath(
-                                    locationFactory, new URI(Bytes.toString(entry.getValue())).getPath());
-                                }
-                              });
-          // old format
-          files.add(new LogLocation(LogLocation.VERSION_0,
-                                    eventTimestamp,
-                                    // use 0 as current time as this information is not available
-                                    0,
-                                    fileLocation,
-                                    logPathIdentifier.getNamespaceId(), impersonator));
-        }
-      } else {
-        LOG.warn("For row-key {}, got column entry with unexpected key length {}",
-                 logPathIdentifier.getOldRowkey(), entry.getKey().length);
-      }
-    }
-    return files;
-  }
-
-  private List<LogLocation> getFilesInNewFormat(
-    Table metaTable, LogPathIdentifier logPathIdentifier, long endTimestampMs) throws URISyntaxException {
+  private List<LogLocation> getFiles(StructuredTable metaTable, LogPathIdentifier logPathIdentifier,
+                                     long endTimestampMs) throws IOException {
     // create scanner with
     // start rowkey prefix:context:event-time(0):create-time(0)
     // end rowkey  prefix:context:event-time(endTimestamp):0(create-time doesn't matter for get files)
     // add these files to the list
     List<LogLocation> files = new ArrayList<>();
+    Range scanRange = Range.create(getKeyFields(logPathIdentifier.getRowkey(), 0L, 0L), Range.Bound.INCLUSIVE,
+                                   getPartialKey(logPathIdentifier.getRowkey(), endTimestampMs),
+                                   Range.Bound.INCLUSIVE);
 
-    byte[] logPathIdBytes = Bytes.toBytes(logPathIdentifier.getRowkey());
-    byte[] startRowKey = Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
-                                      logPathIdBytes,
-                                      Bytes.toBytes(0L),
-                                      Bytes.toBytes(0L));
-
-    byte[] endRowKey = Bytes.concat(LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX,
-                                    logPathIdBytes,
-                                    // end row-key is exclusive, so use endTimestamp + 1
-                                    Bytes.toBytes(endTimestampMs + 1),
-                                    Bytes.toBytes(0L));
-    int prefixLength = LoggingStoreTableUtil.NEW_FILE_META_ROW_KEY_PREFIX.length + logPathIdBytes.length;
-
-    try (Scanner scanner = metaTable.scan(startRowKey, endRowKey)) {
-      Row row;
-      while ((row = scanner.next()) != null) {
-        // column value is the file location
-        byte[] value = row.get(LoggingStoreTableUtil.META_TABLE_COLUMN_KEY);
-        files.add(new LogLocation(LogLocation.VERSION_1,
-                                  Bytes.toLong(row.getRow(), prefixLength, Bytes.SIZEOF_LONG),
-                                  Bytes.toLong(row.getRow(), prefixLength + Bytes.SIZEOF_LONG, Bytes.SIZEOF_LONG),
-                                  // we store path in new format
-                                  Locations.getLocationFromAbsolutePath(locationFactory, (Bytes.toString(value))),
-                                  logPathIdentifier.getNamespaceId(), impersonator));
-
+    try (CloseableIterator<StructuredRow> iter = metaTable.scan(scanRange, Integer.MAX_VALUE)) {
+      while (iter.hasNext()) {
+        StructuredRow row = iter.next();
+        files.add(fromRow(row, logPathIdentifier.getNamespaceId()));
       }
     }
     return files;
   }
 
-  private byte[] getOldRowKey(LogPathIdentifier logPathIdentifier) {
-    return Bytes.add(LoggingStoreTableUtil.OLD_FILE_META_ROW_KEY_PREFIX, logPathIdentifier.getOldRowkey().getBytes());
+  @SuppressWarnings("ConstantConditions")
+  private LogLocation fromRow(StructuredRow row, String namespace) {
+    return new LogLocation(LogLocation.VERSION_1,
+                           row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
+                           row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
+                           Locations.getLocationFromAbsolutePath(
+                             locationFactory, row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)),
+                           namespace, impersonator);
   }
 
-  @VisibleForTesting
-  List<LogLocation> getFilesInRange(List<LogLocation> files, long startTimeInMs) {
+  private List<LogLocation> getFilesInRange(List<LogLocation> files, long startTimeInMs) {
     // return if its empty
     if (files.isEmpty()) {
       return files;
     }
     // sort the list
-    Collections.sort(files, LOG_LOCATION_COMPARATOR);
+    files.sort(LOG_LOCATION_COMPARATOR);
 
     // iterate the list from the end
     // we continue when the start timestamp of the log file is higher than the startTimeInMs
@@ -214,5 +138,18 @@ public class FileMetaDataReader {
       }
     }
     return filteredList;
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private List<Field<?>> getKeyFields(String identifier, long eventTime, long currentTime) {
+    return ImmutableList.of(Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD, identifier),
+                            Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, eventTime),
+                            Fields.longField(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD, currentTime));
+  }
+
+  private ImmutableList<Field<?>> getPartialKey(String identifier, long endTimestampMs) {
+    return ImmutableList.of(
+      Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD, identifier),
+      Fields.longField(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD, endTimestampMs));
   }
 }
