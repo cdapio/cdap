@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.Cursor;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
@@ -38,6 +39,7 @@ import co.cask.cdap.spi.metadata.ScopedName;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
+import co.cask.cdap.spi.metadata.Sorting;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -358,22 +360,32 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
 
   @Override
   public SearchResponse search(SearchRequest request) {
-    ImmutablePair<NamespaceId, Set<EntityScope>> namespaceAndScopes =
-      determineNamespaceAndScopes(request.getNamespaces());
-    CursorAndOffsetInfo cursorOffsetAndLimits = determineCursorOffsetAndLimits(request);
+    Cursor cursor = request.getCursor() != null && !request.getCursor().isEmpty()
+      ? Cursor.fromString(request.getCursor()) : null;
+    Set<String> namespaces = cursor == null ? request.getNamespaces() : cursor.getNamespaces();
+    ImmutablePair<NamespaceId, Set<EntityScope>> namespaceAndScopes = determineNamespaceAndScopes(namespaces);
+    CursorAndOffsetInfo cursorOffsetAndLimits = determineCursorOffsetAndLimits(request, cursor);
+    String query = cursor != null ? cursor.getQuery()
+      : request.getQuery() == null || request.getQuery().isEmpty() ? "*" : request.getQuery();
+    Set<String> types = cursor != null ? cursor.getTypes() : request.getTypes();
+    types = types == null ? Collections.emptySet() : types;
+    Sorting sorting = cursor == null ? request.getSorting()
+      : cursor.getSorting() == null ? null : Sorting.of(cursor.getSorting());
+    SortInfo sortInfo = sorting == null ? SortInfo.DEFAULT
+      : new SortInfo(sorting.getKey(), SortInfo.SortOrder.valueOf(sorting.getOrder().name()));
+    boolean showHidden = cursor != null ? cursor.isShowHidden() : request.isShowHidden();
+    MetadataScope scope = cursor != null ? cursor.getScope() : request.getScope();
+
     MetadataSearchResponse response = search(new co.cask.cdap.data2.metadata.dataset.SearchRequest(
       namespaceAndScopes.getFirst(),
-      request.getQuery() == null || request.getQuery().isEmpty() ? "*" : request.getQuery(),
-      request.getTypes() == null ? Collections.emptySet() : request.getTypes(),
-      request.getSorting() == null ? SortInfo.DEFAULT :
-        new SortInfo(request.getSorting().getKey(), SortInfo.SortOrder.valueOf(request.getSorting().getOrder().name())),
+      query, types, sortInfo,
       cursorOffsetAndLimits.getOffsetToRequest(),
       cursorOffsetAndLimits.getLimitToRequest(),
       request.isCursorRequested() ? 1 : 0,
       cursorOffsetAndLimits.getCursor(),
-      request.isShowHidden(),
+      showHidden,
       namespaceAndScopes.getSecond()
-    ), request.getScope());
+    ), scope);
 
     // translate results back and limit them to at most what was requested (see above where we add 1)
     int limitToRespond = cursorOffsetAndLimits.getLimitToRespond();
@@ -388,20 +400,25 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
         return new MetadataRecord(record.getMetadataEntity(), metadata);
       }).collect(Collectors.toList());
 
-    String cursorToReturn = null;
+    Cursor newCursor = null;
     if (response.getCursors() != null && !response.getCursors().isEmpty()) {
-      // the new cursor's offset is the previous cursor's offset plus the number of results
-      cursorToReturn = new Cursor(offsetToRespond + results.size(), limitToRespond,
-                                  response.getCursors().get(0)).toString();
+      String actualCursor = response.getCursors().get(0);
+      if (cursor != null) {
+        // the new cursor's offset is the previous cursor's offset plus the number of results
+        newCursor = new Cursor(cursor, cursor.getOffset() + results.size(), actualCursor);
+      } else {
+        newCursor = new Cursor(offsetToRespond + results.size(), limitToRespond, showHidden, scope, namespaces, types,
+                               sorting == null ? null : sorting.toString(), actualCursor, query);
+      }
     }
     // adjust the total results by the difference of requested offset and the true offset that we respond back
     int totalResults = offsetToRespond - cursorOffsetAndLimits.getOffsetToRequest() + response.getTotal();
-    return new SearchResponse(request, cursorToReturn, offsetToRespond, limitToRespond,
-                              totalResults, results);
+    return new SearchResponse(request, newCursor == null ? null : newCursor.toString(),
+                              offsetToRespond, limitToRespond, totalResults, results);
   }
 
   @VisibleForTesting
-  static CursorAndOffsetInfo determineCursorOffsetAndLimits(SearchRequest request) {
+  static CursorAndOffsetInfo determineCursorOffsetAndLimits(SearchRequest request, Cursor cursor) {
     // limit and offset will be what we request from the datasets
     int limit = request.getLimit();
     int offset = request.getOffset();
@@ -409,22 +426,21 @@ public class DatasetMetadataStorage extends SearchHelper implements MetadataStor
     int limitToRespond = limit;
     int offsetToRespond = offset;
     // if the request has a cursor, then that supersedes the offset and limit
-    String cursor = null;
-    if (request.getCursor() != null && !request.getCursor().isEmpty()) {
+    String actualCursor = null;
+    if (cursor != null) {
       // deserialize the cursor
-      Cursor c = Cursor.fromString(request.getCursor());
-      cursor = c.getCursor();
+      actualCursor = cursor.getActualCursor();
       // request as many as given by the cursor - and that is also returned in the response
-      limit = c.getPageSize();
+      limit = cursor.getLimit();
       limitToRespond = limit;
       // we must request offset zero, because the dataset interprets it relative to the cursor
       offset = 0;
-      offsetToRespond = c.getOffset();
+      offsetToRespond = cursor.getOffset();
     } else if (!request.isCursorRequested() && limit < Integer.MAX_VALUE) {
       // if no cursor is requested, fetch one extra result to determine if there are more results following
       limit++;
     }
-    return new CursorAndOffsetInfo(cursor, offset, offsetToRespond, limit, limitToRespond);
+    return new CursorAndOffsetInfo(actualCursor, offset, offsetToRespond, limit, limitToRespond);
   }
 
   @VisibleForTesting
