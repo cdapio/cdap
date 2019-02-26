@@ -16,10 +16,8 @@
 
 package co.cask.cdap.master.environment.k8s;
 
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -31,8 +29,6 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
-import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.store.StoreDefinition;
@@ -40,8 +36,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +55,8 @@ public class StorageMain {
 
   @VisibleForTesting
   void createStorage(CConfiguration cConf) throws IOException {
+    LOG.info("Creating storages");
+
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
@@ -80,13 +76,12 @@ public class StorageMain {
     );
 
     // Create stores definitions
-    DatasetDefinition tableDef = injector.getInstance(Key.get(DatasetDefinition.class,
-                                                              Names.named(Constants.Dataset.TABLE_TYPE_NO_TX)));
-    StructuredTableRegistry tableRegistry = new NoSqlStructuredTableRegistry(tableDef);
-    StructuredTableAdmin tableAdmin = new NoSqlStructuredTableAdmin(tableDef, tableRegistry);
+    StructuredTableRegistry tableRegistry = injector.getInstance(StructuredTableRegistry.class);
+    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
 
     try {
       StoreDefinition.createAllTables(tableAdmin, tableRegistry);
+      LOG.info("Storage definitions creation completed");
     } catch (TableAlreadyExistsException e) {
       // Ignore the error
       LOG.debug("Store table already exists", e);
@@ -95,5 +90,7 @@ public class StorageMain {
     // Create metadata tables
     injector.getInstance(MetadataStorage.class).createIndex();
     injector.getInstance(LevelDBTableService.class).close();
+
+    LOG.info("Storage creation completed");
   }
 }
