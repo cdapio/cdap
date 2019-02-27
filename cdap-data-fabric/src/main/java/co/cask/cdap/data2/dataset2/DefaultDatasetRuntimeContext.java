@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableDatasetDefinition;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.common.Cancellable;
 
@@ -44,6 +45,9 @@ import javax.annotation.Nullable;
 /**
  * The default implementation of {@link DatasetRuntimeContext}. It performs authorization, lineage and usage recording
  * for each individual dataset operation.
+ *
+ * This class is created and stored in every Dataset that is created.
+ * This is done through class rewriting in the DatasetClassRewriter.
  */
 public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
 
@@ -173,6 +177,12 @@ public class DefaultDatasetRuntimeContext extends DatasetRuntimeContext {
     // This method should be called when the method exit, which should happen in the same thread
     // as the method entry call.
     callStack.get().exit();
+  }
+
+  @Override
+  public void close() {
+    // CDAP-14998: need to remove the ThreadLocal to prevent memory leaks
+    callStack.remove();
   }
 
   private void recordAccess(AccessType lineageType, AccessType auditType) {
