@@ -503,7 +503,7 @@ public class StandaloneMain {
       new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
-      new PreviewHttpModule().getStandaloneModules(),
+      new PreviewHttpModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),

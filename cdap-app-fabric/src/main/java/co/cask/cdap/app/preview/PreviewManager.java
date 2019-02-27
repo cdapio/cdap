@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package co.cask.cdap.app.preview;
 
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -41,4 +42,13 @@ public interface PreviewManager {
    * @throws NotFoundException if the preview application is not found
    */
   PreviewRunner getRunner(ApplicationId preview) throws NotFoundException;
+
+  /**
+   * Returns a {@link LogReader} for reading logs for the given preview.
+   *
+   * @param preview the application id of the preview for which {@link LogReader} is to be returned
+   * @return the {@link LogReader} for reading logs for the given preview
+   * @throws NotFoundException if the preview application is not found
+   */
+  LogReader getLogReader(ApplicationId preview) throws NotFoundException;
 }

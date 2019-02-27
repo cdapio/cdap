@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,8 +58,7 @@ public class FileMetaDataReader {
   private final Impersonator impersonator;
 
   @Inject
-  FileMetaDataReader(TransactionRunner transactionRunner, final LocationFactory locationFactory,
-                     final Impersonator impersonator) {
+  FileMetaDataReader(TransactionRunner transactionRunner, LocationFactory locationFactory, Impersonator impersonator) {
     this.transactionRunner = transactionRunner;
     this.locationFactory = locationFactory;
     this.impersonator = impersonator;

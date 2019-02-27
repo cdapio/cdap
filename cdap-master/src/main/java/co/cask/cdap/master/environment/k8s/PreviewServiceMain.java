@@ -61,7 +61,7 @@ public class PreviewServiceMain extends AbstractServiceMain {
   @Override
   protected List<Module> getServiceModules() {
     return Arrays.asList(
-      new PreviewHttpModule().getDistributedModules(),
+      new PreviewHttpModule(),
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),

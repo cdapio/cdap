@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.gateway.handlers.AbstractLogHandler;
-import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.metrics.query.MetricsQueryHelper;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -79,9 +78,8 @@ public class PreviewHttpHandler extends AbstractLogHandler {
   private final PreviewManager previewManager;
 
   @Inject
-  PreviewHttpHandler(PreviewManager previewManager,
-                     LogReader logReader, CConfiguration cConfig) {
-    super(logReader, cConfig);
+  PreviewHttpHandler(PreviewManager previewManager, CConfiguration cConf) {
+    super(cConf);
     this.previewManager = previewManager;
   }
 
@@ -180,8 +178,8 @@ public class PreviewHttpHandler extends AbstractLogHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
 
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord, format,
-              suppress);
+    doGetLogs(previewManager.getLogReader(runId.getParent().getParent()), responder, loggingContext, fromTimeSecsParam,
+              toTimeSecsParam, escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
@@ -197,9 +195,9 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
     ProgramRunId runId = getProgramRunId(namespaceId, previewId);
     RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
+    doPrev(previewManager.getLogReader(runId.getParent().getParent()), responder, loggingContext, maxEvents,
+           fromOffsetStr, escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
@@ -215,9 +213,9 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
     ProgramRunId runId = getProgramRunId(namespaceId, previewId);
     RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
-    LoggingContext loggingContext =
-      LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
+    doNext(previewManager.getLogReader(runId.getParent().getParent()), responder, loggingContext, maxEvents,
+           fromOffsetStr, escape, filterStr, runRecord, format, suppress);
   }
 
   @POST

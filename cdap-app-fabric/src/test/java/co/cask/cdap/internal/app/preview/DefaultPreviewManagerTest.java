@@ -37,6 +37,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
+import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -97,7 +98,7 @@ public class DefaultPreviewManagerTest {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new SecureStoreServerModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new PreviewHttpModule().getStandaloneModules(),
+      new PreviewHttpModule(),
       new ProvisionerModule(),
       new AbstractModule() {
         @Override
@@ -124,6 +125,9 @@ public class DefaultPreviewManagerTest {
     // Make sure same PreviewManager instance is returned for a same preview
     Assert.assertEquals(previewInjector.getInstance(PreviewRunner.class),
                         previewInjector.getInstance(PreviewRunner.class));
+
+    // Also make sure it can return a LogReader
+    previewInjector.getInstance(LogReader.class);
 
     Injector anotherPreviewInjector
       = defaultPreviewManager.createPreviewInjector(new ApplicationId("ns2", "app2"));

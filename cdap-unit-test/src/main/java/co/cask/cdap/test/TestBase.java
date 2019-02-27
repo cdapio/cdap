@@ -253,7 +253,7 @@ public class TestBase {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new PreviewHttpModule().getStandaloneModules(),
+      new PreviewHttpModule(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
