@@ -19,6 +19,7 @@ package co.cask.cdap.metadata.elastic;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.metadata.Cursor;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataChange;
 import co.cask.cdap.spi.metadata.MetadataConstants;
@@ -31,6 +32,7 @@ import co.cask.cdap.spi.metadata.Read;
 import co.cask.cdap.spi.metadata.ScopedName;
 import co.cask.cdap.spi.metadata.ScopedNameOfKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
+import co.cask.cdap.spi.metadata.Sorting;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
@@ -374,7 +376,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   public co.cask.cdap.spi.metadata.SearchResponse search(SearchRequest request)
     throws IOException {
     return request.getCursor() != null && !request.getCursor().isEmpty()
-      ? doScroll(request) : doSearch(request, request.getOffset(), request.getLimit());
+      ? doScroll(request) : doSearch(request);
   }
 
   /**
@@ -639,7 +641,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     throws IOException {
 
     Cursor cursor = Cursor.fromString(request.getCursor());
-    SearchScrollRequest scrollRequest = new SearchScrollRequest(cursor.getScrollId());
+    SearchScrollRequest scrollRequest = new SearchScrollRequest(cursor.getActualCursor());
     if (request.isCursorRequested()) {
       scrollRequest.scroll(scrollTimeout);
     }
@@ -648,34 +650,49 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       searchResponse = client.scroll(scrollRequest, RequestOptions.DEFAULT);
     } catch (ElasticsearchStatusException e) {
       // scroll invalid or timed out
-      return doSearch(request, cursor.getOffset(), cursor.getPageSize());
+      return doSearch(createRequestFromCursor(request, cursor));
     }
     if (searchResponse.isTimedOut()) {
       // scroll had expired, we have to search again
-      return doSearch(request, cursor.getOffset(), cursor.getPageSize());
+      return doSearch(createRequestFromCursor(request, cursor));
     }
     SearchHits hits = searchResponse.getHits();
     List<MetadataRecord> results = fromHits(hits);
-    String newCursor = computeCursor(searchResponse, cursor.getOffset(), cursor.getPageSize());
-    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, cursor.getOffset(), cursor.getPageSize(),
+    String newCursor = computeCursor(searchResponse, cursor);
+    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, cursor.getOffset(), cursor.getLimit(),
                                                         (int) hits.getTotalHits(), results);
+  }
+
+  private static SearchRequest createRequestFromCursor(SearchRequest request, Cursor cursor) {
+    SearchRequest.Builder builder = SearchRequest.of(cursor.getQuery())
+      .setOffset(cursor.getOffset())
+      .setLimit(cursor.getLimit())
+      .setShowHidden(cursor.isShowHidden())
+      .setScope(cursor.getScope())
+      .setCursorRequested(request.isCursorRequested());
+    if (cursor.getSorting() != null) {
+      builder.setSorting(Sorting.of(cursor.getSorting()));
+    }
+    if (cursor.getNamespaces() != null) {
+      cursor.getNamespaces().forEach(builder::addNamespace);
+    }
+    if (cursor.getTypes() != null) {
+      cursor.getTypes().forEach(builder::addType);
+    }
+    return builder.build();
   }
 
   /**
    * Perform a search that does continue a previous search using a cursor.
    *
    * @param request the search request
-   * @param offset the offset for the first result to return. This could be either the offset
-   *               from the request, or the offset from a cursor that had expired.
-   * @param limit the limit for the number of results to return. This could be either the limit
-   *              from the request, or the limit from a cursor that had expired.
    */
-  private co.cask.cdap.spi.metadata.SearchResponse doSearch(SearchRequest request, int offset, int limit)
+  private co.cask.cdap.spi.metadata.SearchResponse doSearch(SearchRequest request)
     throws IOException {
 
     org.elasticsearch.action.search.SearchRequest searchRequest =
       new org.elasticsearch.action.search.SearchRequest(indexName);
-    searchRequest.source(createSearchSource(request, offset, limit));
+    searchRequest.source(createSearchSource(request));
     if (request.isCursorRequested()) {
       searchRequest.scroll(scrollTimeout);
     }
@@ -684,8 +701,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       client.search(searchRequest, RequestOptions.DEFAULT);
     SearchHits hits = searchResponse.getHits();
     List<MetadataRecord> results = fromHits(hits);
-    String newCursor = computeCursor(searchResponse, offset, limit);
-    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, offset, limit,
+    String newCursor = computeCursor(searchResponse, request);
+    return new co.cask.cdap.spi.metadata.SearchResponse(request, newCursor, request.getOffset(), request.getLimit(),
                                                         (int) hits.getTotalHits(), results);
   }
 
@@ -702,12 +719,29 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * </li></ul>
    */
   @Nullable
-  private String computeCursor(SearchResponse searchResponse, int offset, int pageSize) {
+  private String computeCursor(SearchResponse searchResponse, Cursor cursor) {
     if (searchResponse.getScrollId() != null) {
       SearchHits hits = searchResponse.getHits();
-      int newOffset = offset + hits.getHits().length;
+      int newOffset = cursor.getOffset() + hits.getHits().length;
       if (newOffset < hits.getTotalHits()) {
-        return new Cursor(newOffset, pageSize, searchResponse.getScrollId()).toString();
+        return new Cursor(cursor, newOffset, searchResponse.getScrollId()).toString();
+      }
+      // we have seen all results, there are no more to fetch: clear the scroll
+      cancelSroll(searchResponse.getScrollId());
+    }
+    return null;
+  }
+
+  @Nullable
+  private String computeCursor(SearchResponse searchResponse, SearchRequest request) {
+    if (searchResponse.getScrollId() != null) {
+      SearchHits hits = searchResponse.getHits();
+      int newOffset = request.getOffset() + hits.getHits().length;
+      if (newOffset < hits.getTotalHits()) {
+        return new Cursor(newOffset, request.getLimit(), request.isShowHidden(), request.getScope(),
+                          request.getNamespaces(), request.getTypes(),
+                          request.getSorting() == null ? null : request.getSorting().toString(),
+                          searchResponse.getScrollId(), request.getQuery()).toString();
       }
       // we have seen all results, there are no more to fetch: clear the scroll
       cancelSroll(searchResponse.getScrollId());
@@ -722,7 +756,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     client.clearScrollAsync(clearScrollRequest, RequestOptions.DEFAULT, ActionListener.wrap(x -> { }, x -> { }));
   }
 
-  private SearchSourceBuilder createSearchSource(SearchRequest request, int offset, int limit) {
+  private SearchSourceBuilder createSearchSource(SearchRequest request) {
+    int offset = request.getOffset();
+    int limit = request.getLimit();
     // clients cannot know what the index's max window size is, but any request where offset + limit
     // exceeds that size will fail in ES. Hence we need to adjust the requested number of results to
     // not exceed that window size.

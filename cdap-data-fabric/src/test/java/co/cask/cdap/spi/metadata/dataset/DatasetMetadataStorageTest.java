@@ -20,6 +20,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
+import co.cask.cdap.common.metadata.Cursor;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -118,7 +119,7 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
   protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
     Cursor c = Cursor.fromString(cursor);
     Assert.assertEquals(expectedOffset, c.getOffset());
-    Assert.assertEquals(expectedPageSize, c.getPageSize());
+    Assert.assertEquals(expectedPageSize, c.getLimit());
   }
 
   // this tests is not in MetadataStorageTest,
@@ -266,8 +267,8 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     testCursorsOffsetsAndLimits(null, true, 0, 10, null, 0, 0, 10, 10);
     testCursorsOffsetsAndLimits(null, true, 5, 10, null, 5, 5, 10, 10);
     // search with cursor supersedes offset and limit
-    testCursorsOffsetsAndLimits(new Cursor(10, 5, "x"), false, 20, 50, "x", 0, 10, 5, 5);
-    testCursorsOffsetsAndLimits(new Cursor(10, 5, "x"), true, 20, 50, "x", 0, 10, 5, 5);
+    testCursorsOffsetsAndLimits(cursor(10, 5, "x"), false, 20, 50, "x", 0, 10, 5, 5);
+    testCursorsOffsetsAndLimits(cursor(10, 5, "x"), true, 20, 50, "x", 0, 10, 5, 5);
   }
 
   private void testCursorsOffsetsAndLimits(Cursor cursor, boolean cursorRequested,
@@ -278,11 +279,19 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
     SearchRequest request = SearchRequest.of("*")
       .setCursor(cursor == null ? null : cursor.toString()).setCursorRequested(cursorRequested)
       .setOffset(offsetRequested).setLimit(limitRequested).build();
-    DatasetMetadataStorage.CursorAndOffsetInfo info = DatasetMetadataStorage.determineCursorOffsetAndLimits(request);
+    DatasetMetadataStorage.CursorAndOffsetInfo info =
+      DatasetMetadataStorage.determineCursorOffsetAndLimits(request, cursor);
     Assert.assertEquals(expectedCursor, info.getCursor());
     Assert.assertEquals(expectedOffsetToRequest, info.getOffsetToRequest());
     Assert.assertEquals(expectedOffsetToRespond, info.getOffsetToRespond());
     Assert.assertEquals(expectedLimitToRequest, info.getLimitToRequest());
     Assert.assertEquals(expectedLimitToRespond, info.getLimitToRespond());
   }
+
+  @SuppressWarnings("SameParameterValue")
+  private static Cursor cursor(int offset, int limit, String actual) {
+    return new Cursor(offset, limit, true, null, null, null, null, actual, "*");
+  }
+
+
 }

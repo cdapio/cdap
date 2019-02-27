@@ -19,6 +19,7 @@ package co.cask.cdap.metadata.elastic;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.metadata.Cursor;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataKind;
 import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
@@ -335,11 +336,12 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
     // sleep 1 sec longer than the configured scroll timeout to invalidate cursor
     TimeUnit.SECONDS.sleep(3);
     SearchResponse response3 = mds.search(request2);
-    Assert.assertEquals(response2, response3);
+    Assert.assertEquals(response2.getResults(), response3.getResults());
+    Assert.assertEquals(response2.getCursor(), response3.getCursor());
 
     // create a nonsense cursor and search with that
     Cursor cursor = Cursor.fromString(response.getCursor());
-    cursor = new Cursor(cursor.getOffset(), cursor.getPageSize(), "nosuchcursor");
+    cursor = new Cursor(cursor, cursor.getOffset(), "nosuchcursor");
     SearchRequest request4 = SearchRequest.of("t*").setCursor(cursor.toString()).build();
     SearchResponse response4 = mds.search(request4);
     // compare only the results, not the entire response (the cursor is different)
@@ -353,6 +355,6 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
   protected void validateCursor(String cursor, int expectedOffset, int expectedPageSize) {
     Cursor c = Cursor.fromString(cursor);
     Assert.assertEquals(expectedOffset, c.getOffset());
-    Assert.assertEquals(expectedPageSize, c.getPageSize());
+    Assert.assertEquals(expectedPageSize, c.getLimit());
   }
 }
