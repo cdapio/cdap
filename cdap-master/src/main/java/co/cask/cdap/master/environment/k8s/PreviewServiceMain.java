@@ -24,12 +24,14 @@ import co.cask.cdap.app.guice.UnsupportedExploreClient;
 import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.preview.PreviewHttpServer;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.logging.guice.RemoteLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -75,6 +77,8 @@ public class PreviewServiceMain extends AbstractServiceMain {
       new MetadataServiceModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
+      new RemoteLogAppenderModule(),
+      new DFSLocationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

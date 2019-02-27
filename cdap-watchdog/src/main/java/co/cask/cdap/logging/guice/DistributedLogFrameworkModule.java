@@ -27,22 +27,25 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import org.apache.twill.api.TwillContext;
 
 /**
  * Guice module for the distributed log framework.
  */
 public class DistributedLogFrameworkModule extends PrivateModule {
 
-  private final TwillContext twillContext;
+  private final Integer instanceId;
+  private final Integer instanceCount;
 
-  public DistributedLogFrameworkModule(TwillContext twillContext) {
-    this.twillContext = twillContext;
+  public DistributedLogFrameworkModule(Integer instanceId, Integer instanceCount) {
+    this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
   }
 
   @Override
   protected void configure() {
-    bind(TwillContext.class).toInstance(twillContext);
+    bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID)).toInstance(instanceId);
+    bind(Integer.class).annotatedWith(Names.named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT))
+      .toInstance(instanceCount);
     bind(AppenderContext.class).to(DistributedAppenderContext.class);
 
     // Bind the status service

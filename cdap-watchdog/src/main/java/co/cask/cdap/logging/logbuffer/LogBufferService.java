@@ -17,11 +17,13 @@
 package co.cask.cdap.logging.logbuffer;
 
 import co.cask.cdap.api.logging.AppenderContext;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
+import co.cask.cdap.common.metrics.MetricsReporterHook;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -46,9 +48,11 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service responsible for loading, starting and stopping log buffer pipelines, creating concurrent writer and
@@ -61,6 +65,7 @@ public class LogBufferService extends AbstractIdleService {
 
   private final CConfiguration cConf;
   private final Provider<AppenderContext> contextProvider;
+  private final MetricsCollectionService metricsService;
   private final CheckpointManagerFactory checkpointManagerFactory;
   private final List<Service> pipelines = new ArrayList<>();
 
@@ -70,10 +75,12 @@ public class LogBufferService extends AbstractIdleService {
 
   @Inject
   public LogBufferService(CConfiguration cConf, DiscoveryService discoveryService,
+                          MetricsCollectionService metricsCollectionService,
                           CheckpointManagerFactory checkpointManagerFactory,
                           Provider<AppenderContext> contextProvider) {
     this.cConf = cConf;
     this.contextProvider = contextProvider;
+    this.metricsService = metricsCollectionService;
     this.checkpointManagerFactory = checkpointManagerFactory;
     this.discoveryService = discoveryService;
   }
@@ -102,7 +109,7 @@ public class LogBufferService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      this.httpService.stop();
+      this.httpService.stop(0, 5, TimeUnit.SECONDS);
       this.concurrentWriter.close();
       // Stops all pipeline
       validateAllFutures(Iterables.transform(pipelines, Service::stop));
@@ -193,6 +200,8 @@ public class LogBufferService extends AbstractIdleService {
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT))
+      .setHandlerHooks(Collections.singletonList(
+        new MetricsReporterHook(metricsService, Constants.Service.LOG_BUFFER_SERVICE)))
       .build();
   }
 }

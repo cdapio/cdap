@@ -17,9 +17,11 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import co.cask.cdap.logging.guice.RemoteLogAppenderModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -53,7 +55,9 @@ public class MessagingServiceMain extends AbstractServiceMain {
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
-      new MessagingServerRuntimeModule().getStandaloneModules()
+      new MessagingServerRuntimeModule().getStandaloneModules(),
+      new DFSLocationModule(),
+      new RemoteLogAppenderModule()
     );
   }
 

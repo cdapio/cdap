@@ -19,6 +19,7 @@ package co.cask.cdap.master.environment.k8s;
 import co.cask.cdap.app.guice.EntityVerifierModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
@@ -29,6 +30,7 @@ import co.cask.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
+import co.cask.cdap.logging.guice.RemoteLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -82,6 +84,8 @@ public class MetadataServiceMain extends AbstractServiceMain {
       new SecureStoreClientModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
+      new DFSLocationModule(),
+      new RemoteLogAppenderModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

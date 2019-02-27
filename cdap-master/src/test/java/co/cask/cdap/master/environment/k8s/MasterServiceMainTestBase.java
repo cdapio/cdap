@@ -74,6 +74,7 @@ public class MasterServiceMainTestBase {
     // Start the master main services
     serviceManagers.put(RouterServiceMain.class, runMain(RouterServiceMain.class));
     serviceManagers.put(MessagingServiceMain.class, runMain(MessagingServiceMain.class));
+    serviceManagers.put(LogSaverServiceMain.class, runMain(LogSaverServiceMain.class));
     serviceManagers.put(MetricsServiceMain.class, runMain(MetricsServiceMain.class));
     serviceManagers.put(MetadataServiceMain.class, runMain(MetadataServiceMain.class));
     serviceManagers.put(AppFabricServiceMain.class, runMain(AppFabricServiceMain.class));

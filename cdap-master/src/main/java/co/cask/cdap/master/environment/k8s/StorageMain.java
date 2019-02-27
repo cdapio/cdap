@@ -24,6 +24,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
+import co.cask.cdap.logging.guice.RemoteLogAppenderModule;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
@@ -66,6 +67,7 @@ public class StorageMain {
       new InMemoryDiscoveryModule(),
       new StorageModule(),
       new AuthenticationContextModules().getNoOpModule(),
+      new RemoteLogAppenderModule(),
       new AbstractModule() {
         @Override
         protected void configure() {

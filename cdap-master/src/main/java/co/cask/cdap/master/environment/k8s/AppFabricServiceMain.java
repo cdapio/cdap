@@ -22,6 +22,7 @@ import co.cask.cdap.app.guice.MonitorHandlerModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
@@ -37,6 +38,7 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.logging.guice.RemoteLogAppenderModule;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.operations.OperationalStatsService;
@@ -99,6 +101,8 @@ public class AppFabricServiceMain extends AbstractServiceMain {
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
       getDataFabricModule(),
+      new RemoteLogAppenderModule(),
+      new DFSLocationModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
