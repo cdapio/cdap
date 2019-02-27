@@ -374,6 +374,9 @@ cdap_set_classpath() {
     __hbase_cp=$("${HBASE_HOME}"/bin/hbase classpath)
   elif [[ $(which hbase 2>/dev/null) ]]; then
     __hbase_cp=$(hbase classpath)
+  elif [[ -n ${HADOOP_HOME} ]] && [[ -d ${HADOOP_HOME} ]]; then
+    # For the no hbase case, we still want to setup the Hadoop classpath
+    __hbase_cp=$("${HADOOP_HOME}"/bin/hadoop classpath)
   else
     # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
     logecho "[WARN] Could not find Hadoop and HBase libraries, using EXTRA_CLASSPATH"
