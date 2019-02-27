@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -41,9 +42,14 @@ public class DefaultPreviewStoreTest {
   private static DefaultPreviewStore store;
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
+  public static void beforeClass() {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultPreviewStore.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Before
@@ -52,7 +58,7 @@ public class DefaultPreviewStoreTest {
   }
 
   @Test
-  public void testPreviewStore() throws Exception {
+  public void testPreviewStore() {
     String firstApplication = RunIds.generate().getId();
     ApplicationId firstApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), firstApplication);
 

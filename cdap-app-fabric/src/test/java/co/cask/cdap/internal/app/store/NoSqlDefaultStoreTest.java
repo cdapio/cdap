@@ -20,6 +20,7 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 public class NoSqlDefaultStoreTest extends DefaultStoreTest {
@@ -29,6 +30,11 @@ public class NoSqlDefaultStoreTest extends DefaultStoreTest {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
     nsStore = injector.getInstance(DefaultNamespaceStore.class);
-    nsAdmin = AppFabricTestHelper.getInjector().getInstance(NamespaceAdmin.class);
+    nsAdmin = injector.getInstance(NamespaceAdmin.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 }

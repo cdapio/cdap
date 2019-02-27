@@ -103,7 +103,7 @@ public class WorkerProgramRunnerTest {
   };
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
@@ -124,8 +124,9 @@ public class WorkerProgramRunnerTest {
   }
 
   @AfterClass
-  public static void afterClass() throws Exception {
+  public static void afterClass() {
     txService.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 
   @After

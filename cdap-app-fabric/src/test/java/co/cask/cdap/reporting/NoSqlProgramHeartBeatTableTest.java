@@ -20,6 +20,7 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 public class NoSqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
@@ -29,5 +30,10 @@ public class NoSqlProgramHeartBeatTableTest extends ProgramHeartBeatTableTest {
     Injector injector = AppFabricTestHelper.getInjector();
     AppFabricTestHelper.ensureNamespaceExists(NamespaceId.DEFAULT);
     transactionRunner = injector.getInstance(TransactionRunner.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 }

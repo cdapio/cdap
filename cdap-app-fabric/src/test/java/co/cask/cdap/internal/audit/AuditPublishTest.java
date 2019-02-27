@@ -89,7 +89,6 @@ public class AuditPublishTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
-
     auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
   }
 
@@ -98,6 +97,7 @@ public class AuditPublishTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    AppFabricTestHelper.shutdown();
   }
 
   @Test

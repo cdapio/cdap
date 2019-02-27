@@ -203,5 +203,6 @@ public abstract class RemotePrivilegesTestBase {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 }

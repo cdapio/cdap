@@ -25,6 +25,7 @@ import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,6 +42,11 @@ public class DefaultNamespaceCreatorTest {
     Injector injector = AppFabricTestHelper.getInjector();
     defaultNamespaceCreator = injector.getInstance(DefaultNamespaceCreator.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   // NOTE: can't actually delete the default namespace... so everything needs to be tested in a single test case

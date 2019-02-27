@@ -80,59 +80,62 @@ public class ConcurrencyConstraintTest {
   @Test
   public void testMaxConcurrentRuns() {
     Store store = AppFabricTestHelper.getInjector().getInstance(Store.class);
+    try {
+      long now = System.currentTimeMillis();
+      ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
+                                                     ImmutableMap.of("prop3", "abc"),
+                                                     new PartitionTrigger(DATASET_ID, 1),
+                                                     ImmutableList.of());
+      SimpleJob job = new SimpleJob(schedule, 0, now, Collections.emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
-    long now = System.currentTimeMillis();
-    ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
-                                                   ImmutableMap.of("prop3", "abc"),
-                                                   new PartitionTrigger(DATASET_ID, 1),
-                                                   ImmutableList.of());
-    SimpleJob job = new SimpleJob(schedule, 0, now, Collections.emptyList(), Job.State.PENDING_TRIGGER, 0L);
+      ConcurrencyConstraint concurrencyConstraint = new ConcurrencyConstraint(2);
+      ConstraintContext constraintContext = new ConstraintContext(job, now, store);
 
-    ConcurrencyConstraint concurrencyConstraint = new ConcurrencyConstraint(2);
-    ConstraintContext constraintContext = new ConstraintContext(job, now, store);
+      assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
 
-    assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
+      ProgramRunId pid1 = WORKFLOW_ID.run(RunIds.generate().getId());
+      ProgramRunId pid2 = WORKFLOW_ID.run(RunIds.generate().getId());
+      ProgramRunId pid3 = WORKFLOW_ID.run(RunIds.generate().getId());
 
-    ProgramRunId pid1 = WORKFLOW_ID.run(RunIds.generate().getId());
-    ProgramRunId pid2 = WORKFLOW_ID.run(RunIds.generate().getId());
-    ProgramRunId pid3 = WORKFLOW_ID.run(RunIds.generate().getId());
+      // add a run for the schedule
+      Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
+      setStartAndRunning(store, pid1, EMPTY_MAP, systemArgs);
+      assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
 
-    // add a run for the schedule
-    Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
-    setStartAndRunning(store, pid1, EMPTY_MAP, systemArgs);
-    assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
+      // add a run for the program from a different schedule. Since there are now 2 running instances of the
+      // workflow (regardless of the schedule name), the constraint is not met
+      systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, "not" + schedule.getName());
+      setStartAndRunning(store, pid2, EMPTY_MAP, systemArgs);
+      assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
-    // add a run for the program from a different schedule. Since there are now 2 running instances of the
-    // workflow (regardless of the schedule name), the constraint is not met
-    systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, "not" + schedule.getName());
-    setStartAndRunning(store, pid2, EMPTY_MAP, systemArgs);
-    assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
+      // add a run for the program that wasn't from a schedule
+      // there are now three concurrent runs, so the constraint will not be met
+      setStartAndRunning(store, pid3);
+      assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
-    // add a run for the program that wasn't from a schedule
-    // there are now three concurrent runs, so the constraint will not be met
-    setStartAndRunning(store, pid3);
-    assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
+      // stop the first program; constraint will not be satisfied as there are still 2 running
+      store.setStop(pid1, System.currentTimeMillis(), ProgramRunStatus.COMPLETED,
+                    AppFabricTestHelper.createSourceId(++sourceId));
+      assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
-    // stop the first program; constraint will not be satisfied as there are still 2 running
-    store.setStop(pid1, System.currentTimeMillis(), ProgramRunStatus.COMPLETED,
-                  AppFabricTestHelper.createSourceId(++sourceId));
-    assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
+      // suspending/resuming the workflow doesn't reduce its concurrency count
+      store.setSuspend(pid3, AppFabricTestHelper.createSourceId(++sourceId), -1);
+      assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
+      store.setResume(pid3, AppFabricTestHelper.createSourceId(++sourceId), -1);
+      assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
-    // suspending/resuming the workflow doesn't reduce its concurrency count
-    store.setSuspend(pid3, AppFabricTestHelper.createSourceId(++sourceId), -1);
-    assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
-    store.setResume(pid3, AppFabricTestHelper.createSourceId(++sourceId), -1);
-    assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
+      // but the constraint will be satisfied with it completes, as there is only 1 remaining RUNNING
+      store.setStop(pid3, System.currentTimeMillis(), ProgramRunStatus.KILLED,
+                    AppFabricTestHelper.createSourceId(++sourceId));
+      assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
 
-    // but the constraint will be satisfied with it completes, as there is only 1 remaining RUNNING
-    store.setStop(pid3, System.currentTimeMillis(), ProgramRunStatus.KILLED,
-                  AppFabricTestHelper.createSourceId(++sourceId));
-    assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
-
-    // stopping the last running workflow will also satisfy the constraint
-    store.setStop(pid2, System.currentTimeMillis(), ProgramRunStatus.FAILED,
-                  AppFabricTestHelper.createSourceId(++sourceId));
-    assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
+      // stopping the last running workflow will also satisfy the constraint
+      store.setStop(pid2, System.currentTimeMillis(), ProgramRunStatus.FAILED,
+                    AppFabricTestHelper.createSourceId(++sourceId));
+      assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
+    } finally {
+      AppFabricTestHelper.shutdown();
+    }
   }
 
   private void assertSatisfied(boolean expectSatisfied, ConstraintResult constraintResult) {

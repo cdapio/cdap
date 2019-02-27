@@ -23,6 +23,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,6 +38,11 @@ public class AppCreatorTest {
   public static void setupClass() {
     Injector injector = AppFabricTestHelper.getInjector();
     appCreator = injector.getInstance(AppCreator.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Test

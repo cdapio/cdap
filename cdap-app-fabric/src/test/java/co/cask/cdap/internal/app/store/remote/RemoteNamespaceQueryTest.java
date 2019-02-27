@@ -82,6 +82,7 @@ public class RemoteNamespaceQueryTest {
     appFabricServer.stopAndWait();
     datasetService.stopAndWait();
     txManager.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 
   private static void waitForService(DiscoveryServiceClient discoveryService, String discoverableName)

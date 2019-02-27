@@ -21,6 +21,7 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,6 +36,11 @@ public class ProgramStarterTest {
   public static void setupClass() {
     Injector injector = AppFabricTestHelper.getInjector();
     programStarter = injector.getInstance(ProgramStarter.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Test

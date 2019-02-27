@@ -36,6 +36,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import org.apache.twill.filesystem.LocalLocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -70,6 +71,11 @@ public class EntityExistenceTest {
     File artifactFile = new File(AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class).toURI());
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(ARTIFACT), artifactFile);
     AppFabricTestHelper.deployApplication(Id.Namespace.fromEntityId(NAMESPACE), AllProgramsApp.class, null, cConf);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Test

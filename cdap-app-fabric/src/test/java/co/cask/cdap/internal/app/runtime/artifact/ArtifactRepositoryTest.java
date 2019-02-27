@@ -72,6 +72,7 @@ import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -135,6 +136,11 @@ public class ArtifactRepositoryTest {
     appArtifactFile = createAppJar(PluginTestApp.class, new File(tmpDir, "PluginTest-1.0.0.jar"),
                                    createManifest(ManifestFields.EXPORT_PACKAGE,
                                                   PluginTestRunnable.class.getPackage().getName()));
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Before

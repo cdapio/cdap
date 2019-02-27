@@ -128,8 +128,9 @@ public class MapReduceRunnerTestBase {
   }
 
   @AfterClass
-  public static void afterClass() throws Exception {
+  public static void afterClass() {
     txService.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 
   @After

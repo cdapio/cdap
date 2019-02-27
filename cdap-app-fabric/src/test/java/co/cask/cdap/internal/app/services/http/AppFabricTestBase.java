@@ -95,6 +95,7 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.util.concurrent.Service;
@@ -194,6 +195,7 @@ public abstract class AppFabricTestBase {
   private static DatasetService datasetService;
   private static TransactionSystemClient txClient;
   private static ServiceStore serviceStore;
+  private static MetadataStorage metadataStorage;
   private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static LocationFactory locationFactory;
@@ -238,7 +240,8 @@ public abstract class AppFabricTestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     structuredTableRegistry);
-    injector.getInstance(MetadataStorage.class).createIndex();
+    metadataStorage = injector.getInstance(MetadataStorage.class);
+    metadataStorage.createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
@@ -295,6 +298,7 @@ public abstract class AppFabricTestBase {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    Closeables.closeQuietly(metadataStorage);
   }
 
   protected static CConfiguration createBasicCConf() throws IOException {

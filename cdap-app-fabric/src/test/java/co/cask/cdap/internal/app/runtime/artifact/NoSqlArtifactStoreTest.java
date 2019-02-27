@@ -27,12 +27,13 @@ import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.base.Joiner;
 import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 public class NoSqlArtifactStoreTest extends ArtifactStoreTest {
 
   @BeforeClass
-  public static void setup() throws Exception {
+  public static void setup() {
     CConfiguration cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
@@ -45,5 +46,10 @@ public class NoSqlArtifactStoreTest extends ArtifactStoreTest {
                                       injector.getInstance(Impersonator.class),
                                       transactionRunner
     );
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 }

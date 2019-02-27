@@ -67,6 +67,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -103,6 +104,11 @@ public abstract class DefaultStoreTest {
       AppFabricTestHelper.getInjector().getInstance(NamespacePathLocator.class);
     namespacePathLocator.get(NamespaceId.DEFAULT).delete(true);
     nsAdmin.create(NamespaceMeta.DEFAULT);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   private void setStartAndRunning(ProgramRunId id, ArtifactId artifactId) {

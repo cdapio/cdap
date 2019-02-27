@@ -25,6 +25,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.base.Joiner;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 public class NoSqlUserConfigStoreTest extends UserConfigStoreTest {
@@ -41,4 +42,8 @@ public class NoSqlUserConfigStoreTest extends UserConfigStoreTest {
     admin = injector.getInstance(StructuredTableAdmin.class);
   }
 
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
+  }
 }

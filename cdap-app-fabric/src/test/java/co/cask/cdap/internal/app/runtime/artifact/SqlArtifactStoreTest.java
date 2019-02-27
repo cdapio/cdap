@@ -68,5 +68,6 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
   @AfterClass
   public static void afterClass() throws IOException {
     pg.close();
+    AppFabricTestHelper.shutdown();
   }
 }

@@ -154,6 +154,7 @@ public class ProgramLifecycleServiceAuthorizationTest {
   @AfterClass
   public static void tearDown() {
     appFabricServer.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 
   private static CConfiguration createCConf() throws IOException {

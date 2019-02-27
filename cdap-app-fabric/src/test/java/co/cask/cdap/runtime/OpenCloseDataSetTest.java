@@ -192,5 +192,6 @@ public class OpenCloseDataSetTest {
   @AfterClass
   public static void tearDown() {
     Locations.deleteQuietly(namespaceHomeLocation, true);
+    AppFabricTestHelper.shutdown();
   }
 }

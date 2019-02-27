@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import com.google.common.base.Joiner;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
@@ -40,6 +41,11 @@ public class NoSqlProfileServiceTest extends ProfileServiceTest {
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
     injector = AppFabricTestHelper.getInjector(cConf);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Override

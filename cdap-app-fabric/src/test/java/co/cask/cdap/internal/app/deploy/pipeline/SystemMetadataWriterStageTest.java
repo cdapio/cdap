@@ -64,20 +64,21 @@ public class SystemMetadataWriterStageTest {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static MetadataStorage metadataStorage;
   private static MetadataPublisher metadataPublisher;
-  private static MetadataSubscriberService metadataSubcriber;
+  private static MetadataSubscriberService metadataSubscriber;
 
   @BeforeClass
   public static void setup() {
     Injector injector = AppFabricTestHelper.getInjector();
     metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataPublisher = injector.getInstance(MetadataPublisher.class);
-    metadataSubcriber = injector.getInstance(MetadataSubscriberService.class);
-    metadataSubcriber.startAndWait();
+    metadataSubscriber = injector.getInstance(MetadataSubscriberService.class);
+    metadataSubscriber.startAndWait();
   }
 
   @AfterClass
   public static void stop() {
-    metadataSubcriber.stopAndWait();
+    metadataSubscriber.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 
   @Test
