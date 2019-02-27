@@ -72,6 +72,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
@@ -193,13 +194,16 @@ public class DefaultPreviewManager implements PreviewManager {
     java.nio.file.Path previewDir = Files.createDirectories(Paths.get(previewDirPath.toAbsolutePath().toString(),
                                                                       applicationId.getApplication()));
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    Configuration previewHConf = new Configuration(hConf);
-    previewHConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
     // Use No-SQL store for preview data
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+
+    // Setup Hadoop configuration
+    Configuration previewHConf = new Configuration(hConf);
+    previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
+    previewHConf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY,
+                     previewDir.resolve("fs").toUri().toString());
 
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf),

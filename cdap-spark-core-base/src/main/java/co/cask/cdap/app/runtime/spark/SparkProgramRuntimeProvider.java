@@ -292,8 +292,9 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   private synchronized SparkRunnerClassLoader createClassLoader(boolean filterScalaClasses,
                                                                 boolean rewriteYarnClient) throws IOException {
     // Determine if needs to filter Scala classes or not.
+    FilterClassLoader filteredBaseParent = new FilterClassLoader(getClass().getClassLoader(), createClassFilter());
     ClassLoader runnerParentClassLoader = filterScalaClasses
-      ? new ScalaFilterClassLoader(getClass().getClassLoader()) : getClass().getClassLoader();
+      ? new ScalaFilterClassLoader(filteredBaseParent) : filteredBaseParent;
 
     if (classLoaderUrls == null) {
       classLoaderUrls = getSparkClassloaderURLs(getClass().getClassLoader());
@@ -345,11 +346,12 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
       // The scala from the Spark library should replace the one from the parent classloader
       // CDH also packages spark-yarn-shuffle.jar linked to spark-<version>-yarn-shuffle.jar in yarn's lib dir
+      // Also filter out all jackson libraries that comes from the parent
       Iterator<URL> itor = urls.iterator();
       while (itor.hasNext()) {
         URL url = itor.next();
         String filename = Paths.get(url.getPath()).getFileName().toString();
-        if (filename.startsWith("org.scala-lang") || filename.startsWith("spark-")) {
+        if (filename.startsWith("org.scala-lang") || filename.startsWith("spark-") || filename.contains("jackson-")) {
           itor.remove();
         }
       }
@@ -363,6 +365,32 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
   }
 
   /**
+   * Returns {@code true} if the given string is equals to the equals string, or if the given string is
+   * starts with the given equal string concatenated with the given suffix.
+   */
+  private static boolean equalsOrStartWith(String str, String equalStr, char startWithSuffix) {
+    return str.equals(equalStr) || str.startsWith(equalStr + startWithSuffix);
+  }
+
+  /**
+   * Creates a {@link FilterClassLoader.Filter} for shielding out unwanted classes that comes from the CDAP
+   * main classloader. It includes classes that are known to cause conflicts with Spark.
+   */
+  private FilterClassLoader.Filter createClassFilter() {
+    return new FilterClassLoader.Filter() {
+      @Override
+      public boolean acceptResource(String resource) {
+        return !equalsOrStartWith(resource, "com/fasterxml/jackson", '/');
+      }
+
+      @Override
+      public boolean acceptPackage(String packageName) {
+        return !equalsOrStartWith(packageName, "com.fasterxml.jackson", '.');
+      }
+    };
+  }
+
+  /**
    * A ClassLoader that filter out scala class.
    */
   private static final class ScalaFilterClassLoader extends ClassLoader {
@@ -371,14 +399,17 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       super(new FilterClassLoader(parent, new FilterClassLoader.Filter() {
         @Override
         public boolean acceptResource(String resource) {
-          return !resource.startsWith("org/apache/spark/") && !resource.startsWith("org/spark-project/") &&
-            !resource.startsWith("scala/") && !"scala.class".equals(resource);
+          return !equalsOrStartWith(resource, "org/apache/spark", '/')
+            && !equalsOrStartWith(resource, "org/spark-project", '/')
+            && !equalsOrStartWith(resource, "scala", '/')
+            && !"scala/class".equals(resource);
         }
 
         @Override
         public boolean acceptPackage(String packageName) {
-          return !packageName.startsWith("org/apache/spark") && !packageName.startsWith("org/spark-project/") &&
-            !packageName.startsWith("scala/");
+          return !equalsOrStartWith(packageName, "org.apache.spark", '.')
+            && !equalsOrStartWith(packageName, "org.spark-project", '.')
+            && !equalsOrStartWith(packageName, "scala", '.');
         }
       }));
     }
