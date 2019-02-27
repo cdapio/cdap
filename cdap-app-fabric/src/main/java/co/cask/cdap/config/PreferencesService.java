@@ -131,7 +131,6 @@ public class PreferencesService {
     // After everything is set, publish the update message and add the association if profile is present
     if (profile.isPresent()) {
       profileStore.addProfileAssignment(profile.get(), entityId);
-      adminEventPublisher.publishProfileAssignment(entityId, profile.get());
     }
 
     // if old properties has the profile, remove the association
@@ -140,7 +139,9 @@ public class PreferencesService {
     }
 
     // if new profiles do not have profile information but old profiles have, it is same as deletion of the profile
-    if (!profile.isPresent() && oldProfile.isPresent()) {
+    if (profile.isPresent()) {
+      adminEventPublisher.publishProfileAssignment(entityId, profile.get());
+    } else if (oldProfile.isPresent()) {
       adminEventPublisher.publishProfileUnAssignment(entityId);
     }
   }
