@@ -21,6 +21,7 @@ import co.cask.cdap.data.security.DefaultSecretStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Injector;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
@@ -33,5 +34,10 @@ public class NoSqlDefaultSecretStoreTest extends DefaultSecretStoreTest {
 
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
     store = new DefaultSecretStore(transactionRunner);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 }

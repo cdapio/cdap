@@ -76,6 +76,6 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
   @AfterClass
   public static void afterClass() throws IOException {
     pg.close();
+    AppFabricTestHelper.shutdown();
   }
-
 }

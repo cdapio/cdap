@@ -604,6 +604,7 @@ public class MasterServiceMain extends DaemonMain {
     private TwillRunnerService remoteExecutionTwillRunner;
     private ExploreClient exploreClient;
     private LogAppenderInitializer logAppenderInitializer;
+    private MetadataStorage metadataStorage;
 
 
     private MasterLeaderElectionHandler(CConfiguration cConf, Configuration hConf, ZKClientService zkClient,
@@ -638,8 +639,9 @@ public class MasterServiceMain extends DaemonMain {
       } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Unable to create the system tables.", e);
       }
+      metadataStorage = injector.getInstance(MetadataStorage.class);
       try {
-        injector.getInstance(MetadataStorage.class).createIndex();
+        metadataStorage.createIndex();
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
@@ -728,6 +730,7 @@ public class MasterServiceMain extends DaemonMain {
         stopQuietly(service);
       }
       services.clear();
+      Closeables.closeQuietly(metadataStorage);
       Closeables.closeQuietly(authorizerInstantiator);
       Closeables.closeQuietly(exploreClient);
       Closeables.closeQuietly(logAppenderInitializer);

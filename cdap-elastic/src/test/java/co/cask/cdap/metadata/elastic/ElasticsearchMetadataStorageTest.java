@@ -32,6 +32,7 @@ import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Closeables;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -83,7 +84,7 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
       try {
         elasticStore.dropIndex();
       } finally {
-        elasticStore.close();
+        Closeables.closeQuietly(elasticStore);
       }
     }
   }

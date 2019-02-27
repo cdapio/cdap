@@ -177,6 +177,7 @@ public class SystemArtifactsAuthorizationTest {
     authorizer.revoke(Authorizable.fromEntityId(NamespaceId.SYSTEM));
     Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));
     SecurityRequestContext.setUserId(OLD_USER_ID);
+    AppFabricTestHelper.shutdown();
   }
 
   private static void createSystemArtifact(File systemArtifactsDir) throws IOException {

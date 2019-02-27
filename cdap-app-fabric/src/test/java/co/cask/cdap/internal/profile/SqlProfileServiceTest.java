@@ -100,5 +100,6 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
   @AfterClass
   public static void afterClass() throws IOException {
     pg.close();
+    AppFabricTestHelper.shutdown();
   }
 }

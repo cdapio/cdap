@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -52,6 +53,11 @@ public class SystemProfileCreatorTest {
     Injector injector = AppFabricTestHelper.getInjector();
     profileCreator = injector.getInstance(SystemProfileCreator.class);
     profileService = injector.getInstance(ProfileService.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @After

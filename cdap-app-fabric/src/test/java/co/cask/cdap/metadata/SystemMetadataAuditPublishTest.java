@@ -80,6 +80,7 @@ public class SystemMetadataAuditPublishTest {
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }
+    AppFabricTestHelper.shutdown();
   }
 
   @Test

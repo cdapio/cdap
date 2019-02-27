@@ -27,6 +27,7 @@ import co.cask.cdap.proto.bootstrap.BootstrapResult;
 import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.JsonObject;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -73,6 +74,11 @@ public class BootstrapServiceTest {
     bootstrapStore = AppFabricTestHelper.getInjector().getInstance(BootstrapStore.class);
     bootstrapService = new BootstrapService(bootstrapConfigProvider, bootstrapStore, executors);
     bootstrapService.reload();
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @After

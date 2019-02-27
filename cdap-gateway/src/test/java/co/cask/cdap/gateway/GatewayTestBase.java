@@ -45,6 +45,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.store.StoreDefinition;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -113,6 +114,7 @@ public abstract class GatewayTestBase {
   private static DatasetOpExecutorService dsOpService;
   private static DatasetService datasetService;
   private static MessagingService messagingService;
+  private static MetadataStorage metadataStorage;
   protected static NamespaceAdmin namespaceAdmin;
 
   private static int nestedStartCount;
@@ -180,7 +182,8 @@ public abstract class GatewayTestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
-    injector.getInstance(MetadataStorage.class).createIndex();
+    metadataStorage = injector.getInstance(MetadataStorage.class);
+    metadataStorage.createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
@@ -221,6 +224,7 @@ public abstract class GatewayTestBase {
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    Closeables.closeQuietly(metadataStorage);
     conf.clear();
   }
 

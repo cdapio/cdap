@@ -23,6 +23,7 @@ import co.cask.cdap.proto.bootstrap.BootstrapStepResult;
 import com.google.gson.Gson;
 import com.google.inject.Injector;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -43,6 +44,11 @@ public class SystemPreferencesSetterTest {
     Injector injector = AppFabricTestHelper.getInjector();
     systemPreferenceSetter = injector.getInstance(SystemPreferenceSetter.class);
     preferencesService = injector.getInstance(PreferencesService.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @After

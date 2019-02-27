@@ -140,6 +140,7 @@ public class StandaloneMain {
   private final LevelDBTableService levelDBTableService;
   private final SecureStoreService secureStoreService;
   private final PreviewHttpServer previewHttpServer;
+  private final MetadataStorage metadataStorage;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -169,6 +170,7 @@ public class StandaloneMain {
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
+    metadataStorage = injector.getInstance(MetadataStorage.class);
 
     if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -236,7 +238,7 @@ public class StandaloneMain {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
-    injector.getInstance(MetadataStorage.class).createIndex();
+    metadataStorage.createIndex();
 
     metricsCollectionService.startAndWait();
     datasetOpExecutorService.startAndWait();
@@ -341,6 +343,7 @@ public class StandaloneMain {
 
       logAppenderInitializer.close();
       authorizerInstantiator.close();
+      metadataStorage.close();
       levelDBTableService.close();
     } catch (Throwable e) {
       halt = true;

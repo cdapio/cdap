@@ -190,6 +190,7 @@ public class TestBase {
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
   private static MetadataSubscriberService metadataSubscriberService;
+  private static MetadataStorage metadataStorage;
   private static MetadataAdmin metadataAdmin;
 
   // This list is to record ApplicationManager create inside @Test method
@@ -269,7 +270,9 @@ public class TestBase {
     );
 
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
+    metadataStorage = injector.getInstance(MetadataStorage.class);
     metadataAdmin = injector.getInstance(MetadataAdmin.class);
+    metadataStorage.createIndex();
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -281,7 +284,6 @@ public class TestBase {
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
-    injector.getInstance(MetadataStorage.class).createIndex();
 
     dsOpService = injector.getInstance(DatasetOpExecutorService.class);
     dsOpService.startAndWait();
@@ -468,7 +470,6 @@ public class TestBase {
       return;
     }
 
-
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
       Principal principal = new Principal(System.getProperty("user.name"), Principal.PrincipalType.USER);
@@ -476,7 +477,6 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                          principal, ImmutableSet.of(Action.ADMIN));
     }
-
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
 
@@ -488,9 +488,7 @@ public class TestBase {
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }
-    if (exploreClient != null) {
-      Closeables.closeQuietly(exploreClient);
-    }
+    Closeables.closeQuietly(exploreClient);
     if (exploreExecutorService != null) {
       exploreExecutorService.stopAndWait();
     }
@@ -503,6 +501,7 @@ public class TestBase {
     }
     provisioningService.stopAndWait();
     metadataSubscriberService.stopAndWait();
+    Closeables.closeQuietly(metadataStorage);
   }
 
   protected MetricsManager getMetricsManager() {

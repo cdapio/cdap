@@ -46,7 +46,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -88,12 +87,7 @@ public class DefaultSecureStoreServiceTest {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
     CConfiguration cConf = createCConf();
-    final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf, new AbstractModule() {
-      @Override
-      protected void configure() {
-        // no overrides
-      }
-    });
+    final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf);
     discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
@@ -126,6 +120,7 @@ public class DefaultSecureStoreServiceTest {
   @AfterClass
   public static void cleanup() {
     appFabricServer.stopAndWait();
+    AppFabricTestHelper.shutdown();
   }
 
   private static CConfiguration createCConf() throws Exception {

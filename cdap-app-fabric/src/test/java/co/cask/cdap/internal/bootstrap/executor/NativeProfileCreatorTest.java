@@ -26,6 +26,7 @@ import co.cask.cdap.proto.profile.Profile;
 import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,6 +43,11 @@ public class NativeProfileCreatorTest {
     Injector injector = AppFabricTestHelper.getInjector();
     nativeProfileCreator = injector.getInstance(NativeProfileCreator.class);
     profileService = injector.getInstance(ProfileService.class);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    AppFabricTestHelper.shutdown();
   }
 
   @After

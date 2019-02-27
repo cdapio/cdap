@@ -42,6 +42,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Closeables;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -105,6 +106,7 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
   public static void teardown() throws IOException {
     txManager.stopAndWait();
     storage.dropIndex();
+    Closeables.closeQuietly(storage);
   }
 
   @Override

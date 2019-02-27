@@ -67,6 +67,7 @@ public class CDAPOperationalStatsTest {
   @AfterClass
   public static void teardown() throws Exception {
     namespaceAdmin.delete(NAMESPACE);
+    AppFabricTestHelper.shutdown();
   }
 
   @Test

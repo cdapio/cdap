@@ -72,6 +72,7 @@ import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -102,6 +103,7 @@ public class AppFabricTestHelper {
 
   public static CConfiguration configuration;
   private static Injector injector;
+  private static MetadataStorage metadataStorage;
 
   public static Injector getInjector() {
     return getInjector(CConfiguration.create());
@@ -118,6 +120,14 @@ public class AppFabricTestHelper {
 
   public static Injector getInjector(CConfiguration cConf, Module overrides) {
     return getInjector(cConf, null, overrides);
+  }
+
+  public static synchronized Injector getInjector(CConfiguration conf, @Nullable SConfiguration sConf) {
+    return getInjector(conf, sConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+      }
+    });
   }
 
   public static synchronized Injector getInjector(CConfiguration conf, @Nullable SConfiguration sConf,
@@ -152,8 +162,9 @@ public class AppFabricTestHelper {
       } catch (IOException | TableAlreadyExistsException e) {
         throw new RuntimeException("Failed to create the system tables", e);
       }
+      metadataStorage = injector.getInstance(MetadataStorage.class);
       try {
-        injector.getInstance(MetadataStorage.class).createIndex();
+        metadataStorage.createIndex();
       } catch (IOException e) {
         throw new RuntimeException("Unable to create the metadata tables.", e);
       }
@@ -176,6 +187,14 @@ public class AppFabricTestHelper {
       }
     }
     return injector;
+  }
+
+  /**
+   * This must be called by all tests that create their injector through this class.
+   */
+  public static void shutdown() {
+    Closeables.closeQuietly(metadataStorage);
+    metadataStorage = null;
   }
 
   public static byte[] createSourceId(long sourceId) {

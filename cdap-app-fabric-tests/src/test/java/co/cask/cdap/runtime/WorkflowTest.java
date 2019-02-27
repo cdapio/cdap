@@ -45,6 +45,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.inject.Injector;
 import org.apache.twill.common.Threads;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -255,4 +256,10 @@ public class WorkflowTest {
 
     return inputDir.getAbsolutePath();
   }
+
+  @After
+  public void tearDown() {
+    AppFabricTestHelper.shutdown();
+  }
+
 }
