@@ -82,7 +82,7 @@ case ${1} in
   config-tool) shift; cdap_config_tool ${@}; __ret=${?} ;;
   upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
   version) shift; cdap_version_command ${@}; __ret=${?} ;;
-  run) shift; cdap_run_class ${@}; __ret=${?} ;;
+  run) shift; cdap_exec_class ${@}; __ret=${?} ;;
   sandbox) shift; cdap_sdk ${@}; __ret=${?} ;;
   setup) shift; cdap_setup ${@}; __ret=${?} ;;
   debug) shift; cdap_debug ${@}; __ret=${?} ;;

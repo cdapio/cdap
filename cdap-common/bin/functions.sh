@@ -697,8 +697,9 @@ cdap_service() {
       __ret=0
       ;;
     run) cdap_run_class ${__args} ; __ret=${?} ;;
-    usage|-h|--help) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}"; __ret=0 ;;
-    *) die "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath}" ;;
+    exec) cdap_exec_class ${__args} ; __ret=${?} ;;
+    usage|-h|--help) echo "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath|run|exec}"; __ret=0 ;;
+    *) die "Usage: $0 ${__service} {start|stop|restart|status|condrestart|classpath|run|exec}" ;;
   esac
   return ${__ret}
 }
@@ -861,6 +862,36 @@ cdap_run_class() {
   "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
   __ret=${?}
   return ${__ret}
+}
+
+#
+# cdap_exec_class <class> [arguments]
+# Executes a given class' main method with the CLASSPATH and environment setup. It replaces the current process
+# with the new Java process
+#
+cdap_exec_class() {
+  local readonly __class=${1}
+  shift
+  local readonly __args=${@}
+  local JAVA_HEAPMAX=${JAVA_HEAPMAX:--Xmx1024m}
+  [[ -z ${__class} ]] && echo "[ERROR] No class name given!" && die "Usage: ${0} run <fully-qualified-class> [arguments]"
+  # Check and set classpath if in development environment.
+  cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
+  # Setup classpaths.
+  cdap_set_classpath "${CDAP_HOME}"/master "${CDAP_CONF}"
+  # Setup Java
+  cdap_set_java || return 1
+  cdap_set_spark || logecho "$(date) [WARN] Could not determine SPARK_HOME! Spark support unavailable!"
+  cdap_set_hive_classpath || return 1
+  # Add proper HBase compatibility to CLASSPATH
+  cdap_set_hbase || exit 1
+  cdap_create_local_dir || die "Could not create local directory"
+  if [[ -n ${__args} ]] && [[ ${__args} != '' ]]; then
+    echo "$(date) Running class ${__class} with arguments: ${__args}"
+  else
+    echo "$(date) Running class ${__class}"
+  fi
+  exec "${JAVA}" ${JAVA_HEAPMAX} -Dhive.classpath=${HIVE_CLASSPATH} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR} ${OPTS} -cp ${CLASSPATH} ${__class} ${__args}
 }
 
 #
