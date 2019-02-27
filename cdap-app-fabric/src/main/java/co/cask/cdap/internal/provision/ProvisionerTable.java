@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.provision;
 
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -36,7 +37,6 @@ import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -59,10 +59,14 @@ public class ProvisionerTable {
    * @throws IOException if there is an error reading from underlying structured table.
    */
   public List<ProvisioningTaskInfo> listTaskInfo() throws IOException {
-    Iterator<StructuredRow> iterator = table.scan(Range.all(), Integer.MAX_VALUE);
-    List<ProvisioningTaskInfo> result = new ArrayList<>();
-    while (iterator.hasNext()) {
-      result.add(deserialize(iterator.next().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD)));
+    List<ProvisioningTaskInfo> result;
+    try (CloseableIterator<StructuredRow> iterator = table.scan(Range.all(), Integer.MAX_VALUE)) {
+      result = new ArrayList<>();
+      while (iterator.hasNext()) {
+        result.add(
+          deserialize(iterator.next().getString(StoreDefinition.ProvisionerStore.PROVISIONER_TASK_INFO_FIELD))
+        );
+      }
     }
     return result;
   }

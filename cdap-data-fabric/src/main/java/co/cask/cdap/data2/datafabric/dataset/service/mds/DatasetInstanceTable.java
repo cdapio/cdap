@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset.service.mds;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -30,14 +30,12 @@ import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.table.field.Range;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -112,19 +110,21 @@ public final class DatasetInstanceTable {
 
   private Collection<DatasetSpecification> getAll(NamespaceId namespaceId, Predicate<DatasetSpecification> filter)
     throws IOException {
-    Iterator<StructuredRow> iterator = table.scan(
+    List<DatasetSpecification> result;
+    try (CloseableIterator<StructuredRow> iterator = table.scan(
       Range.singleton(
         ImmutableList.of(
           Fields.stringField(StoreDefinition.DatasetInstanceStore.NAMESPACE_FIELD, namespaceId.getNamespace()))),
-      Integer.MAX_VALUE);
-    List<DatasetSpecification> result = new ArrayList<>();
-    while (iterator.hasNext()) {
-      DatasetSpecification datasetSpecification =
-        GSON.fromJson(
-          iterator.next().getString(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD),
-          DatasetSpecification.class);
-      if (filter.test(datasetSpecification)) {
-        result.add(datasetSpecification);
+      Integer.MAX_VALUE)) {
+      result = new ArrayList<>();
+      while (iterator.hasNext()) {
+        DatasetSpecification datasetSpecification =
+          GSON.fromJson(
+            iterator.next().getString(StoreDefinition.DatasetInstanceStore.DATASET_METADATA_FIELD),
+            DatasetSpecification.class);
+        if (filter.test(datasetSpecification)) {
+          result.add(datasetSpecification);
+        }
       }
     }
     return result;

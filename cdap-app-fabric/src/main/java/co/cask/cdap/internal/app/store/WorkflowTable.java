@@ -44,7 +44,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,12 +102,14 @@ public class WorkflowTable {
    * @return List of WorkflowRunRecords
    */
   private List<WorkflowRunRecord> scan(WorkflowId id, long timeRangeStart, long timeRangeEnd) throws IOException {
-    Iterator<StructuredRow> iterator = table.scan(
-      Range.create(getPrimaryKeyFields(id, timeRangeStart), Range.Bound.INCLUSIVE,
-                   getPrimaryKeyFields(id, timeRangeEnd), Range.Bound.EXCLUSIVE), Integer.MAX_VALUE);
-    List<WorkflowRunRecord> workflowRunRecordList = new ArrayList<>();
-    while (iterator.hasNext()) {
-      workflowRunRecordList.add(getRunRecordFromRow(iterator.next()));
+    List<WorkflowRunRecord> workflowRunRecordList;
+    try (CloseableIterator<StructuredRow> iterator =
+           table.scan(Range.create(getPrimaryKeyFields(id, timeRangeStart), Range.Bound.INCLUSIVE,
+                                   getPrimaryKeyFields(id, timeRangeEnd), Range.Bound.EXCLUSIVE), Integer.MAX_VALUE)) {
+      workflowRunRecordList = new ArrayList<>();
+      while (iterator.hasNext()) {
+        workflowRunRecordList.add(getRunRecordFromRow(iterator.next()));
+      }
     }
     return workflowRunRecordList;
   }
