@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 /**
  * The internal context object used by the Dataset framework to track Dataset methods.
  */
-public abstract class DatasetRuntimeContext {
+public abstract class DatasetRuntimeContext implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DatasetRuntimeContext.class);
   private static final ThreadLocal<DatasetRuntimeContext> CONTEXT_THREAD_LOCAL = new InheritableThreadLocal<>();
@@ -54,6 +54,11 @@ public abstract class DatasetRuntimeContext {
 
       @Override
       public void onMethodExit() {
+        // no-op
+      }
+
+      @Override
+      public void close() {
         // no-op
       }
     };
@@ -104,4 +109,7 @@ public abstract class DatasetRuntimeContext {
    */
   @SuppressWarnings("unused")
   public abstract void onMethodExit();
+  
+  @Override
+  public abstract void close();
 }

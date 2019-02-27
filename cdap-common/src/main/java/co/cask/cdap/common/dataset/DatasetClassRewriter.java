@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
  * <pre>
  * 1. Introduce a new field, "_datasetRuntimeContext0" of type {@link DatasetRuntimeContext}.
  * 2. In each constructor, insert this._datasetRuntimeContext = DatasetRuntimeContext.getContext()
- * 3. For each constructor and method, transform the code to:
+ * 3. For each constructor and non-close method, transform the code to:
  *
  *    this._datasetRuntimeContext0.onMethodEntry([annotation]);
  *    try {
@@ -59,6 +59,13 @@ import javax.annotation.Nullable;
  *
  *    The [annotation] is determined by the @NoAccess, @ReadOnly, @WriteOnly, @ReadWrite annotations on the
  *    constructor or method. The [defaultAnnotation] for constructor is @NoAccess and for method is @ReadWrite.
+ * 4. For the close() method, transform the code to:
+ *
+ *    try {
+ *      // original code
+ *    } finally {
+ *      this._datasetRuntimeContext0.close();
+ *    }
  * </pre>
  *
  * The class rewrite will skip rewriting of all {@link TransactionAware} methods and {@link Closeable}
@@ -161,27 +168,38 @@ public final class DatasetClassRewriter implements ClassRewriter {
 
           Type methodAnnotationType = getMethodAnnotationType(hasRead, hasWrite);
 
-          // this._datasetRuntimeContext.onMethodEntry(isConstructor, methodAnnotation);
+          if (!"close".equals(name)) {
+            // this._datasetRuntimeContext.onMethodEntry(isConstructor, methodAnnotation);
+            loadThis();
+            getField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
+            visitLdcInsn(isConstructor);
+            push(methodAnnotationType);
+            invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
+                          new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE,
+                                                                               Type.BOOLEAN_TYPE, CLASS_TYPE)));
+          }
           // try {
-          loadThis();
-          getField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
-          visitLdcInsn(isConstructor);
-          push(methodAnnotationType);
-          invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                        new Method("onMethodEntry", Type.getMethodDescriptor(Type.VOID_TYPE,
-                                                                             Type.BOOLEAN_TYPE, CLASS_TYPE)));
           beginTry();
         }
 
         @Override
         protected void onFinally(int opcode) {
-          // } finally {
-          //   this._datasetRuntimeContext.onMethodExit();
-          // }
           loadThis();
           getField(datasetType, datasetRuntimeContextField, DATASET_RUNTIME_CONTEXT_TYPE);
-          invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
-                        new Method("onMethodExit", Type.getMethodDescriptor(Type.VOID_TYPE)));
+
+          if ("close".equals(name)) {
+            // } finally {
+            //   this._datasetRuntimeContext.close();
+            // }
+            invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
+                          new Method("close", Type.getMethodDescriptor(Type.VOID_TYPE)));
+          } else {
+            // } finally {
+            //   this._datasetRuntimeContext.onMethodExit();
+            // }
+            invokeVirtual(DATASET_RUNTIME_CONTEXT_TYPE,
+                          new Method("onMethodExit", Type.getMethodDescriptor(Type.VOID_TYPE)));
+          }
         }
 
         @Nullable
