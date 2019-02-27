@@ -17,13 +17,11 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
@@ -45,7 +43,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,21 +67,16 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
   private final CConfiguration cConf;
   private final MessagingService messagingService;
-  private final DatasetFramework datasetFramework;
-  private final TransactionSystemClient txClient;
   private final MetricsCollectionService metricsCollectionService;
   private final List<Service> subscriberServices;
   private ScheduledExecutorService subscriberExecutor;
 
   @Inject
   ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                                        DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                         MetricsCollectionService metricsCollectionService,
                                         TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.messagingService = messagingService;
-    this.datasetFramework = datasetFramework;
-    this.txClient = txClient;
     this.metricsCollectionService = metricsCollectionService;
     this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(transactionRunner),
                                             new DataEventSubscriberService(transactionRunner),
@@ -127,11 +119,10 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
    */
   private abstract class AbstractSchedulerSubscriberService extends AbstractNotificationSubscriberService {
 
-    AbstractSchedulerSubscriberService(String name, String topic, int fetchSize, boolean transactionalFetch,
+    AbstractSchedulerSubscriberService(String name, String topic, int fetchSize,
                                        TransactionRunner transactionRunner) {
-      super(name, cConf, topic, transactionalFetch, fetchSize,
-            cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
-            messagingService, datasetFramework, txClient, metricsCollectionService, transactionRunner);
+      super(name, cConf, topic, fetchSize, cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS),
+            messagingService, metricsCollectionService, transactionRunner);
     }
 
     @Nullable
@@ -146,7 +137,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     }
 
     @Override
-    protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
+    protected void processMessages(StructuredTableContext structuredTableContext,
                                    Iterator<ImmutablePair<String, Notification>> messages) throws IOException {
       ProgramScheduleStoreDataset scheduleStore = getScheduleStore(structuredTableContext);
       JobQueueTable jobQueue = getJobQueue(structuredTableContext);
@@ -184,7 +175,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     SchedulerEventSubscriberService(TransactionRunner transactionRunner) {
       // Time and stream size events are non-transactional
       super("scheduler.event", cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), false, transactionRunner);
+            cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE), transactionRunner);
     }
 
     @Override
@@ -226,7 +217,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     DataEventSubscriberService(TransactionRunner transactionRunner) {
       // Dataset partition events are published transactionally, hence fetch need to be transactional too.
       super("scheduler.data.event", cConf.get(Constants.Dataset.DATA_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), true, transactionRunner);
+            cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), transactionRunner);
     }
 
     @Override
@@ -252,7 +243,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
     ProgramStatusEventSubscriberService(TransactionRunner transactionRunner) {
       // Fetch transactionally since publishing from AppMetadataStore is transactional.
       super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC),
-            cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true, transactionRunner);
+            cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), transactionRunner);
     }
 
     @Override
