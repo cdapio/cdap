@@ -88,7 +88,9 @@ public class StorageMain {
     }
 
     // Create metadata tables
-    injector.getInstance(MetadataStorage.class).createIndex();
+    try (MetadataStorage metadataStorage = injector.getInstance(MetadataStorage.class)) {
+      metadataStorage.createIndex();
+    }
     injector.getInstance(LevelDBTableService.class).close();
 
     LOG.info("Storage creation completed");

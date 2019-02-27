@@ -802,27 +802,6 @@
                   </resources>
                 </configuration>
               </execution>
-              <!-- Copy Spark 2, and includes the spark-assembly -->
-              <execution>
-                <id>copy-spark2-assembly</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.runtime.ext.dir}/${spark2.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-spark-core2_2.11/target/libexec
-                      </directory>
-                      <includes>
-                        <include>co.cask.cdap.spark-assembly*.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
           <plugin>
@@ -830,22 +809,18 @@
             <artifactId>maven-dependency-plugin</artifactId>
             <version>2.8</version>
             <executions>
-              <!-- Copy Hadoop dependencies -->
+              <!--
+                Need to override the copy-dependencies to exclude Kafka and Scala in K8s build, but to include Hadoop
+              -->
               <execution>
-                <id>copy-hadoop-dependencies</id>
+                <id>copy-dependencies</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-dependencies</goal>
                 </goals>
-                <configuration>
-                  <outputDirectory>${stage.hadoop.lib.dir}</outputDirectory>
-                  <overWriteReleases>false</overWriteReleases>
-                  <overWriteSnapshots>false</overWriteSnapshots>
-                  <overWriteIfNewer>true</overWriteIfNewer>
-                  <includeGroupIds>org.apache.hadoop</includeGroupIds>
-                  <prependGroupId>true</prependGroupId>
-                  <silent>true</silent>
-                  <includeScope>compile</includeScope>
+                <configuration combine.self="append">
+                  <excludeGroupIds>org.apache.hbase,org.apache.hive,com.google.protobuf,\
+                    org.datanucleus,asm,org.apache.spark,slf4j-log4j12,org.scala-lang,org.apache.kafka</excludeGroupIds>
                 </configuration>
               </execution>
             </executions>
