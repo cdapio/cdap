@@ -26,8 +26,8 @@ import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
 import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
+import co.cask.cdap.spi.data.sql.RetryingSqlTransactionRunner;
 import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.SqlTransactionRunner;
 import co.cask.cdap.spi.data.sql.jdbc.DataSourceInstantiator;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
@@ -86,8 +86,8 @@ public class StorageModule extends PrivateModule {
       }
 
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        return new SqlTransactionRunner(injector.getInstance(StructuredTableAdmin.class),
-                                        injector.getInstance(DataSourceInstantiator.class).get());
+        return new RetryingSqlTransactionRunner(injector.getInstance(StructuredTableAdmin.class),
+                                                injector.getInstance(DataSourceInstantiator.class).get());
       }
 
       throw new UnsupportedOperationException(
