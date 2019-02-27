@@ -65,7 +65,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -247,15 +246,17 @@ public class AppMetadataStore {
   public List<ApplicationId> getAllAppVersionsAppIds(String namespaceId, String appId)
     throws IOException {
     List<ApplicationId> appIds = new ArrayList<>();
-    Iterator<StructuredRow> iterator =
-      getApplicationSpecificationTable().scan(getNamespaceAndApplicationRange(namespaceId, appId), Integer.MAX_VALUE);
-   while (iterator.hasNext()) {
-     StructuredRow row = iterator.next();
-     appIds.add(
-       new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
-         .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
-              row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD)));
-   }
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().scan(getNamespaceAndApplicationRange(namespaceId, appId),
+                                                   Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        appIds.add(
+          new NamespaceId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD))
+            .app(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
+                 row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD)));
+      }
+    }
    return appIds;
   }
 

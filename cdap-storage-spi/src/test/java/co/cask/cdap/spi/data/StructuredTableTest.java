@@ -436,7 +436,8 @@ public abstract class StructuredTableTest {
 
       // non-index column
       try {
-        table.scan(Fields.longField(LONG_COL, 1L));
+        try (CloseableIterator<StructuredRow> iterator = table.scan(Fields.longField(LONG_COL, 1L))) {
+        }
         Assert.fail("Expected InvalidFieldException for scanning a non-index column");
       } catch (InvalidFieldException e) {
         // Expected
