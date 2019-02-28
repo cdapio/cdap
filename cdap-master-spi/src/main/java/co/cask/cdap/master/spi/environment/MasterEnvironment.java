@@ -19,6 +19,7 @@ package co.cask.cdap.master.spi.environment;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -43,6 +44,14 @@ public interface MasterEnvironment {
    */
   default void destroy() {
     // no-op by default
+  }
+
+  /**
+   * Returns a {@link Optional} {@link MasterEnvironmentTask} to be executed periodically.
+   * It is guaranteed that there is no concurrent call to the task returned.
+   */
+  default Optional<MasterEnvironmentTask> getTask() {
+    return Optional.empty();
   }
 
   /**

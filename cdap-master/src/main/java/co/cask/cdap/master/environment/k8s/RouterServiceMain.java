@@ -21,6 +21,8 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.gateway.router.RouterModules;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.guice.SecurityModules;
@@ -56,7 +58,8 @@ public class RouterServiceMain extends AbstractServiceMain {
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources) {
+                             List<? super AutoCloseable> closeableResources,
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
     services.add(injector.getInstance(NettyRouter.class));
   }
 

@@ -41,6 +41,7 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.master.environment.DefaultMasterEnvironmentContext;
 import co.cask.cdap.master.environment.MasterEnvironmentExtensionLoader;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -144,8 +145,9 @@ public abstract class AbstractServiceMain extends DaemonMain {
                                            + opts.envProvider);
     }
 
+    MasterEnvironmentContext masterEnvContext = new DefaultMasterEnvironmentContext(cConf);
     try {
-      masterEnv.initialize(new DefaultMasterEnvironmentContext(cConf));
+      masterEnv.initialize(masterEnvContext);
     } catch (Exception e) {
       throw new RuntimeException("Exception raised when initializing master environment for " + masterEnv.getName(), e);
     }
@@ -180,7 +182,7 @@ public abstract class AbstractServiceMain extends DaemonMain {
 
     // Add Services
     services.add(injector.getInstance(MetricsCollectionService.class));
-    addServices(injector, services, closeableResources);
+    addServices(injector, services, closeableResources, masterEnv, masterEnvContext);
 
     LOG.info("Master service {} initialized", getClass().getName());
   }
@@ -257,14 +259,15 @@ public abstract class AbstractServiceMain extends DaemonMain {
 
   /**
    * Adds {@link Service} to run.
-   *
    * @param injector the Guice {@link Injector} for all the necessary bindings
    * @param services the {@link List} to populate services to run
    * @param closeableResources the {@link List} to populate {@link AutoCloseable} that will be closed on stopping
-   *                           of this service main
+   * @param masterEnv the {@link MasterEnvironment} created for this main service
+   * @param masterEnvContext the {@link MasterEnvironmentContext} created for this main service
    */
   protected abstract void addServices(Injector injector, List<? super Service> services,
-                                      List<? super AutoCloseable> closeableResources);
+                                      List<? super AutoCloseable> closeableResources,
+                                      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext);
 
   /**
    * Returns the {@link LoggingContext} to use for this service main.

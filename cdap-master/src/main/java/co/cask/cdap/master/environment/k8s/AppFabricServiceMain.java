@@ -37,6 +37,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.operations.OperationalStatsService;
@@ -115,7 +117,8 @@ public class AppFabricServiceMain extends AbstractServiceMain {
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources) {
+                             List<? super AutoCloseable> closeableResources,
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
     closeableResources.add(injector.getInstance(AuthorizerInstantiator.class));
     services.add(injector.getInstance(OperationalStatsService.class));
     services.add(injector.getInstance(SecureStoreService.class));
@@ -129,6 +132,9 @@ public class AppFabricServiceMain extends AbstractServiceMain {
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
+
+    // Optionally adds the master environment task
+    masterEnv.getTask().ifPresent(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
   }
 
   @Nullable
