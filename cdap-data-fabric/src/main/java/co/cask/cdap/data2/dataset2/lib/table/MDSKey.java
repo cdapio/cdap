@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
@@ -27,6 +28,7 @@ import java.nio.ByteBuffer;
  * Metadata entry key
  */
 public final class MDSKey implements Comparable<MDSKey> {
+  private static final byte[] DELIM = {(byte) 1};
   private final byte[] key;
 
   /**
@@ -80,13 +82,19 @@ public final class MDSKey implements Comparable<MDSKey> {
      * @return the next byte[] part in the splitter
      */
     public byte[] getBytes() {
-      int len = byteBuffer.getInt();
-      if (byteBuffer.remaining() < len) {
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      byte b = -1;
+      while (byteBuffer.hasRemaining()) {
+        b = byteBuffer.get();
+        if (b == DELIM[0]) {
+          break;
+        }
+        out.write(b);
+      }
+      if (b != DELIM[0]) {
         throw new BufferUnderflowException();
       }
-      byte[] bytes = new byte[len];
-      byteBuffer.get(bytes, 0, len);
-      return bytes;
+      return out.toByteArray();
     }
 
     /**
@@ -180,9 +188,9 @@ public final class MDSKey implements Comparable<MDSKey> {
       this.key = start.getKey();
     }
 
-    // Encodes parts of the key with segments of <length> <value>
+    // Append the delimiter after the byte array
     public Builder add(byte[] part) {
-      key = Bytes.add(key, Bytes.toBytes(part.length), part);
+      key = Bytes.add(key, part, DELIM);
       return this;
     }
 

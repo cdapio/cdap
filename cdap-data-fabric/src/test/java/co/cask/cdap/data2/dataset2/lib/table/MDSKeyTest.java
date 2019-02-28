@@ -23,7 +23,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.BufferUnderflowException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class MDSKeyTest {
 
@@ -174,5 +178,59 @@ public class MDSKeyTest {
     Assert.assertArrayEquals(new byte[]{'x', 'y'}, splitter.getBytes());
     Assert.assertArrayEquals(new byte[]{'z', 'z'}, splitter.getBytes());
     Assert.assertEquals(8L, splitter.getLong());
+  }
+
+  @SuppressWarnings("SimplifiableJUnitAssertion")
+  @Test
+  public void testSort() {
+    List<MDSKey> expectedSorted = new ArrayList<>();
+    List<MDSKey> expectedReverse = new ArrayList<>();
+    // Add keys in sorted order
+    int max = 3;
+    List<String> sortedStrings = Arrays.asList("first-", "long-string-", "str-");
+    for (int i = 0; i < max; ++i) {
+      for (int s = 0; s < max; ++s) {
+        for (long l = 0; l < max; ++l) {
+          expectedSorted.add(new MDSKey.Builder().add(i).add(sortedStrings.get(s) + i).add(l).build());
+          int ri = max - i - 1;
+          int rs = max - s - 1;
+          long rl = max - l - 1;
+          expectedReverse.add(new MDSKey.Builder().add(ri).add(sortedStrings.get(rs) + ri).add(rl).build());
+        }
+      }
+    }
+
+    // Now shuffle, and sort the list
+    List<MDSKey> actualSorted = new ArrayList<>(expectedSorted);
+    Random random = new Random(System.nanoTime());
+    Collections.shuffle(actualSorted, random);
+    Collections.sort(actualSorted);
+    Assert.assertTrue(createSortErrorMessage(expectedSorted, actualSorted), expectedSorted.equals(actualSorted));
+
+    // Test reverse sorting
+    ArrayList<MDSKey> actualReverse = new ArrayList<>(expectedReverse);
+    Collections.shuffle(actualReverse, random);
+    Collections.sort(actualReverse, Collections.reverseOrder());
+    Collections.reverse(actualReverse);
+    Assert.assertTrue(createSortErrorMessage(expectedReverse, actualReverse), expectedReverse.equals(actualReverse));
+  }
+
+  private String createSortErrorMessage(List<MDSKey> expected, List<MDSKey> actual) {
+    StringBuilder stringBuilder = new StringBuilder("\n\nExpected :");
+    writeSortKeyList(stringBuilder, expected);
+    stringBuilder.append("\nActual   :");
+    writeSortKeyList(stringBuilder, actual);
+    stringBuilder.append("\n");
+    return stringBuilder.toString();
+  }
+  private void writeSortKeyList(StringBuilder stringBuilder, List<MDSKey> keys) {
+    for (MDSKey key : keys) {
+      MDSKey.Splitter splitter = key.split();
+      stringBuilder.append("MDSKey{")
+        .append("int=").append(splitter.getInt()).append(", ")
+        .append("str=").append(splitter.getString()).append(", ")
+        .append("long=").append(splitter.getLong())
+        .append("}, ");
+    }
   }
 }

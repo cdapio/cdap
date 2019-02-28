@@ -65,7 +65,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
@@ -123,8 +122,6 @@ public class FileMetadataCleanerTest {
   }
 
   @Test
-  @Ignore
-  // TODO CDAP-14953 ignoring this test until this jira fixed
   public void testScanAndDeleteNewMetadata() throws Exception {
     TransactionRunner transactionRunner = injector.getInstance(TransactionRunner.class);
 
