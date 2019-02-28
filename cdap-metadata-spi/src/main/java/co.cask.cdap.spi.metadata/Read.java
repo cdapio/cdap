@@ -70,8 +70,8 @@ public class Read {
   }
 
   private Read(MetadataEntity entity,
-               MetadataScope scope,
-               MetadataKind kind,
+               @Nullable MetadataScope scope,
+               @Nullable MetadataKind kind,
                Set<ScopedNameOfKind> selection) {
     this.entity = entity;
     this.scopes = scope == null ? MetadataScope.ALL : Collections.singleton(scope);
