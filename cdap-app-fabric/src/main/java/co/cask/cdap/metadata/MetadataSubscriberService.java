@@ -24,6 +24,7 @@ import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -192,7 +193,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   @Override
   protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, MetadataMessage>> messages) throws IOException {
+                                 Iterator<ImmutablePair<String, MetadataMessage>> messages)
+    throws IOException, ConflictException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor

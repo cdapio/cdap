@@ -165,7 +165,6 @@ public abstract class AppFabricTestBase {
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-
   protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";

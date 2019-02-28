@@ -95,7 +95,6 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-
       // set it through preferences
       setPreferences(getPreferenceURI(TEST_NAMESPACE1),
                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile"), 200);

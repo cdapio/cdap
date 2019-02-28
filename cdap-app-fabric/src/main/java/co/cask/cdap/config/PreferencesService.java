@@ -126,7 +126,7 @@ public class PreferencesService {
     Map<String, String> oldProperties = preferencesTable.getPreferences(entityId);
     // get the old profile information from the previous properties
     Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
-    preferencesTable.setPreferences(entityId, propertyMap);
+    long seqId = preferencesTable.setPreferences(entityId, propertyMap);
 
     // After everything is set, publish the update message and add the association if profile is present
     if (profile.isPresent()) {
@@ -140,12 +140,11 @@ public class PreferencesService {
 
     // if new profiles do not have profile information but old profiles have, it is same as deletion of the profile
     if (profile.isPresent()) {
-      adminEventPublisher.publishProfileAssignment(entityId, profile.get());
+      adminEventPublisher.publishProfileAssignment(entityId, seqId);
     } else if (oldProfile.isPresent()) {
-      adminEventPublisher.publishProfileUnAssignment(entityId);
+      adminEventPublisher.publishProfileUnAssignment(entityId, seqId);
     }
   }
-
 
   private void deleteConfig(EntityId entityId) {
     TransactionRunners.run(transactionRunner, context -> {
@@ -154,12 +153,12 @@ public class PreferencesService {
       NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
         NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
       Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProp);
-      dataset.deleteProperties(entityId);
+      long seqId = dataset.deleteProperties(entityId);
 
       // if there is profile properties, publish the message to update metadata and remove the assignment
       if (oldProfile.isPresent()) {
         ProfileStore.get(context).removeProfileAssignment(oldProfile.get(), entityId);
-        adminEventPublisher.publishProfileUnAssignment(entityId);
+        adminEventPublisher.publishProfileUnAssignment(entityId, seqId);
       }
     });
   }

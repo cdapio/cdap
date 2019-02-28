@@ -61,6 +61,9 @@ public final class StoreDefinition {
     if (overWrite || tableAdmin.getSpecification(ConfigStore.CONFIGS) == null) {
       ConfigStore.createTable(tableAdmin);
     }
+    if (overWrite || tableAdmin.getSpecification(PreferencesStore.PREFERENCES) == null) {
+      PreferencesStore.createTable(tableAdmin);
+    }
     if (overWrite || tableAdmin.getSpecification(ProvisionerStore.PROVISIONER_TABLE) == null) {
       ProvisionerStore.createTable(tableAdmin);
     }
@@ -173,6 +176,33 @@ public final class StoreDefinition {
 
     public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
       tableAdmin.create(CONFIG_TABLE_SPEC);
+    }
+  }
+
+  /**
+   * Schema for ConfigStore
+   */
+  public static final class PreferencesStore {
+    public static final StructuredTableId PREFERENCES = new StructuredTableId("preferences");
+
+    public static final String NAMESPACE_FIELD = "namespace";
+    public static final String TYPE_FIELD = "type";
+    public static final String NAME_FIELD = "name";
+    public static final String PROPERTIES_FIELD = "properties";
+    public static final String SEQUENCE_ID_FIELD = "seq";
+
+    public static final StructuredTableSpecification PREFERENCES_TABLE_SPEC = new StructuredTableSpecification.Builder()
+      .withId(PREFERENCES)
+      .withFields(Fields.stringType(NAMESPACE_FIELD),
+                  Fields.stringType(TYPE_FIELD),
+                  Fields.stringType(NAME_FIELD),
+                  Fields.stringType(PROPERTIES_FIELD),
+                  Fields.longType(SEQUENCE_ID_FIELD))
+      .withPrimaryKeys(NAMESPACE_FIELD, TYPE_FIELD, NAME_FIELD)
+      .build();
+
+    public static void createTable(StructuredTableAdmin tableAdmin) throws IOException, TableAlreadyExistsException {
+      tableAdmin.create(PREFERENCES_TABLE_SPEC);
     }
   }
 

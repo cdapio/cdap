@@ -19,6 +19,7 @@ package co.cask.cdap.metadata.profile;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.config.PreferencesTable;
 import co.cask.cdap.data2.metadata.writer.MetadataMessage;
@@ -99,14 +100,18 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   @Override
-  public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
-    LOG.trace("Processing message: {}", message);
+  public void processMessage(MetadataMessage message, StructuredTableContext context)
+    throws IOException, ConflictException {
 
+    LOG.trace("Processing message: {}", message);
     EntityId entityId = message.getEntityId();
 
     switch (message.getType()) {
       case PROFILE_ASSIGNMENT:
       case PROFILE_UNASSIGNMENT:
+        validatePreferenceSequenceId(entityId, message);
+        updateProfileMetadata(entityId, message);
+        break;
       case ENTITY_CREATION:
         updateProfileMetadata(entityId, message);
         break;
@@ -120,8 +125,15 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     }
   }
 
+  private void validatePreferenceSequenceId(EntityId entityId, MetadataMessage message)
+    throws IOException, ConflictException {
+    long seqId = GSON.fromJson(message.getRawPayload(), long.class);
+    preferencesTable.ensureSequence(entityId, seqId);
+  }
+
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
     List<MetadataMutation> updates = new ArrayList<>();
+    LOG.trace("Updating profile metadata for {}", entityId);
     collectProfileMetadata(entityId, message, updates);
     metadataStorage.batch(updates);
   }
@@ -142,7 +154,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                       "updated. Ignoring the message {}", namespaceId, message);
           return;
         }
-        LOG.trace("Updating profile metadata for {}", entityId);
         ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
         List<ApplicationMeta> applicationMetas = appMetadataStore.getAllApplications(namespaceId.getNamespace());
         for (ApplicationMeta meta : applicationMetas) {
@@ -201,6 +212,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
     // We only care about application and schedules.
     if (entity.getEntityType().equals(EntityType.APPLICATION)) {
+      LOG.trace("Removing profile metadata for {}", entity);
       ApplicationId appId = (ApplicationId) message.getEntityId();
       ApplicationSpecification appSpec = message.getPayload(GSON, ApplicationSpecification.class);
       for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, appId)) {
@@ -220,7 +232,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
                                          @Nullable ProfileId namespaceProfile,
                                          List<MetadataMutation> updates) throws IOException {
-    LOG.trace("Updating profile metadata for {}", applicationId);
     ProfileId appProfile = namespaceProfile == null
       ? getResolvedProfileId(applicationId)
       : getProfileId(applicationId).orElse(namespaceProfile);
@@ -231,7 +242,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
                                              List<MetadataMutation> updates) throws IOException {
-    LOG.trace("Updating profile metadata for {}", programId);
     ProfileId programProfile = appProfile == null
       ? getResolvedProfileId(programId)
       : getProfileId(programId).orElse(appProfile);
@@ -245,7 +255,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private void collectScheduleProfileMetadata(ProgramSchedule schedule, ProfileId programProfile,
                                               List<MetadataMutation> updates) {
     ScheduleId scheduleId = schedule.getScheduleId();
-    LOG.trace("Updating profile metadata for {}", scheduleId);
     // if we are able to get profile from preferences or schedule properties, use it
     // otherwise default profile will be used
     Optional<ProfileId> scheduleProfileId =
