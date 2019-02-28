@@ -18,14 +18,13 @@
   TODO: This is just a stub(mock) for jest to not invoke the actual socket connection.
   This needs to be exported as a singleton class. Will do when we actually need to mock a function.
 */
-import {Subject} from 'rxjs/Subject';
+import { Subject } from 'rxjs/Subject';
 
 const MyMetadataApi = {
   __metadata: {},
   __properties: {},
-  __tags: []
+  __tags: [],
 };
-
 
 MyMetadataApi.__setMetadata = function(metadata, isError) {
   this.__isError = isError;
@@ -44,12 +43,18 @@ MyMetadataApi.__setTags = function(tags, isError) {
 MyMetadataApi.addTags = function(params, tag) {
   let subject = new Subject();
   setTimeout(() => {
-    this.__tags = this.__tags.concat(tag);
-    subject.next(this.__tags);
+    this.__tags = this.__tags.concat(
+      tag.map((tagVal) => {
+        return {
+          name: tagVal,
+          scope: 'USER',
+        };
+      })
+    );
+    subject.next({ tags: this.__tags });
   });
   return subject;
 };
-
 
 MyMetadataApi.generalGetter = function(property) {
   return function() {
@@ -59,7 +64,10 @@ MyMetadataApi.generalGetter = function(property) {
         subject.error(this[property]);
         return;
       }
-      subject.next(this[property]);
+      subject.next({
+        properties: this.__properties,
+        tags: this.__tags,
+      });
     });
     return subject;
   }.bind(this);
@@ -74,4 +82,4 @@ MyMetadataApi.getProperties = MyMetadataApi.generalGetter('__properties');
 MyMetadataApi.getMetadata = MyMetadataApi.generalGetter('__metadata');
 MyMetadataApi.getTags = MyMetadataApi.generalGetter('__tags');
 
-module.exports = {MyMetadataApi};
+module.exports = { MyMetadataApi };

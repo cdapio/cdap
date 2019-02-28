@@ -79,7 +79,7 @@ function getData() {
     target: ['dataset', 'application'],
     query: '*',
     sort: 'entity-name asc',
-    showCustom: true,
+    responseFormat: 'v6',
   };
 
   Observable.forkJoin(

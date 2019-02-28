@@ -27,13 +27,7 @@ require('./DatasetCards.scss');
 export default function DatasetCards({ dataEntities }) {
   let currentNamespace = NamespaceStore.getState().selectedNamespace;
   let data = dataEntities.map((dataEntity) => {
-    let entity = {
-      metadataEntity: dataEntity.metadataEntity,
-      metadata: {
-        SYSTEM: {},
-      },
-    };
-    entity = parseMetadata(entity);
+    let entity = parseMetadata(dataEntity);
     entity.uniqueId = uuidV4();
     return entity;
   });

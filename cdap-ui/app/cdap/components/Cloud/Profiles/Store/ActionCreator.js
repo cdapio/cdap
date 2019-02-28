@@ -79,7 +79,7 @@ const convertMetadataToAssociations = (metadata) => {
   let schedulesCount = 0,
     triggersCount = 0;
   metadata.forEach((m) => {
-    const schedule = objectQuery(m, 'metadataEntity', 'details', 'schedule');
+    const schedule = objectQuery(m, 'entity', 'details', 'schedule');
     if (schedule) {
       // fixed name for time based schedule.
       if (schedule === GLOBALS.defaultScheduleId) {
@@ -318,13 +318,13 @@ export const getProfiles = (namespace) => {
       if (namespace === SYSTEM_NAMESPACE) {
         apiObservable$ = MySearchApi.searchSystem({
           query: profileName,
-          showCustom: true,
+          responseFormat: 'v6',
         });
       } else {
         apiObservable$ = MySearchApi.search({
           namespace,
           query: profileName,
-          showCustom: true,
+          responseFormat: 'v6',
         });
       }
       apiObservable$.subscribe((res) =>

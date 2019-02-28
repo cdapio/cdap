@@ -16,89 +16,64 @@
 
 import {parseMetadata} from 'services/metadata-parser';
 
+const applicationMetadata = {
+  entity: {
+    details: {
+      application: 'ApplicationName',
+      version: '-SNAPSHOT',
+    },
+    type: 'application',
+  },
+  metadata: {
+    tags: [
+      {
+        name: 'PurchaseHistory',
+        scope: 'SYSTEM',
+      },
+      {
+        name: 'cdap-data-pipeline',
+        scope: 'SYSTEM',
+      },
+    ],
+  },
+};
+
 describe('metadata-parser', () => {
   it('should parse application metadata', () => {
-    const applicationMetadata = {
-      metadataEntity: {
-        details: {
-          application: 'ApplicationName',
-          version: '-SNAPSHOT',
-        },
-        type: 'application',
-      },
-      metadata: {
-        SYSTEM: {
-          tags: ['PurchaseHistory'],
-        },
-      },
-    };
-
     const parsedMetadata = parseMetadata(applicationMetadata);
 
     expect(parsedMetadata.id).toBe('ApplicationName');
     expect(parsedMetadata.version).toBe('1.0.0-SNAPSHOT');
     expect(parsedMetadata.type).toBe('application');
-    expect(parsedMetadata.isHydrator).toBe(false);
   });
 
   it('should detect hydrator pipeline', () => {
-    const applicationMetadata = {
-      metadataEntity: {
-        details: {
-          application: 'ApplicationName',
-          version: '-SNAPSHOT',
-        },
-        type: 'application',
-      },
-      metadata: {
-        SYSTEM: {
-          tags: ['cdap-data-pipeline']
-        },
-      },
-    };
-
     const parsedMetadata = parseMetadata(applicationMetadata);
-
     expect(parsedMetadata.isHydrator).toBe(true);
   });
 
   it('should parse artifact metadata', () => {
-    const systemArtifactMetadata = {
-      metadataEntity: {
+    const artifactMetadata = {
+      entity: {
         details: {
           artifact: 'ArtifactName',
-          namespace: 'SYSTEM',
-          version: '1.0.0',
-        },
-        type: 'artifact',
-      },
-    };
-
-    const userArtifactMetadata = {
-      metadataEntity: {
-        details: {
-          artifact: 'ArtifactName',
-          namespace: 'USER',
+          namespace: 'default',
           version: '1.0.0'
         },
         type: 'artifact',
       },
     };
 
-    const systemParsedMetadata = parseMetadata(systemArtifactMetadata);
-    const userParsedMetadata = parseMetadata(userArtifactMetadata);
+    const artifactParsedMetadata = parseMetadata(artifactMetadata);
 
-    expect(systemParsedMetadata.id).toBe('ArtifactName');
-    expect(systemParsedMetadata.version).toBe('1.0.0');
-    expect(systemParsedMetadata.type).toBe('artifact');
-    expect(systemParsedMetadata.scope).toBe('SYSTEM');
-    expect(userParsedMetadata.scope).toBe('USER');
-
+    expect(artifactParsedMetadata.id).toBe('ArtifactName');
+    expect(artifactParsedMetadata.version).toBe('1.0.0');
+    expect(artifactParsedMetadata.type).toBe('artifact');
   });
 
   it('should parse dataset metadata', () => {
     const datasetMetadata = {
-      metadataEntity: {
+      entity: {
         details: {
           dataset: 'DatasetName'
         },
@@ -114,10 +89,10 @@ describe('metadata-parser', () => {
 
   it('should parse program metadata', () => {
     const programMetadata = {
-      metadataEntity: {
+      entity: {
         details: {
           program: 'ProgramName',
-          type: 'Flow',
+          type: 'MapReduce',
           application: 'SomeApplication',
         },
         type: 'program',
@@ -129,23 +104,6 @@ describe('metadata-parser', () => {
     expect(parsedMetadata.id).toBe('ProgramName');
     expect(parsedMetadata.type).toBe('program');
     expect(parsedMetadata.applicationId).toBe('SomeApplication');
-    expect(parsedMetadata.programType).toBe('Flow');
-  });
-
-  it('should parse view metadata', () => {
-    const viewMetadata = {
-      metadataEntity: {
-        details: {
-          view: 'ViewName',
-        },
-        type: 'view',
-      },
-    };
-
-    const parsedMetadata = parseMetadata(viewMetadata);
-
-    expect(parsedMetadata.id).toBe('ViewName');
-    expect(parsedMetadata.type).toBe('view');
-
+    expect(parsedMetadata.programType).toBe('MapReduce');
   });
 });

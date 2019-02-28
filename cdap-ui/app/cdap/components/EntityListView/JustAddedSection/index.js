@@ -113,7 +113,7 @@ export default class JustAddedSection extends Component {
       limit: numColumns,
       query: '*',
       sort: 'creation-time desc',
-      showCustom: true,
+      responseFormat: 'v6',
     };
 
     MySearchApi.search(params)
@@ -121,15 +121,10 @@ export default class JustAddedSection extends Component {
         return res.results
           .map(parseMetadata)
           .filter((entity) => {
-            let creationTime = objectQuery(
-              entity,
-              'metadata',
-              'metadata',
-              SCOPES.SYSTEM,
-              'properties',
-              'creation-time'
+            let creationTime = objectQuery(entity, 'metadata', 'metadata', 'properties').find(
+              (property) => property.name === 'creation-time' && property.scope === SCOPES.SYSTEM
             );
-
+            creationTime = objectQuery(creationTime, 'value');
             creationTime = parseInt(creationTime, 10);
             let thresholdTime = Date.now() - JUSTADDED_THRESHOLD_TIME;
             return creationTime >= thresholdTime;

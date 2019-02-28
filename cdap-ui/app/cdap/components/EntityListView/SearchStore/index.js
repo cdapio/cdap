@@ -46,7 +46,6 @@ const defaultSearchState = {
   offset: 0,
   limit: DEFAULT_SEARCH_PAGE_SIZE,
   numColumns: null,
-  numCursors: 10,
   total: 0,
   currentPage: 1,
 

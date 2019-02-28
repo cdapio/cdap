@@ -16,7 +16,7 @@
 
 function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
   var url = myCdapUrl.constructUrl,
-      searchPath = '/namespaces/:namespace/metadata/search?limit=25&target=dataset&target=view',
+      searchPath = '/namespaces/:namespace/metadata/search?limit=25&target=dataset',
       basePath = '/namespaces/:namespace/:entityType/:entityId',
       programPath = '/namespaces/:namespace/apps/:appId/:programType/:programId/runs/:runId',
       propertyPath = '/namespaces/:namespace/:entityType/:entityId/metadata/properties',
@@ -33,16 +33,13 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
   },
   {
     search: myHelpers.getConfig('GET', 'REQUEST', searchPath, false),
-    properties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata', true),
-    viewsProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/views/:viewId/metadata', true),
+    properties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata?responseFormat=v6', false),
     getLineage: myHelpers.getConfig('GET', 'REQUEST', basePath + '/lineage?collapse=access&collapse=run&collapse=component'),
     getProgramRunStatus: myHelpers.getConfig('GET', 'REQUEST', programPath),
-    getDatasetSystemProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?scope=SYSTEM', false, { suppressErrors: true }),
-    getSystemTags: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/tags?scope=SYSTEM', true),
     getDatasetDetail: myHelpers.getConfig('GET', 'REQUEST', '/namespaces/:namespace/data/datasets/:entityId'),
 
     // USER AND PREFERRED TAGS
-    getUserTags: myHelpers.getConfig('GET', 'REQUEST', `${tagsPath}?scope=USER`, true, { suppressErrors: true }),
+    getUserTags: myHelpers.getConfig('GET', 'REQUEST', `${tagsPath}?scope=USER&responseFormat=v6`, false, { suppressErrors: true }),
     deleteTag: myHelpers.getConfig('DELETE', 'REQUEST', `${tagsPath}/:tag`, false, { suppressErrors: true }),
     addTag: myHelpers.getConfig('POST', 'REQUEST', tagsPath, false, { suppressErrors: true }),
 

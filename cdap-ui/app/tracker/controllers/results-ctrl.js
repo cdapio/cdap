@@ -124,13 +124,11 @@ class TrackerResultsController {
       namespace: this.$state.params.namespace,
       query: this.$state.params.searchQuery,
       scope: this.$scope,
-      entityScope: 'USER',
-      showCustom: true,
+      responseFormat: 'v6',
     };
 
     if (params.query === '*') {
       params.sort = 'creation-time desc';
-      params.numCursors = 10;
     } else if (params.query.charAt(params.query.length - 1) !== '*') {
       params.query = params.query + '*';
     }
@@ -147,55 +145,76 @@ class TrackerResultsController {
         this.loading = false;
       });
   }
-  parseResult (entity) {
+  parseResult (entityObj) {
     let obj = {};
-    let query = this.myHelpers.objectQuery;
-    let system = query(entity, 'metadata', 'SYSTEM');
-    let sysProps = query(system, 'properties');
-    if (entity.metadataEntity.type === 'dataset') {
-      angular.extend(obj, {
-        name: entity.metadataEntity.details.dataset,
-        type: 'Dataset',
-        entityTypeState: 'datasets',
-        icon: 'icon-datasets'
-      });
-      if (system && sysProps) {
-        angular.extend(obj, {
-          description: query(sysProps, 'description') || 'No description provided for this Dataset.',
-          createDate: query(sysProps, 'creation-time') || null,
-          datasetType: query(sysProps, 'type') || null
-        });
-        if (query(system, 'tags') && system.tags.indexOf('explore') !== -1) {
-          obj.datasetExplorable = true;
-        }
+
+    angular.extend(obj, {
+      name: entityObj.entity.details.dataset,
+      type: 'Dataset',
+      entityTypeState: 'datasets',
+      icon: 'icon-datasets'
+    });
+
+    let description = 'No description provided for this Dataset.',
+        createDate = null,
+        datasetType = null;
+
+    angular.forEach(entityObj.metadata.properties, (property) => {
+      switch (property.name) {
+        case 'description':
+          description = property.value;
+          break;
+        case 'creation-time':
+          createDate = property.value;
+          break;
+        case 'type':
+          datasetType = property.value;
+          break;
       }
-      obj.queryFound = this.findQueries(entity, obj);
-      this.entityFiltersList[0].count++;
+    });
+
+    angular.extend(obj, {
+      description: description,
+      createDate: createDate,
+      datasetType: datasetType,
+    });
+
+    if (entityObj.metadata.tags.find((tag) => tag.name === 'explore' && tag.scope === 'SYSTEM')) {
+      obj.datasetExplorable = true;
     }
+
+    obj.queryFound = this.findQueries(entityObj, obj);
+    this.entityFiltersList[0].count++;
+
     return obj;
   }
 
-  findQueries(entity, parsedEntity) {
+  findQueries(entityObj, parsedEntity) {
     // Removing special characters from search query
-    let replaceRegex = new RegExp('[^a-zA-Z0-9]', 'g');
+    let replaceRegex = new RegExp('[^a-zA-Z0-9_-]', 'g');
     let searchTerm = this.$state.params.searchQuery.replace(replaceRegex, '');
 
     let regex = new RegExp(searchTerm, 'ig');
 
     let foundIn = [];
 
+    // Name
     if (parsedEntity.name.search(regex) > -1) {
       foundIn.push(METADATA_FILTERS.name);
       this.metadataFiltersList[0].count++;
     }
-    if (entity.metadata.SYSTEM && entity.metadata.SYSTEM.properties.description && entity.metadata.SYSTEM.properties.description.search(regex) > -1) {
+
+    // Description
+    const description = entityObj.metadata.properties.find((property) => property.name === 'decription' && property.scope === 'SYSTEM');
+    if (description && description.value.search(regex) > -1) {
       foundIn.push(METADATA_FILTERS.description);
       this.metadataFiltersList[1].count++;
     }
 
-    let userTags = this.myHelpers.objectQuery(entity, 'metadata', 'USER', 'tags') || '';
+    // Tags
+    let userTags = entityObj.metadata.tags.filter((tag) => tag.scope === 'USER').map((tag) => tag.name);
     userTags = userTags.toString();
-    let systemTags = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'tags') || '';
+    let systemTags = entityObj.metadata.tags.filter((tag) => tag.scope === 'SYSTEM').map((tag) => tag.name);
     systemTags = systemTags.toString();
 
     if (userTags.search(regex) > -1) {
@@ -207,10 +226,21 @@ class TrackerResultsController {
       this.metadataFiltersList[3].count++;
     }
 
-    let userProperties = this.myHelpers.objectQuery(entity, 'metadata', 'USER', 'properties') || {};
-    userProperties = JSON.stringify(userProperties);
-    let systemProperties = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'properties') || {};
-    systemProperties = JSON.stringify(systemProperties);
+    // Properties
+    function convertToObject(arr) {
+      const returnObj = {};
+
+      arr.forEach((pair) => {
+        returnObj[pair.name] = pair.value;
+      });
+
+      return returnObj;
+    }
+
+    let userProperties = entityObj.metadata.properties.filter((property) => property.scope === 'USER');
+    userProperties = JSON.stringify(convertToObject(userProperties));
+    let systemProperties = entityObj.metadata.properties.filter((property) => property.scope === 'SYSTEM' && property.name !== 'schema');
+    systemProperties = JSON.stringify(convertToObject(systemProperties));
 
     if (userProperties.search(regex) > -1) {
       foundIn.push(METADATA_FILTERS.userProperties);
@@ -221,9 +251,9 @@ class TrackerResultsController {
       this.metadataFiltersList[5].count++;
     }
 
-    let schema = this.myHelpers.objectQuery(entity, 'metadata', 'SYSTEM', 'properties', 'schema') || '';
-
-    if (schema.search(regex) > -1) {
+    // Schema
+    const schema = entityObj.metadata.properties.find((property) => property.name === 'schema' && property.scope === 'SYSTEM');
+    if (schema && schema.value.search(regex) > -1) {
       foundIn.push(METADATA_FILTERS.schema);
       this.metadataFiltersList[6].count++;
     }

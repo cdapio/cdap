@@ -19,45 +19,37 @@ import NamespaceStore from 'services/NamespaceStore';
 import { parseMetadata } from 'services/metadata-parser';
 import uuidV4 from 'uuid/v4';
 import SearchStore from 'components/EntityListView/SearchStore';
-import SearchStoreAction from 'components/EntityListView/SearchStore/SearchStoreActions';
+import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import ExploreTablesStore from 'services/ExploreTables/ExploreTablesStore';
 import { fetchTables } from 'services/ExploreTables/ActionCreator';
 import { DEFAULT_SEARCH_QUERY } from 'components/EntityListView/SearchStore/SearchConstants';
-import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
 import isNil from 'lodash/isNil';
 import { Theme } from 'services/ThemeHelper';
 
 const search = () => {
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let {
-    offset,
-    numCursors,
-    limit,
-    activeFilters,
-    activeSort,
-    query,
-  } = SearchStore.getState().search;
+  let { offset, limit, activeFilters, activeSort, query } = SearchStore.getState().search;
 
   let params = {
     namespace: namespace,
     target: activeFilters,
     limit,
     offset,
-    numCursors,
     sort: activeSort.fullSort,
     query,
-    showCustom: true,
+    cursorRequested: true,
+    responseFormat: 'v6',
   };
   if (query !== DEFAULT_SEARCH_QUERY) {
     delete params.sort;
-    delete params.numCursors;
+    delete params.cursorRequested;
     params.query = params.query + '*';
   }
 
   ExploreTablesStore.dispatch(fetchTables(namespace));
 
   SearchStore.dispatch({
-    type: SearchStoreAction.LOADING,
+    type: SearchStoreActions.LOADING,
     payload: {
       loading: true,
     },
@@ -91,7 +83,7 @@ const search = () => {
           return;
         }
         SearchStore.dispatch({
-          type: SearchStoreAction.SETRESULTS,
+          type: SearchStoreActions.SETRESULTS,
           payload: { response },
         });
       },

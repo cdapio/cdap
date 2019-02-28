@@ -45,7 +45,7 @@ export default class DeleteConfirmation extends Component {
     let namespace = NamespaceStore.getState().selectedNamespace;
     const params = {
       namespace,
-      key: this.props.property.key,
+      key: this.props.property.name,
       entityType: this.props.entityType,
       entityId: this.props.entityId,
     };
@@ -83,7 +83,7 @@ export default class DeleteConfirmation extends Component {
           toggleModal={this.toggleModal}
           confirmationText={T.translate(
             'features.PropertiesEditor.DeleteConfirmation.confirmationText',
-            { key: this.props.property.key }
+            { key: this.props.property.name }
           )}
           confirmButtonText={T.translate(
             'features.PropertiesEditor.DeleteConfirmation.confirmButton'

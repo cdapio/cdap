@@ -72,35 +72,7 @@ export default class Tags extends Component {
     Mousetrap.bind('return', this.addTag);
     Mousetrap.bind('escape', this.closeInputFieldIfEmpty);
 
-    let systemParams = Object.assign({}, this.params, { scope: SCOPES.SYSTEM });
-    let userParams = Object.assign({}, this.params, { scope: SCOPES.USER });
-
-    this.setState({
-      loading: true,
-    });
-
-    let getTagsSubscription = MyMetadataApi.getTags(systemParams)
-      .combineLatest(MyMetadataApi.getTags(userParams))
-      .subscribe(
-        (res) => {
-          this.setState(
-            {
-              systemTags: res[0].sort(),
-              userTags: res[1].sort(),
-              loading: false,
-            },
-            this.isTagsOverflowing
-          );
-        },
-        (err) => {
-          this.setState({
-            error: isObject(err) ? err.response : err,
-            loading: false,
-          });
-        }
-      );
-
-    this.subscriptions.push(getTagsSubscription);
+    this.getTags();
   }
 
   componentWillUnmount() {
@@ -109,6 +81,41 @@ export default class Tags extends Component {
 
     this.subscriptions.map((subscriber) => subscriber.unsubscribe());
   }
+
+  getTags = () => {
+    this.setState({ loading: false });
+
+    let tagsSubscription = MyMetadataApi.getTags(this.params).subscribe(
+      (res) => {
+        this.setState(
+          {
+            systemTags: res.tags
+              .filter((tag) => tag.scope === SCOPES.SYSTEM)
+              .map((tag) => tag.name)
+              .sort(),
+            userTags: res.tags
+              .filter((tag) => tag.scope === SCOPES.USER)
+              .map((tag) => tag.name)
+              .sort(),
+            loading: false,
+          },
+          this.isTagsOverflowing
+        );
+
+        if (this.state.showInputField) {
+          this.toggleInputField();
+        }
+      },
+      (err) => {
+        this.setState({
+          error: isObject(err) ? err.response : err,
+          loading: false,
+        });
+      }
+    );
+
+    this.subscriptions.push(tagsSubscription);
+  };
 
   toggleInputField = () => {
     if (!this.state.loading) {
@@ -139,33 +146,6 @@ export default class Tags extends Component {
     });
   };
 
-  fetchUserTags() {
-    let params = Object.assign({}, this.params, { scope: SCOPES.USER });
-
-    let fetchTagsSubscription = MyMetadataApi.getTags(params).subscribe(
-      (res) => {
-        this.setState(
-          {
-            userTags: res.sort(),
-            loading: false,
-          },
-          this.isTagsOverflowing
-        );
-        if (this.state.showInputField) {
-          this.toggleInputField();
-        }
-      },
-      (err) => {
-        this.setState({
-          error: isObject(err) ? err.response : err,
-          loading: false,
-        });
-      }
-    );
-
-    this.subscriptions.push(fetchTagsSubscription);
-  }
-
   addTag = () => {
     if (this.state.currentInputTag !== '') {
       this.setState({
@@ -175,7 +155,7 @@ export default class Tags extends Component {
         this.state.currentInputTag,
       ]).subscribe(
         () => {
-          this.fetchUserTags();
+          this.getTags();
         },
         (err) => {
           this.setState({
@@ -198,7 +178,7 @@ export default class Tags extends Component {
 
     let deleteTagsSubscription = MyMetadataApi.deleteTags(params).subscribe(
       () => {
-        this.fetchUserTags();
+        this.getTags();
       },
       (err) => {
         this.setState({

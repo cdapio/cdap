@@ -107,7 +107,6 @@ export default class EntityCard extends Component {
       <EntityCardHeader
         className={this.props.entity.isHydrator ? 'datapipeline' : this.props.entity.type}
         entity={this.props.entity}
-        systemTags={this.props.entity.metadata.metadata.SYSTEM.tags}
         successMessage={this.state.successMessage}
       />
     );
