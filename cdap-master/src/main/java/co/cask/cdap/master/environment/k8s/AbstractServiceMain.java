@@ -20,7 +20,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -54,7 +53,6 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.ILoggerFactory;
@@ -240,14 +238,13 @@ public abstract class AbstractServiceMain extends DaemonMain {
    */
   protected final Module getDataFabricModule() {
     return Modules.override(
-      new DataFabricModules("master").getDistributedModules()).with(new AbstractModule() {
+      new DataFabricModules("master", true).getDistributedModules()).with(new AbstractModule() {
       @Override
       protected void configure() {
         // Bind transaction system to a constant one, basically no transaction, with every write become
         // visible immediately.
         // TODO: Ideally we shouldn't need this at all. However, it is needed now to satisfy dependencies
         bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
       }
     });
   }

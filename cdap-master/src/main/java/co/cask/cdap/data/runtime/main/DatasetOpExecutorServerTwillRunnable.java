@@ -110,7 +110,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
+      new DataFabricModules(txClientId, cConf).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new KafkaLogAppenderModule(),

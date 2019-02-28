@@ -153,16 +153,18 @@ public class MasterTwillApplication implements TwillApplication {
       addMessaging(
         addDatasetOpExecutor(
           addLogSaverService(
-            addTransactionService(
-              addMetricsProcessor (
-                addMetricsService(
-                  TwillSpecification.Builder.with().setName(NAME).withRunnable()
-                )
+            addMetricsProcessor (
+              addMetricsService(
+                TwillSpecification.Builder.with().setName(NAME).withRunnable()
               )
             )
           )
         )
       );
+
+    if (!cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL)) {
+      runnableSetter = addTransactionService(runnableSetter);
+    }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("Adding explore runnable.");

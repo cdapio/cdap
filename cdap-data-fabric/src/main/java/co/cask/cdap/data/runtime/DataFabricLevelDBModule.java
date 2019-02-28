@@ -22,6 +22,7 @@ import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.runtime.TransactionModules;
 
@@ -29,6 +30,15 @@ import org.apache.tephra.runtime.TransactionModules;
  * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
  */
 public class DataFabricLevelDBModule extends AbstractModule {
+  private final boolean useNoopTxClient;
+
+  public DataFabricLevelDBModule() {
+    this(false);
+  }
+
+  public DataFabricLevelDBModule(boolean useNoopTxClient) {
+    this.useNoopTxClient = useNoopTxClient;
+  }
 
   @Override
   public void configure() {
@@ -41,6 +51,9 @@ public class DataFabricLevelDBModule extends AbstractModule {
       protected void configure() {
         // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
         bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+        if (useNoopTxClient) {
+          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
+        }
       }
     }));
     install(new TransactionExecutorModule());

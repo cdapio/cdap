@@ -29,6 +29,7 @@ import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.distributed.PooledClientProvider;
 import org.apache.tephra.distributed.ThreadLocalClientProvider;
@@ -45,9 +46,11 @@ import org.slf4j.LoggerFactory;
 public class DataFabricDistributedModule extends AbstractModule {
   private static final Logger LOG = LoggerFactory.getLogger(DataFabricDistributedModule.class);
   private final String txClientId;
+  private final boolean useNoopTxClient;
 
-  public DataFabricDistributedModule(String txClientId) {
+  public DataFabricDistributedModule(String txClientId, boolean useNoopTxClient) {
     this.txClientId = txClientId;
+    this.useNoopTxClient = useNoopTxClient;
   }
 
   @Override
@@ -62,6 +65,9 @@ public class DataFabricDistributedModule extends AbstractModule {
       protected void configure() {
         // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
         bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+        if (useNoopTxClient) {
+          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
+        }
       }
     }));
     install(new TransactionExecutorModule());

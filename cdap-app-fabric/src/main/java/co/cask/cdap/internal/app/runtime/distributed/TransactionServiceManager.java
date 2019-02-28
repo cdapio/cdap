@@ -35,14 +35,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class TransactionServiceManager extends AbstractDistributedMasterServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceManager.class);
-  private TransactionSystemClient txClient;
-  private DiscoveryServiceClient discoveryServiceClient;
+  private final TransactionSystemClient txClient;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final boolean isSql;
 
   @Inject
   public TransactionServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
                                    TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient) {
     super(cConf, Constants.Service.TRANSACTION, twillRunnerService, discoveryServiceClient);
     this.txClient = txClient;
+    this.isSql = cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL);
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -56,7 +58,7 @@ public class TransactionServiceManager extends AbstractDistributedMasterServiceM
     try {
       Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName))
         .pick(discoveryTimeout, TimeUnit.SECONDS);
-      if (discoverable == null) {
+      if (discoverable == null && !isSql) {
         return false;
       }
 

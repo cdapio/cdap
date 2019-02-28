@@ -99,7 +99,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
       new ZKDiscoveryModule(),
       new KafkaClientModule(),
       new MessagingClientModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
+      new DataFabricModules(txClientId, cConf).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),

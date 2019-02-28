@@ -104,7 +104,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
+      new DataFabricModules(txClientId, cConf).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new DistributedLogFrameworkModule(twillContext),

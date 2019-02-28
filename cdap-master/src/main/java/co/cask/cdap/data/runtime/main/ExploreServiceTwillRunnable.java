@@ -422,7 +422,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new MetricsClientRuntimeModule().getDistributedModules(),
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
+      new DataFabricModules(txClientId, cConf).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),

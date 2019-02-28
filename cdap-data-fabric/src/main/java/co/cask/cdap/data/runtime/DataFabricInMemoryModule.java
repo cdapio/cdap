@@ -21,6 +21,7 @@ import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector
 import com.google.inject.AbstractModule;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.metrics.MetricsCollector;
 import org.apache.tephra.runtime.TransactionModules;
 
@@ -29,9 +30,11 @@ import org.apache.tephra.runtime.TransactionModules;
  */
 public class DataFabricInMemoryModule extends AbstractModule {
   private final String txClientId;
+  private final boolean useNoopTxClient;
 
-  public DataFabricInMemoryModule(String txClientId) {
+  public DataFabricInMemoryModule(String txClientId, boolean useNoopTxClient) {
     this.txClientId = txClientId;
+    this.useNoopTxClient = useNoopTxClient;
   }
 
   @Override
@@ -43,6 +46,9 @@ public class DataFabricInMemoryModule extends AbstractModule {
       protected void configure() {
         // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
         bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+        if (useNoopTxClient) {
+          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
+        }
       }
     }));
     install(new TransactionExecutorModule());

@@ -72,7 +72,6 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -197,7 +196,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new DFSLocationModule());
     modules.add(new KafkaClientModule());
     modules.add(new KafkaLogAppenderModule());
-    modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
+    modules.add(new DataFabricModules(generateClientId(programRunId, instanceId), cConf).getDistributedModules());
     modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new NamespaceQueryAdminModule());
     modules.add(new AbstractModule() {
@@ -214,13 +213,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
     modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());
     modules.add(new DataSetServiceModules().getStandaloneModules());
-    modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
-        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
-      }
-    }));
+    // Use the noop txClient in isolated mode, basically there is no transaction.
+    modules.add(new DataFabricModules("", true).getInMemoryModules());
 
     // In isolated mode, ignore the namespace mapping
     modules.add(new AbstractModule() {

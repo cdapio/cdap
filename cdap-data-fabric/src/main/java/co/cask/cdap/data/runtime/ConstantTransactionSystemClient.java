@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.guice;
+package co.cask.cdap.data.runtime;
 
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;

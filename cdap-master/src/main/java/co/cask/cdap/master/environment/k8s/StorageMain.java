@@ -16,10 +16,10 @@
 
 package co.cask.cdap.master.environment.k8s;
 
-import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.data.runtime.ConstantTransactionSystemClient;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;

@@ -130,7 +130,7 @@ public class ContextManager {
       new DFSLocationModule(),
       new NamespaceQueryAdminModule(),
       new ZKDiscoveryModule(),
-      new DataFabricModules("cdap.explore.ContextManager").getDistributedModules(),
+      new DataFabricModules("cdap.explore.ContextManager", cConf).getDistributedModules(),
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

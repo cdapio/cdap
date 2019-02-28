@@ -15,6 +15,8 @@
  */
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import com.google.inject.Module;
 
@@ -24,28 +26,35 @@ import com.google.inject.Module;
  */
 public class DataFabricModules extends RuntimeModule {
   private final String txClientId;
+  private final boolean useNoopTxClient;
 
-  public DataFabricModules(String txClientId) {
-    this.txClientId = txClientId;
+  public DataFabricModules(String txClientId, CConfiguration cConf) {
+    this(txClientId,
+         cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL));
   }
 
   public DataFabricModules() {
-    this.txClientId = "";
+    this("", false);
+  }
+
+  public DataFabricModules(String txClientId, boolean useNoopTxClient) {
+    this.txClientId = txClientId;
+    this.useNoopTxClient = useNoopTxClient;
   }
 
   @Override
   public Module getInMemoryModules() {
-    return new DataFabricInMemoryModule(txClientId);
+    return new DataFabricInMemoryModule(txClientId, useNoopTxClient);
   }
 
   @Override
   public Module getStandaloneModules() {
-    return new DataFabricLevelDBModule();
+    return new DataFabricLevelDBModule(useNoopTxClient);
   }
 
   @Override
   public Module getDistributedModules() {
-    return new DataFabricDistributedModule(txClientId);
+    return new DataFabricDistributedModule(txClientId, useNoopTxClient);
   }
 
 } // end of DataFabricModules

@@ -202,7 +202,7 @@ public class UpgradeTool {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreServerModule(),
-      new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
+      new DataFabricModules(UpgradeTool.class.getName(), cConf).getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new KafkaLogAppenderModule(),
       // the DataFabricDistributedModule needs MetricsCollectionService binding

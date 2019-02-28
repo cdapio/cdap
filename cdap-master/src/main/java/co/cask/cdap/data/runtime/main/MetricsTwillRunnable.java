@@ -105,7 +105,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new ZKDiscoveryModule(),
       new KafkaClientModule(),
       new MessagingClientModule(),
-      new DataFabricModules(txClientId).getDistributedModules(),
+      new DataFabricModules(txClientId, cConf).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       // For the injection of DatasetDefinition of MetricsTable directly
       new SystemDatasetRuntimeModule().getDistributedModules(),
