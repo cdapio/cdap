@@ -18,7 +18,6 @@ package co.cask.cdap.logging.appender;
 
 import co.cask.cdap.common.service.AbstractRetryableScheduledService;
 import co.cask.cdap.common.service.RetryStrategy;
-import kafka.producer.KeyedMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,9 +129,10 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
   }
 
   /**
-   * Publishes messages from the message queue to Kafka.
+   * Publishes messages from the message queue.
    *
-   * @param buffer a buffer for storing {@link KeyedMessage} for publishing to Kafka
+   * @param buffer a buffer for storing {@link MESSAGE} for publishing
+   * @param blockForMessage whether to block for message
    * @throws InterruptedException if the thread is interrupted
    */
   private void publishMessages(List<MESSAGE> buffer,

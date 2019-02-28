@@ -17,15 +17,25 @@
 package co.cask.cdap.logging.logbuffer;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
+import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
+import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
+import co.cask.cdap.logging.pipeline.MockAppender;
+import co.cask.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
+import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -48,18 +58,33 @@ import java.util.concurrent.TimeUnit;
 public class ConcurrentLogBufferWriterTest {
   private static final Logger LOG = LoggerFactory.getLogger(ConcurrentLogBufferWriterTest.class);
   private static final LoggingEventSerializer serializer = new LoggingEventSerializer();
+  private static final MetricsContext NO_OP_METRICS_CONTEXT = new NoopMetricsContext();
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Test
-  public void testWrites() throws IOException {
+  public void testWrites() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     String absolutePath = TMP_FOLDER.newFolder().getAbsolutePath();
     cConf.set(Constants.LogBuffer.LOG_BUFFER_BASE_DIR, absolutePath);
     cConf.setLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES, 100000);
 
-    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf);
+    LoggerContext loggerContext = LogPipelineTestUtil
+      .createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"), MockAppender.class.getName());
+    final MockAppender appender =
+      LogPipelineTestUtil.getAppender(loggerContext.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME),
+                                      "Test", MockAppender.class);
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
+    LogBufferPipelineConfig config = new LogBufferPipelineConfig(1024L, 300L, 500L, 4);
+    loggerContext.start();
+    LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
+      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      config, checkpointManager, 0);
+    // start the pipeline
+    pipeline.startAndWait();
+
+    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline));
     ImmutableList<byte[]> events = getLoggingEvents();
     writer.process(new LogBufferRequest(0, events));
 
@@ -70,6 +95,10 @@ public class ConcurrentLogBufferWriterTest {
         Assert.assertEquals(event.getMessage(), getEvent(dis, serializer.toBytes(event).length).getMessage());
       }
     }
+
+    // verify if the pipeline has processed the messages.
+    Tasks.waitFor(5, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    pipeline.stopAndWait();
   }
 
   @Test
@@ -81,7 +110,21 @@ public class ConcurrentLogBufferWriterTest {
     cConf.set(Constants.LogBuffer.LOG_BUFFER_BASE_DIR, absolutePath);
     cConf.setLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES, 100000);
 
-    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf);
+    LoggerContext loggerContext = LogPipelineTestUtil
+      .createLoggerContext("WARN", ImmutableMap.of("test.logger", "INFO"), MockAppender.class.getName());
+    final MockAppender appender =
+      LogPipelineTestUtil.getAppender(loggerContext.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME),
+                                      "Test", MockAppender.class);
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
+    LogBufferPipelineConfig config = new LogBufferPipelineConfig(1024L, 300L, 500L, 4);
+    loggerContext.start();
+    LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
+      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      config, checkpointManager, 0);
+    // start the pipeline
+    pipeline.startAndWait();
+
+    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline));
     ImmutableList<byte[]> events = getLoggingEvents();
 
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -110,6 +153,10 @@ public class ConcurrentLogBufferWriterTest {
         }
       }
     }
+
+    // verify if the pipeline has processed the messages.
+    Tasks.waitFor(100, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    pipeline.stopAndWait();
   }
 
   private ImmutableList<byte[]> getLoggingEvents() {

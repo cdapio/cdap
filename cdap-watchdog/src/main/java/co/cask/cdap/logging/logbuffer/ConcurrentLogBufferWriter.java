@@ -18,6 +18,7 @@ package co.cask.cdap.logging.logbuffer;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 
@@ -55,8 +56,7 @@ import javax.annotation.concurrent.ThreadSafe;
  * 8. If the PendingLogBufferRequest enqueued by this thread is NOT COMPLETED, go back to step 2.
  * </pre>
  *
- * TODO: CDAP-14882 Send log events to log pipeline for further processing.
- * TODO: CDAP-14882 Restore unprocessed log events from LogBuffer(WAL).
+ * TODO: CDAP-14937 Restore unprocessed log events from LogBuffer(WAL).
  */
 @ThreadSafe
 public class ConcurrentLogBufferWriter implements Closeable {
@@ -64,13 +64,16 @@ public class ConcurrentLogBufferWriter implements Closeable {
   private final PendingRequestQueue pendingRequestQueue;
   // WAL writer to buffer log events
   private final LogBufferWriter logBufferWriter;
+  private final List<LogBufferProcessorPipeline> pipelines;
   private final AtomicBoolean writerFlag;
   private final AtomicBoolean closed;
 
-  public ConcurrentLogBufferWriter(CConfiguration cConf) throws IOException {
+  public ConcurrentLogBufferWriter(CConfiguration cConf,
+                                   List<LogBufferProcessorPipeline> pipelines) throws IOException {
     this.pendingRequestQueue = new PendingRequestQueue();
     this.logBufferWriter = new LogBufferWriter(cConf.get(Constants.LogBuffer.LOG_BUFFER_BASE_DIR),
                                                cConf.getLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES));
+    this.pipelines = pipelines;
     this.writerFlag = new AtomicBoolean();
     this.closed = new AtomicBoolean();
   }
@@ -106,7 +109,7 @@ public class ConcurrentLogBufferWriter implements Closeable {
       return false;
     }
     try {
-      pendingRequestQueue.process(logBufferWriter);
+      pendingRequestQueue.process(logBufferWriter, pipelines);
     } finally {
       writerFlag.set(false);
     }
@@ -145,7 +148,7 @@ public class ConcurrentLogBufferWriter implements Closeable {
       writeQueue.add(bufferRequest);
     }
 
-    void process(LogBufferWriter writer) {
+    void process(LogBufferWriter writer, List<LogBufferProcessorPipeline> pipelines) {
       // Capture all current events.
       // The reason for capturing instead of using a live iterator is to avoid the possible case of infinite write
       // time. The number of requests in the queue is bounded by the number of threads that call this method.
@@ -162,7 +165,9 @@ public class ConcurrentLogBufferWriter implements Closeable {
         if (!inflightRequests.isEmpty()) {
           // persist logs in append only WAL
           Iterable<LogBufferEvent> events = writer.write(new PendingEventIterator(inflightRequests.iterator()));
-          // TODO: CDAP-14882 send the LogBufferEvent(s) to each log pipeline for processing
+          for (LogBufferProcessorPipeline pipeline : pipelines) {
+            pipeline.processLogEvents(events.iterator());
+          }
         }
         // after log events have been sent to log buffer pipeline for processing, set the pending requests to complete
         completeAll(null);

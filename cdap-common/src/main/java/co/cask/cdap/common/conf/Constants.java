@@ -124,6 +124,7 @@ public final class Constants {
     public static final String MASTER_SERVICES_ANNOUNCE_ADDRESS = "master.services.announce.address";
     public static final String PREVIEW_HTTP = "preview";
     public static final String SECURE_STORE_SERVICE = "secure.store.service";
+    public static final String LOG_BUFFER_SERVICE = "log.buffer.service";
   }
 
   /**
@@ -790,6 +791,10 @@ public final class Constants {
   public static final class LogBuffer {
     public static final String LOG_BUFFER_BASE_DIR = "log.buffer.base.dir";
     public static final String LOG_BUFFER_MAX_FILE_SIZE_BYTES = "log.buffer.max.file.size.bytes";
+    // number of events to be sent to time event queue processor from incoming queue
+    public static final String LOG_BUFFER_PIPELINE_BATCHSIZE = "log.buffer.pipeline.batch.size";
+    public static final String LOG_BUFFER_SERVER_BIND_ADDRESS = "log.buffer.server.bind.address";
+    public static final String LOG_BUFFER_SERVER_BIND_PORT = "log.buffer.server.bind.port";
   }
 
   /**
@@ -833,7 +838,7 @@ public final class Constants {
     // Configuration keys
     public static final String KAFKA_TOPIC = "log.kafka.topic";
     public static final String TMS_TOPIC_PREFIX = "log.tms.topic.prefix";
-    public static final String TMS_APPENDER_QUEUE_SIZE = "log.tms.queue.size";
+    public static final String APPENDER_QUEUE_SIZE = "log.queue.size";
     public static final String NUM_PARTITIONS = "log.publish.num.partitions";
     public static final String LOG_PUBLISH_PARTITION_KEY = "log.publish.partition.key";
 

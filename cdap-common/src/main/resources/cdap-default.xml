@@ -1476,6 +1476,22 @@
   </property>
 
   <property>
+    <name>log.buffer.server.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Log buffer HTTP service bind address
+    </description>
+  </property>
+
+  <property>
+    <name>log.buffer.server.bind.port</name>
+    <value>0</value>
+    <description>
+      Log buffer HTTP service bind port
+    </description>
+  </property>
+
+  <property>
     <name>log.kafka.topic</name>
     <value>logs.user-v2</value>
     <description>
@@ -1492,10 +1508,10 @@
   </property>
 
   <property>
-    <name>log.tms.queue.size</name>
+    <name>log.queue.size</name>
     <value>512</value>
     <description>
-      The buffer size used in TMS Log Appender
+      The buffer size used in Log Appender
     </description>
   </property>
 
