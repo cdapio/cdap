@@ -19,7 +19,6 @@ package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.common.CachedStructuredTableRegistry;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
@@ -35,7 +34,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import com.google.inject.Scopes;
 import org.apache.tephra.TransactionSystemClient;
 
 /**
@@ -45,10 +44,11 @@ public class StorageModule extends PrivateModule {
 
   @Override
   protected void configure() {
-    bind(TransactionRunner.class).toProvider(TransactionRunnerProvider.class);
-    bind(StructuredTableAdmin.class).toProvider(StructuredTableAdminProvider.class);
-    bind(StructuredTableRegistry.class).toProvider(StructuredTableRegistryProvider.class);
-    bind(DataSourceInstantiator.class).in(Singleton.class);
+    bind(TransactionRunner.class).toProvider(TransactionRunnerProvider.class).in(Scopes.SINGLETON);
+    bind(StructuredTableAdmin.class).toProvider(StructuredTableAdminProvider.class).in(Scopes.SINGLETON);
+    bind(StructuredTableRegistry.class).toProvider(StructuredTableRegistryProvider.class).in(Scopes.SINGLETON);
+    bind(DataSourceInstantiator.class).in(Scopes.SINGLETON);
+
     expose(TransactionRunner.class);
     expose(StructuredTableAdmin.class);
     expose(StructuredTableRegistry.class);
@@ -59,16 +59,14 @@ public class StorageModule extends PrivateModule {
    * Transaction runner provider to provide the {@link TransactionRunner} class, the actual implementation will be
    * based on the configuration file.
    */
-  @Singleton
   private static final class TransactionRunnerProvider implements Provider<TransactionRunner> {
+
     private final CConfiguration cConf;
-    private final SConfiguration sConf;
     private final Injector injector;
 
     @Inject
-    TransactionRunnerProvider(CConfiguration cConf, SConfiguration sConf, Injector injector) {
+    TransactionRunnerProvider(CConfiguration cConf, Injector injector) {
       this.cConf = cConf;
-      this.sConf = sConf;
       this.injector = injector;
     }
 
@@ -100,16 +98,14 @@ public class StorageModule extends PrivateModule {
    * Structure table admin provider to provide the {@link StructuredTableAdmin} class, the actual implementation
    * will be based on the configuration file.
    */
-  @Singleton
   private static final class StructuredTableAdminProvider implements Provider<StructuredTableAdmin> {
+
     private final CConfiguration cConf;
-    private final SConfiguration sConf;
     private final Injector injector;
 
     @Inject
-    StructuredTableAdminProvider(CConfiguration cConf, SConfiguration sConf, Injector injector) {
+    StructuredTableAdminProvider(CConfiguration cConf, Injector injector) {
       this.cConf = cConf;
-      this.sConf = sConf;
       this.injector = injector;
     }
 
@@ -138,16 +134,13 @@ public class StorageModule extends PrivateModule {
    * Structure table registry provider to provide the {@link StructuredTableRegistry} class, the actual implementation
    * will be based on the configuration file.
    */
-  @Singleton
   private static final class StructuredTableRegistryProvider implements Provider<StructuredTableRegistry> {
     private final CConfiguration cConf;
-    private final SConfiguration sConf;
     private final Injector injector;
 
     @Inject
-    StructuredTableRegistryProvider(CConfiguration cConf, SConfiguration sConf, Injector injector) {
+    StructuredTableRegistryProvider(CConfiguration cConf, Injector injector) {
       this.cConf = cConf;
-      this.sConf = sConf;
       this.injector = injector;
     }
 
