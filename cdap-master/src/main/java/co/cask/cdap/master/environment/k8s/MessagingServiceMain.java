@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -59,7 +61,8 @@ public class MessagingServiceMain extends AbstractServiceMain {
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources) {
+                             List<? super AutoCloseable> closeableResources,
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);

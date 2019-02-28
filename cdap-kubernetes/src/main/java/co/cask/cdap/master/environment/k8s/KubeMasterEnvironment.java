@@ -19,6 +19,8 @@ package co.cask.cdap.master.environment.k8s;
 import co.cask.cdap.k8s.discovery.KubeDiscoveryService;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentTask;
+import com.google.common.base.Strings;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -31,6 +33,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,13 +48,18 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String POD_LABELS_PATH = "master.environment.k8s.pod.labels.path";
+  private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
+  private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_POD_LABELS_PATH = "/etc/podinfo/pod.labels.properties";
+  private static final String DEFAULT_POD_KILLER_SELECTOR = "cdap.container=preview";
+  private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
 
   private KubeDiscoveryService discoveryService;
+  private PodKillerTask podKillerTask;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException {
@@ -72,7 +81,30 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       }
     }
 
-    discoveryService = new KubeDiscoveryService(conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE), podLabels);
+    String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
+    discoveryService = new KubeDiscoveryService(namespace, podLabels);
+
+    // Optionally creates the pod killer task
+    String podKillerSelector = conf.getOrDefault(POD_KILLER_SELECTOR, DEFAULT_POD_KILLER_SELECTOR);
+    if (!Strings.isNullOrEmpty(podKillerSelector)) {
+      long delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
+      try {
+        delayMillis = Long.parseLong(conf.get(POD_KILLER_DELAY_MILLIS));
+        if (delayMillis <= 0) {
+          delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
+          LOG.warn("Only positive value is allowed for configuration {}. Defaulting to ",
+                   POD_KILLER_DELAY_MILLIS, delayMillis);
+        }
+      } catch (NumberFormatException e) {
+        LOG.warn("Invalid value for configuration {}. Expected a positive integer, but get {}.",
+                 POD_KILLER_DELAY_MILLIS, conf.get(POD_KILLER_DELAY_MILLIS));
+      }
+
+      podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis);
+      LOG.info("Created pod killer task on namespace {}, with selector {} and delay {}",
+               namespace, podKillerSelector, delayMillis);
+    }
+
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -95,5 +127,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
     return () -> discoveryService;
+  }
+
+  @Override
+  public Optional<MasterEnvironmentTask> getTask() {
+    return Optional.ofNullable(podKillerTask);
   }
 }

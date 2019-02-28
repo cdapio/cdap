@@ -30,6 +30,8 @@ import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.client.ExploreClient;
+import co.cask.cdap.master.spi.environment.MasterEnvironment;
+import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metadata.MetadataServiceModule;
@@ -86,7 +88,8 @@ public class PreviewServiceMain extends AbstractServiceMain {
 
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
-                             List<? super AutoCloseable> closeableResources) {
+                             List<? super AutoCloseable> closeableResources,
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(PreviewHttpServer.class));
   }
