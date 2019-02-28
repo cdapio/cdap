@@ -22,15 +22,20 @@ import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 
 import './PipelineTable.scss';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 interface IProps {
   pipelines: IPipeline[];
+  pipelinesLoading: boolean;
 }
 
 const PREFIX = 'features.PipelineList';
 
-const PipelineTableView: React.SFC<IProps> = ({ pipelines }) => {
+const PipelineTableView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) => {
   function renderBody() {
+    if (pipelinesLoading) {
+      return <LoadingSVGCentered />;
+    }
     if (pipelines.length === 0) {
       return <EmptyList type={VIEW_TYPES.deployed} />;
     }
@@ -69,6 +74,7 @@ const PipelineTableView: React.SFC<IProps> = ({ pipelines }) => {
 const mapStateToProps = (state) => {
   return {
     pipelines: state.deployed.pipelines,
+    pipelinesLoading: state.deployed.pipelinesLoading,
   };
 };
 
