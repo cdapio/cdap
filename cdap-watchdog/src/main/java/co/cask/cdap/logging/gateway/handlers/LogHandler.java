@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.netty.handler.codec.http.HttpRequest;
 
-import java.util.Collections;
 import java.util.List;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -49,10 +48,12 @@ import javax.ws.rs.QueryParam;
 public class LogHandler extends AbstractLogHandler {
 
   private final ProgramStore programStore;
+  private final LogReader logReader;
 
   @Inject
-  public LogHandler(LogReader logReader, CConfiguration cConfig, ProgramStore programStore) {
-    super(logReader, cConfig);
+  public LogHandler(LogReader logReader, CConfiguration cConf, ProgramStore programStore) {
+    super(cConf);
+    this.logReader = logReader;
     this.programStore = programStore;
   }
 
@@ -70,7 +71,8 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null, format, suppress);
+    doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam,
+              toTimeSecsParam, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -90,8 +92,8 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                     runRecord.getSystemArgs());
 
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, runRecord, format,
-              suppress);
+    doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam, toTimeSecsParam,
+              escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
@@ -107,7 +109,7 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
                                              programId, ProgramType.valueOfCategoryName(programType));
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+    doNext(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -127,7 +129,8 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                     runRecord.getSystemArgs());
 
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+    doNext(logReader, responder, loggingContext, maxEvents, fromOffsetStr,
+           escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
@@ -143,7 +146,7 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -163,7 +166,8 @@ public class LogHandler extends AbstractLogHandler {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                     runRecord.getSystemArgs());
 
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, runRecord, format, suppress);
+    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr,
+           escape, filterStr, runRecord, format, suppress);
   }
 
   @GET
@@ -178,7 +182,8 @@ public class LogHandler extends AbstractLogHandler {
                       @QueryParam("suppress") List<String> suppress) {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
-    doGetLogs(responder, loggingContext, fromTimeSecsParam, toTimeSecsParam, escape, filterStr, null, format, suppress);
+    doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam,
+              toTimeSecsParam, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -192,7 +197,8 @@ public class LogHandler extends AbstractLogHandler {
                       @QueryParam("suppress") List<String> suppress) {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
-    doNext(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+    doNext(logReader, responder, loggingContext, maxEvents,
+           fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   @GET
@@ -206,7 +212,7 @@ public class LogHandler extends AbstractLogHandler {
                       @QueryParam("suppress") List<String> suppress) {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
-    doPrev(responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
+    doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
   private RunRecordMeta getRunRecordMeta(ProgramRunId programRunId) throws NotFoundException {

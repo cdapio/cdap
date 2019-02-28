@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,19 +41,17 @@ import javax.annotation.Nullable;
 /**
  * Abstract Class that contains commonly used methods for log Http Requests.
  */
-public class AbstractLogHandler extends AbstractHttpHandler {
+public abstract class AbstractLogHandler extends AbstractHttpHandler {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractLogHandler.class);
 
-  private final LogReader logReader;
   private final String logPattern;
 
-  public AbstractLogHandler(LogReader logReader, CConfiguration cConfig) {
-    this.logReader = logReader;
+  protected AbstractLogHandler(CConfiguration cConfig) {
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
   }
 
-  protected void doGetLogs(HttpResponder responder, LoggingContext loggingContext,
+  protected void doGetLogs(LogReader logReader, HttpResponder responder, LoggingContext loggingContext,
                            long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
                            @Nullable RunRecordMeta runRecord, String format, List<String> fieldsToSuppress) {
 
@@ -68,21 +66,16 @@ public class AbstractLogHandler extends AbstractHttpHandler {
       ReadRange readRange = new ReadRange(timeRange.getFromMillis(), timeRange.getToMillis(),
                                           LogOffset.INVALID_KAFKA_OFFSET);
       readRange = adjustReadRange(readRange, runRecord, fromTimeSecsParam != -1);
-      AbstractChunkedLogProducer logsProducer = null;
       try {
         // the iterator is closed by the BodyProducer passed to the HttpResponder
         CloseableIterator<LogEvent> logIter = logReader.getLog(loggingContext, readRange.getFromMillis(),
                                                                readRange.getToMillis(), filter);
-        logsProducer = getFullLogsProducer(format, logIter, fieldsToSuppress, escape);
+        AbstractChunkedLogProducer logsProducer = getFullLogsProducer(format, logIter, fieldsToSuppress, escape);
+        responder.sendContent(HttpResponseStatus.OK, logsProducer, logsProducer.getResponseHeaders());
       } catch (Exception ex) {
         LOG.debug("Exception while reading logs for logging context {}", loggingContext, ex);
-        if (logsProducer != null) {
-          logsProducer.close();
-        }
         responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        return;
       }
-      responder.sendContent(HttpResponseStatus.OK, logsProducer, logsProducer.getResponseHeaders());
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     } catch (IllegalArgumentException e) {
@@ -90,9 +83,9 @@ public class AbstractLogHandler extends AbstractHttpHandler {
     }
   }
 
-  protected void doPrev(HttpResponder responder, LoggingContext loggingContext, int maxEvents, String fromOffsetStr,
-                      boolean escape, String filterStr, @Nullable RunRecordMeta runRecord, String format,
-                      List<String> fieldsToSuppress) {
+  protected void doPrev(LogReader logReader, HttpResponder responder, LoggingContext loggingContext,
+                        int maxEvents, String fromOffsetStr, boolean escape, String filterStr,
+                        @Nullable RunRecordMeta runRecord, String format, List<String> fieldsToSuppress) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
@@ -114,9 +107,9 @@ public class AbstractLogHandler extends AbstractHttpHandler {
     }
   }
 
-  protected void doNext(HttpResponder responder, LoggingContext loggingContext, int maxEvents,
-                      String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordMeta runRecord,
-                      String format, List<String> fieldsToSuppress) {
+  protected void doNext(LogReader logReader, HttpResponder responder, LoggingContext loggingContext, int maxEvents,
+                        String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordMeta runRecord,
+                        String format, List<String> fieldsToSuppress) {
     try {
       Filter filter = FilterParser.parse(filterStr);
       Callback logCallback = getNextOrPrevLogsCallback(format, responder, fieldsToSuppress, escape);
@@ -137,8 +130,8 @@ public class AbstractLogHandler extends AbstractHttpHandler {
     }
   }
 
-  protected Callback getNextOrPrevLogsCallback(String format, HttpResponder responder, List<String> suppress,
-                                               boolean escape) {
+  private Callback getNextOrPrevLogsCallback(String format, HttpResponder responder,
+                                             List<String> suppress, boolean escape) {
     LogFormatType formatType = getFormatType(format);
     switch (formatType) {
       case JSON:
@@ -157,11 +150,11 @@ public class AbstractLogHandler extends AbstractHttpHandler {
       this.toMillis = toMillis;
     }
 
-    public long getFromMillis() {
+    long getFromMillis() {
       return fromMillis;
     }
 
-    public long getToMillis() {
+    long getToMillis() {
       return toMillis;
     }
   }

@@ -21,7 +21,6 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.preview.PreviewHttpModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -50,7 +49,6 @@ import co.cask.cdap.gateway.handlers.VersionHandler;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler;
 import co.cask.cdap.gateway.handlers.meta.RemotePrivilegesHandler;
-import co.cask.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -219,7 +217,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getDistributedModules() {
 
     return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
-                           new PreviewHttpModule().getDistributedModules(),
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),

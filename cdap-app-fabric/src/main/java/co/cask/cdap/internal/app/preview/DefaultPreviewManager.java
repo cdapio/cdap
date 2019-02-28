@@ -44,6 +44,8 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.provision.ProvisionerModule;
 import co.cask.cdap.logging.guice.LocalLogAppenderModule;
+import co.cask.cdap.logging.read.FileLogReader;
+import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metadata.MetadataReaderWriterModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -83,6 +85,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -107,6 +110,7 @@ public class DefaultPreviewManager implements PreviewManager {
   private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final Cache<ApplicationId, Injector> appInjectors;
+  private final Path previewDataDir;
 
   @Inject
   DefaultPreviewManager(final CConfiguration cConf, Configuration hConf, DiscoveryService discoveryService,
@@ -127,6 +131,7 @@ public class DefaultPreviewManager implements PreviewManager {
     this.authorizerInstantiator = authorizerInstantiator;
     this.privilegesManager = privilegesManager;
     this.authorizationEnforcer = authorizationEnforcer;
+    this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
 
     this.appInjectors = CacheBuilder.newBuilder()
       .maximumSize(cConf.getInt(Constants.Preview.PREVIEW_CACHE_SIZE, 10))
@@ -182,17 +187,24 @@ public class DefaultPreviewManager implements PreviewManager {
     return injector.getInstance(PreviewRunner.class);
   }
 
+  @Override
+  public LogReader getLogReader(ApplicationId preview) throws NotFoundException {
+    Injector injector = appInjectors.getIfPresent(preview);
+    if (injector == null) {
+      throw new NotFoundException(preview);
+    }
+
+    return injector.getInstance(LogReader.class);
+  }
+
   /**
    * Create injector for the given application id.
    */
   @VisibleForTesting
   Injector createPreviewInjector(ApplicationId applicationId) throws IOException {
     CConfiguration previewCConf = CConfiguration.copy(cConf);
-    java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
+    Path previewDir = Files.createDirectories(previewDataDir.resolve(applicationId.getApplication()));
 
-    Files.createDirectories(previewDirPath);
-    java.nio.file.Path previewDir = Files.createDirectories(Paths.get(previewDirPath.toAbsolutePath().toString(),
-                                                                      applicationId.getApplication()));
     previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
     previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
     previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
@@ -233,6 +245,7 @@ public class DefaultPreviewManager implements PreviewManager {
             .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
             .to(DefaultArtifactRepository.class)
             .in(Scopes.SINGLETON);
+          bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
         }
 
         @Provides
@@ -269,12 +282,11 @@ public class DefaultPreviewManager implements PreviewManager {
     }
   }
 
-  private void removePreviewDir(ApplicationId application) {
-    java.nio.file.Path previewDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                  "preview", application.getApplication()).toAbsolutePath();
+  private void removePreviewDir(ApplicationId applicationId) {
+    Path previewDirPath = previewDataDir.resolve(applicationId.getApplication());
 
     try {
-      DataTracerFactoryProvider.removeDataTracerFactory(application);
+      DataTracerFactoryProvider.removeDataTracerFactory(applicationId);
       DirUtils.deleteDirectoryContents(previewDirPath.toFile());
     } catch (IOException e) {
       LOG.debug("Error deleting the preview directory {}", previewDirPath, e);
