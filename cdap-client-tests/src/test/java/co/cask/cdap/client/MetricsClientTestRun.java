@@ -95,16 +95,8 @@ public class MetricsClientTestRun extends ClientTestBase {
       LOG.info("Took {} milliseonds for the first metrics to be available", duration);
 
       curTime = System.currentTimeMillis();
-      MetricQueryResult result =
-        metricsClient.query(MetricsTags.service(service),
-                            Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
-                            Collections.emptyList(), ImmutableMap.of("start", "now-20s", "end", "now"));
-      duration = System.currentTimeMillis() - curTime;
-      LOG.info("Took {} milliseonds to complete the query", duration);
-      Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
-
-      curTime = System.currentTimeMillis();
-      result = metricsClient.query(MetricsTags.service(service), Constants.Metrics.Name.Service.SERVICE_INPUT);
+      MetricQueryResult result = metricsClient.query(MetricsTags.service(service),
+                                                     Constants.Metrics.Name.Service.SERVICE_INPUT);
       duration = System.currentTimeMillis() - curTime;
       LOG.info("Took {} milliseonds to complete the query", duration);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
@@ -113,6 +105,14 @@ public class MetricsClientTestRun extends ClientTestBase {
       result = metricsClient.query(MetricsTags.service(service),
                                    Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
                                    Collections.emptyList(), Collections.singletonMap("aggregate", "true"));
+      duration = System.currentTimeMillis() - curTime;
+      LOG.info("Took {} milliseonds to complete the query", duration);
+      Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
+
+      curTime = System.currentTimeMillis();
+      result = metricsClient.query(MetricsTags.service(service),
+                                   Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
+                                   Collections.emptyList(), ImmutableMap.of("start", "now-20s", "end", "now"));
       duration = System.currentTimeMillis() - curTime;
       LOG.info("Took {} milliseonds to complete the query", duration);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
