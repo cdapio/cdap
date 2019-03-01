@@ -190,6 +190,11 @@ function TimelinePreviewController ($scope, LogViewerStore, LOGVIEWERSTORE_ACTIO
         }
         this.apiSettings.metric.startTime = Math.floor(res.startTime/1000);
         this.apiSettings.metric.endTime = Math.floor(res.endTime/1000);
+
+        if (!LogViewerStore.getState().startTime) {
+          this.updateStartTimeInStore(this.apiSettings.metric.startTime);
+        }
+
         $scope.renderSearchCircles([]);
         this.pollForMetadata();
       },
