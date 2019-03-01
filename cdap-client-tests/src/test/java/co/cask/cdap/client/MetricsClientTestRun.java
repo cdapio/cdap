@@ -38,6 +38,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.Collections;
@@ -49,6 +51,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class MetricsClientTestRun extends ClientTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(MetricsClientTestRun.class);
 
   private MetricsClient metricsClient;
   private ApplicationClient appClient;
@@ -78,25 +81,40 @@ public class MetricsClientTestRun extends ClientTestBase {
       URL serviceURL = serviceClient.getServiceURL(service);
       URL pingURL = new URL(serviceURL, "ping");
 
+      long curTime = System.currentTimeMillis();
       HttpResponse response = HttpRequests.execute(HttpRequest.get(pingURL).build());
       Assert.assertEquals(200, response.getResponseCode());
+      long duration = System.currentTimeMillis() - curTime;
+      LOG.info("Took {} milliseonds to send the query", duration);
 
+      curTime = System.currentTimeMillis();
       Tasks.waitFor(true, () ->
         metricsClient.query(MetricsTags.service(service), Constants.Metrics.Name.Service.SERVICE_INPUT)
           .getSeries().length > 0, 10, TimeUnit.SECONDS);
+      duration = System.currentTimeMillis() - curTime;
+      LOG.info("Took {} milliseonds for the first metrics to be available", duration);
 
+      curTime = System.currentTimeMillis();
       MetricQueryResult result =
         metricsClient.query(MetricsTags.service(service),
                             Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
                             Collections.emptyList(), ImmutableMap.of("start", "now-20s", "end", "now"));
+      duration = System.currentTimeMillis() - curTime;
+      LOG.info("Took {} milliseonds to complete the query", duration);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
+      curTime = System.currentTimeMillis();
       result = metricsClient.query(MetricsTags.service(service), Constants.Metrics.Name.Service.SERVICE_INPUT);
+      duration = System.currentTimeMillis() - curTime;
+      LOG.info("Took {} milliseonds to complete the query", duration);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
+      curTime = System.currentTimeMillis();
       result = metricsClient.query(MetricsTags.service(service),
                                    Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
                                    Collections.emptyList(), Collections.singletonMap("aggregate", "true"));
+      duration = System.currentTimeMillis() - curTime;
+      LOG.info("Took {} milliseonds to complete the query", duration);
       Assert.assertEquals(1, result.getSeries()[0].getData()[0].getValue());
 
       List<MetricTagValue> tags = metricsClient.searchTags(MetricsTags.service(service));
