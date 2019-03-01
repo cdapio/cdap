@@ -33,7 +33,6 @@ import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Throwables;
@@ -73,10 +72,10 @@ public class AdminEventPublisher {
    * updated according to the closest level preference that contains the profile information.
    *
    * @param entityId the entity id to update metadata, all programs/schedules under this entity id will be affected
-   * @param profileId the profileId which get assigned
+   * @param seqId the sequence id of the preferences operation
    */
-  public void publishProfileAssignment(EntityId entityId, ProfileId profileId) {
-    publishMessage(entityId, MetadataMessage.Type.PROFILE_ASSIGNMENT, profileId);
+  public void publishProfileAssignment(EntityId entityId, long seqId) {
+    publishMessage(entityId, MetadataMessage.Type.PROFILE_ASSIGNMENT, seqId);
   }
 
   /**
@@ -84,9 +83,10 @@ public class AdminEventPublisher {
    * reindexed to the closest level preference that contains the profile information
    *
    * @param entityId the entity id to reindex metadata, all programs/schedules under this entity id will be affected
+   * @param seqId the sequence id of the preferences operation
    */
-  public void publishProfileUnAssignment(EntityId entityId) {
-    publishMessage(entityId, MetadataMessage.Type.PROFILE_UNASSIGNMENT);
+  public void publishProfileUnAssignment(EntityId entityId, long seqId) {
+    publishMessage(entityId, MetadataMessage.Type.PROFILE_UNASSIGNMENT, seqId);
   }
 
   /**

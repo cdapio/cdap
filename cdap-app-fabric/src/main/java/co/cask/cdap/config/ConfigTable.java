@@ -30,6 +30,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -100,8 +101,8 @@ public class ConfigTable {
 
   private Config fromRow(StructuredRow row) {
     String name = row.getString(StoreDefinition.ConfigStore.NAME_FIELD);
-    Map<String, String> properties =
-      GSON.fromJson(row.getString(StoreDefinition.ConfigStore.PROPERTIES_FIELD), MAP_TYPE);
+    String string = row.getString(StoreDefinition.ConfigStore.PROPERTIES_FIELD);
+    Map<String, String> properties = string != null ? GSON.fromJson(string, MAP_TYPE) : Collections.emptyMap();
     return new Config(name, properties);
   }
 
