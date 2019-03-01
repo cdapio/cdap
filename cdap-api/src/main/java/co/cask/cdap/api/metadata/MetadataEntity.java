@@ -204,7 +204,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
                                                            "If you want to represent a CDAP Entity please follow the " +
                                                            "correct hierarchy. If you are trying to represent a " +
                                                            "custom resource please use a different type name. " +
-                                                           "Note: if a type name is not specified the last key is " +
+                                                           "Note: if a type name is not specified, the last key is " +
                                                            "considered as the type.",
                                                          type, parts, type, Arrays.deepToString(validSequences)));
       }

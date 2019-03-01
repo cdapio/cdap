@@ -20,6 +20,7 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metadata.Cursor;
+import co.cask.cdap.common.metadata.MetadataUtil;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataChange;
 import co.cask.cdap.spi.metadata.MetadataConstants;
@@ -982,6 +983,12 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     StringBuilder builder = new StringBuilder(entity.getType());
     char sep = ':';
     for (MetadataEntity.KeyValue kv : entity) {
+      // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
+      // if it is a versioned entity then ignore the version
+      if (MetadataUtil.isVersionedEntityType(entity.getType()) &&
+        MetadataEntity.VERSION.equalsIgnoreCase(kv.getKey())) {
+        continue;
+      }
       builder.append(sep).append(kv.getKey()).append('=').append(kv.getValue());
       sep = ',';
     }
@@ -1006,7 +1013,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         builder.append(parts[0], parts[1]);
       }
     }
-    return builder.build();
+    // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
+    // if it is a versioned entity then add the default version
+    return MetadataUtil.addVersionIfNeeded(builder.build());
   }
 
   private static boolean isFailure(int httpStatus) {

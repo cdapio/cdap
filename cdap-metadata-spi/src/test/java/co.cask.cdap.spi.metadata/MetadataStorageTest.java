@@ -47,7 +47,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import javax.annotation.Nullable;
 
 import static co.cask.cdap.api.metadata.MetadataScope.SYSTEM;
@@ -409,6 +408,100 @@ public abstract class MetadataStorageTest {
 
     // clean up
     mds.apply(new Drop(entity));
+  }
+
+  @Test
+  public void testVersionLessEntities() throws Exception {
+    MetadataEntity appWithoutVersion = ofAppNoVersion("nn", "app");
+    MetadataEntity appWithVersion =
+      MetadataEntity.builder(appWithoutVersion).append(MetadataEntity.VERSION, "42").build();
+    MetadataEntity appWithDefaultVersion =
+      MetadataEntity.builder(appWithoutVersion).append(MetadataEntity.VERSION, "-SNAPSHOT").build();
+    testVersionLessEntities(appWithoutVersion, appWithVersion, appWithDefaultVersion);
+
+    MetadataEntity programWithoutVersion = MetadataEntity.builder(appWithoutVersion)
+      .append(MetadataEntity.TYPE, "Service").appendAsType(MetadataEntity.PROGRAM, "pingService").build();
+    MetadataEntity programWithVersion = MetadataEntity.builder(appWithVersion)
+      .append(MetadataEntity.TYPE, "Service").appendAsType(MetadataEntity.PROGRAM, "pingService").build();
+    MetadataEntity programWithDefaultVersion = MetadataEntity.builder(appWithDefaultVersion)
+      .append(MetadataEntity.TYPE, "Service").appendAsType(MetadataEntity.PROGRAM, "pingService").build();
+    testVersionLessEntities(programWithoutVersion, programWithVersion, programWithDefaultVersion);
+
+    MetadataEntity scheduleWithoutVersion = MetadataEntity.builder(appWithoutVersion)
+      .appendAsType(MetadataEntity.SCHEDULE, "pingSchedule").build();
+    MetadataEntity scheduleWithVersion = MetadataEntity.builder(appWithVersion)
+      .appendAsType(MetadataEntity.SCHEDULE, "pingSchedule").build();
+    MetadataEntity scheduleWithDefaultVersion = MetadataEntity.builder(appWithDefaultVersion)
+      .appendAsType(MetadataEntity.SCHEDULE, "pingSchedule").build();
+    testVersionLessEntities(scheduleWithoutVersion, scheduleWithVersion, scheduleWithDefaultVersion);
+
+    // artifacts have version but it is not ignored
+    MetadataEntity artifactWithVersion = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "nn")
+      .append(MetadataEntity.ARTIFACT, "artifact").append(MetadataEntity.VERSION, "42").build();
+    MetadataEntity artifactWithDefaultVersion = MetadataEntity.builder().append(MetadataEntity.NAMESPACE, "nn")
+      .append(MetadataEntity.ARTIFACT, "artifact").append(MetadataEntity.VERSION, "-SNAPSHOT").build();
+
+    MetadataStorage mds = getMetadataStorage();
+    Metadata meta = new Metadata(ImmutableSet.of(new ScopedName(SYSTEM, "sys"), new ScopedName(USER, "usr")),
+                                 ImmutableMap.of(new ScopedName(SYSTEM, "sp"), "sv", new ScopedName(USER, "up"), "uv"));
+
+    // metadata can only be retrieved with the matching version
+    mds.apply(new Create(artifactWithVersion, meta, ImmutableMap.of()));
+    Assert.assertEquals(meta, mds.read(new Read(artifactWithVersion)));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(artifactWithDefaultVersion)));
+
+    // metadata can only be dropped with the matching version
+    mds.apply(new Drop(artifactWithDefaultVersion));
+    Assert.assertEquals(meta, mds.read(new Read(artifactWithVersion)));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(artifactWithDefaultVersion)));
+
+    // search returns the exact version
+    assertResults(mds, SearchRequest.of("sp:sv").build(), new MetadataRecord(artifactWithVersion, meta));
+
+    // actually drop it
+    mds.apply(new Drop(artifactWithVersion));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(artifactWithVersion)));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(artifactWithDefaultVersion)));
+  }
+
+  private void testVersionLessEntities(MetadataEntity withoutVersion, MetadataEntity withVersion,
+                                       MetadataEntity withDefaultVersion) throws IOException {
+
+    Metadata meta = new Metadata(ImmutableSet.of(new ScopedName(SYSTEM, "sys"), new ScopedName(USER, "usr")),
+                                 ImmutableMap.of(new ScopedName(SYSTEM, "sp"), "sv", new ScopedName(USER, "up"), "uv"));
+
+    MetadataStorage mds = getMetadataStorage();
+    mds.apply(new Create(withVersion, meta, ImmutableMap.of()));
+    Assert.assertEquals(meta, mds.read(new Read(withVersion)));
+    Assert.assertEquals(meta, mds.read(new Read(withoutVersion)));
+    Assert.assertEquals(meta, mds.read(new Read(withDefaultVersion)));
+
+    // update with versioned entity
+    Metadata meta2 = new Metadata(USER, ImmutableSet.of("plus"), ImmutableMap.of("plus", "minus"));
+    mds.apply(new Update(withVersion, meta2));
+
+    Metadata newMeta = union(meta, meta2);
+    Assert.assertEquals(newMeta, mds.read(new Read(withVersion)));
+    Assert.assertEquals(newMeta, mds.read(new Read(withoutVersion)));
+    Assert.assertEquals(newMeta, mds.read(new Read(withDefaultVersion)));
+
+    // remove a property with default version
+    mds.apply(new Remove(withDefaultVersion, ImmutableSet.of(new ScopedNameOfKind(TAG, USER, "usr"),
+                                                                new ScopedNameOfKind(PROPERTY, SYSTEM, "sp"))));
+    newMeta = new Metadata(ImmutableSet.of(new ScopedName(SYSTEM, "sys"), new ScopedName(USER, "plus")),
+                           ImmutableMap.of(new ScopedName(USER, "up"), "uv", new ScopedName(USER, "plus"), "minus"));
+    Assert.assertEquals(newMeta, mds.read(new Read(withVersion)));
+    Assert.assertEquals(newMeta, mds.read(new Read(withoutVersion)));
+    Assert.assertEquals(newMeta, mds.read(new Read(withDefaultVersion)));
+
+    // search should return default version
+    assertResults(mds, SearchRequest.of("plus").build(), new MetadataRecord(withDefaultVersion, newMeta));
+
+    // drop entity, verify it's gone for all version variations
+    mds.batch(batch(new Drop(withoutVersion)));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(withVersion)));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(withoutVersion)));
+    Assert.assertEquals(Metadata.EMPTY, mds.read(new Read(withDefaultVersion)));
   }
 
   @Test
@@ -1438,6 +1531,14 @@ public abstract class MetadataStorageTest {
 
   private static MetadataEntity ofDataset(String ns, String dataset) {
     return MetadataEntity.ofDataset(ns, dataset);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static MetadataEntity ofAppNoVersion(String ns, String app) {
+    return MetadataEntity.builder()
+      .append(MetadataEntity.NAMESPACE, ns)
+      .appendAsType(MetadataEntity.APPLICATION, app)
+      .build();
   }
 
   private static MetadataEntity ofApp(String ns, String app) {
