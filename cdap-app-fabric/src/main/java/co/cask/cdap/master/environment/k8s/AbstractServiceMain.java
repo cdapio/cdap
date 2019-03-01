@@ -17,7 +17,6 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.app.MainClassLoader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -27,6 +26,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.options.OptionsParser;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.data.runtime.ConstantTransactionSystemClient;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;

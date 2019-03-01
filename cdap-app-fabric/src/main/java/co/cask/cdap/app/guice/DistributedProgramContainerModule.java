@@ -30,6 +30,7 @@ import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
 import co.cask.cdap.common.namespace.guice.NamespaceQueryAdminModule;
+import co.cask.cdap.data.runtime.ConstantTransactionSystemClient;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;

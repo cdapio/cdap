@@ -153,16 +153,18 @@ public class MasterTwillApplication implements TwillApplication {
       addMessaging(
         addDatasetOpExecutor(
           addLogSaverService(
-            addTransactionService(
-              addMetricsProcessor (
-                addMetricsService(
-                  TwillSpecification.Builder.with().setName(NAME).withRunnable()
-                )
+            addMetricsProcessor (
+              addMetricsService(
+                TwillSpecification.Builder.with().setName(NAME).withRunnable()
               )
             )
           )
         )
       );
+
+    if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
+      runnableSetter = addTransactionService(runnableSetter);
+    }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("Adding explore runnable.");
@@ -171,10 +173,10 @@ public class MasterTwillApplication implements TwillApplication {
       LOG.info("Explore module disabled - will not launch explore runnable.");
     }
     return runnableSetter
-        .withOrder()
-          .begin(Constants.Service.MESSAGING_SERVICE, Constants.Service.TRANSACTION, Constants.Service.DATASET_EXECUTOR)
-        .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
-        .build();
+      .withOrder()
+      .begin(Constants.Service.MESSAGING_SERVICE, Constants.Service.TRANSACTION, Constants.Service.DATASET_EXECUTOR)
+      .withEventHandler(new AbortOnTimeoutEventHandler(noContainerTimeout))
+      .build();
   }
 
   private Builder.RunnableSetter addLogSaverService(Builder.MoreRunnable builder) {

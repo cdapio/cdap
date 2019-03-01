@@ -34,7 +34,7 @@ import co.cask.cdap.data2.registry.UsageWriter;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.spi.metadata.MetadataStorage;
-import co.cask.cdap.spi.metadata.dataset.DatasetMetadataStorage;
+import co.cask.cdap.spi.metadata.noop.NoopMetadataStorage;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -70,7 +70,7 @@ public class PreviewDataModules {
         bind(DatasetDefinitionRegistryFactory.class)
           .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
 
-        bind(MetadataStorage.class).to(DatasetMetadataStorage.class);
+        bind(MetadataStorage.class).to(NoopMetadataStorage.class);
         expose(MetadataStorage.class);
 
         bind(DatasetFramework.class)

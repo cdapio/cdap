@@ -15,14 +15,27 @@
  */
 package co.cask.cdap.data.runtime;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.metrics.TransactionManagerMetricsCollector;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Scopes;
-import com.google.inject.util.Modules;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
+import org.apache.tephra.DefaultTransactionExecutor;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.apache.tephra.metrics.MetricsCollector;
-import org.apache.tephra.runtime.TransactionModules;
+import org.apache.tephra.persist.NoOpTransactionStateStorage;
+import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.snapshot.SnapshotCodecProvider;
 
 /**
  * The Guice module of data fabric bindings for in memory execution.
@@ -38,14 +51,38 @@ public class DataFabricInMemoryModule extends AbstractModule {
   protected void configure() {
     // bind transactions
     bind(TransactionSystemClientService.class).to(DelegatingTransactionSystemClientService.class);
-    install(Modules.override(new TransactionModules(txClientId).getInMemoryModules()).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
-        bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
-      }
-    }));
+    bind(SnapshotCodecProvider.class).in(Scopes.SINGLETON);
+    bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class).in(Scopes.SINGLETON);
+    bind(TransactionManager.class).in(Scopes.SINGLETON);
+
+    bindConstant().annotatedWith(Names.named(TxConstants.CLIENT_ID)).to(txClientId);
+    install(new FactoryModuleBuilder()
+              .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+              .build(TransactionExecutorFactory.class));
+
+    // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
+    bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+    bind(TransactionSystemClient.class).toProvider(InMemoryTransactionSystemClientProvider.class).in(Scopes.SINGLETON);
+
     install(new TransactionExecutorModule());
     install(new StorageModule());
+  }
+
+  /**
+   * In memory transaction client provider which provides the {@link TransactionSystemClient} for in-memory mode.
+   */
+  static final class InMemoryTransactionSystemClientProvider extends AbstractTransactionSystemClientProvider {
+    private final Injector injector;
+
+    @Inject
+    InMemoryTransactionSystemClientProvider(CConfiguration cConf, Injector injector) {
+      super(cConf);
+      this.injector = injector;
+    }
+
+    @Override
+    protected TransactionSystemClient getTransactionSystemClient() {
+      return injector.getInstance(InMemoryTxSystemClient.class);
+    }
   }
 }
