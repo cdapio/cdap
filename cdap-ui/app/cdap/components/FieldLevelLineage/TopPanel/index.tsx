@@ -16,18 +16,26 @@
 
 import * as React from 'react';
 import TimePicker from 'components/FieldLevelLineage/TimePicker';
+import Typography from '@material-ui/core/Typography';
+import T from 'i18n-react';
 import './TopPanel.scss';
+
+const PREFIX = 'features.FieldLevelLineage.TopPanel';
 
 const TopPanel: React.SFC = () => {
   return (
-    <div className="top-panel">
-      <div className="title-row">
-        <div className="title">Field level lineage</div>
-
-        <TimePicker />
+    <div className="top-panel row">
+      <div className="col-4">
+        <h4>{T.translate(`${PREFIX}.title`)}</h4>
+        <div>{T.translate(`${PREFIX}.subtitle`)}</div>
       </div>
 
-      <div className="subtitle">Select a field to explore root cause and impact</div>
+      <div className="col-4">
+        <Typography variant="caption" className="time-picker-caption">
+          {T.translate(`${PREFIX}.timePickerCaption`)}
+        </Typography>
+        <TimePicker />
+      </div>
     </div>
   );
 };

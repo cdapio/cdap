@@ -28,7 +28,6 @@ function FieldSearchView({ searchValue }) {
     <div className="search-container">
       <Input
         type="text"
-        className="form-control"
         placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
         onChange={search}
         value={searchValue}

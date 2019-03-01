@@ -25,7 +25,7 @@ export default function SummaryRow({ entity, index }) {
   }/fields?${getTimeQueryParams()}`;
 
   return (
-    <div className="summary-row lineage-column">
+    <div className="summary-row lineage-row">
       <div className="index">{index + 1}</div>
 
       <div className="dataset-name truncate">

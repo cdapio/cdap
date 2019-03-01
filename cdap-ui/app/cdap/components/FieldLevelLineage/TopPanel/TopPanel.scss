@@ -16,23 +16,23 @@
 
 @import '~styles/variables.scss';
 $border-color: $grey-04;
+$caption-color: $grey-02;
 
 .field-level-lineage .top-panel {
-  padding: 25px 50px;
+  padding-left: 50px;
+  padding-right: 50px;
+  height: 60px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: flex-end;
 
-  .title,
-  .time-picker-dropdown {
-    display: inline-block;
+  .time-picker-caption {
+    color: $caption-color;
   }
 
-  .title {
-    font-size: 18px;
-    font-weight: bold;
-  }
-
   .time-picker-dropdown {
-    margin-left: 50px;
     vertical-align: top;
+    margin-top: 5px;
 
     .dropdown-toggle {
       padding: 0;
@@ -40,11 +40,17 @@ $border-color: $grey-04;
       border: 0;
       border-bottom: 2px solid $border-color;
 
+      h5 { display: inline; }
+
       &:hover,
       &:active,
       &:focus {
         background-color: transparent;
       }
+    }
+
+    .dropdown-item {
+      cursor: pointer;
     }
   }
 
@@ -53,5 +59,9 @@ $border-color: $grey-04;
     position: relative;
     margin-left: 10px;
     width: 400px;
+
+    .time-range-picker-container .time-range-selector .time .time-wrapper {
+      line-height: 25px;
+    }
   }
 }

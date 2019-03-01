@@ -15,11 +15,12 @@
  */
 
 import * as React from 'react';
-import { getLineageSummary } from 'components/FieldLevelLineage/store/ActionCreator';
+import { getLineageSummary, getOperations } from 'components/FieldLevelLineage/store/ActionCreator';
 import classnames from 'classnames';
 import { connect } from 'react-redux';
 import If from 'components/If';
 import T from 'i18n-react';
+import { Directions } from 'components/FieldLevelLineage/LineageSummary/Directions';
 
 const PREFIX = 'features.FieldLevelLineage';
 
@@ -31,6 +32,8 @@ interface IField {
 interface IFieldRowProps {
   field: IField;
   activeField: string;
+  incoming: any[];
+  outgoing: any[];
 }
 
 interface IFieldRowState {
@@ -42,7 +45,12 @@ class FieldRowView extends React.PureComponent<IFieldRowProps, IFieldRowState> {
     isHovered: false,
   };
 
-  private onClickHandler = (field) => {
+  private handleOperationsClick(event, direction) {
+    event.stopPropagation();
+    getOperations(direction);
+  }
+
+  private onClickHandler = () => {
     if (!this.props.field.lineage) {
       return;
     }
@@ -51,18 +59,12 @@ class FieldRowView extends React.PureComponent<IFieldRowProps, IFieldRowState> {
   };
 
   private onMouseEnter = () => {
-    if (this.props.field.lineage) {
-      return;
-    }
     this.setState({
       isHovered: true,
     });
   };
 
   private onMouseLeave = () => {
-    if (this.props.field.lineage) {
-      return;
-    }
     this.setState({
       isHovered: false,
     });
@@ -72,10 +74,11 @@ class FieldRowView extends React.PureComponent<IFieldRowProps, IFieldRowState> {
     const field = this.props.field;
     const isActive = field.name === this.props.activeField;
     const isDisabled = !field.lineage;
+    const showArrow = !isDisabled && (this.state.isHovered || isActive);
 
     return (
       <div
-        className={classnames('field-row truncate', {
+        className={classnames('field-row', {
           active: isActive,
           disabled: isDisabled,
         })}
@@ -84,10 +87,44 @@ class FieldRowView extends React.PureComponent<IFieldRowProps, IFieldRowState> {
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
       >
-        {field.name}
+        <If condition={showArrow && this.props.incoming.length > 0}>
+          <div
+            className={classnames('row-arrow arrow-left', {
+              bordered: !isActive,
+            })}
+          />
+        </If>
 
-        <If condition={isDisabled && this.state.isHovered}>
-          <em className="no-lineage-text">{T.translate(`${PREFIX}.noLineage`)}</em>
+        <div className="operations">
+          <If condition={isActive && this.props.incoming.length > 0}>
+            <span onClick={(e) => this.handleOperationsClick(e, Directions.INCOMING)}>
+              {T.translate(`${PREFIX}.incomingOperations`)}
+            </span>
+          </If>
+        </div>
+
+        <div className="field-name truncate">
+          {field.name}
+
+          <If condition={isDisabled && this.state.isHovered}>
+            <em className="no-lineage-text">{T.translate(`${PREFIX}.noLineage`)}</em>
+          </If>
+        </div>
+
+        <div className="operations">
+          <If condition={isActive && this.props.outgoing.length > 0}>
+            <span onClick={(e) => this.handleOperationsClick(e, Directions.OUTGOING)}>
+              {T.translate(`${PREFIX}.outgoingOperations`)}
+            </span>
+          </If>
+        </div>
+
+        <If condition={showArrow && this.props.outgoing.length > 0}>
+          <div
+            className={classnames('row-arrow arrow-right', {
+              bordered: !isActive,
+            })}
+          />
         </If>
       </div>
     );
@@ -98,6 +135,8 @@ const mapStateToProps = (state, ownProp) => {
   return {
     field: ownProp.field,
     activeField: state.lineage.activeField,
+    incoming: state.lineage.incoming,
+    outgoing: state.lineage.outgoing,
   };
 };
 

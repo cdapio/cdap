@@ -16,57 +16,65 @@
 
 @import '~styles/variables.scss';
 
-$fields-count-color: $grey-04;
-$row-height: 32px;
-$bg-color: $grey-07;
-$outside-border: 2px solid $grey-03;
-$border-size: 1px;
-$border: $border-size solid $grey-03;
+$row-height: 29px;
+$border: 1px solid $grey-06;
 $grid-padding: 0 10px;
-$number-of-rows: 11;
 $disabled-color: $grey-04;
 $active-bg-color: $yellow-02-lighter;
-$hover-bg-color: white;
-$border-offset: 2px;
+$hover-bg-color: $grey-08;
 $no-lineage-indicator-color: $grey-01;
+$operations-color: $blue-03;
+$header-bg-color: $grey-08;
+$header-color: $grey-02;
+$operations-width: 95px;
 
 .field-level-lineage .fields-box {
-  .header {
-    display: flex;
-
-    > div { width: 50%; }
-    .fields-count { color: $fields-count-color; }
+  .empty {
+    text-align: center;
+    font-size: 16px;
+    margin-top: 100px;
   }
 
-  .empty {
-    background-color: $bg-color;
-    height: calc((#{$row-height} + #{$border-size}) * (#{$number-of-rows + 1}) + #{$border-offset});
-    border: $outside-border;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    padding: 25px;
+  .search-container > .form-control {
+    height: 26px;
+    line-height: 26px;
   }
 
   .fields-list {
-    background-color: $bg-color;
-    line-height: $row-height;
+    .field-row {
+      line-height: $row-height;
+      display: flex;
+      border-bottom: $border;
+      align-items: center;
+
+      .field-name {
+        width: calc(100% - (#{$operations-width} * 2));
+        padding: 0 10px;
+      }
+
+      .operations {
+        width: $operations-width;
+        line-height: 1;
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        color: $operations-color;
+        padding-left: 20px;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
 
     .fields-list-header {
-      font-weight: bold;
-      padding: $grid-padding;
+      background-color: $header-bg-color;
+      color: $header-color;
     }
 
     .fields-list-body {
-      border: $outside-border;
-      height: calc((#{$row-height} + #{$border-size}) * #{$number-of-rows} + #{$border-offset});
-      overflow-y: auto;
-
       .field-row {
-        padding: $grid-padding;
-        border-bottom: $border;
         cursor: pointer;
+        position: relative;
 
         &:hover {
           background-color: $hover-bg-color;
@@ -88,6 +96,63 @@ $no-lineage-indicator-color: $grey-01;
           position: absolute;
           right: 0;
           padding: 0 15px;
+        }
+
+        // ARROWS
+        $default-border: 14px solid transparent;
+        $arrow-border: 21px solid $grey-06;
+        $filler-default-border: 10px solid transparent;
+        $filler-arrow-border: 16px solid white;
+        $arrow-offset: -25px;
+        $filler-offset: 3px;
+
+        .row-arrow {
+          width: 0;
+          height: 0;
+          border-top: $default-border;
+          border-bottom: $default-border;
+          position: absolute;
+          cursor: initial;
+
+          &.bordered {
+            &:before {
+              content: '';
+              height: 0;
+              width: 0;
+              position: absolute;
+              border-top: $filler-default-border;
+              border-bottom: $filler-default-border;
+              top: -10px;
+            }
+          }
+        }
+
+        .arrow-left {
+          border-right: $arrow-border;
+          left: $arrow-offset;
+
+          &.bordered {
+            border-right-color: $grey-04;
+
+            &:before {
+              border-right: $filler-arrow-border;
+              left: $filler-offset;
+            }
+          }
+        }
+
+        .arrow-right {
+          border-left: $arrow-border;
+          right: $arrow-offset;
+
+          &.bordered {
+            border-left-color: $grey-04;
+
+            &:before {
+              border-left: $filler-arrow-border;
+              right: $filler-offset;
+            }
+          }
         }
       }
     }

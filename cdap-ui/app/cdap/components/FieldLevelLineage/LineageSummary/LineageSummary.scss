@@ -19,40 +19,26 @@
 $index-column-width: 30px;
 $dataset-name-column-width: 60%;
 $field-name-bg-color: $grey-07;
-$outside-border: 2px solid $grey-03;
-$border-size: 1px;
-$border: $border-size solid $grey-03;
+$border: 1px solid $grey-06;
 $text-color: $grey-01;
 $grid-padding: 0 10px;
-$view-operations-color: $blue-03;
-$row-height: 32px;
-$number-of-rows: 10;
-$lineage-count-color: $grey-04;
-$disabled-color: $grey-04;
-$dataset-hover-bg-color: $grey-07;
+$row-height: 29px;
+$dataset-hover-bg-color: $grey-08;
 $field-hover-bg-color: white;
-$header-height: 38px;
+$header-bg-color: $grey-08;
+$header-color: $grey-02;
 
 .field-level-lineage-container .lineage-summary-empty-container {
-  margin-top: $header-height;
-  display: flex;
-  border: $outside-border;
-  height: calc(#{$header-height} + (#{$row-height} * (#{$number-of-rows} + 1)) + 7px); // 7px to offset different borders
-  background-color: $field-name-bg-color;
-  justify-content: center;
-  align-items: center;
+  margin-top: 100px;
   font-size: 16px;
+  text-align: center;
 }
 
 .field-level-lineage-container .lineage-summary-container {
-  .field-lineage-info {
-    .title > strong { margin-right: 5px; }
-    .lineage-count { color: $lineage-count-color; }
-  }
-
   .lineage-fields {
-    .lineage-column {
+    .lineage-row {
       display: flex;
+      border-bottom: $border;
 
       > div {
         padding: $grid-padding;
@@ -66,24 +52,15 @@ $header-height: 38px;
 
       .field-name {
         width: calc(100% - #{$index-column-width} - #{$dataset-name-column-width});
-        background-color: $field-name-bg-color;
       }
     }
 
-    .lineage-fields-header { font-weight: bold; }
+    .lineage-fields-header {
+      background-color: $header-bg-color;
+      color: $header-color;
+    }
 
     .lineage-fields-body {
-      border: $outside-border;
-      border-bottom: 0;
-      height: calc((#{$row-height + #{$border-size}}) * #{$number-of-rows});
-      overflow-y: auto;
-
-      .lineage-column {
-        border-bottom: $border;
-
-        > div:not(:last-child) { border-right: $border; }
-      }
-
       .summary-row:hover { background-color: $dataset-hover-bg-color; }
 
       .field-name,
@@ -104,24 +81,6 @@ $header-height: 38px;
         height: 100%;
 
         &:hover { text-decoration: none; }
-      }
-    }
-  }
-
-  .view-operations {
-    padding: $grid-padding;
-    line-height: $row-height;
-    border: $outside-border;
-    border-top: $border;
-
-    > span {
-      color: $view-operations-color;
-      cursor: pointer;
-      &:hover:not(.disabled) { text-decoration: underline; }
-
-      &.disabled {
-        color: $disabled-color;
-        cursor: not-allowed;
       }
     }
   }
