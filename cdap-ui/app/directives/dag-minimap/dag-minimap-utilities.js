@@ -99,10 +99,6 @@ class DAGMinimapUtilities {
       yOffset,
     } = graphMetadata;
 
-    const position = node._uiPosition;
-    const x = parseInt(position.left, 10) - minX;
-    const y = parseInt(position.top, 10) - minY;
-
     let height = this.SIZE.nodeHeight;
     let width = this.SIZE.nodeWidth;
 
@@ -113,6 +109,19 @@ class DAGMinimapUtilities {
 
     height *= scale;
     width *= scale;
+
+    const position = node._uiPosition;
+    if (!position) {
+      return {
+        height,
+        width,
+        left: 0,
+        right: 0,
+      };
+    }
+
+    const x = parseInt(position.left, 10) - minX;
+    const y = parseInt(position.top, 10) - minY;
 
     const left = (x * scale) + xOffset;
     const top = (y * scale) + yOffset;
