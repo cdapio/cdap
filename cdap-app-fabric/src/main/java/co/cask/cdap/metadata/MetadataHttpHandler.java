@@ -18,14 +18,13 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
-import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metadata.MetadataPath;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.metadata.MetadataCompatibility;
 import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.spi.metadata.Metadata;
@@ -36,7 +35,6 @@ import co.cask.cdap.spi.metadata.SearchResponse;
 import co.cask.cdap.spi.metadata.Sorting;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -61,8 +59,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -150,7 +146,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/**/metadata")
   public void removeMetadata(HttpRequest request, HttpResponder responder,
-                             @QueryParam("type") String type) throws IOException {
+                             @QueryParam("type") String type) throws IOException, BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     metadataAdmin.removeMetadata(metadataEntity);
     responder.sendString(HttpResponseStatus.OK,
@@ -160,7 +156,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/**/metadata/properties")
   public void removeProperties(HttpRequest request, HttpResponder responder,
-                               @QueryParam("type") String type) throws IOException {
+                               @QueryParam("type") String type) throws IOException, BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.removeProperties(metadataEntity);
     responder.sendString(HttpResponseStatus.OK,
@@ -171,7 +167,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/properties/{property}")
   public void removeProperty(HttpRequest request, HttpResponder responder,
                              @PathParam("property") String property,
-                             @QueryParam("type") String type) throws IOException {
+                             @QueryParam("type") String type) throws IOException, BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.removeProperties(metadataEntity, Collections.singleton(property));
     responder.sendString(HttpResponseStatus.OK,
@@ -181,7 +177,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/**/metadata/tags")
   public void removeTags(HttpRequest request, HttpResponder responder,
-                         @QueryParam("type") String type) throws IOException {
+                         @QueryParam("type") String type) throws IOException, BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.removeTags(metadataEntity);
     responder.sendString(HttpResponseStatus.OK,
@@ -192,7 +188,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/metadata/tags/{tag}")
   public void removeTag(HttpRequest request, HttpResponder responder,
                         @PathParam("tag") String tag,
-                        @QueryParam("type") String type) throws IOException {
+                        @QueryParam("type") String type) throws IOException, BadRequestException {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.removeTags(metadataEntity, Collections.singleton(tag));
     responder.sendString(HttpResponseStatus.OK,
@@ -319,77 +315,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable String entityType, String suffix) {
-    String[] parts = uri.substring((uri.indexOf(Constants.Gateway.API_VERSION_3) +
-      Constants.Gateway.API_VERSION_3.length() + 1), uri.lastIndexOf(suffix)).split("/");
-    MetadataEntity.Builder builder = MetadataEntity.builder();
-
-    int curIndex = 0;
-    while (curIndex < parts.length - 1) {
-      // the api part which we get for program does not have 'type' keyword as part of the uri. It goes like
-      // ../apps/appName/programType/ProgramName so handle that correctly
-      if (curIndex >= 2 && parts[curIndex - 2].equalsIgnoreCase("apps") && !parts[curIndex].equalsIgnoreCase
-        ("versions")) {
-        builder = appendHelper(builder, entityType, MetadataEntity.TYPE,
-                                      ProgramType.valueOfCategoryName(parts[curIndex]).name());
-        builder = appendHelper(builder, entityType, MetadataEntity.PROGRAM, parts[curIndex + 1]);
-      } else {
-        if (MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().containsKey(parts[curIndex])) {
-          builder = appendHelper(builder, entityType,
-                                        MetadataClient.ENTITY_TYPE_TO_API_PART.inverse().get(parts[curIndex]),
-                                        parts[curIndex + 1]);
-        } else {
-          builder = appendHelper(builder, entityType, parts[curIndex], parts[curIndex + 1]);
-        }
-      }
-      curIndex += 2;
-    }
-    builder = makeBackwardCompatible(builder);
-    return builder.build();
-  }
-
-  /**
-   * If the MetadataEntity Builder key-value represent an application or artifact which is versioned in CDAP i.e. their
-   * metadata entity representation ends with 'version' rather than 'application' or 'artifact' and the type is also
-   * set to 'version' then for backward compatibility of rest end points return an updated builder which has the
-   * correct type. This is only needed in 5.0 for backward compatibility of the rest endpoint.
-   * From 5.0 and later the rest end point must be called with a query parameter which specify the type of the
-   * metadata entity if the type is not the last key. (CDAP-13678)
-   */
-  @VisibleForTesting
-  static MetadataEntity.Builder makeBackwardCompatible(MetadataEntity.Builder builder) {
-    MetadataEntity entity = builder.build();
-    List<MetadataEntity.KeyValue> entityKeyValues = StreamSupport.stream(entity.spliterator(), false)
-      .collect(Collectors.toList());
-    if (entityKeyValues.size() == 3 && entity.getType().equals(MetadataEntity.VERSION) &&
-      (entityKeyValues.get(1).getKey().equals(MetadataEntity.ARTIFACT) ||
-        entityKeyValues.get(1).getKey().equals(MetadataEntity.APPLICATION))) {
-      // this is artifact or application so update the builder
-      MetadataEntity.Builder actualEntityBuilder = MetadataEntity.builder();
-      // namespace
-      actualEntityBuilder.append(entityKeyValues.get(0).getKey(), entityKeyValues.get(0).getValue());
-      // application or artifact (so append as type)
-      actualEntityBuilder.appendAsType(entityKeyValues.get(1).getKey(), entityKeyValues.get(1).getValue());
-      // version detail
-      actualEntityBuilder.append(entityKeyValues.get(2).getKey(), entityKeyValues.get(2).getValue());
-      return actualEntityBuilder;
-    }
-    return builder;
-  }
-
-  private MetadataEntity.Builder appendHelper(MetadataEntity.Builder builder, @Nullable String entityType,
-                                      String key, String value) {
-
-    if (entityType == null || entityType.isEmpty()) {
-      // if a type is not provided then keep appending as type to update the type on every append
-      return builder.appendAsType(key, value);
-    } else {
-      if (entityType.equalsIgnoreCase(key)) {
-        // if a type was provided and this key is the type then appendAsType
-        return builder.appendAsType(key, value);
-      } else {
-        return builder.append(key, value);
-      }
+  private MetadataEntity getMetadataEntityFromPath(String uri, @Nullable String type, String suffix)
+    throws BadRequestException {
+    try {
+      return MetadataPath.getMetadataEntityFromPath(uri, Constants.Gateway.API_VERSION_3 + "/", suffix, type);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e);
     }
   }
 
