@@ -116,6 +116,7 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
 
   /**
    * Abstract base class for implementing job queue logic for various kind of notifications.
+   * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
    */
   private abstract class AbstractSchedulerSubscriberService extends AbstractNotificationSubscriberService {
 

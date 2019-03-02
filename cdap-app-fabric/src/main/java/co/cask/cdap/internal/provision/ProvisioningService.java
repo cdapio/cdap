@@ -55,6 +55,8 @@ import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
+import co.cask.cdap.spi.data.StructuredTableContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
@@ -113,13 +115,14 @@ public class ProvisioningService extends AbstractIdleService {
   private final ProgramStateWriter programStateWriter;
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private final ProvisionerStore provisionerStore;
+  private final TransactionRunner transactionRunner;
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
                       ProvisionerConfigProvider provisionerConfigProvider,
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
-                      ProvisionerStore provisionerStore) {
+                      ProvisionerStore provisionerStore, TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
@@ -130,6 +133,7 @@ public class ProvisioningService extends AbstractIdleService {
     this.secureStore = secureStore;
     this.programStateWriter = programStateWriter;
     this.provisionerStore = provisionerStore;
+    this.transactionRunner = transactionRunner;
     this.taskStateCleanup = programRunId -> {
       try {
         provisionerStore.deleteTaskInfo(programRunId);
@@ -300,9 +304,10 @@ public class ProvisioningService extends AbstractIdleService {
    * submit the runnable using their own executor.
    *
    * @param provisionRequest the provision request
+   * @param context context for the transaction
    * @return runnable that will actually execute the cluster provisioning
    */
-  public Runnable provision(ProvisionRequest provisionRequest) throws IOException {
+  public Runnable provision(ProvisionRequest provisionRequest, StructuredTableContext context) throws IOException {
     ProgramRunId programRunId = provisionRequest.getProgramRunId();
     ProgramOptions programOptions = provisionRequest.getProgramOptions();
     Map<String, String> args = programOptions.getArguments().asMap();
@@ -344,7 +349,8 @@ public class ProvisioningService extends AbstractIdleService {
       new ProvisioningTaskInfo(programRunId, provisionRequest.getProgramDescriptor(), programOptions,
                                properties, name, provisionRequest.getUser(), provisioningOp,
                                createKeysDirectory(programRunId).toURI(), null);
-    provisionerStore.putTaskInfo(provisioningTaskInfo);
+    ProvisionerTable provisionerTable = new ProvisionerTable(context);
+    provisionerTable.putTaskInfo(provisioningTaskInfo);
     return createProvisionTask(provisioningTaskInfo, provisioner);
   }
 
@@ -356,15 +362,17 @@ public class ProvisioningService extends AbstractIdleService {
    * tracked by this service. The caller does not need to submit the runnable using their own executor.
    *
    * @param programRunId the program run to deprovision
+   * @param context context for the transaction
    * @return runnable that will actually execute the cluster deprovisioning
    */
-  public Runnable deprovision(ProgramRunId programRunId) throws IOException {
-    return deprovision(programRunId, taskStateCleanup);
+  public Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context) throws IOException {
+    return deprovision(programRunId, context, taskStateCleanup);
   }
 
   // This is visible for testing, where we may not want to delete the task information after it completes
   @VisibleForTesting
-  Runnable deprovision(ProgramRunId programRunId, Consumer<ProgramRunId> taskCleanup) throws IOException {
+  Runnable deprovision(ProgramRunId programRunId, StructuredTableContext context,
+                       Consumer<ProgramRunId> taskCleanup) throws IOException {
     // look up information for the corresponding provision operation
     ProvisioningTaskInfo existing =
       provisionerStore.getTaskInfo(new ProvisioningTaskKey(programRunId, ProvisioningOp.Type.PROVISION));
@@ -401,7 +409,8 @@ public class ProvisioningService extends AbstractIdleService {
                                                        ProvisioningOp.Status.REQUESTING_DELETE);
     ProvisioningTaskInfo provisioningTaskInfo = new ProvisioningTaskInfo(existing, provisioningOp,
                                                                          existing.getCluster());
-    provisionerStore.putTaskInfo(provisioningTaskInfo);
+    ProvisionerTable provisionerTable = new ProvisionerTable(context);
+    provisionerTable.putTaskInfo(provisioningTaskInfo);
 
     return createDeprovisionTask(provisioningTaskInfo, provisioner, taskCleanup);
   }
@@ -541,7 +550,7 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     // TODO: (CDAP-13246) pick up timeout from profile instead of hardcoding
-    ProvisioningTask task = new ProvisionTask(taskInfo, provisionerStore, provisioner, context,
+    ProvisioningTask task = new ProvisionTask(taskInfo, transactionRunner, provisioner, context,
                                               provisionerNotifier, programStateWriter, 300);
 
     Runnable runnable = () -> runWithProgramLogging(
@@ -582,7 +591,7 @@ public class ProvisioningService extends AbstractIdleService {
       provisionerNotifier.orphaned(taskInfo.getProgramRunId());
       return () -> { };
     }
-    DeprovisionTask task = new DeprovisionTask(taskInfo, provisionerStore, 300,
+    DeprovisionTask task = new DeprovisionTask(taskInfo, transactionRunner, 300,
                                                provisioner, context, provisionerNotifier, locationFactory);
 
     Runnable runnable = () -> runWithProgramLogging(

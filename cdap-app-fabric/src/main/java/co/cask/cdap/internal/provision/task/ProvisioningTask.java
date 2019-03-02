@@ -21,11 +21,14 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.internal.provision.ProvisionerStore;
+import co.cask.cdap.internal.provision.ProvisionerTable;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.internal.provision.ProvisioningTaskKey;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,15 +51,15 @@ public abstract class ProvisioningTask {
   protected final ProvisioningTaskInfo initialTaskInfo;
   protected final ProgramRunId programRunId;
   protected final int retryTimeLimitSecs;
-  protected final ProvisionerStore provisionerStore;
+  protected final TransactionRunner transactionRunner;
 
-  public ProvisioningTask(ProvisioningTaskInfo initialTaskInfo, ProvisionerStore provisionserStore,
+  public ProvisioningTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
                           int retryTimeLimitSecs) {
     this.taskKey = new ProvisioningTaskKey(initialTaskInfo.getProgramRunId(),
                                            initialTaskInfo.getProvisioningOp().getType());
     this.programRunId = initialTaskInfo.getProgramRunId();
     this.initialTaskInfo = initialTaskInfo;
-    this.provisionerStore = provisionserStore;
+    this.transactionRunner = transactionRunner;
     this.retryTimeLimitSecs = retryTimeLimitSecs;
   }
 
@@ -137,15 +140,16 @@ public abstract class ProvisioningTask {
     throws InterruptedException, IOException {
     try {
       // Stop retrying if we are interrupted. Otherwise, retry on every exception, up to the retry limit
-      return Retries.callWithInterruptibleRetries(() ->  {
-        ProvisioningTaskInfo currentState = provisionerStore.getTaskInfo(taskKey);
+      return Retries.callWithInterruptibleRetries(() -> TransactionRunners.run(transactionRunner, context -> {
+        ProvisionerTable provisionerTable = new ProvisionerTable(context);
+        ProvisioningTaskInfo currentState = provisionerTable.getTaskInfo(taskKey);
         // if the state is cancelled, don't write anything and transition to the end subtask.
         if (currentState != null && currentState.getProvisioningOp().getStatus() == ProvisioningOp.Status.CANCELLED) {
           return currentState;
         }
-        provisionerStore.putTaskInfo(taskInfo);
+        provisionerTable.putTaskInfo(taskInfo);
         return taskInfo;
-      }, retryStrategy, t -> true);
+      }), retryStrategy, t -> true);
     } catch (RuntimeException e) {
       LOG.error("{} task failed in to save state for {} subtask. The task will be failed.",
                 taskInfo.getProvisioningOp().getType(), taskInfo.getProvisioningOp().getStatus(), e);

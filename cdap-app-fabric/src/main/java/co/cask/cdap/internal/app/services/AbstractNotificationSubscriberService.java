@@ -33,7 +33,8 @@ import com.google.gson.Gson;
 import org.apache.tephra.TxConstants;
 
 /**
- * Abstract class that fetches notifications from TMS
+ * Abstract class that fetches notifications from TMS.
+ * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
  */
 public abstract class AbstractNotificationSubscriberService extends AbstractMessagingSubscriberService<Notification> {
 

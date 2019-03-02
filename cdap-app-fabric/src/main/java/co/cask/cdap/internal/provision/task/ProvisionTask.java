@@ -19,12 +19,12 @@ package co.cask.cdap.internal.provision.task;
 
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
-import co.cask.cdap.internal.provision.ProvisionerStore;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,11 +68,11 @@ public class ProvisionTask extends ProvisioningTask {
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramStateWriter programStateWriter;
 
-  public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, ProvisionerStore provisionerStore,
+  public ProvisionTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
                        Provisioner provisioner, ProvisionerContext provisionerContext,
                        ProvisionerNotifier provisionerNotifier, ProgramStateWriter programStateWriter,
                        int retryTimeLimitSecs) {
-    super(initialTaskInfo, provisionerStore, retryTimeLimitSecs);
+    super(initialTaskInfo, transactionRunner, retryTimeLimitSecs);
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;
