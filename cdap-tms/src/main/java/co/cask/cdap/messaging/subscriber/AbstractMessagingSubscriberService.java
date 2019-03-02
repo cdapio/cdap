@@ -16,10 +16,10 @@
 
 package co.cask.cdap.messaging.subscriber;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.common.utils.TimeBoundIterator;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
@@ -42,20 +42,23 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMessagingSubscriberService.class);
 
+  private final int txTimeoutSeconds;
 
   /**
    * Constructor.
    *
    * @param topicId the topic to consume from
    * @param fetchSize number of messages to fetch in each batch
+   * @param txTimeoutSeconds transaction timeout in seconds to use when processing messages
    * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty result
    * @param retryStrategy the {@link RetryStrategy} to determine retry on failure
    * @param metricsContext the {@link MetricsContext} for emitting metrics about the message consumption.
    */
   protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
-                                               long emptyFetchDelayMillis,
+                                               int txTimeoutSeconds, long emptyFetchDelayMillis,
                                                RetryStrategy retryStrategy, MetricsContext metricsContext) {
     super(topicId, metricsContext, fetchSize, emptyFetchDelayMillis, retryStrategy);
+    this.txTimeoutSeconds = txTimeoutSeconds;
   }
 
   /**
@@ -135,14 +138,19 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
     MessageTrackingIterator iterator;
 
     while (true) {
-      iterator = TransactionRunners.run(getTransactionRunner(), context1 -> {
-        MessageTrackingIterator trackingIterator = new MessageTrackingIterator(messages);
-        processMessages(context1, trackingIterator);
+      // Process the notifications and record the message id of where the processing is up to.
+      // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
+      long timeBoundMillis = 900L * txTimeoutSeconds;
+      iterator = TransactionRunners.run(getTransactionRunner(), context -> {
+        TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+                                                                                                timeBoundMillis);
+        MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+        processMessages(context, trackingIterator);
         String lastMessageId = trackingIterator.getLastMessageId();
 
         // Persist the message id of the last message being consumed from the iterator
         if (lastMessageId != null) {
-          storeMessageId(context1, lastMessageId);
+          storeMessageId(context, lastMessageId);
         }
         return trackingIterator;
       });

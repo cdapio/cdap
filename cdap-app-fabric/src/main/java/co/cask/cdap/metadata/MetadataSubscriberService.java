@@ -66,6 +66,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,6 +117,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+      cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
       cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
       RetryStrategies.fromConfiguration(cConf, "system.metadata."),
       metricsCollectionService.getContext(ImmutableMap.of(

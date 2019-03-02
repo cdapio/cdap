@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
+import org.apache.tephra.TxConstants;
 
 /**
  * Abstract class that fetches notifications from TMS
@@ -47,7 +48,8 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
                                                   MessagingService messagingService,
                                                   MetricsCollectionService metricsCollectionService,
                                                   TransactionRunner transactionRunner) {
-    super(NamespaceId.SYSTEM.topic(topicName), fetchSize, emptyFetchDelayMillis,
+    super(NamespaceId.SYSTEM.topic(topicName), fetchSize, cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
+          emptyFetchDelayMillis,
           RetryStrategies.fromConfiguration(cConf, "system.notification."),
           metricsCollectionService.getContext(ImmutableMap.of(
             Constants.Metrics.Tag.COMPONENT, Constants.Service.MASTER_SERVICES,
