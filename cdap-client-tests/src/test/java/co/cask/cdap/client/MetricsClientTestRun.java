@@ -89,7 +89,9 @@ public class MetricsClientTestRun extends ClientTestBase {
 
       curTime = System.currentTimeMillis();
       Tasks.waitFor(true, () ->
-        metricsClient.query(MetricsTags.service(service), Constants.Metrics.Name.Service.SERVICE_INPUT)
+        metricsClient.query(MetricsTags.service(service),
+                            Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
+                            Collections.emptyList(), ImmutableMap.of("start", "now-20s", "end", "now"))
           .getSeries().length > 0, 10, TimeUnit.SECONDS);
       duration = System.currentTimeMillis() - curTime;
       LOG.info("Took {} milliseonds for the first metrics to be available", duration);
