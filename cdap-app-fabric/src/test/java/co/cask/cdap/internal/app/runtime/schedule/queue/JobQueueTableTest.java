@@ -99,10 +99,10 @@ public abstract class JobQueueTableTest {
                                                       Lists.newArrayList(),
                                                       Job.State.PENDING_TRIGGER, 0L);
 
-  protected abstract TransactionRunner newTransactionRunner();
+  protected abstract TransactionRunner getTransactionRunner();
   protected abstract CConfiguration getCConf();
 
-  private TransactionRunner transactionRunner = newTransactionRunner();
+  private final TransactionRunner transactionRunner = getTransactionRunner();
 
   @After
   public void tearDown() {
@@ -323,8 +323,7 @@ public abstract class JobQueueTableTest {
   }
 
   private void addNotificationToSchedule(ProgramSchedule programSchedule) {
-    TransactionRunner txRunner = newTransactionRunner();
-    TransactionRunners.run(txRunner, context -> {
+    TransactionRunners.run(transactionRunner, context -> {
       JobQueueTable jobQueue = JobQueueTable.getJobQueue(context, getCConf());
       // Construct a partition notification with DATASET_ID
       Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.of());

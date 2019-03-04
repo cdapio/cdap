@@ -77,7 +77,9 @@ public class DataSourceInstantiator implements Supplier<DataSource> {
                                                          "DataSource", Constants.Dataset.DATA_STORAGE_SQL));
     }
 
-    loadJDBCDriver(storageImpl);
+    if (cConf.getBoolean(Constants.Dataset.DATA_STORAGE_SQL_DRIVER_EXTERNAL)) {
+      loadJDBCDriver(storageImpl);
+    }
 
     String jdbcUrl = cConf.get(Constants.Dataset.DATA_STORAGE_SQL_JDBC_CONNECTION_URL);
     if (jdbcUrl == null) {

@@ -20,13 +20,22 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocalLocationModule;
+import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.data.runtime.StorageModule;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
-import co.cask.cdap.spi.data.sql.RetryingSqlTransactionRunner;
-import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
+import co.cask.cdap.spi.data.sql.PostgresInstantiator;
+import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.StoreDefinition;
 import com.google.common.base.Joiner;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,7 +43,6 @@ import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import javax.sql.DataSource;
 
 /**
  *
@@ -45,36 +53,39 @@ public class SqlJobQueueTableTest extends JobQueueTableTest {
 
   private static EmbeddedPostgres pg;
   private static CConfiguration cConf;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
   public static void setup() throws Exception {
     cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
-    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
 
-    pg = EmbeddedPostgres.builder().setDataDirectory(TEMP_FOLDER.newFolder()).setCleanDataDirectory(false).start();
-    DataSource dataSource = pg.getPostgresDatabase();
-    SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
-    registry.initialize();
-    StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
+    pg = PostgresInstantiator.createAndStart(cConf, TEMP_FOLDER.newFolder());
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocalLocationModule(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new StorageModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceAdmin.class).in(Scopes.SINGLETON);
+        }
+      }
+    );
+
+    injector.getInstance(StructuredTableRegistry.class).initialize();
+    StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
 
     StoreDefinition.JobQueueStore.createTables(structuredTableAdmin);
     StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin);
   }
 
   @Override
-  protected synchronized TransactionRunner newTransactionRunner() {
-    try {
-      DataSource dataSource = pg.getPostgresDatabase();
-      SqlStructuredTableRegistry registry = new SqlStructuredTableRegistry(dataSource);
-      registry.initialize();
-      StructuredTableAdmin structuredTableAdmin =
-        new PostgresSqlStructuredTableAdmin(registry, dataSource);
-      return new RetryingSqlTransactionRunner(structuredTableAdmin, dataSource);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
   }
 
   @Override

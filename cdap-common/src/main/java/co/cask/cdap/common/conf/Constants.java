@@ -442,6 +442,7 @@ public final class Constants {
     public static final String DATA_STORAGE_IMPLEMENTATION = "data.storage.implementation";
     public static final String DATA_STORAGE_NOSQL = "nosql";
     public static final String DATA_STORAGE_SQL = "postgresql";
+    public static final String DATA_STORAGE_SQL_DRIVER_EXTERNAL = "data.storage.sql.jdbc.driver.external";
     public static final String DATA_STORAGE_SQL_DRIVER_DIRECTORY = "data.storage.sql.jdbc.driver.directory";
     public static final String DATA_STORAGE_SQL_JDBC_DRIVER_NAME = "data.storage.sql.jdbc.driver.name";
 

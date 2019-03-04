@@ -735,6 +735,18 @@
   </property>
 
   <property>
+    <name>data.storage.sql.jdbc.driver.external</name>
+    <value>true</value>
+    <description>
+      Indicates whether the JDBC driver has to be loaded from an external directory.
+      If true, then the JDBC driver directory has to be specified using
+      "data.storage.sql.jdbc.driver.directory".
+      If false, then the JDBC driver is present in the CDAP classpath.
+      This config can only be used when the storage implementation is postgresql.
+    </description>
+  </property>
+
+  <property>
     <name>data.storage.sql.jdbc.driver.directory</name>
     <value>/opt/cdap/master/ext/jdbc</value>
     <description>
@@ -742,7 +754,8 @@
       Sub-directory with the name that matches with the value of "data.storage.implementation" setting
       will be searched for the corresponding JDBC driver and
       dependencies jars to connect to the configured sql instance.
-      This config can only be used when the stroage implementation is sql.
+      The JDBC driver class to load has to be specified using "data.storage.sql.jdbc.driver.name".
+      This config can only be used when the storage implementation is postgresql.
     </description>
   </property>
 
