@@ -245,7 +245,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium, myLoadingService) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -306,17 +306,8 @@ angular
     });
 
     EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
-      $log.log('[DataSource] reconnected, reloading to home');
-      /*
-        TL;DR: We need to reload services to check if backend is up and running.
-        LONGER-VERSION : When node server goes down and then later comes up we used to use ui-router's transitionTo api.
-        This, however reloads the controllers but does not reload the services. As a result our poll for
-        backend services got dropped in the previous node server and the new node server is not polling for
-        backend service (system services & backend heartbeat apis). So we need to force reload the entire app
-        to reload services. Ideally we should have one controller that loaded everything so that we can control
-        the polling in services but unfortunately we are polling for stuff in too many places - StatusFactory, ServiceStatusFactory.
-      */
-      $window.location.reload();
+      $log.log('[DataSource] reconnected');
+      myLoadingService.hideLoadingIcon();
     });
 
     console.timeEnd(PKG.name);

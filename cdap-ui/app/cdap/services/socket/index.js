@@ -16,13 +16,15 @@
 
 import SockJS from 'sockjs-client';
 import { Subject } from 'rxjs/Subject';
+import ee from 'event-emitter';
 
 class Socket {
   constructor() {
     this.buffer = [];
     this.observable = new Subject();
     this.timeout = null;
-
+    this.eventEmitter = ee(ee);
+    this.isFirstTime = true;
     this.init();
   }
 
@@ -33,6 +35,11 @@ class Socket {
     this.socket = new SockJS('/_sock');
 
     this.socket.onopen = () => {
+      if (!this.isFirstTime) {
+        this.eventEmitter.emit('SOCKET_RECONNECT');
+      }
+      this.isFirstTime = false;
+
       // Buffering request while Socket is still starting up
       this.buffer.forEach((req) => {
         this._doSend(req);

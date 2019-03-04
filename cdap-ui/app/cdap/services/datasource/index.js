@@ -16,6 +16,7 @@
 
 import Socket from '../socket';
 import uuidV4 from 'uuid/v4';
+import ee from 'event-emitter';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/observable/combineLatest';
@@ -38,6 +39,7 @@ const REQUEST_ORIGIN_ROUTER = 'ROUTER';
 
 export default class Datasource {
   constructor(genericResponseHandlers = [() => true]) {
+    this.eventEmitter = ee(ee);
     let socketData = Socket.getObservable();
     this.bindings = {};
 
@@ -73,11 +75,38 @@ export default class Datasource {
         delete this.bindings[hash];
       }
     });
+
+
+    /**
+     * On socket reconnect, go through the the existing bindings, and resend the requests
+     * to the websocket. The original request bindings will still be preserved.
+     */
+    this.eventEmitter.on('SOCKET_RECONNECT', () => {
+      Object.keys(this.bindings).forEach((reqId) => {
+        const req = this.bindings[reqId];
+        if (!req) {
+          return;
+        }
+
+        if (req.type === 'REQUEST') {
+          this.socketSend('request', req.resource);
+        } else if (req.type === 'POLL') {
+          this.socketSend('poll-start', req.resource);
+        }
+      });
+    });
+  }
+
+  socketSend(actionType, resource) {
+    Socket.send({
+      action: actionType,
+      resource: resource,
+    });
   }
 
   request(resource = {}) {
     let generatedResource = {
-      id: uuidV4(),
+      id: resource.id || uuidV4(),
       json: resource.json === false ? false : true,
       method: resource.method || 'GET',
       suppressErrors: resource.suppressErrors || false,
@@ -108,6 +137,7 @@ export default class Datasource {
     if (resource.requestOrigin) {
       generatedResource.requestOrigin = resource.requestOrigin;
     }
+
     let subject = new Subject();
 
     this.bindings[generatedResource.id] = {
@@ -116,10 +146,7 @@ export default class Datasource {
       type: 'REQUEST',
     };
 
-    Socket.send({
-      action: 'request',
-      resource: generatedResource,
-    });
+    this.socketSend('request', generatedResource);
 
     return subject;
   }
@@ -182,10 +209,7 @@ export default class Datasource {
       type: 'POLL',
     };
 
-    Socket.send({
-      action: 'poll-start',
-      resource: generatedResource,
-    });
+    this.socketSend('poll-start', generatedResource);
 
     return observable;
   }

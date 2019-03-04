@@ -34,7 +34,8 @@ angular.module(PKG.name+'.services')
 
     var self = this,
         socket = null,
-        buffer = [];
+        buffer = [],
+        firstTime = true;
 
     function init (attempt) {
       $log.log('[mySocket] init');
@@ -53,12 +54,12 @@ angular.module(PKG.name+'.services')
         }
       };
 
-      socket.onopen = function (event) {
-        EventPipe.emit('backendUp', 'User interface service is online');
-        if(attempt>1) {
-          EventPipe.emit(MYSOCKET_EVENT.reconnected, event);
+      socket.onopen = function () {
+        if (!firstTime) {
+          EventPipe.emit(MYSOCKET_EVENT.reconnected);
           attempt = 1;
         }
+        firstTime = false;
 
         $log.info('[mySocket] opened');
         angular.forEach(buffer, send);
