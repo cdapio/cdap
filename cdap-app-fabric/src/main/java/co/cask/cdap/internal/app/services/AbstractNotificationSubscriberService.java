@@ -16,18 +16,12 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
@@ -36,8 +30,6 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
-import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 
 /**
@@ -48,20 +40,15 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
   private static final Gson GSON = new Gson();
 
   private final String name;
-  private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
 
-  @Inject
   protected AbstractNotificationSubscriberService(String name, CConfiguration cConf, String topicName,
-                                                  boolean transactionalFetch, int fetchSize, long emptyFetchDelayMillis,
+                                                  int fetchSize, long emptyFetchDelayMillis,
                                                   MessagingService messagingService,
-                                                  DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                                   MetricsCollectionService metricsCollectionService,
                                                   TransactionRunner transactionRunner) {
-    super(NamespaceId.SYSTEM.topic(topicName), transactionalFetch, fetchSize,
-          cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
-          cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
+    super(NamespaceId.SYSTEM.topic(topicName), fetchSize, cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
           emptyFetchDelayMillis,
           RetryStrategies.fromConfiguration(cConf, "system.notification."),
           metricsCollectionService.getContext(ImmutableMap.of(
@@ -73,12 +60,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
           )));
     this.name = name;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, ImmutableMap.of(), null, null, messagingContext)),
-      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
-    );
     this.transactionRunner = transactionRunner;
   }
 
@@ -90,11 +71,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractMess
   @Override
   protected MessagingContext getMessagingContext() {
     return messagingContext;
-  }
-
-  @Override
-  protected Transactional getTransactional() {
-    return transactional;
   }
 
   @Override

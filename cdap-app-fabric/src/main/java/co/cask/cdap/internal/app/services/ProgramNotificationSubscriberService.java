@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -26,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.ProjectInfo;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -59,7 +57,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,8 +86,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
   public static final String CDAP_VERSION = "cdap.version";
 
-  private final CConfiguration cConf;
-  private final DatasetFramework datasetFramework;
   private final String recordedProgramStatusPublishTopic;
   private final ProvisionerNotifier provisionerNotifier;
   private final ProgramLifecycleService programLifecycleService;
@@ -102,18 +97,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                       DatasetFramework datasetFramework, TransactionSystemClient txClient,
                                        MetricsCollectionService metricsCollectionService,
                                        ProvisionerNotifier provisionerNotifier,
                                        ProgramLifecycleService programLifecycleService,
                                        ProvisioningService provisioningService,
                                        ProgramStateWriter programStateWriter, TransactionRunner transactionRunner) {
-    super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC), false,
+    super("program.status", cConf, cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
           cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE),
           cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
-          messagingService, datasetFramework, txClient, metricsCollectionService, transactionRunner);
-    this.cConf = cConf;
-    this.datasetFramework = datasetFramework;
+          messagingService, metricsCollectionService, transactionRunner);
     this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
     this.provisionerNotifier = provisionerNotifier;
     this.programLifecycleService = programLifecycleService;
@@ -137,7 +129,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   @Override
-  protected void processMessages(DatasetContext context, StructuredTableContext structuredTableContext,
+  protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, Notification>> messages) {
     // TODO CDAP-14848 remove dataset context from args
     ProgramHeartbeatTable heartbeatDataset = new ProgramHeartbeatTable(structuredTableContext);

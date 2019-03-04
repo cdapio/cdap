@@ -16,11 +16,6 @@
 
 package co.cask.cdap.messaging.subscriber;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.utils.ImmutablePair;
@@ -30,13 +25,10 @@ import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.AbstractIterator;
-import org.apache.tephra.TransactionNotInProgressException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -50,37 +42,24 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMessagingSubscriberService.class);
 
-  private final boolean transactionalFetch;
   private final int txTimeoutSeconds;
-  private final int maxTxTimeoutSeconds;
 
   /**
    * Constructor.
    *
    * @param topicId the topic to consume from
-   * @param transactionalFetch {@code true} to indicate fetching from TMS needs to be performed inside transaction
    * @param fetchSize number of messages to fetch in each batch
    * @param txTimeoutSeconds transaction timeout in seconds to use when processing messages
-   * @param maxTxTimeoutSeconds max transaction timeout in seconds to use, any tx timeout larger than this number
-   *                           is not allowed
    * @param emptyFetchDelayMillis number of milliseconds to sleep after a fetch returns empty result
    * @param retryStrategy the {@link RetryStrategy} to determine retry on failure
    * @param metricsContext the {@link MetricsContext} for emitting metrics about the message consumption.
    */
-  protected AbstractMessagingSubscriberService(TopicId topicId, boolean transactionalFetch, int fetchSize,
-                                               int txTimeoutSeconds, int maxTxTimeoutSeconds,
-                                               long emptyFetchDelayMillis,
+  protected AbstractMessagingSubscriberService(TopicId topicId, int fetchSize,
+                                               int txTimeoutSeconds, long emptyFetchDelayMillis,
                                                RetryStrategy retryStrategy, MetricsContext metricsContext) {
     super(topicId, metricsContext, fetchSize, emptyFetchDelayMillis, retryStrategy);
-    this.transactionalFetch = transactionalFetch;
     this.txTimeoutSeconds = txTimeoutSeconds;
-    this.maxTxTimeoutSeconds = maxTxTimeoutSeconds;
   }
-
-  /**
-   * Returns the {@link Transactional} for executing tasks in transaction.
-   */
-  protected abstract Transactional getTransactional();
 
   /**
    * Returns the {@link TransactionRunner} for executing tasks in transaction.
@@ -101,14 +80,14 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
 
   /**
    * Persists the given message id. This method will be called from a transaction, which is the same transaction
-   * for the call to {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}.
+   * for the call to {@link #processMessages(StructuredTableContext, Iterator)}.
    *
    * @param context the {@link StructuredTableContext} for getting dataset instances
-   * @param messageId the message id that the {@link #processMessages(DatasetContext, StructuredTableContext, Iterator)}
+   * @param messageId the message id that the {@link #processMessages(StructuredTableContext, Iterator)}
    *                  has been processed
    *                  up to.
    * @throws Exception if failed to persist the message id
-   * @see #processMessages(DatasetContext, StructuredTableContext, Iterator)
+   * @see #processMessages(StructuredTableContext, Iterator)
    */
   protected abstract void storeMessageId(StructuredTableContext context, String messageId) throws Exception;
 
@@ -127,16 +106,13 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * {@link #storeMessageId(StructuredTableContext, String)} call. If {@link Exception} is raised from this method,
    * the messages as provided through the {@code messages} parameter will be replayed in the next call.
    *
-   * @param datasetContext the {@link DatasetContext} for getting dataset instances
    * @param structuredTableContext the {@link StructuredTableContext} for getting the tables for the transaction
    * @param messages an {@link Iterator} of {@link ImmutablePair}, with the {@link ImmutablePair#first}
    *                 as the message id, and the {@link ImmutablePair#second} as the decoded message
    * @throws Exception if failed to process the messages
    * @see #storeMessageId(StructuredTableContext, String)
    */
-  // TODO: CDAP-14848 Remove DatasetContext parameter after all the datasets are migrated
-  protected abstract void processMessages(DatasetContext datasetContext,
-                                          StructuredTableContext structuredTableContext,
+  protected abstract void processMessages(StructuredTableContext structuredTableContext,
                                           Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
@@ -159,56 +135,29 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected String processMessages(Iterator<ImmutablePair<String, T>> messages) {
-    int curTxTimeout = txTimeoutSeconds;
     MessageTrackingIterator iterator;
 
     while (true) {
-      try {
-        // Process the notifications and record the message id of where the processing is up to.
-        // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
-        long timeBoundMillis = 900L * curTxTimeout;
-        // TODO: CDAP-14848 Remove redundancy
-        iterator = Transactionals.execute(getTransactional(), curTxTimeout, context ->
-          TransactionRunners.run(getTransactionRunner(), context1 -> {
-            TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
-                                                                                                    timeBoundMillis);
-            MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-            processMessages(context, context1, trackingIterator);
-            String lastMessageId = trackingIterator.getLastMessageId();
+      // Process the notifications and record the message id of where the processing is up to.
+      // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
+      long timeBoundMillis = 900L * txTimeoutSeconds;
+      iterator = TransactionRunners.run(getTransactionRunner(), context -> {
+        TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+                                                                                                timeBoundMillis);
+        MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+        processMessages(context, trackingIterator);
+        String lastMessageId = trackingIterator.getLastMessageId();
 
-            // Persist the message id of the last message being consumed from the iterator
-            if (lastMessageId != null) {
-              storeMessageId(context1, lastMessageId);
-            }
-            return trackingIterator;
-          }));
-        break;
-      } catch (Exception e) {
-        // we double the tx timeout if we see a tx timeout, stop doubling if it exceeds our max tx timeout
-        if (e.getCause() instanceof TransactionNotInProgressException) {
-          if (curTxTimeout >= maxTxTimeoutSeconds) {
-            throw e;
-          }
-          curTxTimeout = Math.min(maxTxTimeoutSeconds, 2 * curTxTimeout);
-          LOG.warn("Timed out processing system message. Trying again with a larger timeout of {} seconds.",
-                   curTxTimeout);
-          continue;
+        // Persist the message id of the last message being consumed from the iterator
+        if (lastMessageId != null) {
+          storeMessageId(context, lastMessageId);
         }
-        throw e;
-      }
+        return trackingIterator;
+      });
+      break;
     }
 
     return iterator.getLastMessageId();
-  }
-
-  @Override
-  protected List<Message> fetchMessages(@Nullable String messageId) throws TopicNotFoundException, IOException {
-    if (!transactionalFetch) {
-      return super.fetchMessages(messageId);
-    }
-    return Transactionals.execute(getTransactional(), context -> {
-      return super.fetchMessages(messageId);
-    }, TopicNotFoundException.class, IOException.class);
   }
 
   /**

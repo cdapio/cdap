@@ -16,8 +16,6 @@
 
 package co.cask.cdap.metadata;
 
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessagingContext;
@@ -30,9 +28,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.ImmutablePair;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.LineageTable;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import co.cask.cdap.data2.metadata.lineage.field.FieldLineageTable;
@@ -42,8 +38,6 @@ import co.cask.cdap.data2.metadata.writer.MetadataOperation;
 import co.cask.cdap.data2.metadata.writer.MetadataOperationTypeAdapter;
 import co.cask.cdap.data2.registry.DatasetUsage;
 import co.cask.cdap.data2.registry.UsageTable;
-import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
@@ -72,7 +66,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,21 +105,19 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
   private final MetadataStorage metadataStorage;
-  private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
-                            DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                            DatasetFramework datasetFramework,
                             MetricsCollectionService metricsCollectionService,
                             MetadataStorage metadataStorage,
                             TransactionRunner transactionRunner) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
-      true, cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
+      cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
       cConf.getInt(TxConstants.Manager.CFG_TX_TIMEOUT),
-      cConf.getInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT),
       cConf.getLong(Constants.Metadata.MESSAGING_POLL_DELAY_MILLIS),
       RetryStrategies.fromConfiguration(cConf, "system.metadata."),
       metricsCollectionService.getContext(ImmutableMap.of(
@@ -142,23 +133,12 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.datasetFramework = datasetFramework;
     this.metadataStorage = metadataStorage;
-    this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(new MultiThreadDatasetCache(
-        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
-        NamespaceId.SYSTEM, Collections.emptyMap(), null, null, messagingContext)),
-      org.apache.tephra.RetryStrategies.retryOnConflict(20, 100)
-    );
     this.transactionRunner = transactionRunner;
   }
 
   @Override
   protected MessagingContext getMessagingContext() {
     return messagingContext;
-  }
-
-  @Override
-  protected Transactional getTransactional() {
-    return transactional;
   }
 
   @Override
@@ -192,7 +172,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected void processMessages(DatasetContext datasetContext, StructuredTableContext structuredTableContext,
+  protected void processMessages(StructuredTableContext structuredTableContext,
                                  Iterator<ImmutablePair<String, MetadataMessage>> messages)
     throws IOException, ConflictException {
     Map<MetadataMessage.Type, MetadataMessageProcessor> processors = new HashMap<>();
