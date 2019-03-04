@@ -27,26 +27,30 @@ const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 
 const mapStateToCheckpointingProps = (state) => {
   return {
-    checkpointing: state.disableCheckpoints,
+    disableCheckpoints: state.disableCheckpoints,
   };
 };
+
 const mapDispatchToCheckpointingProps = (dispatch) => {
   return {
     onToggle: (value) => {
       dispatch({
         type: PipelineConfigurationsActions.SET_CHECKPOINTING,
-        payload: { checkpointing: value },
+        payload: { disableCheckpoints: value },
       });
     },
   };
 };
 
-const Checkpointing = ({ checkpointing, onToggle }) => {
+const Checkpointing = ({ disableCheckpoints, onToggle }) => {
   return (
     <div className="label-with-toggle checkpointing row">
       <span className="toggle-label col-4">{T.translate(`${PREFIX}.checkpointing`)}</span>
       <div className="col-7 toggle-container">
-        <ToggleSwitch isOn={checkpointing} onToggle={onToggle.bind(null, !checkpointing)} />
+        <ToggleSwitch
+          isOn={!disableCheckpoints}
+          onToggle={onToggle.bind(null, !disableCheckpoints)}
+        />
         <Popover
           target={() => <IconSVG name="icon-info-circle" />}
           showOn="Hover"
@@ -60,7 +64,7 @@ const Checkpointing = ({ checkpointing, onToggle }) => {
 };
 
 Checkpointing.propTypes = {
-  checkpointing: PropTypes.bool,
+  disableCheckpoints: PropTypes.bool,
   onToggle: PropTypes.func,
 };
 

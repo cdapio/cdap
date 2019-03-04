@@ -398,7 +398,7 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
     case ACTIONS.SET_CHECKPOINTING:
       return {
         ...state,
-        disableCheckpoints: action.payload.checkpointing,
+        disableCheckpoints: action.payload.disableCheckpoints,
       };
     case ACTIONS.SET_NUM_RECORDS_PREVIEW:
       return {
