@@ -16,12 +16,9 @@
 package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.common.metadata.MetadataUtil;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
-import co.cask.cdap.proto.id.EntityId;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -30,20 +27,6 @@ import javax.annotation.Nullable;
 class MetadataKey {
   private static final byte[] VALUE_ROW_PREFIX = {'v'}; // value row prefix to store metadata value
   private static final byte[] INDEX_ROW_PREFIX = {'i'}; // index row prefix used for metadata search
-  private static final byte[] VALUE_ROW_PREFIX_KEY =
-    new MDSKey.Builder().add(MetadataKey.VALUE_ROW_PREFIX).build().getKey();
-  private static final byte[] INDEX_ROW_PREFIX_KEY =
-    new MDSKey.Builder().add(MetadataKey.INDEX_ROW_PREFIX).build().getKey();
-
-  private static final Set<String> VERSIONED_ENTITIES;
-  static {
-    Set<String> versionedEntities = new HashSet<>();
-    versionedEntities.add(MetadataEntity.APPLICATION);
-    versionedEntities.add(MetadataEntity.SCHEDULE);
-    versionedEntities.add(MetadataEntity.PROGRAM);
-    VERSIONED_ENTITIES = Collections.unmodifiableSet(versionedEntities);
-  }
-
 
   static String extractMetadataKey(byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
@@ -137,24 +120,9 @@ class MetadataKey {
         break;
       }
     }
-    MetadataEntity metadataEntity = builder.build();
-    if (VERSIONED_ENTITIES.contains(metadataEntity.getType())) {
-      // CDAP-13597 if it is a versioned entity then put the default version so that the EntityId created later or
-      // returned by Metadata API for backward compatibility have the default version
-
-      // EntityId.fromMetadataEntity already has the logic to add version information in the correct place depending
-      // on the type of the entity so use that
-      metadataEntity = EntityId.fromMetadataEntity(metadataEntity).toMetadataEntity();
-    }
-    return metadataEntity;
-  }
-
-  static byte[] getValueRowPrefix() {
-    return VALUE_ROW_PREFIX_KEY;
-  }
-
-  static byte[] getIndexRowPrefix() {
-    return INDEX_ROW_PREFIX_KEY;
+    // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
+    // if it is a versioned entity then add the default version
+    return MetadataUtil.addVersionIfNeeded(builder.build());
   }
 
   private static MDSKey.Builder getMDSKeyPrefix(MetadataEntity metadataEntity, byte[] rowPrefix) {
@@ -163,8 +131,9 @@ class MetadataKey {
     builder.add(metadataEntity.getType());
     // add all the key value pairs from the metadata entity this is the targetId
     for (MetadataEntity.KeyValue keyValue : metadataEntity) {
-      // CDAP-13597 for versioned entities like application, schedule and programs their metadata is not versioned
-      if (VERSIONED_ENTITIES.contains(metadataEntity.getType()) &&
+      // TODO (CDAP-13597): Handle versioning of metadata entities in a better way
+      // if it is a versioned entity then ignore the version
+      if (MetadataUtil.isVersionedEntityType(metadataEntity.getType()) &&
         keyValue.getKey().equalsIgnoreCase(MetadataEntity.VERSION)) {
         continue;
       }
