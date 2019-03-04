@@ -107,9 +107,8 @@ public class FieldLineageAdmin {
     Set<Field> result = createFields(lineageFields, true);
     if (includeCurrent) {
       // get the system properties of this dataset
-      Map<String, String> properties = metadataAdmin.getProperties(MetadataScope.SYSTEM,
-                                                                   MetadataEntity.ofDataset(endPoint.getNamespace(),
-                                                                                            endPoint.getName()));
+      Map<String, String> properties = metadataAdmin
+        .getProperties(MetadataScope.SYSTEM, MetadataEntity.ofDataset(endPoint.getNamespace(), endPoint.getName()));
       // the system metadata contains the schema of the dataset which is written by the DatasetSystemMetadataWriter
       if (properties.containsKey(MetadataConstants.SCHEMA_KEY)) {
         String schema = properties.get(MetadataConstants.SCHEMA_KEY);

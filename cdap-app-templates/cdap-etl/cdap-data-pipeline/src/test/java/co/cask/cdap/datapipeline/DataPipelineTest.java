@@ -2929,7 +2929,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
     // verify metadata written by the pipeline
     Metadata actual =
-      metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
+      metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
+                                MetadataScope.USER);
 
     Assert.assertNotNull(actual);
     Assert.assertTrue(!actual.isEmpty());
@@ -2946,7 +2947,8 @@ public class DataPipelineTest extends HydratorTestBase {
 
     waitForMetadataProcessing(metadataAdmin, 1);
 
-    actual = metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
+    actual = metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"),
+                                       MetadataScope.USER);
 
     Assert.assertNotNull(actual);
     Assert.assertTrue(!actual.isEmpty());
@@ -2957,11 +2959,10 @@ public class DataPipelineTest extends HydratorTestBase {
 
   private void waitForMetadataProcessing(MetadataAdmin metadataAdmin, int expectedTagSize)
     throws TimeoutException, InterruptedException, java.util.concurrent.ExecutionException {
-    Tasks.waitFor(true, () -> {
-      Metadata metadata =
-        metadataAdmin.getMetadata(MetadataEntity.ofDataset(NamespaceId.DEFAULT.getNamespace(), "singleInput"));
-      return metadata.getTags(MetadataScope.USER).size() == expectedTagSize;
-    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(expectedTagSize, () ->
+                    metadataAdmin.getTags(MetadataScope.USER, MetadataEntity.ofDataset(
+                      NamespaceId.DEFAULT.getNamespace(), "singleInput")).size(),
+                  10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   private void runPipelineForMetadata(MetadataAdmin metadataAdmin,

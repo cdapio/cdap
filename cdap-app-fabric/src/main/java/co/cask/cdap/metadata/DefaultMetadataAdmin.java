@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStorage}.
@@ -80,33 +81,48 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
   }
 
   @Override
-  public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  public Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws IOException {
     return storage.read(new Read(metadataEntity, scope));
   }
 
   @Override
+  public Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope, @Nullable MetadataKind kind)
+    throws IOException {
+    Read read = kind != null ? (scope != null ? new Read(entity, scope, kind) : new Read(entity, kind))
+      : scope != null ? new Read(entity, scope) : new Read(entity);
+    return storage.read(read);
+  }
+
+  @Override
   public Map<String, String> getProperties(MetadataEntity metadataEntity) throws IOException {
-    Metadata metadata = storage.read(new Read(metadataEntity, MetadataKind.PROPERTY));
-    return metadata.getProperties().entrySet().stream()
-      .collect(Collectors.toMap(entry -> entry.getKey().getName(), Map.Entry::getValue));
+    return doGetProperties(null, metadataEntity);
   }
 
   @Override
   public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
-    Metadata metadata = storage.read(new Read(metadataEntity, scope, MetadataKind.PROPERTY));
-    return metadata.getProperties(scope);
+    return doGetProperties(scope, metadataEntity);
+  }
+
+  private Map<String, String> doGetProperties(@Nullable MetadataScope scope, MetadataEntity metadataEntity)
+    throws IOException {
+    Metadata metadata = getMetadata(metadataEntity, scope, MetadataKind.PROPERTY);
+    return metadata.getProperties().entrySet().stream().collect(Collectors.toMap(
+      entry -> entry.getKey().getName(), Map.Entry::getValue));
   }
 
   @Override
   public Set<String> getTags(MetadataEntity metadataEntity) throws IOException {
-    Metadata metadata = storage.read(new Read(metadataEntity, MetadataKind.TAG));
-    return metadata.getTags().stream().map(ScopedName::getName).collect(Collectors.toSet());
+    return doGetTags(null, metadataEntity);
   }
 
   @Override
   public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
-    Metadata metadata = storage.read(new Read(metadataEntity, scope, MetadataKind.TAG));
-    return metadata.getTags(scope);
+    return doGetTags(scope, metadataEntity);
+  }
+
+  private Set<String> doGetTags(@Nullable MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+    Metadata metadata = getMetadata(metadataEntity, scope, MetadataKind.TAG);
+    return metadata.getTags().stream().map(ScopedName::getName).collect(Collectors.toSet());
   }
 
   @Override

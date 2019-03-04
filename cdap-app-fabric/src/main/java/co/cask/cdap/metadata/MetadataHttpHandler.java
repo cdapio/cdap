@@ -30,7 +30,7 @@ import co.cask.cdap.proto.codec.NamespacedEntityIdCodec;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataConstants;
-import co.cask.cdap.spi.metadata.MetadataRecord;
+import co.cask.cdap.spi.metadata.MetadataKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
 import co.cask.cdap.spi.metadata.Sorting;
@@ -99,30 +99,41 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                           @Nullable @QueryParam("type") String type,
                           @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
     throws BadRequestException, IOException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
-    Metadata metadata = getMetadata(metadataEntity, scope);
-    MetadataRecord record = new MetadataRecord(metadataEntity, metadata);
+    MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
+    MetadataScope theScope = validateScope(scope);
+    Metadata metadata = scope == null ? metadataAdmin.getMetadata(entity) : metadataAdmin.getMetadata(entity, theScope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
-      "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(record, scope) : record));
+      "v5".equals(responseFormat) ? MetadataCompatibility.toV5MetadataRecords(entity, metadata, scope) : metadata));
   }
 
   @GET
   @Path("/**/metadata/properties")
   public void getProperties(HttpRequest request, HttpResponder responder,
                             @QueryParam("scope") String scope,
-                            @QueryParam("type") String type)
+                            @QueryParam("type") String type,
+                            @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
     throws BadRequestException, IOException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getProperties(metadataEntity, scope)));
+    MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
+    MetadataScope theScope = validateScope(scope);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      "v5".equals(responseFormat)
+        ? (scope == null ? metadataAdmin.getProperties(entity) : metadataAdmin.getProperties(theScope, entity))
+        : metadataAdmin.getMetadata(entity, theScope, MetadataKind.PROPERTY)));
   }
 
   @GET
   @Path("/**/metadata/tags")
   public void getTags(HttpRequest request, HttpResponder responder,
-                      @QueryParam("scope") String scope, @QueryParam("type") String type)
+                      @QueryParam("scope") String scope,
+                      @QueryParam("type") String type,
+                      @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
     throws BadRequestException, IOException {
-    MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(getTags(metadataEntity, scope)));
+    MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
+    MetadataScope theScope = validateScope(scope);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
+      "v5".equals(responseFormat)
+        ? (scope == null ? metadataAdmin.getTags(entity) : metadataAdmin.getTags(theScope, entity))
+        : metadataAdmin.getMetadata(entity, theScope, MetadataKind.TAG)));
   }
 
   @POST
@@ -430,29 +441,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     return toReturn;
   }
 
-  private Metadata getMetadata(MetadataEntity metadataEntity,
-                               @Nullable String scope) throws BadRequestException, IOException {
-    return scope == null ? metadataAdmin.getMetadata(metadataEntity)
-      : metadataAdmin.getMetadata(validateScope(scope), metadataEntity);
-  }
-
-  private Map<String, String> getProperties(MetadataEntity metadataEntity,
-                                            @Nullable String scope) throws BadRequestException, IOException {
-    return (scope == null) ?
-      metadataAdmin.getProperties(metadataEntity) :
-      metadataAdmin.getProperties(validateScope(scope), metadataEntity);
-  }
-
-  private Set<String> getTags(MetadataEntity metadataEntity,
-                              @Nullable String scope) throws BadRequestException, IOException {
-    return (scope == null) ?
-      metadataAdmin.getTags(metadataEntity) :
-      metadataAdmin.getTags(validateScope(scope), metadataEntity);
-  }
-
-  private MetadataScope validateScope(String scope) throws BadRequestException {
+  private MetadataScope validateScope(@Nullable String scope) throws BadRequestException {
     try {
-      return MetadataScope.valueOf(scope.toUpperCase());
+      return scope == null ? null : MetadataScope.valueOf(scope.toUpperCase());
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(String.format("Invalid metadata scope '%s'. Expected '%s' or '%s'",
                                                   scope, MetadataScope.USER, MetadataScope.SYSTEM));

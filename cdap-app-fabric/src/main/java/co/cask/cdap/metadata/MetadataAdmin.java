@@ -20,12 +20,14 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.spi.metadata.Metadata;
+import co.cask.cdap.spi.metadata.MetadataKind;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Interface that the {@link MetadataHttpHandler} uses to interact with Metadata.
@@ -64,7 +66,17 @@ public interface MetadataAdmin {
    * Returns the metadata (including properties and tags) for the specified {@link MetadataEntity}
    * in the specified {@link MetadataScope}.
    */
-  Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
+  Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws IOException;
+
+  /**
+   * Returns the metadata of specified kind (properties or tags) for the specified {@link MetadataEntity}
+   * in the specified {@link MetadataScope}.
+   *
+   * @param scope the scope to address, or null for all scopes
+   * @param kind the kind of metadata to select, or null for all metadata
+   */
+  Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope, @Nullable MetadataKind kind)
+    throws IOException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in both

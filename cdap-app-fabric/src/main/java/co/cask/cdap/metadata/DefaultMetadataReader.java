@@ -56,7 +56,7 @@ public class DefaultMetadataReader implements MetadataReader {
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     try {
-      return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(scope, metadataEntity), scope);
+      return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity, scope), scope);
     } catch (IOException e) {
       throw new MetadataException(e);
     }

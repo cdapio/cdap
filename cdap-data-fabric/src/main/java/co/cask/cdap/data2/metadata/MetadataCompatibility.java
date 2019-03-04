@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.metadata;
 
+import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.proto.EntityScope;
@@ -99,13 +100,13 @@ public final class MetadataCompatibility {
    * Convert a {@link Metadata} to a 5.x map from scope to {@link co.cask.cdap.api.metadata.Metadata}.
    */
   public static Set<co.cask.cdap.common.metadata.MetadataRecord>
-  toV5MetadataRecords(MetadataRecord record, @Nullable String requestedScope) {
+  toV5MetadataRecords(MetadataEntity entity, Metadata metadata, @Nullable String requestedScope) {
     Set<co.cask.cdap.common.metadata.MetadataRecord> result = new HashSet<>();
     for (MetadataScope scope : MetadataScope.ALL) {
-      Set<String> tags = record.getMetadata().getTags(scope);
-      Map<String, String> properties = record.getMetadata().getProperties(scope);
       if (requestedScope == null || scope.name().equalsIgnoreCase(requestedScope)) {
-        result.add(new co.cask.cdap.common.metadata.MetadataRecord(record.getEntity(), scope, properties, tags));
+        Set<String> tags = metadata.getTags(scope);
+        Map<String, String> properties = metadata.getProperties(scope);
+        result.add(new co.cask.cdap.common.metadata.MetadataRecord(entity, scope, properties, tags));
       }
     }
     return result;
