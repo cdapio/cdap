@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package co.cask.cdap.logging.logbuffer.recover;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -28,6 +28,8 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
+import co.cask.cdap.logging.logbuffer.LogBufferWriter;
+import co.cask.cdap.logging.logbuffer.MockCheckpointManager;
 import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.MockAppender;
@@ -41,6 +43,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tests for {@link LogBufferRecoveryService}.
@@ -73,7 +76,7 @@ public class LogBufferRecoveryServiceTest {
     pipeline.startAndWait();
 
     // write directly to log buffer
-    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250);
+    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
     writer.write(events.iterator()).iterator();
     writer.close();
@@ -82,7 +85,7 @@ public class LogBufferRecoveryServiceTest {
     // iterations
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
-                                                                    absolutePath, 2);
+                                                                    absolutePath, 2, new AtomicBoolean(true));
     service.startAndWait();
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);

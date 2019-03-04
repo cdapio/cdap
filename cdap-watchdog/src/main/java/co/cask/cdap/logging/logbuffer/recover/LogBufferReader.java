@@ -14,12 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package co.cask.cdap.logging.logbuffer.recover;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.logging.logbuffer.LogBufferEvent;
+import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.io.Closeables;
 
+import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.EOFException;
@@ -40,17 +43,30 @@ public class LogBufferReader implements Closeable {
   private final long maxFileId;
 
   private long currFileId;
-  private LogBufferInputStream inputStream;
+  private LogBufferEventReader eventReader;
   private boolean skipFirstEvent;
 
-  public LogBufferReader(String baseDir, int batchSize, long currFileId, long currPos) throws IOException {
+  /**
+   * Creates log buffer reader responsible for reading log buffer files.
+   *
+   * @param baseDir base directory for log buffer
+   * @param batchSize max number of log events to read in one batch
+   * @param maxFileId max file id to which recovery should happen
+   * @param currFileId current log buffer file id
+   * @param currPos position in current log buffer file
+   * @throws IOException if there is any error while opening file to read
+   */
+  public LogBufferReader(String baseDir, int batchSize, long maxFileId, long currFileId,
+                         long currPos) throws IOException {
     this.baseDir = baseDir;
     this.batchSize = batchSize;
-    // if no checkpoints are written, start from 0th position from first file. Also in that case do not skip first event
+    // if no checkpoints are written, currFileId and currPos will be -1. In that case the first event should not be
+    // skipped. However, if currFileId and currPos are non negative, that means first event should be skipped as
+    // atleast one log event has been persisted.
     this.currFileId = currFileId < 0 ? 0 : currFileId;
     this.skipFirstEvent = currFileId >= 0;
-    this.maxFileId = getMaxFileId(baseDir);
-    this.inputStream = new LogBufferInputStream(baseDir, this.currFileId, currPos < 0 ? 0 : currPos);
+    this.maxFileId = maxFileId;
+    this.eventReader = new LogBufferEventReader(baseDir, this.currFileId, currPos < 0 ? 0 : currPos);
   }
 
   /**
@@ -67,27 +83,27 @@ public class LogBufferReader implements Closeable {
     }
 
     // iterate over all the remaining events.
-    while (eventList.size() < batchSize && currFileId < (maxFileId + 1)) {
+    while (eventList.size() < batchSize && currFileId <= maxFileId) {
       try {
-        if (inputStream == null) {
-          inputStream = new LogBufferInputStream(baseDir, currFileId);
+        if (eventReader == null) {
+          eventReader = new LogBufferEventReader(baseDir, currFileId);
         }
 
         // skip the first event if skipFirstEvent is true. This is needed because log buffer offset represents offset
         // till which log events have been processed. Meaning current event is already processed by log buffer pipeline.
         if (skipFirstEvent) {
-          inputStream.read();
+          eventReader.read();
           skipFirstEvent = false;
         }
 
-        eventList.add(inputStream.read());
+        eventList.add(eventReader.read());
       } catch (FileNotFoundException e) {
         // move to next file in case file pointed by currFileId was not found
         currFileId++;
       } catch (EOFException e) {
-        // reached eof on this input stream. So close it, move to next file
-        inputStream.close();
-        inputStream = null;
+        // reached eof on this event reader. So close it, move to next file
+        eventReader.close();
+        eventReader = null;
         currFileId++;
       }
     }
@@ -97,41 +113,28 @@ public class LogBufferReader implements Closeable {
 
   @Override
   public void close() throws IOException {
-    if (inputStream != null) {
-      inputStream.close();
+    if (eventReader != null) {
+      eventReader.close();
     }
   }
 
-  private long getMaxFileId(String baseDir) {
-    long maxFileId = -1;
-    File[] files = new File(baseDir).listFiles();
-    if (files != null) {
-      for (File file : files) {
-        String[] splitted = file.getName().split("\\.");
-        long fileId = Long.parseLong(splitted[0]);
-        if (maxFileId < fileId) {
-          maxFileId = fileId;
-        }
-      }
-    }
 
-    return maxFileId;
-  }
 
   /**
-   * Input stream to interact with log buffer files.
+   * Log buffer event reader to read log events from a log buffer file.
    */
-  private static final class LogBufferInputStream {
+  private static final class LogBufferEventReader implements Closeable {
+    private static final int BUFFER_SIZE = 32 * 1024; // 32k buffer
+    private final DataInputStream inputStream;
+    private final LoggingEventSerializer serializer;
     private long fileId;
     private long pos;
-    private DataInputStream inputStream;
-    private final LoggingEventSerializer serializer;
 
-    LogBufferInputStream(String baseDir, long fileId) throws IOException {
+    LogBufferEventReader(String baseDir, long fileId) throws IOException {
       this(baseDir, fileId, 0);
     }
 
-    LogBufferInputStream(String baseDir, long fileId, long pos) throws IOException {
+    LogBufferEventReader(String baseDir, long fileId, long pos) throws IOException {
       this.fileId = fileId;
       this.pos = pos;
       FileInputStream fis = new FileInputStream(new File(baseDir, fileId + FILE_SUFFIX));
@@ -139,12 +142,12 @@ public class LogBufferReader implements Closeable {
       if (pos != 0) {
         fis.getChannel().position(pos);
       }
-      this.inputStream = new DataInputStream(fis);
+      this.inputStream = new DataInputStream(new BufferedInputStream(fis, BUFFER_SIZE));
       this.serializer = new LoggingEventSerializer();
     }
 
     /**
-     * Reads next event from log buffer file pointed by this input stream.
+     * Reads next event from log buffer file pointed by this reader.
      *
      * @return log buffer event
      * @throws IOException error while reading log buffer file
@@ -161,10 +164,10 @@ public class LogBufferReader implements Closeable {
     }
 
     /**
-     * Closes this input stream.
+     * Closes this reader.
      */
-    void close() {
-      // close current input stream
+    public void close() {
+      // close input stream wrapped by this reader
       Closeables.closeQuietly(inputStream);
     }
   }

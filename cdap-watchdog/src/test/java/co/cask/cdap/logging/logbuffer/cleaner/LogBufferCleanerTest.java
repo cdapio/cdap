@@ -14,76 +14,81 @@
  * the License.
  */
 
-package co.cask.cdap.logging.pipeline.logbuffer;
+package co.cask.cdap.logging.logbuffer.cleaner;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
-import co.cask.cdap.logging.logbuffer.LogBufferEvent;
+import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
 import co.cask.cdap.logging.logbuffer.LogBufferWriter;
-import co.cask.cdap.logging.logbuffer.recover.LogBufferReader;
+import co.cask.cdap.logging.logbuffer.MockCheckpointManager;
+import co.cask.cdap.logging.meta.Checkpoint;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
-import org.junit.Assert;
+import com.google.common.collect.ImmutableMap;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Tests for {@link LogBufferReader}.
+ * Tests for {@link LogBufferCleaner}.
  */
-public class LogBufferReaderTest {
-  private final LoggingEventSerializer serializer = new LoggingEventSerializer();
+public class LogBufferCleanerTest {
+  private static final LoggingEventSerializer serializer = new LoggingEventSerializer();
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
 
   @Test
-  public void testLogReader() throws Exception {
+  public void testLogBufferCleanerService() throws Exception {
     String absolutePath = TMP_FOLDER.newFolder().getAbsolutePath();
 
-    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
+    MockCheckpointManager checkpointManager = new MockCheckpointManager();
+    // update checkpoints
+    checkpointManager.saveCheckpoints(ImmutableMap.of(0, new TestCheckpoint(2L, 0L, 1L)));
+
+    // write directly to log buffer, keep file size 10 bytes so that more files are created
+    LogBufferWriter writer = new LogBufferWriter(absolutePath, 10,
+                                                 new LogBufferCleaner(ImmutableList.of(checkpointManager),
+                                                                      absolutePath, new AtomicBoolean(true)));
     ImmutableList<byte[]> events = getLoggingEvents();
-    Iterable<LogBufferEvent> writtenEvents = writer.write(events.iterator());
+    List<byte[]> subset = new ArrayList<>();
+    subset.add(events.get(0));
+    subset.add(events.get(1));
+    subset.add(events.get(2));
+    writer.write(subset.iterator()).iterator();
+
+    // should delete file 0 an1
+    File file0 = new File(absolutePath, "0.buff");
+    File file1 = new File(absolutePath, "1.buff");
+    Tasks.waitFor(true, () -> !file0.exists() && !file1.exists(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    // update checkpoints
+    checkpointManager.saveCheckpoints(ImmutableMap.of(0, new TestCheckpoint(5L, 0L, 1L)));
+
+    subset.add(events.get(3));
+    subset.add(events.get(4));
+    subset.add(events.get(5));
+    writer.write(subset.iterator()).iterator();
     writer.close();
 
-    List<LogBufferEvent> logBufferEvents = new LinkedList<>();
-    // read from start positions, tests case where no checkpoints are persisted
-    LogBufferReader reader = new LogBufferReader(absolutePath, 2, 3, -1, -1);
-    Iterator<LogBufferEvent> iterator = writtenEvents.iterator();
-    verifyEvents(logBufferEvents, reader, iterator);
-    reader.close();
+    // should delete file 2, 3 and 4
+    File file2 = new File(absolutePath, "2.buff");
+    File file3 = new File(absolutePath, "3.buff");
+    File file4 = new File(absolutePath, "4.buff");
+    Tasks.waitFor(true, () -> !file2.exists() && !file3.exists() && !file4.exists(), 120, TimeUnit.SECONDS,
+                  100, TimeUnit.MILLISECONDS);
 
-    // this should skip first and second event, this is because log buffer offsets are offset for event that is
-    // already stored. so in this case, skip first event and skip second event as second event is the last stored event
-    reader = new LogBufferReader(absolutePath, 2, 3, 0, 145);
-    iterator = writtenEvents.iterator();
-    iterator.next();
-    iterator.next();
-    verifyEvents(logBufferEvents, reader, iterator);
-    reader.close();
-  }
-
-  private void verifyEvents(List<LogBufferEvent> logBufferEvents, LogBufferReader reader,
-                            Iterator<LogBufferEvent> iterator) throws IOException {
-    while (reader.readEvents(logBufferEvents) > 0) {
-      for (LogBufferEvent event : logBufferEvents) {
-        LogBufferEvent next = iterator.next();
-        Assert.assertEquals(next.getOffset(), event.getOffset());
-        Assert.assertEquals(next.getEventSize(), event.getEventSize());
-        Assert.assertEquals(next.getLogEvent().getMessage(), event.getLogEvent().getMessage());
-      }
-      logBufferEvents.clear();
-    }
-    Assert.assertFalse(iterator.hasNext());
   }
 
   private ImmutableList<byte[]> getLoggingEvents() {
@@ -107,5 +112,12 @@ public class LogBufferReaderTest {
     event.setMessage(message);
     event.setTimeStamp(timestamp);
     return new LogMessage(event, loggingContext);
+  }
+
+  private static final class TestCheckpoint extends Checkpoint<LogBufferFileOffset> {
+
+    TestCheckpoint(long fileId, long fileOffset, long maxEventTime) {
+      super(new LogBufferFileOffset(fileId, fileOffset), maxEventTime);
+    }
   }
 }

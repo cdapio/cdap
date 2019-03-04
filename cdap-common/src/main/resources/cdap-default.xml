@@ -1530,9 +1530,10 @@
 
   <property>
     <name>log.buffer.recovery.batch.size</name>
-    <value>1000</value>
+    <value>5000</value>
     <description>
-      Log buffer recovery batch size to recover log buffer files in batches
+      Log buffer recovery batch size in number of log events read. This will be used to recover logs in batches from
+      log buffer upon log service restart
     </description>
   </property>
 

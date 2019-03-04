@@ -14,17 +14,18 @@
  * the License.
  */
 
-package co.cask.cdap.logging.logbuffer;
+package co.cask.cdap.logging.logbuffer.recover;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.logging.logbuffer.LogBufferEvent;
+import co.cask.cdap.logging.logbuffer.LogBufferFileOffset;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.common.util.concurrent.MoreExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +34,16 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Log buffer recovery service which recovers logs upon log saver restart and sends them to log buffer pipeline for
- * further processing.
+ * further processing. This service first scans all the files to figure out max file id till which it should recover.
+ * This is because while recovery service is running, new files can be created. Recovery service should not recover
+ * those logs.
  */
-class LogBufferRecoveryService extends AbstractExecutionThreadService {
+public class LogBufferRecoveryService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(LogBufferRecoveryService.class);
   // For outage, only log once per 60 seconds per message.
   private static final Logger OUTAGE_LOG =
@@ -50,57 +53,64 @@ class LogBufferRecoveryService extends AbstractExecutionThreadService {
   private final List<LogBufferProcessorPipeline> pipelines;
   private final List<CheckpointManager<LogBufferFileOffset>> checkpointManagers;
   private final String baseLogDir;
+  private final boolean baseDirExists;
   private final int batchSize;
   private final CountDownLatch stopLatch;
+  private final AtomicBoolean startCleanup;
 
   private LogBufferReader reader;
   private volatile boolean stopped;
 
-  LogBufferRecoveryService(CConfiguration cConf, List<LogBufferProcessorPipeline> pipelines,
-                           List<CheckpointManager<LogBufferFileOffset>> checkpointManagers) {
+  public LogBufferRecoveryService(CConfiguration cConf, List<LogBufferProcessorPipeline> pipelines,
+                                  List<CheckpointManager<LogBufferFileOffset>> checkpointManagers,
+                                  AtomicBoolean startCleanup) {
     this(pipelines, checkpointManagers, cConf.get(Constants.LogBuffer.LOG_BUFFER_BASE_DIR),
-         cConf.getInt(Constants.LogBuffer.LOG_BUFFER_RECOVERY_BATCH_SIZE));
+         cConf.getInt(Constants.LogBuffer.LOG_BUFFER_RECOVERY_BATCH_SIZE), startCleanup);
   }
 
   @VisibleForTesting
   LogBufferRecoveryService(List<LogBufferProcessorPipeline> pipelines,
                            List<CheckpointManager<LogBufferFileOffset>> checkpointManager,
-                           String baseLogDir, int batchSize) {
+                           String baseLogDir, int batchSize, AtomicBoolean startCleanup) {
     this.pipelines = pipelines;
     this.checkpointManagers = checkpointManager;
     this.baseLogDir = baseLogDir;
+    this.baseDirExists = dirExists(baseLogDir);
     this.batchSize = batchSize;
     this.stopLatch = new CountDownLatch(1);
+    this.startCleanup = startCleanup;
   }
 
   @Override
   protected void startUp() throws Exception {
-    // get the smallest offset of all the log pipelines
-    LogBufferFileOffset minOffset = getSmallestOffset(checkpointManagers);
-    this.reader = new LogBufferReader(baseLogDir, batchSize, minOffset.getFileId(), minOffset.getFilePos());
+    if (baseDirExists) {
+      // get the smallest offset of all the log pipelines
+      LogBufferFileOffset minOffset = getSmallestOffset(checkpointManagers);
+      this.reader = new LogBufferReader(baseLogDir, batchSize, getMaxFileId(baseLogDir),
+                                        minOffset.getFileId(), minOffset.getFilePos());
+    }
   }
 
   @Override
   protected void run() throws Exception {
-    // check if the log buffer dir exists, this could happen if log saver is starting for the first time.
-    if (!exists(baseLogDir)) {
-      return;
-    }
-
-    List<LogBufferEvent> logBufferEvents = new LinkedList<>();
-    boolean hasReadEvents = true;
-    while (!stopped && hasReadEvents) {
-      try {
-        hasReadEvents = reader.readEvents(logBufferEvents) > 0;
-        recoverLogs(logBufferEvents, pipelines);
-      } catch (IOException e) {
-        // even though error occurred while reading, whatever logs were read, those should be processed.
-        recoverLogs(logBufferEvents, pipelines);
-        OUTAGE_LOG.warn("Failed to recover logs from log buffer. Read will be retried.", e);
-        // in case of failure to read, sleep and then retry
-        stopLatch.await(500, TimeUnit.MILLISECONDS);
+    if (baseDirExists) {
+      List<LogBufferEvent> logBufferEvents = new LinkedList<>();
+      boolean hasReadEvents = true;
+      while (!stopped && hasReadEvents) {
+        try {
+          hasReadEvents = reader.readEvents(logBufferEvents) > 0;
+          recoverLogs(logBufferEvents, pipelines);
+        } catch (Exception e) {
+          // even though error occurred while reading, whatever logs were read, those should be processed. This is
+          // because recovery service should be finished quickly so that the logs are persisted in almost sorted order.
+          recoverLogs(logBufferEvents, pipelines);
+          OUTAGE_LOG.warn("Failed to recover logs from log buffer. Read will be retried.", e);
+          // in case of failure to read, sleep and then retry
+          stopLatch.await(500, TimeUnit.MILLISECONDS);
+        }
       }
     }
+    startCleanup.set(true);
   }
 
   @Override
@@ -121,11 +131,6 @@ class LogBufferRecoveryService extends AbstractExecutionThreadService {
     return SERVICE_NAME;
   }
 
-  @Override
-  protected Executor executor() {
-    return MoreExecutors.sameThreadExecutor();
-  }
-
   private LogBufferFileOffset getSmallestOffset(List<CheckpointManager<LogBufferFileOffset>> checkpointManagers)
     throws IOException {
     // there will be atleast one log pipeline
@@ -140,15 +145,31 @@ class LogBufferRecoveryService extends AbstractExecutionThreadService {
     return minOffset;
   }
 
-  private boolean exists(String baseLogDir) {
-    File baseDir = new File(baseLogDir);
-    return baseDir.exists();
-  }
-
   private void recoverLogs(List<LogBufferEvent> logBufferEvents, List<LogBufferProcessorPipeline> pipelines) {
     for (LogBufferProcessorPipeline pipeline : pipelines) {
       pipeline.processLogEvents(logBufferEvents.iterator());
     }
     logBufferEvents.clear();
+  }
+
+  private long getMaxFileId(String baseDir) {
+    long maxFileId = -1;
+    File[] files = new File(baseDir).listFiles();
+    if (files != null) {
+      for (File file : files) {
+        String[] splitted = file.getName().split("\\.");
+        long fileId = Long.parseLong(splitted[0]);
+        if (maxFileId < fileId) {
+          maxFileId = fileId;
+        }
+      }
+    }
+
+    return maxFileId;
+  }
+
+  private boolean dirExists(String baseLogDir) {
+    File baseDir = new File(baseLogDir);
+    return baseDir.exists();
   }
 }

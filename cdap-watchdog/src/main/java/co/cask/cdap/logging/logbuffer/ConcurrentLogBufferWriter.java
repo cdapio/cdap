@@ -67,10 +67,11 @@ public class ConcurrentLogBufferWriter implements Closeable {
   private final AtomicBoolean closed;
 
   public ConcurrentLogBufferWriter(CConfiguration cConf,
-                                   List<LogBufferProcessorPipeline> pipelines) throws IOException {
+                                   List<LogBufferProcessorPipeline> pipelines, Runnable cleaner) throws IOException {
     this.pendingRequestQueue = new PendingRequestQueue();
     this.logBufferWriter = new LogBufferWriter(cConf.get(Constants.LogBuffer.LOG_BUFFER_BASE_DIR),
-                                               cConf.getLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES));
+                                               cConf.getLong(Constants.LogBuffer.LOG_BUFFER_MAX_FILE_SIZE_BYTES),
+                                               cleaner);
     this.pipelines = pipelines;
     this.writerFlag = new AtomicBoolean();
     this.closed = new AtomicBoolean();

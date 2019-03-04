@@ -27,7 +27,9 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
+import co.cask.cdap.logging.logbuffer.cleaner.LogBufferCleaner;
 import co.cask.cdap.logging.logbuffer.handler.LogBufferHandler;
+import co.cask.cdap.logging.logbuffer.recover.LogBufferRecoveryService;
 import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
@@ -50,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Log Buffer Service responsible for:
@@ -89,12 +92,18 @@ public class LogBufferService extends AbstractIdleService {
     // start all the log pipelines
     validateAllFutures(Iterables.transform(pipelines, Service::start));
 
-    // start log recovery service to recover all the pending logs
-    recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers);
+    // recovery service and http handler will send log events to log pipelines. In order to avoid deleting file while
+    // reading them in recovery service, we will pass in an atomic boolean will be set to true by recovery service
+    // when it is done recovering data. So while recovery service is running, cleanup task will be a no-op
+    AtomicBoolean startCleanup = new AtomicBoolean(false);
+    // start log recovery service to recover all the pending logs.
+    recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers, startCleanup);
     recoveryService.startAndWait();
 
     // create concurrent writer
-    concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines);
+    concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines,
+                                                     new LogBufferCleaner(cConf, checkpointManagers,
+                                                                          startCleanup));
 
     // create and start http service
     httpService = createHttpService();
