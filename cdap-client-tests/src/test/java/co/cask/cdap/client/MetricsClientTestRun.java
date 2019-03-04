@@ -82,7 +82,9 @@ public class MetricsClientTestRun extends ClientTestBase {
       Assert.assertEquals(200, response.getResponseCode());
 
       Tasks.waitFor(true, () ->
-        metricsClient.query(MetricsTags.service(service), Constants.Metrics.Name.Service.SERVICE_INPUT)
+        metricsClient.query(MetricsTags.service(service),
+                            Collections.singletonList(Constants.Metrics.Name.Service.SERVICE_INPUT),
+                            Collections.emptyList(), ImmutableMap.of("start", "now-20s", "end", "now"))
           .getSeries().length > 0, 10, TimeUnit.SECONDS);
 
       MetricQueryResult result = metricsClient.query(MetricsTags.service(service),
