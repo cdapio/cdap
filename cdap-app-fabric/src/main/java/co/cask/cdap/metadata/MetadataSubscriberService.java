@@ -83,6 +83,7 @@ import javax.annotation.Nullable;
  * Service responsible for consuming metadata messages from TMS and persist it to metadata store.
  * This is a wrapping service to host multiple {@link AbstractMessagingSubscriberService}s for lineage, usage
  * and metadata subscriptions.
+ * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
  */
 public class MetadataSubscriberService extends AbstractMessagingSubscriberService<MetadataMessage> {
 

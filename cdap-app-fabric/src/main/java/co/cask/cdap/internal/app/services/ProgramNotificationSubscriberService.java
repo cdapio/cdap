@@ -50,7 +50,6 @@ import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.TableNotFoundException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
-import co.cask.cdap.spi.data.transaction.TransactionRunners;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -76,7 +75,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Service that receives program status notifications and persists to the store
+ * Service that receives program status notifications and persists to the store.
+ * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
  */
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
 
@@ -93,7 +93,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
   private final MetricsCollectionService metricsCollectionService;
-  private final TransactionRunner transactionRunner;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -113,7 +112,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
-    this.transactionRunner = transactionRunner;
   }
 
   @Nullable
@@ -130,15 +128,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   @Override
   protected void processMessages(StructuredTableContext structuredTableContext,
-                                 Iterator<ImmutablePair<String, Notification>> messages) {
-    // TODO CDAP-14848 remove dataset context from args
+                                 Iterator<ImmutablePair<String, Notification>> messages) throws Exception {
     ProgramHeartbeatTable heartbeatDataset = new ProgramHeartbeatTable(structuredTableContext);
     List<Runnable> tasks = new LinkedList<>();
     while (messages.hasNext()) {
       ImmutablePair<String, Notification> messagePair = messages.next();
       List<Runnable> runnables = processNotification(heartbeatDataset,
                                                      messagePair.getFirst().getBytes(StandardCharsets.UTF_8),
-                                                     messagePair.getSecond());
+                                                     messagePair.getSecond(), structuredTableContext);
       tasks.addAll(runnables);
     }
 
@@ -162,69 +159,69 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * @param programHeartbeatTable the {@link ProgramHeartbeatTable} for writing heart beats and program status
    * @param messageIdBytes the raw message id in the TMS for the notification
    * @param notification the {@link Notification} to process
+   * @param context context to get the table for operations
    * @return a {@link List} of {@link Runnable} tasks to run after the transactional processing of the whole
    *         messages batch is completed
    * @throws Exception if failed to process the given notification
    */
   private List<Runnable> processNotification(ProgramHeartbeatTable programHeartbeatTable,
-                                             byte[] messageIdBytes, Notification notification) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-      Map<String, String> properties = notification.getProperties();
-      // Required parameters
-      String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
-      String programStatusStr = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
-      String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
+                                             byte[] messageIdBytes, Notification notification,
+                                             StructuredTableContext context) throws Exception {
+    AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+    Map<String, String> properties = notification.getProperties();
+    // Required parameters
+    String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
+    String programStatusStr = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
+    String clusterStatusStr = properties.get(ProgramOptionConstants.CLUSTER_STATUS);
 
-      // Ignore notifications which specify an invalid ProgramRunId, which shouldn't happen
-      if (programRun == null) {
-        LOG.warn("Ignore notification that misses program run state information, {}", notification);
+    // Ignore notifications which specify an invalid ProgramRunId, which shouldn't happen
+    if (programRun == null) {
+      LOG.warn("Ignore notification that misses program run state information, {}", notification);
+      return Collections.emptyList();
+    }
+    ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
+
+    ProgramRunStatus programRunStatus = null;
+    if (programStatusStr != null) {
+      try {
+        programRunStatus = ProgramRunStatus.valueOf(programStatusStr);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Ignore notification with invalid program run status {} for program {}, {}",
+                 programStatusStr, programRun, notification);
         return Collections.emptyList();
       }
-      ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
+    }
 
-      ProgramRunStatus programRunStatus = null;
-      if (programStatusStr != null) {
-        try {
-          programRunStatus = ProgramRunStatus.valueOf(programStatusStr);
-        } catch (IllegalArgumentException e) {
-          LOG.warn("Ignore notification with invalid program run status {} for program {}, {}",
-                   programStatusStr, programRun, notification);
-          return Collections.emptyList();
-        }
-      }
-
-      ProgramRunClusterStatus clusterStatus = null;
-      if (clusterStatusStr != null) {
-        try {
-          clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
-        } catch (IllegalArgumentException e) {
-          LOG.warn("Ignore notification with invalid program run cluster status {} for program {}",
-                   clusterStatusStr, programRun);
-          return Collections.emptyList();
-        }
-      }
-      if (notification.getNotificationType().equals(Notification.Type.PROGRAM_HEART_BEAT)) {
-        RunRecordMeta runRecordMeta = appMetadataStore.getRun(programRunId);
-        long heartBeatTimeInSeconds =
-          TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(properties.get(ProgramOptionConstants.HEART_BEAT_TIME)));
-        writeToHeartBeatTable(runRecordMeta, heartBeatTimeInSeconds, programHeartbeatTable);
-        // we can return after writing to heart beat table
+    ProgramRunClusterStatus clusterStatus = null;
+    if (clusterStatusStr != null) {
+      try {
+        clusterStatus = ProgramRunClusterStatus.valueOf(clusterStatusStr);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Ignore notification with invalid program run cluster status {} for program {}",
+                 clusterStatusStr, programRun);
         return Collections.emptyList();
       }
-      List<Runnable> result = new ArrayList<>();
-      if (programRunStatus != null) {
-        handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
-                           appMetadataStore, programHeartbeatTable).ifPresent(result::add);
-      }
-      if (clusterStatus == null) {
-        return result;
-      }
+    }
+    if (notification.getNotificationType().equals(Notification.Type.PROGRAM_HEART_BEAT)) {
+      RunRecordMeta runRecordMeta = appMetadataStore.getRun(programRunId);
+      long heartBeatTimeInSeconds =
+        TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(properties.get(ProgramOptionConstants.HEART_BEAT_TIME)));
+      writeToHeartBeatTable(runRecordMeta, heartBeatTimeInSeconds, programHeartbeatTable);
+      // we can return after writing to heart beat table
+      return Collections.emptyList();
+    }
+    List<Runnable> result = new ArrayList<>();
+    if (programRunStatus != null) {
+      handleProgramEvent(programRunId, programRunStatus, notification, messageIdBytes,
+                         appMetadataStore, programHeartbeatTable).ifPresent(result::add);
+    }
+    if (clusterStatus == null) {
+      return result;
+    }
 
     handleClusterEvent(programRunId, clusterStatus, notification,
-                       messageIdBytes, appMetadataStore).ifPresent(result::add);
+                       messageIdBytes, appMetadataStore, context).ifPresent(result::add);
     return result;
-    });
   }
 
   private Optional<Runnable> handleProgramEvent(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
@@ -376,7 +373,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
-                                                AppMetadataStore appMetadataStore) throws IOException {
+                                                AppMetadataStore appMetadataStore,
+                                                StructuredTableContext context) throws IOException {
     Map<String, String> properties = notification.getProperties();
 
     ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
@@ -393,7 +391,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
         ProvisionRequest provisionRequest = new ProvisionRequest(programRunId, programOptions, programDescriptor,
                                                                  userId);
-        return Optional.of(provisioningService.provision(provisionRequest));
+        return Optional.of(provisioningService.provision(provisionRequest, context));
       case PROVISIONED:
         Cluster cluster = GSON.fromJson(properties.get(ProgramOptionConstants.CLUSTER), Cluster.class);
         appMetadataStore.recordProgramProvisioned(programRunId, cluster.getNodes().size(), messageIdBytes);
@@ -430,7 +428,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // If we skipped recording the run status, that means this was a duplicate message,
         // or an invalid state transition. In both cases, we should not try to deprovision the cluster.
         if (recordedMeta != null) {
-          return Optional.of(provisioningService.deprovision(programRunId));
+          return Optional.of(provisioningService.deprovision(programRunId, context));
         }
         break;
       case DEPROVISIONED:

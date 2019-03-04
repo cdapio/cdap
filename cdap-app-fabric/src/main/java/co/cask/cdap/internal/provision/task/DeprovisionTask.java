@@ -19,12 +19,12 @@ package co.cask.cdap.internal.provision.task;
 
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.internal.provision.ProvisionerNotifier;
-import co.cask.cdap.internal.provision.ProvisionerStore;
 import co.cask.cdap.internal.provision.ProvisioningOp;
 import co.cask.cdap.internal.provision.ProvisioningTaskInfo;
 import co.cask.cdap.runtime.spi.provisioner.ClusterStatus;
 import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -57,11 +57,11 @@ public class DeprovisionTask extends ProvisioningTask {
   private final ProvisionerNotifier provisionerNotifier;
   private final Location keysDir;
 
-  public DeprovisionTask(ProvisioningTaskInfo initialTaskInfo, ProvisionerStore provisionerStore,
+  public DeprovisionTask(ProvisioningTaskInfo initialTaskInfo, TransactionRunner transactionRunner,
                          int retryTimeLimitSecs, Provisioner provisioner,
                          ProvisionerContext provisionerContext, ProvisionerNotifier provisionerNotifier,
                          LocationFactory locationFactory) {
-    super(initialTaskInfo, provisionerStore, retryTimeLimitSecs);
+    super(initialTaskInfo, transactionRunner, retryTimeLimitSecs);
     this.provisioner = provisioner;
     this.provisionerContext = provisionerContext;
     this.provisionerNotifier = provisionerNotifier;
