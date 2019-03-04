@@ -87,7 +87,7 @@ function getFaviconPath(uiThemeConfig) {
 
 function extractUIThemeWrapper(cdapConfig) {
   const uiThemePath = cdapConfig[uiThemePropertyName];
-  extractUITheme(cdapConfig, uiThemePath);
+  return extractUITheme(cdapConfig, uiThemePath);
 }
 
 function extractUITheme(cdapConfig, uiThemePath) {
