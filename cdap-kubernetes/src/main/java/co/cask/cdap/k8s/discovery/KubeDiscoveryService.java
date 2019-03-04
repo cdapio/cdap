@@ -24,6 +24,7 @@ import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1OwnerReference;
 import io.kubernetes.client.models.V1Service;
 import io.kubernetes.client.models.V1ServiceBuilder;
 import io.kubernetes.client.models.V1ServiceList;
@@ -42,9 +43,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -81,7 +84,9 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   private static final byte[] EMPTY_PAYLOAD = new byte[0];
 
   private final String namespace;
+  private final String namePrefix;
   private final Map<String, String> podLabels;
+  private final List<V1OwnerReference> ownerReferences;
   private final Map<String, DefaultServiceDiscovered> serviceDiscovereds;
   private volatile CoreV1Api coreApi;
   private volatile WatcherThread watcherThread;
@@ -91,19 +96,23 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
    * Constructor to create an instance for service discovery on the given Kubernetes namespace.
    *
    * @param namespace the Kubernetes namespace to perform service discovery on
+   * @param namePrefix prefix applies to all service names in k8s
    * @param podLabels the set of labels for the current pod
    */
-  public KubeDiscoveryService(String namespace, Map<String, String> podLabels) {
+  public KubeDiscoveryService(String namespace, String namePrefix, Map<String, String> podLabels,
+                              List<V1OwnerReference> ownerReferences) {
     this.namespace = namespace;
+    this.namePrefix = namePrefix;
     this.serviceDiscovereds = new ConcurrentHashMap<>();
     this.podLabels = Collections.unmodifiableMap(new HashMap<>(podLabels));
+    this.ownerReferences = Collections.unmodifiableList(new ArrayList<>(ownerReferences));
   }
 
   @Override
   public Cancellable register(Discoverable discoverable) {
     // Create or update the k8s Service
     // The service is created with label selector based on the current pod labels
-    String serviceName = "cdap-" + discoverable.getName().toLowerCase().replace('.', '-');
+    String serviceName = namePrefix + discoverable.getName().toLowerCase().replace('.', '-');
 
     try {
       CoreV1Api api = getCoreApi();
@@ -221,7 +230,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   private Optional<V1Service> getV1Service(CoreV1Api api,
                                            String serviceName, String discoveryName) throws ApiException {
     V1ServiceList serviceList = api.listNamespacedService(namespace, null, null, null, null,
-                                                          "cdap.service=" + discoveryName, 1, null, null, null);
+                                                          "cdap.service=" + namePrefix + discoveryName, 1,
+                                                          null, null, null);
     // Find the service with the given name
     return serviceList.getItems().stream()
       .filter(service -> serviceName.equals(service.getMetadata().getName()))
@@ -242,7 +252,12 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     V1Service service = new V1Service();
     V1ObjectMeta meta = new V1ObjectMeta();
     meta.setName(serviceName);
-    meta.setLabels(ImmutableMap.of("cdap.service", discoverable.getName()));
+    meta.setLabels(ImmutableMap.of("cdap.service", namePrefix + discoverable.getName()));
+
+    // Set the owner reference for GC
+    if (!ownerReferences.isEmpty()) {
+      meta.setOwnerReferences(ownerReferences);
+    }
     service.setMetadata(meta);
 
     V1ServicePort port = new V1ServicePort();
@@ -297,6 +312,11 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     port.setPort(discoverable.getSocketAddress().getPort());
 
     V1Service service = new V1ServiceBuilder(currentService).build();
+
+    // Update the owner reference for GC
+    if (!ownerReferences.isEmpty()) {
+      service.getMetadata().setOwnerReferences(ownerReferences);
+    }
     service.getSpec().setPorts(Collections.singletonList(port));
     service.getSpec().setSelector(podLabels);
 
@@ -382,6 +402,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
             if (serviceName == null) {
               continue;
             }
+            // Remove the name prefix to get the original CDAP service name
+            serviceName = serviceName.substring(namePrefix.length());
             DefaultServiceDiscovered serviceDiscovered = serviceDiscovereds.get(serviceName);
             if (serviceDiscovered == null) {
               continue;
@@ -470,8 +492,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
         // There is only single thread (the run thread) that will call this method,
         // hence if the watch was null outside of this sync block, it will stay as null here.
-        String labelSelector = String.format("cdap.service in (%s)",
-                                             services.stream().collect(Collectors.joining(",")));
+        String labelSelector = String.format(
+          "cdap.service in (%s)", services.stream().map(s -> namePrefix + s).collect(Collectors.joining(",")));
         LOG.debug("Creating watch with label selector {}", labelSelector);
         CoreV1Api coreApi = getCoreApi();
         Call call = coreApi.listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,

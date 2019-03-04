@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -47,7 +48,8 @@ public class KubeDiscoveryServiceTest {
   @Test
   public void testDiscoveryService() throws Exception {
     Map<String, String> podLabels = ImmutableMap.of("cdap.container", "test");
-    try (KubeDiscoveryService service = new KubeDiscoveryService("default", podLabels)) {
+    try (KubeDiscoveryService service = new KubeDiscoveryService("default", "cdap-test-",
+                                                                 podLabels, Collections.emptyList())) {
       // Watch for changes
       ServiceDiscovered serviceDiscovered = service.discover("test.service");
 
@@ -73,7 +75,7 @@ public class KubeDiscoveryServiceTest {
       // The discoverable should have hostname the same as the k8s service name and port from the discoverable
       Discoverable discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(1234, discoverable.getSocketAddress().getPort());
-      Assert.assertEquals("cdap-test-service", discoverable.getSocketAddress().getHostName());
+      Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
 
       // Register the service again with different port. This is to simulate config update
       service.register(new Discoverable("test.service", new InetSocketAddress(InetAddress.getLoopbackAddress(), 4321)));
@@ -86,12 +88,12 @@ public class KubeDiscoveryServiceTest {
       // The discoverable should have hostname the same as the k8s service name and port from the discoverable
       discoverable = discoverables.stream().findFirst().orElseThrow(Exception::new);
       Assert.assertEquals(4321, discoverable.getSocketAddress().getPort());
-      Assert.assertEquals("cdap-test-service", discoverable.getSocketAddress().getHostName());
+      Assert.assertEquals("cdap-test-test-service", discoverable.getSocketAddress().getHostName());
     } finally {
       // Cleanup the created service
       CoreV1Api api = new CoreV1Api(Config.defaultClient());
       V1DeleteOptions deleteOptions = new V1DeleteOptions();
-      api.deleteNamespacedService("cdap-test-service", "default", deleteOptions, null, null, null, null);
+      api.deleteNamespacedService("cdap-test-test-service", "default", deleteOptions, null, null, null, null);
     }
   }
 }
