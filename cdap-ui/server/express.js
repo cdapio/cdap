@@ -87,7 +87,7 @@ function getFaviconPath(uiThemeConfig) {
 
 function extractUIThemeWrapper(cdapConfig) {
   const uiThemePath = cdapConfig[uiThemePropertyName];
-  extractUITheme(cdapConfig, uiThemePath);
+  return extractUITheme(cdapConfig, uiThemePath);
 }
 
 function extractUITheme(cdapConfig, uiThemePath) {
@@ -100,63 +100,40 @@ function extractUITheme(cdapConfig, uiThemePath) {
   }
 
   let uiThemeConfig = DEFAULT_CONFIG;
-  /**
-   *
-   * The first check assumes that its linux based environment.
-   * FIXME: We should always make the user provide abolute path that way we don't do these hops.
-   */
-  if (uiThemePath[0] !== '/') {
-    // if path doesn't start with /, then it's a relative path
-    // have to add the ellipses to navigate back to $CDAP_HOME, before
-    // going through the path
-    uiThemePath = path.join('..', uiThemePath);
-  }
-  try {
-    if (require.resolve(uiThemePath)) {
-      uiThemeConfig = require(uiThemePath);
-      log.info(`UI using theme located at ${cdapConfig[uiThemePropertyName]}`);
-      return uiThemeConfig;
+  // Absolute path
+  if (uiThemePath[0] === '/') {
+    try {
+      if (require.resolve(uiThemePath)) {
+        uiThemeConfig = require(uiThemePath);
+        log.info(`UI using theme file: ${uiThemePath}`);
+        return uiThemeConfig;
+      }
+    } catch (e) {
+      log.info('UI Theme file not found at: ', uiThemePath);
+      throw e;
     }
-  } catch (e) {
-    // Theme file not found in: ${uiThemePath}
   }
-  try {
-    /**
-     * This extra check is required in a non-built environment (during development) as opposed to
-     *  a built environment like SDK or clusters where we have the node app built using ncc
-     *  which takes away the folder structure and builds everything to single file.
-     *
-     * Non-built folder structure
-     * ui/
-     *   server.js
-     *   server/
-     *     config/
-     *       themes/
-     *         default.json
-     *     parser.js -> file lookup happens here
-     *
-     * Built node app folder structure
-     *
-     * ui/
-     *   index.js -> file lookup happens here
-     *   server/
-     *     config/
-     *       themes/
-     *         default.json
-     *
-     * Going two levels up won't be correct in the new structure. Hence the check in first try catch.
-     */
-    uiThemePath = path.join('..', uiThemePath);
-    if (require.resolve(uiThemePath)) {
-      uiThemeConfig = require(uiThemePath);
-      log.info(`UI using theme located at ${uiThemePath}`);
-      return uiThemeConfig;
+  // Relative path
+  {
+    let themePath;
+    try {
+      // __dirname will always be <entire-cdap-home>/ui/server
+      // So the uiThemePath should be relative to the ui folder
+      // Ideally this will be of the form 'server/config/themes/default|light.json
+      // For development since we are starting node from the ui folder we need to drop
+      // the 'server' from the beginning of the path (config/themes/default|light.json)
+      themePath = `${__dirname}/${uiThemePath}`;
+      if (require.resolve(themePath)) {
+        uiThemeConfig = require(themePath);
+        log.info(`UI using theme file: ${themePath}`);
+        return uiThemeConfig;
+      }
+    } catch (e) {
+      // This will show the user what the full path is.
+      // This should help them give proper relative path
+      log.info('UI Theme file not found at: ', themePath);
+      throw e;
     }
-  } catch (e) {
-    // The error can either be file doesn't exist, or file contains invalid json
-    log.error(e.toString());
-    log.warn(`UI using default theme`);
-    throw e;
   }
   return uiThemeConfig;
 }
