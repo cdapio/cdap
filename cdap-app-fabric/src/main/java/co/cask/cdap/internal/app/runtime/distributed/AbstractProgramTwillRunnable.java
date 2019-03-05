@@ -32,6 +32,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.program.StateChangeListener;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -542,6 +543,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     services.add(injector.getInstance(TransactionManager.class));
     services.add(injector.getInstance(MessagingHttpService.class));
     services.add(injector.getInstance(RuntimeMonitorServer.class));
+    services.add(injector.getInstance(DatasetOpExecutorService.class));
     services.add(injector.getInstance(DatasetService.class));
   }
 
