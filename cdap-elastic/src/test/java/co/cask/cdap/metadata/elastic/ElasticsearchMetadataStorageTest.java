@@ -63,17 +63,17 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
   @BeforeClass
   public static void createIndex() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_INDEX_NAME,
+    cConf.set(Config.CONF_ELASTIC_INDEX_NAME,
               "idx" + new Random(System.currentTimeMillis()).nextInt());
-    cConf.setBoolean(ElasticsearchMetadataStorage.CONF_ELASTIC_WAIT_FOR_MUTATIONS, true);
-    cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_SCROLL_TIMEOUT, "2s");
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_NUM_REPLICAS, 1);
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_NUM_SHARDS, 1);
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_WINDOW_SIZE, 128);
+    cConf.setBoolean(Config.CONF_ELASTIC_WAIT_FOR_MUTATIONS, true);
+    cConf.set(Config.CONF_ELASTIC_SCROLL_TIMEOUT, "2s");
+    cConf.setInt(Config.CONF_ELASTIC_NUM_REPLICAS, 1);
+    cConf.setInt(Config.CONF_ELASTIC_NUM_SHARDS, 1);
+    cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 128);
     String elasticPort = System.getProperty("elastic.http.port");
     if (elasticPort != null && !elasticPort.isEmpty()) {
       LOG.info("Elasticsearch port is {}", elasticPort);
-      cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
+      cConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
     }
     elasticStore = new ElasticsearchMetadataStorage(cConf);
     elasticStore.createIndex();
