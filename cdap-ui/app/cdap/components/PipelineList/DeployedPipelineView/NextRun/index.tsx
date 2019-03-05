@@ -88,8 +88,10 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
     }
 
     if (this.state.loading) {
+      // we have fa-lg here because we use tags on the same table row which is using larger loading icon
+      // If both happen to load in UI it will this discrepancy (md vs lg)
       return (
-        <span className="fa fa-spin">
+        <span className="fa fa-spin fa-lg">
           <IconSVG name="icon-spinner" />
         </span>
       );

@@ -26,6 +26,7 @@ import { IAction } from 'services/redux-helpers';
 
 interface IState {
   pipelines: IPipeline[];
+  pipelinesLoading: boolean;
   statusMap: IStatusMap;
   runsCountMap: IRunsCountMap;
   deleteError?: string;
@@ -46,6 +47,7 @@ const Actions = {
 
 const defaultInitialState: IState = {
   pipelines: [],
+  pipelinesLoading: true,
   statusMap: {},
   runsCountMap: {},
   deleteError: null,
@@ -57,6 +59,7 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
       return {
         ...state,
         pipelines: action.payload.pipelines,
+        pipelinesLoading: false,
         deleteError: null,
       };
     case Actions.setStatusMap:

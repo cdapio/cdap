@@ -23,11 +23,15 @@ import './PipelineCount.scss';
 
 interface IProps {
   pipelines: IPipeline[];
+  pipelinesLoading: boolean;
 }
 
 const PREFIX = 'features.PipelineList';
 
-const PipelineCountView: React.SFC<IProps> = ({ pipelines }) => {
+const PipelineCountView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) => {
+  if (pipelinesLoading) {
+    return null;
+  }
   return (
     <div className="pipeline-count">
       <h5>
@@ -42,6 +46,7 @@ const PipelineCountView: React.SFC<IProps> = ({ pipelines }) => {
 const mapStateToProps = (state) => {
   return {
     pipelines: state.deployed.pipelines,
+    pipelinesLoading: state.deployed.pipelinesLoading,
   };
 };
 

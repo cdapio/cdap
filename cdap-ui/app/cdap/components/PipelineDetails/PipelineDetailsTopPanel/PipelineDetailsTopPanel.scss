@@ -33,6 +33,7 @@ $toppanel-border-bottom-color: $grey-05;
 
   .pipeline-metadata {
     padding-top: 5px;
+    margin-left: 10px;
 
     .pipeline-type-name-version {
       display: flex;
@@ -41,7 +42,6 @@ $toppanel-border-bottom-color: $grey-05;
 
       .pipeline-type {
         margin-right: 5px;
-        margin-left: 10px;
 
         .icon-svg {
           color: $blue-02;

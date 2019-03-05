@@ -30,6 +30,11 @@ $input-width: 120px;
     max-width: calc(100% - #{$input-width} - 10px - 50px - 10px - 15px);
     overflow: hidden;
     white-space: nowrap;
+    .tag-btn {
+      &:first-child {
+        margin-left: 0;
+      }
+    }
   }
 
   .btn {
