@@ -188,6 +188,21 @@ var socketDataSource = angular.module(PKG.name+'.services');
           return;
         });
 
+        EventPipe.on(MYSOCKET_EVENT.reconnected, () => {
+          Object.keys(this.bindings).forEach((reqId) => {
+            const req = self.bindings[reqId];
+
+            if (req.poll) {
+              _pollStart(req.resource);
+            } else {
+              mySocket.send({
+                action: 'request',
+                resource: req.resource,
+              });
+            }
+          });
+        });
+
         scope.$on('$destroy', function () {
           Object.keys(self.bindings).forEach(function(key) {
             var b = self.bindings[key];

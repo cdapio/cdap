@@ -42,18 +42,13 @@ const parseAndDispatchBackendStatus = (response) => {
   let loadingState = LoadingIndicatorStore.getState().loading;
   if (response.status <= 399) {
     if ([BACKENDSTATUS.NODESERVERDOWN].indexOf(loadingState.status) !== -1) {
-      const studioPath = `/pipelines/ns/${getCurrentNamespace()}/studio`;
-      if (location.pathname === studioPath) {
-        LoadingIndicatorStore.dispatch({
-          type: BACKENDSTATUS.STATUSUPDATE,
-          payload: {
-            status: BACKENDSTATUS.BACKENDUP,
-          },
-        });
-        retries = 0;
-      } else {
-        window.location.reload();
-      }
+      LoadingIndicatorStore.dispatch({
+        type: BACKENDSTATUS.STATUSUPDATE,
+        payload: {
+          status: BACKENDSTATUS.BACKENDUP,
+        },
+      });
+      retries = 0;
     }
     if ([BACKENDSTATUS.BACKENDDOWN].indexOf(loadingState.status) !== -1) {
       StatusAlertMessageStore.dispatch({
