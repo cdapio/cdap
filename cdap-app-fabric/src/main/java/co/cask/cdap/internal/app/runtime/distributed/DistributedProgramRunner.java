@@ -399,6 +399,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Publish CUD (Create, Update, Delete) operations on dataset instance
       result.set(Constants.Dataset.Manager.PUBLISH_CUD, Boolean.TRUE.toString());
 
+      // Always use NoSQL as storage
+      result.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+
       // The following services will be running in the edge node host.
       // Set the bind addresses for all of them to "${master.services.bind.address}"
       // Which the value of `"master.services.bind.address" will be set in the AbstractProgramTwillRunnable when it
