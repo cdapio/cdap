@@ -120,7 +120,7 @@ export default class SpotlightModal extends Component {
       target,
       limit: PAGE_SIZE,
       offset,
-      showCustom: true,
+      responseFormat: 'v6',
     }).subscribe((res) => {
       this.setState({
         searchResults: res,
@@ -166,20 +166,21 @@ export default class SpotlightModal extends Component {
                   <span className="entity-name">{entity.id}</span>
                 </div>
                 <div className="entity-description">
-                  <span>{entity.metadata.metadata.SYSTEM.properties.description}</span>
+                  <span>
+                    {
+                      entity.metadata.metadata.properties.find(
+                        (property) => property.name === 'description'
+                      ).value
+                    }
+                  </span>
                 </div>
               </Col>
 
               <Col xs="6">
                 <div className="entity-tags-container text-right">
-                  {entity.metadata.metadata.SYSTEM.tags.map((tag) => {
-                    return <Badge key={uuidV4()}>{tag}</Badge>;
+                  {entity.metadata.metadata.tags.map((tag) => {
+                    return <Badge key={uuidV4()}>{tag.name}</Badge>;
                   })}
-                  {entity.metadata.metadata.USER
-                    ? entity.metadata.metadata.USER.tags.map((tag) => {
-                        return <Badge key={uuidV4()}>{tag}</Badge>;
-                      })
-                    : null}
                 </div>
               </Col>
             </div>

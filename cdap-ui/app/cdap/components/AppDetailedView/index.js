@@ -89,7 +89,12 @@ export default class AppDetailedView extends Component {
         .subscribe(
           (res) => {
             let entityDetail = res[1];
-            let properties = res[0];
+            const properties = {};
+            res[0].properties.forEach((property) => {
+              if (property.scope === SCOPES.SYSTEM) {
+                properties[property.name] = property.value;
+              }
+            });
             if (isEmpty(entityDetail)) {
               this.setState({
                 notFound: true,
@@ -101,7 +106,7 @@ export default class AppDetailedView extends Component {
               return prog;
             });
             let datasets = entityDetail.datasets.map((dataset) => {
-              dataset.metadataEntity = {
+              dataset.entity = {
                 details: {
                   dataset: dataset.name,
                 },

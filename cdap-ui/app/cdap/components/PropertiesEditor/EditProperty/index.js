@@ -62,7 +62,7 @@ export default class EditProperty extends Component {
     };
 
     let requestBody = {};
-    requestBody[this.props.property.key] = this.state.valueInput;
+    requestBody[this.props.property.name] = this.state.valueInput;
 
     MyMetadataApi.addProperties(params, requestBody).subscribe(
       () => {
@@ -116,7 +116,7 @@ export default class EditProperty extends Component {
         <ModalHeader>
           <span>
             {T.translate('features.PropertiesEditor.EditProperty.modalHeader', {
-              key: this.props.property.key,
+              key: this.props.property.name,
             })}
           </span>
 

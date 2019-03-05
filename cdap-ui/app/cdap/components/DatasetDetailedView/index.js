@@ -135,6 +135,14 @@ export default class DatasetDetailedView extends Component {
               return programObj;
             });
 
+            const properties = {};
+
+            res[0].properties.forEach((property) => {
+              if (property.scope === SCOPES.SYSTEM) {
+                properties[property.name] = property.value;
+              }
+            });
+
             let entityDetail = {
               programs,
               schema: res[0].schema,
@@ -142,7 +150,7 @@ export default class DatasetDetailedView extends Component {
               app: appId,
               id: datasetId,
               type: 'dataset',
-              properties: res[0],
+              properties,
             };
 
             this.setState(

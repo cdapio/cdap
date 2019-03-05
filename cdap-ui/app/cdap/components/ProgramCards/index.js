@@ -28,7 +28,7 @@ export default function ProgramCards({ programs }) {
     <div className="program-cards">
       {programs.map((program) => {
         let entity = {
-          metadataEntity: {
+          entity: {
             details: {
               application: program.app,
               program: program.name,
@@ -37,7 +37,8 @@ export default function ProgramCards({ programs }) {
             type: EntityType.program,
           },
           metadata: {
-            SYSTEM: {},
+            tags: [],
+            properties: [],
           },
         };
 

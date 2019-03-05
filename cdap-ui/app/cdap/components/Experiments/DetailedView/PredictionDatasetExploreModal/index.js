@@ -57,13 +57,18 @@ export default class PredictionDatasetExploreModal extends Component {
       scope: SCOPES.SYSTEM,
     }).subscribe(
       (datasetDetails) => {
+        const properties = {};
+        datasetDetails.properties.forEach((property) => {
+          properties[property.key] = property.value;
+        });
+
         this.setState({
           datasetDetails: {
-            schema: datasetDetails.schema,
+            schema: properties.schema,
             id: this.state.predictionDataset,
             type: 'dataset',
             uniqueId: uuidV4(),
-            properties: datasetDetails,
+            properties,
           },
         });
       },

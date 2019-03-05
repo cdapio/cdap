@@ -89,14 +89,19 @@ export default class DatasetOverview extends Component {
             return programObj;
           });
 
+          const properties = {};
+          res[0].properties.forEach((property) => {
+            properties[property.name] = property.value;
+          });
+
           let entityDetail = {
             programs,
-            schema: res[0].schema,
+            schema: properties.schema,
             name: appId, // FIXME: Finalize on entity detail for fast action
             app: appId,
             id: this.props.entity.id,
             type: 'dataset',
-            properties: res[0],
+            properties,
           };
 
           this.setState(

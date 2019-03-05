@@ -47,7 +47,6 @@ class TrackerMetadataController {
       scope: this.$scope,
       namespace: this.$state.params.namespace,
       entityType,
-      showCustom: true,
       entityId,
     };
 
@@ -76,23 +75,22 @@ class TrackerMetadataController {
   }
 
   processResponse(res) {
-    let systemMetadata = {}, userMetadata = {};
-
-    angular.forEach(res, (response) => {
-      if (response.scope === 'USER') {
-        userMetadata = response;
-      } else if (response.scope === 'SYSTEM'){
-        systemMetadata = response;
+    let systemProperties = {}, userProperties = {};
+    res.properties.forEach((property) => {
+      if (property.scope === 'SYSTEM') {
+        systemProperties[property.name] = property.value;
+      } else {
+        userProperties[property.name] = property.value;
       }
     });
 
     this.systemTags = {
-      system: systemMetadata.tags
+      system: res.tags.filter((tag) => tag.scope === 'SYSTEM').map((tag) => tag.name),
     };
 
     this.properties = {
-      system: systemMetadata.properties,
-      user: userMetadata.properties,
+      system: systemProperties,
+      user: userProperties,
       isUserEmpty: false,
       isSystemEmpty: false
     };
@@ -102,18 +100,18 @@ class TrackerMetadataController {
      * dataset type is externalDataset. Ideally Backend should
      * return this automatically.
      **/
-    if (systemMetadata.properties.type === 'externalDataset') {
+    if (systemProperties.type === 'externalDataset') {
       this.fetchExternalDatasetProperties();
     }
 
-    if (Object.keys(userMetadata.properties).length === 0) {
+    if (Object.keys(userProperties).length === 0) {
       this.activePropertyTab = 1;
       this.properties.isUserEmpty = true;
     }
 
-    this.properties.isSystemEmpty = Object.keys(systemMetadata.properties).length === 0;
+    this.properties.isSystemEmpty = Object.keys(systemProperties).length === 0;
 
-    this.schema = systemMetadata.properties.schema;
+    this.schema = systemProperties.schema;
   }
 
   fetchExternalDatasetProperties() {
@@ -212,7 +210,7 @@ class TrackerMetadataController {
     this.myTrackerApi.getUserTags(params)
       .$promise
       .then((res) => {
-        this.userTags = res;
+        this.userTags = res.tags.map((tag) => tag.name);
       });
   }
 

@@ -18,8 +18,7 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import { MyMetadataApi } from 'api/metadata';
-import NamespaceStore from 'services/NamespaceStore';
-import map from 'lodash/map';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import uuidV4 from 'uuid/v4';
 import AddPropertyModal from 'components/PropertiesEditor/AddPropertyModal';
 import T from 'i18n-react';
@@ -29,14 +28,6 @@ import classnames from 'classnames';
 import { SCOPES } from 'services/global-constants';
 
 require('./PropertiesEditor.scss');
-
-const convertObjToArr = (obj) => {
-  let properties = map(obj, (value, key) => ({ key, value })).map((row) => {
-    row.id = uuidV4();
-    return row;
-  });
-  return properties;
-};
 
 export default class PropertiesEditor extends Component {
   constructor(props) {
@@ -49,62 +40,41 @@ export default class PropertiesEditor extends Component {
       newValue: '',
       editedKey: null,
     };
-
-    this.fetchUserProperties = this.fetchUserProperties.bind(this);
   }
 
   componentWillMount() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-    const baseRequestObject = {
-      namespace,
-      entityType: this.props.entityType,
-      entityId: this.props.entityId,
-    };
-
-    let systemParams = Object.assign({}, baseRequestObject, { scope: SCOPES.SYSTEM });
-    let userParams = Object.assign({}, baseRequestObject, { scope: SCOPES.USER });
-
-    MyMetadataApi.getProperties(systemParams)
-      .map(convertObjToArr)
-      .combineLatest(MyMetadataApi.getProperties(userParams).map(convertObjToArr))
-      .subscribe(
-        (res) => {
-          this.setState({
-            systemProperties: res[0].filter((row) => row.key !== 'schema'),
-            userProperties: res[1],
-          });
-        },
-        (err) => {
-          console.log('Error', err);
-        }
-      );
+    this.fetchProperties();
   }
 
-  fetchUserProperties() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
+  fetchProperties = () => {
     const params = {
-      namespace,
+      namespace: getCurrentNamespace(),
       entityType: this.props.entityType,
       entityId: this.props.entityId,
-      scope: SCOPES.USER,
     };
 
     MyMetadataApi.getProperties(params)
-      .map(convertObjToArr)
+      .map((res) => {
+        return res.properties.map((property) => {
+          property.id = uuidV4();
+          return property;
+        });
+      })
       .subscribe((res) => {
         this.setState({
-          userProperties: res,
+          systemProperties: res.filter((property) => property.scope === SCOPES.SYSTEM),
+          userProperties: res.filter((property) => property.scope === SCOPES.USER),
           activeEdit: null,
           newValue: '',
         });
       });
-  }
+  };
 
   renderSystemProperties() {
     return this.state.systemProperties.map((row) => {
       return (
         <tr key={row.id}>
-          <td>{row.key}</td>
+          <td>{row.name}</td>
           <td>{row.value}</td>
           <td>{T.translate('features.PropertiesEditor.system')}</td>
           <td />
@@ -125,7 +95,7 @@ export default class PropertiesEditor extends Component {
 
         <DeleteConfirmation
           property={row}
-          onDelete={this.fetchUserProperties}
+          onDelete={this.fetchProperties}
           entityType={this.props.entityType}
           entityId={this.props.entityId}
         />
@@ -138,9 +108,9 @@ export default class PropertiesEditor extends Component {
       return (
         <tr
           key={row.id}
-          className={classnames({ 'text-success': row.key === this.state.editedKey })}
+          className={classnames({ 'text-success': row.name === this.state.editedKey })}
         >
-          <td>{row.key}</td>
+          <td>{row.name}</td>
           <td>{row.value}</td>
           <td>{T.translate('features.PropertiesEditor.user')}</td>
           <td className="actions">{this.renderActions(row)}</td>
@@ -150,9 +120,9 @@ export default class PropertiesEditor extends Component {
   }
 
   setEditProperty(row) {
-    this.setState({ editedKey: row.key });
+    this.setState({ editedKey: row.name });
 
-    this.fetchUserProperties();
+    this.fetchProperties();
 
     setTimeout(() => {
       this.setState({ editedKey: null });

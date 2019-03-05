@@ -70,7 +70,7 @@ export default class AddPropertyModal extends Component {
 
   onSave() {
     let uniqueCheck = this.props.existingProperties.filter((row) => {
-      return row.key === this.state.keyInput;
+      return row.name === this.state.keyInput;
     });
 
     if (uniqueCheck.length > 0) {
@@ -96,7 +96,7 @@ export default class AddPropertyModal extends Component {
     MyMetadataApi.addProperties(params, reqObj).subscribe(
       () => {
         this.toggleModal();
-        this.props.onSave({ key });
+        this.props.onSave({ name: key });
       },
       (err) => {
         this.setState({

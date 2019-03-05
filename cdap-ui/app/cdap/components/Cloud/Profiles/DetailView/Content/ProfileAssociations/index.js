@@ -120,13 +120,14 @@ export default class ProfileAssociations extends Component {
     if (namespace === SYSTEM_NAMESPACE) {
       apiObservable$ = MySearchApi.searchSystem({
         query: profileName,
-        showCustom: true,
+        responseFormat: 'v6',
       });
     } else {
       apiObservable$ = MySearchApi.search({
         namespace,
         query: profileName,
         showCustom: true,
+        responseFormat: 'v6',
       });
     }
     apiObservable$.subscribe(
@@ -150,48 +151,50 @@ export default class ProfileAssociations extends Component {
   convertMetadataToAssociations = (metadata) => {
     let appsMap = {};
     metadata.forEach((m) => {
-      const application = m.metadataEntity.details.application;
+      const application = m.entity.details.application;
       let existingEntry = appsMap[application];
       if (!existingEntry) {
         existingEntry = {
           name: application,
-          namespace: m.metadataEntity.details.namespace,
+          namespace: m.entity.details.namespace,
           schedules: [],
           triggers: [],
           metadata: {
             app: application,
-            namespace: m.metadataEntity.details.namespace,
+            namespace: m.entity.details.namespace,
           },
         };
         appsMap[application] = existingEntry;
       }
-      if (m.metadataEntity.details.schedule) {
+      if (m.entity.details.schedule) {
         // fixed name for time based schedule.
-        if (m.metadataEntity.details.schedule === GLOBALS.defaultScheduleId) {
+        if (m.entity.details.schedule === GLOBALS.defaultScheduleId) {
           appsMap[application] = {
             ...existingEntry,
-            schedules: [...existingEntry.schedules, m.metadataEntity.details],
+            schedules: [...existingEntry.schedules, m.entity.details],
           };
         } else {
           appsMap[application] = {
             ...existingEntry,
-            triggers: [...existingEntry.triggers, m.metadataEntity.details],
+            triggers: [...existingEntry.triggers, m.entity.details],
           };
         }
-      } else if (!isNilOrEmpty(m.metadataEntity.type)) {
+      } else if (!isNilOrEmpty(m.entity.type)) {
         appsMap[application] = {
           ...existingEntry,
-          created: m.metadata.SYSTEM.properties['creation-time'],
+          created: m.metadata.properties.find((property) => property.name === 'creation-time')
+            .value,
           metadata: {
             ...existingEntry.metadata,
-            type: m.metadataEntity.type,
-            program: m.metadataEntity.details.program,
+            type: m.entity.type,
+            program: m.entity.details.program,
           },
         };
       }
     });
     return appsMap;
   };
+
   renderGridHeader = () => {
     return (
       <div className="grid-header">

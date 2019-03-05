@@ -18,7 +18,7 @@ import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
 import { apiCreator } from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
-let searchpath = '/namespaces/:namespace/metadata/search?entityScope=USER';
+let searchpath = '/namespaces/:namespace/metadata/search';
 let systemSearchPath = '/metadata/search';
 
 export const MySearchApi = {

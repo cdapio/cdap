@@ -22,10 +22,10 @@ let lineagePath = '/namespaces/:namespace/datasets/:entityId/lineage/fields';
 
 export const MyMetadataApi = {
   getMetadata: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
-  getProperties: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/properties`),
+  getProperties: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/properties?responseFormat=v6`),
   addProperties: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/properties`),
   deleteProperty: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/properties/:key`),
-  getTags: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/tags`),
+  getTags: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/tags?responseFormat=v6`),
   addTags: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/tags`),
   deleteTags: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/tags/:key`),
 

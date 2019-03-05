@@ -17,23 +17,23 @@
 import EntityIconMap from 'services/entity-icon-map';
 import intersection from 'lodash/intersection';
 import EntityType from 'services/metadata-parser/EntityType';
-import { GLOBALS, SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
+import { GLOBALS } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
 
-export function parseMetadata(entity) {
-  let type = entity.metadataEntity.type;
+const SYSTEM_SCOPE = 'SYSTEM';
+
+export function parseMetadata(entityObj) {
+  let type = entityObj.entity.type;
 
   switch (type) {
     case EntityType.artifact:
-      return createArtifactObj(entity);
+      return createArtifactObj(entityObj);
     case EntityType.application:
-      return createApplicationObj(entity);
+      return createApplicationObj(entityObj);
     case EntityType.dataset:
-      return createDatasetObj(entity);
+      return createDatasetObj(entityObj);
     case EntityType.program:
-      return createProgramObj(entity);
-    case EntityType.view:
-      return createViewObj(entity);
+      return createProgramObj(entityObj);
   }
 }
 
@@ -47,10 +47,10 @@ export function getType(entity) {
     return entity.type;
   }
 
-  if (entity.metadata.metadata.SYSTEM.tags.indexOf('cdap-data-pipeline') !== -1) {
-    return 'cdap-data-pipeline';
-  } else if (entity.metadata.metadata.SYSTEM.tags.indexOf('cdap-data-streams') !== -1) {
-    return 'cdap-data-streams';
+  if (entity.metadata.metadata.tags.find((tag) => tag.name === GLOBALS.etlDataPipeline && tag.scope === SYSTEM_SCOPE)) {
+    return GLOBALS.etlDataPipeline;
+  } else if (entity.metadata.metadata.tags.find((tag) => tag.name === GLOBALS.etlDataStreams && tag.scope === SYSTEM_SCOPE)) {
+    return GLOBALS.etlDataStreams;
   } else {
     return entity.type;
   }
@@ -66,7 +66,7 @@ export function getCustomAppPipelineDatasetCounts(entities) {
   const apps = entities.results.filter((entity) => entityIsApp(entity));
   const pipelineCount = apps.filter((entity) => entityIsPipeline(entity)).length;
   const customAppCount = apps.length - pipelineCount;
-  const datasetCount = entities.total - apps.length;
+  const datasetCount = entities.results.length - apps.length;
   return {
     pipelineCount,
     customAppCount,
@@ -74,77 +74,66 @@ export function getCustomAppPipelineDatasetCounts(entities) {
   };
 }
 
-function entityIsApp(entity) {
-  return objectQuery(entity, 'metadataEntity', 'type') === EntityType.application;
+function entityIsApp(entityObj) {
+  return objectQuery(entityObj, 'entity', 'type') === EntityType.application;
 }
 
-function entityIsPipeline(entity) {
+function entityIsPipeline(entityObj) {
   return (
-    intersection(GLOBALS.etlPipelineTypes, objectQuery(entity, 'metadata', SCOPES.SYSTEM, 'tags'))
+    intersection(GLOBALS.etlPipelineTypes, objectQuery(entityObj, 'metadata', 'tags').map((tag) => tag.name))
       .length > 0
   );
 }
 
-function createArtifactObj(entity) {
+function createArtifactObj(entityObj) {
   return {
-    id: entity.metadataEntity.details.artifact,
-    type: entity.metadataEntity.type.toLowerCase(),
-    version: entity.metadataEntity.details.version,
-    metadata: entity,
-    scope:
-      entity.metadataEntity.details.namespace.toLowerCase() === SYSTEM_NAMESPACE ? SCOPES.SYSTEM : SCOPES.USER,
+    id: entityObj.entity.details.artifact,
+    type: entityObj.entity.type.toLowerCase(),
+    version: entityObj.entity.details.version,
+    metadata: entityObj,
     icon: EntityIconMap['artifact'],
   };
 }
 
-function createApplicationObj(entity) {
-  let version = entity.metadataEntity.details.version;
+function createApplicationObj(entityObj) {
+  let version = entityObj.entity.details.version;
   if (version === '-SNAPSHOT') {
     version = '1.0.0-SNAPSHOT';
   }
 
   let icon = EntityIconMap['application'];
-  if (entity.metadata.SYSTEM.tags.indexOf('cdap-data-pipeline') !== -1) {
-    icon = EntityIconMap['cdap-data-pipeline'];
-  } else if (entity.metadata.SYSTEM.tags.indexOf('cdap-data-streams') !== -1) {
-    icon = EntityIconMap['cdap-data-streams'];
+  if (entityObj.metadata.tags.find((tag) => tag.name === GLOBALS.etlDataPipeline && tag.scope === SYSTEM_SCOPE)) {
+    icon = EntityIconMap[GLOBALS.etlDataPipeline];
+  } else if (entityObj.metadata.tags.find((tag) => tag.name === GLOBALS.etlDataStreams && tag.scope === SYSTEM_SCOPE)) {
+    icon = EntityIconMap[GLOBALS.etlDataStreams];
   }
 
   return {
-    id: entity.metadataEntity.details.application,
-    type: entity.metadataEntity.type.toLowerCase(),
-    metadata: entity,
+    id: entityObj.entity.details.application,
+    type: entityObj.entity.type.toLowerCase(),
+    metadata: entityObj,
     version,
     icon,
-    isHydrator: entityIsPipeline(entity),
+    isHydrator: entityIsPipeline(entityObj),
   };
 }
 
-function createDatasetObj(entity) {
+function createDatasetObj(entityObj) {
   return {
-    id: entity.metadataEntity.details.dataset,
-    type: entity.metadataEntity.type.toLowerCase(),
-    metadata: entity,
+    id: entityObj.entity.details.dataset,
+    type: entityObj.entity.type.toLowerCase(),
+    metadata: entityObj,
     icon: EntityIconMap['dataset'],
   };
 }
 
-function createProgramObj(entity) {
+function createProgramObj(entityObj) {
   return {
-    id: entity.metadataEntity.details.program,
-    applicationId: entity.metadataEntity.details.application,
-    type: entity.metadataEntity.type.toLowerCase(),
-    programType: entity.metadataEntity.details.type,
-    metadata: entity,
-    icon: EntityIconMap[entity.metadataEntity.details.type],
-  };
-}
-
-function createViewObj(entity) {
-  return {
-    id: entity.metadataEntity.details.view,
-    type: entity.metadataEntity.type.toLowerCase(),
-    metadata: entity,
-    icon: EntityIconMap['view'],
+    id: entityObj.entity.details.program,
+    applicationId: entityObj.entity.details.application,
+    type: entityObj.entity.type.toLowerCase(),
+    programType: entityObj.entity.details.type,
+    metadata: entityObj,
+    icon: EntityIconMap[entityObj.entity.details.type.toLowerCase()],
   };
 }

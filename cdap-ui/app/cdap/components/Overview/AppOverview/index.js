@@ -91,13 +91,17 @@ export default class AppOverview extends Component {
           return;
         }
         let entityDetail = res[1];
-        let properties = res[0];
+        let properties = {};
+        res[0].properties.forEach((property) => {
+          properties[property.name] = property.value;
+        });
+
         let programs = entityDetail.programs.map((prog) => {
           prog.uniqueId = uuidV4();
           return prog;
         });
         let datasets = entityDetail.datasets.map((dataset) => {
-          dataset.metadataEntity = {
+          dataset.entity = {
             details: {
               dataset: dataset.name,
             },

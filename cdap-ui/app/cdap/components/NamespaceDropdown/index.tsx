@@ -218,14 +218,14 @@ export default class NamespaceDropdown extends React.PureComponent<
       target: ['application', 'dataset'],
       query: '*',
       sort: 'entity-name asc',
-      showCustom: true,
+      responseFormat: 'v6',
     };
     let numApplications = 0;
     let numDatasets = 0;
     this.apiSubscription = MySearchApi.search(params).subscribe(
       (res) => {
-        res.results.forEach((entity) => {
-          const entityType = entity.metadataEntity.type;
+        res.results.forEach((entityObj) => {
+          const entityType = entityObj.entity.type;
           if (entityType === EntityType.application) {
             numApplications += 1;
           } else {

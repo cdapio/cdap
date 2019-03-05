@@ -7,6 +7,9 @@ exports[`Tags renders correctly 1`] = `
   <strong>
     features.Tags.labelWithCount:
   </strong>
+  <i>
+    features.Tags.notags
+  </i>
   <span
     class="tags-list"
   >
@@ -28,16 +31,5 @@ exports[`Tags renders correctly 1`] = `
       />
     </svg>
   </span>
-  <svg
-    class="icon-svg icon-spinner fa-lg fa-spin"
-    data-testid="loading-icon"
-  >
-    <use
-      xlink:href="http://localhost/#symbol-defs_icon-spinner"
-    />
-    <use
-      xlink:href="http://localhost/#symbol-defs_new_icon-spinner"
-    />
-  </svg>
 </div>
 `;
