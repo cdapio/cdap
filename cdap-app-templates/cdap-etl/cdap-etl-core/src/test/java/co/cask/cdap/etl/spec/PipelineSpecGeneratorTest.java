@@ -74,7 +74,7 @@ public class PipelineSpecGeneratorTest {
   private static final ETLPlugin MOCK_SPLITTER = new ETLPlugin("mocksplit", SplitterTransform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
-  private static BatchPipelineSpecGenerator<MockPluginConfigurer> specGenerator;
+  private static BatchPipelineSpecGenerator specGenerator;
 
   @BeforeClass
   public static void setupTests() {
@@ -98,10 +98,10 @@ public class PipelineSpecGeneratorTest {
                                    artifactIds);
 
 
-    specGenerator = new BatchPipelineSpecGenerator<>(pluginConfigurer,
-                                                     ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                     ImmutableSet.of(BatchSink.PLUGIN_TYPE),
-                                                     Engine.MAPREDUCE);
+    specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
+                                                   ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE),
+                                                   Engine.MAPREDUCE);
   }
 
 
@@ -586,8 +586,8 @@ public class PipelineSpecGeneratorTest {
       .setEngine(Engine.MAPREDUCE)
       .build();
 
-    new BatchPipelineSpecGenerator<>(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                     ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+    new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                   ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
       .generateSpec(config);
   }
 
@@ -612,8 +612,8 @@ public class PipelineSpecGeneratorTest {
       .setEngine(Engine.MAPREDUCE)
       .build();
 
-    PipelineSpec actual = new BatchPipelineSpecGenerator<>(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                                           ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
+    PipelineSpec actual = new BatchPipelineSpecGenerator(pluginConfigurer, ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                                         ImmutableSet.of(BatchSink.PLUGIN_TYPE), Engine.MAPREDUCE)
       .generateSpec(config);
 
     PipelineSpec expected = BatchPipelineSpec.builder()

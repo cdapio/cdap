@@ -28,14 +28,13 @@ import java.util.Set;
 
 /**
  * Generates specs for data stream pipelines.
- *
- * @param <T> the type of the platform configurer
  */
-public class DataStreamsPipelineSpecGenerator<T extends PluginConfigurer & DatasetConfigurer>
-  extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec, T> {
+public class DataStreamsPipelineSpecGenerator
+  extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec> {
 
-  public DataStreamsPipelineSpecGenerator(T configurer, Set<String> sourcePluginTypes,
-                                          Set<String> sinkPluginTypes) {
+  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(T configurer,
+                                                                                    Set<String> sourcePluginTypes,
+                                                                                    Set<String> sinkPluginTypes) {
     super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
   }
 

@@ -20,9 +20,9 @@ import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.etl.proto.v2.spec.PluginSpec;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import co.cask.cdap.etl.validation.InvalidPipelineException;
@@ -31,16 +31,13 @@ import java.util.Set;
 
 /**
  * Generates a pipeline spec for batch apps.
- *
- * @param <T> the type of the platform configurer
  */
-public class BatchPipelineSpecGenerator<T extends PluginConfigurer & DatasetConfigurer>
-  extends PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec, T> {
+public class BatchPipelineSpecGenerator extends PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> {
 
-  public BatchPipelineSpecGenerator(T configurer,
-                                    Set<String> sourcePluginTypes,
-                                    Set<String> sinkPluginTypes,
-                                    Engine engine) {
+  public <T extends PluginConfigurer & DatasetConfigurer> BatchPipelineSpecGenerator(T configurer,
+                                                                                     Set<String> sourcePluginTypes,
+                                                                                     Set<String> sinkPluginTypes,
+                                                                                     Engine engine) {
     super(configurer, sourcePluginTypes, sinkPluginTypes, engine);
   }
 
@@ -50,7 +47,8 @@ public class BatchPipelineSpecGenerator<T extends PluginConfigurer & DatasetConf
 
     for (ETLStage endingAction : config.getPostActions()) {
       String name = endingAction.getName();
-      DefaultPipelineConfigurer<T> pipelineConfigurer = new DefaultPipelineConfigurer<>(configurer, name, engine);
+      DefaultPipelineConfigurer pipelineConfigurer =
+        new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer, name, engine, new DefaultStageConfigurer());
       StageSpec spec = configureStage(endingAction.getName(), endingAction.getPlugin(), pipelineConfigurer).build();
       specBuilder.addAction(new ActionSpec(name, spec.getPlugin()));
     }

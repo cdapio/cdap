@@ -71,23 +71,22 @@ import java.util.Set;
  *
  * @param <C> the type of user provided config
  * @param <P> the pipeline specification generated from the config
- * @param <T> the type of the platform configurer
  */
-public abstract class PipelineSpecGenerator<C extends ETLConfig,
-                                            P extends PipelineSpec,
-                                            T extends PluginConfigurer & DatasetConfigurer> {
+public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends PipelineSpec> {
   private static final Set<String> VALID_ERROR_INPUTS = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
-  protected final T configurer;
+  protected final PluginConfigurer pluginConfigurer;
+  protected final DatasetConfigurer datasetConfigurer;
   protected final Engine engine;
   private final Set<String> sourcePluginTypes;
   private final Set<String> sinkPluginTypes;
 
-  protected PipelineSpecGenerator(T configurer,
-                                  Set<String> sourcePluginTypes,
-                                  Set<String> sinkPluginTypes,
-                                  Engine engine) {
-    this.configurer = configurer;
+  protected <T extends PluginConfigurer & DatasetConfigurer> PipelineSpecGenerator(T configurer,
+                                                                                   Set<String> sourcePluginTypes,
+                                                                                   Set<String> sinkPluginTypes,
+                                                                                   Engine engine) {
+    this.pluginConfigurer = configurer;
+    this.datasetConfigurer = configurer;
     this.sourcePluginTypes = sourcePluginTypes;
     this.sinkPluginTypes = sinkPluginTypes;
     this.engine = engine;
@@ -123,12 +122,14 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
     ValidatedPipeline validatedPipeline = validateConfig(config);
     List<ETLStage> traversalOrder = validatedPipeline.getTraversalOrder();
 
-    Map<String, DefaultPipelineConfigurer<T>> pluginConfigurers = new HashMap<>(traversalOrder.size());
+    Map<String, DefaultPipelineConfigurer> pluginConfigurers = new HashMap<>(traversalOrder.size());
     Map<String, String> pluginTypes = new HashMap<>(traversalOrder.size());
     for (ETLStage stage : traversalOrder) {
       String stageName = stage.getName();
       pluginTypes.put(stageName, stage.getPlugin().getType());
-      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer<>(configurer, stageName, engine));
+      pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(pluginConfigurer, datasetConfigurer,
+                                                                     stageName, engine,
+                                                                     new DefaultStageConfigurer()));
     }
 
     // anything prefixed by 'system.[engine].' is a pipeline property.
@@ -148,7 +149,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
     // configure the stages in order and build up the stage specs
     for (ETLStage stage : traversalOrder) {
       String stageName = stage.getName();
-      DefaultPipelineConfigurer<T> pluginConfigurer = pluginConfigurers.get(stageName);
+      DefaultPipelineConfigurer pluginConfigurer = pluginConfigurers.get(stageName);
 
       ConfiguredStage configuredStage = configureStage(stage, validatedPipeline, pluginConfigurer);
 
@@ -252,7 +253,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
    * @return the spec for the stage
    */
   private ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
-                                         DefaultPipelineConfigurer<T> pluginConfigurer)
+                                         DefaultPipelineConfigurer pluginConfigurer)
     throws InvalidPipelineException {
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
@@ -315,7 +316,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
    * @throws InvalidPipelineException if the plugin threw an exception during configuration
    */
   public StageSpec.Builder configureStage(String stageName, ETLPlugin etlPlugin,
-                                          DefaultPipelineConfigurer<T> pipelineConfigurer)
+                                          DefaultPipelineConfigurer pipelineConfigurer)
     throws InvalidPipelineException {
     TrackedPluginSelector pluginSelector = new TrackedPluginSelector(
       new ArtifactSelectorProvider().getPluginSelector(etlPlugin.getArtifactConfig()));
@@ -323,11 +324,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
 
     Object plugin;
     try {
-      plugin = configurer.usePlugin(etlPlugin.getType(),
-                                    etlPlugin.getName(),
-                                    stageName,
-                                    etlPlugin.getPluginProperties(),
-                                    pluginSelector);
+      plugin = pluginConfigurer.usePlugin(etlPlugin.getType(),
+                                          etlPlugin.getName(),
+                                          stageName,
+                                          etlPlugin.getPluginProperties(),
+                                          pluginSelector);
     } catch (Exception e) {
       throw new InvalidPipelineException(new StageValidationError(e.getMessage(), stageName));
     }
