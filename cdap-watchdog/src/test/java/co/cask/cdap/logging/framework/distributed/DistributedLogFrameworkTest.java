@@ -211,13 +211,14 @@ public class DistributedLogFrameworkTest {
     cConf.setLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS, 2000);
     cConf.setLong("log.process.pipeline.checkpoint.interval.ms", 2000);
 
+    MockTwillContext mockTwillContext = new MockTwillContext();
     return Guice.createInjector(
       new ConfigModule(cConf),
       new ZKClientModule(),
       new InMemoryDiscoveryModule(),
       new KafkaClientModule(),
       new LocalLocationModule(),
-      new DistributedLogFrameworkModule(new MockTwillContext()),
+      new DistributedLogFrameworkModule(mockTwillContext.getInstanceId(), mockTwillContext.getInstanceCount()),
       new DataSetsModules().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
       new TransactionExecutorModule(),

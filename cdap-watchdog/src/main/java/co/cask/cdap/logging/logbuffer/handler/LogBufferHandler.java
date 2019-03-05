@@ -54,7 +54,6 @@ public class LogBufferHandler extends AbstractHttpHandler {
   public void publish(FullHttpRequest request, HttpResponder responder,
                       @PathParam("partition-id") int partitionId) throws Exception {
     LogBufferRequest bufferRequest = createLogBufferRequest(request, partitionId);
-
     writer.process(bufferRequest);
     responder.sendStatus(HttpResponseStatus.OK);
   }

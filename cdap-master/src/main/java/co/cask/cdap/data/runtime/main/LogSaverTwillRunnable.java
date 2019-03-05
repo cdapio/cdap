@@ -107,7 +107,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
-      new DistributedLogFrameworkModule(twillContext),
+      new DistributedLogFrameworkModule(twillContext.getInstanceId(), twillContext.getInstanceCount()),
       new KafkaLogAppenderModule(),
       new AuditModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),

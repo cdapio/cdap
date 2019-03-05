@@ -19,6 +19,7 @@ package co.cask.cdap.master.environment.k8s;
 import co.cask.cdap.app.guice.ConstantTransactionSystemClient;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
@@ -65,6 +66,7 @@ public class StorageMain {
       new DataSetsModules().getStandaloneModules(),
       new InMemoryDiscoveryModule(),
       new StorageModule(),
+      new DFSLocationModule(),
       new AuthenticationContextModules().getNoOpModule(),
       new AbstractModule() {
         @Override

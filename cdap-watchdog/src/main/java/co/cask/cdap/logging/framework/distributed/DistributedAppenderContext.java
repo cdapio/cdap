@@ -18,35 +18,38 @@ package co.cask.cdap.logging.framework.distributed;
 
 import co.cask.cdap.api.logging.AppenderContext;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.framework.AbstractAppenderContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Inject;
-import org.apache.twill.api.TwillContext;
+import com.google.inject.name.Named;
 import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * A {@link AppenderContext} used in distributed mode.
  */
 public class DistributedAppenderContext extends AbstractAppenderContext {
-
-  private final TwillContext twillContext;
+  private final int instanceId;
+  private final int instanceCount;
 
   @Inject
   DistributedAppenderContext(TransactionRunner transactionRunner,
                              LocationFactory locationFactory,
                              MetricsCollectionService metricsCollectionService,
-                             TwillContext twillContext) {
+                             @Named(Constants.LogSaver.LOG_SAVER_INSTANCE_ID) Integer instanceId,
+                             @Named(Constants.LogSaver.LOG_SAVER_INSTANCE_COUNT) Integer instanceCount) {
     super(transactionRunner, locationFactory, metricsCollectionService);
-    this.twillContext = twillContext;
+    this.instanceId = instanceId;
+    this.instanceCount = instanceCount;
   }
 
   @Override
   public int getInstanceId() {
-    return twillContext.getInstanceId();
+    return instanceId;
   }
 
   @Override
   public int getInstanceCount() {
-    return twillContext.getInstanceCount();
+    return instanceCount;
   }
 }

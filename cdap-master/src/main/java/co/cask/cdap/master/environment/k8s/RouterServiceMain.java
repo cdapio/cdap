@@ -17,6 +17,7 @@
 package co.cask.cdap.master.environment.k8s;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.gateway.router.NettyRouter;
@@ -51,6 +52,7 @@ public class RouterServiceMain extends AbstractServiceMain {
     return Arrays.asList(
       new MessagingClientModule(),
       new RouterModules().getDistributedModules(),
+      new DFSLocationModule(),
       // Use the Standalone module for now, until we have proper support for key management for authentication in K8s
       new SecurityModules().getStandaloneModules()
     );
