@@ -21,6 +21,9 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
+import co.cask.cdap.api.annotation.PluginFunction;
+import co.cask.cdap.api.annotation.PluginInput;
+import co.cask.cdap.api.annotation.PluginOutput;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
@@ -247,7 +250,8 @@ final class ArtifactInspector {
           String configField = getProperties(TypeToken.of(cls), pluginProperties);
           Set<String> pluginEndpoints = getPluginEndpoints(cls);
           PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
-                                                    getPluginDescription(cls), cls.getName(),
+                                                    getPluginDescription(cls), getPluginInput(cls), 
+                                                    getPluginOutput(cls), getPluginFunction(cls), cls.getName(),
                                                     configField, pluginProperties, pluginEndpoints,
                                                     getPluginRequirements(cls));
           builder.addPlugin(pluginClass);
@@ -420,6 +424,30 @@ final class ArtifactInspector {
   private String getPluginDescription(Class<?> cls) {
     Description annotation = cls.getAnnotation(Description.class);
     return annotation == null ? "" : annotation.value();
+  }
+
+  /**
+   * Extracts and returns plugin input.
+   */
+  private String[] getPluginInput(Class<?> cls) {
+      PluginInput annotation = cls.getAnnotation(PluginInput.class);
+      return annotation == null || annotation.type() == null ? null : annotation.type();
+  }
+
+  /**
+   * Extracts and returns plugin output.
+   */
+  private String[] getPluginOutput(Class<?> cls) {
+      PluginOutput annotation = cls.getAnnotation(PluginOutput.class);
+      return annotation == null || annotation.type() == null ? null : annotation.type();
+  }
+
+  /**
+   * Extracts and returns plugin input.
+   */
+  private String[] getPluginFunction(Class<?> cls) {
+      PluginFunction annotation = cls.getAnnotation(PluginFunction.class);
+      return annotation == null || annotation.function() == null ? null : annotation.function();
   }
 
   /**

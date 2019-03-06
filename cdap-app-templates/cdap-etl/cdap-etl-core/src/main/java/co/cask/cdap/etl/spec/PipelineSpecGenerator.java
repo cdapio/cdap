@@ -173,10 +173,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig,
         }
 
         // Do not allow null input schema for Joiner
-        if (BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && nextStageInputSchema == null) {
-          throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
-                                                             "outputs a null schema.", stageName));
-        }
+//        if (BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && nextStageInputSchema == null) {
+//          throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, 
+//        but stage %s " +
+//                                                             "outputs a null schema.", stageName));
+//        }
 
         // Do not allow more than one input schema for stages other than Joiner and Action
         if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType)

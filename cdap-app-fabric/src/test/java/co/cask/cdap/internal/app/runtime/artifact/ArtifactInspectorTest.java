@@ -144,7 +144,7 @@ public class ArtifactInspectorTest {
           "y", new PluginPropertyField("y", "", "double", true, true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)));
       PluginClass multipleRequirementPlugin = new PluginClass(
-        InspectionApp.PLUGIN_TYPE, InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN, InspectionApp.PLUGIN_DESCRIPTION,
+        InspectionApp.PLUGIN_TYPE, InspectionApp.MULTIPLE_REQUIREMENTS_PLUGIN, InspectionApp.PLUGIN_DESCRIPTION, 
         InspectionApp.MultipleRequirementsPlugin.class.getName(), "pluginConf",
         ImmutableMap.of(
           "y", new PluginPropertyField("y", "", "double", true, true),

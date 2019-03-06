@@ -51,10 +51,10 @@ import co.cask.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import co.cask.cdap.etl.spark.function.OutputPassFilter;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spec.StageSpec;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -514,3 +514,4 @@ public abstract class SparkPipelineRunner {
     }
   }
 }
+

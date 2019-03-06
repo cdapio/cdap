@@ -184,8 +184,8 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testMultiplePluginClasses() throws InvalidArtifactException {
     DefaultArtifactRepository.validatePluginSet(ImmutableSet.of(
-      new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.of()),
-      new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.of())));
+      new PluginClass("t1", "n1", "", null, null, null, "co.cask.test1", "cfg", ImmutableMap.of()),
+      new PluginClass("t1", "n1", "", null, null, null, "co.cask.test2", "cfg", ImmutableMap.of())));
   }
 
   @Test
@@ -204,8 +204,8 @@ public class ArtifactRepositoryTest {
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
     Set<PluginClass> manuallyAddedPlugins1 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", "co.cask.classname", null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
+      new PluginClass("typeA", "manual1", "desc", null, null, null, "co.cask.classname", null, emptyMap),
+      new PluginClass("typeB", "manual2", "desc", null, null, null, "co.cask.otherclassname", null, emptyMap)
     );
     File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
@@ -227,8 +227,8 @@ public class ArtifactRepositoryTest {
 
     // write plugins config file
     Set<PluginClass> manuallyAddedPlugins2 = ImmutableSet.of(
-      new PluginClass("typeA", "manual1", "desc", "co.notcask.classname", null, emptyMap),
-      new PluginClass("typeB", "manual2", "desc", "co.notcask.otherclassname", null, emptyMap)
+      new PluginClass("typeA", "manual1", "desc", null, null, null, "co.notcask.classname", null, emptyMap),
+      new PluginClass("typeB", "manual2", "desc", null, null, null, "co.notcask.otherclassname", null, emptyMap)
     );
     pluginConfigFile = new File(systemArtifactsDir2, "BPlugin-1.0.0.json");
     ArtifactConfig pluginConfig2 = new ArtifactConfig(
