@@ -37,6 +37,7 @@ import RulesEngineLink from 'components/Header/RulesEngineLink';
 import MetadataLink from 'components/Header/MetadataLink';
 import HubButton from 'components/Header/HubButton';
 import {NamespaceLinkContext} from 'components/Header/NamespaceLinkContext';
+import { Theme } from 'services/ThemeHelper';
 
 require('./Header.scss');
 
@@ -96,6 +97,9 @@ export default class Header extends Component {
   }
 
   render() {
+    if (Theme.showHeader === false) {
+      return null;
+    }
     let administrationURL = '/administration/configuration';
     const namespaceLinkContext = {
       namespace: this.state.currentNamespace,

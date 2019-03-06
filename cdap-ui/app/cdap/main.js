@@ -53,6 +53,8 @@ import ErrorBoundary from 'components/ErrorBoundary';
 import OverlayFocus from 'components/OverlayFocus';
 import {Theme} from 'services/ThemeHelper';
 import AuthRefresher from 'components/AuthRefresher';
+import { getClassNameForHeaderFooter } from 'components/FeatureUI/util';
+
 const SampleTSXComponent = Loadable({
   loader: () => import (/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
   loading: LoadingSVGCentered
@@ -186,7 +188,13 @@ CDAP.propTypes = {
   children: PropTypes.node
 };
 
+const appContainer = document.getElementById('app-container');
+const className = getClassNameForHeaderFooter();
+if(className){
+  appContainer.classList.add(className);
+}
+
 ReactDOM.render(
   <CDAP />,
-  document.getElementById('app-container')
+  appContainer
 );

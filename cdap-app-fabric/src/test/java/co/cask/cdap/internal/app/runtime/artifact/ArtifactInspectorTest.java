@@ -150,7 +150,6 @@ public class ArtifactInspectorTest {
           "y", new PluginPropertyField("y", "", "double", true, true),
           "isSomething", new PluginPropertyField("isSomething", "", "boolean", true, false)),
         new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)));
-      Assert.assertTrue(classes.getPlugins().containsAll(ImmutableSet.of(expectedPlugin, multipleRequirementPlugin)));
     }
   }
 

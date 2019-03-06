@@ -124,7 +124,10 @@ class HydratorPlusPlusStudioCtrl {
         }
       }
     });
+
+    $scope.getClassName = window.CaskCommon.Util.getClassNameForHeaderFooter();
   }
+
   toggleSidebar() {
     this.isExpanded = !this.isExpanded;
     this.myLocalStorage.set('hydrator++-leftpanel-isExpanded', this.isExpanded);

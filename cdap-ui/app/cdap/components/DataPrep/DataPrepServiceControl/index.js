@@ -106,7 +106,7 @@ export default class DataPrepServiceControl extends Component {
               </h2>
               <div className="text-xs-left action-container">
                 <button
-                  className="btn btn-primary"
+                  className={"btn btn-primary " + (Theme && Theme.isCustomerMWC ? 'btn-primary-mwc' : '')}
                   onClick={this.enableService}
                   disabled={this.state.loading}
                 >

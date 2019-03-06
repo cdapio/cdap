@@ -18,12 +18,15 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
+import FeatureUI from 'components/FeatureUI';
+
 import EntityListView from 'components/EntityListView';
 import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { Theme } from 'services/ThemeHelper';
 
 require('./Home.scss');
 
@@ -124,6 +127,9 @@ export default class Home extends Component {
             );
           }} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
+          {
+            Theme.showFeatureEngineering && <Route path="/ns/:namespace/featureEngineering" component={FeatureUI} />
+          }
           <Route path="/ns/:namespace/experiments" component={Experiments} />
           <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
