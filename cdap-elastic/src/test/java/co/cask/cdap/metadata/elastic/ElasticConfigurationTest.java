@@ -48,20 +48,20 @@ public class ElasticConfigurationTest {
     LOG.info("Elasticsearch port is {}, index name is {}", elasticPort, indexName);
 
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_INDEX_NAME, indexName);
-    cConf.set(ElasticsearchMetadataStorage.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
+    cConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
+    cConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
 
     // shards defaults to 5, and replicas default 1 in Elasticsearch
     // max result window defaults to 10000 but this default is not returned in the settings
     testIndexConfig(cConf, indexName, elasticPort, 5, 1, null);
 
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_WINDOW_SIZE, 100);
+    cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
     testIndexConfig(cConf, indexName, elasticPort, 5, 1, 100);
 
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_NUM_SHARDS, 4);
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_NUM_REPLICAS, 2);
-    cConf.setInt(ElasticsearchMetadataStorage.CONF_ELASTIC_WINDOW_SIZE, 100);
+    cConf.setInt(Config.CONF_ELASTIC_NUM_SHARDS, 4);
+    cConf.setInt(Config.CONF_ELASTIC_NUM_REPLICAS, 2);
+    cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
     testIndexConfig(cConf, indexName, elasticPort, 4, 2, 100);
   }

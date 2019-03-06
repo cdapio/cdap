@@ -24,6 +24,7 @@ import co.cask.cdap.spi.metadata.MetadataMutation.Create;
 import co.cask.cdap.spi.metadata.MetadataMutation.Drop;
 import co.cask.cdap.spi.metadata.MetadataMutation.Remove;
 import co.cask.cdap.spi.metadata.MetadataMutation.Update;
+import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -33,17 +34,23 @@ import com.google.common.collect.Sets;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -1407,6 +1414,223 @@ public abstract class MetadataStorageTest {
    * @param expectedPageSize the expected pagesize/limit of the cursor
    */
   protected abstract void validateCursor(String cursor, int expectedOffset, int expectedPageSize);
+
+  @Test
+  public void testConcurrency() throws IOException {
+    int numThreads = 10;
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    CompletionService<MetadataChange> completionService = new ExecutorCompletionService<>(executor);
+    MetadataStorage mds = getMetadataStorage();
+    MetadataEntity entity = MetadataEntity.ofDataset("myds");
+    // add "r<i>" tags to be removed by the individual threads
+    mds.apply(new Update(entity, new Metadata(
+      USER, IntStream.range(0, numThreads).mapToObj(i -> "r" + i).collect(Collectors.toSet()))));
+    // create normally replaces. Add directives to preserve all tags. Also create the expected tags
+    Set<String> expectedTags = new HashSet<>();
+    Map<ScopedNameOfKind, MetadataDirective> directives = new HashMap<>();
+    IntStream.range(0, numThreads).forEach(i -> {
+      directives.put(new ScopedNameOfKind(TAG, USER, "t" + i), MetadataDirective.KEEP);
+      directives.put(new ScopedNameOfKind(TAG, USER, "r" + i), MetadataDirective.KEEP);
+      directives.put(new ScopedNameOfKind(TAG, USER, "c" + i), MetadataDirective.KEEP);
+      // create threads will add c<i> and update threads will add t<i>; all r<i> will be removed
+      expectedTags.add("t" + i);
+      expectedTags.add("c" + i);
+    });
+    try {
+      // create conflicting threads that perform create, update, and remove on the same entity
+      IntStream.range(0, numThreads).forEach(
+        i -> {
+          completionService.submit(
+            () -> mds.apply(new Create(entity, new Metadata(USER, tags("c" + i)), directives)));
+          completionService.submit(
+            () -> mds.apply(new Update(entity, new Metadata(USER, tags("t" + i)))));
+          completionService.submit(
+            () -> mds.apply(new Remove(entity, Collections.singleton(new ScopedNameOfKind(TAG, USER, "r" + i)))));
+        });
+      IntStream.range(0, numThreads * 3).forEach(i -> {
+        try {
+          completionService.take();
+        } catch (InterruptedException e) {
+          throw Throwables.propagate(e);
+        }
+      });
+      // validate that all "r" tags were removed and all "c" and "t" tags were added
+      Assert.assertEquals(expectedTags, mds.read(new Read(entity)).getTags(USER));
+    } finally {
+      // clean up
+      mds.apply(new Drop(entity));
+    }
+  }
+
+  @Test
+  public void testBatchConcurrency() throws IOException {
+    int numThreads = 10; // T threads
+    int numEntities = 20; // N entities
+    MetadataStorage mds = getMetadataStorage();
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    CompletionService<List<MetadataChange>> completionService = new ExecutorCompletionService<>(executor);
+    // Set up N entities with T tags (one to be removed per thread)
+    Set<String> allRTags = IntStream.range(0, numThreads).mapToObj(t -> "r" + t).collect(Collectors.toSet());
+    Map<Integer, MetadataEntity> entities = IntStream.range(0, numEntities)
+      .boxed().collect(Collectors.toMap(i -> i, i -> MetadataEntity.ofDataset("myds" + i)));
+    mds.batch(entities.values().stream()
+                .map(entity -> new Update(entity, new Metadata(USER, allRTags))).collect(Collectors.toList()));
+
+    // Generate a random but conflicting set of batches of mutations, one for each thread.
+    // Construct the expected results for each entity along with the mutations
+    // Also, because some threads will perform a Create, create a set of directives to preserve all other tags
+    Map<Integer, Set<String>> expected = IntStream.range(0, numEntities)
+      .boxed().collect(Collectors.toMap(i -> i, i -> new HashSet<>(allRTags)));
+    Map<Integer, List<MetadataMutation>> mutations = IntStream.range(0, numThreads)
+      .boxed().collect(Collectors.toMap(i -> i, i -> new ArrayList<>()));
+    Map<ScopedNameOfKind, MetadataDirective> directives = new HashMap<>();
+    Random rand = new Random(System.currentTimeMillis());
+    IntStream.range(0, numThreads).forEach(t -> {
+      directives.put(new ScopedNameOfKind(TAG, USER, "t" + t), MetadataDirective.KEEP);
+      directives.put(new ScopedNameOfKind(TAG, USER, "r" + t), MetadataDirective.KEEP);
+      directives.put(new ScopedNameOfKind(TAG, USER, "c" + t), MetadataDirective.KEEP);
+      IntStream.range(0, numEntities).forEach(e -> {
+        int random = rand.nextInt(100);
+        if (random < 30) {
+          expected.get(e).add("t" + t);
+          mutations.get(t).add(new Update(entities.get(e), new Metadata(USER, tags("t" + t))));
+        } else if (random < 60) {
+          expected.get(e).add("c" + t);
+          mutations.get(t).add(new Create(entities.get(e), new Metadata(USER, tags("c" + t)), directives));
+        } else if (random < 90) {
+          expected.get(e).remove("r" + t);
+          mutations.get(t).add(new Remove(entities.get(e),
+                                          Collections.singleton(new ScopedNameOfKind(TAG, USER, "r" + t))));
+        }
+      });
+    });
+    // submit all tasks and wait for their completion
+    IntStream.range(0, numThreads).forEach(t -> completionService.submit(
+      () -> mds.batch(mutations.get(t))));
+    IntStream.range(0, numThreads).forEach(t -> {
+      try {
+        completionService.take();
+      } catch (InterruptedException e) {
+        throw Throwables.propagate(e);
+      }
+    });
+    // validate that all "r" tags were removed and all "c" and "t" tags were added
+    IntStream.range(0, numEntities).forEach(
+      e -> {
+        try {
+          Assert.assertEquals("For entity " + entities.get(e), expected.get(e),
+                              mds.read(new Read(entities.get(e))).getTags(USER));
+        } catch (Exception ex) {
+          throw Throwables.propagate(ex);
+        }
+      });
+    // clean up
+    mds.batch(entities.values().stream().map(Drop::new).collect(Collectors.toList()));
+  }
+
+  /**
+   * It's not trivial to test conflicts between updates and drops, because the outcome is not
+   * deterministic. Here we start with an entity that has one tag "a". We issue a Drop and an
+   * Update to add tag "b" concurrently. After both operations complete (possibly with retry
+   * after conflict), only two cases are possible:
+   *
+   * 1. The delete completes first: Tag "a" is gone and tag "b" is the only metadata.
+   *
+   * 2. The update completes first: Tag "b" is added and deleted along with "a" right after,
+   *    and the metadata is empty.
+   *
+   * Because the race between the two mutations does not always happen, we run this 10 times.
+   */
+  @Test
+  @Category(SlowTests.class)
+  public void testUpdateDropConflict() throws IOException {
+    MetadataEntity entity = MetadataEntity.ofDataset("myds");
+    MetadataStorage mds = getMetadataStorage();
+    int numTests = 10;
+    IntStream.range(0, numTests).forEach(x -> {
+      try {
+        mds.apply(new Create(entity, new Metadata(USER, tags("a")), Collections.emptyMap()));
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CompletionService<MetadataChange> completionService = new ExecutorCompletionService<>(executor);
+        MetadataMutation update = new Update(entity, new Metadata(USER, tags("b")));
+        MetadataMutation drop = new Drop(entity);
+        completionService.submit(() -> mds.apply(update));
+        completionService.submit(() -> mds.apply(drop));
+        completionService.take();
+        completionService.take();
+        // each entity is either dropped then updated (and then it has tag "b" only)
+        // or it first update and then dropped (and then it has empty metadata)
+        Assert.assertTrue(ImmutableSet.of(Metadata.EMPTY, new Metadata(USER, tags("b")))
+                            .contains(mds.read(new Read(entity))));
+      } catch (Exception e) {
+        Throwables.propagate(e);
+      }
+    });
+    // clean up
+    mds.apply(new Drop(entity));
+  }
+
+  /**
+   * See {@link #testUpdateDropConflict()} for a description. The difference in this test is that
+   * we issue batches of mutations over a collection of entities. The same assumptions apply,
+   * however, for each entity.
+   */
+  @Test
+  @Category(SlowTests.class)
+  public void testUpdateDropConflictInBatch() throws IOException {
+    int numTests = 10;
+    int numThreads = 2;
+    int numEntities = 20;
+    MetadataStorage mds = getMetadataStorage();
+    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+    CompletionService<List<MetadataChange>> completionService = new ExecutorCompletionService<>(executor);
+    Map<Integer, MetadataEntity> entities = IntStream.range(0, numEntities)
+      .boxed().collect(Collectors.toMap(i -> i, i -> MetadataEntity.ofDataset("myds" + i)));
+    List<MetadataMutation> creates = entities.values().stream()
+      .map(e -> new Create(e, new Metadata(USER, tags("a")), Collections.emptyMap())).collect(Collectors.toList());
+    Random rand = new Random(System.currentTimeMillis());
+    IntStream.range(0, numTests).forEach(x -> {
+      try {
+        mds.batch(creates);
+        Map<Integer, List<MetadataMutation>> mutations = IntStream.range(0, numThreads)
+          .boxed().collect(Collectors.toMap(i -> i, i -> new ArrayList<>()));
+        IntStream.range(0, numEntities).forEach(e -> {
+          // ensure that at least one thread attempts to drop this entity
+          int dropThread = rand.nextInt(numThreads);
+          IntStream.range(0, numThreads).forEach(t -> {
+            if (t == dropThread || rand.nextInt(100) < 50) {
+              mutations.get(t).add(new Drop(entities.get(e)));
+            } else {
+              mutations.get(t).add(new Update(entities.get(e), new Metadata(USER, tags("b"))));
+            }
+          });
+        });
+        IntStream.range(0, numThreads).forEach(t -> completionService.submit(
+          () -> mds.batch(mutations.get(t))));
+        IntStream.range(0, numThreads).forEach(t -> {
+          try {
+            completionService.take();
+          } catch (InterruptedException e) {
+            throw Throwables.propagate(e);
+          }
+        });
+        IntStream.range(0, numEntities).forEach(
+          e -> {
+            try {
+              // each entity is either dropped then updated (and then it has tag "b" only)
+              // or it first update and then dropped (and then it has empty metadata)
+              Assert.assertTrue(ImmutableSet.of(Metadata.EMPTY, new Metadata(USER, tags("b")))
+                                  .contains(mds.read(new Read(entities.get(e)))));
+            } catch (Exception ex) {
+              throw Throwables.propagate(ex);
+            }
+          });
+      } catch (Exception e) {
+        throw Throwables.propagate(e);
+      }
+    });
+    mds.batch(entities.values().stream().map(Drop::new).collect(Collectors.toList()));
+  }
 
   private static class NoDupRandom {
     private final Random random = new Random(System.currentTimeMillis());

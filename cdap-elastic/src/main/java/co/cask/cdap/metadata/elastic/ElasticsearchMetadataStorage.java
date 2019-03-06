@@ -20,7 +20,11 @@ import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.metadata.Cursor;
+import co.cask.cdap.common.metadata.MetadataConflictException;
 import co.cask.cdap.common.metadata.MetadataUtil;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataChange;
 import co.cask.cdap.spi.metadata.MetadataConstants;
@@ -50,6 +54,7 @@ import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
+import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -59,14 +64,12 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
@@ -75,7 +78,6 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -85,6 +87,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.query.WildcardQueryBuilder;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -99,10 +102,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -115,32 +119,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchMetadataStorage.class);
 
-  // Elasticsearch-specific settings
-  @VisibleForTesting
-  static final String CONF_ELASTIC_HOSTS = "metadata.elasticsearch.cluster.hosts";
-  @VisibleForTesting
-  static final String CONF_ELASTIC_INDEX_NAME = "metadata.elasticsearch.index.name";
-  @VisibleForTesting
-  static final String CONF_ELASTIC_SCROLL_TIMEOUT = "metadata.elasticsearch.scroll.timeout";
-  @VisibleForTesting
-  static final String CONF_ELASTIC_WAIT_FOR_MUTATIONS = "metadata.elasticsearch.wait.for.mutations";
-  @VisibleForTesting
-  static final String CONF_ELASTIC_NUM_SHARDS = "metadata.elasticsearch.num.shards";
-  @VisibleForTesting
-  static final String CONF_ELASTIC_NUM_REPLICAS = "metadata.elasticsearch.num.replicas";
-  @VisibleForTesting
-  static final String CONF_ELASTIC_WINDOW_SIZE = "metadata.elasticsearch.max.window.size";
-
-  private static final String DEFAULT_ELASTIC_HOSTS = "localhost:9200";
-  private static final String DEFAULT_INDEX_NAME = "cdap.metadata";
-  private static final String DEFAULT_SCROLL_TIMEOUT = "60s";
-  private static final boolean DEFAULT_WAIT_FOR_MUTATIONS = false;
-
   private static final String SETTING_NUMBER_OF_SHARDS = "number_of_shards";
   private static final String SETTING_NUMBER_OF_REPLICAS = "number_of_replicas";
   private static final String SETTING_MAX_RESULT_WINDOW = "max_result_window";
-  private static final int DEFAULT_MAX_RESULT_WINDOW = 10000; // this is hardcoded in Elasticsearch
-
 
   private static final String MAPPING_RESOURCE = "index.mapping.json";
 
@@ -159,7 +140,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   // used to tokenize the query string, same as the MetadataDataset
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
 
-  // various fields in a metadata document (indexed in elasticsearch)
+  // Various fields in a metadata document (indexed in elasticsearch). Beware that these directly
+  // correspond to field name in the index settings (index.mapping.json). Any change here must be
+  // reflected there, and vice versa.
   private static final String DOC_TYPE = "meta";
   private static final String CREATED_FIELD = "created"; // contains the creation time
   private static final String HIDDEN_FIELD = "hidden"; // contains the _ from the entity name (if present)
@@ -186,16 +169,26 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private final WriteRequest.RefreshPolicy refreshPolicy;
 
   private volatile boolean created = false;
-  private int maxWindowSize = DEFAULT_MAX_RESULT_WINDOW;
+  private int maxWindowSize = Config.DEFAULT_MAX_RESULT_WINDOW;
+
+  // sleep 100 ms for at most 50 times
+  private final RetryStrategy retryStrategyOnConflict;
 
   @Inject
   public ElasticsearchMetadataStorage(CConfiguration cConf) {
     this.cConf = cConf;
-    indexName = cConf.get(CONF_ELASTIC_INDEX_NAME, DEFAULT_INDEX_NAME);
-    scrollTimeout = cConf.get(CONF_ELASTIC_SCROLL_TIMEOUT, DEFAULT_SCROLL_TIMEOUT);
-    refreshPolicy = cConf.getBoolean(CONF_ELASTIC_WAIT_FOR_MUTATIONS, DEFAULT_WAIT_FOR_MUTATIONS)
+    indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
+    scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
+    refreshPolicy = cConf.getBoolean(Config.CONF_ELASTIC_WAIT_FOR_MUTATIONS, Config.DEFAULT_WAIT_FOR_MUTATIONS)
       ? WriteRequest.RefreshPolicy.WAIT_UNTIL : WriteRequest.RefreshPolicy.IMMEDIATE;
-    String elasticHosts = cConf.get(CONF_ELASTIC_HOSTS, DEFAULT_ELASTIC_HOSTS);
+    String elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
+    int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
+                                  Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
+    int retrySleepMs = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_RETRY_SLEEP_MS,
+                                    Config.DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS);
+    retryStrategyOnConflict = RetryStrategies.limit(numRetries,
+                                                    RetryStrategies.fixDelay(retrySleepMs, TimeUnit.MILLISECONDS));
+
     LOG.info("Elasticsearch cluster is {}", elasticHosts);
     HttpHost[] hosts = Arrays.stream(elasticHosts.split(",")).map(hostAndPort -> {
       int pos = hostAndPort.indexOf(':');
@@ -267,9 +260,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
   // Elasticsearch index settings, used when creating the index
   private String createSettings() {
-    String numShards = cConf.get(CONF_ELASTIC_NUM_SHARDS);
-    String numReplicas = cConf.get(CONF_ELASTIC_NUM_REPLICAS);
-    String maxResultWindow = cConf.get(CONF_ELASTIC_WINDOW_SIZE);
+    String numShards = cConf.get(Config.CONF_ELASTIC_NUM_SHARDS);
+    String numReplicas = cConf.get(Config.CONF_ELASTIC_NUM_REPLICAS);
+    String maxResultWindow = cConf.get(Config.CONF_ELASTIC_WINDOW_SIZE);
     Map<String, Integer> indexSettings = new HashMap<>();
     if (numShards != null) {
       indexSettings.put(SETTING_NUMBER_OF_SHARDS, Integer.parseInt(numShards));
@@ -316,10 +309,20 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   @Override
   public MetadataChange apply(MetadataMutation mutation) throws IOException {
     MetadataEntity entity = mutation.getEntity();
-    Metadata before = readFromIndex(entity);
-    Tuple<? extends DocWriteRequest, MetadataChange> intermediary = applyMutation(before, mutation);
-    executeMutation(mutation.getEntity(), intermediary.v1());
-    return intermediary.v2();
+    try {
+      // repeatedly try to read current metadata, apply the mutation and reindex, until there is no conflict
+      return Retries.callWithRetries(
+        () -> {
+          VersionedMetadata before = readFromIndex(entity);
+          RequestAndChange intermediary = applyMutation(before, mutation);
+          executeMutation(mutation.getEntity(), intermediary.getRequest());
+          return intermediary.getChange();
+        },
+        retryStrategyOnConflict,
+        e -> e instanceof MetadataConflictException);
+    } catch (MetadataConflictException e) {
+      throw new MetadataConflictException("After retries: " + e.getRawMessage(), e.getConflictingEntities());
+    }
   }
 
   @Override
@@ -327,15 +330,19 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (mutations.isEmpty()) {
       return Collections.emptyList();
     }
+    if (mutations.size() == 1) {
+      return Collections.singletonList(apply(mutations.get(0)));
+    }
+    // first detect whether there are duplicate entity ids. If so, execute in sequence
     Set<MetadataEntity> entities = new HashSet<>();
-    MultiGetRequest multiGet = new MultiGetRequest();
+    LinkedHashMap<MetadataEntity, MetadataMutation> mutationMap = new LinkedHashMap<>(mutations.size());
     boolean duplicate = false;
     for (MetadataMutation mutation : mutations) {
       if (!entities.add(mutation.getEntity())) {
         duplicate = true;
         break;
       }
-      multiGet.add(indexName, DOC_TYPE, toDocumentId(mutation.getEntity()));
+      mutationMap.put(mutation.getEntity(), mutation);
     }
     if (duplicate) {
       // if there are multiple mutations for the same entity, execute all in sequence
@@ -345,31 +352,73 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       }
       return changes;
     }
+    // collect all changes in an order-preserving map. The first time doBatch() is called, it will
+    // enter all entities in the map. Every time it is retried, the change may get updated, but that
+    // will not change the order of the map.
+    LinkedHashMap<MetadataEntity, MetadataChange> changes = new LinkedHashMap<>(mutations.size());
+    try {
+      // repeatedly try to read current metadata, apply the mutations and reindex, until there is no conflict
+      return Retries.callWithRetries(() -> doBatch(mutationMap, changes),
+                                     RetryStrategies.limit(50, RetryStrategies.fixDelay(100, TimeUnit.MILLISECONDS)),
+                                     e -> e instanceof MetadataConflictException);
+    } catch (MetadataConflictException e) {
+      throw new MetadataConflictException("After retries: " + e.getRawMessage(), e.getConflictingEntities());
+    }
+  }
+
+  /**
+   * For the given mutations, reads the current metadata for the involved entities, applies the mutations,
+   * and attempts to execute the resulting index operations in bulk. When finished, returns the list of
+   * metadata changes caused by the mutations.
+   *
+   * If a conflict occurs during any of these operations, the successful mutations are removed from the
+   * mutations map, and the changes map is updated with the corresponding change, before the
+   * {@link MetadataConflictException} is thrown. That is, calling this repeatedly will gradually
+   * shrink the mutations map to an empty map and fill the changes map with changes performed.
+   *
+   * @param mutations the mutations to apply. Every mutation that is successfully executed is removed
+   *                  from this map, even if an exception is thrown.
+   * @param changes the changes caused by the mutations. For every mutation that is successfully executed,
+   *                this map is updated with the corresponding change, even if an exception is thrown.
+   *
+   * @return the list of all changes performed by the mutations, if all mutations complete successfully
+   *
+   * @throws MetadataConflictException if a conflict occurs for any of the mutations
+   * @throws IOException for any other problem encountered
+   */
+  private List<MetadataChange> doBatch(LinkedHashMap<MetadataEntity, MetadataMutation> mutations,
+                                       LinkedHashMap<MetadataEntity, MetadataChange> changes)
+    throws IOException {
+    MultiGetRequest multiGet = new MultiGetRequest();
+    for (Map.Entry<MetadataEntity, MetadataMutation> entry : mutations.entrySet()) {
+      multiGet.add(indexName, DOC_TYPE, toDocumentId(entry.getKey()));
+    }
     MultiGetResponse multiGetResponse = client.mget(multiGet, RequestOptions.DEFAULT);
     // responses are in the same order as the original requests
     int index = 0;
-    List<MetadataChange> changes = new ArrayList<>(mutations.size());
     BulkRequest bulkRequest = new BulkRequest();
-    for (MetadataMutation mutation : mutations) {
+    for (Map.Entry<MetadataEntity, MetadataMutation> entry : mutations.entrySet()) {
       MultiGetItemResponse itemResponse = multiGetResponse.getResponses()[index++];
       if (itemResponse.isFailed()) {
-        throw new IOException("Failed to read from index for entity " + mutation.getEntity());
+        throw new IOException("Failed to read from index for entity " + entry.getKey());
       }
       GetResponse getResponse = itemResponse.getResponse();
-      Metadata before = getResponse.isExists()
-        ? GSON.fromJson(getResponse.getSourceAsString(), MetadataDocument.class).getMetadata() : Metadata.EMPTY;
-      Tuple<? extends DocWriteRequest, MetadataChange> intermediary = applyMutation(before, mutation);
-      bulkRequest.add(intermediary.v1());
-      changes.add(intermediary.v2());
+      VersionedMetadata before = getResponse.isExists()
+        ? VersionedMetadata.of(GSON.fromJson(getResponse.getSourceAsString(), MetadataDocument.class).getMetadata(),
+                               getResponse.getVersion())
+        : VersionedMetadata.NONE;
+      RequestAndChange intermediary = applyMutation(before, entry.getValue());
+      bulkRequest.add((DocWriteRequest) intermediary.getRequest());
+      changes.put(entry.getKey(), intermediary.getChange());
     }
     setRefreshPolicy(bulkRequest);
-    executeBulk(bulkRequest);
-    return changes;
+    executeBulk(bulkRequest, mutations);
+    return changes.entrySet().stream().map(Map.Entry::getValue).collect(Collectors.toList());
   }
 
   @Override
   public Metadata read(Read read) throws IOException {
-    Metadata metadata = readFromIndex(read.getEntity());
+    Metadata metadata = readFromIndex(read.getEntity()).getMetadata();
     return filterMetadata(metadata, KEEP, read.getKinds(), read.getScopes(), read.getSelection());
   }
 
@@ -390,7 +439,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation.
    */
-  private Tuple<? extends DocWriteRequest, MetadataChange> applyMutation(Metadata before, MetadataMutation mutation) {
+  private RequestAndChange applyMutation(VersionedMetadata before,
+                                         MetadataMutation mutation) {
+    LOG.trace("Applying mutation {} to entity {} with metadata", mutation, mutation.getEntity(), before.getMetadata());
     switch (mutation.getType()) {
       case CREATE:
         return create(before, (MetadataMutation.Create) mutation);
@@ -415,9 +466,9 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<IndexRequest, MetadataChange> create(Metadata before, MetadataMutation.Create create) {
+  private RequestAndChange create(VersionedMetadata before, MetadataMutation.Create create) {
     // if the entity did not exist before, none of the directives apply and this is equivalent to update()
-    if (before.isEmpty()) {
+    if (!before.existing()) {
       return update(create.getEntity(), before, create.getMetadata());
     }
     Metadata meta = create.getMetadata();
@@ -431,10 +482,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     // all tags and properties that are in a scope not affected by this mutation
     Sets.difference(MetadataScope.ALL, scopes).forEach(
       scope -> {
-        before.getTags().stream()
+        before.getMetadata().getTags().stream()
           .filter(tag -> tag.getScope().equals(scope))
           .forEach(existingTagsToKeep::add);
-        before.getProperties().entrySet().stream()
+        before.getMetadata().getProperties().entrySet().stream()
           .filter(entry -> entry.getKey().getScope().equals(scope))
           .forEach(entry -> existingPropertiesToKeep.put(entry.getKey(), entry.getValue()));
       });
@@ -446,12 +497,12 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         if (key.getKind() == MetadataKind.TAG
           && (entry.getValue() == MetadataDirective.PRESERVE || entry.getValue() == MetadataDirective.KEEP)) {
           ScopedName tag = new ScopedName(key.getScope(), key.getName());
-          if (!meta.getTags().contains(tag) && before.getTags().contains(tag)) {
+          if (!meta.getTags().contains(tag) && before.getMetadata().getTags().contains(tag)) {
             existingTagsToKeep.add(tag);
           }
         } else if (key.getKind() == MetadataKind.PROPERTY) {
           ScopedName property = new ScopedName(key.getScope(), key.getName());
-          String existingValue = before.getProperties().get(property);
+          String existingValue = before.getMetadata().getProperties().get(property);
           String newValue = meta.getProperties().get(property);
           if (existingValue != null
             && (entry.getValue() == MetadataDirective.PRESERVE && !existingValue.equals(newValue)
@@ -469,7 +520,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       newProperties.putAll(existingPropertiesToKeep);
     }
     Metadata after = new Metadata(newTags, newProperties);
-    return Tuple.tuple(writeToIndex(create.getEntity(), after), new MetadataChange(create.getEntity(), before, after));
+    return new RequestAndChange(writeToIndex(create.getEntity(), before.getVersion(), after),
+                                new MetadataChange(create.getEntity(), before.getMetadata(), after));
   }
 
   /**
@@ -480,25 +532,29 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<DeleteRequest, MetadataChange> drop(MetadataEntity entity, Metadata before) {
-    return Tuple.tuple(deleteFromIndex(entity), new MetadataChange(entity, before, Metadata.EMPTY));
+  private RequestAndChange drop(MetadataEntity entity, VersionedMetadata before) {
+    return new RequestAndChange(deleteFromIndex(entity, before.getVersion()),
+                                new MetadataChange(entity, before.getMetadata(), Metadata.EMPTY));
   }
 
   /**
    * Creates the Elasticsearch index request for updating the metadata of an entity.
    * This updates or adds the new metadata to the corresponding metadata document in the index.
    *
-   * @param before the metadata for the mutation's entity before the change
+   * @param before the metadata for the mutation's entity before the change, and its version
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<IndexRequest, MetadataChange> update(MetadataEntity entity, Metadata before, Metadata updates) {
-    Set<ScopedName> tags = new HashSet<>(before.getTags());
+  private RequestAndChange update(MetadataEntity entity,
+                                  VersionedMetadata before,
+                                  Metadata updates) {
+    Set<ScopedName> tags = new HashSet<>(before.getMetadata().getTags());
     tags.addAll(updates.getTags());
-    Map<ScopedName, String> properties = new HashMap<>(before.getProperties());
+    Map<ScopedName, String> properties = new HashMap<>(before.getMetadata().getProperties());
     properties.putAll(updates.getProperties());
     Metadata after = new Metadata(tags, properties);
-    return Tuple.tuple(writeToIndex(entity, after), new MetadataChange(entity, before, after));
+    return new RequestAndChange(writeToIndex(entity, before.getVersion(), after),
+                                new MetadataChange(entity, before.getMetadata(), after));
   }
 
   /**
@@ -513,37 +569,29 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    *
    * @return an ElasticSearch request to be executed, and the change caused by the mutation
    */
-  private Tuple<IndexRequest, MetadataChange> remove(Metadata before, MetadataMutation.Remove remove) {
-    Metadata after = filterMetadata(before, DISCARD, remove.getKinds(), remove.getScopes(), remove.getRemovals());
-    return Tuple.tuple(writeToIndex(remove.getEntity(), after), new MetadataChange(remove.getEntity(), before, after));
+  private RequestAndChange remove(VersionedMetadata before, MetadataMutation.Remove remove) {
+    Metadata after = filterMetadata(before.getMetadata(), DISCARD,
+                                    remove.getKinds(), remove.getScopes(), remove.getRemovals());
+    return new RequestAndChange(writeToIndex(remove.getEntity(), before.getVersion(), after),
+                                new MetadataChange(remove.getEntity(), before.getMetadata(), after));
   }
 
   /**
    * Reads the existing metadata for an entity from the index.
    *
-   * @return the metadata from the index if found, or empty metadata if the entity was not found in the index;
-   *         never null.
+   * @return existing metadata along with its version in the index, or an empty metadata with null version.
    */
-  private Metadata readFromIndex(MetadataEntity metadataEntity) throws IOException {
-    return readFromIndexIfExists(metadataEntity)
-      .map(MetadataDocument::getMetadata)
-      .orElse(Metadata.EMPTY);
-  }
-
-  /**
-   * Reads the existing metadata for an entity from the index.
-   *
-   * @return an optional metadata, depending on whether the entity was found in the index.
-   */
-  private Optional<MetadataDocument> readFromIndexIfExists(MetadataEntity entity) throws IOException {
+  private VersionedMetadata readFromIndex(MetadataEntity entity)
+    throws IOException {
     String id = toDocumentId(entity);
     try {
       GetRequest getRequest = new GetRequest(indexName).type(DOC_TYPE).id(id);
       GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
       if (!response.isExists()) {
-        return Optional.empty();
+        return VersionedMetadata.NONE;
       }
-      return Optional.of(GSON.fromJson(response.getSourceAsString(), MetadataDocument.class));
+      Metadata metadata = GSON.fromJson(response.getSourceAsString(), MetadataDocument.class).getMetadata();
+      return VersionedMetadata.of(metadata, response.getVersion());
     } catch (Exception e) {
       throw new IOException("Failed to read from index for entity " + entity);
     }
@@ -553,75 +601,136 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
    * Create an Elasticsearch index request for adding or updating the metadata for an entity in the index.
    * The request must be executed by the caller.
    */
-  private IndexRequest writeToIndex(MetadataEntity entity, Metadata metadata) {
+  private IndexRequest writeToIndex(MetadataEntity entity, Long expectVersion, Metadata metadata) {
     MetadataDocument doc = MetadataDocument.of(entity, metadata);
-    LOG.info("Indexing document: {}", doc);
-    return new IndexRequest(indexName)
+    LOG.trace("Indexing document: {}", doc);
+    IndexRequest request = new IndexRequest(indexName)
       .type(DOC_TYPE)
       .id(toDocumentId(entity))
       .source(GSON.toJson(doc), XContentType.JSON);
+    if (expectVersion == null) {
+      request.opType("create");
+    } else {
+      request.version(expectVersion);
+    }
+    return request;
   }
 
   /**
    * Create an Elasticsearch delete request for removing an entity in the index.
    * The request must be executed by the caller.
    */
-  private DeleteRequest deleteFromIndex(MetadataEntity entity) {
+  private DeleteRequest deleteFromIndex(MetadataEntity entity, Long existingVersion) {
     String id = toDocumentId(entity);
-    return new DeleteRequest(indexName).type(DOC_TYPE).id(id);
+    LOG.trace("Deleting document with id: {}", id);
+    DeleteRequest deleteRequest = new DeleteRequest(indexName).type(DOC_TYPE).id(id);
+    if (existingVersion != null) {
+      deleteRequest.version(existingVersion);
+    }
+    return deleteRequest;
   }
 
   /**
    * Executes an ElasticSearch request to modify a document (index or delete), and handles possible failure.
+   *
+   * @throws MetadataConflictException if a conflict occurs
+   * @throws IOException for any other problem encountered
    */
-  private void executeMutation(MetadataEntity entity, DocWriteRequest<?> writeRequest) throws IOException {
-    if (writeRequest instanceof DeleteRequest) {
-      DeleteRequest deleteRequest = (DeleteRequest) writeRequest;
-      setRefreshPolicy(deleteRequest);
-      DeleteResponse response = client.delete(deleteRequest, RequestOptions.DEFAULT);
-      if (isFailure(response.status().getStatus()) && !isNotFound(response.status().getStatus())) {
-        throw new IOException(String.format("Delete request unsuccessful for entity %s: %s", entity, response));
+  private void executeMutation(MetadataEntity entity, WriteRequest<?> writeRequest) throws IOException {
+    String requestType = null;
+    DocWriteResponse response;
+    setRefreshPolicy(writeRequest);
+    try {
+      if (writeRequest instanceof DeleteRequest) {
+        requestType = "Delete";
+        response = client.delete((DeleteRequest) writeRequest, RequestOptions.DEFAULT);
+      } else if (writeRequest instanceof IndexRequest) {
+        requestType = "Index";
+        response = client.index((IndexRequest) writeRequest, RequestOptions.DEFAULT);
+      } else {
+        throw new IllegalStateException("Unexpected WriteRequest of type " + writeRequest.getClass().getName());
       }
-    } else if (writeRequest instanceof IndexRequest) {
-      IndexRequest indexRequest = (IndexRequest) writeRequest;
-      setRefreshPolicy(indexRequest);
-      IndexResponse response = client.index(indexRequest, RequestOptions.DEFAULT);
-      if (isFailure(response.status().getStatus())) {
-        throw new IOException(String.format("Index request unsuccessful for entity %s: %s", entity, response));
+    } catch (ElasticsearchStatusException e) {
+      if (isConflict(e.status())) {
+        LOG.debug("Encountered conflict in {} request for entity {}", requestType, entity);
+        throw new MetadataConflictException(requestType + " conflict for ${conflicting}", entity);
       }
-    } else {
-      throw new IllegalStateException("Unexpected DocWriteRequest of class " + writeRequest.getClass().getName());
+      throw e;
+    }
+    if (isNotFound(response.status())) {
+      // ignore entities that do not exist - only happens for deletes
+      return;
+    }
+    if (isConflict(response.status())) {
+      LOG.debug("Encountered conflict in {} request for entity {}", requestType, entity);
+      throw new MetadataConflictException(requestType + " conflict for ${conflicting}", entity);
+    }
+    if (isFailure(response)) {
+      throw new IOException(String.format(requestType + " request unsuccessful for entity %s: %s", entity, response));
     }
   }
 
   /**
-   * Executes a bulk request and handles the responses for possible failures.
+   * Executes a bulk request and handles the responses for possible failures, and removes all successful
+   * mutations from the mutations map.
+   *
+   * @param mutations the mutations represented by this bulk. Every mutation that is successfully executed
+   *                  is removed from this map, even if an exception is thrown.
+   *
+   * @throws MetadataConflictException if a conflict occurs for any of the operations in the bulk
+   * @throws IOException for any other problem encountered
    */
-  private void executeBulk(BulkRequest bulkRequest) throws IOException {
+  private void executeBulk(BulkRequest bulkRequest, LinkedHashMap<MetadataEntity, MetadataMutation> mutations)
+    throws IOException {
     BulkResponse response = client.bulk(bulkRequest, RequestOptions.DEFAULT);
     if (response.hasFailures()) {
-      IOException ioe = new IOException("Bulk request unsuccessful");
+      IOException ioe = null;
+      List<MetadataEntity> conflictEntities = new ArrayList<>();
       for (BulkItemResponse itemResponse : response) {
-        if (itemResponse.isFailed()) {
-          BulkItemResponse.Failure failure = itemResponse.getFailure();
-          String entityId;
-          try {
-            entityId = toMetadataEntity(failure.getId()).toString();
-          } catch (Exception e) {
-            LOG.warn("Cannot parse entity id from document id {} in bulk response", failure.getId());
-            entityId = "unknown entity";
-          }
-          ioe.addSuppressed(new IOException(String.format("%s request unsuccessful for entity %s: %s",
-                                                          itemResponse.getOpType(), entityId, failure.getMessage())));
+        MetadataEntity entityId;
+        try {
+          entityId = toMetadataEntity(itemResponse.getId());
+        } catch (Exception e) {
+          LOG.warn("Cannot parse entity id from document id {} in bulk response", itemResponse.getId());
+          continue;
         }
+        if (!itemResponse.isFailed()) {
+          // remove this mutation - it was successful
+          mutations.remove(entityId);
+          continue;
+        }
+        if (isNotFound(itemResponse.status())) {
+          // only happens for deletes - we consider this successful
+          mutations.remove(entityId);
+          continue;
+        }
+        // this mutation failed
+        BulkItemResponse.Failure failure = itemResponse.getFailure();
+        if (isConflict(failure.getStatus())) {
+          conflictEntities.add(entityId);
+          continue;
+        }
+        // not a conflict -> true failure
+        if (ioe == null) {
+          ioe = new IOException("Bulk request unsuccessful");
+        }
+        ioe.addSuppressed(new IOException(String.format("%s request unsuccessful for entity %s: %s",
+                                                        itemResponse.getOpType(), entityId, failure.getMessage())));
       }
-      throw ioe;
+      if (ioe != null) {
+        throw ioe;
+      }
+      if (!conflictEntities.isEmpty()) {
+        LOG.debug("Encountered conflicts in batch mutation for entities {}", conflictEntities);
+        throw new MetadataConflictException("Bulk request conflicts for entities ${conflicting}",
+                                            conflictEntities);
+      }
     }
   }
 
   /**
    * Sets the refresh policy for a write request. Depending on configuration
-   * {@link #CONF_ELASTIC_WAIT_FOR_MUTATIONS}, write requests will only return after they are
+   * {@link Config#CONF_ELASTIC_WAIT_FOR_MUTATIONS}, write requests will only return after they are
    * confirmed to be applied to the index, or return immediately after the request is acknowledged.
    */
   private void setRefreshPolicy(WriteRequest<?> request) {
@@ -1018,11 +1127,17 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     return MetadataUtil.addVersionIfNeeded(builder.build());
   }
 
-  private static boolean isFailure(int httpStatus) {
+  private static boolean isFailure(DocWriteResponse response) {
+    int httpStatus = response.status().getStatus();
     return httpStatus != 200 && httpStatus != 201;
   }
-  private static boolean isNotFound(int httpStatus) {
-    return httpStatus == 404;
+
+  private static boolean isNotFound(RestStatus status) {
+    return status.getStatus() == 404;
+  }
+
+  private static boolean isConflict(RestStatus status) {
+    return status.getStatus() == 409;
   }
 
 }
