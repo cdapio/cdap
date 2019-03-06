@@ -36,13 +36,15 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
   private final boolean checkpointsDisabled;
   private final boolean isUnitTest;
   private final String checkpointDirectory;
+  private final String pipelineId;
 
   private DataStreamsPipelineSpec(Set<StageSpec> stages, Set<Connection> connections,
                                   Resources resources, Resources driverResources, Resources clientResources,
                                   boolean stageLoggingEnabled, boolean processTimingEnabled, long batchIntervalMillis,
                                   String extraJavaOpts, int numOfRecordsPreview,
                                   boolean stopGracefully, Map<String, String> properties,
-                                  boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory) {
+                                  boolean checkpointsDisabled, boolean isUnitTest, String checkpointDirectory,
+                                  String pipelineId) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, properties);
     this.batchIntervalMillis = batchIntervalMillis;
@@ -51,6 +53,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     this.checkpointsDisabled = checkpointsDisabled;
     this.isUnitTest = isUnitTest;
     this.checkpointDirectory = checkpointDirectory;
+    this.pipelineId = pipelineId;
   }
 
   public long getBatchIntervalMillis() {
@@ -77,6 +80,10 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     return checkpointDirectory;
   }
 
+  public String getPipelineId() {
+    return pipelineId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -96,13 +103,14 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       stopGracefully == that.stopGracefully &&
       checkpointsDisabled == that.checkpointsDisabled &&
       isUnitTest == that.isUnitTest &&
-      Objects.equals(checkpointDirectory, that.checkpointDirectory);
+      Objects.equals(checkpointDirectory, that.checkpointDirectory) &&
+      Objects.equals(pipelineId, that.pipelineId);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(super.hashCode(), batchIntervalMillis, extraJavaOpts,
-                        stopGracefully, checkpointsDisabled, isUnitTest, checkpointDirectory);
+                        stopGracefully, checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId);
   }
 
   @Override
@@ -114,6 +122,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       ", checkpointsDisabled=" + checkpointsDisabled +
       ", isUnitTest=" + isUnitTest +
       ", checkpointDirectory='" + checkpointDirectory + '\'' +
+      ", pipelineId='" + pipelineId + '\'' +
       "} " + super.toString();
   }
 
@@ -131,13 +140,15 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
     private boolean checkpointsDisabled;
     private boolean isUnitTest;
     private String checkpointDirectory;
+    private String pipelineId;
 
     public Builder(long batchIntervalMillis) {
       this.batchIntervalMillis = batchIntervalMillis;
       this.stopGracefully = false;
       this.checkpointsDisabled = false;
       this.isUnitTest = false;
-      this.checkpointDirectory = UUID.randomUUID().toString();
+      this.checkpointDirectory = "";
+      this.pipelineId = UUID.randomUUID().toString();
     }
 
     public Builder setExtraJavaOpts(String extraJavaOpts) {
@@ -170,7 +181,7 @@ public class DataStreamsPipelineSpec extends PipelineSpec {
       return new DataStreamsPipelineSpec(stages, connections, resources, driverResources, clientResources,
                                          stageLoggingEnabled, processTimingEnabled, batchIntervalMillis, extraJavaOpts,
                                          numOfRecordsPreview, stopGracefully, properties,
-                                         checkpointsDisabled, isUnitTest, checkpointDirectory);
+                                         checkpointsDisabled, isUnitTest, checkpointDirectory, pipelineId);
     }
   }
 }

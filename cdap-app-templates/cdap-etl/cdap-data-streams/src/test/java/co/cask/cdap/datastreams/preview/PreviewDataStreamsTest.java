@@ -115,6 +115,7 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
       .addConnection("transform", "sink")
       .setNumOfRecordsPreview(100)
       .setBatchInterval("1s")
+      .setCheckpointDir("file://" + TMP_FOLDER.getRoot().toPath().toString())
       .build();
 
     // Construct the preview config with the program name and program type.

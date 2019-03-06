@@ -83,6 +83,7 @@ public class DataStreamsTest extends HydratorTestBase {
   private static final Gson GSON = new Gson();
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
+  private static String checkpointDir;
   private static int startCount = 0;
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
@@ -96,6 +97,7 @@ public class DataStreamsTest extends HydratorTestBase {
     }
 
     setupStreamingArtifacts(APP_ARTIFACT_ID, DataStreamsApp.class);
+    checkpointDir = "file://" + TMP_FOLDER.getRoot().toPath().toString();
   }
 
   @Test
@@ -125,6 +127,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("sleep", "filter1")
       .addConnection("filter1", "filter2")
       .addConnection("filter2", "sink")
+      .setCheckpointDir(checkpointDir)
       .setBatchInterval("1s")
       .build();
 
@@ -225,6 +228,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("users1", "dupeFlagger")
       .addConnection("users2", "dupeFlagger")
       .addConnection("dupeFlagger", "sink2")
+      .setCheckpointDir(checkpointDir)
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
@@ -375,6 +379,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("source2", "agg2")
       .addConnection("agg1", "sink1")
       .addConnection("agg2", "sink2")
+      .setCheckpointDir(checkpointDir)
       .disableCheckpoints()
       .build();
 
@@ -477,6 +482,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("agg", "filter")
       .addConnection("filter", "sink")
       .setBatchInterval("1s")
+      .setCheckpointDir(checkpointDir)
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -606,6 +612,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("t4", "outerjoin")
       .addConnection("outerjoin", "multijoinSink")
       .setBatchInterval("5s")
+      .setCheckpointDir(checkpointDir)
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -715,6 +722,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("agg2", "errorfilter")
       .addConnection("errorflatten", "sink1")
       .addConnection("errorfilter", "sink2")
+      .setCheckpointDir(checkpointDir)
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
@@ -810,6 +818,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("splitter1", "sink2", "non-null")
       .addConnection("splitter2", "sink1", "null")
       .addConnection("splitter2", "sink2", "non-null")
+      .setCheckpointDir(checkpointDir)
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
@@ -895,6 +904,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("source", "nullAlert")
       .addConnection("nullAlert", "sink")
       .addConnection("nullAlert", "tms")
+      .setCheckpointDir(checkpointDir)
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
