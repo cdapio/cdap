@@ -53,8 +53,8 @@ public class DataStreamsPipelineSpecGenerator
       .setStopGracefully(config.getStopGracefully())
       .setIsUnitTest(config.isUnitTest())
       .setCheckpointsDisabled(config.checkpointsDisabled());
-    if (!config.checkpointsDisabled()) {
-      String checkpointDir = config.getCheckpointDir();
+    String checkpointDir = config.getCheckpointDir();
+    if (!config.checkpointsDisabled() && checkpointDir != null) {
       try {
         new Path(checkpointDir);
       } catch (Exception e) {

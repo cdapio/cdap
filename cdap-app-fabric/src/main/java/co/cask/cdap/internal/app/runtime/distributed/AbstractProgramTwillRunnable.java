@@ -555,6 +555,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Starts the core services
       for (Service service : coreServices) {
         service.startAndWait();
+        LOG.error("started :" + service.getClass().getName());
       }
     } catch (Exception e) {
       logAppenderInitializer.close();
