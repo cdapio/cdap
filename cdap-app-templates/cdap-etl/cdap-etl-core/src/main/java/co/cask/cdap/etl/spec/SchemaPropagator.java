@@ -36,9 +36,10 @@ import javax.annotation.Nullable;
 /**
  * Keeps track of schemas for various stages of a pipeline and propagates them as they are updated.
  *
- * The DefaultPipelineConfigurer's keep state about the input, output, and error schemas for each stage.
- * As they are used to configure stages in the pipeline, the output schema set by one stage must be propagated to
- * the configurer for another stage. This class performs that propagation.
+ * The {@link DefaultPipelineConfigurer DefaultPipelineConfigurers} keep state about the input, output,
+ * and error schemas for each stage. As they are used to configure stages in the pipeline,
+ * the output schema set by one stage must be propagated to the configurer for another stage.
+ * This class performs that propagation.
  */
 public class SchemaPropagator {
   private final Map<String, DefaultPipelineConfigurer> pluginConfigurers;
