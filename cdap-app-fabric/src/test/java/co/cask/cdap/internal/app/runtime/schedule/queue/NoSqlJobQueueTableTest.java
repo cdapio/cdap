@@ -51,18 +51,19 @@ import java.io.IOException;
  */
 public class NoSqlJobQueueTableTest extends JobQueueTableTest {
   private static TransactionManager txManager;
-  private static Injector injector;
   private static CConfiguration cConf;
+  private static TransactionRunner transactionRunner;
 
   @BeforeClass
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
     txManager = new TransactionManager(new Configuration());
     txManager.startAndWait();
 
-    injector = Guice.createInjector(
+    Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocalLocationModule(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
@@ -81,6 +82,7 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
 
     injector.getInstance(StructuredTableRegistry.class).initialize();
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    transactionRunner = injector.getInstance(TransactionRunner.class);
 
     StoreDefinition.JobQueueStore.createTables(tableAdmin);
     StoreDefinition.AppMetadataStore.createTables(tableAdmin);
@@ -92,8 +94,8 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
   }
 
   @Override
-  protected TransactionRunner newTransactionRunner() {
-    return injector.getInstance(TransactionRunner.class);
+  protected TransactionRunner getTransactionRunner() {
+    return transactionRunner;
   }
 
   @Override

@@ -14,14 +14,13 @@
  * the License.
  */
 
-
 package co.cask.cdap.spi.data.sql;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
-import co.cask.cdap.spi.data.StructuredTableTest;
+import co.cask.cdap.spi.data.StructuredTableConcurrencyTest;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Guice;
@@ -30,13 +29,18 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 
 /**
- * Test for SQL structured table.
+ * Tests concurrent operations on {@link PostgresSqlStructuredTable}.
  */
-public class SqlStructuredTableTest extends StructuredTableTest {
+public class SqlStructuredTableConcurrencyTest extends StructuredTableConcurrencyTest {
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static EmbeddedPostgres pg;
   private static StructuredTableAdmin tableAdmin;
   private static TransactionRunner transactionRunner;
