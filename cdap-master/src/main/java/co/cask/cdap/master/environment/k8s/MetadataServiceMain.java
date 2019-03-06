@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
 /**
  * The main class to run metadata service. Also, the dataset op executor is running this process as well.
  */
-public class MetadataServiceMain extends AbstractServiceMain {
+public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
    * Main entry point
@@ -69,7 +69,7 @@ public class MetadataServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new MessagingClientModule(),
       new NamespaceQueryAdminModule(),
@@ -106,14 +106,15 @@ public class MetadataServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
     services.add(injector.getInstance(MetadataService.class));
     services.add(injector.getInstance(MetadataSubscriberService.class));
   }
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext() {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.METADATA_SERVICE);

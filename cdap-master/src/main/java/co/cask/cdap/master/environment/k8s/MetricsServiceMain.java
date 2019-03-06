@@ -52,7 +52,7 @@ import javax.annotation.Nullable;
 /**
  * The main class to run metrics services, which includes both metrics processor and metrics query.
  */
-public class MetricsServiceMain extends AbstractServiceMain {
+public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   /**
    * Main entry point
@@ -62,7 +62,7 @@ public class MetricsServiceMain extends AbstractServiceMain {
   }
 
   @Override
-  protected List<Module> getServiceModules() {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
@@ -80,7 +80,8 @@ public class MetricsServiceMain extends AbstractServiceMain {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources,
-                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext) {
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     Set<Integer> topicNumbers = IntStream.range(0, cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM))
       .boxed()
@@ -97,7 +98,7 @@ public class MetricsServiceMain extends AbstractServiceMain {
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext() {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.METRICS);
