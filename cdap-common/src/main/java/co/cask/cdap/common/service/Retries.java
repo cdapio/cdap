@@ -18,6 +18,8 @@ package co.cask.cdap.common.service;
 
 import co.cask.cdap.api.retry.RetriesExhaustedException;
 import co.cask.cdap.api.retry.RetryableException;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +32,11 @@ import java.util.function.Supplier;
  */
 public final class Retries {
   private static final Logger LOG = LoggerFactory.getLogger(Retries.class);
+  // Skip the first error log, and at most log once per 30 seconds.
+  // This helps debugging errors that persist more than 30 seconds.
+  private static final Logger ERROR_LOGGER = Loggers.sampling(
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(1), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
+
   public static final Predicate<Throwable> ALWAYS_TRUE = t -> true;
   private static final Predicate<Throwable> DEFAULT_PREDICATE = RetryableException.class::isInstance;
 
@@ -193,6 +200,7 @@ public final class Retries {
         }
 
         LOG.trace("Call failed, retrying again after {} ms.", retryTime, t);
+        ERROR_LOGGER.warn("Call failed with exception, retrying again after {} ms.", retryTime, t);
         try {
           TimeUnit.MILLISECONDS.sleep(retryTime);
         } catch (InterruptedException e) {

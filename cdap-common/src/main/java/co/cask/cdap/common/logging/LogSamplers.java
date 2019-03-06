@@ -99,6 +99,20 @@ public final class LogSamplers {
   }
 
   /**
+   * Returns a {@link LogSampler} that skips the first N messages.
+   *
+   * @param n number of messages to skip
+   */
+  public static LogSampler skipFirstN(int n) {
+    return new CountBasedLogSampler() {
+      @Override
+      protected boolean accept(String message, int logLevel, long callCount) {
+        return callCount > n;
+      }
+    };
+  }
+
+  /**
    * Returns a {@link LogSampler} that only perform sampling if the log message matches with one of
    * the provided messages. This method is equivalent to calling {@link #onMessages(LogSampler, Iterable)}
    * by converting the array of messages to a list.
