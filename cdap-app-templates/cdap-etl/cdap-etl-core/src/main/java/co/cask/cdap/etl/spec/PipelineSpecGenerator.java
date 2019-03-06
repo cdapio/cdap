@@ -131,7 +131,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                                                                      new DefaultStageConfigurer()));
     }
     SchemaPropagator schemaPropagator = new SchemaPropagator(pluginConfigurers, validatedPipeline::getOutputs,
-                                                             pluginTypes::get);
+                                                             pluginTypes::get, x -> x, null);
 
     // anything prefixed by 'system.[engine].' is a pipeline property.
     Map<String, String> pipelineProperties = new HashMap<>();

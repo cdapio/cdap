@@ -23,14 +23,18 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.AbstractCondition;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.api.condition.ConditionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.DefaultStageConfigurer;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.common.RuntimePluginDatasetConfigurer;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
@@ -91,6 +95,15 @@ public class PipelineCondition extends AbstractCondition {
 
     try {
       Condition condition = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
+
+      // call configurePipeline to perform any validation that couldn't before due to macros
+      RuntimePluginDatasetConfigurer pluginDatasetConfigurer =
+        new RuntimePluginDatasetConfigurer(stageSpec.getName(), getContext().getAdmin(), pluginContext, macroEvaluator);
+      DefaultPipelineConfigurer pipelineConfigurer =
+        new DefaultPipelineConfigurer(pluginDatasetConfigurer, pluginDatasetConfigurer,
+                                      stageSpec.getName(), Engine.MAPREDUCE, new DefaultStageConfigurer());
+      condition.configurePipeline(pipelineConfigurer);
+
       PipelineRuntime pipelineRuntime = new PipelineRuntime(input, metrics);
       ConditionContext conditionContext = new BasicConditionContext(input, pipelineRuntime, stageSpec);
       boolean result = condition.apply(conditionContext);

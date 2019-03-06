@@ -70,7 +70,7 @@ public class TransformRunner<KEY, VALUE> {
 
     // figure out whether we are writing to a single output or to multiple outputs
     Map<String, String> properties = context.getSpecification().getProperties();
-    BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    BatchPhaseSpec phaseSpec = GSON.fromJson(hConf.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     this.outputWriter = getSinkWriter(context, phaseSpec.getPhase(), hConf);
 
     // instantiate and initialize all transformations and setup the TransformExecutor

@@ -112,6 +112,9 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   }
 
   private Schema getOutputSchema(Map<String, Schema> inputSchemas) {
+    if (inputSchemas.values().contains(null)) {
+      return null;
+    }
     // sort the input schemas by input names to get the deterministic order of fields for output schema
     Map<String, Schema> sortedMap = new TreeMap<>(inputSchemas);
     List<Schema.Field> outputFields = new ArrayList<>();

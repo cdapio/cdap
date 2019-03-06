@@ -46,6 +46,7 @@ import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.condition.MockCondition;
+import co.cask.cdap.etl.mock.condition.TrueCondition;
 import co.cask.cdap.etl.mock.spark.Window;
 import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
 import co.cask.cdap.etl.mock.transform.AllErrorTransform;
@@ -85,7 +86,7 @@ public class HydratorTestBase extends TestBase {
     MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
+    MockCondition.PLUGIN_CLASS, TrueCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,

@@ -45,7 +45,7 @@ public class PipelinePhase implements Iterable<StageSpec> {
   private final Map<String, StageSpec> stagesByName;
   private final Dag dag;
 
-  private PipelinePhase(Set<StageSpec> stages, @Nullable Dag dag) {
+  public PipelinePhase(Set<StageSpec> stages, @Nullable Dag dag) {
     stagesByType = new HashMap<>();
     stagesByName = new HashMap<>();
     for (StageSpec stage : stages) {

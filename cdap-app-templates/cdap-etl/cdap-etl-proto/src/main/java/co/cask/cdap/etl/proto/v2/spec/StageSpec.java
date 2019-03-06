@@ -144,6 +144,18 @@ public class StageSpec implements Serializable {
     return new Builder(name, plugin);
   }
 
+  public static Builder builder(StageSpec existing) {
+    Builder builder = new Builder(existing.getName(), existing.getPlugin())
+      .addInputSchemas(existing.getInputSchemas())
+      .setErrorSchema(existing.getErrorSchema())
+      .setStageLoggingEnabled(existing.isStageLoggingEnabled())
+      .setProcessTimingEnabled(existing.isProcessTimingEnabled());
+    for (Map.Entry<String, StageSpec.Port> entry : existing.getOutputPorts().entrySet()) {
+      builder.addOutput(entry.getKey(), entry.getValue().getPort(), entry.getValue().getSchema());
+    }
+    return builder;
+  }
+
   /**
    * Builder for a StageSpec.
    */

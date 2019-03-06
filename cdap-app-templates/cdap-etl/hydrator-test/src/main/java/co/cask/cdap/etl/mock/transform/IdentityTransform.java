@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
@@ -32,14 +33,21 @@ import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Identity transform for testing.
+ * Identity transform for testing. Outputs every record it receives without transforming it.
+ * Can be configured to set an argument while preparing the run.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Identity")
 public class IdentityTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
+  private final Config config;
+
+  public IdentityTransform(Config config) {
+    this.config = config;
+  }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
@@ -48,8 +56,10 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
   }
 
   @Override
-  public void prepareRun(StageSubmitterContext context) throws Exception {
-    super.prepareRun(context);
+  public void prepareRun(StageSubmitterContext context) {
+    if (config.argumentKey != null && config.argumentVal != null) {
+      context.getArguments().set(config.argumentKey, config.argumentVal);
+    }
   }
 
   @Override
@@ -66,14 +76,34 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
     emitter.emit(input);
   }
 
+  /**
+   * Config for the plugin
+   */
+  public static class Config extends PluginConfig {
+    @Nullable
+    private String argumentKey;
+
+    @Nullable
+    private String argumentVal;
+  }
+
   public static ETLPlugin getPlugin() {
     Map<String, String> properties = new HashMap<>();
     return new ETLPlugin("Identity", Transform.PLUGIN_TYPE, properties, null);
   }
 
+  public static ETLPlugin getPlugin(String argumentKey, String argumentVal) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("argumentKey", argumentKey);
+    properties.put("argumentVal", argumentVal);
+    return new ETLPlugin("Identity", Transform.PLUGIN_TYPE, properties, null);
+  }
+
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
+    properties.put("argumentKey", new PluginPropertyField("argumentKey", "", "string", false, false));
+    properties.put("argumentVal", new PluginPropertyField("argumentVal", "", "string", false, false));
     return new PluginClass(Transform.PLUGIN_TYPE, "Identity", "", IdentityTransform.class.getName(),
-                           null, properties);
+                           "config", properties);
   }
 }

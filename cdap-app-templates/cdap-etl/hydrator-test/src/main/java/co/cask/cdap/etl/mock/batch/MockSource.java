@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.mock.batch;
 
+import co.cask.cdap.api.annotation.Macro;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
@@ -86,6 +87,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   public static class Config extends PluginConfig {
     private String tableName;
 
+    @Macro
     @Nullable
     private String schema;
 
@@ -113,7 +115,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
       // should never happen, just done to test App correctness in unit tests
       Schema outputSchema = Schema.parseJson(config.schema);
       if (!outputSchema.equals(context.getOutputSchema())) {
-        throw new IllegalStateException("Output schema does not match what was set at configure time.");
+        throw new IllegalStateException("Intialize time output schema does not match what was set at configure time.");
       }
     }
   }
@@ -131,6 +133,13 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     if (config.metadataOperations != null) {
       // if there are metadata operations to be performed then apply them
       processsMetadata(context);
+    }
+    if (config.schema != null) {
+      // should never happen, just done to test App correctness in unit tests
+      Schema outputSchema = Schema.parseJson(config.schema);
+      if (!outputSchema.equals(context.getOutputSchema())) {
+        throw new IllegalStateException("Prepare time output schema does not match what was set at configure time.");
+      }
     }
   }
 
@@ -218,7 +227,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
-    properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
+    properties.put("schema", new PluginPropertyField("schema", "", "string", false, true));
     properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
     return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
   }

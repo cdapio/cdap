@@ -17,10 +17,12 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
@@ -33,10 +35,14 @@ import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
 import co.cask.cdap.etl.batch.PipelinePhasePreparer;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.PreparedPipelinePhase;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.FieldOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.common.submit.AggregatorContextProvider;
 import co.cask.cdap.etl.common.submit.ContextProvider;
@@ -44,7 +50,11 @@ import co.cask.cdap.etl.common.submit.Finisher;
 import co.cask.cdap.etl.common.submit.JoinerContextProvider;
 import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.spec.SchemaPropagator;
+import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -56,6 +66,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * For each stage, call prepareRun() in topological order.
@@ -65,7 +76,11 @@ import java.util.Set;
  *
  */
 public class MapReducePreparer extends PipelinePhasePreparer {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
+    .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter())
+    .create();
   private final MapReduceContext context;
   private final Set<String> connectorDatasets;
   private Job job;
@@ -74,10 +89,9 @@ public class MapReducePreparer extends PipelinePhasePreparer {
   private Map<String, String> inputAliasToStage;
   private Map<String, List<FieldOperation>> stageOperations;
 
-
-  public MapReducePreparer(MapReduceContext context, Metrics metrics, MacroEvaluator macroEvaluator,
-                           PipelineRuntime pipelineRuntime, Set<String> connectorDatasets) {
-    super(context, metrics, macroEvaluator, pipelineRuntime);
+  MapReducePreparer(MapReduceContext context, Metrics metrics, MacroEvaluator macroEvaluator,
+                    PipelineRuntime pipelineRuntime, Set<String> connectorDatasets) {
+    super(context, context.getAdmin(), metrics, macroEvaluator, pipelineRuntime, Engine.MAPREDUCE);
     this.context = context;
     this.connectorDatasets = connectorDatasets;
   }
@@ -94,7 +108,7 @@ public class MapReducePreparer extends PipelinePhasePreparer {
     // Collect field operations emitted by various stages in this MapReduce program
     stageOperations = new HashMap<>();
 
-    List<Finisher> finishers = prepare(phaseSpec);
+    PreparedPipelinePhase preparedPhase = prepare(phaseSpec, context.getWorkflowToken());
 
     hConf.set(ETLMapReduce.SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
     hConf.set(ETLMapReduce.INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
@@ -111,12 +125,16 @@ public class MapReducePreparer extends PipelinePhasePreparer {
     // token is null when just the mapreduce job is run but not the entire workflow
     // we still want things to work in that case.
     hConf.set(ETLMapReduce.RUNTIME_ARGS_KEY, GSON.toJson(pipelineRuntime.getArguments().asMap()));
+    hConf.set(Constants.PIPELINEID, GSON.toJson(preparedPhase.getPhaseSpec()));
 
-    return finishers;
+    return preparedPhase.getFinishers();
   }
 
+  @Nullable
   @Override
-  protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec stageSpec) {
+  protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec currentSpec,
+                                   DefaultPipelineConfigurer pipelineConfigurer, SchemaPropagator schemaPropagator,
+                                   Set<StageSpec> updatedSpecs) {
     return null;
   }
 

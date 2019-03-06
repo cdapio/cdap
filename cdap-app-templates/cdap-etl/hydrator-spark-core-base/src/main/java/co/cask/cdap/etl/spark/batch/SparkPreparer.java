@@ -23,12 +23,14 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.lineage.field.FieldOperation;
@@ -37,7 +39,9 @@ import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
 import co.cask.cdap.etl.batch.PipelinePhasePreparer;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.PreparedPipelinePhase;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
 import co.cask.cdap.etl.common.FieldOperationTypeAdapter;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
@@ -47,6 +51,7 @@ import co.cask.cdap.etl.common.submit.Finisher;
 import co.cask.cdap.etl.common.submit.JoinerContextProvider;
 import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.proto.v2.spec.StageSpec;
+import co.cask.cdap.etl.spec.SchemaPropagator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -60,9 +65,11 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -88,11 +95,10 @@ public class SparkPreparer extends PipelinePhasePreparer {
                        Metrics metrics,
                        MacroEvaluator macroEvaluator,
                        PipelineRuntime pipelineRuntime) {
-    super(context, metrics, macroEvaluator, pipelineRuntime);
+    super(context, context.getAdmin(), metrics, macroEvaluator, pipelineRuntime, Engine.SPARK);
     this.context = context;
   }
 
-  @Override
   public List<Finisher> prepare(BatchPhaseSpec phaseSpec)
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
@@ -101,7 +107,8 @@ public class SparkPreparer extends PipelinePhasePreparer {
     sinkFactory = new SparkBatchSinkFactory();
     File configFile = File.createTempFile("HydratorSpark", ".config");
 
-    List<Finisher> finishers = super.prepare(phaseSpec);
+    PreparedPipelinePhase preparedPhase = prepare(phaseSpec, context.getWorkflowToken());
+    List<Finisher> finishers = new ArrayList<>(preparedPhase.getFinishers());
     finishers.add(new Finisher() {
       @Override
       public void onFinish(boolean succeeded) {
@@ -112,9 +119,8 @@ public class SparkPreparer extends PipelinePhasePreparer {
     });
 
     try (Writer writer = Files.newBufferedWriter(configFile.toPath(), StandardCharsets.UTF_8)) {
-      SparkBatchSourceSinkFactoryInfo sourceSinkInfo = new SparkBatchSourceSinkFactoryInfo(sourceFactory,
-                                                                                           sinkFactory,
-                                                                                           stagePartitions);
+      SparkBatchSourceSinkFactoryInfo sourceSinkInfo =
+        new SparkBatchSourceSinkFactoryInfo(sourceFactory, sinkFactory, stagePartitions, preparedPhase.getPhaseSpec());
       writer.write(GSON.toJson(sourceSinkInfo));
     }
 
@@ -132,14 +138,24 @@ public class SparkPreparer extends PipelinePhasePreparer {
 
   @Nullable
   @Override
-  protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator,
-                                   StageSpec stageSpec) throws InstantiationException {
-    String stageName = stageSpec.getName();
-    if (SparkSink.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
+  protected SubmitterPlugin create(PipelinePluginInstantiator pluginInstantiator, StageSpec currentSpec,
+                                   DefaultPipelineConfigurer pipelineConfigurer, SchemaPropagator schemaPropagator,
+                                   Set<StageSpec> updatedSpecs) throws InstantiationException {
+    String stageName = currentSpec.getName();
+    if (SparkSink.PLUGIN_TYPE.equals(currentSpec.getPluginType())) {
       BatchConfigurable<SparkPluginContext> sparkSink = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      StageSpec updatedSpec = configureStage(currentSpec, pipelineConfigurer, schemaPropagator,
+                                             sparkSink::configurePipeline);
       ContextProvider<BasicSparkPluginContext> contextProvider =
-        dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, stageSpec, dsContext, context.getAdmin());
+        dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, updatedSpec, dsContext, context.getAdmin());
+      updatedSpecs.add(updatedSpec);
       return new SubmitterPlugin<>(stageName, context, sparkSink, contextProvider);
+    } else if (SparkCompute.PLUGIN_TYPE.equals(currentSpec.getPluginType())) {
+      SparkCompute<?, ?> compute = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      StageSpec updatedSpec = configureStage(currentSpec, pipelineConfigurer, schemaPropagator,
+                                             compute::configurePipeline);
+      updatedSpecs.add(updatedSpec);
+      // TODO: (CDAP-15044) SparkCompute should implement SubmitterLifecycle
     }
     return null;
   }
