@@ -121,6 +121,16 @@ public class LogSamplerTest {
   }
 
   @Test
+  public void testSkipFirstN() {
+    LogSampler sampler = LogSamplers.skipFirstN(5);
+    for (int i = 0; i < 5; i++) {
+      Assert.assertFalse(sampler.accept("", 0));
+    }
+
+    Assert.assertTrue(sampler.accept("", 0));
+  }
+
+  @Test
   public void testOnMessages() {
     LogSampler sampler = LogSamplers.onMessages(LogSamplers.onceEvery(3), "test1", "test5", "test8");
     List<Integer> accepted = new ArrayList<>();
