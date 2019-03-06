@@ -64,3 +64,6 @@ export const SUCCEEDED = "Succeeded";
 export const DEPLOYED = "Deployed";
 export const FAILED = "Failed";
 export const RUNNING = "Running";
+
+export const FEATURE_GENERATED = "Feature Generated";
+export const FEATURE_SELECTED = "Feature Selected";

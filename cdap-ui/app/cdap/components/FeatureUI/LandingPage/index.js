@@ -16,7 +16,6 @@
 
 /* eslint react/prop-types: 0 */
 import React from 'react';
-import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import isNil from 'lodash/isNil';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
@@ -45,6 +44,8 @@ import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, check
 import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
 import { Theme } from 'services/ThemeHelper';
+import StatusBar from "./StatusBar";
+import { SUCCEEDED, DEPLOYED, FAILED, RUNNING, FEATURE_GENERATED, FEATURE_SELECTED } from '../config';
 
 
 require('./LandingPage.scss');
@@ -53,11 +54,15 @@ const SchemaData = [{ "schemaName": "accounts", "schemaColumns": [{ "columnName"
 const PropertyData = [{ "paramName": "Indexes", "description": "" }, { "paramName": "Relationships", "description": "" }, { "paramName": "TimestampColumns", "description": "" }, { "paramName": "TimeIndexColumns", "description": "" }, { "paramName": "CategoricalColumns", "description": "" }, { "paramName": "IgnoreColumns", "description": "" }, { "paramName": "multiFieldTransFunctionInputColumns", "description": "" }, { "paramName": "multiFieldAggFunctionInputColumns", "description": "" }, { "paramName": "TargetEntity", "description": "" }, { "paramName": "TargetEntityPrimaryField", "description": "" }];
 const ConfigurationData = [{ "paramName": "DFSDepth", "description": "", "isCollection": false, "dataType": "int" }, { "paramName": "TrainingWindows", "description": "", "isCollection": true, "dataType": "int" }, { "paramName": "WindowEndTime", "description": "", "isCollection": false, "dataType": "string" }];
 
+
 class LandingPage extends React.Component {
+
+  featureTypes = [{ id: 1, name: FEATURE_GENERATED, selected: false }, { id: 2, name: FEATURE_SELECTED, selected: false }]
   currentPipeline;
   sampleData = [
     { "featureName": "plusonelog_first_errors_numwords_event_hostname____24", "featureStatistics": { "Mean": 0.04316484976694808, "Norm L1": 59.61065752815533, "Norm L2": 6.427982513741404, "Max": 0.6931471805599453, "50 Percentile": 0.6931471805599453, "Variance": 0.02807672037699529, "No. of Non Zeros": 86.0, "25 Percentile": 0.6931471805599453, "Min": 0.0, "No. of Nulls": 1295, "Inter Quartile Percentile": 0.0, "75 Percentile": 0.6931471805599453 } }
   ]
+  data_original = [];
   constructor(props) {
     super(props);
     this.toggleFeatureWizard = this.toggleFeatureWizard.bind(this);
@@ -73,7 +78,9 @@ class LandingPage extends React.Component {
       displayFeatureSelection: false,
       pipeLineData: this.sampleData,
       selectedPipeline: {},
-      currentNamespace: NamespaceStore.getState().selectedNamespace
+      currentNamespace: NamespaceStore.getState().selectedNamespace,
+      statusList: this.generateStatusList([])
+
     };
   }
 
@@ -110,11 +117,46 @@ class LandingPage extends React.Component {
     this.setState(prevState => ({ dropdownOpen: !prevState.dropdownOpen }));
   }
 
-  onPipeLineTypeChange(type) {
+  onPipeLineTypeChange = (type) => {
     this.setState({
       selectedPipelineType: type
     });
     this.getPipelines(type);
+  }
+
+  onStatusSelectionChange = (status) => {
+    if (status == 'All') {
+      this.setState({
+        data: [...this.data_original]
+      });
+    } else {
+      this.setState({
+        data: this.data_original.filter((item) => item.status === status)
+      });
+    }
+  }
+
+  generateStatusList(list) {
+
+    let runningCount = 0;
+    let sucessCount = 0;
+    let deployedCount = 0;
+    let failCount = 0;
+    list.forEach(element => {
+      if (element.status === RUNNING) {
+        runningCount++;
+      } else if (element.status === SUCCEEDED) {
+        sucessCount++;
+      } else if (element.status === DEPLOYED) {
+        deployedCount++;
+      } else if (element.status === FAILED) {
+        failCount++;
+      }
+    });
+    return  [{ id: 1, name: RUNNING, count: runningCount, selected: false },
+      { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
+      { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
+      { id: 4, name: FAILED, count: failCount, selected: false }];
   }
 
   getPipelines(type) {
@@ -127,8 +169,10 @@ class LandingPage extends React.Component {
           if (checkResponseError(result) || isNil(result["pipelineInfoList"])) {
             this.handleError(result, GET_PIPELINE);
           } else {
+            this.data_original = result["pipelineInfoList"];
             this.setState({
-              data: result["pipelineInfoList"]
+              data: result["pipelineInfoList"],
+              statusList:this.generateStatusList(this.data_original)
             });
           }
         },
@@ -300,7 +344,7 @@ class LandingPage extends React.Component {
       let configObj = find(configList, { name: config.paramName });
       return {
         name: config.paramName,
-        displayName: isEmpty(config.displayName) ? config.paramName: config.displayName ,
+        displayName: isEmpty(config.displayName) ? config.paramName : config.displayName,
         value: isEmpty(configObj) ? (isEmpty(config.defaultValue) ? "" : config.defaultValue) : configObj.value,
         dataType: config.dataType,
         isCollection: config.isCollection,
@@ -567,7 +611,10 @@ class LandingPage extends React.Component {
           </div>
           : <div className="feature-generation">
             <div className='top-control'>
-              <div className='type-selector'>
+              <StatusBar statusList={this.state.statusList} featureTypes={this.featureTypes} pipeLineSelectionTypeChange={this.onPipeLineTypeChange.bind(this)}
+                statusSelectionChange={this.onStatusSelectionChange.bind(this)}></StatusBar>
+              <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
+              {/* <div className='type-selector'>
                 <div className="type-label">Pipeline Type:</div>
                 <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
                   <DropdownToggle caret>
@@ -585,7 +632,7 @@ class LandingPage extends React.Component {
                 </Dropdown>
                 <i className="fa fa-refresh refresh-button" onClick = {() => this.getPipelines(this.state.selectedPipelineType)}></i>
               </div>
-              <button className={"feature-button "+ (Theme && Theme.isCustomerMWC ? 'feature-button-mwc':'')}  onClick={this.toggleFeatureWizard}>+ Add New</button>
+              <button className={"feature-button "+ (Theme && Theme.isCustomerMWC ? 'feature-button-mwc':'')}  onClick={this.toggleFeatureWizard}>+ Add New</button> */}
             </div>
             <FeatureTable data={this.state.data}
               onView={this.viewPipeline.bind(this)}
