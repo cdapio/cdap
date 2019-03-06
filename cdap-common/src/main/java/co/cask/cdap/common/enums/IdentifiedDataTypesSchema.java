@@ -19,21 +19,32 @@ package co.cask.cdap.common.enums;
  * @author bhupesh.goel
  *
  */
-public enum CorrelationCoefficient {
-    PEARSON("pearson"), SPEARMAN("spearman"), CHI_SQUARE_TEST("ChiSqTest"), 
-    MIC("mic"), ANOVA("anova"), KENDALL_TAU("kendallTau");
-    
-    private final String name;
-    
-    CorrelationCoefficient(final String name) {
-        this.name = name;
-    }
-    
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-    
+public enum IdentifiedDataTypesSchema {
+
+  ID("id", "long"), 
+  SCHEMA_NAME("schemaName", "string"), 
+  IDENTIFIED_COLUMN_TYPE_INFO("identifiedColumnTypeInfo", "string");
+
+  private final String name;
+  private final String type;
+
+  IdentifiedDataTypesSchema(final String name, final String type) {
+    this.name = name;
+    this.type = type;
+  }
+
+  /**
+   * @return the name
+   */
+  public String getName() {
+    return name;
+  }
+
+  /**
+   * @return the type
+   */
+  public String getType() {
+    return type;
+  }
+
 }
