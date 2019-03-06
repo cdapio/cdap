@@ -32,7 +32,6 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
-import io.cdap.cdap.internal.app.runtime.plugin.PluginService;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -71,7 +70,6 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final RunRecordCorrectorService runRecordCorrectorService;
-  private final PluginService pluginService;
   private final CoreSchedulerService coreSchedulerService;
   private final ProvisioningService provisioningService;
   private final BootstrapService bootstrapService;
@@ -98,7 +96,6 @@ public class AppFabricServer extends AbstractIdleService {
                          ProgramNotificationSubscriberService programNotificationSubscriberService,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
-                         PluginService pluginService,
                          CoreSchedulerService coreSchedulerService,
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService) {
@@ -114,7 +111,6 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.runRecordCorrectorService = runRecordCorrectorService;
-    this.pluginService = pluginService;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED);
     this.coreSchedulerService = coreSchedulerService;
     this.provisioningService = provisioningService;
@@ -137,7 +133,6 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
-        pluginService.start(),
         coreSchedulerService.start()
       )
     ).get();
@@ -184,7 +179,6 @@ public class AppFabricServer extends AbstractIdleService {
     applicationLifecycleService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
-    pluginService.stopAndWait();
     provisioningService.stopAndWait();
   }
 

@@ -68,7 +68,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -645,7 +644,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE))
+      ), new Requirements(ImmutableSet.of(Table.TYPE))
     );
 
     PluginClass excludedPlugin2 = new PluginClass(
@@ -653,7 +652,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of(KeyValueTable.TYPE))
+      ), new Requirements(ImmutableSet.of(KeyValueTable.TYPE))
     );
 
     PluginClass excludedPlugin3 = new PluginClass(
@@ -661,7 +660,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE))
+      ), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE))
     );
 
 
@@ -670,7 +669,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE, Cube.TYPE))
+      ), new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE, Cube.TYPE))
     );
 
 
@@ -679,7 +678,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of(Table.TYPE, Cube.TYPE))
+      ), new Requirements(ImmutableSet.of(Table.TYPE, Cube.TYPE))
     );
 
 
@@ -688,7 +687,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of("noTransactionNeeded"))
+      ), new Requirements(ImmutableSet.of("noTransactionNeeded"))
     );
 
 
@@ -697,7 +696,7 @@ public abstract class ArtifactStoreTest {
       ImmutableMap.of(
         "threshold", new PluginPropertyField("thresh", "description", "double", true, false),
         "retry", new PluginPropertyField("retries", "description", "int", false, false)
-      ), new HashSet<>(), new Requirements(ImmutableSet.of("noTransactionNeeded", "tpfs"))
+      ), new Requirements(ImmutableSet.of("noTransactionNeeded", "tpfs"))
     );
 
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "ArtifactWithTransactionalPlugins", "1.0.0");
