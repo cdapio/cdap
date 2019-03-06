@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,14 +29,13 @@ import java.util.Set;
 
 /**
  * Generates specs for data stream pipelines.
- *
- * @param <T> the type of the platform configurer
  */
-public class DataStreamsPipelineSpecGenerator<T extends PluginConfigurer & DatasetConfigurer>
-  extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec, T> {
+public class DataStreamsPipelineSpecGenerator
+  extends PipelineSpecGenerator<DataStreamsConfig, DataStreamsPipelineSpec> {
 
-  public DataStreamsPipelineSpecGenerator(T configurer, Set<String> sourcePluginTypes,
-                                          Set<String> sinkPluginTypes) {
+  <T extends PluginConfigurer & DatasetConfigurer> DataStreamsPipelineSpecGenerator(T configurer,
+                                                                                    Set<String> sourcePluginTypes,
+                                                                                    Set<String> sinkPluginTypes) {
     super(configurer, sourcePluginTypes, sinkPluginTypes, Engine.SPARK);
   }
 

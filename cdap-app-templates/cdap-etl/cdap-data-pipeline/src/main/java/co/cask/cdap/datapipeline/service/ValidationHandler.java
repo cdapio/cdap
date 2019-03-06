@@ -105,16 +105,16 @@ public class ValidationHandler extends AbstractHttpServiceHandler {
     ETLStage stageConfig = validationRequest.getStage();
     ValidatingConfigurer validatingConfigurer = new ValidatingConfigurer(getContext().createPluginConfigurer());
     // Batch or Streaming doesn't matter for a single stage.
-    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec, ValidatingConfigurer> pipelineSpecGenerator =
-      new BatchPipelineSpecGenerator<>(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
-                                       Engine.SPARK);
+    PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> pipelineSpecGenerator =
+      new BatchPipelineSpecGenerator(validatingConfigurer, Collections.emptySet(), Collections.emptySet(),
+                                     Engine.SPARK);
 
     DefaultStageConfigurer stageConfigurer = new DefaultStageConfigurer();
     for (StageSchema stageSchema : validationRequest.getInputSchemas()) {
       stageConfigurer.addInputSchema(stageSchema.getStage(), stageSchema.getSchema());
     }
-    DefaultPipelineConfigurer<ValidatingConfigurer> pipelineConfigurer =
-      new DefaultPipelineConfigurer<>(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
+    DefaultPipelineConfigurer pipelineConfigurer =
+      new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
 
     try {
       StageSpec spec = pipelineSpecGenerator.configureStage(stageConfig.getName(), stageConfig.getPlugin(),

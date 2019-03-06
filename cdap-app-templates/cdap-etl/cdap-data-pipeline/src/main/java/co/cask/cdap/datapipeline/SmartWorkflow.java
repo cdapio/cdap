@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -168,11 +168,11 @@ public class SmartWorkflow extends AbstractWorkflow {
     // the run early, before provisioning is performed.
     // If plugins were registered only at the application level, CDAP would not be able to fail the run early.
     try {
-      spec = new BatchPipelineSpecGenerator<>(getConfigurer(),
-                                              ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-                                              ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-                                                              AlertPublisher.PLUGIN_TYPE),
-                                              config.getEngine()).generateSpec(config);
+      spec = new BatchPipelineSpecGenerator(getConfigurer(),
+                                            ImmutableSet.of(BatchSource.PLUGIN_TYPE),
+                                            ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
+                                                            AlertPublisher.PLUGIN_TYPE),
+                                            config.getEngine()).generateSpec(config);
     } catch (InvalidPipelineException e) {
       throw new IllegalArgumentException(String.format("Failed to configure pipeline: %s", e.getMessage()), e);
     }
