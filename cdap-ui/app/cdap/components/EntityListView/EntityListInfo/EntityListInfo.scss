@@ -15,8 +15,6 @@
  */
 
 $page-li-size: 22px;
-$current-page-background-color: rgba(93, 103, 137, 1);
-$hovered-page-background-color: rgba(219, 219, 219, 1);
 
 .entity-list-info {
   padding: 15px 25px 5px 10px;
@@ -34,76 +32,12 @@ $hovered-page-background-color: rgba(219, 219, 219, 1);
 
   .pagination {
     float: right;
-    margin-right: 50px;
+    margin-right: 75px;
     margin-bottom: initial;
+    align-items: center;
 
     .total-entities {
-      display: inline-block;
-      vertical-align: top;
-
-      span {
-        font-weight: bold;
-        font-size: 12px;
-      }
-    }
-
-    .page-list {
-      padding-left: 16px;
-      list-style-type: none;
-      display: inline-block;
-      margin-bottom: 0;
-      vertical-align: top;
-
-      li {
-        font-weight: bold;
-        display: inline-block;
-        border-radius: 100%;
-
-        a,
-        span {
-          display: flex;
-          height: $page-li-size;
-          width: $page-li-size;
-          justify-content: center;
-          align-items: center;
-          color: inherit;
-          user-select: none;
-
-          &:hover,
-          &:focus {
-            text-decoration: none;
-            outline: 0;
-          }
-        }
-
-        &:not(:first-child) {
-          margin-left: 15px;
-        }
-
-        &.current-page {
-          background-color: $current-page-background-color;
-
-          a {
-            color: #ffffff;
-          }
-        }
-
-        &.ellipsis {
-          margin-left: 5px;
-          margin-right: -10px;
-
-          span {
-            user-select: none;
-          }
-        }
-
-        &:hover {
-          &:not(.current-page):not(.ellipsis) {
-            cursor: pointer;
-            background-color: $hovered-page-background-color;
-          }
-        }
-      }
+      margin-right: 10px;
     }
   }
 }

@@ -15,7 +15,7 @@
 */
 
 import { MySearchApi } from 'api/search';
-import NamespaceStore from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import { parseMetadata } from 'services/metadata-parser';
 import uuidV4 from 'uuid/v4';
 import SearchStore from 'components/EntityListView/SearchStore';
@@ -27,7 +27,7 @@ import isNil from 'lodash/isNil';
 import { Theme } from 'services/ThemeHelper';
 
 const search = () => {
-  let namespace = NamespaceStore.getState().selectedNamespace;
+  const namespace = getCurrentNamespace();
   let { offset, limit, activeFilters, activeSort, query } = SearchStore.getState().search;
 
   let params = {
@@ -37,8 +37,8 @@ const search = () => {
     offset,
     sort: activeSort.fullSort,
     query,
-    cursorRequested: true,
     responseFormat: 'v6',
+    cursorRequested: true,
   };
   if (query !== DEFAULT_SEARCH_QUERY) {
     delete params.sort;
@@ -48,6 +48,23 @@ const search = () => {
 
   ExploreTablesStore.dispatch(fetchTables(namespace));
 
+  searchRequest(params);
+};
+
+const nextPage = () => {
+  const { cursor, activeSort } = SearchStore.getState().search;
+
+  const params = {
+    cursor,
+    sort: activeSort.fullSort,
+    cursorRequested: true,
+    responseFormat: 'v6',
+  };
+
+  searchRequest(params);
+};
+
+const searchRequest = (params) => {
   SearchStore.dispatch({
     type: SearchStoreActions.LOADING,
     payload: {
@@ -57,22 +74,26 @@ const search = () => {
 
   MySearchApi.search(params)
     .map((res) => {
-      return Object.assign(
-        {},
-        {
-          total: res.total,
-          limit: res.limit,
-          results: res.results.map(parseMetadata).map((entity) => {
-            entity.uniqueId = uuidV4();
-            return entity;
-          }),
-        }
-      );
+      const responseObj = {
+        total: res.totalResults,
+        limit: res.limit,
+        results: res.results.map(parseMetadata).map((entity) => {
+          entity.uniqueId = uuidV4();
+          return entity;
+        }),
+      };
+
+      if (res.cursor) {
+        responseObj.cursor = res.cursor;
+      }
+
+      return responseObj;
     })
     .subscribe(
       (response) => {
-        let currentPage = SearchStore.getState().search.currentPage;
-        if (response.total > 0 && Math.ceil(response.total / limit) < currentPage) {
+        const state = SearchStore.getState().search;
+        const currentPage = state.currentPage;
+        if (response.total > 0 && Math.ceil(response.total / state.limit) < currentPage) {
           SearchStore.dispatch({
             type: SearchStoreActions.SETERROR,
             payload: {
@@ -152,4 +173,4 @@ const updateQueryString = () => {
   // Modify URL to match application state
   history.pushState(obj, obj.title, obj.url);
 };
-export { search, updateQueryString };
+export { search, updateQueryString, nextPage };
