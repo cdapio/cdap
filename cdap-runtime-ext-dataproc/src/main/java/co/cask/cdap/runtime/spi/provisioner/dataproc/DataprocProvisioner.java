@@ -223,12 +223,12 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
+    /*DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
       client.deleteCluster(clusterName);
-    }
+    }*/
   }
 
   private String getMasterExternalIp(Cluster cluster) {
