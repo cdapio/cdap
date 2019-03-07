@@ -48,6 +48,7 @@ import javax.ws.rs.PathParam;
 public class DynamicPluginServiceApp extends AbstractApplication {
   public static final String PLUGIN_TYPE = "supplier";
   public static final String SERVICE_NAME = "service";
+  public static final String NAMESPACE_HEADER = "Namespace";
 
   @Override
   public void configure() {
@@ -73,7 +74,6 @@ public class DynamicPluginServiceApp extends AbstractApplication {
     private static final Gson GSON = new Gson();
     private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
     private boolean onFinishSuccessful = false;
-    private boolean onErrorSuccessful = false;
 
     @POST
     @Path("plugins/{name}/apply")
@@ -85,7 +85,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
         .addAll(properties)
         .build();
 
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer();
+      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(getNamespace(request));
       Function<PluginConfigurer, String> plugin =
         pluginConfigurer.usePlugin(PLUGIN_TYPE, name, UUID.randomUUID().toString(), pluginProperties);
       if (plugin == null) {
@@ -102,7 +102,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
     public void producePluginFunction(HttpServiceRequest request, HttpServiceResponder responder) {
       PluginRequest pluginRequest = GSON.fromJson(StandardCharsets.UTF_8.decode(request.getContent()).toString(),
                                                   PluginRequest.class);
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer();
+      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(getNamespace(request));
 
       HttpContentProducer producer = new HttpContentProducer() {
         private boolean done = false;
@@ -161,7 +161,7 @@ public class DynamicPluginServiceApp extends AbstractApplication {
     @POST
     @Path("consumer")
     public HttpContentConsumer callWithConsumer(HttpServiceRequest request, HttpServiceResponder responder) {
-      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer();
+      PluginConfigurer pluginConfigurer = getContext().createPluginConfigurer(getNamespace(request));
       return new HttpContentConsumer() {
         private byte[] body = new byte[0];
         private PluginRequest pluginRequest;
@@ -204,6 +204,10 @@ public class DynamicPluginServiceApp extends AbstractApplication {
       };
     }
 
+    private String getNamespace(HttpServiceRequest request) {
+      String namespace = request.getHeader(NAMESPACE_HEADER);
+      return namespace == null ? getContext().getNamespace() : namespace;
+    }
   }
 
   /**

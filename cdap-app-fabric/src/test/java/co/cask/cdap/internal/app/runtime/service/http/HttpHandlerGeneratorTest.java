@@ -674,6 +674,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public PluginConfigurer createPluginConfigurer(String namespace) {
+      return null;
+    }
+
+    @Override
     public ApplicationSpecification getApplicationSpecification() {
       return null;
     }

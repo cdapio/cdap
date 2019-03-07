@@ -159,6 +159,11 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
 
   @Override
   public PluginConfigurer createPluginConfigurer() {
+    return createPluginConfigurer(getNamespace());
+  }
+
+  @Override
+  public PluginConfigurer createPluginConfigurer(String namespace) {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     try {
@@ -171,7 +176,7 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
           DirUtils.deleteDirectoryContents(pluginsDir, true);
         }
       });
-      return new DefaultPluginConfigurer(artifactId, namespaceId, instantiator, pluginFinder);
+      return new DefaultPluginConfigurer(artifactId, new NamespaceId(namespace), instantiator, pluginFinder);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

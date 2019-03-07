@@ -86,6 +86,19 @@ public class DynamicPluginServiceTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testNamespaceIsolation() throws Exception {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("value", "x");
+    URL url = baseURI.resolve(String.format("plugins/%s/apply", ConstantFunction.NAME)).toURL();
+    HttpRequest request = HttpRequest.builder(HttpMethod.POST, url)
+      .withBody(GSON.toJson(properties))
+      .addHeader(DynamicPluginServiceApp.NAMESPACE_HEADER, "ghost")
+      .build();
+    HttpResponse response = HttpRequests.execute(request);
+    Assert.assertEquals(404, response.getResponseCode());
+  }
+
+  @Test
   public void testDynamicPluginSimple() throws Exception {
     // test a single plugin
     Map<String, String> properties = new HashMap<>();
