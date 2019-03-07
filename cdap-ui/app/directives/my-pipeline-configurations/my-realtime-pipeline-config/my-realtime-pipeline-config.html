@@ -136,6 +136,16 @@
             </i>
           </div>
         </div>
+        <div class="label-with-toggle checkpoint-directory row" ng-if="!RealtimePipelineConfigCtrl.checkpointing">
+          <span class="toggle-label col-xs-4">Checkpoint directory</span>
+          <div class="col-xs-7">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Checkpoint directory"
+              ng-model="RealtimePipelineConfigCtrl.checkpointDir">
+          </div>
+        </div>
         <div class="label-with-toggle instrumentation row">
           <span class="toggle-label col-xs-4">Instrumentation</span>
           <div class="col-xs-7 toggle-container">

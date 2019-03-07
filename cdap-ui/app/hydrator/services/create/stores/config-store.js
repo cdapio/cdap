@@ -102,6 +102,7 @@ class HydratorPlusPlusConfigStore {
       if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
         this.setClientResources(this.state.config.clientResources);
         this.setCheckpointing(this.state.config.disableCheckpoints);
+        this.setCheckpointDir(this.state.config.checkpointDir || window.CDAP_CONFIG.hydrator.defaultCheckpointDir);
         this.setGracefulStop(this.state.config.stopGracefully);
         this.setBatchInterval(this.state.config.batchInterval);
       } else {
@@ -286,6 +287,9 @@ class HydratorPlusPlusConfigStore {
       config.stageLoggingEnabled = this.getStageLogging();
       config.processTimingEnabled = this.getInstrumentation();
       config.disableCheckpoints = this.getCheckpointing();
+      if (!config.disableCheckpoints) {
+        config.checkpointDir = this.getCheckpointDir();
+      }
       config.stopGracefully = this.getGracefulStop();
     }
 
@@ -539,6 +543,16 @@ class HydratorPlusPlusConfigStore {
   }
   setCheckpointing(val=false) {
     this.state.config.disableCheckpoints = val;
+  }
+  getCheckpointDir() {
+    return this.getConfig().checkpointDir;
+  }
+  setCheckpointDir(val) {
+    if (val !== false) {
+      this.state.config.checkpointDir = val;
+    } else {
+      this.state.config.checkpointDir = '';
+    }
   }
   getGracefulStop() {
     return this.getConfig().stopGracefully;

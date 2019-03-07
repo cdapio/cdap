@@ -168,6 +168,7 @@ const updatePipeline = () => {
     processTimingEnabled,
     stageLoggingEnabled,
     disableCheckpoints,
+    checkpointDir,
     stopGracefully,
     schedule,
     maxConcurrentRuns,
@@ -201,6 +202,10 @@ const updatePipeline = () => {
     disableCheckpoints,
     stopGracefully,
   };
+
+  if (!disableCheckpoints) {
+    realtimeOnlyConfig.checkpointDir = checkpointDir;
+  }
 
   let config;
   if (artifact.name === GLOBALS.etlDataPipeline) {

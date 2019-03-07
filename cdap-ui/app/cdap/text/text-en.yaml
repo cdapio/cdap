@@ -1814,6 +1814,7 @@ features:
       batchInterval: Batch interval
       checkpointing: Checkpointing
       checkpointingTooltip: Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures.
+      checkpointDir: Checkpoint directory
       contentHeading: Set configurations for this pipeline
       instrumentation: Instrumentation
       instrumentationTooltip: Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources.

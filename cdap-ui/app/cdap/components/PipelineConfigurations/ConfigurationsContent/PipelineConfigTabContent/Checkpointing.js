@@ -28,6 +28,7 @@ const PREFIX = 'features.PipelineConfigurations.PipelineConfig';
 const mapStateToCheckpointingProps = (state) => {
   return {
     disableCheckpoints: state.disableCheckpoints,
+    checkpointDir: state.checkpointDir,
   };
 };
 
@@ -39,33 +40,60 @@ const mapDispatchToCheckpointingProps = (dispatch) => {
         payload: { disableCheckpoints: value },
       });
     },
+    onCheckpointDirChange: (e) => {
+      dispatch({
+        type: PipelineConfigurationsActions.SET_CHECKPOINT_DIR,
+        payload: {
+          checkpointDir: e.target.value,
+        },
+      });
+    },
   };
 };
 
-const Checkpointing = ({ disableCheckpoints, onToggle }) => {
-  return (
-    <div className="label-with-toggle checkpointing row">
-      <span className="toggle-label col-4">{T.translate(`${PREFIX}.checkpointing`)}</span>
-      <div className="col-7 toggle-container">
-        <ToggleSwitch
-          isOn={!disableCheckpoints}
-          onToggle={onToggle.bind(null, !disableCheckpoints)}
+const Checkpointing = ({ disableCheckpoints, checkpointDir, onToggle, onCheckpointDirChange }) => {
+  const checkpointDirComponent = (
+    <div className="label-with-toggle row">
+      <span className="toggle-label col-4">{T.translate(`${PREFIX}.checkpointDir`)}</span>
+      <div className="col-7">
+        <input
+          type="text"
+          className="form-control"
+          value={checkpointDir}
+          onChange={onCheckpointDirChange}
         />
-        <Popover
-          target={() => <IconSVG name="icon-info-circle" />}
-          showOn="Hover"
-          placement="right"
-        >
-          {T.translate(`${PREFIX}.checkpointingTooltip`)}
-        </Popover>
       </div>
     </div>
+  );
+
+  return (
+    <React.Fragment>
+      <div className="label-with-toggle checkpointing row">
+        <span className="toggle-label col-4">{T.translate(`${PREFIX}.checkpointing`)}</span>
+        <div className="col-7 toggle-container">
+          <ToggleSwitch
+            isOn={!disableCheckpoints}
+            onToggle={onToggle.bind(null, !disableCheckpoints)}
+          />
+          <Popover
+            target={() => <IconSVG name="icon-info-circle" />}
+            showOn="Hover"
+            placement="right"
+          >
+            {T.translate(`${PREFIX}.checkpointingTooltip`)}
+          </Popover>
+        </div>
+      </div>
+      {!disableCheckpoints ? checkpointDirComponent : null}
+    </React.Fragment>
   );
 };
 
 Checkpointing.propTypes = {
   disableCheckpoints: PropTypes.bool,
   onToggle: PropTypes.func,
+  onCheckpointDirChange: PropTypes.func,
+  checkpointDir: PropTypes.string,
 };
 
 const ConnectedCheckpointing = connect(

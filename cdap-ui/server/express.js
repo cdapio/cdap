@@ -227,6 +227,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true',
+        defaultCheckpointDir: cdapConfig['data.streams.default.checkpoint.directory'] || false,
       },
       marketUrl: cdapConfig['market.base.url'],
       securityEnabled: authAddress.enabled,

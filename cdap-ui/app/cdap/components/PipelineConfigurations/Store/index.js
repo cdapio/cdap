@@ -63,6 +63,7 @@ const ACTIONS = {
   SET_INSTRUMENTATION: 'SET_INSTRUMENTATION',
   SET_STAGE_LOGGING: 'SET_STAGE_LOGGING',
   SET_CHECKPOINTING: 'SET_CHECKPOINTING',
+  SET_CHECKPOINT_DIR: 'SET_CHECKPOINT_DIR',
   SET_NUM_RECORDS_PREVIEW: 'SET_NUM_RECORDS_PREVIEW',
   SET_MODELESS_OPEN_STATUS: 'SET_MODELESS_OPEN_STATUS',
   SET_PIPELINE_VISUAL_CONFIGURATION: 'SET_PIPELINE_VISUAL_CONFIGURATION',
@@ -100,6 +101,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   processTimingEnabled: HYDRATOR_DEFAULT_VALUES.processTimingEnabled,
   stageLoggingEnabled: HYDRATOR_DEFAULT_VALUES.stageLoggingEnabled,
   disableCheckpoints: HYDRATOR_DEFAULT_VALUES.disableCheckpoints,
+  checkpointDir: window.CDAP_CONFIG.hydrator.defaultCheckpointDir,
   stopGracefully: HYDRATOR_DEFAULT_VALUES.stopGracefully,
   backpressure: HYDRATOR_DEFAULT_VALUES.backpressure,
   numExecutors: HYDRATOR_DEFAULT_VALUES.numExecutors,
@@ -399,6 +401,11 @@ const configure = (state = DEFAULT_CONFIGURE_OPTIONS, action = defaultAction) =>
       return {
         ...state,
         disableCheckpoints: action.payload.disableCheckpoints,
+      };
+    case ACTIONS.SET_CHECKPOINT_DIR:
+      return {
+        ...state,
+        checkpointDir: action.payload.checkpointDir,
       };
     case ACTIONS.SET_NUM_RECORDS_PREVIEW:
       return {
