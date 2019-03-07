@@ -14,19 +14,32 @@
  * the License.
  */
 
-@import '../../../styles/variables.scss';
+@import '~styles/colors.scss';
+
 $disabled-font-color: $grey-04;
 $highlight-color: $yellow-01;
 $highlight-row-bg-color: $yellow-02-lighter;
-$table-border-color: $grey-04;
+$operations-header-color: $grey-02;
+$input-field-color: $blue-03;
 
 .modal .field-level-lineage-modal.modal-dialog {
   max-width: 85vw;
   max-height: 80vh;
 
+  .modal-header,
+  .modal-body {
+    padding-left: 30px;
+    padding-right: 30px;
+  }
+
+  .modal-body {
+    padding-top: 0;
+  }
+
   .operations-container {
     .navigation {
       user-select: none;
+      height: 27px;
 
       .nav-icon {
         cursor: pointer;
@@ -45,17 +58,28 @@ $table-border-color: $grey-04;
     }
 
     .summary-text,
-    .last-execution {
-      line-height: 2;
+    .last-executed {
+      color: $operations-header-color;
+    }
+
+    .summary-text {
+      margin-top: 30px;
+    }
+
+    .last-executed {
+      line-height: 27px;
+      vertical-align: bottom;
+      margin-bottom: 0;
     }
 
     .grid-wrapper {
       max-height: 60vh;
       overflow: auto;
+      margin-top: 30px;
     }
 
     .grid.grid-container {
-      max-height: 60vh;
+      max-height: 55vh;
 
       .grid-header,
       .grid-body {
@@ -64,24 +88,9 @@ $table-border-color: $grey-04;
         }
       }
 
-      .grid-header {
-        font-weight: 600;
-
-        .grid-row > div { padding-left: 7px; }
-      }
-
       .grid-body .grid-row {
-        padding: 0;
-
-        > div {
-          padding: 7px;
-
-          &:first-child { text-align: right; }
-
-          &:not(:last-child) {
-            border-right: 1px solid $table-border-color;
-            min-height: 100%;
-          }
+        > div:first-child {
+          padding-left: 15px;
         }
       }
 
@@ -89,6 +98,11 @@ $table-border-color: $grey-04;
 
       .input-field {
         cursor: pointer;
+        color: $input-field-color;
+
+        &:hover {
+          text-decoration: underline;
+        }
 
         &.selected {
           color: $highlight-color;

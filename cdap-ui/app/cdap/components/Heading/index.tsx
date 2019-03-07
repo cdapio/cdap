@@ -24,13 +24,7 @@ export enum HeadingTypes {
   h6 = 'h6',
 }
 interface IHeadingProps {
-  type:
-    | HeadingTypes.h1
-    | HeadingTypes.h2
-    | HeadingTypes.h3
-    | HeadingTypes.h4
-    | HeadingTypes.h5
-    | HeadingTypes.h6;
+  type: HeadingTypes;
   label: string | React.ReactNode;
   className?: string;
 }

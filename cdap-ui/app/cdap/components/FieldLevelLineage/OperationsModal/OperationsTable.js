@@ -50,7 +50,7 @@ export default class OperationsTable extends Component {
 
   joinEndpoints(endpoints) {
     if (!endpoints || !endpoints.endPoint) {
-      return null;
+      return '--';
     }
 
     return endpoints.endPoint.name;
@@ -83,7 +83,7 @@ export default class OperationsTable extends Component {
             className={classnames('input-field', { selected: isSelected })}
             onClick={this.handleInputClick.bind(this, field, operation)}
           >
-            {field.name}
+            [{field.name}]
           </span>
           {i !== fields.length - 1 ? ', ' : null}
         </span>
@@ -156,7 +156,7 @@ export default class OperationsTable extends Component {
   render() {
     return (
       <div className="grid-wrapper">
-        <div className="grid grid-container">
+        <div className="grid grid-container grid-compact">
           {this.renderHeader()}
           {this.renderBody()}
         </div>

@@ -20,6 +20,7 @@ import { connect } from 'react-redux';
 import { humanReadableDate, objectQuery } from 'services/helpers';
 import Navigation from 'components/FieldLevelLineage/OperationsModal/Navigation';
 import OperationsTable from 'components/FieldLevelLineage/OperationsModal/OperationsTable';
+import Heading, { HeadingTypes } from 'components/Heading';
 import T from 'i18n-react';
 
 const PREFIX = 'features.FieldLevelLineage.OperationsModal';
@@ -62,18 +63,22 @@ function ModalContentView({ operations, activeIndex }) {
 
   return (
     <div className="operations-container">
+      <Heading
+        type={HeadingTypes.h5}
+        label={T.translate(`${PREFIX}.summaryText`, { sources, targets })}
+        className="summary-text"
+      />
+
       <Navigation />
 
-      <div className="summary-text">
-        {T.translate(`${PREFIX}.summaryText`, { sources, targets })}
-      </div>
-
-      <div className="last-execution">
-        {T.translate(`${PREFIX}.lastExecution`, {
+      <Heading
+        type={HeadingTypes.h6}
+        label={T.translate(`${PREFIX}.lastExecution`, {
           app: application,
           time: humanReadableDate(lastExecutedTime),
         })}
-      </div>
+        className="last-executed"
+      />
 
       <OperationsTable operations={activeOperations} />
     </div>
