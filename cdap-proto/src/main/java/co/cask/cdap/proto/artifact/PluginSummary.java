@@ -128,14 +128,17 @@ public class PluginSummary {
         PluginSummary that = (PluginSummary) o;
 
         return Objects.equals(name, that.name) && Objects.equals(type, that.type)
-                && Objects.equals(description, that.description) && Objects.equals(pluginFunction, that.pluginFunction)
-                && Objects.equals(pluginInput, that.pluginInput) && Objects.equals(pluginOutput, that.pluginOutput)
+                && Objects.equals(description, that.description) 
+                && Objects.equals(getPluginFunctionToString(), that.getPluginFunctionToString())
+                && Objects.equals(getPluginInputToString(), that.getPluginInputToString()) 
+                && Objects.equals(getPluginOutputToString(), that.getPluginOutputToString())
                 && Objects.equals(className, that.className) && Objects.equals(artifact, that.artifact);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type, description, pluginFunction, pluginInput, pluginOutput, className, artifact);
+        return Objects.hash(name, type, description, getPluginFunctionToString(), getPluginInputToString(), 
+            getPluginOutputToString(), className, artifact);
     }
 
     @Override
