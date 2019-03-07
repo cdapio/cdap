@@ -281,11 +281,11 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    *
    * @param <T> type of the object provided by this {@link Provider}
    */
-  private static final class SupplierProviderBridge<T> implements Provider<T> {
+  protected static final class SupplierProviderBridge<T> implements Provider<T> {
 
     private final Supplier<T> supplier;
 
-    private SupplierProviderBridge(Supplier<T> supplier) {
+    SupplierProviderBridge(Supplier<T> supplier) {
       this.supplier = supplier;
     }
 

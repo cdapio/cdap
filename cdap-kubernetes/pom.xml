@@ -44,6 +44,11 @@
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
+      <artifactId>twill-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.twill</groupId>
       <artifactId>twill-discovery-api</artifactId>
       <scope>provided</scope>
     </dependency>

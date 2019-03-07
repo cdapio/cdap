@@ -688,7 +688,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   private Set<Class<?>> addExtraDependencies(CConfiguration cConf, Set<Class<?>> dependencies) {
     // Only support HBase and KMS when running on premise
     if (clusterMode == ClusterMode.ON_PREMISE) {
-      dependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
+      try {
+        dependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
+      } catch (Exception e) {
+        LOG.debug("No HBase dependencies to add.");
+      }
       if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
         dependencies.add(SecureStoreUtils.getKMSSecureStore());
       }
