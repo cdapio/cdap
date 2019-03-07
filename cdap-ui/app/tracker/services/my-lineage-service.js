@@ -197,11 +197,17 @@ class myLineageService {
           entityType: data.type,
           entityId: data.name
         };
-        this.myTrackerApi.getDatasetSystemProperties(params)
+        this.myTrackerApi.getDatasetProperties(params)
           .$promise
           .then( (res) => {
-            let parsedType = res.type.split('.');
-            nodeObj.displayType = parsedType[parsedType.length - 1];
+            const type = res.find((property) => {
+              return property.scope === 'SYSTEM' && property.name === 'type';
+            });
+
+            if (type) {
+              let parsedType = type.value.split('.');
+              nodeObj.displayType = parsedType[parsedType.length - 1];
+            }
           });
       }
     });
