@@ -56,7 +56,8 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
    * at configure time. Plugins registered by the dynamic configurer live in their own scope and will not
    * conflict with any plugins that were registered by the service when it was configured. Plugins registered by
    * the returned configurer will also not be available through {@link #newPluginInstance(String)} or
-   * {@link #newPluginInstance(String, MacroEvaluator)}.
+   * {@link #newPluginInstance(String, MacroEvaluator)}. Plugins with system scope and plugins in the same namespace
+   * as the running service will be visible.
    *
    * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
    * then to be forgotten.
@@ -64,4 +65,20 @@ public interface HttpServiceContext extends RuntimeContext, DatasetContext, Serv
    * @return an dynamic plugin configurer that must be closed
    */
   PluginConfigurer createPluginConfigurer();
+
+  /**
+   * Create a {@link PluginConfigurer} that can be used to instantiate plugins at runtime that were not registered
+   * at configure time. Plugins registered by the dynamic configurer live in their own scope and will not
+   * conflict with any plugins that were registered by the service when it was configured. Plugins registered by
+   * the returned configurer will also not be available through {@link #newPluginInstance(String)} or
+   * {@link #newPluginInstance(String, MacroEvaluator)}. Plugins with system scope and plugins in the specified
+   * namespace will be visible.
+   *
+   * The dynamic configurer is meant to be used to create plugins for the lifetime of a single service call and
+   * then to be forgotten.
+   *
+   * @param namespace the namespace for user scoped plugins
+   * @return an dynamic plugin configurer that must be closed
+   */
+  PluginConfigurer createPluginConfigurer(String namespace);
 }
