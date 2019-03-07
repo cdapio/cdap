@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,15 +18,15 @@ package co.cask.cdap.common.http;
 import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.http.ChannelPipelineModifier;
-import co.cask.http.NettyHttpService;
+import io.cdap.http.ChannelPipelineModifier;
+import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
 
 import javax.annotation.Nullable;
 
 /**
- * Provides a {@link co.cask.http.NettyHttpService.Builder} that has common settings built-in.
+ * Provides a {@link io.cdap.http.NettyHttpService.Builder} that has common settings built-in.
  */
 public class CommonNettyHttpServiceBuilder extends NettyHttpService.Builder {
 

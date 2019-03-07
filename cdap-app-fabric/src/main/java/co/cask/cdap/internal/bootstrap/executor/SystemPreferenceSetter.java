@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,16 +22,8 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.config.PreferencesService;
-import co.cask.cdap.internal.profile.ProfileService;
-import co.cask.cdap.proto.EntityScope;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
-import co.cask.cdap.proto.profile.Profile;
-import co.cask.cdap.proto.profile.ProfileCreateRequest;
-import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
-import org.apache.tools.ant.util.Retryable;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -160,7 +160,7 @@
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
-    <netty.http.version>1.1.0</netty.http.version>
+    <netty.http.version>1.2.0</netty.http.version>
     <netty.version>4.1.16.Final</netty.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -229,7 +229,7 @@
         <version>${twill.version}</version>
       </dependency>
       <dependency>
-        <groupId>co.cask.http</groupId>
+        <groupId>io.cdap.http</groupId>
         <artifactId>netty-http</artifactId>
         <version>${netty.http.version}</version>
         <exclusions>

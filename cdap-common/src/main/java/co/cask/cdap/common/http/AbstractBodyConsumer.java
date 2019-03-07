@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package co.cask.cdap.common.http;
 
-import co.cask.http.BodyConsumer;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

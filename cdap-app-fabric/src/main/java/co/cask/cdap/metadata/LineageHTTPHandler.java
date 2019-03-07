@@ -31,12 +31,12 @@ import co.cask.cdap.proto.metadata.lineage.Field;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageDetails;
 import co.cask.cdap.proto.metadata.lineage.FieldLineageSummary;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 

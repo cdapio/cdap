@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,12 +21,8 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.common.ApplicationNotFoundException;
-import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.ArtifactRangeNotFoundException;
-import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.id.Id;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -36,8 +32,6 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
-
-import javax.annotation.Nullable;
 
 /**
  * Creates an application if it doesn't already exist.

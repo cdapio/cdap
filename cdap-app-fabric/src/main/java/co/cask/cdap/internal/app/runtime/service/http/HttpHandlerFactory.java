@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,14 +21,14 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.internal.asm.ByteCodeClassLoader;
 import co.cask.cdap.internal.asm.ClassDefinition;
-import co.cask.http.HttpHandler;
-import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A factory for creating {@link co.cask.http.HttpHandler} from user http service handler
+ * A factory for creating {@link io.cdap.http.HttpHandler} from user http service handler
  */
 public final class HttpHandlerFactory {
 

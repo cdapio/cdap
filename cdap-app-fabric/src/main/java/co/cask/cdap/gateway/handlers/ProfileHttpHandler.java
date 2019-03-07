@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,11 +29,11 @@ import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.profile.ProfileCreateRequest;
 import co.cask.cdap.proto.provisioner.ProvisionerInfo;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -57,7 +57,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * {@link co.cask.http.HttpHandler} for managing profiles.
+ * {@link io.cdap.http.HttpHandler} for managing profiles.
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class ProfileHttpHandler extends AbstractHttpHandler {

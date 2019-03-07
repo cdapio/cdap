@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,14 +29,14 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.tools.HttpsEnabler;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
-import co.cask.http.NettyHttpService;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
+import io.cdap.http.NettyHttpService;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -150,7 +150,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
   }
 
   /**
-   * {@link co.cask.http.HttpHandler} for exposing metadata of a runtime.
+   * {@link io.cdap.http.HttpHandler} for exposing metadata of a runtime.
    */
   @Path("/v1/runtime")
   public final class RuntimeHandler extends AbstractHttpHandler {

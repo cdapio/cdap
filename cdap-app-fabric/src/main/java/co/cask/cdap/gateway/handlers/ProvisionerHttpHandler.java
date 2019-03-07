@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,10 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.provision.ProvisioningService;
 import co.cask.cdap.proto.provisioner.ProvisionerDetail;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -33,7 +33,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * {@link co.cask.http.HttpHandler} for managing provisioners.
+ * {@link io.cdap.http.HttpHandler} for managing provisioners.
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class ProvisionerHttpHandler extends AbstractHttpHandler {

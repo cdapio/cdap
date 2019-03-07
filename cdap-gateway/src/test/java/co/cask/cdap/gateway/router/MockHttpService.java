@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,9 @@
 package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.http.HttpHandler;
-import co.cask.http.NettyHttpService;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;

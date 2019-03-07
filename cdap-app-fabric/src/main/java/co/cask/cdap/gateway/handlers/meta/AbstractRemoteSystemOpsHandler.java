@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,10 @@ package co.cask.cdap.gateway.handlers.meta;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.internal.remote.MethodArgument;
-import co.cask.http.AbstractHttpHandler;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 
 import java.lang.reflect.Type;

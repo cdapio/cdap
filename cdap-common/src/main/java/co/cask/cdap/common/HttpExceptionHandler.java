@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,10 @@ package co.cask.cdap.common;
 
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.http.ExceptionHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
+import io.cdap.http.ExceptionHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;

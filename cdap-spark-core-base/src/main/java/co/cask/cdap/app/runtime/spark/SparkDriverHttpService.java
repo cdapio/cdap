@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,9 +17,9 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.common.HttpExceptionHandler;
-import co.cask.http.HttpHandler;
-import co.cask.http.NettyHttpService;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.NettyHttpService;
 
 import java.net.InetSocketAddress;
 import java.net.URI;

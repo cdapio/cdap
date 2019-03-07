@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,12 +23,12 @@ import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
-import co.cask.http.BodyConsumer;
-import co.cask.http.BodyProducer;
-import co.cask.http.HandlerContext;
-import co.cask.http.HttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.BodyProducer;
+import io.cdap.http.HandlerContext;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.twill.common.Cancellable;
 

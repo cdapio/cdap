@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,10 +28,10 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.http.BodyConsumer;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.name.Named;
+import io.cdap.http.BodyConsumer;
 
 import java.util.EnumSet;
 import java.util.List;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2018 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ package co.cask.cdap.logging.gateway.handlers;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.logging.read.LogEvent;
-import co.cask.http.BodyProducer;
 import com.google.common.collect.Multimap;
+import io.cdap.http.BodyProducer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
