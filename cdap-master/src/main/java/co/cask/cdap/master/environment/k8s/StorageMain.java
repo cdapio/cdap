@@ -16,10 +16,12 @@
 
 package co.cask.cdap.master.environment.k8s;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DFSLocationModule;
 import co.cask.cdap.common.guice.InMemoryDiscoveryModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.ConstantTransactionSystemClient;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
@@ -37,6 +39,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +76,9 @@ public class StorageMain {
         protected void configure() {
           bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
           bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+          // The metrics collection service might not get started at this moment,
+          // so inject a NoopMetricsCollectionService.
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
     );

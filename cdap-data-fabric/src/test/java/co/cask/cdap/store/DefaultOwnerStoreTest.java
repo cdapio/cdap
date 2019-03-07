@@ -16,11 +16,14 @@
 
 package co.cask.cdap.store;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -35,8 +38,10 @@ import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
@@ -74,7 +79,13 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getMasterModule(),
-      new StorageModule()
+      new StorageModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+        }
+      }
     );
 
     injector.getInstance(TransactionManager.class).startAndWait();
@@ -83,7 +94,8 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     TransactionRunner transactionRunner =
       new NoSqlTransactionRunner(injector.getInstance(NoSqlStructuredTableAdmin.class),
-                                 injector.getInstance(TransactionSystemClient.class));
+                                 injector.getInstance(TransactionSystemClient.class),
+                                 new NoOpMetricsCollectionService(), cConf);
     StoreDefinition.OwnerStore.createTables(structuredTableAdmin);
     ownerStore = new DefaultOwnerStore(transactionRunner);
   }

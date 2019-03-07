@@ -17,10 +17,12 @@
 package co.cask.cdap.spi.metadata.dataset;
 
 import co.cask.cdap.api.metadata.MetadataEntity;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
 import co.cask.cdap.common.guice.NamespaceAdminTestModule;
 import co.cask.cdap.common.metadata.Cursor;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -44,9 +46,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Closeables;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.runtime.TransactionInMemoryModule;
 import org.junit.AfterClass;
@@ -90,7 +94,13 @@ public class DatasetMetadataStorageTest extends MetadataStorageTest {
         new AuthorizationTestModule(),
         new AuthorizationEnforcementModule().getInMemoryModules(),
         new AuthenticationContextModules().getMasterModule(),
-        new StorageModule())
+        new StorageModule(),
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          }
+        })
       .add(additionalModules)
       .build();
 

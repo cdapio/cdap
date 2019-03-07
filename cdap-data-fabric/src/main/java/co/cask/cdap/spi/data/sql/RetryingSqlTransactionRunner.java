@@ -16,11 +16,16 @@
 
 package co.cask.cdap.spi.data.sql;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.transaction.TransactionException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TxRunnable;
+import com.google.inject.Inject;
 
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
@@ -36,14 +41,21 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
   private static final long DELAY_MILLIS = 100;
 
   private final SqlTransactionRunner transactionRunner;
+  private final MetricsCollectionService metricsCollectionService;
 
-  public RetryingSqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource) {
-    this.transactionRunner = new SqlTransactionRunner(tableAdmin, dataSource);
+  @Inject
+  public RetryingSqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
+                                      MetricsCollectionService metricsCollectionService, CConfiguration cConf) {
+    this.transactionRunner =
+      new SqlTransactionRunner(tableAdmin, dataSource, metricsCollectionService,
+                               cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED));
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     int retries = 0;
+    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
     while (true) {
       try {
         transactionRunner.run(runnable);
@@ -51,6 +63,7 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
       } catch (SqlTransactionException e) {
         // Retry only transaction failure exceptions
         if (TRANSACTION_CONFLICT_SQL_STATE.equals(e.getSqlException().getSQLState())) {
+          metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_CONFLICT, 1L);
           ++retries;
           long delay = retries > MAX_RETRIES ? -1 : DELAY_MILLIS;
           if (delay < 0) {

@@ -21,7 +21,7 @@ import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.TableAlreadyExistsException;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.nosql.NoSqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
+import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.store.StoreDefinition;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -36,7 +36,7 @@ public class NoSqlLineageTableTest extends LineageTableTest {
   public static void beforeClass() throws IOException, TableAlreadyExistsException {
     StructuredTableAdmin structuredTableAdmin =
       dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableAdmin.class);
-    transactionRunner = dsFrameworkUtil.getInjector().getInstance(NoSqlTransactionRunner.class);
+    transactionRunner = dsFrameworkUtil.getInjector().getInstance(TransactionRunner.class);
     NoSqlStructuredTableRegistry registry =
       dsFrameworkUtil.getInjector().getInstance(NoSqlStructuredTableRegistry.class);
     registry.initialize();

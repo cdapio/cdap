@@ -22,10 +22,12 @@ import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.StorageModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionExecutorModule;
@@ -92,6 +94,8 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
           bind(DatasetDefinitionRegistryFactory.class)
             .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          expose(MetricsCollectionService.class);
           expose(DatasetFramework.class);
         }
       }

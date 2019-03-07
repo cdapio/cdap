@@ -629,7 +629,13 @@ public final class Constants {
     public static final Map<String, String> TRANSACTION_MANAGER_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
+    // metrics context for system storage
+    public static final Map<String, String> METRICS_TAGS = ImmutableMap.of(
+      Tag.COMPONENT, "system.storage",
+      Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace());
+
     public static final String PROGRAM_METRICS_ENABLED = "app.program.metrics.enabled";
+    public static final String STRUCTURED_TABLE_TIME_METRICS_ENABLED = "structured.table.time.metrics.enabled";
 
     /**
      * Metric's dataset related constants.
@@ -747,6 +753,19 @@ public final class Constants {
       public static final String PROGRAM_FAILED_RUNS = "program.failed.runs";
       public static final String PROGRAM_KILLED_RUNS = "program.killed.runs";
       public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
+    }
+
+    /**
+     * Structured table metrics
+     */
+    public static final class StructuredTable {
+
+      public static final String METRICS_PREFIX = "structured.table.";
+      public static final String TRANSACTION_COUNT = "structured.table.transaction.count";
+      public static final String TRANSACTION_CONFLICT = "structured.table.transaction.conflict";
+      public static final String ACTIVE_CONNECTIONS = "structured.table.connection.active";
+      public static final String IDLE_CONNECTIONS = "structured.table.connection.idle";
+      public static final String ERROR_CONNECTIONS = "structured.table.connection.error";
     }
   }
 

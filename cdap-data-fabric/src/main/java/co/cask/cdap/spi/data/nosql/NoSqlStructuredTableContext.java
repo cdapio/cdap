@@ -19,10 +19,12 @@ package co.cask.cdap.spi.data.nosql;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;
 import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.spi.data.common.MetricStructuredTable;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
@@ -37,10 +39,15 @@ import java.util.Map;
 public class NoSqlStructuredTableContext implements StructuredTableContext {
   private final NoSqlStructuredTableAdmin tableAdmin;
   private final DatasetContext datasetContext;
+  private final MetricsCollector metricsCollector;
+  private final boolean emitTimeMetrics;
 
-  NoSqlStructuredTableContext(NoSqlStructuredTableAdmin tableAdmin, DatasetContext datasetContext) {
+  NoSqlStructuredTableContext(NoSqlStructuredTableAdmin tableAdmin, DatasetContext datasetContext,
+                              MetricsCollector metricsCollector, boolean emitTimeMetrics) {
     this.tableAdmin = tableAdmin;
     this.datasetContext = datasetContext;
+    this.metricsCollector = metricsCollector;
+    this.emitTimeMetrics = emitTimeMetrics;
   }
 
   @Override
@@ -61,9 +68,10 @@ public class NoSqlStructuredTableContext implements StructuredTableContext {
         arguments.put(IndexedTable.INDEX_COLUMNS_CONF_KEY, Joiner.on(",").join(specification.getIndexes()));
         arguments.put(IndexedTable.DYNAMIC_INDEXING_PREFIX, tableId.getName());
       }
-      return new NoSqlStructuredTable(datasetContext.getDataset(NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME,
-                                                                arguments),
-                                      new StructuredTableSchema(specification));
+      StructuredTable table =
+        new NoSqlStructuredTable(datasetContext.getDataset(NoSqlStructuredTableAdmin.ENTITY_TABLE_NAME, arguments),
+                                 new StructuredTableSchema(specification));
+      return new MetricStructuredTable(tableId, table, metricsCollector, emitTimeMetrics);
     } catch (DatasetInstantiationException e) {
       throw new StructuredTableInstantiationException(
         tableId, String.format("Error instantiating table %s", tableId), e);

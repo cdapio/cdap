@@ -16,10 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.queue;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocalLocationModule;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.InMemoryNamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.StorageModule;
@@ -76,6 +78,7 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
           bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceAdmin.class).in(Scopes.SINGLETON);
           bind(TransactionSystemClient.class).toInstance(new InMemoryTxSystemClient(txManager));
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
         }
       }
     );

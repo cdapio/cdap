@@ -31,6 +31,7 @@ import java.io.IOException;
  * TODO: CDAP-14674 Make sure all the store definition goes here.
  */
 public final class StoreDefinition {
+
   private StoreDefinition() {
     // prevent instantiation
   }

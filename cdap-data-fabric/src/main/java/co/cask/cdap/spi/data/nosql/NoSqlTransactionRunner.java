@@ -18,6 +18,10 @@ package co.cask.cdap.spi.data.nosql;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.spi.data.nosql.dataset.NoSQLTransactionals;
 import co.cask.cdap.spi.data.nosql.dataset.TableDatasetSupplier;
@@ -38,9 +42,12 @@ import java.util.Map;
 public class NoSqlTransactionRunner implements TransactionRunner {
   private final NoSqlStructuredTableAdmin tableAdmin;
   private final Transactional transactional;
+  private final MetricsCollectionService metricsCollectionService;
+  private final boolean emitTimeMetrics;
 
   @Inject
-  public NoSqlTransactionRunner(NoSqlStructuredTableAdmin tableAdmin, TransactionSystemClient txClient) {
+  public NoSqlTransactionRunner(NoSqlStructuredTableAdmin tableAdmin, TransactionSystemClient txClient,
+                                MetricsCollectionService metricsCollectionService, CConfiguration cConf) {
     this.tableAdmin = tableAdmin;
     this.transactional = Transactions.createTransactionalWithRetry(
       NoSQLTransactionals.createTransactional(txClient, new TableDatasetSupplier() {
@@ -50,13 +57,17 @@ public class NoSqlTransactionRunner implements TransactionRunner {
         }
       }),
       RetryStrategies.retryOnConflict(20, 100));
+    this.metricsCollectionService = metricsCollectionService;
+    this.emitTimeMetrics = cConf.getBoolean(Constants.Metrics.STRUCTURED_TABLE_TIME_METRICS_ENABLED);
   }
 
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     try {
+      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
       transactional.execute(
-        datasetContext -> runnable.run(new NoSqlStructuredTableContext(tableAdmin, datasetContext))
+        datasetContext -> runnable.run(new NoSqlStructuredTableContext(tableAdmin, datasetContext,
+                                                                       metricsCollector, emitTimeMetrics))
       );
     } catch (TransactionFailureException e) {
       throw new TransactionException("Failure executing NoSql transaction:", e.getCause() == null ? e : e.getCause());

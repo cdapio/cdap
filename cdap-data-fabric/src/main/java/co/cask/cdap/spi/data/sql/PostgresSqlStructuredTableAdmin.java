@@ -23,6 +23,7 @@ import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.base.Joiner;
+import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
   private final StructuredTableRegistry registry;
   private final DataSource dataSource;
 
+  @Inject
   public PostgresSqlStructuredTableAdmin(StructuredTableRegistry registry, DataSource dataSource) {
     this.registry = registry;
     this.dataSource = dataSource;
