@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableSet;
  * Data Streams Application.
  */
 public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
+  public static final String CHECKPOINT_FILESET = "dataStreamsCheckpoints";
 
   @Override
   public void configure() {
@@ -47,5 +48,9 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
       throw new IllegalArgumentException(String.format("Failed to configure pipeline: %s", e.getMessage()), e);
     }
     addSpark(new DataStreamsSparkLauncher(spec));
+
+    if (!config.checkpointsDisabled()) {
+      createDataset(CHECKPOINT_FILESET, FileSet.class);
+    }
   }
 }

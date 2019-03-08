@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,8 @@
 package co.cask.cdap.etl.spark;
 
 import com.google.common.base.Optional;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function0;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction2;
@@ -46,9 +46,8 @@ public final class StreamingCompat {
 
   }
 
-  public static JavaStreamingContext getOrCreate(String checkpointDir, Function0<JavaStreamingContext> contextFunc,
-                                                 Configuration configuration) {
-    return JavaStreamingContext.getOrCreate(checkpointDir, contextFunc, configuration);
+  public static JavaStreamingContext getOrCreate(String checkpointDir, Function0<JavaStreamingContext> contextFunc) {
+    return JavaStreamingContext.getOrCreate(checkpointDir, contextFunc);
   }
 
   public static <T> void foreachRDD(JavaDStream<T> stream, final Function2<JavaRDD<T>, Time, Void> func) {

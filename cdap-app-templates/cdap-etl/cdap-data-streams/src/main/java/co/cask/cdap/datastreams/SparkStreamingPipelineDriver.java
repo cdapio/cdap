@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,11 @@
 
 package co.cask.cdap.datastreams;
 
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.AlertPublisher;
@@ -39,27 +43,21 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function0;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.twill.filesystem.Location;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
  * Driver for running pipelines using Spark Streaming.
  */
 public class SparkStreamingPipelineDriver implements JavaSparkMain {
-  private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineDriver.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -70,6 +68,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {
+
     final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                                DataStreamsPipelineSpec.class);
 
@@ -81,52 +80,26 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     boolean checkpointsDisabled = pipelineSpec.isCheckpointsDisabled();
 
     String checkpointDir = null;
-    JavaSparkContext context = null;
     if (!checkpointsDisabled) {
+      // Get the location of the checkpoint directory.
       String pipelineName = sec.getApplicationSpecification().getName();
-      Path baseCheckpointDir = new Path(new Path(pipelineSpec.getCheckpointDirectory()), pipelineName);
-      Path checkpointDirPath = new Path(baseCheckpointDir, pipelineSpec.getPipelineId());
-      checkpointDir = checkpointDirPath.toString();
+      String relativeCheckpointDir = pipelineSpec.getCheckpointDirectory();
 
-      context = new JavaSparkContext();
-      Configuration configuration = context.hadoopConfiguration();
-      // Set the filesystem to whatever the checkpoint directory uses. This is necessary since spark will override
-      // the URI schema with what is set in this config. This needs to happen before StreamingCompat.getOrCreate
-      // is called, since StreamingCompat.getOrCreate will attempt to parse the checkpointDir before calling
-      // context function.
-      configuration.set("fs.defaultFS", checkpointDir);
-      FileSystem fileSystem = FileSystem.get(configuration);
-
-      // Checkpoint directory structure: [directory]/[pipelineName]/[pipelineId]
-      // Ideally, when a pipeline is deleted, we would be able to delete [directory]/[pipelineName].
-      // This is because we don't want another pipeline created with the same name to pick up the old checkpoint.
-      // Since CDAP has no way to run application logic on deletion, we instead generate a unique pipeline id
-      // and use that as the checkpoint directory as a subdirectory inside the pipeline name directory.
-      // On start, we check for any other pipeline ids for that pipeline name, and delete them if they exist.
-      if (!ensureDirExists(fileSystem, baseCheckpointDir)) {
-        throw new IOException(
-          String.format("Unable to create checkpoint base directory '%s' for the pipeline.", baseCheckpointDir));
-      }
-
-      try {
-        for (FileStatus child : fileSystem.listStatus(baseCheckpointDir)) {
-          if (child.isDirectory()) {
-            if (!child.getPath().equals(checkpointDirPath) && !fileSystem.delete(child.getPath(), true)) {
-              LOG.warn("Unable to delete checkpoint directory {} from an old pipeline.", child);
-            }
-          }
+      // there isn't any way to instantiate the fileset except in a TxRunnable, so need to use a reference.
+      final AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
+      Transactionals.execute(sec, new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
+          checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
         }
-      } catch (Exception e) {
-        LOG.warn("Unable to clean up old checkpoint directories from old pipelines.", e);
-      }
+      }, Exception.class);
 
-      if (!ensureDirExists(fileSystem, checkpointDirPath)) {
-        throw new IOException(
-          String.format("Unable to create checkpoint directory '%s' for the pipeline.", checkpointDir));
-      }
+      Location pipelineCheckpointDir = checkpointBaseRef.get().append(pipelineName).append(relativeCheckpointDir);
+      checkpointDir = pipelineCheckpointDir.toURI().toString();
     }
 
-    JavaStreamingContext jssc = run(pipelineSpec, pipelinePhase, sec, checkpointDir, context);
+    JavaStreamingContext jssc = run(pipelineSpec, pipelinePhase, sec, checkpointDir);
     jssc.start();
 
     boolean stopped = false;
@@ -146,15 +119,14 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
   private JavaStreamingContext run(final DataStreamsPipelineSpec pipelineSpec,
                                    final PipelinePhase pipelinePhase,
                                    final JavaSparkExecutionContext sec,
-                                   @Nullable final String checkpointDir,
-                                   @Nullable final JavaSparkContext context) throws Exception {
+                                   @Nullable final String checkpointDir) throws Exception {
+
     Function0<JavaStreamingContext> contextFunction = new Function0<JavaStreamingContext>() {
       @Override
       public JavaStreamingContext call() throws Exception {
-        JavaSparkContext javaSparkContext = context == null ? new JavaSparkContext() : context;
         JavaStreamingContext jssc = new JavaStreamingContext(
-          javaSparkContext, Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
-        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec,
+          new JavaSparkContext(), Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
+        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec, 
                                                                                pipelineSpec.isCheckpointsDisabled());
         PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                         pipelineSpec.isStageLoggingEnabled(),
@@ -170,17 +142,10 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         }
         if (checkpointDir != null) {
           jssc.checkpoint(checkpointDir);
-          jssc.sparkContext().hadoopConfiguration().set("fs.defaultFS", checkpointDir);
         }
         return jssc;
       }
     };
-    return checkpointDir == null
-      ? contextFunction.call()
-      : StreamingCompat.getOrCreate(checkpointDir, contextFunction, context.hadoopConfiguration());
-  }
-
-  private boolean ensureDirExists(FileSystem fileSystem, Path dir) throws IOException {
-    return fileSystem.isDirectory(dir) || fileSystem.mkdirs(dir) || fileSystem.isDirectory(dir);
+    return checkpointDir == null ? contextFunction.call() : StreamingCompat.getOrCreate(checkpointDir, contextFunction);
   }
 }

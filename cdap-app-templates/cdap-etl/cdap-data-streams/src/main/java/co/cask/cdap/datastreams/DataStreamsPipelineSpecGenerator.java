@@ -23,7 +23,6 @@ import co.cask.cdap.etl.common.macro.TimeParser;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
 import co.cask.cdap.etl.validation.InvalidPipelineException;
-import org.apache.hadoop.fs.Path;
 
 import java.util.Set;
 
@@ -53,15 +52,8 @@ public class DataStreamsPipelineSpecGenerator
       .setStopGracefully(config.getStopGracefully())
       .setIsUnitTest(config.isUnitTest())
       .setCheckpointsDisabled(config.checkpointsDisabled());
-    if (!config.checkpointsDisabled()) {
-      String checkpointDir = config.getCheckpointDir();
-      try {
-        new Path(checkpointDir);
-      } catch (Exception e) {
-        throw new IllegalArgumentException(
-          String.format("Checkpoint directory '%s' is not a valid Path: %s", checkpointDir, e.getMessage()), e);
-      }
-      specBuilder.setCheckpointDirectory(checkpointDir);
+    if (config.getCheckpointDir() != null) {
+      specBuilder.setCheckpointDirectory(config.getCheckpointDir());
     }
     configureStages(config, specBuilder);
     return specBuilder.build();

@@ -96,7 +96,6 @@ public class DataStreamsSparkSinkTest  extends HydratorTestBase {
       .addStage(new ETLStage("source", MockSource.getPlugin(schema, input)))
       .addStage(new ETLStage("sink", co.cask.cdap.etl.mock.spark.streaming.MockSink.getPlugin("${tablename}")))
       .addConnection("source", "sink")
-      .setCheckpointDir("file://" + TMP_FOLDER.getRoot().toPath().toString())
       .setBatchInterval("1s")
       .build();
 
