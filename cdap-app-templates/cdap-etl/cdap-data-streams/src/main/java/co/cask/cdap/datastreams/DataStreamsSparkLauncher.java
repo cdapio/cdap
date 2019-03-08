@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
@@ -34,9 +35,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.spark.SparkConf;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -121,6 +124,39 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     }
     context.setSparkConf(sparkConf);
 
+    if (!spec.isCheckpointsDisabled()) {
+      // Each pipeline has its own checkpoint directory within the checkpoint fileset.
+      // Ideally, when a pipeline is deleted, we would be able to delete that checkpoint directory.
+      // This is because we don't want another pipeline created with the same name to pick up the old checkpoint.
+      // Since CDAP has no way to run application logic on deletion, we instead generate a unique pipeline id
+      // and use that as the checkpoint directory as a subdirectory inside the pipeline name directory.
+      // On start, we check for any other pipeline ids for that pipeline name, and delete them if they exist.
+      FileSet checkpointFileSet = context.getDataset(DataStreamsApp.CHECKPOINT_FILESET);
+      String pipelineName = context.getApplicationSpecification().getName();
+      String checkpointDir = spec.getCheckpointDirectory();
+      Location pipelineCheckpointBase = checkpointFileSet.getBaseLocation().append(pipelineName);
+      Location pipelineCheckpointDir = pipelineCheckpointBase.append(checkpointDir);
+
+      if (!ensureDirExists(pipelineCheckpointBase)) {
+        throw new IOException(
+          String.format("Unable to create checkpoint base directory '%s' for the pipeline.", pipelineCheckpointBase));
+      }
+
+      try {
+        for (Location child : pipelineCheckpointBase.list()) {
+          if (!child.equals(pipelineCheckpointDir) && !child.delete(true)) {
+            LOG.warn("Unable to delete checkpoint directory {} from an old pipeline.", child);
+          }
+        }
+      } catch (Exception e) {
+        LOG.warn("Unable to clean up old checkpoint directories from old pipelines.", e);
+      }
+
+      if (!ensureDirExists(pipelineCheckpointDir)) {
+        throw new IOException(
+          String.format("Unable to create checkpoint directory '%s' for the pipeline.", pipelineCheckpointDir));
+      }
+    }
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
@@ -133,4 +169,9 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
                        status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
 
   }
+
+  private boolean ensureDirExists(Location location) throws IOException {
+    return location.isDirectory() || location.mkdirs() || location.isDirectory();
+  }
+
 }
