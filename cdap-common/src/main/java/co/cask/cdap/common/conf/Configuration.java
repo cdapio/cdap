@@ -57,9 +57,11 @@ import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -1683,6 +1685,7 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
     try {
       DocumentBuilderFactory docBuilderFactory
         = DocumentBuilderFactory.newInstance();
+      docBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       //ignore all comments inside the xml file
       docBuilderFactory.setIgnoringComments(true);
 
@@ -1842,7 +1845,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
       DOMSource source = new DOMSource(doc);
       StreamResult result = new StreamResult(out);
       TransformerFactory transFactory = TransformerFactory.newInstance();
+      transFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       Transformer transformer = transFactory.newTransformer();
+      transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
       // Important to not hold Configuration log while writing result, since
       // 'out' may be an HDFS stream which needs to lock this configuration
@@ -1859,8 +1864,9 @@ public class Configuration implements Iterable<Map.Entry<String, String>> {
   private synchronized Document asXmlDocument() throws IOException {
     Document doc;
     try {
-      doc =
-        DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        doc = docBuilderFactory.newDocumentBuilder().newDocument();
+        docBuilderFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
     } catch (ParserConfigurationException pe) {
       throw new IOException(pe);
     }
