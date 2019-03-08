@@ -33,6 +33,7 @@ import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1LabelSelector;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodTemplateSpec;
 import io.kubernetes.client.models.V1ResourceRequirements;
@@ -78,13 +79,16 @@ import java.util.concurrent.TimeUnit;
  * and have no analogy in Kubernetes.
  */
 class KubeTwillPreparer implements TwillPreparer {
+
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
+  // Just use a static for the container inside pod that runs CDAP app.
+  private static final String CONTAINER_NAME = "cdap-app-container";
+
   // These are equal to the constants used in DistributedProgramRunner
   private static final String APP_SPEC = "appSpec.json";
   private static final String PROGRAM_OPTIONS = "program.options.json";
   private final ApiClient apiClient;
   private final String kubeNamespace;
-  private final String image;
   private final PodInfo podInfo;
   private final RunId runId;
   private final List<URI> resources;
@@ -97,7 +101,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int memoryMB;
   private final int vcores;
 
-  KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, String image, PodInfo podInfo, RunId runId,
+  KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, RunId runId,
                     TwillSpecification spec, V1ObjectMeta resourceMeta, DiscoveryServiceClient discoveryServiceClient) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
@@ -105,7 +109,6 @@ class KubeTwillPreparer implements TwillPreparer {
     }
     this.apiClient = apiClient;
     this.kubeNamespace = kubeNamespace;
-    this.image = image;
     this.runId = runId;
     this.podInfo = podInfo;
     this.runnables = spec.getRunnables().keySet();
@@ -341,11 +344,15 @@ class KubeTwillPreparer implements TwillPreparer {
          name: cdap-[instance name]-[cleansed twill app name]-runid
          labels:
            cdap.instance: cdap1
+           cdap.container: cdap-app-container
            cdap.twill.runner: k8s
            cdap.twill.app: [cleansed twill app name]
            cdap.twill.run.id: [twill run id]
      */
-    deployment.setMetadata(resourceMeta);
+    // Copy the meta and add the container label
+    V1ObjectMeta deploymentMeta = new V1ObjectMetaBuilder(resourceMeta).build();
+    deploymentMeta.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
+    deployment.setMetadata(deploymentMeta);
 
     /*
        spec:
@@ -353,13 +360,14 @@ class KubeTwillPreparer implements TwillPreparer {
          selector:
            matchLabels:
              cdap.instance: cdap1
+             cdap.container: cdap-app-container
              cdap.twill.runner: k8s
              cdap.twill.app: [cleansed twill app name]
              cdap.twill.run.id: [twill run id]
      */
     V1DeploymentSpec spec = new V1DeploymentSpec();
     V1LabelSelector labelSelector = new V1LabelSelector();
-    labelSelector.matchLabels(resourceMeta.getLabels());
+    labelSelector.matchLabels(deploymentMeta.getLabels());
     spec.setSelector(labelSelector);
     // TODO: figure out where number of instances is specified in twill spec
     spec.setReplicas(1);
@@ -369,6 +377,7 @@ class KubeTwillPreparer implements TwillPreparer {
          metadata:
            labels:
              cdap.instance: cdap1
+             cdap.container: cdap-app-container
              cdap.twill.runner: k8s
              cdap.twill.app: [cleansed twill app name]
              cdap.twill.run.id: [twill run id]
@@ -376,12 +385,12 @@ class KubeTwillPreparer implements TwillPreparer {
            [pod spec]
      */
     V1PodTemplateSpec templateSpec = new V1PodTemplateSpec();
-    templateSpec.setMetadata(resourceMeta);
+    templateSpec.setMetadata(deploymentMeta);
 
     /*
          spec:
            containers:
-           - name: cdap-k8s
+           - name: cdap-app-container
              image: gcr.io/cdap-dogfood/cdap-sandbox:k8s-26
              command: ["co.cask.cdap.internal.app.runtime.k8s.UserServiceProgramMain"]
              args: ["--env=k8s",
@@ -401,24 +410,29 @@ class KubeTwillPreparer implements TwillPreparer {
      */
     V1PodSpec podSpec = new V1PodSpec();
 
+    // Define volumes in the pod.
     V1Volume podInfoVolume = getPodInfoVolume();
     V1Volume configVolume = getConfigVolume(configMap);
-    podSpec.setVolumes(Arrays.asList(podInfoVolume, configVolume));
+    List<V1Volume> volumes = new ArrayList<>(podInfo.getVolumes());
+    volumes.add(podInfoVolume);
+    volumes.add(configVolume);
+    podSpec.setVolumes(volumes);
+
+    // Set the service for RBAC control for app.
+    podSpec.setServiceAccountName(podInfo.getServiceAccountName());
 
     V1Container container = new V1Container();
-    container.setName("cdap-k8s");
-    container.setImage(image);
+    container.setName(CONTAINER_NAME);
+    container.setImage(podInfo.getContainerImage());
 
-    V1VolumeMount podInfoMount = new V1VolumeMount();
-    podInfoMount.setName(podInfoVolume.getName());
-    podInfoMount.setMountPath(podInfo.getPodInfoDir());
-
+    // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
     String configDir = podInfo.getPodInfoDir() + "-app";
-    V1VolumeMount configMount = new V1VolumeMount();
-    configMount.setName(configVolume.getName());
-    configMount.setMountPath(configDir);
-
-    container.setVolumeMounts(Arrays.asList(podInfoMount, configMount));
+    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
+                       .mountPath(podInfo.getPodInfoDir()).readOnly(true));
+    volumeMounts.add(new V1VolumeMount().name(configVolume.getName())
+                       .mountPath(configDir).readOnly(true));
+    container.setVolumeMounts(volumeMounts);
 
     List<V1EnvVar> envVars = new ArrayList<>();
     // assumption is there is only a single runnable
@@ -447,7 +461,7 @@ class KubeTwillPreparer implements TwillPreparer {
 
     LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true");
-    LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
+    LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
     return deployment;
   }
 

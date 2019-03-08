@@ -235,21 +235,20 @@ public class HBaseVersion {
 
   private static void determineVersion() {
     try {
-      Class versionInfoClass = Class.forName("org.apache.hadoop.hbase.util.VersionInfo");
+      Class<?> versionInfoClass = Class.forName("org.apache.hadoop.hbase.util.VersionInfo");
       Method versionMethod = versionInfoClass.getMethod("getVersion");
       versionString = (String) versionMethod.invoke(null);
       currentVersion = determineVersionFromVersionString(versionString);
+    } catch (ClassNotFoundException e) {
+      // If there is no HBase class, treat it as unknown. This is for env that HBase is not available.
+      LOG.debug("HBase is not available from the environment. Cannot determine HBase version.");
     } catch (Throwable e) {
-      // Get the Logger instance inside determineVersion() to prevent LoggerFactory.getLogger printing extra output to
-      // stdout. No need for a static Logger instance because determineVersion() will only be called once.
-      Logger logger = LoggerFactory.getLogger(HBaseVersion.class);
-      // must be a class loading exception, HBase is not there
-      logger.error("Unable to determine HBase version from string '{}', are HBase classes available?", versionString);
-      logger.error("Exception was: ", e);
+      LOG.error("Unable to determine HBase version", e);
       currentVersion = Version.UNKNOWN;
-      if (versionString == null) {
-        versionString = "unknown";
-      }
+    }
+
+    if (versionString == null) {
+      versionString = "unknown";
     }
   }
 
