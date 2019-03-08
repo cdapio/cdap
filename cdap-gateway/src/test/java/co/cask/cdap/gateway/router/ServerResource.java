@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,12 @@ package co.cask.cdap.gateway.router;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.BodyConsumer;
-import co.cask.http.ChunkResponder;
-import co.cask.http.HttpResponder;
-import co.cask.http.NettyHttpService;
 import com.google.common.base.Throwables;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.ChunkResponder;
+import io.cdap.http.HttpResponder;
+import io.cdap.http.NettyHttpService;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;

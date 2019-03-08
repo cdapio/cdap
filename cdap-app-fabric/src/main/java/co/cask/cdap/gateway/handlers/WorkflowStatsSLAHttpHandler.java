@@ -32,11 +32,11 @@ import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.proto.WorkflowStatsComparison;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 

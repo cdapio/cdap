@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,12 @@ import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 

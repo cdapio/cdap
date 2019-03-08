@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpContentProducer;
-import co.cask.http.BodyProducer;
+import io.cdap.http.BodyProducer;
 
 /**
  * Interface for creating {@link BodyProducer} instance from {@link HttpContentProducer}.

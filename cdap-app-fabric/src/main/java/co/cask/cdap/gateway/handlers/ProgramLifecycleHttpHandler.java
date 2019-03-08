@@ -80,7 +80,6 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.scheduler.ProgramScheduleService;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -97,6 +96,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -133,7 +133,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * {@link co.cask.http.HttpHandler} to manage program lifecycle for v3 REST APIs
+ * {@link io.cdap.http.HttpHandler} to manage program lifecycle for v3 REST APIs
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")

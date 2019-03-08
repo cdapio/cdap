@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,10 @@
 
 package co.cask.cdap.explore.jdbc;
 
-import co.cask.http.HttpHandler;
-import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.AbstractIdleService;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.NettyHttpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

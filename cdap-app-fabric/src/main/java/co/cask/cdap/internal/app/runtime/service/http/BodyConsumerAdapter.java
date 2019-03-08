@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,9 @@ import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.http.BodyConsumer;
-import co.cask.http.BodyProducer;
-import co.cask.http.HttpResponder;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.BodyProducer;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;

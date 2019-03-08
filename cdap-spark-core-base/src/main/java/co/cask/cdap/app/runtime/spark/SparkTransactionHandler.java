@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,10 @@
 package co.cask.cdap.app.runtime.spark;
 
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;

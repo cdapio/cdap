@@ -121,7 +121,7 @@
       <artifactId>tephra-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>co.cask.http</groupId>
+      <groupId>io.cdap.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>
     <dependency>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,6 @@ import co.cask.cdap.messaging.store.cache.MessageTableCacheProvider;
 import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import co.cask.cdap.proto.id.TopicId;
-import co.cask.http.HttpHandler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
@@ -48,6 +47,7 @@ import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.http.HttpHandler;
 
 import javax.annotation.Nullable;
 

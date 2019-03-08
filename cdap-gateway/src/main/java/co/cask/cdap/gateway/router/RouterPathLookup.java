@@ -19,8 +19,8 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.http.AbstractHttpHandler;
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.commons.lang.StringUtils;
 

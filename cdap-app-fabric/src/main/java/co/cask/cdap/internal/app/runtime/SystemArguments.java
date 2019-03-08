@@ -31,7 +31,7 @@ import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.profile.Profile;
 import co.cask.cdap.proto.provisioner.ProvisionerPropertyValue;
-import co.cask.http.NettyHttpService;
+import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.TwillPreparer;

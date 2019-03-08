@@ -27,10 +27,10 @@ import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
 import co.cask.cdap.logging.read.LogReader;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.http.HttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 
 import java.util.List;

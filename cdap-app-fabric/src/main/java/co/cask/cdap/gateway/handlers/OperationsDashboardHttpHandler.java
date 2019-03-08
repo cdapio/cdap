@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,12 +37,12 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.ops.DashboardProgramRunRecord;
 import co.cask.cdap.reporting.ProgramHeartbeatService;
 import co.cask.cdap.scheduler.Scheduler;
-import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -62,7 +62,7 @@ import javax.ws.rs.QueryParam;
 
 
 /**
- * {@link co.cask.http.HttpHandler} to handle program run operation dashboard and reports for v3 REST APIs
+ * {@link io.cdap.http.HttpHandler} to handle program run operation dashboard and reports for v3 REST APIs
  *
  * TODO: [CDAP-13355] Move this handler into report generation app
  */

@@ -46,7 +46,6 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.messaging.distributed.MessagingServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
-import co.cask.http.HttpHandler;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
@@ -58,6 +57,7 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import io.cdap.http.HttpHandler;
 
 import java.util.Map;
 

@@ -51,8 +51,6 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.http.BodyConsumer;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -61,6 +59,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -94,7 +94,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * {@link co.cask.http.HttpHandler} for managing application lifecycle.
+ * {@link io.cdap.http.HttpHandler} for managing application lifecycle.
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")

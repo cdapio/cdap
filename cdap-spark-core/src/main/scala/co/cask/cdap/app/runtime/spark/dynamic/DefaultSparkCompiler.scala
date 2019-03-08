@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,11 @@
 package co.cask.cdap.app.runtime.spark.dynamic
 
 import java.io._
-import java.net.URL
-import java.net.URLClassLoader
+import java.net.{URL, URLClassLoader}
 
-import scala.tools.nsc.Global
-import scala.tools.nsc.Settings
 import scala.tools.nsc.backend.JavaPlatform
-import scala.tools.nsc.interpreter.AbstractFileClassLoader
-import scala.tools.nsc.interpreter.IMain
-import scala.tools.nsc.interpreter.ReplGlobal
-import scala.tools.nsc.interpreter.ReplReporter
-import scala.tools.nsc.io
+import scala.tools.nsc.interpreter.{AbstractFileClassLoader, IMain, ReplGlobal, ReplReporter}
+import scala.tools.nsc.{Global, Settings, io}
 import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.reporters.Reporter
 import scala.tools.nsc.util.MergedClassPath

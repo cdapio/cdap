@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,12 @@
 package co.cask.cdap.app.runtime.spark.dynamic;
 
 import co.cask.cdap.common.NotFoundException;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HandlerContext;
-import co.cask.http.HttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.io.Closeables;
 import com.google.common.io.Resources;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HandlerContext;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;

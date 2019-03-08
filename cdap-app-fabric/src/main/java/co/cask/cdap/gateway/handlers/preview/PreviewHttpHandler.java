@@ -32,7 +32,6 @@ import co.cask.cdap.proto.codec.BasicThrowableCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,6 +40,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
@@ -64,7 +64,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * {@link co.cask.http.HttpHandler} to manage preview lifecycle for v3 REST APIs
+ * {@link io.cdap.http.HttpHandler} to manage preview lifecycle for v3 REST APIs
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")

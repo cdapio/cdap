@@ -22,10 +22,10 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -35,7 +35,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * The {@link co.cask.http.HttpHandler} for handling REST calls to the usage registry.
+ * The {@link io.cdap.http.HttpHandler} for handling REST calls to the usage registry.
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class UsageHandler extends AbstractHttpHandler {

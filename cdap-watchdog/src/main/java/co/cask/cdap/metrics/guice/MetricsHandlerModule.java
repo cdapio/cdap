@@ -18,14 +18,13 @@ package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.metrics.query.MetricsHandler;
 import co.cask.cdap.metrics.query.MetricsQueryService;
-import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.http.HttpHandler;
 
 /**
  * Metrics http handlers.

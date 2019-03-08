@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ package co.cask.cdap.metrics.guice;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
-import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.http.HttpHandler;
 
 /**
  * Metrics Processor Service Module for the MetricsProcessorStatusService

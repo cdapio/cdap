@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,11 @@
  */
 
 package co.cask.cdap.app.runtime.spark.dynamic
-import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-
 import java.net.URL
 
-import scala.reflect.io.PlainFile
-import scala.reflect.io.VirtualDirectory
+import co.cask.cdap.api.spark.dynamic.{SparkCompiler, SparkInterpreter}
+
+import scala.reflect.io.{PlainFile, VirtualDirectory}
 import scala.tools.nsc.Settings
 
 /**

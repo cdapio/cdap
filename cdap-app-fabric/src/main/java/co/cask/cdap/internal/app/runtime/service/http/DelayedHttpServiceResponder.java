@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,11 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.http.BodyProducer;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import io.cdap.http.BodyProducer;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;

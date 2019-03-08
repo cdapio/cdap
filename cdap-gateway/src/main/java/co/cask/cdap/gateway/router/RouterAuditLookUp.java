@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,10 +22,10 @@ import co.cask.cdap.common.logging.AuditLogConfig;
 import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.internal.asm.Classes;
-import co.cask.http.HttpHandler;
-import co.cask.http.internal.PatternPathRouterWithGroups;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.internal.PatternPathRouterWithGroups;
 import io.netty.handler.codec.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

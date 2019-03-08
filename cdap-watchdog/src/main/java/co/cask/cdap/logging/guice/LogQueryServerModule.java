@@ -20,11 +20,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.logging.gateway.handlers.LogHandler;
 import co.cask.cdap.logging.service.LogQueryService;
-import co.cask.http.HttpHandler;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import io.cdap.http.HttpHandler;
 
 /**
  * A Guice module to provide bindings for the HTTP service for querying logs.

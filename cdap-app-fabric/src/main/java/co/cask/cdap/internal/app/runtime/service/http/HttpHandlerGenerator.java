@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,9 +26,6 @@ import co.cask.cdap.internal.app.runtime.ThrowingRunnable;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
-import co.cask.http.BodyConsumer;
-import co.cask.http.HttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
@@ -37,6 +34,9 @@ import com.google.common.collect.Lists;
 import com.google.common.hash.Hashing;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.HttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -79,11 +79,11 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 
 /**
- * A bytecode generator for generating class that implements {@link co.cask.http.HttpHandler} interface and
+ * A bytecode generator for generating class that implements {@link io.cdap.http.HttpHandler} interface and
  * copy public methods annotated with {@link Path} of a delegating class by delegating to the delegation instance.
  *
  * It is needed for wrapping user class that annotated with {@link Path} into a class that implements
- * {@link co.cask.http.HttpHandler} for the netty http service to inspect.
+ * {@link io.cdap.http.HttpHandler} for the netty http service to inspect.
  *
  * Also, the generated class can impose transaction boundary for calls to those {@link Path @Path} methods.
  *

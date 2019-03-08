@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,13 +22,13 @@ import co.cask.cdap.common.security.AuditDetail;
 import co.cask.cdap.common.security.AuditPolicy;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.http.BodyProducer;
-import co.cask.http.HandlerContext;
-import co.cask.http.HttpResponder;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.http.BodyProducer;
+import io.cdap.http.HandlerContext;
+import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.EmptyHttpHeaders;

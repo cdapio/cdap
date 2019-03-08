@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.BodyConsumer;
-import co.cask.http.ChannelPipelineModifier;
-import co.cask.http.ChunkResponder;
-import co.cask.http.HttpResponder;
-import co.cask.http.NettyHttpService;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -42,6 +36,12 @@ import com.ning.http.client.Request;
 import com.ning.http.client.RequestBuilder;
 import com.ning.http.client.Response;
 import com.ning.http.client.providers.netty.NettyAsyncHttpProvider;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyConsumer;
+import io.cdap.http.ChannelPipelineModifier;
+import io.cdap.http.ChunkResponder;
+import io.cdap.http.HttpResponder;
+import io.cdap.http.NettyHttpService;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;

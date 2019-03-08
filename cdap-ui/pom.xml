@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014-2018 Cask Data, Inc.
+  Copyright © 2014-2019 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -121,7 +121,7 @@
               <excludeGroupIds>org.apache.hbase,asm,org.apache.zookeeper,org.apache.kafka,org.apache.twill,\
                 org.apache.httpcomponents,org.apache.thrift,org.apache.flume,org.apache.avro,org.ow2.asm,\
                 com.google.inject,org.apache.hadoop,commons-codec,com.google.inject.extensions,\
-                co.cask.http,org.codehaus.jackson</excludeGroupIds>
+                io.cdap.http,org.codehaus.jackson</excludeGroupIds>
               <excludeArtifactIds>cdap-proto,tephra,zkclient,servlet-api,common-http,\
                 common-lang,common-io</excludeArtifactIds>
               <prependGroupId>true</prependGroupId>

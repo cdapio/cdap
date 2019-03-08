@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,12 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.operations.OperationalStats;
 import co.cask.cdap.operations.OperationalStatsUtils;
-import co.cask.http.AbstractHttpHandler;
-import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
+import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * {@link co.cask.http.HttpHandler} for service provider statistics.
+ * {@link io.cdap.http.HttpHandler} for service provider statistics.
  */
 @Path(Constants.Gateway.API_VERSION_3 + "/system/serviceproviders")
 public class OperationalStatsHttpHandler extends AbstractHttpHandler {
