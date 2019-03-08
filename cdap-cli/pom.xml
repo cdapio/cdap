@@ -40,7 +40,7 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>co.cask.common</groupId>
+      <groupId>io.cdap.common</groupId>
       <artifactId>common-cli</artifactId>
     </dependency>
     <dependency>

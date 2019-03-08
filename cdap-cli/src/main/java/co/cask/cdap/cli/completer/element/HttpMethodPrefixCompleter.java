@@ -25,8 +25,8 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.cli.completers.PrefixCompleter;
 import com.google.common.collect.Lists;
+import io.cdap.common.cli.completers.PrefixCompleter;
 
 import java.io.IOException;
 import java.util.Collection;

@@ -29,11 +29,11 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.preview.PreviewConfig;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.File;
 import java.io.FileReader;

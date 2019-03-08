@@ -17,13 +17,13 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.common.http.HttpResponse;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.hbase.txprune.InvalidListPruningDebugTool;

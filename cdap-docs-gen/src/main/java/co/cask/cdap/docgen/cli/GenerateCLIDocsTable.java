@@ -23,10 +23,10 @@ import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.common.cli.Command;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.common.cli.Command;
 
 import java.io.IOException;
 import java.io.PrintStream;

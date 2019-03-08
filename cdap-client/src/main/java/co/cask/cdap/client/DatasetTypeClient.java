@@ -25,10 +25,10 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpResponse;
-import co.cask.common.http.ObjectResponse;
 import com.google.common.reflect.TypeToken;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

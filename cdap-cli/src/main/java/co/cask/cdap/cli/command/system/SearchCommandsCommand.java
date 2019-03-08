@@ -19,13 +19,13 @@ package co.cask.cdap.cli.command.system;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.util.table.TableRendererConfig;
-import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import io.cdap.common.cli.Arguments;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 import java.io.PrintStream;
 import java.util.List;

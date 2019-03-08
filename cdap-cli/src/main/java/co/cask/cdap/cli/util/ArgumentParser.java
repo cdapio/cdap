@@ -17,20 +17,20 @@
 package co.cask.cdap.cli.util;
 
 import co.cask.cdap.cli.ProgramIdArgument;
-import co.cask.common.cli.util.Parser;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import io.cdap.common.cli.util.Parser;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static co.cask.common.cli.util.Parser.MANDATORY_ARG_BEGINNING;
-import static co.cask.common.cli.util.Parser.MANDATORY_ARG_ENDING;
-import static co.cask.common.cli.util.Parser.OPTIONAL_PART_BEGINNING;
-import static co.cask.common.cli.util.Parser.OPTIONAL_PART_ENDING;
+import static io.cdap.common.cli.util.Parser.MANDATORY_ARG_BEGINNING;
+import static io.cdap.common.cli.util.Parser.MANDATORY_ARG_ENDING;
+import static io.cdap.common.cli.util.Parser.OPTIONAL_PART_BEGINNING;
+import static io.cdap.common.cli.util.Parser.OPTIONAL_PART_ENDING;
 
 /**
  * Utility class for parsing arguments from user input based on command pattern.

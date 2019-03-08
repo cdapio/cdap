@@ -17,7 +17,7 @@
 package co.cask.cdap.common.http;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.common.http.HttpRequestConfig;
+import io.cdap.common.http.HttpRequestConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

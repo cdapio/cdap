@@ -28,8 +28,8 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.AbstractProgramManager;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpResponse;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

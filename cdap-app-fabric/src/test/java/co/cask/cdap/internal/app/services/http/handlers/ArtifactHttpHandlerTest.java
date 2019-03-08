@@ -56,9 +56,6 @@ import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -67,6 +64,9 @@ import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.Assert;
 import org.junit.Test;
@@ -247,7 +247,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     URL url = getEndPoint(String.format("%s/namespaces/%s/artifactproperties",
                                         Constants.Gateway.API_VERSION_3, NamespaceId.DEFAULT.getNamespace())).toURL();
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(requestList)).build();
-    co.cask.common.http.HttpResponse response = HttpRequests.execute(request);
+    io.cdap.common.http.HttpResponse response = HttpRequests.execute(request);
 
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
@@ -944,7 +944,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
     return getResults(endpoint, PLUGIN_INFOS_TYPE);
   }
 
-  private co.cask.common.http.HttpResponse callPluginMethod(
+  private io.cdap.common.http.HttpResponse callPluginMethod(
     ArtifactId plugins3Id, String pluginType, String pluginName, String pluginMethod,
     String body, ArtifactScope scope, int expectedResponseCode) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(
@@ -959,7 +959,7 @@ public class ArtifactHttpHandlerTest extends ArtifactHttpHandlerTestBase {
                     scope.name()))
       .toURL();
     HttpRequest request = HttpRequest.post(endpoint).withBody(body).build();
-    co.cask.common.http.HttpResponse response = HttpRequests.execute(request);
+    io.cdap.common.http.HttpResponse response = HttpRequests.execute(request);
     Assert.assertEquals(expectedResponseCode, response.getResponseCode());
     return response;
   }

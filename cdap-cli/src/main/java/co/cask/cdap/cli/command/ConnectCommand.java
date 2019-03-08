@@ -21,8 +21,8 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.CLIConnectionConfig;
 import co.cask.cdap.cli.LaunchOptions;
 import co.cask.cdap.cli.util.InstanceURIParser;
-import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
+import io.cdap.common.cli.Arguments;
+import io.cdap.common.cli.Command;
 
 import java.io.PrintStream;
 import javax.inject.Inject;

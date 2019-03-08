@@ -23,11 +23,11 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.ConfigEntry;
 import co.cask.cdap.proto.Version;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpResponse;
-import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
 
 import java.io.IOException;
 import java.util.List;

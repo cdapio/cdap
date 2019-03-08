@@ -26,8 +26,8 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Map;

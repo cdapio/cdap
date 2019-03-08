@@ -18,10 +18,10 @@ package co.cask.cdap.internal.app.runtime.monitor;
 
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.security.tools.HttpsEnabler;
-import co.cask.common.http.HttpRequestConfig;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.net.HttpHeaders;
+import io.cdap.common.http.HttpRequestConfig;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;

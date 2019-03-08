@@ -21,7 +21,7 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.common.cli.Arguments;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Map;

@@ -24,9 +24,9 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
+import io.cdap.common.cli.Command;
 import jline.console.ConsoleReader;
 
 import java.io.PrintStream;

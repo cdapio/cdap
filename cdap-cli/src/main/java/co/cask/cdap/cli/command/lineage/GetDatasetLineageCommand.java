@@ -23,11 +23,11 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.LineageClient;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
-import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Collections;

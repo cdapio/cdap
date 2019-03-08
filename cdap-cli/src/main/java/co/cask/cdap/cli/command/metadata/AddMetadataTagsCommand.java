@@ -21,9 +21,9 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.MetadataClient;
-import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Set;

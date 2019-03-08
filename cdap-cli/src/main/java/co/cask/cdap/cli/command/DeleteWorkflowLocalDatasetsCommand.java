@@ -24,7 +24,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.WorkflowClient;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.common.cli.Arguments;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 

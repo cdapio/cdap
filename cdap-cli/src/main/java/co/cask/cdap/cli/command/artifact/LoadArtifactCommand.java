@@ -26,8 +26,8 @@ import co.cask.cdap.common.conf.ArtifactConfigReader;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.File;
 import java.io.FileInputStream;

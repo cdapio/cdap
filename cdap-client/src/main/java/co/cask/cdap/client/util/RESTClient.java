@@ -21,13 +21,13 @@ import co.cask.cdap.client.exception.DisconnectedException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;

@@ -21,8 +21,8 @@ import co.cask.cdap.cli.completer.element.EndpointCompleter;
 import co.cask.cdap.cli.completer.element.HttpEndpointPrefixCompleter;
 import co.cask.cdap.cli.completer.element.HttpMethodPrefixCompleter;
 import co.cask.cdap.client.ServiceClient;
-import co.cask.common.cli.supplier.CompleterSupplier;
 import com.google.inject.Inject;
+import io.cdap.common.cli.supplier.CompleterSupplier;
 import jline.console.completer.Completer;
 
 /**
@@ -51,7 +51,7 @@ public class EndpointSupplier implements CompleterSupplier {
       String prefixMatch = prefix.replaceAll("<.+?>", "<>");
       // Matches prefix "call service <app-id.service-id>" unless completer is a DefaultStringsCompleter containing
       // the non-argument token "version" (Referring to the method call
-      // "getCompleter(childPrefix, new DefaultStringsCompleter(nonArgumentTokens)" in co.cask.common.cli.CLI.java).
+      // "getCompleter(childPrefix, new DefaultStringsCompleter(nonArgumentTokens)" in io.cdap.common.cli.CLI.java).
       // Also matches "call service <app-id.service-id> version <app-version>".
       if ((METHOD_PREFIX.equals(prefixMatch) || METHOD_PREFIX_WITH_APP_VERSION.equals(prefixMatch))
         && completer instanceof EndpointCompleter) {
