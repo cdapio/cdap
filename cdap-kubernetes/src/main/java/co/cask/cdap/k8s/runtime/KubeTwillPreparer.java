@@ -42,7 +42,6 @@ import io.kubernetes.client.models.V1VolumeMount;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.TwillController;
@@ -50,7 +49,6 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,30 +88,28 @@ class KubeTwillPreparer implements TwillPreparer {
   private final ApiClient apiClient;
   private final String kubeNamespace;
   private final PodInfo podInfo;
-  private final RunId runId;
   private final List<URI> resources;
   private final Set<String> runnables;
   private final Map<String, Map<String, String>> environments;
   private final V1ObjectMeta resourceMeta;
-  private final DiscoveryServiceClient discoveryServiceClient;
+  private final KubeTwillControllerFactory controllerFactory;
   private final URI appSpec;
   private final URI programOptions;
   private final int memoryMB;
   private final int vcores;
 
-  KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, RunId runId,
-                    TwillSpecification spec, V1ObjectMeta resourceMeta, DiscoveryServiceClient discoveryServiceClient) {
+  KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
+                    V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
     }
     this.apiClient = apiClient;
     this.kubeNamespace = kubeNamespace;
-    this.runId = runId;
     this.podInfo = podInfo;
     this.runnables = spec.getRunnables().keySet();
     this.resources = new ArrayList<>();
-    this.discoveryServiceClient = discoveryServiceClient;
+    this.controllerFactory = controllerFactory;
     this.environments = new HashMap<>();
     for (String runnable : runnables) {
       environments.put(runnable, new HashMap<>());
@@ -317,14 +313,14 @@ class KubeTwillPreparer implements TwillPreparer {
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
       V1ConfigMap configMap = createConfigMap();
-      createDeployment(configMap);
-      return new KubeTwillController(resourceMeta.getName(), kubeNamespace, runId, apiClient, discoveryServiceClient);
+      createDeployment(configMap, timeoutUnit.toMillis(timeout));
+      return controllerFactory.create(timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
   }
 
-  private V1Deployment createDeployment(V1ConfigMap configMap) throws ApiException {
+  private V1Deployment createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
     /*
        The deployment will look something like:
        apiVersion: apps/v1
@@ -352,6 +348,8 @@ class KubeTwillPreparer implements TwillPreparer {
     // Copy the meta and add the container label
     V1ObjectMeta deploymentMeta = new V1ObjectMetaBuilder(resourceMeta).build();
     deploymentMeta.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
+    deploymentMeta.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
+                                      Long.toString(startTimeoutMillis));
     deployment.setMetadata(deploymentMeta);
 
     /*

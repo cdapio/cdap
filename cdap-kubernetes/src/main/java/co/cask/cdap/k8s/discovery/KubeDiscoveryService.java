@@ -16,9 +16,8 @@
 
 package co.cask.cdap.k8s.discovery;
 
+import co.cask.cdap.k8s.common.AbstractWatcherThread;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Range;
-import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -31,7 +30,6 @@ import io.kubernetes.client.models.V1ServiceList;
 import io.kubernetes.client.models.V1ServicePort;
 import io.kubernetes.client.models.V1ServiceSpec;
 import io.kubernetes.client.util.Config;
-import io.kubernetes.client.util.Watch;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -51,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -72,15 +69,8 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeDiscoveryService.class);
 
-  private static final Range<Integer> FAILURE_RETRY_RANGE = Range.closedOpen(100, 2000);
+  private static final  String SERVICE_LABEL = "cdap.service";
 
-  // The response type from K8s when a service was added
-  private static final String ADDED = "ADDED";
-  // The response type from K8s when a service was deleted
-  private static final String DELETED = "DELETED";
-  // The response type from K8s when a service was modified
-  private static final String MODIFIED = "MODIFIED";
-  // Not to support payload. Use a constant for the payload due to bug in TWILL-264
   private static final byte[] EMPTY_PAYLOAD = new byte[0];
 
   private final String namespace;
@@ -154,6 +144,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     // Start the watcher thread if it is not yet started
     WatcherThread watcherThread = this.watcherThread;
+
     if (watcherThread == null) {
       synchronized (this) {
         if (closed) {
@@ -252,7 +243,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     V1Service service = new V1Service();
     V1ObjectMeta meta = new V1ObjectMeta();
     meta.setName(serviceName);
-    meta.setLabels(ImmutableMap.of("cdap.service", namePrefix + discoverable.getName()));
+    meta.setLabels(ImmutableMap.of(SERVICE_LABEL, namePrefix + discoverable.getName()));
 
     // Set the owner reference for GC
     if (!ownerReferences.isEmpty()) {
@@ -352,168 +343,68 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
   /**
    * A {@link Thread} that keep watching for changes in service in Kubernetes.
    */
-  private final class WatcherThread extends Thread implements AutoCloseable {
+  private final class WatcherThread extends AbstractWatcherThread<V1Service> {
 
     private final Set<String> services;
-    private final Random random;
-    private volatile Watch<V1Service> watch;
-    private volatile boolean stopped;
 
     WatcherThread() {
-      super("kube-discovery-service");
+      super("kube-discovery-service", namespace);
       this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
-      this.random = new Random();
     }
 
-    /**
-     * Adds the given service to the watch list.
-     *
-     * @param service name of the service
-     */
-    void addService(String service) {
-      // If not adding a new service to watch, just return
-      if (!services.add(service)) {
-        return;
+    void addService(String name) {
+      // Service name in K8s are prefixed
+      // If this is a new service to watch, reset the watch so that the new selector will get pickup.
+      if (services.add(namePrefix + name)) {
+        resetWatch();
       }
-      resetAndCloseWatch();
     }
 
-    @Override
-    public void run() {
-      LOG.info("Start watching for changes in kubernetes services");
-
-      int failureCount = 0;
-      while (!stopped) {
-        try {
-          Watch<V1Service> watch = getWatch();
-
-          // If we can create the watch, reset the failure count.
-          failureCount = 0;
-
-          // The watch can only be null if the watcher thread is stopping
-          if (watch == null) {
-            break;
-          }
-
-          // The hasNext() will block until there are new data or watch is closed
-          while (!stopped && watch.hasNext()) {
-            Watch.Response<V1Service> response = watch.next();
-            String serviceName = response.object.getMetadata().getLabels().get("cdap.service");
-            if (serviceName == null) {
-              continue;
-            }
-            // Remove the name prefix to get the original CDAP service name
-            serviceName = serviceName.substring(namePrefix.length());
-            DefaultServiceDiscovered serviceDiscovered = serviceDiscovereds.get(serviceName);
-            if (serviceDiscovered == null) {
-              continue;
-            }
-
-            switch (response.type) {
-              // For ADDED and MODIFIED, they are treated the same since both would contains the complete list of
-              // ports exposed by the given service
-              case ADDED:
-              case MODIFIED:
-                serviceDiscovered.setDiscoverables(toDiscoverables(serviceName,
-                                                                   response.object.getMetadata().getName(),
-                                                                   response.object.getSpec().getPorts()));
-                break;
-              case DELETED: {
-                serviceDiscovered.setDiscoverables(Collections.emptySet());
-                break;
-              }
-              default:
-                LOG.trace("Ignore watch type {}", response.type);
-            }
-          }
-        } catch (Exception e) {
-          // Ignore the exception if it is during stopping of the thread, which is expected to happen
-          if (stopped) {
-            break;
-          }
-
-          // We just retry on any form of exceptions
-          Throwable cause = e.getCause();
-          if (cause instanceof IOException || cause instanceof IllegalStateException) {
-            // Log at lower level if it is caused by IOException or IllegalStateException, which will happen
-            // if connection to the API server is lost or the watch is closed
-            LOG.trace("Exception raised when watching for service changes", e);
-          } else {
-            LOG.warn("Exception raised when watching for service changes", e);
-          }
-
-          // Clear watch so that a new only will be created in next iteration.
-          resetAndCloseWatch();
-
-          try {
-            // If not stopped and failed more than once, sleep for some random second.
-            // We only sleep when fail more than one time because exception could be thrown when a new service
-            // is being added, the watch would get closed, hence throwing exception.
-            if (!stopped && failureCount++ > 0) {
-              // Sleep for some random milliseconds before retrying
-              int sleepMs = random.nextInt(FAILURE_RETRY_RANGE.upperEndpoint()) + FAILURE_RETRY_RANGE.lowerEndpoint();
-              TimeUnit.MILLISECONDS.sleep(sleepMs);
-            }
-          } catch (InterruptedException ex) {
-            // Can only happen on stopping
-            break;
-          }
-        }
-      }
-      LOG.info("Stop watching for changes in kubernetes services");
-    }
-
-    @Override
-    public void close() {
-      LOG.debug("Stop watching for kubernetes service");
-      stopped = true;
-      resetAndCloseWatch();
-    }
-
-    /**
-     * Gets a {@link Watch} for watching for service resources change. This method should only be called
-     * from the watcher thread.
-     *
-     * @return a {@link Watch} or {@code null} if the watching thread is already terminated.
-     */
     @Nullable
-    private Watch<V1Service> getWatch() throws IOException, ApiException {
-      Watch<V1Service> watch = this.watch;
-      if (watch != null) {
-        return watch;
-      }
-
-      synchronized (this) {
-        // Need to check here for the case where the thread that calls the close() method set the flag to true,
-        // then this thread grab the lock and update the watch field.
-        if (stopped) {
-          return null;
-        }
-
-        // There is only single thread (the run thread) that will call this method,
-        // hence if the watch was null outside of this sync block, it will stay as null here.
-        String labelSelector = String.format(
-          "cdap.service in (%s)", services.stream().map(s -> namePrefix + s).collect(Collectors.joining(",")));
-        LOG.debug("Creating watch with label selector {}", labelSelector);
-        CoreV1Api coreApi = getCoreApi();
-        Call call = coreApi.listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
-                                                      null, null, null, true, null, null);
-        this.watch = watch = Watch.createWatch(KubeDiscoveryService.this.coreApi.getApiClient(), call,
-                                               new TypeToken<Watch.Response<V1Service>>() { }.getType());
-        return watch;
-      }
+    @Override
+    protected String getSelector() {
+      return String.format("%s in (%s)", SERVICE_LABEL, services.stream().collect(Collectors.joining(",")));
     }
 
-    /**
-     * Closes the existing watch if there is one and reset the field to {@code null}.
-     */
-    private void resetAndCloseWatch() {
-      Watch<V1Service> watch;
-      synchronized (this) {
-        watch = this.watch;
-        this.watch = null;
+    @Override
+    protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+      return getCoreApi().listNamespacedServiceCall(namespace, null, null, null, null, labelSelector,
+                                                    null, null, null, true, null, null);
+    }
+
+    @Override
+    protected ApiClient getApiClient() throws IOException {
+      return getCoreApi().getApiClient();
+    }
+
+    @Override
+    public void resourceAdded(V1Service service) {
+      getServiceDiscovered(service)
+        .ifPresent(s -> s.setDiscoverables(toDiscoverables(s.getName(),
+                                                           service.getMetadata().getName(),
+                                                           service.getSpec().getPorts())));
+    }
+
+    @Override
+    public void resourceModified(V1Service service) {
+      // Treat modify the same as add since both would contain the complete list of
+      // ports exposed by the given service
+      resourceAdded(service);
+    }
+
+    @Override
+    public void resourceDeleted(V1Service service) {
+      getServiceDiscovered(service).ifPresent(s -> s.setDiscoverables(Collections.emptySet()));
+    }
+
+    private Optional<DefaultServiceDiscovered> getServiceDiscovered(V1Service service) {
+      String serviceName = service.getMetadata().getLabels().get(SERVICE_LABEL);
+      if (serviceName == null) {
+        return Optional.empty();
       }
-      closeQuietly(watch);
+      // Remove the name prefix to get the original CDAP service name
+      serviceName = serviceName.substring(namePrefix.length());
+      return Optional.ofNullable(serviceDiscovereds.get(serviceName));
     }
 
     /**
