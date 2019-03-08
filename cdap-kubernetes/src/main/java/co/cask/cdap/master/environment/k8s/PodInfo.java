@@ -17,30 +17,46 @@
 package co.cask.cdap.master.environment.k8s;
 
 import io.kubernetes.client.models.V1OwnerReference;
+import io.kubernetes.client.models.V1Volume;
+import io.kubernetes.client.models.V1VolumeMount;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
- * Pod information
+ * Pod information.
  */
-public class PodInfo {
+public final class PodInfo {
+
   private final String podInfoDir;
   private final String labelsFile;
   private final String nameFile;
   private final String namespace;
   private final Map<String, String> labels;
   private final List<V1OwnerReference> ownerReferences;
+  private final String serviceAccountName;
+  private final List<V1Volume> volumes;
+  private final String containerLabelName;
+  private final String containerImage;
+  private final List<V1VolumeMount> containerVolumeMounts;
 
   public PodInfo(String podInfoDir, String labelsFile, String nameFile, String namespace,
-                 Map<String, String> labels, List<V1OwnerReference> ownerReferences) {
+                 Map<String, String> labels, List<V1OwnerReference> ownerReferences,
+                 String serviceAccountName, List<V1Volume> volumes, String containerLabelName,
+                 String containerImage, List<V1VolumeMount> containerVolumeMounts) {
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
     this.nameFile = nameFile;
     this.namespace = namespace;
     this.labels = labels;
-    this.ownerReferences = ownerReferences;
+    this.ownerReferences = Collections.unmodifiableList(new ArrayList<>(ownerReferences));
+    this.serviceAccountName = serviceAccountName;
+    this.volumes = Collections.unmodifiableList(new ArrayList<>(volumes));
+    this.containerLabelName = containerLabelName;
+    this.containerImage = containerImage;
+    this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
   }
 
   public String getPodInfoDir() {
@@ -65,5 +81,28 @@ public class PodInfo {
 
   public List<V1OwnerReference> getOwnerReferences() {
     return ownerReferences;
+  }
+
+  public String getServiceAccountName() {
+    return serviceAccountName;
+  }
+
+  public List<V1Volume> getVolumes() {
+    return volumes;
+  }
+
+  /**
+   * Returns the label name that used to hold the name of the container that runs CDAP.
+   */
+  public String getContainerLabelName() {
+    return containerLabelName;
+  }
+
+  public String getContainerImage() {
+    return containerImage;
+  }
+
+  public List<V1VolumeMount> getContainerVolumeMounts() {
+    return containerVolumeMounts;
   }
 }

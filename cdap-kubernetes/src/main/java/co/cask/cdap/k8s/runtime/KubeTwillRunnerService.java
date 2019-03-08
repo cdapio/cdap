@@ -38,6 +38,8 @@ import org.apache.twill.api.security.SecureStoreRenewer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -68,23 +70,24 @@ import java.util.stream.Collectors;
  * cdap.twill.app=[literal app name]
  */
 public class KubeTwillRunnerService implements TwillRunnerService {
+
+  private static final Logger LOG = LoggerFactory.getLogger(KubeTwillRunnerService.class);
+
   private static final String APP_ANNOTATION = "cdap.twill.app";
   private static final String APP_LABEL = "cdap.twill.app";
   private static final String RUNNER_LABEL = "cdap.twill.runner";
   private static final String RUNNER_LABEL_VAL = "k8s";
   private static final String RUN_ID_LABEL = "cdap.twill.run.id";
   private final String kubeNamespace;
-  private final String image;
   private final String resourcePrefix;
   private final PodInfo podInfo;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, String> extraLabels;
   private ApiClient apiClient;
 
-  public KubeTwillRunnerService(String kubeNamespace, String image, DiscoveryServiceClient discoveryServiceClient,
+  public KubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
                                 PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels) {
     this.kubeNamespace = kubeNamespace;
-    this.image = image;
     this.podInfo = podInfo;
     this.resourcePrefix = resourcePrefix;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -105,8 +108,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   public TwillPreparer prepare(TwillApplication application) {
     TwillSpecification spec = application.configure();
     RunId runId = RunIds.generate();
-    Map<String, String> labels = new HashMap<>();
-    labels.putAll(extraLabels);
+    Map<String, String> labels = new HashMap<>(extraLabels);
     labels.put(RUNNER_LABEL, RUNNER_LABEL_VAL);
     labels.put(APP_LABEL, asLabel(spec.getName()));
     labels.put(RUN_ID_LABEL, runId.getId());
@@ -117,7 +119,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     // labels have more strict requirements around valid character sets,
     // so use annotations to store the app name.
     resourceMeta.setAnnotations(Collections.singletonMap(APP_ANNOTATION, spec.getName()));
-    return new KubeTwillPreparer(apiClient, kubeNamespace, image, podInfo,
+    return new KubeTwillPreparer(apiClient, kubeNamespace, podInfo,
                                  runId, spec, resourceMeta, discoveryServiceClient);
   }
 

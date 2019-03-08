@@ -22,10 +22,14 @@ import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentTask;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.V1Container;
 import io.kubernetes.client.models.V1OwnerReference;
 import io.kubernetes.client.models.V1Pod;
+import io.kubernetes.client.models.V1Volume;
+import io.kubernetes.client.models.V1VolumeMount;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
@@ -42,11 +46,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link MasterEnvironment} to provide the environment for running in Kubernetes.
@@ -55,17 +62,23 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeMasterEnvironment.class);
 
+  // Contains the list of configuration / secret names coming from the Pod information, which are
+  // needed to propagate to deployments created via the KubeTwillRunnerService
+  private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
+
   private static final String NAMESPACE_KEY = "master.environment.k8s.namespace";
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
+  // Label for the container name
+  private static final String CONTAINER_LABEL = "master.environment.k8s.container.label";
   private static final String POD_INFO_DIR = "master.environment.k8s.pod.info.dir";
   private static final String POD_NAME_FILE = "master.environment.k8s.pod.name.file";
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
-  private static final String RUNNER_IMAGE = "master.environment.k8s.runner.image";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
+  private static final String DEFAULT_CONTAINER_LABEL = "cdap.container";
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
   private static final String DEFAULT_POD_NAME_FILE = "pod.name";
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
@@ -79,7 +92,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private KubeTwillRunnerService twillRunner;
 
   @Override
-  public void initialize(MasterEnvironmentContext context) throws IOException {
+  public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
     LOG.info("Initializing Kubernetes environment");
 
     Map<String, String> conf = context.getConfigurations();
@@ -126,12 +139,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
-    String runnerImage = conf.get(RUNNER_IMAGE);
-    if (runnerImage == null) {
-      throw new IllegalStateException(
-        String.format("No image found for the program runner. Please set %s in cdap-site.xml.", RUNNER_IMAGE));
-    }
-    twillRunner = new KubeTwillRunnerService(namespace, runnerImage, discoveryService, podInfo, resourcePrefix,
+    twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
@@ -167,7 +175,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return Optional.ofNullable(podKillerTask);
   }
 
-  private PodInfo getPodInfo(Map<String, String> conf) throws IOException {
+  private PodInfo getPodInfo(Map<String, String> conf) throws IOException, ApiException {
     String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
 
     File podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
@@ -190,29 +198,43 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     File podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
-    String podName;
-    List<V1OwnerReference> ownerReferences = Collections.emptyList();
-    try {
-      podName = Files.lines(podNameFile.toPath()).findFirst().orElse(null);
-      if (podName == null) {
-        LOG.warn("Failed to get pod name from path {}. No owner reference will be used.",
-                 podNameFile.getAbsolutePath());
-      }
-
-      // Query the owner reference based on the instance label.
-      CoreV1Api api = new CoreV1Api(Config.defaultClient());
-      V1Pod pod = api.readNamespacedPod(podName, namespace, null, null, null);
-      ownerReferences = pod.getMetadata().getOwnerReferences();
-    } catch (IOException e) {
-      // If the CRD or CR is not available, just log and return null.
-      // Missing owner reference won't affect functionality of CDAP.
-      // It only affects K8s ability to garbage collect objects created by this service.
-      LOG.warn("Failed to get the owner reference.", e);
-    } catch (ApiException e) {
-      LOG.warn("API error when fetching the owner reference. Code: {}, Message: {}",
-               e.getCode(), e.getResponseBody(), e);
+    String podName = Files.lines(podNameFile.toPath()).findFirst().orElse(null);
+    if (Strings.isNullOrEmpty(podName)) {
+      throw new IOException("Failed to get pod name from file " + podName);
     }
+
+    // Query pod information.
+    CoreV1Api api = new CoreV1Api(Config.defaultClient());
+    V1Pod pod = api.readNamespacedPod(podName, namespace, null, null, null);
+    List<V1OwnerReference> ownerReferences = pod.getMetadata().getOwnerReferences();
+
+    // Find the container that is having this CDAP process running inside (because a pod can have multiple containers).
+    // If there is no such label, default to the first container.
+    // The name of the label will be used to hold the name of new container created by this process.
+    // We use the same label name so that we don't need to alter the configuration for new pod
+    String containerLabelName = conf.getOrDefault(CONTAINER_LABEL, DEFAULT_CONTAINER_LABEL);
+    String containerName = podLabels.get(containerLabelName);
+    V1Container container = pod.getSpec().getContainers().stream()
+      .filter(c -> Objects.equals(containerName, c.getName()))
+      .findFirst()
+      .orElse(pod.getSpec().getContainers().get(0));
+
+    // Get the config volumes from the pod
+    List<V1Volume> volumes = pod.getSpec().getVolumes().stream()
+      .filter(v -> CONFIG_NAMES.contains(v.getName()))
+      .collect(Collectors.toList());
+
+    // Get the volume mounts from the container
+    List<V1VolumeMount> mounts = container.getVolumeMounts().stream()
+      .filter(m -> CONFIG_NAMES.contains(m.getName()))
+      .collect(Collectors.toList());
+
+    // Use the same service account as the current process for now.
+    // Ideally we should use a more restricted role.
+    String serviceAccountName = pod.getSpec().getServiceAccountName();
     return new PodInfo(podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
-                       podNameFile.getName(), namespace, podLabels, ownerReferences);
+                       podNameFile.getName(), namespace, podLabels, ownerReferences,
+                       serviceAccountName,
+                       volumes, containerLabelName, container.getImage(), mounts);
   }
 }
