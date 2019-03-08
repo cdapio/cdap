@@ -61,6 +61,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
@@ -370,27 +375,71 @@ public class DefaultArtifactRepository implements ArtifactRepository {
       }
     }
 
-    // loop until there is no change
-    boolean nochange = false;
-    while (!remainingArtifacts.isEmpty() && !nochange) {
-      // add all artifacts that don't have any more parents
-      Set<Id.Artifact> addedArtifacts = new HashSet<>();
-      for (Id.Artifact remainingArtifact : remainingArtifacts) {
-        if (!childToParents.containsKey(remainingArtifact)) {
-          addSystemArtifact(systemArtifacts.get(remainingArtifact));
-          addedArtifacts.add(remainingArtifact);
-          for (Id.Artifact child : parentToChildren.get(remainingArtifact)) {
-            childToParents.remove(child, remainingArtifact);
-          }
-        }
+    ExecutorService executorService =
+      Executors.newFixedThreadPool(remainingArtifacts.size(),
+                                   Threads.createDaemonThreadFactory("system-artifact-loader-%d"));
+    try {
+      // loop until there is no change
+      boolean artifactsAdded = true;
+      while (!remainingArtifacts.isEmpty() && artifactsAdded) {
+        artifactsAdded = loadSystemArtifacts(executorService, systemArtifacts, remainingArtifacts, parentToChildren,
+                                             childToParents);
       }
-      remainingArtifacts.removeAll(addedArtifacts);
-      nochange = addedArtifacts.isEmpty();
+    } finally {
+      executorService.shutdownNow();
     }
 
     if (!remainingArtifacts.isEmpty()) {
       LOG.warn("Unable to add system artifacts {} due to cyclic dependencies", Joiner.on(",").join(remainingArtifacts));
     }
+  }
+
+  /**
+   * Add as many system artifacts as possible in parallel. Returns true if at least one artifact was added and there
+   * were no errors.
+   */
+  private boolean loadSystemArtifacts(ExecutorService executorService,
+                                      Map<Id.Artifact, SystemArtifactInfo> systemArtifacts,
+                                      Set<Id.Artifact> remainingArtifacts,
+                                      Multimap<Id.Artifact, Id.Artifact> parentToChildren,
+                                      Multimap<Id.Artifact, Id.Artifact> childToParents) throws Exception {
+
+    // add all artifacts that don't have any more parents
+    Set<Id.Artifact> addedArtifacts = new HashSet<>();
+    List<Future<Id.Artifact>> futures = new ArrayList<>();
+    for (Id.Artifact remainingArtifact : remainingArtifacts) {
+      if (!childToParents.containsKey(remainingArtifact)) {
+        futures.add(executorService.submit(() -> {
+          addSystemArtifact(systemArtifacts.get(remainingArtifact));
+          return remainingArtifact;
+        }));
+      }
+    }
+
+    Exception failure = null;
+    for (Future<Id.Artifact> f : futures) {
+      try {
+        Id.Artifact addedArtifact = f.get();
+        addedArtifacts.add(addedArtifact);
+        for (Id.Artifact child : parentToChildren.get(addedArtifact)) {
+          childToParents.remove(child, addedArtifact);
+        }
+        remainingArtifacts.removeAll(addedArtifacts);
+      } catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (failure != null) {
+          failure.addSuppressed(cause);
+        } else if (cause instanceof Exception) {
+          failure = (Exception) cause;
+        } else {
+          throw e;
+        }
+      }
+    }
+    if (failure != null) {
+      throw failure;
+    }
+    return !futures.isEmpty();
   }
 
   @Override
