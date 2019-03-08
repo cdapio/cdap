@@ -28,9 +28,9 @@ import co.cask.cdap.spi.data.table.field.FieldType;
 import co.cask.cdap.spi.data.table.field.Fields;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.test.app.SystemTestApp;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 

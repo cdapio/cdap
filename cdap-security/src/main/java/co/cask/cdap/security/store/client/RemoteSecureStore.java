@@ -27,13 +27,13 @@ import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.SecureKeyCreateRequest;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.IOException;

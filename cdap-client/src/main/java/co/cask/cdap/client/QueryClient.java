@@ -22,9 +22,9 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.SuppliedAddressExploreClient;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.http.HttpRequestConfig;
 import com.google.common.base.Supplier;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.cdap.common.http.HttpRequestConfig;
 
 import javax.inject.Inject;
 

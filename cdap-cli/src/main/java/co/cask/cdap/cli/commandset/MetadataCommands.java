@@ -29,11 +29,11 @@ import co.cask.cdap.cli.command.metadata.RemoveMetadataPropertyCommand;
 import co.cask.cdap.cli.command.metadata.RemoveMetadataTagCommand;
 import co.cask.cdap.cli.command.metadata.RemoveMetadataTagsCommand;
 import co.cask.cdap.cli.command.metadata.SearchMetadataCommand;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 /**
  * Metadata commands.

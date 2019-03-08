@@ -22,9 +22,9 @@ import co.cask.cdap.common.NamespaceCannotBeDeletedException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

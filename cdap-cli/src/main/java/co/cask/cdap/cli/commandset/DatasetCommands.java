@@ -31,11 +31,11 @@ import co.cask.cdap.cli.command.ListDatasetModulesCommand;
 import co.cask.cdap.cli.command.ListDatasetTypesCommand;
 import co.cask.cdap.cli.command.SetDatasetInstancePropertiesCommand;
 import co.cask.cdap.cli.command.TruncateDatasetInstanceCommand;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 /**
  * Dataset commands.

@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services.http.handlers;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.common.http.HttpResponse;
+import io.cdap.common.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 

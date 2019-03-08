@@ -29,7 +29,6 @@ import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.metrics.MetricsTestBase;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
-import co.cask.common.io.ByteBufferInputStream;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -40,8 +39,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -84,14 +83,13 @@ public class MessagingMetricsCollectionServiceTest extends MetricsTestBase {
 
     // Consume from kafka
     final Map<String, MetricValues> metrics = Maps.newHashMap();
-    ByteBufferInputStream is = new ByteBufferInputStream(null);
     for (int i = 0; i < cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM); i++) {
     TopicId topicId = NamespaceId.SYSTEM.topic(TOPIC_PREFIX + i);
       try (CloseableIterator<RawMessage> iterator = messagingService.prepareFetch(topicId).fetch()) {
         while (iterator.hasNext()) {
           RawMessage message = iterator.next();
           MetricValues metricsRecord = (MetricValues) recordReader.read(
-            new BinaryDecoder(is.reset(ByteBuffer.wrap(message.getPayload()))), schema);
+            new BinaryDecoder(new ByteArrayInputStream(message.getPayload())), schema);
           StringBuilder flattenContext = new StringBuilder();
           // for verifying expected results, sorting tags
           Map<String, String> tags = Maps.newTreeMap();

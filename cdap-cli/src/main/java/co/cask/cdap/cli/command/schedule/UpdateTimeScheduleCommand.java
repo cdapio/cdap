@@ -33,9 +33,9 @@ import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.common.cli.Arguments;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.List;

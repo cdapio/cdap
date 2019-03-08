@@ -19,10 +19,10 @@ package co.cask.cdap.cli.util;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.exception.CommandInputError;
-import co.cask.common.cli.util.Parser;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import io.cdap.common.cli.util.Parser;
 
 import java.nio.ByteBuffer;
 import java.util.List;

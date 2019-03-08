@@ -23,11 +23,11 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
-import co.cask.common.cli.Arguments;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.List;

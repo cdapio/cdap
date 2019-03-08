@@ -28,10 +28,10 @@ import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.metadata.lineage.CollapseType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;

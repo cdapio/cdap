@@ -29,13 +29,13 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
-import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

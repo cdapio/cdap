@@ -30,9 +30,9 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import io.cdap.common.cli.Arguments;
 
 import java.io.IOException;
 import java.io.PrintStream;

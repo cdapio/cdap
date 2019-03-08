@@ -49,7 +49,6 @@ import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.common.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -914,7 +913,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         return (Runnable) hookEntry;
       }
 
-      throw new UnsupportedTypeException("Hook entry is not a Runnable: " + hookEntry.getClass().getName());
+      throw new UnsupportedOperationException("Hook entry is not a Runnable: " + hookEntry.getClass().getName());
     } catch (Exception e) {
       LOG.warn("Failed to get Spark shutdown hook Runnable from Hadoop ShutdownHookManager hook entry {} due to {}",
                hookEntry, e.toString());

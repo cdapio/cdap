@@ -23,11 +23,11 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.common.http.HttpRequestConfig;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
+import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 

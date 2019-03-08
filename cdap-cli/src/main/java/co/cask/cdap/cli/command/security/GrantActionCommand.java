@@ -23,10 +23,10 @@ import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
-import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Set;

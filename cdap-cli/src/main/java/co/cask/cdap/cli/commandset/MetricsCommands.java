@@ -21,11 +21,11 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.metrics.GetMetricCommand;
 import co.cask.cdap.cli.command.metrics.SearchMetricNamesCommand;
 import co.cask.cdap.cli.command.metrics.SearchMetricTagsCommand;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 /**
  * Metrics commands.

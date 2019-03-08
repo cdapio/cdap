@@ -29,12 +29,12 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpResponse;
-import co.cask.common.http.ObjectResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
+import io.cdap.common.http.ObjectResponse;
 
 import java.io.File;
 import java.io.IOException;

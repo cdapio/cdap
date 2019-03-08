@@ -16,9 +16,9 @@
 
 package co.cask.cdap.cli.completer.element;
 
-import co.cask.common.cli.completers.StringsCompleter;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
+import io.cdap.common.cli.completers.StringsCompleter;
 
 import java.util.Collection;
 

@@ -27,8 +27,8 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.proto.id.ServiceId;
-import co.cask.common.cli.Arguments;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 

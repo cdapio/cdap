@@ -16,7 +16,7 @@
 
 package co.cask.cdap.cli.exception;
 
-import co.cask.common.cli.Command;
+import io.cdap.common.cli.Command;
 
 /**
  * Thrown when there was an error in the command input.

@@ -27,11 +27,11 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.id.DatasetModuleId;
-import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.List;

@@ -24,11 +24,11 @@ import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+import io.cdap.common.cli.Arguments;
+import io.cdap.common.cli.Command;
 
 import java.io.PrintStream;
 import java.util.Set;

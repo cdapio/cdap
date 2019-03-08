@@ -22,7 +22,7 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.common.cli.Arguments;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 

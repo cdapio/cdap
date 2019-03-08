@@ -17,9 +17,9 @@
 package co.cask.cdap.cli.command.system;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
+import io.cdap.common.cli.Command;
 
 import java.io.PrintStream;
 

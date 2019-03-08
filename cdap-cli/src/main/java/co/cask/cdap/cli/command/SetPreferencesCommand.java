@@ -24,7 +24,7 @@ import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.common.cli.Arguments;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Map;

@@ -23,11 +23,11 @@ import co.cask.cdap.cli.command.system.ExitCommand;
 import co.cask.cdap.cli.command.system.QuitCommand;
 import co.cask.cdap.cli.command.system.RenderAsCommand;
 import co.cask.cdap.cli.command.system.VersionCommand;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 /**
  * General commands.

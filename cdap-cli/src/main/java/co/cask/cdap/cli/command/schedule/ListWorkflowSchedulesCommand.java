@@ -26,10 +26,10 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ScheduleClient;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.WorkflowId;
-import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.List;

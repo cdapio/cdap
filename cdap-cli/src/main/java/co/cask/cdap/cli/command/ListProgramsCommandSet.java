@@ -19,10 +19,10 @@ package co.cask.cdap.cli.command;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.ApplicationClient;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 import java.util.List;
 

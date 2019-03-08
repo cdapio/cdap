@@ -19,11 +19,11 @@ package co.cask.cdap.cli.commandset;
 import co.cask.cdap.cli.command.CallServiceCommand;
 import co.cask.cdap.cli.command.CheckServiceAvailabilityCommand;
 import co.cask.cdap.cli.command.GetServiceEndpointsCommand;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 /**
  * Service commands.

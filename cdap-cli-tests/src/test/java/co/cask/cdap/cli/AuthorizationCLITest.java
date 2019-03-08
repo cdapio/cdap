@@ -29,7 +29,7 @@ import co.cask.cdap.proto.security.Role;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.server.BasicAuthenticationHandler;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
-import co.cask.common.cli.CLI;
+import io.cdap.common.cli.CLI;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;

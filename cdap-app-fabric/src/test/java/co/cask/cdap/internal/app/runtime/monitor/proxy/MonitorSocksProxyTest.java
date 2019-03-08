@@ -23,13 +23,13 @@ import co.cask.cdap.common.ssh.TestSSHServer;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
-import co.cask.common.http.HttpMethod;
-import co.cask.common.http.HttpRequests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
+import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequests;
+import io.cdap.common.http.HttpResponse;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.BodyProducer;
 import io.cdap.http.HttpHandler;
@@ -143,7 +143,7 @@ public class MonitorSocksProxyTest {
     // Make 10 requests. With connection keep-alive, there should only be one SSH tunnel created
     URL url = new URL(String.format("http://%s:%d/ping", httpAddr.getHostName(), httpAddr.getPort()));
     for (int i = 0; i < 10; i++) {
-      HttpResponse response = HttpRequests.execute(co.cask.common.http.HttpRequest.get(url).build());
+      HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
       Assert.assertEquals(200, response.getResponseCode());
     }
 
@@ -151,7 +151,7 @@ public class MonitorSocksProxyTest {
 
     // Make one more call with Connection: close. This should close the connection, hence close the tunnel.
     HttpResponse response = HttpRequests.execute(
-      co.cask.common.http.HttpRequest.builder(HttpMethod.GET, url)
+      io.cdap.common.http.HttpRequest.builder(HttpMethod.GET, url)
         .addHeader(HttpHeaderNames.CONNECTION.toString(), HttpHeaderValues.CLOSE.toString())
         .build());
     Assert.assertEquals(200, response.getResponseCode());
@@ -189,7 +189,7 @@ public class MonitorSocksProxyTest {
 
     // On proxy failure, IOException will be thrown
     URL url = new URL(String.format("http://%s:%d/ping", httpAddr.getHostName(), httpAddr.getPort()));
-    HttpRequests.execute(co.cask.common.http.HttpRequest.get(url).build());
+    HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
   }
 
   /**
@@ -204,7 +204,7 @@ public class MonitorSocksProxyTest {
       // On proxy failure, IOException will be thrown
       InetSocketAddress httpAddr = httpService.getBindAddress();
       URL url = new URL(String.format("http://%s:%d/ping", httpAddr.getHostName(), httpAddr.getPort()));
-      HttpRequests.execute(co.cask.common.http.HttpRequest.get(url).build());
+      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
     } finally {
       sshSession = oldSession;
     }

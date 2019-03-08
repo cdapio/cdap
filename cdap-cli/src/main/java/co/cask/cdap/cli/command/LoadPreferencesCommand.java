@@ -23,11 +23,11 @@ import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.client.PreferencesClient;
 import co.cask.cdap.common.BadRequestException;
-import co.cask.common.cli.Arguments;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.common.cli.Arguments;
 
 import java.io.File;
 import java.io.FileReader;

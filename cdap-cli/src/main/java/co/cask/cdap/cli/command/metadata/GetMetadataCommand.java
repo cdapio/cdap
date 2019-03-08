@@ -24,10 +24,10 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.common.metadata.MetadataRecord;
-import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.Set;

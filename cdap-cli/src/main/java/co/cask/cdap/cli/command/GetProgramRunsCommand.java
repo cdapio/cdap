@@ -28,8 +28,8 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
+import io.cdap.common.cli.Arguments;
 
 import java.io.PrintStream;
 import java.util.List;

@@ -21,10 +21,10 @@ import co.cask.cdap.cli.Categorized;
 import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.client.PreferencesClient;
-import co.cask.common.cli.Command;
-import co.cask.common.cli.CommandSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Command;
+import io.cdap.common.cli.CommandSet;
 
 import java.util.List;
 

@@ -21,9 +21,9 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.table.AltStyleTableRenderer;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
 import co.cask.cdap.cli.util.table.TableRenderer;
-import co.cask.common.cli.Arguments;
-import co.cask.common.cli.Command;
 import com.google.inject.Inject;
+import io.cdap.common.cli.Arguments;
+import io.cdap.common.cli.Command;
 
 import java.io.PrintStream;
 
