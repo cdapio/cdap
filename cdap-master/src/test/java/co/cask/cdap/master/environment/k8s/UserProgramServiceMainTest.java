@@ -22,6 +22,8 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -32,11 +34,11 @@ import co.cask.cdap.api.service.http.ServiceHttpEndpoint;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.service.ServiceDiscoverable;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.test.PluginJarHelper;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -48,18 +50,24 @@ import co.cask.cdap.internal.app.runtime.k8s.ServiceOptions;
 import co.cask.cdap.internal.app.runtime.k8s.UserServiceProgramMain;
 import co.cask.cdap.master.environment.ServiceWithPluginApp;
 import co.cask.cdap.master.environment.plugin.ConstantCallable;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.client.ClientMessagingService;
+import co.cask.cdap.messaging.data.RawMessage;
+import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Injector;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -73,7 +81,6 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -99,20 +106,6 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
 
   @Test
   public void testProgramService() throws Exception {
-    // start app fabric in order to deploy an app
-    AppFabricServiceMain main = getServiceMainInstance(AppFabricServiceMain.class);
-
-    // Discovery the app-fabric endpoint
-    DiscoveryServiceClient discoveryClient = main.getInjector().getInstance(DiscoveryServiceClient.class);
-    Discoverable appFabricEndpoint = new RandomEndpointStrategy(
-      () -> discoveryClient.discover(Constants.Service.APP_FABRIC_HTTP)).pick(20, TimeUnit.SECONDS);
-
-    Assert.assertNotNull(appFabricEndpoint);
-
-    InetSocketAddress addr = appFabricEndpoint.getSocketAddress();
-    URI baseURI = URI.create(String.format("http://%s:%d/v3/namespaces/default/",
-                                           addr.getHostName(), addr.getPort()));
-
     // Deploy ServiceWithPluginApp
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ServiceWithPluginApp.class);
@@ -120,6 +113,7 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
     String appArtifactName = ServiceWithPluginApp.class.getSimpleName();
     String artifactVersion = "1.0.0-SNAPSHOT";
 
+    URI baseURI = getRouterBaseURI().resolve("v3/namespaces/default/");
     // deploy app artifact
     HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0);
     URL url = baseURI.resolve(String.format("artifacts/%s", appArtifactName)).toURL();
@@ -205,20 +199,50 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
     executorService.execute(userServiceProgramMain::start);
 
     try {
-      Discoverable serviceProgramEndpoint = new RandomEndpointStrategy(
-        () -> discoveryClient.discover(ServiceDiscoverable.getName(programRunId.getParent())))
-        .pick(20, TimeUnit.SECONDS);
-      addr = serviceProgramEndpoint.getSocketAddress();
-      url = URI.create(String.format("http://%s:%d/v3/namespaces/%s/apps/%s/services/%s/methods/call",
-                                     addr.getHostName(), addr.getPort(), programRunId.getNamespace(),
-                                     programRunId.getApplication(), programRunId.getProgram())).toURL();
-      response = HttpRequests.execute(HttpRequest.get(url).build());
-      Assert.assertEquals(200, response.getResponseCode());
-      Assert.assertEquals(expectedVal, response.getResponseBodyAsString());
+      URL callUrl = baseURI.resolve(String.format("apps/%s/services/%s/methods/call",
+                                                  programRunId.getApplication(), programRunId.getProgram())).toURL();
+      Tasks.waitFor(expectedVal, () -> {
+        HttpResponse callResponse = HttpRequests.execute(HttpRequest.get(callUrl).build());
+        return callResponse.getResponseCode() == 200 ? callResponse.getResponseBodyAsString() : null;
+      }, 1, TimeUnit.MINUTES);
     } finally {
       userServiceProgramMain.stop();
       executorService.shutdownNow();
     }
+
+    // verify that program status messages were written out
+    // Check the status messages instead of checking the program state through the status endpoint
+    // because the program is started manually in this test instead of through normal program lifecycle
+    // this means the 'starting' state is never written,
+    // thus the 'running' state message is ignored and never stored.
+    Injector injector = getServiceMainInstance(MessagingServiceMain.class).getInjector();
+    DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    MessagingService messagingService = new ClientMessagingService(discoveryServiceClient);
+    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    boolean foundRunning = false;
+    boolean foundKilled = false;
+    try (CloseableIterator<RawMessage> iter = messagingService.prepareFetch(topicId).fetch()) {
+      while (iter.hasNext()) {
+        RawMessage message = iter.next();
+        Notification notification = GSON.fromJson(Bytes.toString(message.getPayload()), Notification.class);
+        if (notification.getNotificationType() != Notification.Type.PROGRAM_STATUS) {
+          continue;
+        }
+        ProgramRunId notificationRunID = GSON.fromJson(notification.getProperties().get("programRunId"),
+                                                       ProgramRunId.class);
+        if (!programRunId.equals(notificationRunID)) {
+          continue;
+        }
+        ProgramRunStatus runStatus = ProgramRunStatus.valueOf(notification.getProperties().get("programStatus"));
+        if (runStatus == ProgramRunStatus.RUNNING) {
+          foundRunning = true;
+        } else if (runStatus == ProgramRunStatus.KILLED) {
+          foundKilled = true;
+        }
+      }
+    }
+    Assert.assertTrue("Did not find program state messages", foundRunning && foundKilled);
   }
 
   private ApplicationSpecification createSpec(ArtifactId appArtifactId, ArtifactId pluginArtifactId,
