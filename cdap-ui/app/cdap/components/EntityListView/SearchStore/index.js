@@ -42,6 +42,7 @@ const defaultSearchState = {
   sort: DEFAULT_SEARCH_SORT_OPTIONS,
   activeSort: DEFAULT_SEARCH_SORT,
   query: DEFAULT_SEARCH_QUERY,
+  cursor: null,
 
   offset: 0,
   limit: DEFAULT_SEARCH_PAGE_SIZE,
@@ -114,11 +115,12 @@ const getPageSize = (element) => {
 const search = (state = defaultSearchState, action = defaultAction) => {
   switch (action.type) {
     case SearchStoreActions.SETRESULTS: {
-      let { results, total, limit } = action.payload.response;
+      let { results, total, limit, cursor } = action.payload.response;
       return Object.assign({}, state, {
         results: results,
         total,
         limit,
+        cursor,
         loading: false,
         error: {},
       });

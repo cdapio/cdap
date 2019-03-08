@@ -18,11 +18,16 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import T from 'i18n-react';
-import ReactPaginate from 'react-paginate';
+import PaginationStepper from 'components/PaginationStepper';
+import Typography from '@material-ui/core/Typography';
 import NamespaceStore from 'services/NamespaceStore';
 import SearchStore from 'components/EntityListView/SearchStore';
 import SearchStoreActions from 'components/EntityListView/SearchStore/SearchStoreActions';
-import { search, updateQueryString } from 'components/EntityListView/SearchStore/ActionCreator';
+import {
+  search,
+  updateQueryString,
+  nextPage,
+} from 'components/EntityListView/SearchStore/ActionCreator';
 import Mousetrap from 'mousetrap';
 
 require('./EntityListInfo.scss');
@@ -51,7 +56,7 @@ export default class EntityListInfo extends Component {
         offset: currentPage * limit,
       },
     });
-    search();
+    nextPage();
     updateQueryString();
   }
   goToPreviousPage() {
@@ -69,50 +74,29 @@ export default class EntityListInfo extends Component {
     search();
     updateQueryString();
   }
-  handlePageChange(data) {
-    let currentPage = data.selected + 1;
-    let pageSize = SearchStore.getState().search.limit;
-    let offset = data.selected * pageSize;
-    SearchStore.dispatch({
-      type: SearchStoreActions.SETCURRENTPAGE,
-      payload: {
-        currentPage,
-        offset,
-      },
-    });
-    search();
-    updateQueryString();
-  }
 
   showPagination() {
-    let plus = this.props.allEntitiesFetched ? '' : '+';
-    let searchLoading = SearchStore.getState().search.loading;
-    let entitiesLabel = T.translate('features.EntityListView.Info.entities');
+    const { currentPage, total, limit, loading } = SearchStore.getState().search;
+    const prevDisabled = currentPage === 1;
+    const nextDisabled = currentPage === Math.ceil(total / limit);
+
+    const plus = nextDisabled ? '' : '+';
+    const entitiesLabel = T.translate('features.EntityListView.Info.entities');
+
     return (
       <span className="pagination">
-        {searchLoading ? null : (
-          /* have to wrap this in an ul to be consistent with ReactPaginate html */
-          <ul className="total-entities">
-            <span>
-              {this.props.numberOfEntities} {plus} {entitiesLabel}
-            </span>
-          </ul>
+        {loading ? null : (
+          <Typography variant="subtitle2" className="total-entities">
+            {this.props.numberOfEntities}
+            {plus} {entitiesLabel}
+          </Typography>
         )}
-        {!searchLoading && this.props.numberOfPages > 1 ? (
-          <ReactPaginate
-            pageCount={this.props.numberOfPages}
-            pageRangeDisplayed={3}
-            marginPagesDisplayed={1}
-            breakLabel={<span>...</span>}
-            breakClassName={'ellipsis'}
-            previousLabel={<span className="fa fa-angle-left" />}
-            nextLabel={<span className="fa fa-angle-right" />}
-            onPageChange={this.handlePageChange.bind(this)}
-            disableInitialCallback={true}
-            initialPage={this.props.currentPage - 1}
-            forcePage={this.props.currentPage - 1}
-            containerClassName={'page-list'}
-            activeClassName={'current-page'}
+        {!loading && this.props.numberOfPages > 1 ? (
+          <PaginationStepper
+            onNext={this.goToNextPage}
+            onPrev={this.goToPreviousPage}
+            nextDisabled={nextDisabled}
+            prevDisabled={prevDisabled}
           />
         ) : null}
       </span>
