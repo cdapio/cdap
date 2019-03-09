@@ -44,6 +44,7 @@ function myTrackerApi(myCdapUrl, $resource, myAuth, myHelpers) {
     addTag: myHelpers.getConfig('POST', 'REQUEST', tagsPath, false, { suppressErrors: true }),
 
     // METADATA PROPERTIES CONTROL
+    getDatasetProperties: myHelpers.getConfig('GET', 'REQUEST', basePath + '/metadata/properties?&responseFormat=v6', false, { suppressErrors: true }),
     deleteEntityProperty: myHelpers.getConfig('DELETE', 'REQUEST', propertyPath + '/:key', false, { suppressErrors: true }),
     addEntityProperty: myHelpers.getConfig('POST', 'REQUEST', propertyPath, false, { suppressErrors: true }),
 
