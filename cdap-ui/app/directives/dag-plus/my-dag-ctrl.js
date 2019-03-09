@@ -543,30 +543,52 @@ angular.module(PKG.name + '.commons')
 
       if (sourceIsPort) {
         let portClass = getPortEndpointClass(newConnObj.source.classList);
+        // port endpoint marker is of the form "endpoint_UnionSplitter-9c1564a4-fc99-4927-bfc0-ef7a0bd607e1_port_string"
+        // We need everything between endpoint and _port_ as node id
+        // and type after _port_ as port name
         sourceIdSplit = portClass.split('_');
-        connection.port = sourceIdSplit[3];
+        connection.from = sourceIdSplit.slice(1, sourceIdSplit.length - 2).join('_');
+        connection.port = sourceIdSplit[sourceIdSplit.length - 1];
       } else if (sourceIsCondition) {
         sourceIdSplit = newConnObj.sourceId.split('_');
-        connection.condition = sourceIdSplit[3] === 'true';
+        connection.from = sourceIdSplit.slice(1, sourceIdSplit.length - 2).join('_');
+        connection.condition = sourceIdSplit[sourceIdSplit.length - 1];
       } else {
-        sourceIdSplit = newConnObj.sourceId.split('_');
+        // The regular endpoints are marked as "endpoint_nodename"
+        // So this split just skips the "endpoint" and assigns the rest as nodeid.
+        sourceIdSplit = newConnObj.sourceId.split('_').slice(1).join('_');
+        connection.from = sourceIdSplit;
       }
-
-      connection.from = sourceIdSplit[1];
-
       $scope.connections.push(connection);
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
     }
 
     function removeConnection(detachedConnObj, updateStore = true) {
       let connObj = Object.assign({}, detachedConnObj);
+      /**
+       * This is still not perfect. We shouldn't be splitting names by '_' and randomly take at index 1
+       * Underscore is something that very common in names used by developers.
+       *
+       * FIXME: This needs a much bigger refactor
+       */
       if (myHelpers.objectQuery(detachedConnObj, 'sourceId') && detachedConnObj.sourceId.indexOf('_condition_') !== -1) {
-        connObj.sourceId = detachedConnObj.sourceId.split('_')[1];
+        // The regular endpoints are marked as "endpoint_nodename"
+        // So this split just skips the "endpoint" and assigns the rest as nodeid.
+        let conditionSplit = detachedConnObj.sourceId.split('_');
+        connObj.sourceId = conditionSplit.slice(1, conditionSplit.length - 2).join('_');
       } else if (myHelpers.objectQuery(detachedConnObj, 'source', 'className') && detachedConnObj.source.className.indexOf('_port_') !== -1) {
+        /**
+         * The nodes are marked as endpoint_somename_port_nonnull
+         * and endpoint_somename_port_null. So we need to remove the endpoint_ and _port_nonull
+         * part from the label correctly.
+         */
         let portClass = getPortEndpointClass(detachedConnObj.source.classList);
-        connObj.sourceId = portClass.split('_')[1];
+        let portSplit = portClass.split('_');
+        connObj.sourceId = portSplit.slice(1, portSplit.length - 2).join('_');
       } else {
-        connObj.sourceId = detachedConnObj.sourceId.split('_')[1];
+        // The regular endpoints are marked as "endpoint_nodename"
+        // So this split just skips the "endpoint" and assigns the rest as nodeid.
+        connObj.sourceId = detachedConnObj.sourceId.split('_').slice(1).join('_');
       }
       var connectionIndex = _.findIndex($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
@@ -759,9 +781,20 @@ angular.module(PKG.name + '.commons')
 
       if (connObj.connection.source.className.indexOf('_port_') !== -1) {
         let portClass = getPortEndpointClass(connObj.connection.source.classList);
-        connObj.sourceId = portClass.split('_')[1];
+        /**
+         * The nodes are marked as endpoint_somename_port_nonnull
+         * and endpoint_somename_port_null. So we need to remove the endpoint_ and _port_nonull
+         * part from the label correctly.
+         */
+        let portSplit = portClass.split('_');
+        connObj.sourceId = portSplit.slice(1, portSplit.length - 2).join('_');
+      } else if (connObj.sourceId.indexOf('_condition_') !== -1) {
+        let conditionalSplit = connObj.sourceId.split('_');
+        connObj.sourceId = conditionalSplit.slice(1, conditionalSplit.length - 2).join('_');
       } else {
-        connObj.sourceId = connObj.sourceId.split('_')[1];
+        // The regular endpoints are marked as "endpoint_nodename"
+        // So this split just skips the "endpoint" and assigns the rest as nodeid.
+        connObj.sourceId = connObj.sourceId.split('_').slice(1).join('_');
       }
 
       var exists = _.find($scope.connections, function (conn) {
