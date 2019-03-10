@@ -45,6 +45,8 @@ import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
 import { Theme } from 'services/ThemeHelper';
 import StatusBar from "./StatusBar";
+import { InputGroup, Input } from 'reactstrap';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { SUCCEEDED, DEPLOYED, FAILED, RUNNING, FEATURE_GENERATED, FEATURE_SELECTED } from '../config';
 
 
@@ -153,10 +155,10 @@ class LandingPage extends React.Component {
         failCount++;
       }
     });
-    return  [{ id: 1, name: RUNNING, count: runningCount, selected: false },
-      { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
-      { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
-      { id: 4, name: FAILED, count: failCount, selected: false }];
+    return [{ id: 1, name: RUNNING, count: runningCount, selected: false },
+    { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
+    { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
+    { id: 4, name: FAILED, count: failCount, selected: false }];
   }
 
   getPipelines(type) {
@@ -172,7 +174,7 @@ class LandingPage extends React.Component {
             this.data_original = result["pipelineInfoList"];
             this.setState({
               data: result["pipelineInfoList"],
-              statusList:this.generateStatusList(this.data_original)
+              statusList: this.generateStatusList(this.data_original)
             });
           }
         },
@@ -600,6 +602,10 @@ class LandingPage extends React.Component {
     );
   }
 
+  onFilterKeyChange(){
+
+  }
+
   render() {
     return (
       <div className='landing-page-container'>{
@@ -611,28 +617,34 @@ class LandingPage extends React.Component {
           </div>
           : <div className="feature-generation">
             <div className='top-control'>
+              <div className='top-panel'>
+                <div className='type-selector'>
+                  <div className="type-label">Pipeline Type:</div>
+                  <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
+                    <DropdownToggle caret>
+                      {this.state.selectedPipelineType}
+                    </DropdownToggle>
+                    <DropdownMenu>
+                      {
+                        this.state.pipelineTypes.map((type) => {
+                          return (
+                            <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
+                          );
+                        })
+                      }
+                    </DropdownMenu>
+                  </Dropdown>
+                  <i className="fa fa-refresh refresh-button" onClick={() => this.getPipelines(this.state.selectedPipelineType)}></i>
+                </div>
+                <InputGroup>
+                  <Input placeholder="search" onChange={this.onFilterKeyChange.bind(this)} />
+                  <i className="search-icon fa fa-search"></i>
+                </InputGroup>
+              </div>
+
               <StatusBar statusList={this.state.statusList} featureTypes={this.featureTypes} pipeLineSelectionTypeChange={this.onPipeLineTypeChange.bind(this)}
                 statusSelectionChange={this.onStatusSelectionChange.bind(this)}></StatusBar>
               <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
-              {/* <div className='type-selector'>
-                <div className="type-label">Pipeline Type:</div>
-                <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
-                  <DropdownToggle caret>
-                    {this.state.selectedPipelineType}
-                  </DropdownToggle>
-                  <DropdownMenu>
-                    {
-                      this.state.pipelineTypes.map((type) => {
-                        return (
-                          <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
-                        );
-                      })
-                    }
-                  </DropdownMenu>
-                </Dropdown>
-                <i className="fa fa-refresh refresh-button" onClick = {() => this.getPipelines(this.state.selectedPipelineType)}></i>
-              </div>
-              <button className={"feature-button "+ (Theme && Theme.isCustomerMWC ? 'feature-button-mwc':'')}  onClick={this.toggleFeatureWizard}>+ Add New</button> */}
             </div>
             <FeatureTable data={this.state.data}
               onView={this.viewPipeline.bind(this)}

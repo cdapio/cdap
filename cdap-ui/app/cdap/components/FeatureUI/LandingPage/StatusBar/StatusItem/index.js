@@ -34,7 +34,7 @@ class StatusItem extends Component {
   }
 
   itemClicked =() => {
-    console.log("hello");
+    // console.log("hello");
   }
 
   getClassName = (item) => {
@@ -50,13 +50,15 @@ class StatusItem extends Component {
   }
 
   render() {
+    let showIcon = isNil(this.props.showIcon)? true: this.props.showIcon;
     return (
-      <div className={this.props.item.selected ? 'status-item-box box-selected': 'status-item-box box-un-selected' } onClick={this.props.itemClick}>
+      <div className = "status-item-box" onClick={this.props.itemClick}>
+         <span className="status-name">{this.state.name} </span>
         <div className="header">
-          <span className={this.state.className}></span>
-          <span className="status-name">{this.state.name} </span>
+          { showIcon &&
+           <span className={this.state.className}></span> }
           {
-            isNil(this.state.count) ? null : <span>({this.state.count})</span>
+            isNil(this.state.count) ? "-" : <span className = "status-count" > {this.state.count}</span>
           }
         </div>
       </div>

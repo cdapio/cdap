@@ -106,12 +106,9 @@ class StatusBar extends Component {
   render() {
     return (
       <div className="status-bar-box">
-        <label className="status-header">PipeLine</label>
-        <div className="status-box">
-          <div className={this.state.totalSelected ? 'all-status-box-selected' : 'all-status-box'} onClick={this.allStatusClicked}>
-            Total ( {this.state.totalCount})
-            </div>
-          <div className="child-status-box">
+            <StatusItem item = {{name: "Total", count: this.state.totalCount }} showIcon = {false}
+                itemClick = {this.allStatusClicked} key={'status_all'} >
+            </StatusItem>
             {
               this.state.statusList.map((status) => {
                 return (
@@ -120,24 +117,7 @@ class StatusBar extends Component {
                 );
               })
             }
-          </div>
         </div>
-        <div className="type-box">
-          <div className={this.state.totalTypeSelected ? 'all-type-box all-type-box-selected' : 'all-type-box all-type-box-un-selected'}
-            onClick={this.allTypeClicked}>
-            All</div>
-          <div className="child-type-box">
-            {
-              this.state.featureTypes.map((type) => {
-                return (
-                  <StatusItem item={type}
-                    itemClick={this.typeItemClicked.bind(this, type)} key={'status_' + type.id.toString()} ></StatusItem>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
     );
   }
 }

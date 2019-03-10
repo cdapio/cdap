@@ -16,18 +16,25 @@
 
 .status-item-box {
   min-width: 140px;
-  padding-left: 5px;
+  padding-left: 10px;
   padding-right: 5px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  border: solid 1px;
-
+  border-left: 2px solid #888888;
+  border-radius: 1px;
+  margin: 5px;
+  .status-name {
+    padding: 0px 5px;
+  }
   .header {
     display: flex;
     width: 100%;
     align-items: center;
-
+    padding: 0px 5px;
+    .status-count {
+      font-size: 26px;
+      padding: 0px 5px;
+    }
     .status-success {
       height: 13px;
       width: 13px;
@@ -60,10 +67,6 @@
       display: inline-block;
     }
 
-    .status-name {
-      margin-left: 8px;
-    }
-
   }
   .footer {
     display: flex;
@@ -79,8 +82,4 @@
 
 .box-selected {
   background-color: darkgray;
-}
-
-.box-un-selected {
-  background-color: white;
 }
