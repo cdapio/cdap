@@ -27,7 +27,6 @@ const fePipelineService = `${appPath}/services/FeatureEngineeringPipelineService
 const autoFeatureGenerationService = `${appPath}/services/AutoFeatureGenerationService/methods/featureengineering`;
 const manualFeatureSelectionService = `${appPath}/services/ManualFeatureSelectionService/methods/featureengineering`;
 
-
 const FEDataServiceApi = {
   pipelines: serviceCreator(dataSrc, "GET", "REQUEST",`${fePipelineService}/pipeline/getall?pipelineType=:type`),
   schema: serviceCreator(dataSrc, "GET", "REQUEST",`${dataPrepSchemaService}/dataschema/getall`),
@@ -41,6 +40,7 @@ const FEDataServiceApi = {
   pipelineFilteredData: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/filter`),
   featureCorrelationData: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/correlation/:coefficientType/score/targetfeature/get`),
   saveFeaturePipeline: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/selected/create/pipeline`),
+  detectProperties:  serviceCreator(dataSrc, "POST", "REQUEST",`${dataPrepSchemaService}/dataset/selected/schema/identified/get`),
 };
 
 

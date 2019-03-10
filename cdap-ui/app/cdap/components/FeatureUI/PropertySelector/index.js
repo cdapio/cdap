@@ -21,6 +21,8 @@ import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import find from 'lodash/find';
+import difference from 'lodash/difference';
+
 import CheckList from '../CheckList';
 import { InputGroup, Input } from 'reactstrap';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -36,6 +38,9 @@ import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
 import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase } from '../util';
 import InfoTip from '../InfoTip';
+import FEDataServiceApi from '../feDataService';
+import NamespaceStore from 'services/NamespaceStore';
+
 require('./PropertySelector.scss');
 
 class PropertySelector extends React.Component {
@@ -43,6 +48,7 @@ class PropertySelector extends React.Component {
   currentProperty = undefined;
   currentSubProperty = "none";
   propertyMap;
+  lastSchemas;
 
   constructor(props) {
     super(props);
@@ -55,8 +61,70 @@ class PropertySelector extends React.Component {
     };
   }
 
+  isSchemaChanged() {
+    let detectedSchemas = this.props.detectedProperties.map(schema => schema.dataSchemaName);
+    let currentSchemas = this.state.schemas.map(schema => schema.schemaName);
+    let diff = difference(currentSchemas, detectedSchemas);
+    return diff.length > 0;
+  }
   componentDidMount() {
     this.onAccordionChange(0);
+    if (this.isSchemaChanged()) {
+      this.detectProperties();
+    }
+  }
+
+  detectProperties() {
+    FEDataServiceApi.detectProperties({
+      namespace: NamespaceStore.getState().selectedNamespace
+    },
+      this.props.selectedSchemas.map(schema => schema.schemaName)
+    ).subscribe(
+      result => {
+        this.setDetectedProperties(result);
+        this.props.setDetectedProperties(result);
+      }
+    );
+  }
+
+  setDetectedProperties(result) {
+    let detectedPropertyMap = {};
+    let updatePropMap = cloneDeep(this.props.propertyMap);
+    result.forEach(schema => {
+      schema.columnInfo.forEach(column => {
+        if (!detectedPropertyMap.hasOwnProperty(column.columnType)) {
+          detectedPropertyMap[column.columnType] = {};
+        }
+        if (!detectedPropertyMap[column.columnType].hasOwnProperty(schema.dataSchemaName)) {
+          detectedPropertyMap[column.columnType][schema.dataSchemaName] = [];
+        }
+        detectedPropertyMap[column.columnType][schema.dataSchemaName].push(column.columnName);
+      })
+    });
+    console.log("Detected properties -> ", detectedPropertyMap);
+    for (let propertyName in detectedPropertyMap) {
+      let property = find(this.props.availableProperties, { paramName: propertyName + "Columns" })
+      if (property) {
+        for (let schemaName in detectedPropertyMap[propertyName]) {
+          let schema = find(this.state.schemas, { schemaName: schemaName });
+          if (schema) {
+            let schemaColumns = schema.schemaColumns.filter((item) => {
+              if (detectedPropertyMap[propertyName][schemaName].indexOf(item.columnName) >= 0) {
+                return true;
+              } else {
+                return item.checked;
+              }
+            }).map(column => {
+              column.checked = true;
+              return column;
+            });
+            let updateObj = getPropertyUpdateObj(property, "none", schema.schemaName, schemaColumns);
+            updatePropertyMapWithObj(updatePropMap, updateObj);
+          }
+        }
+      }
+    }
+    this.props.updatePropertyMap(updatePropMap);
   }
 
   handleColumnChange(schema, checkList) {

@@ -28,6 +28,7 @@ const mapStateToConfigurationProps = (state) => {
     selectedSchemas: state.featureState.selectedSchemas,
     propertyMap: state.featureState.propertyMap,
     availableProperties: state.featureState.availableProperties,
+    detectedProperties: state.featureState.detectedProperties,
   };
 };
 
@@ -36,6 +37,12 @@ const mapDispatchToConfigurationProps = (dispatch) => {
     updatePropertyMap: (value) => {
       dispatch({
         type: AddFeatureActions.updatePropertyMap,
+        payload: value
+      });
+    },
+    setDetectedProperties: (value) => {
+      dispatch({
+        type: AddFeatureActions.setDetectedProperties,
         payload: value
       });
     },

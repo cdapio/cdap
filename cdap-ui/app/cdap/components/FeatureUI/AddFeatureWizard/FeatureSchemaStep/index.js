@@ -25,7 +25,8 @@ const mapStateToSelectSchemaProps = (state) => {
   return {
     availableSchemas: state.featureState.availableSchemas,
     selectedSchemas: state.featureState.selectedSchemas,
-    propertyMap: state.featureState.propertyMap
+    propertyMap: state.featureState.propertyMap,
+    detectedProperties: state.featureState.detectedProperties,
   };
 };
 
@@ -66,7 +67,13 @@ const mapDispatchToSelectSchemaProps = (dispatch) => {
         type: AddFeatureActions.deleteSelectedSchema,
         payload: schema
       });
-    }
+    },
+    setDetectedProperties: (value) => {
+      dispatch({
+        type: AddFeatureActions.setDetectedProperties,
+        payload: value
+      });
+    },
   };
 };
 

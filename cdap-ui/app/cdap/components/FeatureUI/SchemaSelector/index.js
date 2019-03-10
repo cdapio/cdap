@@ -23,6 +23,7 @@ import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import cloneDeep from 'lodash/cloneDeep';
 import find from 'lodash/find';
+import remove from 'lodash/remove';
 import { removeSchemaFromPropertyMap } from '../util';
 
 
@@ -130,6 +131,9 @@ class SchemaSelector extends React.Component {
       let propertyMap = cloneDeep(this.props.propertyMap);
       removeSchemaFromPropertyMap(propertyMap, this.state.schemaSelected.schemaName);
       this.props.updatePropertyMap(propertyMap);
+      let detectedProperties = cloneDeep(this.props.detectedProperties);
+      remove(detectedProperties, { dataSchemaName: this.state.schemaSelected.schemaName });
+      this.props.setDetectedProperties(detectedProperties);
     }
     this.setState({
       openAlertModal: false

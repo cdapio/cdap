@@ -34,6 +34,7 @@ const defaultState = {
   availableProperties: [],
   availableConfigurations: [],
   selectedSchemas: [],
+  detectedProperties: [],
   propertyMap: new Map(),
   configurationList: [],
   __complete: false,
@@ -187,6 +188,12 @@ const featureState = (state = defaultState, action = defaultAction) => {
         configurationList: action.payload
       };
     }
+      break;
+    case AddFeatureActions.setDetectedProperties:
+      state = {
+        ...state,
+        detectedProperties: action.payload
+      };
       break;
   }
   console.log("Feature Store ->", action, state);
