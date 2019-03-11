@@ -79,7 +79,7 @@ class FeatureSelection extends Component {
           columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, tooltipField:'featureName' });
         }
         columns.forEach(element => {
-          columDefs.push({ headerName: element.name, field: element.name , resizable: true, suppressMenu: true});
+          columDefs.push({ headerName: element.name, field: element.name , resizable: true, filter:'agNumberColumnFilter'});
         });
       }
 
