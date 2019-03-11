@@ -59,6 +59,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -123,8 +124,11 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       // the URI schema with what is set in this config. This needs to happen before StreamingCompat.getOrCreate
       // is called, since StreamingCompat.getOrCreate will attempt to parse the checkpointDir before calling
       // context function.
-      configuration.set("fs.defaultFS", checkpointDir);
-      FileSystem fileSystem = FileSystem.get(configuration);
+      URI checkpointUri = checkpointDirPath.toUri();
+      if (checkpointUri.getScheme() != null) {
+        configuration.set("fs.defaultFS", checkpointDir);
+      }
+      FileSystem fileSystem = FileSystem.get(checkpointUri, configuration);
 
       // Checkpoint directory structure: [directory]/[pipelineName]/[pipelineId]
       // Ideally, when a pipeline is deleted, we would be able to delete [directory]/[pipelineName].
