@@ -155,7 +155,6 @@ public class StandaloneMain {
     levelDBTableService = injector.getInstance(LevelDBTableService.class);
     messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
-    txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
     logQueryService = injector.getInstance(LogQueryService.class);
@@ -171,6 +170,12 @@ public class StandaloneMain {
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
+
+    if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
+      txService = injector.getInstance(InMemoryTransactionService.class);
+    } else {
+      txService = null;
+    }
 
     if (cConf.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -234,7 +239,9 @@ public class StandaloneMain {
     // TODO: CDAP-7688, remove next line after the issue is resolved
     injector.getInstance(MessagingHttpService.class).startAndWait();
 
-    txService.startAndWait();
+    if (txService != null) {
+      txService.startAndWait();
+    }
     // Define all StructuredTable before starting any services that need StructuredTable
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class),
                                     injector.getInstance(StructuredTableRegistry.class));
@@ -328,7 +335,10 @@ public class StandaloneMain {
 
       metricsCollectionService.stopAndWait();
       metricsQueryService.stopAndWait();
-      txService.stopAndWait();
+
+      if (txService != null) {
+        txService.stopAndWait();
+      }
 
       if (securityEnabled) {
         // auth service is on the side anyway

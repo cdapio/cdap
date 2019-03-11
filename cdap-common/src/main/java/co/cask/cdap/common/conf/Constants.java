@@ -393,6 +393,9 @@ public final class Constants {
    * Transactions.
    */
   public static final class Transaction {
+
+    public static final String TX_ENABLED = "data.tx.enabled";
+
     /**
      * Twill Runnable configuration.
      */

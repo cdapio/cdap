@@ -24,17 +24,28 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.util.Modules;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.DefaultTransactionExecutor;
+import org.apache.tephra.TransactionExecutor;
+import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.TxConstants;
 import org.apache.tephra.distributed.PooledClientProvider;
 import org.apache.tephra.distributed.ThreadLocalClientProvider;
 import org.apache.tephra.distributed.ThriftClientProvider;
+import org.apache.tephra.distributed.TransactionServiceClient;
 import org.apache.tephra.metrics.MetricsCollector;
-import org.apache.tephra.runtime.TransactionModules;
+import org.apache.tephra.persist.HDFSTransactionStateStorage;
+import org.apache.tephra.persist.TransactionStateStorage;
+import org.apache.tephra.runtime.TransactionStateStorageProvider;
+import org.apache.tephra.snapshot.SnapshotCodecProvider;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +68,24 @@ public class DataFabricDistributedModule extends AbstractModule {
 
     // bind transactions
     bind(TransactionSystemClientService.class).to(DistributedTransactionSystemClientService.class);
-    install(Modules.override(new TransactionModules(txClientId).getDistributedModules()).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Binds the tephra MetricsCollector to the one that emit metrics via MetricsCollectionService
-        bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
-      }
-    }));
+
+    // some of these classes need to be non-singleton in order to create a new instance during leader() in
+    // TransactionService
+    bind(SnapshotCodecProvider.class).in(Scopes.SINGLETON);
+    bind(TransactionStateStorage.class).annotatedWith(Names.named("persist")).to(HDFSTransactionStateStorage.class);
+    bind(TransactionStateStorage.class).toProvider(TransactionStateStorageProvider.class);
+    // to catch issues during configure time
+    bind(TransactionManager.class);
+
+    bindConstant().annotatedWith(Names.named(TxConstants.CLIENT_ID)).to(txClientId);
+
+    bind(TransactionSystemClient.class).toProvider(DistributedTxSystemClientProvider.class).in(Scopes.SINGLETON);
+    bind(MetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
+
+    install(new FactoryModuleBuilder()
+              .implement(TransactionExecutor.class, DefaultTransactionExecutor.class)
+              .build(TransactionExecutorFactory.class));
+
     install(new TransactionExecutorModule());
     install(new StorageModule());
   }
@@ -105,6 +127,24 @@ public class DataFabricDistributedModule extends AbstractModule {
         throw new IllegalArgumentException(message);
       }
       return clientProvider;
+    }
+  }
+
+  /**
+   * Distributed transaction client provider which provides the {@link TransactionSystemClient} for distributed mode.
+   */
+  private static final class DistributedTxSystemClientProvider extends AbstractTransactionSystemClientProvider {
+    private final Injector injector;
+
+    @Inject
+    DistributedTxSystemClientProvider(CConfiguration cConf, Injector injector) {
+      super(cConf);
+      this.injector = injector;
+    }
+
+    @Override
+    protected TransactionSystemClient getTransactionSystemClient() {
+      return injector.getInstance(TransactionServiceClient.class);
     }
   }
 }

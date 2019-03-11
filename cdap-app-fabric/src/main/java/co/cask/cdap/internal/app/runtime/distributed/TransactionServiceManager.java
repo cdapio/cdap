@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,14 +35,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class TransactionServiceManager extends AbstractDistributedMasterServiceManager {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionServiceManager.class);
-  private TransactionSystemClient txClient;
-  private DiscoveryServiceClient discoveryServiceClient;
+  private final TransactionSystemClient txClient;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final boolean isTxEnabled;
 
   @Inject
   public TransactionServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
                                    TransactionSystemClient txClient, DiscoveryServiceClient discoveryServiceClient) {
     super(cConf, Constants.Service.TRANSACTION, twillRunnerService, discoveryServiceClient);
     this.txClient = txClient;
+    this.isTxEnabled = cConf.getBoolean(Constants.Transaction.TX_ENABLED);
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -56,7 +58,7 @@ public class TransactionServiceManager extends AbstractDistributedMasterServiceM
     try {
       Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryServiceClient.discover(serviceName))
         .pick(discoveryTimeout, TimeUnit.SECONDS);
-      if (discoverable == null) {
+      if (discoverable == null && isTxEnabled) {
         return false;
       }
 

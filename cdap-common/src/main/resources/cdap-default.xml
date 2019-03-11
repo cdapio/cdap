@@ -790,6 +790,14 @@
   </property>
 
   <property>
+    <name>data.tx.enabled</name>
+    <value>true</value>
+    <description>
+      Determines if the transaction service is enabled.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.bind.address</name>
     <value>0.0.0.0</value>
     <description>
