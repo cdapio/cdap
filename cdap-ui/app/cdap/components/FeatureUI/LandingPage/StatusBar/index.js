@@ -106,14 +106,10 @@ class StatusBar extends Component {
   render() {
     return (
       <div className="status-bar-box">
-            <StatusItem item = {{name: "Total", count: this.state.totalCount }} showIcon = {false}
-                itemClick = {this.allStatusClicked} key={'status_all'} >
-            </StatusItem>
-            {
-              this.state.statusList.map((status) => {
+           {
+              this.props.statusList.map((status) => {
                 return (
-                  <StatusItem item={status}
-                    itemClick={this.statusItemClicked.bind(this, status)} key={'status_' + status.id.toString()} ></StatusItem>
+                  <StatusItem item={status} key={'status_' + status.id.toString()} ></StatusItem>
                 );
               })
             }

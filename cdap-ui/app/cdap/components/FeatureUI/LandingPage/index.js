@@ -35,7 +35,8 @@ import {
   PIPELINE_SCHEMAS,
   CLONE_PIPELINE,
   GET_PIPE_LINE_DATA,
-  ERROR_MESSAGES
+  ERROR_MESSAGES,
+  TOTAL
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
@@ -144,7 +145,9 @@ class LandingPage extends React.Component {
     let sucessCount = 0;
     let deployedCount = 0;
     let failCount = 0;
+    let totalCount = 0;
     list.forEach(element => {
+      totalCount++;
       if (element.status === RUNNING) {
         runningCount++;
       } else if (element.status === SUCCEEDED) {
@@ -155,7 +158,9 @@ class LandingPage extends React.Component {
         failCount++;
       }
     });
-    return [{ id: 1, name: RUNNING, count: runningCount, selected: false },
+    return [
+    { id: 0, name: TOTAL, count: totalCount, selected: false },
+    { id: 1, name: RUNNING, count: runningCount, selected: false },
     { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
     { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
     { id: 4, name: FAILED, count: failCount, selected: false }];
@@ -636,14 +641,9 @@ class LandingPage extends React.Component {
                   </Dropdown>
                   <i className="fa fa-refresh refresh-button" onClick={() => this.getPipelines(this.state.selectedPipelineType)}></i>
                 </div>
-                <InputGroup>
-                  <Input placeholder="search" onChange={this.onFilterKeyChange.bind(this)} />
-                  <i className="search-icon fa fa-search"></i>
-                </InputGroup>
               </div>
 
-              <StatusBar statusList={this.state.statusList} featureTypes={this.featureTypes} pipeLineSelectionTypeChange={this.onPipeLineTypeChange.bind(this)}
-                statusSelectionChange={this.onStatusSelectionChange.bind(this)}></StatusBar>
+              <StatusBar statusList={this.state.statusList}></StatusBar>
               <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
             </div>
             <FeatureTable data={this.state.data}

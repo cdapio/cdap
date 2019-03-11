@@ -66,6 +66,7 @@ export const SUCCEEDED = "Succeeded";
 export const DEPLOYED = "Deployed";
 export const FAILED = "Failed";
 export const RUNNING = "Running";
+export const TOTAL = "Total";
 
 export const FEATURE_GENERATED = "Feature Generated";
 export const FEATURE_SELECTED = "Feature Selected";
@@ -75,13 +76,14 @@ export const AFEGridColumns = [
     field: "pipelineName",
     tooltipField: 'pipelineName',
     cellRenderer: 'feLinkRenderer',
-    width: 300
+    width: 400
   },
   {
     headerName: "Status",
     field: "status",
     tooltipField: 'status',
-    cellRenderer: 'statusRenderer'
+    cellRenderer: 'statusRenderer',
+    width: 300,
   },
   {
     headerName: "Last Run Time",

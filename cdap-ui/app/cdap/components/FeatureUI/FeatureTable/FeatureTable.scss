@@ -14,49 +14,44 @@
  * the License.
  */
 
-.feature-table {
-  border-collapse: collapse;
+.grid-container {
+  height: calc(100% - 61px);
   width: 100%;
-  thead {
-    border: 1px solid #dddddd;
+  .ag-header-container,
+  .ag-center-cols-container {
+    width: 100% !important;
+  }
+  .ag-header-row {
+    width: 100% !important;
+    font-size: 16px;
     background-image: linear-gradient(#bdbdbd, white);
-    th {
-      padding: 10px 15px;
-      text-align: left;
-      font-weight: 500;
-      color: #333333;
-      font-size: 16px;
-    }
+    color: #333333;
   }
-  tbody {
-    td {
-      padding: 8px 15px;
-      border-bottom: 1px solid #d0d0d0;
-      font-size: 14px;
-    }
-    tr {
-      background-color: white;
-    }
+  .ag-cell {
+    font-size: 14px;
   }
+  .ag-cell-focus {
+    border-color: transparent !important;
+  }
+}
 
-  .view-link {
-    color: #6f7c9d;
-    text-decoration: underline;
-    text-align: left;
-    cursor: pointer;
-  }
+.view-link {
+  color: #6f7c9d;
+  text-decoration: underline;
+  text-align: left;
+  cursor: pointer;
+}
 
-  .disable-link {
-    color: grey;
-    text-align: left;
-    pointer-events: none;
-  }
+.disable-link {
+  color: grey;
+  text-align: left;
+  pointer-events: none;
+}
 
-  .center-align {
-    text-align: center;
-  }
+.center-align {
+  text-align: center;
+}
 
-  .clickable {
-    cursor: pointer;
-  }
+.clickable {
+  cursor: pointer;
 }

@@ -19,8 +19,9 @@
   padding-left: 10px;
   padding-right: 5px;
   display: flex;
-  flex-direction: column;
-  border-left: 2px solid #888888;
+  flex-direction: row;
+  align-items: center;
+  border-left: 1px solid #888888;
   border-radius: 1px;
   margin: 5px;
   .status-name {

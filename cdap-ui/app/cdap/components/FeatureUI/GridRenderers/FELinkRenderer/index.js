@@ -7,7 +7,7 @@ class FSLinkRenderer extends React.Component {
 
   invokeParentMethod(item) {
     if (this.props.context && this.props.context.componentParent && this.props.context.componentParent.onEdit) {
-      this.props.context.componentParent.onFeatureSelection(item);
+      this.props.context.componentParent.onView(item);
     }
   }
   render() {

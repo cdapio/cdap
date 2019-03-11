@@ -28,8 +28,8 @@ class StatusItem extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {className:this.getClassName(this.props.item),
-      count:isNil(this.props.item.count) ? undefined : this.props.item.count,
+    this.state = {
+      className:this.getClassName(this.props.item),
       name:this.props.item.name};
   }
 
@@ -51,6 +51,7 @@ class StatusItem extends Component {
 
   render() {
     let showIcon = isNil(this.props.showIcon)? true: this.props.showIcon;
+    let count = isNil(this.props.item.count) ? undefined : this.props.item.count;
     return (
       <div className = "status-item-box" onClick={this.props.itemClick}>
          <span className="status-name">{this.state.name} </span>
@@ -58,7 +59,7 @@ class StatusItem extends Component {
           { showIcon &&
            <span className={this.state.className}></span> }
           {
-            isNil(this.state.count) ? "-" : <span className = "status-count" > {this.state.count}</span>
+            isNil(count) ? "-" : <span className = "status-count" > {count}</span>
           }
         </div>
       </div>
