@@ -244,7 +244,7 @@ class FeatureSelection extends Component {
     if (!isNil(value) && value.length > 0) {
       const item = value[0]['featureCorrelationScores'];
       columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true, tooltipField:'featureName'  });
-      columDefs.push({ headerName: "Value", field: "value", suppressMenu: true });
+      columDefs.push({ headerName: "Value", field: "value", filter:'agNumberColumnFilter' });
 
       if (!isNil(item)) {
         for (let key in item) {
