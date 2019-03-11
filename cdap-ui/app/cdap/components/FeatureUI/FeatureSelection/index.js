@@ -79,7 +79,7 @@ class FeatureSelection extends Component {
           columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, tooltipField:'featureName' });
         }
         columns.forEach(element => {
-          columDefs.push({ headerName: element.name, field: element.name , resizable: true});
+          columDefs.push({ headerName: element.name, field: element.name , resizable: true, suppressMenu: true});
         });
       }
 
@@ -244,7 +244,7 @@ class FeatureSelection extends Component {
     if (!isNil(value) && value.length > 0) {
       const item = value[0]['featureCorrelationScores'];
       columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true, tooltipField:'featureName'  });
-      columDefs.push({ headerName: "Value", field: "value" });
+      columDefs.push({ headerName: "Value", field: "value", suppressMenu: true });
 
       if (!isNil(item)) {
         for (let key in item) {

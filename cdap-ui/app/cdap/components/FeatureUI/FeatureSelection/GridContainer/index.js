@@ -44,6 +44,7 @@ class GridContainer extends Component {
         <AgGridReact
           columnDefs={this.props.gridColums}
           defaultColDef={this.defaultColDef}
+          enableFilter = { true }
           rowSelection="multiple"
           rowData={this.props.rowData}
           onSelectionChanged={this.onSelectionChanged.bind(this)}>
