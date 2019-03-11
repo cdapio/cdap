@@ -56,6 +56,7 @@ import co.cask.cdap.security.store.SecureStoreUtils;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
@@ -198,6 +199,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
       final List<String> additionalClassPaths = new ArrayList<>();
       addContainerJars(cConf, localizeResources, additionalClassPaths);
+      addAdditionalLogAppenderJars(cConf, tempDir, localizeResources);
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
@@ -364,6 +366,21 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       deleteDirectory(tempDir);
       throw Throwables.propagate(e);
     }
+  }
+
+  private void addAdditionalLogAppenderJars(CConfiguration cConf, File tempDir,
+                                            Map<String, LocalizeResource> localizeResources) throws IOException {
+    String provider = cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER);
+    if (Strings.isNullOrEmpty(provider)) {
+      return;
+    }
+    String jarDir = cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR);
+    File bundleJarFile = new File(tempDir, "log-appender.jar");
+    BundleJarUtil.createJar(new File(jarDir + "/" + provider), bundleJarFile);
+    String localizedDir = "log-appender";
+    // set extensions dir to point to localized appender directory - appender/<log-appender-provider>
+    localizeResources.put(localizedDir + "/" + provider, new LocalizeResource(bundleJarFile, true));
+    cConf.set(Constants.Logging.LOG_APPENDER_EXT_DIR, localizedDir);
   }
 
   /**

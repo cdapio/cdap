@@ -1505,6 +1505,22 @@
   </property>
 
   <property>
+    <name>app.program.log.appender.extensions.dir</name>
+    <value>/opt/cdap/master/ext/log/appenders</value>
+    <description>
+      Directory for log appender jars
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.log.appender.provider</name>
+    <value></value>
+    <description>
+      Provider for log appender. The log appender provided by this provider will be loaded in each program container
+    </description>
+  </property>
+
+  <property>
     <name>log.kafka.topic</name>
     <value>logs.user-v2</value>
     <description>
@@ -1548,7 +1564,7 @@
     <name>log.pipeline.cdap.file.cleanup.batch.size</name>
     <value>10000</value>
     <description>
-      Batch size to clean up metadata table.
+      Batch size to clean up log metadata table
     </description>
   </property>
 

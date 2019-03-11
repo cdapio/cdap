@@ -858,14 +858,16 @@ public final class Constants {
     public static final String PIPELINE_LOGGER_CACHE_SIZE = "log.process.pipeline.logger.cache.size";
     public static final String PIPELINE_LOGGER_CACHE_EXPIRATION_MS = "log.process.pipeline.logger.cache.expiration.ms";
 
+    // log appender configs
+    public static final String LOG_APPENDER_PROVIDER = "app.program.log.appender.provider";
+    public static final String LOG_APPENDER_EXT_DIR = "app.program.log.appender.extensions.dir";
+    public static final String LOG_APPENDER_PROPERTY_PREFIX = "app.program.log.appender.system.properties.";
+
     // Property key in the logger context to indicate it is performing pipeline validation
     public static final String PIPELINE_VALIDATION = "log.pipeline.validation";
 
     public static final String SYSTEM_PIPELINE_CHECKPOINT_PREFIX = "cdap";
 
-    // Constants
-    // Table used to store log metadata
-    public static final String META_TABLE = "log.meta";
     // key constants
     public static final String TAG_NAMESPACE_ID = ".namespaceId";
     public static final String TAG_APPLICATION_ID = ".applicationId";

@@ -123,7 +123,7 @@ public class CDAPLogAppender extends AppenderBase<ILoggingEvent> implements Flus
   /**
    * Sets batch size for file cleanup
    */
-  public void setfileCleanupBatchSize(int batchSize) {
+  public void setFileCleanupBatchSize(int batchSize) {
     this.fileCleanupBatchSize = batchSize;
   }
 

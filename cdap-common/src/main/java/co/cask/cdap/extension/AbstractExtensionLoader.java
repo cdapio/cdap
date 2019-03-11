@@ -92,8 +92,8 @@ public abstract class AbstractExtensionLoader<EXTENSION_TYPE, EXTENSION> {
     // type should always be an instance of ParameterizedType
     Preconditions.checkState(type instanceof ParameterizedType);
     Type extensionType = ((ParameterizedType) type).getActualTypeArguments()[1];
-    // extensionType should always be an instance of Class
-    Preconditions.checkState(extensionType instanceof Class);
+    extensionType = TypeToken.of(extensionType).getRawType();
+    Preconditions.checkState(extensionType != null);
     this.extensionClass = (Class<EXTENSION>) extensionType;
     this.systemExtensionLoader = ServiceLoader.load(this.extensionClass);
     this.serviceLoaderCache = createServiceLoaderCache();
