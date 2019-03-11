@@ -57,7 +57,6 @@ class FeatureTable extends React.Component {
           columnDefs = {this.state.columnDefs}
           context={this.state.context}
           frameworkComponents = {this.state.frameworkComponents}
-          rowSelection="single"
           rowData={this.props.data}
           enableFilter={true}
           >
