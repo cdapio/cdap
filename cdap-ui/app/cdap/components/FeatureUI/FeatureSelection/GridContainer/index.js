@@ -22,12 +22,34 @@ import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './GridContainer.scss';
 
 class GridContainer extends Component {
+  gridApi;
+  gridColumnApi;
   defaultColDef = {
     resizable: true
   }
   constructor(props) {
     super(props);
   }
+
+  componentWillReceiveProps(nextProps) {
+    if(this.gridApi) {
+      if(nextProps.isDataLoading) {
+        this.gridApi.showLoadingOverlay()
+      } else {
+        if(isEmpty(nextProps.data)) {
+          this.gridApi.showNoRowsOverlay();
+        } else {
+          this.gridApi.hideOverlay();
+        }
+      }
+    }
+  }
+
+  onGridReady = params => {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+  }
+
 
   refreshGridColumns = (data) => {
     console.log(data);
@@ -47,6 +69,7 @@ class GridContainer extends Component {
           enableFilter = { true }
           rowSelection="multiple"
           rowData={this.props.rowData}
+          onGridReady={this.onGridReady}
           onSelectionChanged={this.onSelectionChanged.bind(this)}>
         </AgGridReact>
       </div>

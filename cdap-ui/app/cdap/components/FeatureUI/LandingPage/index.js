@@ -177,25 +177,25 @@ class LandingPage extends React.Component {
         type: type == "All" ? '' : type
       }).subscribe(
         result => {
-          this.setState({
-            isDataLoading: false
-          });
           if (checkResponseError(result) || isNil(result["pipelineInfoList"])) {
             this.handleError(result, GET_PIPELINE);
             this.setState({
-              data: []
+              data: [],
+              isDataLoading: false
             });
           } else {
             this.data_original = result["pipelineInfoList"];
             this.setState({
               data: result["pipelineInfoList"],
-              statusList: this.generateStatusList(this.data_original)
+              statusList: this.generateStatusList(this.data_original),
+              isDataLoading: false
             });
           }
         },
         error => {
           this.setState({
-            data: []
+            data: [],
+            isDataLoading: false
           });
           this.handleError(error, GET_PIPELINE);
         }

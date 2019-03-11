@@ -48,7 +48,8 @@ class FeatureSelection extends Component {
     this.state = Object.assign({
       activeTab: "1", selectedFeatures: [],
       openSaveModal: false,
-      enableSave:false
+      enableSave:false,
+      isDataLoading: false,
     }, dataInfo);
 
 
@@ -172,6 +173,9 @@ class FeatureSelection extends Component {
 
   getFilteredRecords(requestObj) {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
+    this.setState ({
+      isDataLoading: true
+    });
     FEDataServiceApi.pipelineFilteredData(
       {
         namespace: NamespaceStore.getState().selectedNamespace,
@@ -180,14 +184,25 @@ class FeatureSelection extends Component {
         result => {
           if (checkResponseError(result) || isNil(result["featureStatsList"])) {
             this.handleError(result, GET_PIPE_LINE_FILTERED);
+            this.setState ({
+              isDataLoading: false,
+              gridRowData: []
+            });
           } else {
             const parsedResult = this.dataParser(result["featureStatsList"]);
             this.storeGridInfo(true, parsedResult.gridColumnDefs, parsedResult.gridRowData);
-            this.setState({ gridRowData: parsedResult.gridRowData });
+            this.setState({
+              isDataLoading: false,
+              gridRowData: parsedResult.gridRowData
+            });
           }
         },
         error => {
           this.handleError(error, GET_PIPE_LINE_FILTERED);
+          this.setState ({
+            isDataLoading: false,
+            gridRowData: []
+          });
         }
       );
   }
@@ -205,6 +220,9 @@ class FeatureSelection extends Component {
   applyCorrelation = (value) => {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
     const selectedFeatures = [value.selectedfeatures.name];
+    this.setState ({
+      isDataLoading: true
+    });
     FEDataServiceApi.featureCorrelationData(
       {
         namespace: NamespaceStore.getState().selectedNamespace,
@@ -214,13 +232,24 @@ class FeatureSelection extends Component {
         result => {
           if (checkResponseError(result) || isNil(result["featureCorrelationScores"])) {
             this.handleError(result, GET_FEATURE_CORRELAION);
+            this.setState ({
+              isDataLoading: false,
+              gridRowData: [],
+            });
           } else {
             const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
             this.storeGridInfo(false, parsedResult.gridColumnDefs, parsedResult.gridRowData);
-            this.setState({ gridColumnDefs: parsedResult.gridColumnDefs, gridRowData: parsedResult.gridRowData });
+            this.setState({
+              isDataLoading: false,
+              gridColumnDefs: parsedResult.gridColumnDefs,
+              gridRowData: parsedResult.gridRowData });
           }
         },
         error => {
+          this.setState ({
+            isDataLoading: false,
+            gridRowData: [],
+          });
           this.handleError(error, GET_FEATURE_CORRELAION);
         }
       );
@@ -268,6 +297,9 @@ class FeatureSelection extends Component {
 
   onFeatureSelection(pipeline, isFilter=false) {
     this.currentPipeline = pipeline;
+    this.setState ({
+      isDataLoading: true
+    });
     FEDataServiceApi.pipelineData({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
@@ -275,16 +307,28 @@ class FeatureSelection extends Component {
       result => {
         if (checkResponseError(result) || isNil(result["featureStatsList"])) {
           this.handleError(result, GET_PIPE_LINE_DATA);
+          this.setState ({
+            isDataLoading: false,
+            gridRowData: []
+          });
         } else {
           const data = this.dataParser(result["featureStatsList"]);
           if(!isFilter){
             this.storeGridInfo(false, data.gridColumnDefs, data.gridRowData);
-            this.setState({gridColumnDefs:data.gridColumnDefs, gridRowData: data.gridRowData });
+            this.setState({
+              gridColumnDefs:data.gridColumnDefs,
+              gridRowData: data.gridRowData,
+              isDataLoading: false
+           });
           }
         }
       },
       error => {
         this.handleError(error, GET_PIPELINE);
+        this.setState ({
+          isDataLoading: false,
+          gridRowData: []
+        });
       }
     );
   }
