@@ -39,4 +39,14 @@ public final class Config {
   static final int DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES = 50;
   static final int DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS = 100;
   static final int DEFAULT_MAX_RESULT_WINDOW = 10000; // this is hardcoded in Elasticsearch
+
+  // index.mappings.json will have a mapping: "cdap_version": "CDAP_VERSION".
+  // the latter (placeholder) is replaced with the current CDAP version at index creation
+  // and similar for the metadata version and the checksum of the mappings file
+  static final String MAPPING_CDAP_VERSION = "cdap_version";
+  static final String MAPPING_CDAP_VERSION_PLACEHOLDER = "CDAP_VERSION";
+  static final String MAPPING_METADATA_VERSION = "metadata_version";
+  static final String MAPPING_METADATA_VERSION_PLACEHOLDER = "METADATA_VERSION";
+  static final String MAPPING_MAPPING_CHECKSUM = "mapping_checksum";
+  static final String MAPPING_MAPPING_CHECKSUM_PLACEHOLDER = "MAPPING_CHECKSUM";
 }
