@@ -120,7 +120,9 @@ export default class Popover extends PureComponent {
     );
 
     if (newState) {
-      this.eventEmitter.emit('POPOVER_OPEN', this.id);
+      if (this.props.showOn !== 'Hover') {
+        this.eventEmitter.emit('POPOVER_OPEN', this.id);
+      }
       this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
         let parent = document.getElementById(this.id);
         let child = e.target;
