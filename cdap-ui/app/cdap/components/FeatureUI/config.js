@@ -88,7 +88,8 @@ export const AFEGridColumns = [
     field: "lastStartEpochTime",
     tooltipField: 'lastStartEpochTime',
     valueFormatter: function(params) { return getEpochDateString(params); },
-    width: 200
+    width: 200,
+    filter: false
   },
   {
     headerName: "Type",
@@ -100,24 +101,28 @@ export const AFEGridColumns = [
     headerName: "",
     field: "pipelineName",
     width: 200,
-    cellRenderer: 'fsLinkRenderer'
+    cellRenderer: 'fsLinkRenderer',
+    filter: false
   },
   {
     headerName: "",
     field: "pipelineName",
     width: 40,
-    cellRenderer: 'cloneRenderer'
+    cellRenderer: 'cloneRenderer',
+    filter: false
   },
   {
     headerName: "",
     field: "pipelineName",
     width: 40,
-    cellRenderer: 'editRenderer'
+    cellRenderer: 'editRenderer',
+    filter: false
   },
   {
     headerName: "",
     field: "pipelineName",
     width: 40,
-    cellRenderer: 'deleteRenderer'
+    cellRenderer: 'deleteRenderer',
+    filter: false
   }
 ];
