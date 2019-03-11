@@ -258,4 +258,12 @@
     </description>
   </property>
 
+  <property>
+    <name>log.appender.extensions.dir</name>
+    <value>ext/log/appenders</value>
+    <description>
+      Directory for log appender jars
+    </description>
+  </property>
+
 </configuration>

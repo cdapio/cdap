@@ -43,6 +43,7 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.appender.loader.LogAppenderLoaderService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -535,6 +536,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   private void addIsolatedServices(Injector injector, Collection<Service> services) {
+    services.add(injector.getInstance(LogAppenderLoaderService.class));
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);

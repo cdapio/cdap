@@ -75,6 +75,7 @@ import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
+import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -222,6 +223,19 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       if (logbackURI != null) {
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+      }
+
+      if (!Strings.isNullOrEmpty(cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER))) {
+        String jarDir = cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR) + "/"
+          + cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER);
+        File dir = new File(jarDir);
+        File bundleJarFile = new File(tempDir, "log-appender.jar");
+        BundleJarUtil.createJar(dir, bundleJarFile);
+        // set cConf to point to localized appender directory
+        cConf.set(Constants.Logging.LOG_APPENDER_EXT_DIR,
+                  "appender/" + cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER));
+        localizeResources.put(cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR),
+                              new LocalizeResource(bundleJarFile, true));
       }
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
