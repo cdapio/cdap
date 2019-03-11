@@ -81,6 +81,7 @@ class LandingPage extends React.Component {
       displayFeatureSelection: false,
       pipeLineData: this.sampleData,
       selectedPipeline: {},
+      isDataLoading: false,
       currentNamespace: NamespaceStore.getState().selectedNamespace,
       statusList: this.generateStatusList([])
 
@@ -167,14 +168,23 @@ class LandingPage extends React.Component {
   }
 
   getPipelines(type) {
+    this.setState({
+      isDataLoading: true
+    });
     FEDataServiceApi.pipelines(
       {
         namespace: NamespaceStore.getState().selectedNamespace,
         type: type == "All" ? '' : type
       }).subscribe(
         result => {
+          this.setState({
+            isDataLoading: false
+          });
           if (checkResponseError(result) || isNil(result["pipelineInfoList"])) {
             this.handleError(result, GET_PIPELINE);
+            this.setState({
+              data: []
+            });
           } else {
             this.data_original = result["pipelineInfoList"];
             this.setState({
@@ -184,6 +194,9 @@ class LandingPage extends React.Component {
           }
         },
         error => {
+          this.setState({
+            data: []
+          });
           this.handleError(error, GET_PIPELINE);
         }
       );
@@ -647,6 +660,7 @@ class LandingPage extends React.Component {
               <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
             </div>
             <FeatureTable data={this.state.data}
+              isDataLoading = {this.state.isDataLoading}
               onView={this.viewPipeline.bind(this)}
               onEdit={this.editPipeline.bind(this, EDIT_PIPELINE)}
               onClone={this.editPipeline.bind(this, CLONE_PIPELINE)}

@@ -19,6 +19,7 @@ import React from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
+import isEmpty from 'lodash/isEmpty';
 import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE, AFEGridColumns } from '../config';
 import StatusRenderer from '../GridRenderers/StatusRenderer';
 import DeleteRenderer from '../GridRenderers/DeleteRenderer';
@@ -30,10 +31,10 @@ import FSLinkRenderer from '../GridRenderers/FSLinkRenderer';
 require('./FeatureTable.scss');
 
 class FeatureTable extends React.Component {
-  gridColums;
+  gridApi;
+  gridColumnApi;
   constructor(props) {
     super(props);
-    this.gridColums = AFEGridColumns;
     this.state = {
       columnDefs: AFEGridColumns,
       frameworkComponents:  {
@@ -48,8 +49,33 @@ class FeatureTable extends React.Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    if(this.gridApi) {
+      if(nextProps.isDataLoading) {
+        this.gridApi.showLoadingOverlay()
+      } else {
+        if(isEmpty(nextProps.data)) {
+          this.gridApi.showNoRowsOverlay();
+        } else {
+          this.gridApi.hideOverlay();
+        }
+      }
+    }
+  }
+
+
+  onGridReady = params => {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
+  }
+
 
   render() {
+    setTimeout(() => {
+      if(this.gridApi) {
+        this.gridApi.sizeColumnsToFit()
+      }
+    }, 500);
     return (
       <div
         className="ag-theme-balham grid-container">
@@ -59,6 +85,7 @@ class FeatureTable extends React.Component {
           frameworkComponents = {this.state.frameworkComponents}
           rowData={this.props.data}
           enableFilter={true}
+          onGridReady={this.onGridReady}
           >
         </AgGridReact>
       </div>
