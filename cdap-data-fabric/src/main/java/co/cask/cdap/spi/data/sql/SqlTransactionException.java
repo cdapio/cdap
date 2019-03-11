@@ -26,8 +26,9 @@ import java.sql.SQLException;
 class SqlTransactionException extends TransactionException {
   private final SQLException sqlException;
 
-  SqlTransactionException(String message, SQLException sqlException, Throwable cause) {
-    super(message, cause);
+  SqlTransactionException(SQLException sqlException, Throwable cause) {
+    super(String.format("Failed to execute the sql queries. Transaction failed with sql state: %s",
+                        sqlException.getSQLState()), cause);
     this.sqlException = sqlException;
   }
 
