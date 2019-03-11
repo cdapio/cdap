@@ -16,7 +16,13 @@
 
 package co.cask.cdap.datastreams;
 
+import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.AlertPublisher;
@@ -36,6 +42,7 @@ import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.spark.StreamingCompat;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,12 +54,15 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function0;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -60,6 +70,7 @@ import javax.annotation.Nullable;
  */
 public class SparkStreamingPipelineDriver implements JavaSparkMain {
   private static final Logger LOG = LoggerFactory.getLogger(SparkStreamingPipelineDriver.class);
+  private static final String DEFAULT_CHECKPOINT_DATASET_NAME = "defaultCheckpointDataset";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -84,7 +95,26 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     JavaSparkContext context = null;
     if (!checkpointsDisabled) {
       String pipelineName = sec.getApplicationSpecification().getName();
-      Path baseCheckpointDir = new Path(new Path(pipelineSpec.getCheckpointDirectory()), pipelineName);
+      String configCheckpointDir = pipelineSpec.getCheckpointDirectory();
+      if (Strings.isNullOrEmpty(configCheckpointDir)) {
+        // Use the directory of a fileset dataset if the checkpoint directory is not set.
+        Admin admin = sec.getAdmin();
+        if (!admin.datasetExists(DEFAULT_CHECKPOINT_DATASET_NAME)) {
+          admin.createDataset(DEFAULT_CHECKPOINT_DATASET_NAME, FileSet.class.getName(),
+                              FileSetProperties.builder().build());
+        }
+        // there isn't any way to instantiate the fileset except in a TxRunnable, so need to use a reference.
+        final AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
+        Transactionals.execute(sec, new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            FileSet checkpointFileSet = context.getDataset(DEFAULT_CHECKPOINT_DATASET_NAME);
+            checkpointBaseRef.set(checkpointFileSet.getBaseLocation());
+          }
+        });
+        configCheckpointDir = checkpointBaseRef.get().toURI().toString();
+      }
+      Path baseCheckpointDir = new Path(new Path(configCheckpointDir), pipelineName);
       Path checkpointDirPath = new Path(baseCheckpointDir, pipelineSpec.getPipelineId());
       checkpointDir = checkpointDirPath.toString();
 
@@ -94,8 +124,11 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       // the URI schema with what is set in this config. This needs to happen before StreamingCompat.getOrCreate
       // is called, since StreamingCompat.getOrCreate will attempt to parse the checkpointDir before calling
       // context function.
-      configuration.set("fs.defaultFS", checkpointDir);
-      FileSystem fileSystem = FileSystem.get(configuration);
+      URI checkpointUri = checkpointDirPath.toUri();
+      if (checkpointUri.getScheme() != null) {
+        configuration.set("fs.defaultFS", checkpointDir);
+      }
+      FileSystem fileSystem = FileSystem.get(checkpointUri, configuration);
 
       // Checkpoint directory structure: [directory]/[pipelineName]/[pipelineId]
       // Ideally, when a pipeline is deleted, we would be able to delete [directory]/[pipelineName].

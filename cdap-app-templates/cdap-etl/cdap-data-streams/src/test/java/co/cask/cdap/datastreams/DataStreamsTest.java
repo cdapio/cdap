@@ -127,7 +127,6 @@ public class DataStreamsTest extends HydratorTestBase {
       .addConnection("sleep", "filter1")
       .addConnection("filter1", "filter2")
       .addConnection("filter2", "sink")
-      .setCheckpointDir(checkpointDir)
       .setBatchInterval("1s")
       .build();
 
