@@ -36,7 +36,6 @@ class FeatureTable extends React.Component {
     this.gridColums = AFEGridColumns;
     this.state = {
       columnDefs: AFEGridColumns,
-      defaultColDef: { filter: true },
       frameworkComponents:  {
         'statusRenderer': StatusRenderer,
         'deleteRenderer': DeleteRenderer,
@@ -60,7 +59,7 @@ class FeatureTable extends React.Component {
           frameworkComponents = {this.state.frameworkComponents}
           rowSelection="single"
           rowData={this.props.data}
-          defaultColDef={this.state.defaultColDef}
+          enableFilter={true}
           >
         </AgGridReact>
       </div>
