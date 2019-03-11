@@ -17,6 +17,11 @@
 // Note: Strictly speaking, JSON does not allow comments, but GSON and Elasticsearch appear to be tolerant.
 // This file directly corresponds to the structure of co.cask.cdap.metadata.elastic.MetadataDocument.
 {
+  "_meta": {
+    "cdap_version": "CDAP_VERSION",
+    "metadata_version": "METADATA_VERSION",
+    "mapping_checksum": "MAPPING_CHECKSUM"
+  },
   "properties": {
     "entity": {
       "enabled": "false"
