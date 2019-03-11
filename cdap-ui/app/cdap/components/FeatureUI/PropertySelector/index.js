@@ -99,11 +99,11 @@ class PropertySelector extends React.Component {
           detectedPropertyMap[column.columnType][schema.dataSchemaName] = [];
         }
         detectedPropertyMap[column.columnType][schema.dataSchemaName].push(column.columnName);
-      })
+      });
     });
     console.log("Detected properties -> ", detectedPropertyMap);
     for (let propertyName in detectedPropertyMap) {
-      let property = find(this.props.availableProperties, { paramName: propertyName + "Columns" })
+      let property = find(this.props.availableProperties, { paramName: propertyName + "Columns" });
       if (property) {
         for (let schemaName in detectedPropertyMap[propertyName]) {
           let schema = find(this.state.schemas, { schemaName: schemaName });

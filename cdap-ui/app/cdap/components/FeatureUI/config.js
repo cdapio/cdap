@@ -1,3 +1,5 @@
+import { getEpochDateString } from "./GridFormatters";
+
 /*
  * Copyright © 2018 Cask Data, Inc.
  *
@@ -22,7 +24,7 @@ export const GET_PIPE_LINE_CORRELATED_DATA = "/v3/namespaces/default/apps/Featur
 export const FEATURE_GENERATED_PIPELINE = "Feature Generation Pipeline";
 export const FEATURE_SELECTED_PIPELINE = "Selected Feature Pipeline";
 
-export const PIPELINE_TYPES = ["All", FEATURE_GENERATED_PIPELINE , FEATURE_SELECTED_PIPELINE];
+export const PIPELINE_TYPES = ["All", FEATURE_GENERATED_PIPELINE, FEATURE_SELECTED_PIPELINE];
 
 export const GET_PIPELINE = "GET_PIPELINE";
 export const GET_SCHEMA = "GET_SCHEMA";
@@ -67,3 +69,55 @@ export const RUNNING = "Running";
 
 export const FEATURE_GENERATED = "Feature Generated";
 export const FEATURE_SELECTED = "Feature Selected";
+export const AFEGridColumns = [
+  {
+    headerName: "Pipeline",
+    field: "pipelineName",
+    tooltipField: 'pipelineName',
+    cellRenderer: 'feLinkRenderer',
+    width: 200
+  },
+  {
+    headerName: "Status",
+    field: "status",
+    tooltipField: 'status',
+    cellRenderer: 'statusRenderer'
+  },
+  {
+    headerName: "Last Run Time",
+    field: "lastStartEpochTime",
+    tooltipField: 'lastStartEpochTime',
+    valueFormatter: function(params) { return getEpochDateString(params); },
+    width: 200
+  },
+  {
+    headerName: "Type",
+    field: "pipelineType",
+    tooltipField: 'pipelineType',
+    width: 200
+  },
+  {
+    headerName: "",
+    field: "pipelineName",
+    width: 200,
+    cellRenderer: 'fsLinkRenderer'
+  },
+  {
+    headerName: "",
+    field: "pipelineName",
+    width: 40,
+    cellRenderer: 'cloneRenderer'
+  },
+  {
+    headerName: "",
+    field: "pipelineName",
+    width: 40,
+    cellRenderer: 'editRenderer'
+  },
+  {
+    headerName: "",
+    field: "pipelineName",
+    width: 40,
+    cellRenderer: 'deleteRenderer'
+  }
+];

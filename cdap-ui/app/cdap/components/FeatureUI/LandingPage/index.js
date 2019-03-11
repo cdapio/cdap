@@ -267,7 +267,7 @@ class LandingPage extends React.Component {
           }
             break;
           default:
-            {
+            if (!isEmpty(pipelineData[property])) {
               let propertyData = find(this.props.availableProperties, { paramName: property });
               if (!isNil(propertyData)) {
                 if (isEmpty(propertyData.subParams)) {
@@ -275,7 +275,8 @@ class LandingPage extends React.Component {
                     let schemaMap = new Map();
                     pipelineData[property].forEach(propData => {
                       if (schemaMap.has(propData.table)) {
-                        let columns = schemaMap.get(propData.table).push({ columnName: propData.column });
+                        let columns = schemaMap.get(propData.table);
+                        columns.push({ columnName: propData.column });
                         schemaMap.set(propData.table, columns);
                       } else {
                         schemaMap.set(propData.table, [{ columnName: propData.column }]);
@@ -291,30 +292,29 @@ class LandingPage extends React.Component {
                     updatePropertyMapWithObj(propertyMap, updatedObj);
                   }
                 } else {
-                  if (!isEmpty(pipelineData[property])) {
-                    let dataObj = pipelineData[property][0];
-                    for (let subPropertyName in dataObj) {
-                      let subProperty = find(propertyData.subParams, { paramName: subPropertyName });
-                      if (!isNil(subProperty)) {
-                        if (subProperty.isCollection) {
-                          let schemaMap = new Map();
-                          dataObj[subPropertyName].forEach(propData => {
-                            if (schemaMap.has(propData.table)) {
-                              let columns = schemaMap.get(propData.table).push({ columnName: propData.column });
-                              schemaMap.set(propData.table, columns);
-                            } else {
-                              schemaMap.set(propData.table, [{ columnName: propData.column }]);
-                            }
-                          });
-                          schemaMap.forEach((value, key) => {
-                            let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, key, value);
-                            updatePropertyMapWithObj(propertyMap, updatedObj);
-                          });
-                        } else {
-                          let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, dataObj[subPropertyName].table,
-                            [{ columnName: dataObj[subPropertyName].column }]);
+                  let dataObj = pipelineData[property][0];
+                  for (let subPropertyName in dataObj) {
+                    let subProperty = find(propertyData.subParams, { paramName: subPropertyName });
+                    if (!isNil(subProperty)) {
+                      if (subProperty.isCollection) {
+                        let schemaMap = new Map();
+                        dataObj[subPropertyName].forEach(propData => {
+                          if (schemaMap.has(propData.table)) {
+                            let columns = schemaMap.get(propData.table);
+                            columns.push({ columnName: propData.column });
+                            schemaMap.set(propData.table, columns);
+                          } else {
+                            schemaMap.set(propData.table, [{ columnName: propData.column }]);
+                          }
+                        });
+                        schemaMap.forEach((value, key) => {
+                          let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, key, value);
                           updatePropertyMapWithObj(propertyMap, updatedObj);
-                        }
+                        });
+                      } else {
+                        let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, dataObj[subPropertyName].table,
+                          [{ columnName: dataObj[subPropertyName].column }]);
+                        updatePropertyMapWithObj(propertyMap, updatedObj);
                       }
                     }
                   }

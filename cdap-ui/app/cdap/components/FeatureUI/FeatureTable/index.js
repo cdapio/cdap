@@ -16,60 +16,100 @@
 
 /* eslint react/prop-types: 0 */
 import React from 'react';
-import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE } from '../config';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/dist/styles/ag-grid.css';
+import 'ag-grid-community/dist/styles/ag-theme-balham.css';
+import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE, AFEGridColumns } from '../config';
+import StatusRenderer from '../GridRenderers/StatusRenderer';
+import DeleteRenderer from '../GridRenderers/DeleteRenderer';
+import EditRenderer from '../GridRenderers/EditRenderer';
+import CloneRenderer from '../GridRenderers/CloneRenderer';
+import FELinkRenderer from '../GridRenderers/FELinkRenderer';
+import FSLinkRenderer from '../GridRenderers/FSLinkRenderer';
+
 require('./FeatureTable.scss');
 
 class FeatureTable extends React.Component {
-  render() {
-    let data = this.props.data;
-    return (
-      <table className='feature-table'>
-        <thead>
-          <tr>
-            <th>Pipeline Name</th>
-            <th>Status</th>
-            <th>Last Run Time</th>
-            <th>Type</th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(item => {
-            return <tr key={item.pipelineName}>
-              <td>
-                <div className="view-link" onClick={this.onView.bind(this, item)}>
-                  {item.pipelineName}</div>
-              </td>
-              <td>
-                <div>
-                  <span className={this.getStatusClass(item)}></span>
-                  {item.status}
-                </div>
-              </td>
-              <td>{this.getEpochDateString(item.lastStartEpochTime)}</td>
-              <td >
-                {item.pipelineType}
-              </td>
-              <td className="center-align">
-                {
-                  this.isFeatureAvailable(item) &&
-                  <button className="feature-button-invert" onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
-                }
+  gridColums;
+  constructor(props) {
+    super(props);
+    this.gridColums = AFEGridColumns;
+    this.state = {
+      columnDefs: AFEGridColumns,
+      frameworkComponents:  {
+        'statusRenderer': StatusRenderer,
+        'deleteRenderer': DeleteRenderer,
+        'editRenderer': EditRenderer,
+        'cloneRenderer': CloneRenderer,
+        'fsLinkRenderer': FSLinkRenderer,
+        'feLinkRenderer': FELinkRenderer
+      },
+      context: {componentParent: this}
+    }
+  }
 
-              </td>
-              <td className="center-align">
-                <span className="fa fa-edit right-padding clickable"
-                  onClick={this.onEdit.bind(this, item)}></span>
-                <span className="fa fa-clone right-padding clickable"
-                  onClick={this.onClone.bind(this, item)}></span>
-                <span className="fa fa-trash text-danger"
-                  onClick={this.onDelete.bind(this, item)}></span>
-              </td>
-            </tr>;
-          })}
-        </tbody>
-      </table>
+
+  render() {
+    return (
+      <div
+        className="ag-theme-balham grid-container">
+        <AgGridReact
+          columnDefs = {this.state.columnDefs}
+          context={this.state.context}
+          frameworkComponents = {this.state.frameworkComponents}
+          rowSelection="single"
+          rowData={this.props.data}
+          >
+        </AgGridReact>
+      </div>
+
+      // <table className='feature-table'>
+      //   <thead>
+      //     <tr>
+      //       <th>Pipeline Name</th>
+      //       <th>Status</th>
+      //       <th>Last Run Time</th>
+      //       <th>Type</th>
+      //       <th></th>
+      //       <th></th>
+      //     </tr>
+      //   </thead>
+      //   <tbody>
+      //     {data.map(item => {
+      //       return <tr key={item.pipelineName}>
+      //         <td>
+      //           <div className="view-link" onClick={this.onView.bind(this, item)}>
+      //             {item.pipelineName}</div>
+      //         </td>
+      //         <td>
+      //           <div>
+      //             <span className={this.getStatusClass(item)}></span>
+      //             {item.status}
+      //           </div>
+      //         </td>
+      //         <td>{this.getEpochDateString(item.lastStartEpochTime)}</td>
+      //         <td >
+      //           {item.pipelineType}
+      //         </td>
+      //         <td className="center-align">
+      //           {
+      //             this.isFeatureAvailable(item) &&
+      //             <button className="feature-button-invert" onClick={this.onFeatureSelection.bind(this, item)}>Feature Selection</button>
+      //           }
+
+      //         </td>
+      //         <td className="center-align">
+      //           <span className="fa fa-edit right-padding clickable"
+      //             onClick={this.onEdit.bind(this, item)}></span>
+      //           <span className="fa fa-clone right-padding clickable"
+      //             onClick={this.onClone.bind(this, item)}></span>
+      //           <span className="fa fa-trash text-danger"
+      //             onClick={this.onDelete.bind(this, item)}></span>
+      //         </td>
+      //       </tr>;
+      //     })}
+      //   </tbody>
+      // </table>
     );
   }
   getEpochDateString(epoch) {
@@ -100,7 +140,7 @@ class FeatureTable extends React.Component {
   }
 
   onDelete(item) {
-    if (this.props.onEdit) {
+    if (this.props.onDelete) {
       this.props.onDelete(item);
     }
   }
