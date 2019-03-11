@@ -16,10 +16,15 @@
 
 package co.cask.cdap.spi.data.sql;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.transaction.TransactionException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TxRunnable;
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +40,25 @@ public class SqlTransactionRunner implements TransactionRunner {
 
   private final StructuredTableAdmin admin;
   private final DataSource dataSource;
+  private final MetricsCollectionService metricsCollectionService;
+  private final boolean emitTimeMetrics;
 
-  public SqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource) {
+  @VisibleForTesting
+  public SqlTransactionRunner(StructuredTableAdmin admin, DataSource dataSource) {
+    this(admin, dataSource, new NoOpMetricsCollectionService(), false);
+  }
+
+  public SqlTransactionRunner(StructuredTableAdmin tableAdmin, DataSource dataSource,
+                              MetricsCollectionService metricsCollectionService, boolean emitTimeMetrics) {
     this.admin = tableAdmin;
     this.dataSource = dataSource;
+    this.metricsCollectionService = metricsCollectionService;
+    this.emitTimeMetrics = emitTimeMetrics;
   }
 
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
+
     Connection connection;
     try {
       connection = dataSource.getConnection();
@@ -51,9 +67,11 @@ public class SqlTransactionRunner implements TransactionRunner {
     }
 
     try {
+      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
+      metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_COUNT, 1L);
       connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
       connection.setAutoCommit(false);
-      runnable.run(new SqlStructuredTableContext(admin, connection));
+      runnable.run(new SqlStructuredTableContext(admin, connection, metricsCollector, emitTimeMetrics));
       connection.commit();
     } catch (Exception e) {
       Throwable cause = e.getCause();

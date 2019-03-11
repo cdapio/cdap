@@ -27,7 +27,7 @@ import co.cask.cdap.spi.data.nosql.NoSqlTransactionRunner;
 import co.cask.cdap.spi.data.sql.PostgresSqlStructuredTableAdmin;
 import co.cask.cdap.spi.data.sql.RetryingSqlTransactionRunner;
 import co.cask.cdap.spi.data.sql.SqlStructuredTableRegistry;
-import co.cask.cdap.spi.data.sql.jdbc.DataSourceInstantiator;
+import co.cask.cdap.spi.data.sql.jdbc.DataSourceProvider;
 import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.inject.Inject;
@@ -35,7 +35,8 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import org.apache.tephra.TransactionSystemClient;
+
+import javax.sql.DataSource;
 
 /**
  * Module to provide the binding for the new storage spi
@@ -47,12 +48,13 @@ public class StorageModule extends PrivateModule {
     bind(TransactionRunner.class).toProvider(TransactionRunnerProvider.class).in(Scopes.SINGLETON);
     bind(StructuredTableAdmin.class).toProvider(StructuredTableAdminProvider.class).in(Scopes.SINGLETON);
     bind(StructuredTableRegistry.class).toProvider(StructuredTableRegistryProvider.class).in(Scopes.SINGLETON);
-    bind(DataSourceInstantiator.class).in(Scopes.SINGLETON);
+    bind(DataSourceProvider.class).in(Scopes.SINGLETON);
+    bind(DataSource.class).toProvider(DataSourceProvider.class).in(Scopes.SINGLETON);
 
     expose(TransactionRunner.class);
     expose(StructuredTableAdmin.class);
     expose(StructuredTableRegistry.class);
-    expose(DataSourceInstantiator.class);
+    expose(DataSource.class);
   }
 
   /**
@@ -79,13 +81,11 @@ public class StorageModule extends PrivateModule {
 
       storageImpl = storageImpl.toLowerCase();
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_NOSQL)) {
-        return new NoSqlTransactionRunner(injector.getInstance(NoSqlStructuredTableAdmin.class),
-                                          injector.getInstance(TransactionSystemClient.class));
+        return injector.getInstance(NoSqlTransactionRunner.class);
       }
 
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        return new RetryingSqlTransactionRunner(injector.getInstance(StructuredTableAdmin.class),
-                                                injector.getInstance(DataSourceInstantiator.class).get());
+        return injector.getInstance(RetryingSqlTransactionRunner.class);
       }
 
       throw new UnsupportedOperationException(
@@ -121,8 +121,7 @@ public class StorageModule extends PrivateModule {
         return injector.getInstance(NoSqlStructuredTableAdmin.class);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        return new PostgresSqlStructuredTableAdmin(injector.getInstance(StructuredTableRegistry.class),
-                                                   injector.getInstance(DataSourceInstantiator.class).get());
+        return injector.getInstance(PostgresSqlStructuredTableAdmin.class);
       }
       throw new UnsupportedOperationException(
         String.format("%s is not a supported storage implementation, the supported implementations are %s and %s",
@@ -157,8 +156,7 @@ public class StorageModule extends PrivateModule {
         return new CachedStructuredTableRegistry(registry);
       }
       if (storageImpl.equals(Constants.Dataset.DATA_STORAGE_SQL)) {
-        SqlStructuredTableRegistry registry =
-          new SqlStructuredTableRegistry(injector.getInstance(DataSourceInstantiator.class).get());
+        SqlStructuredTableRegistry registry = injector.getInstance(SqlStructuredTableRegistry.class);
         return new CachedStructuredTableRegistry(registry);
       }
       throw new UnsupportedOperationException(

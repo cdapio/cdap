@@ -17,12 +17,14 @@
 package co.cask.cdap.spi.data.sql.jdbc;
 
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import org.apache.commons.dbcp2.ConnectionFactory;
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
@@ -38,24 +40,26 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.Supplier;
 import javax.sql.DataSource;
 
 /**
  * Class to instantiate the {@link DataSource} for the sql related structured table.
  */
-public class DataSourceInstantiator implements Supplier<DataSource> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSourceInstantiator.class);
+public class DataSourceProvider implements Provider<DataSource> {
+  private static final Logger LOG = LoggerFactory.getLogger(DataSourceProvider.class);
 
   private final CConfiguration cConf;
   private final SConfiguration sConf;
+  private final MetricsCollectionService metricsCollectionService;
 
   private volatile DataSource dataSource;
 
   @Inject
-  public DataSourceInstantiator(CConfiguration cConf, SConfiguration sConf) {
+  public DataSourceProvider(CConfiguration cConf, SConfiguration sConf,
+                            MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.sConf = sConf;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -95,8 +99,9 @@ public class DataSourceInstantiator implements Supplier<DataSource> {
     GenericObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory);
     poolableConnectionFactory.setPool(connectionPool);
     connectionPool.setMaxTotal(cConf.getInt(Constants.Dataset.DATA_STORAGE_SQL_CONNECTION_SIZE));
-    dataSource = new PoolingDataSource<>(connectionPool);
-    return dataSource;
+    PoolingDataSource<PoolableConnection> dataSource = new PoolingDataSource<>(connectionPool);
+    this.dataSource = new MetricsDataSource(dataSource, metricsCollectionService, connectionPool);
+    return this.dataSource;
   }
 
   private Properties retrieveJDBCConnectionProperties() {

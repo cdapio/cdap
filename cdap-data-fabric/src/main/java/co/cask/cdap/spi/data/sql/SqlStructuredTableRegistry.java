@@ -17,6 +17,8 @@
 package co.cask.cdap.spi.data.sql;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.spi.data.StructuredRow;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
@@ -190,6 +192,8 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
           throw exception;
         }
       };
-    return new SqlTransactionRunner(specAdmin, dataSource);
+    // The metrics collection service might not get started at this moment,
+    // so inject a NoopMetricsCollectionService.
+    return new SqlTransactionRunner(specAdmin, dataSource, new NoOpMetricsCollectionService(), false);
   }
 }

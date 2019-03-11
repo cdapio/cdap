@@ -19,6 +19,7 @@ package co.cask.cdap.spi.data.sql.jdbc;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.test.AppJarHelper;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.junit.Assert;
@@ -38,7 +39,7 @@ import java.util.Properties;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
 
-public class DataSourceInstantiatorTest {
+public class DataSourceProviderTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
@@ -57,7 +58,7 @@ public class DataSourceInstantiatorTest {
 
     SConfiguration sConf = SConfiguration.create();
 
-    DataSourceInstantiator instantiator = new DataSourceInstantiator(cConf, sConf);
+    DataSourceProvider instantiator = new DataSourceProvider(cConf, sConf, new NoOpMetricsCollectionService());
     DataSource dataSource = instantiator.get();
     Assert.assertNotNull(dataSource);
     Enumeration<Driver> drivers = DriverManager.getDrivers();

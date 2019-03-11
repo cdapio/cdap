@@ -16,11 +16,13 @@
 
 package co.cask.cdap.spi.data.sql;
 
+import co.cask.cdap.api.metrics.MetricsCollector;
 import co.cask.cdap.spi.data.StructuredTable;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.StructuredTableInstantiationException;
 import co.cask.cdap.spi.data.TableNotFoundException;
+import co.cask.cdap.spi.data.common.MetricStructuredTable;
 import co.cask.cdap.spi.data.table.StructuredTableId;
 import co.cask.cdap.spi.data.table.StructuredTableSchema;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
@@ -33,10 +35,15 @@ import java.sql.Connection;
 public class SqlStructuredTableContext implements StructuredTableContext {
   private final StructuredTableAdmin admin;
   private final Connection connection;
+  private final MetricsCollector metricsCollector;
+  private final boolean emitTimeMetrics;
 
-  public SqlStructuredTableContext(StructuredTableAdmin structuredTableAdmin, Connection connection) {
+  public SqlStructuredTableContext(StructuredTableAdmin structuredTableAdmin, Connection connection,
+                                   MetricsCollector metricsCollector, boolean emitTimeMetrics) {
     this.admin = structuredTableAdmin;
     this.connection = connection;
+    this.metricsCollector = metricsCollector;
+    this.emitTimeMetrics = emitTimeMetrics;
   }
 
   @Override
@@ -46,6 +53,8 @@ public class SqlStructuredTableContext implements StructuredTableContext {
     if (specification == null) {
       throw new TableNotFoundException(tableId);
     }
-    return new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification));
+    return new MetricStructuredTable(
+      tableId, new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification)),
+      metricsCollector, emitTimeMetrics);
   }
 }
