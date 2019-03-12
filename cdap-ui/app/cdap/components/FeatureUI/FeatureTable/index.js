@@ -80,6 +80,7 @@ class FeatureTable extends React.Component {
       <div
         className="ag-theme-balham grid-container">
         <AgGridReact
+          suppressMenuHide = {true}
           columnDefs={this.state.columnDefs}
           context={this.state.context}
           frameworkComponents={this.state.frameworkComponents}

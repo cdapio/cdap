@@ -65,6 +65,7 @@ class GridContainer extends Component {
       <div
         className="ag-theme-balham grid-container"    >
         <AgGridReact
+          suppressMenuHide = {true}
           columnDefs={this.props.gridColums}
           defaultColDef={this.defaultColDef}
           enableFilter={true}
