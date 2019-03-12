@@ -58,13 +58,18 @@ public class DataprocProvisioner implements Provisioner {
     "Google Cloud Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
       "Hadoop clusters in a simpler, more cost-efficient way.");
   private static final String CLUSTER_PREFIX = "cdap-";
+
+  // Keys for looking up system properties
+  private static final String LABELS_PROPERTY = "labels";
+
   // keys and values cannot be longer than 63 characters
   // keys and values can only contain lowercase letters, numbers, underscores, and dashes
   // keys must start with a lowercase letter
   // keys cannot be empty
   private static final Pattern LABEL_KEY_PATTERN = Pattern.compile("^[a-z][a-z0-9_-]{0,62}$");
   private static final Pattern LABEL_VAL_PATTERN = Pattern.compile("^[a-z0-9_-]{0,63}$");
-  private Map<String, String> systemLabels;
+
+  private ProvisionerSystemContext systemContext;
 
   @Override
   public ProvisionerSpecification getSpec() {
@@ -73,21 +78,7 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public void initialize(ProvisionerSystemContext systemContext) {
-    Map<String, String> labels = new HashMap<>();
-    // dataproc only allows label values to be lowercase letters, numbers, or dashes
-    String cdapVersion = systemContext.getCDAPVersion().toLowerCase();
-    cdapVersion = cdapVersion.replaceAll("\\.", "_");
-    labels.put("cdap-version", cdapVersion);
-
-    String extraLabelsStr = systemContext.getProperties().get("labels");
-    // labels are expected to be in format:
-    // name1=val1,name2=val2
-    if (extraLabelsStr != null) {
-      labels.putAll(parseLabels(extraLabelsStr));
-    }
-
-    systemLabels = Collections.unmodifiableMap(labels);
-    LOG.info("Dataproc provisioner initialized with system labels {}", systemLabels);
+    this.systemContext = systemContext;
   }
 
   /**
@@ -149,7 +140,21 @@ public class DataprocProvisioner implements Provisioner {
     SSHKeyPair sshKeyPair = context.getSSHContext().generate("cdap");
     context.getSSHContext().setSSHKeyPair(sshKeyPair);
 
-    DataprocConf conf = DataprocConf.fromProvisionerContext(context);
+    // Reload system context properties and get system labels
+    systemContext.reloadProperties();
+    Map<String, String> systemLabels = getSystemLabels(systemContext);
+
+    // Default the project id from system config if missing or if it is auto-detect
+    Map<String, String> contextProperties = new HashMap<>(context.getProperties());
+    String contextProjectId = contextProperties.get(DataprocConf.PROJECT_ID_KEY);
+    if (contextProjectId == null || DataprocConf.AUTO_DETECT.equals(contextProjectId)) {
+      contextProjectId = systemContext.getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, contextProjectId);
+      if (contextProjectId != null) {
+        contextProperties.put(DataprocConf.PROJECT_ID_KEY, contextProjectId);
+      }
+    }
+
+    DataprocConf conf = DataprocConf.create(contextProperties, sshKeyPair.getPublicKey());
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
@@ -170,6 +175,7 @@ public class DataprocProvisioner implements Provisioner {
           break;
       }
 
+      LOG.info("Creating Dataproc cluster {} with system labels {}", clusterName, systemLabels);
       client.createCluster(clusterName, imageVersion, systemLabels);
       return new Cluster(clusterName, ClusterStatus.CREATING, Collections.emptyList(), Collections.emptyMap());
     }
@@ -262,6 +268,23 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public Capabilities getCapabilities() {
     return new Capabilities(Collections.unmodifiableSet(new HashSet<>(Arrays.asList("fileSet", "externalDataset"))));
+  }
+
+  private Map<String, String> getSystemLabels(ProvisionerSystemContext systemContext) {
+    Map<String, String> labels = new HashMap<>();
+    // dataproc only allows label values to be lowercase letters, numbers, or dashes
+    String cdapVersion = systemContext.getCDAPVersion().toLowerCase();
+    cdapVersion = cdapVersion.replaceAll("\\.", "_");
+    labels.put("cdap-version", cdapVersion);
+
+    String extraLabelsStr = systemContext.getProperties().get(LABELS_PROPERTY);
+    // labels are expected to be in format:
+    // name1=val1,name2=val2
+    if (extraLabelsStr != null) {
+      labels.putAll(parseLabels(extraLabelsStr));
+    }
+
+    return Collections.unmodifiableMap(labels);
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,
