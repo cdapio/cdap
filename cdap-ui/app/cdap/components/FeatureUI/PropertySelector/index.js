@@ -71,6 +71,18 @@ class PropertySelector extends React.Component {
   componentDidMount() {
     if (this.isSchemaChanged()) {
       this.detectProperties();
+    } else {
+      this.setDefaultPropertyTobeConigured();
+    }
+
+  }
+
+  setDefaultPropertyTobeConigured(){
+    if (!isEmpty(this.props.availableProperties)) {
+      this.currentProperty = find(this.props.availableProperties, {groupName : 'basic'});
+      if(this.currentProperty){
+        this.onAccordionChange(this.currentProperty.paramName);
+      }
     }
   }
 
@@ -83,13 +95,15 @@ class PropertySelector extends React.Component {
       result => {
         this.setDetectedProperties(result);
         this.props.setDetectedProperties(result);
+        setTimeout(() => {
+          this.setDefaultPropertyTobeConigured();
+        });
       }
     );
   }
 
   setDetectedProperties(result) {
     let detectedPropertyMap = {};
-    let updatePropMap = cloneDeep(this.props.propertyMap);
     result.forEach(schema => {
       schema.columnInfo.forEach(column => {
         if (!detectedPropertyMap.hasOwnProperty(column.columnType)) {
@@ -105,6 +119,7 @@ class PropertySelector extends React.Component {
     for (let propertyName in detectedPropertyMap) {
       let property = find(this.props.availableProperties, { paramName: propertyName });
       if (property) {
+        let updatePropMap = cloneDeep(this.props.propertyMap);
         for (let schemaName in detectedPropertyMap[propertyName]) {
           let schema = find(this.state.schemas, { schemaName: schemaName });
           if (schema) {
@@ -112,19 +127,21 @@ class PropertySelector extends React.Component {
               if (detectedPropertyMap[propertyName][schemaName].indexOf(item.columnName) >= 0) {
                 return true;
               } else {
-                return item.checked;
+                return false; //to be handled later
               }
             }).map(column => {
               column.checked = true;
               return column;
             });
+
             let updateObj = getPropertyUpdateObj(property, "none", schema.schemaName, schemaColumns);
             updatePropertyMapWithObj(updatePropMap, updateObj);
+            this.props.updatePropertyMap(updatePropMap);
           }
         }
       }
     }
-    this.props.updatePropertyMap(updatePropMap);
+
   }
 
   handleColumnChange(schema, checkList) {
@@ -360,7 +377,7 @@ class PropertySelector extends React.Component {
               <div className="config-item-container">
                 <Accordion onChange={this.onAccordionChange.bind(this)}>
                   {
-                    Array.from(advancePropMap.keys()).map((property, index) => {
+                    Array.from(advancePropMap.keys()).map((property) => {
                       let isMandatory = false;
                       let subParams = advancePropMap.get(property);
                       let description;
