@@ -29,6 +29,7 @@ import CardActionFeedback from 'components/CardActionFeedback';
 import getPipelineConfig from 'components/DataPrep/TopPanel/PipelineConfigHelper';
 import isString from 'lodash/isString';
 import If from 'components/If';
+import { Theme } from 'services/ThemeHelper';
 
 const mapErrorToMessage = (message) => {
   if (message.indexOf('invalid field name') !== -1) {
@@ -171,6 +172,8 @@ export default class AddToHydratorModal extends Component {
   }
 
   render() {
+    const disableRealtime = Theme.showRealtimePipeline === false;
+
     let content;
 
     if (this.state.loading) {
@@ -190,6 +193,8 @@ export default class AddToHydratorModal extends Component {
           type: T.translate(`${PREFIX}.${type}`),
         });
       }
+
+      const realtimeUrl = disableRealtime ? null : this.state.realtimeUrl;
 
       content = (
         <div>
@@ -214,12 +219,12 @@ export default class AddToHydratorModal extends Component {
               <span>{T.translate(`${PREFIX}.addToPipelineModal.batchPipelineBtn`)}</span>
             </a>
             <a
-              href={this.state.realtimeUrl}
+              href={realtimeUrl}
               className={classnames('btn btn-secondary', {
-                inactive: !this.state.realtimeUrl || this.state.error,
+                inactive: !this.state.realtimeUrl || this.state.error || disableRealtime,
               })}
               onClick={(() => {
-                if (!this.state.realtimeUrl) {
+                if (!this.state.realtimeUrl || disableRealtime) {
                   return;
                 }
                 window.localStorage.setItem(

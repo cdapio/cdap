@@ -30,6 +30,7 @@ import {
   suspendSchedule,
 } from 'components/PipelineConfigurations/Store/ActionCreator';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -124,7 +125,7 @@ export default class PipelineScheduleButton extends Component {
   }
 
   render() {
-    if (!this.props.isBatch) {
+    if (!this.props.isBatch || Theme.showSchedules === false) {
       return null;
     }
 

@@ -24,6 +24,8 @@ class TrackerEntityController{
       name: 'Dataset',
       icon: 'icon-datasets'
     };
+
+    this.showLineage = window.CaskCommon.ThemeHelper.Theme.showLineage;
   }
 
   goBack() {

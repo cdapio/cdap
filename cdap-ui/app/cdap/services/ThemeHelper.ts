@@ -78,6 +78,10 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     hub?: boolean;
     'ingest-data'?: boolean;
     'add-namespace'?: boolean;
+    schedules?: boolean;
+    triggers?: boolean;
+    lineage?: boolean;
+    'realtime-pipeline'?: boolean;
   };
 }
 
@@ -165,8 +169,12 @@ interface IThemeObj {
   showHub?: boolean;
   showIngestData?: boolean;
   showAddNamespace?: boolean;
-  featureNames?: IFeatureNames;
+  showSchedules?: boolean;
+  showTriggers?: boolean;
+  showLineage?: boolean;
+  showRealtimePipeline?: boolean;
   showAboutProductModal?: boolean;
+  featureNames?: IFeatureNames;
 }
 
 function getTheme(): IThemeObj {
@@ -317,6 +325,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showIngestData: true,
       showAddNamespace: true,
       showAboutProductModal: true,
+      showSchedules: true,
+      showTriggers: true,
+      showLineage: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -354,9 +365,20 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     if ('add-namespace' in featuresJson && isBoolean(featuresJson['add-namespace'])) {
       features.showAddNamespace = featuresJson['add-namespace'];
     }
-
     if ('about-product' in featuresJson && isBoolean(featuresJson['about-product'])) {
       features.showAboutProductModal = featuresJson['about-product'];
+    }
+    if ('schedules' in featuresJson && isBoolean(featuresJson.schedules)) {
+      features.showSchedules = featuresJson.schedules;
+    }
+    if ('triggers' in featuresJson && isBoolean(featuresJson.triggers)) {
+      features.showTriggers = featuresJson.triggers;
+    }
+    if ('lineage' in featuresJson && isBoolean(featuresJson.lineage)) {
+      features.showLineage = featuresJson.lineage;
+    }
+    if ('realtime-pipeline' in featuresJson && isBoolean(featuresJson['realtime-pipeline'])) {
+      features.showRealtimePipeline = featuresJson['realtime-pipeline'];
     }
     return features;
   }

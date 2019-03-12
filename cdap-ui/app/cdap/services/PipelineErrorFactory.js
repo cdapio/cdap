@@ -16,6 +16,7 @@
 
 import { objectQuery } from 'services/helpers';
 import { GLOBALS } from 'services/global-constants';
+import { Theme } from './ThemeHelper';
 
 let countUnFilledRequiredFields = (node) => {
   var requiredFieldCount = 0;
@@ -239,12 +240,18 @@ let allConnectionsValid = (nodes, connections, cb) => {
 };
 
 let hasValidArtifact = (importConfig) => {
+  const uiSupportedArtifacts = [GLOBALS.etlDataPipeline];
+
+  if (Theme.showRealtimePipeline !== false) {
+    uiSupportedArtifacts.push(GLOBALS.etlDataStreams);
+  }
+
   return (
     importConfig.artifact &&
     importConfig.artifact.name.length &&
     importConfig.artifact.version.length &&
     importConfig.artifact.scope.length
-  );
+  ) && uiSupportedArtifacts.indexOf(importConfig.artifact.name) !== -1;
 };
 let hasValidConfig = (importConfig) => {
   return importConfig.config;

@@ -15,10 +15,17 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
+  .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE, GLOBALS) {
     const theme = window.CaskCommon.ThemeHelper.Theme;
     const productName = theme.productName;
     const featureName = theme.featureNames.pipelines;
+
+    const uiSupportedArtifacts = [GLOBALS.etlDataPipeline];
+
+    if (theme.showRealtimePipeline !== false) {
+      uiSupportedArtifacts.push(GLOBALS.etlDataStreams);
+    }
+
     $stateProvider
       .state('home', {
         url: '/',
@@ -145,9 +152,8 @@ angular.module(PKG.name + '.feature.hydrator')
               }
               return defer.promise;
             },
-            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS, $rootScope) {
+            rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, $rootScope) {
               var defer = $q.defer();
-              let uiSupportedArtifacts = [GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
               let isArtifactValid = (backendArtifacts, artifact) => {
                 return backendArtifacts.filter( a =>
                   (a.name === artifact && a.version === $rootScope.cdapVersion)
@@ -213,7 +219,7 @@ angular.module(PKG.name + '.feature.hydrator')
             );
               return defer.promise;
             },
-            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, GLOBALS, $rootScope) {
+            rArtifacts: function(myPipelineApi, $stateParams, $q, HydratorPlusPlusOrderingFactory, $rootScope) {
               var defer = $q.defer();
               myPipelineApi.fetchArtifacts({
                 namespace: $stateParams.namespace
@@ -222,7 +228,6 @@ angular.module(PKG.name + '.feature.hydrator')
                 if (!res.length) {
                   return;
                 } else {
-                  let uiSupportedArtifacts = [GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
                   let filteredRes = res
                     .filter( artifact => artifact.version === $rootScope.cdapVersion)
                     .filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );

@@ -42,7 +42,7 @@
       <li ng-class="{'active': $state.is('tracker.detail.entity.metadata')}">
         <a ui-sref="tracker.detail.entity.metadata">Summary</a>
       </li>
-      <li ng-class="{'active': $state.is('tracker.detail.entity.lineage')}">
+      <li ng-class="{'active': $state.is('tracker.detail.entity.lineage')}" ng-if="EntityController.showLineage !== false">
         <a ui-sref="tracker.detail.entity.lineage">Lineage</a>
       </li>
     </ul>
