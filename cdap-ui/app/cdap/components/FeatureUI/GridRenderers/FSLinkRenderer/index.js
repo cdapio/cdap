@@ -16,6 +16,7 @@
 
 /* eslint react/prop-types: 0 */
 import React from 'react';
+import { FEATURE_GENERATED_PIPELINE } from 'components/FeatureUI/config';
 
 class FSLinkRenderer extends React.Component {
   constructor(props) {
@@ -28,8 +29,17 @@ class FSLinkRenderer extends React.Component {
     }
   }
   render() {
-    return  <div className="view-link" onClick={this.invokeParentMethod.bind(this, this.props.data)}>
-       Feature Selection</div>;
+    return this.showLink(this.props.data) && <div className="view-link" onClick={this.invokeParentMethod.bind(this, this.props.data)}>
+      Feature Selection</div>;
+  }
+
+  showLink(item) {
+    if (item) {
+      if (item.pipelineType == FEATURE_GENERATED_PIPELINE) {
+        return !isNaN(item.lastStartEpochTime);
+      }
+    }
+    return false;
   }
 }
 export default FSLinkRenderer;
