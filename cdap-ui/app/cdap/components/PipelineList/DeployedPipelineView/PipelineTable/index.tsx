@@ -20,29 +20,61 @@ import { connect } from 'react-redux';
 import T from 'i18n-react';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
+import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 
 import './PipelineTable.scss';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import EmptyMessageContainer from 'components/EmptyMessageContainer';
 
 interface IProps {
   pipelines: IPipeline[];
   pipelinesLoading: boolean;
+  search: string;
+  onClear: () => void;
 }
 
 const PREFIX = 'features.PipelineList';
 
-const PipelineTableView: React.SFC<IProps> = ({ pipelines, pipelinesLoading }) => {
+const PipelineTableView: React.SFC<IProps> = ({ pipelines, pipelinesLoading, search, onClear }) => {
   function renderBody() {
     if (pipelinesLoading) {
       return <LoadingSVGCentered />;
     }
+
     if (pipelines.length === 0) {
       return <EmptyList type={VIEW_TYPES.deployed} />;
     }
 
+    let filteredList = pipelines;
+    if (search.length > 0) {
+      filteredList = filteredList.filter((pipeline) => {
+        const name = pipeline.name.toLowerCase();
+        const searchFilter = search.toLowerCase();
+
+        return name.indexOf(searchFilter) !== -1;
+      });
+    }
+
+    if (filteredList.length === 0) {
+      return (
+        <EmptyMessageContainer
+          title={T.translate(`${PREFIX}.EmptyList.EmptySearch.heading`, { search }).toString()}
+        >
+          <ul>
+            <li>
+              <span className="link-text" onClick={onClear}>
+                {T.translate(`${PREFIX}.EmptyList.EmptySearch.clear`)}
+              </span>
+              <span>{T.translate(`${PREFIX}.EmptyList.EmptySearch.search`)}</span>
+            </li>
+          </ul>
+        </EmptyMessageContainer>
+      );
+    }
+
     return (
       <div className="grid-body">
-        {pipelines.map((pipeline) => {
+        {filteredList.map((pipeline) => {
           return <PipelineTableRow key={pipeline.name} pipeline={pipeline} />;
         })}
       </div>
@@ -75,9 +107,26 @@ const mapStateToProps = (state) => {
   return {
     pipelines: state.deployed.pipelines,
     pipelinesLoading: state.deployed.pipelinesLoading,
+    search: state.deployed.search,
   };
 };
 
-const PipelineTable = connect(mapStateToProps)(PipelineTableView);
+const mapDispatch = (dispatch) => {
+  return {
+    onClear: () => {
+      dispatch({
+        type: Actions.setSearch,
+        payload: {
+          search: '',
+        },
+      });
+    },
+  };
+};
+
+const PipelineTable = connect(
+  mapStateToProps,
+  mapDispatch
+)(PipelineTableView);
 
 export default PipelineTable;

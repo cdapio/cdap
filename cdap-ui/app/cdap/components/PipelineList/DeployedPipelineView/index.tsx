@@ -15,14 +15,13 @@
  */
 
 import * as React from 'react';
-import IconSVG from 'components/IconSVG';
 import PipelineTable from 'components/PipelineList/DeployedPipelineView/PipelineTable';
 import {
   fetchPipelineList,
   reset,
 } from 'components/PipelineList/DeployedPipelineView/store/ActionCreator';
 import PipelineCount from 'components/PipelineList/DeployedPipelineView/PipelineCount';
-import T from 'i18n-react';
+import SearchBox from 'components/PipelineList/DeployedPipelineView/SearchBox';
 import { Provider } from 'react-redux';
 import Store from 'components/PipelineList/DeployedPipelineView/store';
 
@@ -45,23 +44,7 @@ export default class DeployedPipelineView extends React.PureComponent {
         <div className="pipeline-deployed-view pipeline-list-content">
           <div className="deployed-header">
             <PipelineCount />
-
-            <div className="search-box">
-              <div className="input-group">
-                <div className="input-group-prepend">
-                  <div className="input-group-text">
-                    <IconSVG name="icon-search" />
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder={T.translate(
-                    `${PREFIX}.DeployedPipelineView.searchPlaceholder`
-                  ).toString()}
-                />
-              </div>
-            </div>
+            <SearchBox />
           </div>
 
           <PipelineTable />
