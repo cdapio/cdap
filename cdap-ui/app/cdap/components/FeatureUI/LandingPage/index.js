@@ -46,7 +46,6 @@ import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
 import { Theme } from 'services/ThemeHelper';
 import StatusBar from "./StatusBar";
-import { InputGroup, Input } from 'reactstrap';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { SUCCEEDED, DEPLOYED, FAILED, RUNNING, FEATURE_GENERATED, FEATURE_SELECTED } from '../config';
 
@@ -618,10 +617,6 @@ class LandingPage extends React.Component {
         this.handleError(error, GET_CONFIGURATION);
       }
     );
-  }
-
-  onFilterKeyChange(){
-
   }
 
   render() {

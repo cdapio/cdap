@@ -37,7 +37,7 @@ class FeatureTable extends React.Component {
     super(props);
     this.state = {
       columnDefs: AFEGridColumns,
-      frameworkComponents:  {
+      frameworkComponents: {
         'statusRenderer': StatusRenderer,
         'deleteRenderer': DeleteRenderer,
         'editRenderer': EditRenderer,
@@ -45,16 +45,16 @@ class FeatureTable extends React.Component {
         'fsLinkRenderer': FSLinkRenderer,
         'feLinkRenderer': FELinkRenderer
       },
-      context: {componentParent: this}
-    }
+      context: { componentParent: this }
+    };
   }
 
   componentWillReceiveProps(nextProps) {
-    if(this.gridApi) {
-      if(nextProps.isDataLoading) {
-        this.gridApi.showLoadingOverlay()
+    if (this.gridApi) {
+      if (nextProps.isDataLoading) {
+        this.gridApi.showLoadingOverlay();
       } else {
-        if(isEmpty(nextProps.data)) {
+        if (isEmpty(nextProps.data)) {
           this.gridApi.showNoRowsOverlay();
         } else {
           this.gridApi.hideOverlay();
@@ -72,21 +72,21 @@ class FeatureTable extends React.Component {
 
   render() {
     setTimeout(() => {
-      if(this.gridApi) {
-        this.gridApi.sizeColumnsToFit()
+      if (this.gridApi) {
+        this.gridApi.sizeColumnsToFit();
       }
     }, 500);
     return (
       <div
         className="ag-theme-balham grid-container">
         <AgGridReact
-          columnDefs = {this.state.columnDefs}
+          columnDefs={this.state.columnDefs}
           context={this.state.context}
-          frameworkComponents = {this.state.frameworkComponents}
+          frameworkComponents={this.state.frameworkComponents}
           rowData={this.props.data}
           enableFilter={true}
           onGridReady={this.onGridReady}
-          >
+        >
         </AgGridReact>
       </div>
     );

@@ -17,6 +17,7 @@
 /* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { AgGridReact } from 'ag-grid-react';
+import isEmpty from 'lodash/isEmpty';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './GridContainer.scss';
@@ -32,11 +33,11 @@ class GridContainer extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if(this.gridApi) {
-      if(nextProps.isDataLoading) {
-        this.gridApi.showLoadingOverlay()
+    if (this.gridApi) {
+      if (nextProps.isDataLoading) {
+        this.gridApi.showLoadingOverlay();
       } else {
-        if(isEmpty(nextProps.data)) {
+        if (isEmpty(nextProps.data)) {
           this.gridApi.showNoRowsOverlay();
         } else {
           this.gridApi.hideOverlay();
@@ -66,7 +67,7 @@ class GridContainer extends Component {
         <AgGridReact
           columnDefs={this.props.gridColums}
           defaultColDef={this.defaultColDef}
-          enableFilter = { true }
+          enableFilter={true}
           rowSelection="multiple"
           rowData={this.props.rowData}
           onGridReady={this.onGridReady}
