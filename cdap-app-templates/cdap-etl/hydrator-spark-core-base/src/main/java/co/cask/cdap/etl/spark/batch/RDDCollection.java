@@ -227,4 +227,3 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
 }
-
