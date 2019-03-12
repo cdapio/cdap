@@ -58,7 +58,7 @@ public class SFTPFileSystem extends FileSystem {
   public static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
   public static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
   public static final String FS_SFTP_USER_PREFIX = "fs.sftp.user.";
-  public static final String FS_SFTP_PASSWORD_PREFIX = "fs.sftp.password.";
+  public static final String FS_SFTP_PASSWORD_PREFIX = "fs.sftp.password."; //NOSONAR
   public static final String FS_SFTP_HOST = "fs.sftp.host";
   public static final String FS_SFTP_HOST_PORT = "fs.sftp.host.port";
   public static final String FS_SFTP_KEYFILE = "fs.sftp.keyfile";
