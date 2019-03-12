@@ -417,9 +417,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
         continue;
       }
 
-      if (programStatus.equals(ProgramRunStatus.COMPLETED.name()) ||
-        programStatus.equals(ProgramRunStatus.FAILED.name()) ||
-        programStatus.equals(ProgramRunStatus.KILLED.name())) {
+      if (ProgramRunStatus.isEndState(programStatus)) {
         try {
           return Long.parseLong(properties.get(ProgramOptionConstants.END_TIME));
         } catch (Exception e) {

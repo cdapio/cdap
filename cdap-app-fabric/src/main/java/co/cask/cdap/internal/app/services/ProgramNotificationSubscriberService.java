@@ -84,7 +84,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
-  public static final String CDAP_VERSION = "cdap.version";
+  private static final String CDAP_VERSION = "cdap.version";
 
   private final String recordedProgramStatusPublishTopic;
   private final ProvisionerNotifier provisionerNotifier;
@@ -330,6 +330,21 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                             Constants.Metrics.Program.PROGRAM_FAILED_RUNS);
         }
         break;
+      case REJECTED:
+        ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+        ProgramDescriptor programDescriptor =
+          GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
+        recordedRunRecord = appMetadataStore.recordProgramRejected(
+          programRunId, programOptions.getUserArguments().asMap(),
+          programOptions.getArguments().asMap(), messageIdBytes, programDescriptor.getArtifactId().toApiArtifactId());
+        writeToHeartBeatTable(recordedRunRecord,
+                              RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS),
+                              programHeartbeatTable);
+        if (recordedRunRecord != null) {
+          runnable = getEmitMetricsRunnable(programRunId, recordedRunRecord,
+                                            Constants.Metrics.Program.PROGRAM_REJECTED_RUNS);
+        }
+        break;
       default:
         // This should not happen
         LOG.error("Unsupported program status {} for program {}, {}", programRunStatus, programRunId, notification);
@@ -340,7 +355,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       // We need to publish the message so that the trigger subscriber can pick it up and start the trigger if
       // necessary
       publishRecordedStatus(notification, programRunId, recordedRunRecord.getStatus());
-      if (programRunStatus.isEndState()) {
+      // for any status that represents completion of a job that was actually started (excludes rejected jobs)
+      // publish the deprovisioning event(s).
+      if (programRunStatus.isEndState() && programRunStatus != ProgramRunStatus.REJECTED) {
         // if this is a preview run or a program within a workflow, we don't actually need to de-provision the cluster.
         // instead, we just record the state as deprovisioned without notifying the provisioner
         // and we will emit the program status metrics for it

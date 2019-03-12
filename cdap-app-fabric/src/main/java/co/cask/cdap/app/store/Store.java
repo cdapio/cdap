@@ -95,6 +95,19 @@ public interface Store {
   void setStart(ProgramRunId id, @Nullable String twillRunId, Map<String, String> systemArgs, byte[] sourceId);
 
   /**
+   * Logs rejection of a program run and persists program status to {@link ProgramRunStatus#REJECTED}.
+   *
+   * @param id run id of the program
+   * @param runtimeArgs the runtime arguments for this program run
+   * @param systemArgs the system arguments for this program run
+   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
+   *                 when the current program run status is reached
+   * @param artifactId artifact id used to create the application the program belongs to
+   */
+  void setRejected(ProgramRunId id, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+                   byte[] sourceId, ArtifactId artifactId);
+
+  /**
    * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
    *
    * @param id run id of the program
@@ -214,6 +227,14 @@ public interface Store {
    * @return        map of logged runs
    */
   Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds);
+
+  /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records across all namespaces.
+   *
+   * @param limit count at most that many runs, stop if there are more.
+   * @return map of logged runs
+   */
+  int countActiveRuns(@Nullable Integer limit);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.

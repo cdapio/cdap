@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,11 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProtoConstraint;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * A Constraint which requires a certain duration pass since the last execution of the schedule.
@@ -61,15 +62,13 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
   // Filters run records that are: FAILED, KILLED; keeps only: RUNNING, SUSPENDED, COMPLETED.
   // Also filters COMLPETED run records that have completed before the specified startTime.
   private Iterable<RunRecordMeta> filter(Iterable<RunRecordMeta> runRecords, final long startTime) {
-    return Iterables.filter(runRecords, new Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(RunRecordMeta input) {
-        if (ProgramRunStatus.COMPLETED == input.getStatus() && input.getStopTs() < startTime) {
-          return false;
-        }
-        // otherwise, simply check that its not a FAILED/KILLED run
-        return ProgramRunStatus.FAILED != input.getStatus() && ProgramRunStatus.KILLED != input.getStatus();
+    return StreamSupport.stream(runRecords.spliterator(), false).filter(input -> {
+      //noinspection ConstantConditions
+      if (ProgramRunStatus.COMPLETED == input.getStatus() && input.getStopTs() < startTime) {
+        return false;
       }
-    });
+      // otherwise, simply check that its not an unsuccessful (failed/killed/rejected) run
+      return !input.getStatus().isUnsuccessful();
+    }).collect(Collectors.toList());
   }
 }

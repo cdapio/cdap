@@ -160,6 +160,14 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setRejected(ProgramRunId id, Map<String, String> runtimeArgs,
+                          Map<String, String> systemArgs, byte[] sourceId, ArtifactId artifactId) {
+    TransactionRunners.run(transactionRunner, context -> {
+      getAppMetadataStore(context).recordProgramRejected(id, runtimeArgs, systemArgs, sourceId, artifactId);
+    });
+  }
+
+  @Override
   public void setRunning(ProgramRunId id, long runTime, String twillRunId, byte[] sourceId) {
     TransactionRunners.run(transactionRunner, context -> {
       getAppMetadataStore(context).recordProgramRunning(id, runTime, twillRunId, sourceId);
@@ -324,6 +332,12 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(programRunIds);
     });
+  }
+
+  @Override
+  public int countActiveRuns(@Nullable Integer limit) {
+    return TransactionRunners.run(transactionRunner,
+                                  context -> (int) getAppMetadataStore(context).countActiveRuns(limit));
   }
 
   @Override

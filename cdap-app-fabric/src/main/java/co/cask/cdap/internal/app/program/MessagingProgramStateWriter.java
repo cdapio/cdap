@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -126,6 +126,20 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       .put(ProgramOptionConstants.RESUME_TIME, String.valueOf(System.currentTimeMillis()))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name()).build();
     programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties);
+  }
+
+  @Override
+  public void reject(ProgramRunId programRunId, ProgramOptions programOptions,
+                     ProgramDescriptor programDescriptor, String userId, Throwable cause) {
+    ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId))
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.REJECTED.name())
+      .put(ProgramOptionConstants.USER_ID, userId)
+      .put(ProgramOptionConstants.PROGRAM_DESCRIPTOR, GSON.toJson(programDescriptor))
+      .put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
+    programStatePublisher.publish(Notification.Type.PROGRAM_STATUS, properties.build());
   }
 
   private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {

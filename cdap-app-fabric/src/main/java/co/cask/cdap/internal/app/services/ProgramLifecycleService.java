@@ -35,6 +35,8 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProfileConflictException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.config.PreferencesService;
@@ -126,14 +128,17 @@ public class ProgramLifecycleService {
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
+  private final int maxConcurrentRuns;
 
   @Inject
-  ProgramLifecycleService(Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
+  ProgramLifecycleService(CConfiguration cConf,
+                          Store store, ProfileService profileService, ProgramRuntimeService runtimeService,
                           PropertiesResolver propertiesResolver,
                           PreferencesService preferencesService, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
                           ProgramStateWriter programStateWriter) {
+    this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.store = store;
     this.profileService = profileService;
     this.runtimeService = runtimeService;
@@ -379,7 +384,6 @@ public class ProgramLifecycleService {
     if (!isStopped(programId) && !isConcurrentRunsAllowed(programId.getType())) {
       throw new ConflictException(String.format("Program %s is already running", programId));
     }
-
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
     Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
     if (overrides != null) {
@@ -406,16 +410,23 @@ public class ProgramLifecycleService {
    */
   public synchronized RunId runInternal(ProgramId programId, Map<String, String> userArgs,
                                         Map<String, String> sysArgs,
-                                        boolean debug) throws NotFoundException, IOException, ProfileConflictException {
-    LOG.info("Attempt to run {} program {} as user {}", programId.getType(), programId.getProgram(),
-             authenticationContext.getPrincipal().getName());
-
-    ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
-
+                                        boolean debug) throws NotFoundException, IOException, ConflictException {
     RunId runId = RunIds.generate();
+    ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     String userId = SecurityRequestContext.getUserId();
     userId = userId == null ? "" : userId;
+
+    if (maxConcurrentRuns > 0 && maxConcurrentRuns <= store.countActiveRuns(maxConcurrentRuns)) {
+      ConflictException e = new ConflictException(String.format(
+        "Program %s cannot start because the maximum of %d concurrent runs is exceeded", programId, maxConcurrentRuns));
+      programStateWriter.reject(programId.run(runId), programOptions, programDescriptor, userId, e);
+      throw e;
+    }
+
+    LOG.info("Attempt to run {} program {} as user {}", programId.getType(), programId.getProgram(),
+             authenticationContext.getPrincipal().getName());
+
     provisionerNotifier.provisioning(programId.run(runId), programOptions, programDescriptor, userId);
     return runId;
   }

@@ -18,6 +18,7 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -270,6 +271,8 @@ class ConstraintCheckerService extends AbstractIdleService {
 
       try {
         taskRunner.launch(job);
+      } catch (ConflictException e) {
+        LOG.error("Skip job {} because it was rejected while launching: {}", job.getJobKey(), e.getMessage());
       } catch (Exception e) {
         LOG.error("Skip launching job {} because the program {} encountered an exception while launching.",
                   job.getJobKey(), job.getSchedule().getProgramId(), e);
