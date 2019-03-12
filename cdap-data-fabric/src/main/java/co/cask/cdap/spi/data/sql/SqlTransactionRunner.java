@@ -76,8 +76,7 @@ public class SqlTransactionRunner implements TransactionRunner {
     } catch (Exception e) {
       Throwable cause = e.getCause();
       if (cause instanceof SQLException) {
-        rollback(connection,
-                 new SqlTransactionException("Failed to execute the sql queries.", (SQLException) cause, e));
+        rollback(connection, new SqlTransactionException((SQLException) cause, e));
       }
       rollback(connection, new TransactionException("Failed to execute the sql queries.", e));
     } finally {

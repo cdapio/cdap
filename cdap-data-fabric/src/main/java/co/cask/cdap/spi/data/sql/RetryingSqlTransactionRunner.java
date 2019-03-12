@@ -26,6 +26,8 @@ import co.cask.cdap.spi.data.transaction.TransactionException;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TxRunnable;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
@@ -35,6 +37,7 @@ import javax.sql.DataSource;
  * This class is based on {@link Transactions#createTransactionalWithRetry}.
  */
 public class RetryingSqlTransactionRunner implements TransactionRunner {
+  private static final Logger LOG = LoggerFactory.getLogger(RetryingSqlTransactionRunner.class);
   // From https://www.postgresql.org/docs/9.6/transaction-iso.html, "40001" is the code for serialization failures
   private static final String TRANSACTION_CONFLICT_SQL_STATE = "40001";
   private static final int MAX_RETRIES = 20;
@@ -61,8 +64,10 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
         transactionRunner.run(runnable);
         break;
       } catch (SqlTransactionException e) {
+        String sqlState = e.getSqlException().getSQLState();
+        LOG.trace("Transaction failed with sql state: {}.", sqlState, e);
         // Retry only transaction failure exceptions
-        if (TRANSACTION_CONFLICT_SQL_STATE.equals(e.getSqlException().getSQLState())) {
+        if (TRANSACTION_CONFLICT_SQL_STATE.equals(sqlState)) {
           metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_CONFLICT, 1L);
           ++retries;
           long delay = retries > MAX_RETRIES ? -1 : DELAY_MILLIS;
@@ -80,6 +85,8 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
               throw e;
             }
           }
+        } else {
+          throw e;
         }
       }
     }
