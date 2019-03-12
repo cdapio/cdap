@@ -77,7 +77,7 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, tooltipField:'featureName' });
+          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField:'featureName' });
         }
         columns.forEach(element => {
           columDefs.push({ headerName: element.name, field: element.name , resizable: true, filter:'agNumberColumnFilter'});
@@ -272,7 +272,7 @@ class FeatureSelection extends Component {
     // generate column def\featureCorrelationScores
     if (!isNil(value) && value.length > 0) {
       const item = value[0]['featureCorrelationScores'];
-      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true, tooltipField:'featureName'  });
+      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true,headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField:'featureName'  });
       columDefs.push({ headerName: "Value", field: "value", filter:'agNumberColumnFilter' });
 
       if (!isNil(item)) {
