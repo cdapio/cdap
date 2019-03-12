@@ -105,6 +105,7 @@ export const AFEGridColumns = [
     field: "pipelineName",
     width: 230,
     cellRenderer: 'fsLinkRenderer',
+    suppressMenu: true,
     filter: false
   },
   {
