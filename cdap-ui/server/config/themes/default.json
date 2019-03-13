@@ -35,6 +35,10 @@
     "metadata": true,
     "hub": true,
     "ingest-data": true,
-    "add-namespace": true
+    "add-namespace": true,
+    "schedules": true,
+    "triggers": true,
+    "lineage": true,
+    "realtime-pipeline": true
   }
 }

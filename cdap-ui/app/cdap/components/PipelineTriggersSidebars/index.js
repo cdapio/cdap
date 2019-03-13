@@ -19,8 +19,13 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import PipelineTriggers from 'components/PipelineTriggers';
 import TriggeredPipelines from 'components/TriggeredPipelines';
+import { Theme } from 'services/ThemeHelper';
 
 export default function PipelineTriggersSidebars({ pipelineName, namespace }) {
+  if (Theme.showTriggers === false) {
+    return null;
+  }
+
   return (
     <div className="pipeline-triggers-sidebar-container">
       <PipelineTriggers pipelineName={pipelineName} namespace={namespace} />

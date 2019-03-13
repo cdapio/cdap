@@ -24,6 +24,8 @@ import ProgramTab from 'components/Overview/Tabs/ProgramTab';
 import SchemaTab from 'components/Overview/Tabs/SchemaTab';
 import LineageTab from 'components/DatasetDetailedView/Tabs/LineageTab';
 import PropertiesTab from 'components/DatasetDetailedView/Tabs/PropertiesTab';
+import { Theme } from 'services/ThemeHelper';
+import If from 'components/If';
 import T from 'i18n-react';
 
 const PREFIX = 'features.DatasetDetailedView.Tabs';
@@ -78,13 +80,15 @@ export default class DatasetDetailedViewTabs extends Component {
             </div>
           </NavItem>
 
-          <NavItem>
-            <div className="nav-link">
-              <RouterNavLink to={`${baseLinkPath}/lineage`} activeClassName="active">
-                {T.translate(`${PREFIX}.lineage`)}
-              </RouterNavLink>
-            </div>
-          </NavItem>
+          <If condition={Theme.showLineage !== false}>
+            <NavItem>
+              <div className="nav-link">
+                <RouterNavLink to={`${baseLinkPath}/lineage`} activeClassName="active">
+                  {T.translate(`${PREFIX}.lineage`)}
+                </RouterNavLink>
+              </div>
+            </NavItem>
+          </If>
 
           <NavItem>
             <div className="nav-link">
