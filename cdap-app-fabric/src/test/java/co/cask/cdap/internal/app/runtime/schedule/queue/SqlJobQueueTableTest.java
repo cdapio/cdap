@@ -82,8 +82,8 @@ public class SqlJobQueueTableTest extends JobQueueTableTest {
     StructuredTableAdmin structuredTableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    StoreDefinition.JobQueueStore.createTables(structuredTableAdmin);
-    StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin);
+    StoreDefinition.JobQueueStore.createTables(structuredTableAdmin, false);
+    StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin, false);
   }
 
   @Override

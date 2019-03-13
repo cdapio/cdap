@@ -52,7 +52,7 @@ public class SqlDefaultSecretStoreTest extends DefaultSecretStoreTest {
       new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
     store = new DefaultSecretStore(transactionRunner);
-    StoreDefinition.SecretStore.createTable(structuredTableAdmin);
+    StoreDefinition.SecretStore.createTable(structuredTableAdmin, false);
   }
 
   @AfterClass

@@ -87,8 +87,8 @@ public class NoSqlJobQueueTableTest extends JobQueueTableTest {
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
     transactionRunner = injector.getInstance(TransactionRunner.class);
 
-    StoreDefinition.JobQueueStore.createTables(tableAdmin);
-    StoreDefinition.AppMetadataStore.createTables(tableAdmin);
+    StoreDefinition.JobQueueStore.createTables(tableAdmin, false);
+    StoreDefinition.AppMetadataStore.createTables(tableAdmin, false);
   }
 
   @AfterClass

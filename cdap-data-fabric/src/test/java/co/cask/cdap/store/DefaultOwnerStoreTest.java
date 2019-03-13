@@ -17,7 +17,6 @@
 package co.cask.cdap.store;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -96,7 +95,7 @@ public class DefaultOwnerStoreTest extends OwnerStoreTest {
       new NoSqlTransactionRunner(injector.getInstance(NoSqlStructuredTableAdmin.class),
                                  injector.getInstance(TransactionSystemClient.class),
                                  new NoOpMetricsCollectionService(), cConf);
-    StoreDefinition.OwnerStore.createTables(structuredTableAdmin);
+    StoreDefinition.OwnerStore.createTables(structuredTableAdmin, false);
     ownerStore = new DefaultOwnerStore(transactionRunner);
   }
 

@@ -124,8 +124,9 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
 
   private void createRegistryTable() throws IOException {
     // Use a no-op registry to create PostgresSqlStructuredTableAdmin.
-    // During a table creation, except for registerSpecification, no other methods on the
-    // registry will be called by PostgresSqlStructuredTableAdmin.
+    // During a table creation, except for registerSpecification and getSpecification, no other methods on the
+    // registry will be called by PostgresSqlStructuredTableAdmin. Since we always check existence before we create
+    // the registry table, we can safely return null for the getSpecification method.
     StructuredTableRegistry noOpRegistry = new StructuredTableRegistry() {
       UnsupportedOperationException exception =
         new UnsupportedOperationException("Not expected to be called during creation of registry!");
@@ -143,7 +144,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
       @Nullable
       @Override
       public StructuredTableSpecification getSpecification(StructuredTableId tableId) {
-        throw exception;
+        return null;
       }
 
       @Override
@@ -159,8 +160,7 @@ public class SqlStructuredTableRegistry implements StructuredTableRegistry {
 
     try {
       // Create the table if needed
-      PostgresSqlStructuredTableAdmin admin =
-        new PostgresSqlStructuredTableAdmin(noOpRegistry, dataSource);
+      PostgresSqlStructuredTableAdmin admin = new PostgresSqlStructuredTableAdmin(noOpRegistry, dataSource);
       if (!admin.tableExists(REGISTRY)) {
         LOG.info("Creating SQL table {}", REGISTRY);
         admin.create(SPEC);
