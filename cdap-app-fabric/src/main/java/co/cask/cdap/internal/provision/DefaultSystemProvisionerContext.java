@@ -24,23 +24,36 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Context for initializing a provisioner.
  */
 public class DefaultSystemProvisionerContext implements ProvisionerSystemContext {
-  private final Map<String, String> properties;
+
+  private final String prefix;
+  private final CConfiguration cConf;
+  private final AtomicReference<Map<String, String>> properties;
   private final String cdapVersion;
 
   DefaultSystemProvisionerContext(CConfiguration cConf, String provisionerName) {
-    String prefix = String.format("%s%s.", Constants.Provisioner.SYSTEM_PROPERTY_PREFIX, provisionerName);
-    this.properties = Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix));
+    this.prefix = String.format("%s%s.", Constants.Provisioner.SYSTEM_PROPERTY_PREFIX, provisionerName);
+    this.cConf = CConfiguration.copy(cConf);
+    this.properties = new AtomicReference<>(Collections.emptyMap());
     this.cdapVersion = ProjectInfo.getVersion().toString();
+
+    reloadProperties();
   }
 
   @Override
   public Map<String, String> getProperties() {
-    return properties;
+    return properties.get();
+  }
+
+  @Override
+  public synchronized void reloadProperties() {
+    cConf.reloadConfiguration();
+    properties.set(Collections.unmodifiableMap(cConf.getPropsWithPrefix(prefix)));
   }
 
   @Override

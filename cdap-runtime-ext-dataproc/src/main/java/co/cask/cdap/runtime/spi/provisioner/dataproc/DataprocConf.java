@@ -40,7 +40,9 @@ import javax.annotation.Nullable;
  * Configuration for Dataproc.
  */
 public class DataprocConf {
-  private static final String AUTO_DETECT = "auto-detect";
+  static final String PROJECT_ID_KEY = "projectId";
+  static final String AUTO_DETECT = "auto-detect";
+
   private final String accountKey;
   private final String region;
   private final String zone;
@@ -202,11 +204,6 @@ public class DataprocConf {
     return String.format("custom-%d-%d", cpus, memoryGB);
   }
 
-  public static DataprocConf fromProvisionerContext(ProvisionerContext context) {
-    return create(context.getProperties(),
-                  context.getSSHContext().getSSHKeyPair().map(SSHKeyPair::getPublicKey).orElse(null));
-  }
-
   /**
    * Create the conf from a property map while also performing validation.
    *
@@ -216,7 +213,7 @@ public class DataprocConf {
     return create(properties, null);
   }
 
-  private static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
+  public static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
       try {
@@ -225,7 +222,7 @@ public class DataprocConf {
         throw new IllegalArgumentException(e.getMessage(), e);
       }
     }
-    String projectId = getString(properties, "projectId");
+    String projectId = getString(properties, PROJECT_ID_KEY);
     if (projectId == null || AUTO_DETECT.equals(projectId)) {
       projectId = getSystemProjectId();
     }

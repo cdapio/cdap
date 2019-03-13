@@ -38,6 +38,11 @@ public interface ProvisionerSystemContext {
   Map<String, String> getProperties();
 
   /**
+   * Reloads system properties from the backing storage of the CDAP configuration.
+   */
+  void reloadProperties();
+
+  /**
    * Returns the CDAP version
    */
   String getCDAPVersion();
