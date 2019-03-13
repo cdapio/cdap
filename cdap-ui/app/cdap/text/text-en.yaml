@@ -1935,6 +1935,11 @@ features:
       actionTitle: "You can try to:"
       aPipeline: a pipeline
       create: Create
+      EmptySearch:
+        actionTitle: "You can try to:"
+        clear: Clear
+        heading: "There are no pipelines matching the search query \"{search}\""
+        search: search query
       import: Import
       Message:
         DRAFT: There are no pipelines you saved as drafts

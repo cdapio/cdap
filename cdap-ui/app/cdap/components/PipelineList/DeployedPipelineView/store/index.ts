@@ -23,6 +23,7 @@ import {
 } from 'components/PipelineList/DeployedPipelineView/types';
 import { Reducer, Store as StoreInterface } from 'redux';
 import { IAction } from 'services/redux-helpers';
+import { Action } from 'rxjs/scheduler/Action';
 
 interface IState {
   pipelines: IPipeline[];
@@ -30,6 +31,7 @@ interface IState {
   statusMap: IStatusMap;
   runsCountMap: IRunsCountMap;
   deleteError?: string;
+  search: string;
 }
 
 interface IStore {
@@ -40,6 +42,7 @@ const Actions = {
   setPipeline: 'DEPLOYED_PIPELINE_SET_LIST',
   setStatusMap: 'DEPLOYED_PIPELINE_SET_STATUS_MAP',
   setRunsCountMap: 'DEPLOYED_PIPELINE_SET_RUNS_COUNT_MAP',
+  setSearch: 'DEPLOYED_SET_SEARCH',
   setDeleteError: 'DEPLOYED_PIPELINE_SET_DELETE_ERROR',
   clearDeleteError: 'DEPLOYED_PIPELINE_CLEAR_DELETE_ERROR',
   reset: 'DEPLOYED_PIPELINE_RESET',
@@ -51,6 +54,7 @@ const defaultInitialState: IState = {
   statusMap: {},
   runsCountMap: {},
   deleteError: null,
+  search: '',
 };
 
 const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction) => {
@@ -81,6 +85,11 @@ const deployed: Reducer<IState> = (state = defaultInitialState, action: IAction)
       return {
         ...state,
         deleteError: null,
+      };
+    case Actions.setSearch:
+      return {
+        ...state,
+        search: action.payload.search,
       };
     case Actions.reset:
       return defaultInitialState;
