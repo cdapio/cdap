@@ -24,6 +24,28 @@
 </div>
 
 <div class="modal-body">
+  <div class="widget-added-properties-container" ng-if="GetSchemaModalController.additionalPropertiesFields.length > 0">
+    <div class="field-row row"
+         ng-repeat="field in GetSchemaModalController.additionalPropertiesFields">
+      <label class="label-control col-xs-2 text-right">{{ field.label }}</label>
+      <div
+        class="my-widget-container col-xs-10"
+        data-name="field"
+        data-model="GetSchemaModalController.additionalProperties[field.name]"
+        data-myconfig="field"
+        data-properties="GetSchemaModalController.additionalProperties"
+        widget-container>
+      </div>
+    </div>
+    <div class="action-button-container row">
+      <div class="col-xs-12 text-right">
+        <button class="btn btn-primary" ng-click="GetSchemaModalController.makeRequest()">
+          Execute
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div ng-if="GetSchemaModalController.showLoading">
     <h3 class="fa fa-spin fa-refresh"></h3>
   </div>

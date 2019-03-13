@@ -23,11 +23,14 @@ angular.module(PKG.name + '.commons')
         node: '=',
         fnConfig: '='
       },
-      controller: function ($scope, $uibModal, EventPipe, myPipelineApi) {
+      controller: function ($scope, $uibModal, EventPipe, myPipelineApi, myHelpers) {
         var vm = this;
         var fnConfig = $scope.fnConfig;
         vm.label = fnConfig['label'] || 'Get Schema';
         vm.btnClass = fnConfig['button-class'] || 'btn-default';
+
+        const omitProperties = myHelpers.objectQuery($scope.fnConfig, 'omit-properties') || [];
+        const addProperties = myHelpers.objectQuery($scope.fnConfig, 'add-properties') || [];
 
         vm.node = $scope.node;
         var getRequiredFields = function() {
@@ -50,8 +53,10 @@ angular.module(PKG.name + '.commons')
             templateUrl: 'plugin-functions/functions/output-schema/output-schema-modal.html',
             windowClass: 'hydrator-modal node-config-modal layered-modal output-schema-modal',
             keyboard: true,
-            controller: function ($scope, nodeInfo, $state, HydratorPlusPlusNodeService, myHelpers) {
+            controller: function ($scope, nodeInfo, $state, HydratorPlusPlusNodeService) {
               var mvm = this;
+              mvm.additionalPropertiesFields = addProperties;
+              mvm.additionalProperties = {};
 
               const parseResSchema = (res) => {
                 if (res.name && res.type && res.fields) {
@@ -71,67 +76,79 @@ angular.module(PKG.name + '.commons')
               };
 
               mvm.stageErrors = [];
-              mvm.showLoading = true;
 
-              const params = {
-                context: $state.params.namespace
-              };
+              mvm.makeRequest = () => {
+                mvm.showLoading = true;
 
-              const pluginInfo = angular.copy(nodeInfo.plugin);
-              pluginInfo.type = nodeInfo.type;
+                const params = {
+                  context: $state.params.namespace
+                };
 
-              let schemaParseError = null;
+                const pluginInfo = angular.copy(nodeInfo.plugin);
+                pluginInfo.type = nodeInfo.type;
 
-              const requestBody = {
-                stage: {
-                  name: nodeInfo.name,
-                  plugin: pluginInfo,
-                },
-                inputSchemas: nodeInfo.inputSchema.map((input) => {
-                  let schema;
+                omitProperties.forEach((property) => {
+                  delete pluginInfo.properties[property.name];
+                });
 
-                  try {
-                    schema = JSON.parse(input.schema);
-                  } catch (e) {
-                    schemaParseError = e;
-                  }
+                pluginInfo.properties = angular.extend({}, pluginInfo.properties, mvm.additionalProperties);
 
-                  return {
-                    stage: input.name,
-                    schema
-                  };
-                })
-              };
+                let schemaParseError = null;
+                const requestBody = {
+                  stage: {
+                    name: nodeInfo.name,
+                    plugin: pluginInfo,
+                  },
+                  inputSchemas: !nodeInfo.inputSchema ? [] : nodeInfo.inputSchema.map((input) => {
+                    let schema;
 
-              if (schemaParseError) {
-                mvm.error = schemaParseError;
-                return;
-              }
-
-              myPipelineApi.validateStage(params, requestBody)
-                .$promise
-                .then((res) => {
-                  if (res.errors.length > 0) {
-                    mvm.stageErrors = res.errors.map(err => err.message);
-                  } else {
-                    const outputSchema = myHelpers.objectQuery(res, 'spec', 'outputSchema');
-                    const portSchemas = myHelpers.objectQuery(res, 'spec', 'portSchemas');
-
-                    if (!outputSchema && !portSchemas) {
-                      mvm.error = 'There is no output schema.';
-                      return;
+                    try {
+                      schema = JSON.parse(input.schema);
+                    } catch (e) {
+                      schemaParseError = e;
                     }
 
-                    mvm.schemas = parseResSchema(outputSchema || portSchemas);
-                  }
+                    return {
+                      stage: input.name,
+                      schema
+                    };
+                  })
+                };
 
-                  mvm.showLoading = false;
-                  mvm.error = null;
-                }, (err) => {
-                  mvm.showLoading = false;
-                  mvm.schemas = null;
-                  mvm.error = err.data;
-                });
+                if (schemaParseError) {
+                  mvm.error = schemaParseError;
+                  return;
+                }
+
+                myPipelineApi.validateStage(params, requestBody)
+                  .$promise
+                  .then((res) => {
+                    if (res.errors.length > 0) {
+                      mvm.stageErrors = res.errors.map(err => err.message);
+                    } else {
+                      const outputSchema = myHelpers.objectQuery(res, 'spec', 'outputSchema');
+                      const portSchemas = myHelpers.objectQuery(res, 'spec', 'portSchemas');
+
+                      if (!outputSchema && !portSchemas) {
+                        mvm.error = 'There is no output schema.';
+                        return;
+                      }
+
+                      mvm.schemas = parseResSchema(outputSchema || portSchemas);
+                    }
+
+                    mvm.showLoading = false;
+                    mvm.error = null;
+                  }, (err) => {
+                    mvm.showLoading = false;
+                    mvm.schemas = null;
+                    mvm.error = err.data;
+                  });
+              };
+
+              if (addProperties.length === 0) {
+                mvm.makeRequest();
+              }
 
               mvm.apply = function () {
                 mvm.schemas = mvm.schemas.map(schema => {
@@ -150,7 +167,7 @@ angular.module(PKG.name + '.commons')
             resolve: {
               nodeInfo: function () {
                 return $scope.node;
-              }
+              },
             }
           });
 
