@@ -29,6 +29,7 @@ class MyRealtimePipelineConfigCtrl {
     this.instrumentation = this.store.getInstrumentation();
     this.stageLogging = this.store.getStageLogging();
     this.checkpointing = this.store.getCheckpointing();
+    this.checkpointDir = this.store.getCheckpointDir();
     this.batchInterval = this.store.getBatchInterval();
     this.batchIntervalTime = this.batchInterval.substring(0, this.batchInterval.length - 1);
     this.batchIntervalUnit = this.batchInterval.charAt(this.batchInterval.length - 1);
@@ -123,6 +124,7 @@ class MyRealtimePipelineConfigCtrl {
     this.store.setInstrumentation(this.instrumentation);
     this.store.setStageLogging(this.stageLogging);
     this.store.setCheckpointing(this.checkpointing);
+    this.store.setCheckpointDir(this.checkpointDir);
     this.store.setBatchInterval(this.batchIntervalTime + this.batchIntervalUnit);
     this.store.setClientVirtualCores(this.clientResources.virtualCores);
     this.store.setClientMemoryMB(this.clientResources.memoryMB);
