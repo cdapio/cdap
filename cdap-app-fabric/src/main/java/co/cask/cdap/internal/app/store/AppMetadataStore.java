@@ -71,6 +71,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -119,6 +121,7 @@ public class AppMetadataStore {
     .put(ProgramRunStatus.COMPLETED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.KILLED, TYPE_RUN_RECORD_COMPLETED)
     .put(ProgramRunStatus.FAILED, TYPE_RUN_RECORD_COMPLETED)
+    .put(ProgramRunStatus.REJECTED, TYPE_RUN_RECORD_COMPLETED)
     .build();
 
 
@@ -386,7 +389,6 @@ public class AppMetadataStore {
                                                  @Nullable ArtifactId artifactId)
     throws IOException {
     long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
-    List<Field<?>> fields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, startTs);
     if (startTs == -1L) {
       LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have " +
                   "a timestamp in the run id.");
@@ -422,6 +424,7 @@ public class AppMetadataStore {
       .setArtifactId(artifactId)
       .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
       .build();
+    List<Field<?>> fields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, startTs);
     writeToStructuredTableWithPrimaryKeys(
       fields, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, programRunId.getParent());
@@ -601,6 +604,50 @@ public class AppMetadataStore {
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     LOG.trace("Recorded {} for program {}", ProgramRunClusterStatus.ORPHANED, programRunId);
+    return meta;
+  }
+
+  @Nullable
+  public RunRecordMeta recordProgramRejected(ProgramRunId programRunId,
+                                             Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+                                             byte[] sourceId, @Nullable ArtifactId artifactId)
+    throws IOException {
+    long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+    if (startTs == -1L) {
+      LOG.error("Ignoring unexpected request to record provisioning state for program run {} that does not have " +
+                  "a timestamp in the run id.");
+      return null;
+    }
+
+    RunRecordMeta existing = getRun(programRunId);
+    // for some reason, there is an existing run record?
+    if (existing != null) {
+      LOG.error("Ignoring unexpected request to record rejected state for program run {} that has an existing "
+                  + "run record in run state {} and cluster state {}.",
+                programRunId, existing.getStatus(), existing.getCluster().getStatus());
+      return null;
+    }
+
+    Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs);
+    RunRecordMeta meta = RunRecordMeta.builder()
+      .setProgramRunId(programRunId)
+      .setStartTime(startTs)
+      .setStopTime(startTs) // rejected: stop time == start time
+      .setStatus(ProgramRunStatus.REJECTED)
+      .setProperties(getRecordProperties(systemArgs, runtimeArgs))
+      .setSystemArgs(systemArgs)
+      .setProfileId(profileId.orElse(null))
+      .setArtifactId(artifactId)
+      .setSourceId(sourceId)
+      .setPrincipal(systemArgs.get(ProgramOptionConstants.PRINCIPAL))
+      .build();
+
+    List<Field<?>> fields = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, startTs);
+    writeToStructuredTableWithPrimaryKeys(
+      fields, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
+    List<Field<?>> countKey = getProgramCountPrimaryKeys(TYPE_COUNT, programRunId.getParent());
+    getProgramCountsTable().increment(countKey, StoreDefinition.AppMetadataStore.COUNTS, 1L);
+    LOG.trace("Recorded {} for program {}", ProgramRunStatus.REJECTED, programRunId);
     return meta;
   }
 
@@ -892,6 +939,21 @@ public class AppMetadataStore {
   }
 
   /**
+   * Count all active runs.
+   *
+   * @param limit count at most that many runs, stop if there are more.
+   */
+  public int countActiveRuns(@Nullable Integer limit) throws IOException {
+    AtomicInteger count = new AtomicInteger(0);
+    enumerateProgramRuns(Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null)),
+                         null, key -> !NamespaceId.SYSTEM.getNamespace().equals(
+                           key.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD)),
+                         limit != null ? limit : Integer.MAX_VALUE,
+                         run -> count.incrementAndGet());
+    return count.get();
+  }
+
+  /**
    * Get active runs in all namespaces with a filter, active runs means program run with status STARTING, PENDING,
    * RUNNING or SUSPENDED.
    *
@@ -1032,32 +1094,46 @@ public class AppMetadataStore {
    *
    * @param range to scan runRecordsTable with
    * @param predicate to filter the runRecordMetas by. If null, then does not filter.
+   * @param keyPredicate to filter the row keys by. If null, then does not filter.
    * @param limit the maximum number of entries to return
    * @return map with keys as program run IDs
    */
-  private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(
-    Range range, @Nullable Predicate<RunRecordMeta> predicate, @Nullable Predicate<StructuredRow> keyPredicate,
-    int limit) throws IOException {
-    Map<ProgramRunId, RunRecordMeta> programRunIdMap = new LinkedHashMap<>();
+  private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(Range range,
+                                                              @Nullable Predicate<RunRecordMeta> predicate,
+                                                              @Nullable Predicate<StructuredRow> keyPredicate,
+                                                              int limit) throws IOException {
+    Map<ProgramRunId, RunRecordMeta> map = new LinkedHashMap<>();
+    enumerateProgramRuns(range, predicate, keyPredicate, limit, meta -> map.put(meta.getProgramRunId(), meta));
+    return map;
+  }
+
+  /**
+   * Iterate over a range of run records, filter by predicates and pass each run record to the consumer.
+   *
+   * @param range to scan runRecordsTable with
+   * @param predicate to filter the runRecordMetas by. If null, then does not filter.
+   * @param keyPredicate to filter the row keys by. If null, then does not filter.
+   * @param limit the maximum number of entries to return
+   */
+  private void enumerateProgramRuns(Range range, @Nullable Predicate<RunRecordMeta> predicate,
+                                    @Nullable Predicate<StructuredRow> keyPredicate, int limit,
+                                    Consumer<RunRecordMeta> consumer)
+    throws IOException {
     // Only pass in limit if predicates are null, or else we may return fewer than limit items
     try (CloseableIterator<StructuredRow> iterator =
-      getRunRecordsTable().scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE)) {
+           getRunRecordsTable().scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE)) {
       while (iterator.hasNext() && limit > 0) {
         StructuredRow row = iterator.next();
-        ProgramId programId =
-          new ApplicationId(row.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD),
-                            row.getString(StoreDefinition.AppMetadataStore.APPLICATION_FIELD),
-                            row.getString(StoreDefinition.AppMetadataStore.VERSION_FIELD))
-            .program(ProgramType.valueOf(row.getString(StoreDefinition.AppMetadataStore.PROGRAM_TYPE_FIELD)),
-                     row.getString(StoreDefinition.AppMetadataStore.PROGRAM_FIELD));
+        if (keyPredicate != null && !keyPredicate.test(row)) {
+          continue;
+        }
         RunRecordMeta meta = deserializeRunRecordMeta(row);
-        if ((predicate == null || predicate.test(meta)) && (keyPredicate == null || keyPredicate.test(row))) {
-          programRunIdMap.put(programId.run(meta.getPid()), meta);
+        if (predicate == null || predicate.test(meta)) {
+          consumer.accept(meta);
           limit--;
         }
       }
     }
-    return programRunIdMap;
   }
 
   private Map<ProgramRunId, RunRecordMeta> getProgramRunIdMap(

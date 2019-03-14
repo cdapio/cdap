@@ -513,6 +513,11 @@ public abstract class AppMetadataStoreTest {
         allActual.get(programId).add(activeRun.getValue().getStatus());
       }
       Assert.assertEquals(allExpected, allActual);
+
+      // test the count-all method
+      Assert.assertEquals(store.getActiveRuns(x -> true).size(), store.countActiveRuns(null));
+      Assert.assertEquals(store.getActiveRuns(x -> true).size(), store.countActiveRuns(100));
+      Assert.assertEquals(2, store.countActiveRuns(2));
     });
 
     // check active runs per app

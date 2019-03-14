@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ const statusMap = {
   [PROGRAM_STATUSES.RUNNING]: 'Running',
   [PROGRAM_STATUSES.SUCCEEDED]: 'Succeeded',
   [PROGRAM_STATUSES.FAILED]: 'Failed',
+  [PROGRAM_STATUSES.REJECTED]: 'Rejected',
   [PROGRAM_STATUSES.DRAFT]: 'Draft',
   [PROGRAM_STATUSES.STOPPED]: 'Stopped',
   [PROGRAM_STATUSES.COMPLETED]: 'Succeeded',
@@ -59,7 +60,10 @@ function getStatusIndicatorClass(displayStatus) {
     displayStatus === statusMap[PROGRAM_STATUSES.STOPPING]
   ) {
     return 'status-light-green';
-  } else if (displayStatus === statusMap[PROGRAM_STATUSES.FAILED]) {
+  } else if (
+    displayStatus === statusMap[PROGRAM_STATUSES.FAILED] ||
+    displayStatus === statusMap[PROGRAM_STATUSES.REJECTED]
+  ) {
     return 'status-light-red';
   } else {
     return 'status-light-grey';

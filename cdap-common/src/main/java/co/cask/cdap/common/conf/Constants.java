@@ -205,6 +205,7 @@ public final class Constants {
       "app.program.yarn.attempt.failures.validity.interval";
 
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
+    public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
 
     /**
      * Guice named bindings.
@@ -752,6 +753,7 @@ public final class Constants {
       public static final String PROGRAM_COMPLETED_RUNS = "program.completed.runs";
       public static final String PROGRAM_FAILED_RUNS = "program.failed.runs";
       public static final String PROGRAM_KILLED_RUNS = "program.killed.runs";
+      public static final String PROGRAM_REJECTED_RUNS = "program.rejected.runs";
       public static final String PROGRAM_NODE_MINUTES = "program.node.minutes";
     }
 

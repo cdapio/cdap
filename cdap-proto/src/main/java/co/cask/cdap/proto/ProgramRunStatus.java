@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,10 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.workflow.NodeStatus;
 
+import java.util.EnumSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * Program Status Types used to query program runs
  */
@@ -31,7 +35,13 @@ public enum ProgramRunStatus {
   RESUMING,
   COMPLETED,
   FAILED,
-  KILLED;
+  KILLED,
+  REJECTED;
+
+  private static final Set<ProgramRunStatus> UNSUCCESSFUL_STATES = EnumSet.of(FAILED, KILLED, REJECTED);
+  private static final Set<ProgramRunStatus> END_STATES = EnumSet.of(COMPLETED, FAILED, KILLED, REJECTED);
+  private static final Set<String> END_STATE_NAMES =
+    END_STATES.stream().map(ProgramRunStatus::name).collect(Collectors.toSet());
 
   /**
    * Return whether this state can transition to the specified state.
@@ -81,7 +91,21 @@ public enum ProgramRunStatus {
    * @return whether the status is an end status for a program run.
    */
   public boolean isEndState() {
-    return this == COMPLETED || this == FAILED || this == KILLED;
+    return END_STATES.contains(this);
+  }
+
+  /**
+   * @return whether a name (string) represents an end status for a program run.
+   */
+  public static boolean isEndState(String name) {
+    return END_STATE_NAMES.contains(name);
+  }
+
+  /**
+   * @return whether the status is an end status for a program run.
+   */
+  public boolean isUnsuccessful() {
+    return UNSUCCESSFUL_STATES.contains(this);
   }
 
   /**
