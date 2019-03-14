@@ -34,7 +34,7 @@ const styles = (theme) => {
        */
       fontSize: `${theme.typography.h4FontSize} !important`,
       paddingLeft: '10px',
-      color: '#bbb',
+      color: 'var(--page-name-color)',
       lineHeight: '1',
       fontWeight: 300,
     },

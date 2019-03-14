@@ -36,6 +36,7 @@ import {
 } from 'components/Cloud/Profiles/Store/ActionCreator';
 import { CLOUD, SCOPES, SYSTEM_NAMESPACE } from 'services/global-constants';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.PipelineDetails.ProfilesListView';
 
@@ -92,11 +93,16 @@ export default class ProfilesListViewInPipeline extends Component {
       MyPreferenceApi.getNamespacePreferencesResolved({ namespace })
     ).subscribe(
       ([profiles = [], systemProfiles = [], preferences = {}, namespacePreferences = {}]) => {
+        let filteredSystemProfiles = systemProfiles;
+        if (Theme.showNativeProfile === false) {
+          filteredSystemProfiles = systemProfiles.filter((profile) => profile.name !== 'native');
+        }
+
         let profileCustomizations = isNilOrEmpty(this.state.profileCustomizations)
           ? getCustomizationMap(preferences)
           : this.state.profileCustomizations;
 
-        let allProfiles = profiles.concat(systemProfiles);
+        let allProfiles = profiles.concat(filteredSystemProfiles);
 
         let defaultProfile =
           namespacePreferences[CLOUD.PROFILE_NAME_PREFERENCE_PROPERTY] ||

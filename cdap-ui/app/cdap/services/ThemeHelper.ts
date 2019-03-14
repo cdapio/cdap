@@ -42,6 +42,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'brand-primary-color'?: string;
     'navbar-color'?: string;
     'font-family'?: string;
+    'page-name-color'?: string;
   };
   content?: {
     'product-name'?: string;
@@ -82,6 +83,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     triggers?: boolean;
     lineage?: boolean;
     'realtime-pipeline'?: boolean;
+    'native-profile'?: boolean;
   };
 }
 
@@ -117,6 +119,9 @@ export function applyTheme() {
     // TODO: Validate fonts more rigorously
     if ('font-family' in stylesJSON && typeof stylesJSON['font-family'] === 'string') {
       stylesToApply['font-family'] = stylesJSON['font-family'];
+    }
+    if ('page-name-color' in stylesJSON && isColor(stylesJSON['page-name-color'])) {
+      stylesToApply['page-name-color'] = stylesJSON['page-name-color'];
     }
 
     // this is what's going on under the hood for modern browsers:
@@ -174,6 +179,7 @@ interface IThemeObj {
   showLineage?: boolean;
   showRealtimePipeline?: boolean;
   showAboutProductModal?: boolean;
+  showNativeProfile?: boolean;
   featureNames?: IFeatureNames;
 }
 
@@ -328,6 +334,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showSchedules: true,
       showTriggers: true,
       showLineage: true,
+      showNativeProfile: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -379,6 +386,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('realtime-pipeline' in featuresJson && isBoolean(featuresJson['realtime-pipeline'])) {
       features.showRealtimePipeline = featuresJson['realtime-pipeline'];
+    }
+    if ('native-profile' in featuresJson && isBoolean(featuresJson['native-profile'])) {
+      features.showNativeProfile = featuresJson['native-profile'];
     }
     return features;
   }
