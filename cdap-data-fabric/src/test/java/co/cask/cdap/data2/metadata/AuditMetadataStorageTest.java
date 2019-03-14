@@ -19,6 +19,7 @@ package co.cask.cdap.data2.metadata;
 import co.cask.cdap.api.metadata.Metadata;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.audit.AuditTestModule;
@@ -136,7 +137,8 @@ public class AuditMetadataStorageTest extends MetadataStorageTest {
     Injector injector = DatasetMetadataStorageTest.doSetup(new AuditTestModule());
     cConf = injector.getInstance(CConfiguration.class);
     auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
-    storage = new AuditMetadataStorage(DatasetMetadataStorageTest.storage);
+    storage = new AuditMetadataStorage(DatasetMetadataStorageTest.storage,
+                                       injector.getInstance(MetricsCollectionService.class));
     ((AuditMetadataStorage) storage).setAuditPublisher(auditPublisher);
   }
 

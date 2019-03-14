@@ -630,7 +630,7 @@ public final class Constants {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
     // metrics context for system storage
-    public static final Map<String, String> METRICS_TAGS = ImmutableMap.of(
+    public static final Map<String, String> STORAGE_METRICS_TAGS = ImmutableMap.of(
       Tag.COMPONENT, "system.storage",
       Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace());
 
@@ -766,6 +766,13 @@ public final class Constants {
       public static final String ACTIVE_CONNECTIONS = "structured.table.connection.active";
       public static final String IDLE_CONNECTIONS = "structured.table.connection.idle";
       public static final String ERROR_CONNECTIONS = "structured.table.connection.error";
+    }
+
+    /**
+     * Metadata storage metrics
+     */
+    public static final class MetadataStorage {
+      public static final String METRICS_PREFIX = "metadata.storage.";
     }
   }
 

@@ -64,7 +64,7 @@ public class NoSqlTransactionRunner implements TransactionRunner {
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     try {
-      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
+      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
       transactional.execute(
         datasetContext -> runnable.run(new NoSqlStructuredTableContext(tableAdmin, datasetContext,
                                                                        metricsCollector, emitTimeMetrics))
