@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.logging.appender.loader.LogAppenderLoaderService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -506,6 +507,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     services.add(metricsCollectionService);
     services.add(injector.getInstance(ZKClientService.class));
+    services.add(injector.getInstance(LogAppenderLoaderService.class));
 
     switch (ProgramRunners.getClusterMode(programOptions)) {
       case ON_PREMISE:
