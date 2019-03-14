@@ -154,6 +154,14 @@ public class DataprocProvisioner implements Provisioner {
       }
     }
 
+    // If preferExternalIp has been set to true in system context then it gets the highest preference.
+    String systemPreferExternalIP = systemContext.getProperties().getOrDefault(DataprocConf.PREFER_EXTERNAL_IP,
+                                                                               "false");
+    if (Boolean.parseBoolean(systemPreferExternalIP.trim())) {
+      LOG.debug("System configuration set to prefer external IP. Will use external IPs for DataProc cluster.");
+      contextProperties.put(DataprocConf.PREFER_EXTERNAL_IP, "true");
+    }
+
     DataprocConf conf = DataprocConf.create(contextProperties, sshKeyPair.getPublicKey());
     String clusterName = getClusterName(context.getProgramRun());
 

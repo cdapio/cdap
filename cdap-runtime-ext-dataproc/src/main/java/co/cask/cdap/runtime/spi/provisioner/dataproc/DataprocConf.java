@@ -16,8 +16,6 @@
 
 package co.cask.cdap.runtime.spi.provisioner.dataproc;
 
-import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
-import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHPublicKey;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
@@ -42,6 +40,7 @@ import javax.annotation.Nullable;
 public class DataprocConf {
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
+  static final String PREFER_EXTERNAL_IP = "preferExternalIP";
 
   private final String accountKey;
   private final String region;
@@ -263,7 +262,7 @@ public class DataprocConf {
     long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
     long pollInterval = getLong(properties, "pollInterval", 2);
 
-    boolean preferExternalIP = Boolean.parseBoolean(properties.get("preferExternalIP"));
+    boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
 
     // always use 'global' region until CDAP-14376 is fixed.
     return new DataprocConf(accountKey, "global", zone, projectId, network,
