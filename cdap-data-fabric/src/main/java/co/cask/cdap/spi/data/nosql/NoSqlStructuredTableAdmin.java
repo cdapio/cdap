@@ -67,6 +67,9 @@ public final class NoSqlStructuredTableAdmin implements StructuredTableAdmin {
 
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
+    if (registry.getSpecification(spec.getTableId()) != null) {
+      throw new TableAlreadyExistsException(spec.getTableId());
+    }
     LOG.info("Creating table {} in namespace {}", spec, NamespaceId.SYSTEM);
     DatasetAdmin indexTableAdmin = indexTableDefinition.getAdmin(SYSTEM_CONTEXT, indexTableSpec, null);
     if (!indexTableAdmin.exists()) {

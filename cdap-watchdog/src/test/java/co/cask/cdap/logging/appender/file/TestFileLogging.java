@@ -115,7 +115,7 @@ public class TestFileLogging {
 
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
-    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class), false);
 
     LogAppender appender = injector.getInstance(LocalLogAppender.class);
     new LogAppenderInitializer(appender).initialize("TestFileLogging");

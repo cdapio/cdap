@@ -62,7 +62,7 @@ public class SqlArtifactStoreTest extends ArtifactStoreTest {
                                       injector.getInstance(LocationFactory.class),
                                       injector.getInstance(Impersonator.class),
                                       transactionRunner);
-    StoreDefinition.ArtifactStore.createTables(structuredTableAdmin);
+    StoreDefinition.ArtifactStore.createTables(structuredTableAdmin, false);
   }
 
   @AfterClass

@@ -51,7 +51,7 @@ public class SqlOwnerStoreTest extends OwnerStoreTest {
     registry.initialize();
     StructuredTableAdmin structuredTableAdmin = new PostgresSqlStructuredTableAdmin(registry, dataSource);
     TransactionRunner transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
-    StoreDefinition.OwnerStore.createTables(structuredTableAdmin);
+    StoreDefinition.OwnerStore.createTables(structuredTableAdmin, false);
     ownerStore = new DefaultOwnerStore(transactionRunner);
   }
 

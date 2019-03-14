@@ -50,7 +50,7 @@ public class SqlAppMetadataStoreTest extends AppMetadataStoreTest {
     StructuredTableAdmin structuredTableAdmin =
       new PostgresSqlStructuredTableAdmin(structuredTableRegistry, dataSource);
     transactionRunner = new SqlTransactionRunner(structuredTableAdmin, dataSource);
-    StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin);
+    StoreDefinition.AppMetadataStore.createTables(structuredTableAdmin, false);
   }
 
   @AfterClass

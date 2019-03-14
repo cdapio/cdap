@@ -105,7 +105,7 @@ public class FileMetadataTest {
     txManager.startAndWait();
     StructuredTableRegistry structuredTableRegistry = injector.getInstance(StructuredTableRegistry.class);
     structuredTableRegistry.initialize();
-    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class));
+    StoreDefinition.LogFileMetaStore.createTables(injector.getInstance(StructuredTableAdmin.class), false);
   }
 
   @AfterClass

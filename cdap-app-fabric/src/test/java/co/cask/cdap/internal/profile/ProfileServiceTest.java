@@ -90,7 +90,7 @@ public abstract class ProfileServiceTest {
   public void beforeTest() throws IOException, TableAlreadyExistsException {
     StructuredTableAdmin tableAdmin = getTableAdmin();
     if (tableAdmin.getSpecification(StoreDefinition.ProfileStore.PROFILE_STORE_TABLE) == null) {
-      StoreDefinition.ProfileStore.createTables(tableAdmin);
+      StoreDefinition.ProfileStore.createTables(tableAdmin, false);
     }
     profileService = getProfileService();
     profileService.clear();

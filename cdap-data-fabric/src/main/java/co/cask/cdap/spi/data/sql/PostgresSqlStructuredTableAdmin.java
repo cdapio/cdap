@@ -23,6 +23,7 @@ import co.cask.cdap.spi.data.table.StructuredTableRegistry;
 import co.cask.cdap.spi.data.table.StructuredTableSpecification;
 import co.cask.cdap.spi.data.table.field.FieldType;
 import com.google.common.base.Joiner;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
@@ -56,17 +59,22 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
   @Override
   public void create(StructuredTableSpecification spec) throws IOException, TableAlreadyExistsException {
     try (Connection connection = dataSource.getConnection()) {
-      if (tableExistsInternal(connection, spec.getTableId())) {
+      // If the table is registered, the table and the indexes must get created. If not, we need to verify the
+      // table existence, index existence and then register for the table.
+      if (registry.getSpecification(spec.getTableId()) != null) {
         throw new TableAlreadyExistsException(spec.getTableId());
       }
 
-      // Create table
-      LOG.info("Creating table {}", spec);
       try (Statement statement = connection.createStatement()) {
-        statement.execute(getCreateStatement(spec));
+        if (!tableExistsInternal(connection, spec.getTableId())) {
+          // Create table
+          LOG.info("Creating table {}", spec);
+          statement.execute(getCreateStatement(spec));
+        }
 
         // Create indexes
-        for (String indexStatement : getCreateIndexStatements(spec)) {
+        for (String indexStatement : getCreateIndexStatements(spec.getTableId(),
+                                                              getNonExistIndexes(connection, spec))) {
           LOG.debug("Create index statement: {}", indexStatement);
           statement.execute(indexStatement);
         }
@@ -84,6 +92,7 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     return registry.getSpecification(tableId);
   }
 
+  // TODO: CDAP-15068 - make drop table idempotent
   @Override
   public void drop(StructuredTableId tableId) throws IOException {
     LOG.info("Dropping table {}", tableId);
@@ -114,6 +123,26 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     }
   }
 
+  private Set<String> getNonExistIndexes(Connection connection,
+                                         StructuredTableSpecification specification) throws SQLException {
+    DatabaseMetaData metaData = connection.getMetaData();
+    Set<String> existingIndexes = new HashSet<>();
+    Set<String> indexes = new HashSet<>(specification.getIndexes());
+    try (ResultSet rs = metaData.getIndexInfo(null, null,
+                                              specification.getTableId().getName(), false, false)) {
+      while (rs.next()) {
+        // the COLUMN_NAME will return the column that is indexed, which is more intuitive to use INDEX_NAME, also
+        // null can be returned if the created index is of tableIndexStatistic, though we don't create indexes of this
+        // type, it is safe to only add non-null column name.
+        String columnName = rs.getString("COLUMN_NAME");
+        if (columnName != null) {
+          existingIndexes.add(columnName);
+        }
+      }
+    }
+    return Sets.difference(indexes, existingIndexes);
+  }
+
   private String getCreateStatement(StructuredTableSpecification specification) {
     StringBuilder createStmt = new StringBuilder();
     createStmt.append("CREATE TABLE ").append(specification.getTableId().getName()).append(" (");
@@ -130,10 +159,10 @@ public class PostgresSqlStructuredTableAdmin implements StructuredTableAdmin {
     return createStmt.toString();
   }
 
-  private List<String> getCreateIndexStatements(StructuredTableSpecification specification) {
-    String table = specification.getTableId().getName();
-    List<String> statements = new ArrayList<>(specification.getIndexes().size());
-    for (String column : specification.getIndexes()) {
+  private List<String> getCreateIndexStatements(StructuredTableId tableId, Set<String> indexColumns) {
+    String table = tableId.getName();
+    List<String> statements = new ArrayList<>(indexColumns.size());
+    for (String column : indexColumns) {
       statements.add(String.format("CREATE INDEX %s_%s_idx ON %s (%s)", table, column, table, column));
     }
     return statements;
