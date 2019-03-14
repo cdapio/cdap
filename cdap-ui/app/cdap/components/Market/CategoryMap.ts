@@ -33,10 +33,6 @@ const CATEGORY_MAP = {
     icon: 'icon-plug',
     displayName: T.translate('features.Market.tabs.plugins'),
   },
-  datapack: {
-    icon: 'icon-datapacks',
-    displayName: T.translate('features.Market.tabs.datapacks'),
-  },
   '3rd-party-artifact': {
     icon: 'icon-artifacts',
     displayName: T.translate('features.Market.tabs.artifacts'),
