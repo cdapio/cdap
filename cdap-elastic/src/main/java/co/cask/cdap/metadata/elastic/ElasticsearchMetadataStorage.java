@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata.elastic;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -25,6 +26,8 @@ import co.cask.cdap.common.metadata.MetadataUtil;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
+import co.cask.cdap.common.utils.Checksums;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.spi.metadata.Metadata;
 import co.cask.cdap.spi.metadata.MetadataChange;
 import co.cask.cdap.spi.metadata.MetadataConstants;
@@ -60,6 +63,8 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -78,6 +83,7 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -123,7 +129,8 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String SETTING_NUMBER_OF_REPLICAS = "number_of_replicas";
   private static final String SETTING_MAX_RESULT_WINDOW = "max_result_window";
 
-  private static final String MAPPING_RESOURCE = "index.mapping.json";
+  @VisibleForTesting
+  static final String MAPPING_RESOURCE = "index.mapping.json";
 
   // ScopedName needs a type adapter because it is used as a key in a map,
   // which is not supported by default in Gson:
@@ -222,7 +229,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
         LOG.info("Creating index '{}' with settings: {}", indexName, settings);
         CreateIndexRequest createIndexRequest = new CreateIndexRequest(indexName);
         createIndexRequest.settings(settings, XContentType.JSON);
-        createIndexRequest.mapping(DOC_TYPE, getMapping(), XContentType.JSON);
+        createIndexRequest.mapping(DOC_TYPE, createMappings(), XContentType.JSON);
         CreateIndexResponse response = client.indices().create(createIndexRequest, RequestOptions.DEFAULT);
         if (!response.isAcknowledged()) {
           throw new IOException("Create index request was not acknowledged by EleasticSearch: " + response);
@@ -249,13 +256,43 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     }
   }
 
-  private String getMapping() throws IOException {
+  /**
+   * The only way to store metadata for an index in Elasticsearch is to create a mapping
+   * for "_meta". We do this to store the version of CDAP that creates the index.
+   */
+  public VersionInfo getVersionInfo() throws IOException {
+    GetMappingsRequest request = new GetMappingsRequest().indices(indexName);
+    GetMappingsResponse response = client.indices().getMapping(request, RequestOptions.DEFAULT);
+    MappingMetaData mapping = response.getMappings().get(indexName).get(DOC_TYPE);
+    // Elastic allows arbitrary structure as the mapping. In our index.mappings.json, it is
+    // a map from String to String. That is why it expected to be safe to cast here.
+    @SuppressWarnings("unchecked")
+    Map<String, String> meta = (Map<String, String>) mapping.getSourceAsMap().get("_meta");
+    LOG.trace("Index mapping for _meta: {}", meta);
+    try {
+      return new VersionInfo(new ProjectInfo.Version(meta.get(Config.MAPPING_CDAP_VERSION)),
+                             Integer.parseInt(meta.get(Config.MAPPING_METADATA_VERSION)),
+                             Long.parseLong(meta.get(Config.MAPPING_MAPPING_CHECKSUM)));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+        "Unable to extract version info from index mappings: " + mapping.getSourceAsMap(), e);
+    }
+  }
+
+  private String createMappings() throws IOException {
     @SuppressWarnings("ConstantConditions")
     URL url = getClass().getClassLoader().getResource(MAPPING_RESOURCE);
     if (url == null) {
       throw new IllegalStateException("Index mapping file '" + MAPPING_RESOURCE + "'not found in classpath");
     }
-    return Resources.toString(url, Charsets.UTF_8);
+    // read the mappings file, replace the CDAP_VERSION placeholder with current version
+    String mappings = Resources.toString(url, Charsets.UTF_8);
+    @SuppressWarnings("ConstantConditions")
+    long checksum = Checksums.fingerprint64(Bytes.toBytes(mappings));
+    return mappings
+      .replace(Config.MAPPING_CDAP_VERSION_PLACEHOLDER, ProjectInfo.getVersion().toString())
+      .replace(Config.MAPPING_METADATA_VERSION_PLACEHOLDER, Integer.toString(VersionInfo.METADATA_VERSION))
+      .replace(Config.MAPPING_MAPPING_CHECKSUM_PLACEHOLDER, Long.toString(checksum));
   }
 
   // Elasticsearch index settings, used when creating the index
@@ -263,7 +300,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     String numShards = cConf.get(Config.CONF_ELASTIC_NUM_SHARDS);
     String numReplicas = cConf.get(Config.CONF_ELASTIC_NUM_REPLICAS);
     String maxResultWindow = cConf.get(Config.CONF_ELASTIC_WINDOW_SIZE);
-    Map<String, Integer> indexSettings = new HashMap<>();
+    Map<String, Object> indexSettings = new HashMap<>();
     if (numShards != null) {
       indexSettings.put(SETTING_NUMBER_OF_SHARDS, Integer.parseInt(numShards));
     }
@@ -273,7 +310,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
     if (maxResultWindow != null) {
       indexSettings.put(SETTING_MAX_RESULT_WINDOW, Integer.parseInt(maxResultWindow));
     }
-
     return ("{" +
       (indexSettings.isEmpty() ? "" : "'index': " + GSON.toJson(indexSettings) + ",") +
       "  'analysis': {" +

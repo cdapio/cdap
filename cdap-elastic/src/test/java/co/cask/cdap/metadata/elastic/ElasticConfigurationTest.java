@@ -16,7 +16,12 @@
 
 package co.cask.cdap.metadata.elastic;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.utils.Checksums;
+import co.cask.cdap.common.utils.ProjectInfo;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
@@ -29,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Random;
 import javax.annotation.Nullable;
 
@@ -38,18 +44,13 @@ import javax.annotation.Nullable;
 public class ElasticConfigurationTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(ElasticConfigurationTest.class);
+  private String indexName;
+  private String elasticPort;
 
   @Test
   public void testIndexSetup() throws IOException {
 
-    String indexName = "idx" + new Random(System.currentTimeMillis()).nextInt();
-    String elasticPort = System.getProperty("elastic.http.port");
-    elasticPort = (elasticPort != null && !elasticPort.isEmpty()) ? elasticPort : "9200";
-    LOG.info("Elasticsearch port is {}, index name is {}", elasticPort, indexName);
-
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
-    cConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
+    CConfiguration cConf = createCConf();
 
     // shards defaults to 5, and replicas default 1 in Elasticsearch
     // max result window defaults to 10000 but this default is not returned in the settings
@@ -64,6 +65,19 @@ public class ElasticConfigurationTest {
     cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
     testIndexConfig(cConf, indexName, elasticPort, 4, 2, 100);
+  }
+
+  private CConfiguration createCConf() {
+    indexName = "idx" + new Random(System.currentTimeMillis()).nextInt();
+    elasticPort = System.getProperty("elastic.http.port");
+    elasticPort = (elasticPort != null && !elasticPort.isEmpty()) ? elasticPort : "9200";
+    LOG.info("Elasticsearch port is {}, index name is {}", elasticPort, indexName);
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Config.CONF_ELASTIC_INDEX_NAME, indexName);
+    cConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
+
+    return cConf;
   }
 
   private void testIndexConfig(CConfiguration cConf, String indexName, String elasticPort,
@@ -84,6 +98,25 @@ public class ElasticConfigurationTest {
           Assert.assertEquals(String.valueOf(replicas), response.getSetting(indexName, "index.number_of_replicas"));
           Assert.assertEquals(String.valueOf(shards), response.getSetting(indexName, "index.number_of_shards"));
         }
+      } finally {
+        store.dropIndex();
+      }
+    }
+  }
+
+  @Test
+  public void testVersionInfo() throws IOException {
+    CConfiguration cConf = createCConf();
+    try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf)) {
+      store.createIndex();
+      try {
+        VersionInfo info = store.getVersionInfo();
+        Assert.assertEquals(0, ProjectInfo.getVersion().compareTo(info.getCdapVersion()));
+        Assert.assertEquals(VersionInfo.METADATA_VERSION, info.getMetadataVersion());
+        URL url = getClass().getClassLoader().getResource(ElasticsearchMetadataStorage.MAPPING_RESOURCE);
+        //noinspection ConstantConditions
+        Assert.assertEquals(Checksums.fingerprint64(Bytes.toBytes(Resources.toString(url, Charsets.UTF_8))),
+                            info.getMappingsChecksum());
       } finally {
         store.dropIndex();
       }
