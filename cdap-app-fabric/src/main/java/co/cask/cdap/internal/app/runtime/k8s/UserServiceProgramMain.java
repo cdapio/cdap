@@ -46,6 +46,7 @@ import co.cask.cdap.data2.audit.AuditModule;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.internal.app.program.StateChangeListener;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -204,8 +205,9 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     ProgramRunner programRunner = injector.getInstance(ServiceProgramRunner.class);
     File appSpecFile = new File(options.getAppSpecPath());
     ApplicationSpecification appSpec = readJsonFile(appSpecFile, ApplicationSpecification.class);
-    UserService userService = new UserService(cConf, artifactFinder, programRunner, appSpec, programOptions,
-                                              programRunId, options.getBindAddress());
+    ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    UserService userService = new UserService(cConf, artifactFinder, programRunner, programStateWriter, appSpec,
+                                              programOptions, programRunId, options.getBindAddress());
     services.add(userService);
     closeableResources.add(userService);
   }
@@ -245,9 +247,12 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     private Program program;
 
     private UserService(CConfiguration cConf, ArtifactFinder artifactFinder, ProgramRunner programRunner,
-                        ApplicationSpecification appSpec, ProgramOptions programOptions, ProgramRunId programRunId,
-                        String bindHost) {
+                        ProgramStateWriter programStateWriter, ApplicationSpecification appSpec,
+                        ProgramOptions programOptions, ProgramRunId programRunId, String bindHost) {
       this.controllerFuture = new CompletableFuture<>();
+      this.controllerFuture.thenAcceptAsync(
+        c -> c.addListener(new StateChangeListener(programRunId, null, programStateWriter),
+                           Threads.SAME_THREAD_EXECUTOR));
       this.programCompletion = new CompletableFuture<>();
       this.cConf = cConf;
       this.programRunner = programRunner;
