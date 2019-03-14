@@ -26,6 +26,7 @@ import { MySearchApi } from 'api/search';
 import { GLOBALS, SYSTEM_NAMESPACE } from 'services/global-constants';
 import isNil from 'lodash/isNil';
 import { SCOPES } from 'services/global-constants';
+import { Theme } from 'services/ThemeHelper';
 
 export const getProfileMetricsBody = (
   queryId,
@@ -184,7 +185,12 @@ export const getProfiles = (namespace) => {
   }
 
   profileObservable.subscribe(([systemProfiles = [], namespaceProfiles = []]) => {
-    let profiles = namespaceProfiles.concat(systemProfiles).map((profile) => ({
+    let filteredSystemProfiles = systemProfiles;
+    if (Theme.showNativeProfile === false) {
+      filteredSystemProfiles = systemProfiles.filter((profile) => profile.name !== 'native');
+    }
+
+    let profiles = namespaceProfiles.concat(filteredSystemProfiles).map((profile) => ({
       ...profile,
       oneDayMetrics: {},
       overAllMetrics: {},
