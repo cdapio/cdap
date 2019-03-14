@@ -33,6 +33,16 @@
   align-items: flex-start;
   overflow-x: hidden;
 
+  &.no-header {
+    height: calc(100vh - 105px);
+  }
+  &.no-header-footer {
+    height: calc(100vh - 50px);
+  }
+  &.no-footer {
+    height: calc(100vh - 100px);
+  }
+
   .entities-container {
     padding: 0 0 0 5px;
     display: flex;

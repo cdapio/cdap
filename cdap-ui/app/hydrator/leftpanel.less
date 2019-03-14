@@ -28,6 +28,16 @@ body.theme-cdap.state-hydrator-create {
     z-index: 999;
     width: 130px;
     background: #e1e1e1;
+    &.no-header{
+      top: 0px;
+    }
+    &.no-footer{
+      bottom: 0px;
+    }
+    &.no-header-footer{
+      top: 0px;
+      bottom: 0px;
+    }
 
     .transition(width 0.2s ease);
     &.expanded {

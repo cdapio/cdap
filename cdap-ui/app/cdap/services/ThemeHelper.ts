@@ -21,6 +21,7 @@ import isBoolean from 'lodash/isBoolean';
 
 interface IThemeJSON {
   "spec-version": string;
+  "is-customer-MWC"?: boolean;
 }
 
 interface IJsonFeatureNames {
@@ -28,6 +29,7 @@ interface IJsonFeatureNames {
   "control-center"?: string;
   "dashboard"?: string;
   "data-prep"?: string;
+  "feature-engineering"?: string;
   "entities"?: string;
   "hub"?: string;
   "metadata"?: string;
@@ -63,12 +65,17 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     "footer-text"?: string;
     "footer-link"?: string;
     "feature-names"?: IJsonFeatureNames;
+    "show-footer"?: boolean;
+    "show-header"?: boolean;
+    "show-pipeline-create-button"?: boolean;
+    "show-data-prep-plus-button"?: boolean;
   };
   "features"?: {
     "about-product"?: boolean;
     "dashboard"?: boolean;
     "reports"?: boolean;
     "data-prep"?: boolean;
+    "feature-engineering"?: boolean;
     "pipelines"?: boolean;
     "analytics"?: boolean;
     "rules-engine"?: boolean;
@@ -132,6 +139,7 @@ interface IFeatureNames {
   controlCenter: string;
   dashboard: string;
   dataPrep: string;
+  featureEngineering: string;
   entities: string;
   hub: string;
   metadata: string;
@@ -145,12 +153,15 @@ interface IThemeObj {
   productDescription?: string;
   footerText?: string;
   footerLink?: string;
+  showFooter?: boolean;
+  showHeader?: boolean;
   productLogoNavbar?: string;
   productLogoAbout?: string;
   favicon?: string;
   showDashboard?: boolean;
   showReports?: boolean;
   showDataPrep?: boolean;
+  showFeatureEngineering?: boolean;
   showPipelines?: boolean;
   showAnalytics?: boolean;
   showRulesEngine?: boolean;
@@ -160,17 +171,23 @@ interface IThemeObj {
   showAddNamespace?: boolean;
   featureNames?: IFeatureNames;
   showAboutProductModal?: boolean;
+  showPipelineCreateButton?: boolean;
+  showDataPrepPlusButton?: boolean;
+  isCustomerMWC?: boolean;
 }
 
 function getTheme(): IThemeObj {
   let theme: IThemeObj = {};
   const DEFAULT_THEME_JSON: IThemeJSON = {
     'spec-version': '1.0',
+    'is-customer-MWC': true,
   };
 
   const themeJSON = window.CDAP_UI_THEME || DEFAULT_THEME_JSON;
   const specVersion = themeJSON['spec-version'] || '1.0';
-
+  if (window.CDAP_UI_THEME['is-customer-MWC']) {
+    theme.isCustomerMWC = window.CDAP_UI_THEME['is-customer-MWC'];
+  }
   if (specVersion === '1.0') {
     theme = {
       ...theme,
@@ -198,11 +215,16 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
+      showFooter: true,
+      showHeader: true,
+      showPipelineCreateButton: true,
+      showDataPrepPlusButton: true,
       featureNames: {
         analytics: 'Analytics',
         controlCenter: 'Control Center',
         dashboard: 'Dashboard',
         dataPrep: 'Preparation',
+        featureEngineering: 'Feature Engineering',
         entities: 'Entities',
         hub: 'Hub',
         metadata: 'Metadata',
@@ -225,6 +247,18 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('footer-link' in contentJson) {
       content.footerLink = contentJson['footer-link'];
+    }
+    if ('show-footer' in contentJson) {
+      content.showFooter = contentJson['show-footer'];
+    }
+    if ('show-header' in contentJson) {
+      content.showHeader = contentJson['show-header'];
+    }
+    if ('show-pipeline-create-button' in contentJson) {
+      content.showPipelineCreateButton = contentJson['show-pipeline-create-button'];
+    }
+    if ('show-data-prep-plus-button' in contentJson) {
+      content.showDataPrepPlusButton = contentJson['show-data-prep-plus-button'];
     }
     if ('product-logo-navbar' in contentJson) {
       const productLogoNavbar = window.CDAP_UI_THEME.content['product-logo-navbar'];
@@ -263,6 +297,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       if ('data-prep' in contentJson['feature-names']) {
         featureNames.dataPrep = objectQuery(contentJson, 'feature-names', 'data-prep');
       }
+      if ('feature-engineering' in contentJson['feature-names']) {
+        featureNames.featureEngineering = objectQuery(contentJson, 'feature-names', 'feature-engineering');
+      }
       if ('entities' in contentJson['feature-names']) {
         featureNames.entities = objectQuery(contentJson, 'feature-names', 'entities');
       }
@@ -294,6 +331,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showDashboard: true,
       showReports: true,
       showDataPrep: true,
+      showFeatureEngineering: false,
       showPipelines: true,
       showAnalytics: true,
       showRulesEngine: true,
@@ -314,6 +352,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('data-prep' in featuresJson && isBoolean(featuresJson['data-prep'])) {
       features.showDataPrep = featuresJson['data-prep'];
+    }
+    if ('feature-engineering' in featuresJson && isBoolean(featuresJson['feature-engineering'])) {
+      features.showFeatureEngineering = featuresJson['feature-engineering'];
     }
     if ('pipelines' in featuresJson && isBoolean(featuresJson.pipelines)) {
       features.showPipelines = featuresJson.pipelines;

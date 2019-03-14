@@ -38,13 +38,15 @@ public class PluginInfo extends PluginSummary {
   private final Set<String> endpoints;
 
   public PluginInfo(PluginClass pluginClass, ArtifactSummary artifactSummary) {
-    this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(), pluginClass.getClassName(),
+    this(pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(), pluginClass.getPluginInput(), 
+         pluginClass.getPluginOutput(), pluginClass.getPluginFunction(), pluginClass.getClassName(),
          pluginClass.getConfigFieldName(), artifactSummary, pluginClass.getProperties(), pluginClass.getEndpoints());
   }
 
-  public PluginInfo(String name, String type, String description, String className, @Nullable String configFieldName,
+  public PluginInfo(String name, String type, String description, String[] pluginInput, String[] pluginOutput, 
+                    String[] pluginFunction, String className, @Nullable String configFieldName, 
                     ArtifactSummary artifact, Map<String, PluginPropertyField> properties, Set<String> endpoints) {
-    super(name, type, description, className, artifact);
+    super(name, type, description, pluginInput, pluginOutput, pluginFunction, className, artifact);
     this.configFieldName = configFieldName;
     this.properties = properties;
     this.endpoints = endpoints;
