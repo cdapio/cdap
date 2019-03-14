@@ -26,6 +26,8 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
@@ -33,6 +35,7 @@ import java.util.Collections;
  * Starts a program if it exists and is not running.
  */
 public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
+  private static final Logger LOG = LoggerFactory.getLogger(ProgramStarter.class);
   private final ProgramLifecycleService programLifecycleService;
 
   @Inject
@@ -51,12 +54,14 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
     }
 
     // do nothing if the program is already running
-    if (programLifecycleService.getProgramStatus(programId) != ProgramStatus.STOPPED) {
+    ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
+    if (currentStatus != ProgramStatus.STOPPED) {
+      LOG.info("Program {} is in the {} state, skipping start program bootstrap step.", programId, currentStatus);
       return;
     }
 
     try {
-      programLifecycleService.start(programId, Collections.emptyMap(), false);
+      programLifecycleService.run(programId, Collections.emptyMap(), false);
     } catch (ConflictException e) {
       // thrown if the program is already running, which means it was started after the status check above.
       // ignore this, as it means the program is running as expected
