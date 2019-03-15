@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Class to scan and also delete meta data
@@ -52,38 +53,16 @@ public class FileMetadataCleaner {
    * @param fileCleanupBatchSize transaction clean up batch size.
    * @return list of DeleteEntry - used to get files to delete for which metadata has already been deleted
    */
-  @SuppressWarnings("ConstantConditions")
   public List<DeletedEntry> scanAndGetFilesToDelete(final long tillTime, final int fileCleanupBatchSize) {
     final List<DeletedEntry> toDelete = new ArrayList<>(fileCleanupBatchSize);
 
     try {
-      boolean reachedEnd = false;
       final AtomicReference<Range> range = new AtomicReference<>(Range.all());
       // stop cleaning up if there are no files to delete or if we have reached batch size
-      while (!reachedEnd && toDelete.size() < fileCleanupBatchSize) {
+      while (range.get() != null) {
         TransactionRunners.run(transactionRunner, context -> {
           StructuredTable table = context.getTable(StoreDefinition.LogFileMetaStore.LOG_FILE_META);
-          try (CloseableIterator<StructuredRow> iter = table.scan(range.get(), fileCleanupBatchSize)) {
-            while (iter.hasNext() && toDelete.size() < fileCleanupBatchSize) {
-              StructuredRow row = iter.next();
-              long creationTime = row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD);
-              if (creationTime <= tillTime) {
-                // expired - can be deleted
-                toDelete.add(
-                  new DeletedEntry(row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD),
-                                   row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
-                                   row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
-                                   row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)));
-              } else {
-                // skip this logging context and move to next one.
-                range.set(Range.from(ImmutableList.of(
-                  Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
-                                     row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD))),
-                                     Range.Bound.EXCLUSIVE));
-                break;
-              }
-            }
-          }
+          range.set(scanFilesToDelete(table, fileCleanupBatchSize, tillTime, toDelete, range));
         }, IOException.class);
       }
     } catch (IOException e) {
@@ -98,6 +77,36 @@ public class FileMetadataCleaner {
     }
     // toDelete is empty, safe to return that
     return toDelete;
+  }
+
+  @Nullable
+  @SuppressWarnings("ConstantConditions")
+  private Range scanFilesToDelete(StructuredTable table, int fileCleanupBatchSize, long tillTime,
+                                  List<DeletedEntry> toDelete, AtomicReference<Range> range) throws IOException {
+    try (CloseableIterator<StructuredRow> iter = table.scan(range.get(), fileCleanupBatchSize)) {
+      while (iter.hasNext()) {
+        if (toDelete.size() >= fileCleanupBatchSize) {
+          return null;
+        }
+        StructuredRow row = iter.next();
+        long creationTime = row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD);
+        if (creationTime <= tillTime) {
+          // expired - can be deleted
+          toDelete.add(new DeletedEntry(row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD),
+                                        row.getLong(StoreDefinition.LogFileMetaStore.EVENT_TIME_FIELD),
+                                        row.getLong(StoreDefinition.LogFileMetaStore.CREATION_TIME_FIELD),
+                                        row.getString(StoreDefinition.LogFileMetaStore.FILE_FIELD)));
+        } else {
+          // return range to skip this logging context and move to next one.
+          return Range.from(ImmutableList.of(
+            Fields.stringField(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD,
+                               row.getString(StoreDefinition.LogFileMetaStore.LOGGING_CONTEXT_FIELD))),
+                            Range.Bound.EXCLUSIVE);
+        }
+      }
+      // if there are no more files to delete, return next range as null.
+      return null;
+    }
   }
 
   /**
