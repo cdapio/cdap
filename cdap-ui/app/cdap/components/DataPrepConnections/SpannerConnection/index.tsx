@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -97,11 +97,10 @@ export default class SpannerConnection extends React.PureComponent<
 
     MyDataPrepApi.getConnection(params).subscribe(
       (res) => {
-        const info = objectQuery(res, 'values', 0);
-        const projectId = objectQuery(info, 'properties', 'projectId');
-        const serviceAccountKeyfile = objectQuery(info, 'properties', 'service-account-keyfile');
+        const projectId = objectQuery(res, 'properties', 'projectId');
+        const serviceAccountKeyfile = objectQuery(res, 'properties', 'service-account-keyfile');
 
-        const name = this.props.mode === ConnectionMode.Edit ? info.name : '';
+        const name = this.props.mode === ConnectionMode.Edit ? res.name : '';
 
         this.setState({
           name,

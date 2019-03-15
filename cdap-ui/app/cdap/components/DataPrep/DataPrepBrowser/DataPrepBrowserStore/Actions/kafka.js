@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import DataPrepBrowserStore, {
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import { objectQuery } from 'services/helpers';
 
 const setKafkaAsActiveBrowser = (payload) => {
   let { kafka, activeBrowser } = DataPrepBrowserStore.getState();
@@ -53,12 +52,10 @@ const setKafkaAsActiveBrowser = (payload) => {
 
   MyDataPrepApi.getConnection(params).subscribe(
     (res) => {
-      let info = objectQuery(res, 'values', 0);
-
-      MyDataPrepApi.listTopics({ context: namespace }, info).subscribe(
+      MyDataPrepApi.listTopics({ context: namespace }, res).subscribe(
         (topics) => {
           setKafkaProperties({
-            info,
+            info: res,
             topics: topics.values,
             connectionId: params.connectionId,
           });

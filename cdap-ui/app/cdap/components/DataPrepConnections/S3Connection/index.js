@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -137,12 +137,11 @@ export default class S3Connection extends Component {
 
     MyDataPrepApi.getConnection(params).subscribe(
       (res) => {
-        let info = objectQuery(res, 'values', 0),
-          accessKeyId = objectQuery(info, 'properties', 'accessKeyId'),
-          accessSecretKey = objectQuery(info, 'properties', 'accessSecretKey'),
-          region = objectQuery(info, 'properties', 'region');
+        const accessKeyId = objectQuery(res, 'properties', 'accessKeyId'),
+          accessSecretKey = objectQuery(res, 'properties', 'accessSecretKey'),
+          region = objectQuery(res, 'properties', 'region');
 
-        let name = this.props.mode === 'EDIT' ? info.name : '';
+        let name = this.props.mode === 'EDIT' ? res.name : '';
 
         this.setState({
           name,
