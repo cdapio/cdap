@@ -73,7 +73,11 @@ function getFaviconPath(uiThemeConfig) {
   let faviconPath = DIST_PATH + '/assets/img/favicon.png';
   let themeFaviconPath = objectQuery(uiThemeConfig, ['content', 'favicon-path']);
   if (themeFaviconPath) {
-    themeFaviconPath = CDAP_DIST_PATH + themeFaviconPath;
+    // If absolute path no need to modify as require'ing absolute path should
+    // be fine.
+    if (themeFaviconPath[0] !== '/') {
+      themeFaviconPath = `${CDAP_DIST_PATH}/${themeFaviconPath}`;
+    }
     try {
       if (require.resolve(themeFaviconPath)) {
         faviconPath = themeFaviconPath;
