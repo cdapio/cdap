@@ -92,7 +92,7 @@
       </div>
     </div>
     <div class="btn"
-         ng-if="HydratorPlusPlusTopPanelCtrl.state.artifact.name === HydratorPlusPlusTopPanelCtrl.GLOBALS.etlDataPipeline"
+         ng-if="HydratorPlusPlusTopPanelCtrl.showSchedule"
          ng-class="{'active': HydratorPlusPlusTopPanelCtrl.viewScheduler}"
          ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.toggleScheduler()"
          uib-tooltip="Start building a pipeline before scheduling"
