@@ -21,7 +21,7 @@
          "url": "/cdap_assets/img/CDAP_darkgray.png"
       }
     },
-    "favicon-path": "/cdap_assets/img/favicon.png",
+    "favicon-path": "cdap_assets/img/favicon.png",
     "footer-text": "Licensed under the Apache License, Version 2.0",
     "footer-link": "https://www.apache.org/licenses/LICENSE-2.0"
   },
