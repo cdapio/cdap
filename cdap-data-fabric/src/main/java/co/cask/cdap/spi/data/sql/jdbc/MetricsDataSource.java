@@ -45,7 +45,7 @@ public class MetricsDataSource implements DataSource {
 
   @Override
   public Connection getConnection() throws SQLException {
-    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
+    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
     try {
       Connection connection = dataSource.getConnection();
       metricsCollector.gauge(Constants.Metrics.StructuredTable.ACTIVE_CONNECTIONS, objectPool.getNumActive());
@@ -59,7 +59,7 @@ public class MetricsDataSource implements DataSource {
 
   @Override
   public Connection getConnection(String username, String password) throws SQLException {
-    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
+    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
     try {
       Connection connection = dataSource.getConnection(username, password);
       metricsCollector.gauge(Constants.Metrics.StructuredTable.ACTIVE_CONNECTIONS, objectPool.getNumActive());

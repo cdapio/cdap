@@ -58,7 +58,7 @@ public class RetryingSqlTransactionRunner implements TransactionRunner {
   @Override
   public void run(TxRunnable runnable) throws TransactionException {
     int retries = 0;
-    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
+    MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
     while (true) {
       try {
         transactionRunner.run(runnable);

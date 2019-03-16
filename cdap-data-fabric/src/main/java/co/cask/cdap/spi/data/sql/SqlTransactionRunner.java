@@ -67,7 +67,7 @@ public class SqlTransactionRunner implements TransactionRunner {
     }
 
     try {
-      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.METRICS_TAGS);
+      MetricsContext metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
       metricsCollector.increment(Constants.Metrics.StructuredTable.TRANSACTION_COUNT, 1L);
       connection.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
       connection.setAutoCommit(false);

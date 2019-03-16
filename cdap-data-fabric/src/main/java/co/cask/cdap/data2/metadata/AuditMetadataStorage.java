@@ -17,6 +17,9 @@
 package co.cask.cdap.data2.metadata;
 
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsCollector;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metadata.MetadataRecord;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
@@ -31,12 +34,14 @@ import co.cask.cdap.spi.metadata.MetadataStorage;
 import co.cask.cdap.spi.metadata.Read;
 import co.cask.cdap.spi.metadata.SearchRequest;
 import co.cask.cdap.spi.metadata.SearchResponse;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,13 +51,28 @@ import java.util.Set;
  * and publishes all metadata changes to the audit.
  */
 public class AuditMetadataStorage implements MetadataStorage {
+  private static final Map<MetadataMutation.Type, String> MUTATION_COUNT_MAP;
+  private static final Map<MetadataMutation.Type, String> MUTATION_ERROR_MAP;
+  static {
+    ImmutableMap.Builder<MetadataMutation.Type, String> countBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<MetadataMutation.Type, String> errorBuilder = ImmutableMap.builder();
+    EnumSet.allOf(MetadataMutation.Type.class).forEach(type -> {
+      countBuilder.put(type, type.name().toLowerCase() + ".count");
+      errorBuilder.put(type, type.name().toLowerCase() + ".error");
+    });
+    MUTATION_COUNT_MAP = countBuilder.build();
+    MUTATION_ERROR_MAP = errorBuilder.build();
+  }
 
   private final MetadataStorage storage;
+  private final MetricsCollectionService metricsCollectionService;
   private AuditPublisher auditPublisher;
 
   @Inject
-  public AuditMetadataStorage(@Named(DataSetsModules.SPI_BASE_IMPL) MetadataStorage storage) {
+  public AuditMetadataStorage(@Named(DataSetsModules.SPI_BASE_IMPL) MetadataStorage storage,
+                              MetricsCollectionService metricsCollectionService) {
     this.storage = storage;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @SuppressWarnings("unused")
@@ -63,24 +83,55 @@ public class AuditMetadataStorage implements MetadataStorage {
 
   @Override
   public void createIndex() throws IOException {
-    storage.createIndex();
+    try {
+      storage.createIndex();
+      emitMetrics("createIndex.count");
+    } catch (Exception e) {
+      emitMetrics("createIndex.error");
+      throw e;
+    }
   }
 
   @Override
   public void dropIndex() throws IOException {
-    storage.dropIndex();
+    try {
+      storage.dropIndex();
+      emitMetrics("dropIndex.count");
+    } catch (Exception e) {
+      emitMetrics("dropIndex.error");
+      throw e;
+    }
   }
 
   @Override
   public MetadataChange apply(MetadataMutation mutation) throws IOException {
-    MetadataChange change = storage.apply(mutation);
+    MetadataChange change;
+    try {
+      change = storage.apply(mutation);
+      emitMetrics(MUTATION_COUNT_MAP.get(mutation.getType()));
+    } catch (Exception e) {
+      emitMetrics(MUTATION_ERROR_MAP.get(mutation.getType()));
+      throw e;
+    }
     publishAudit(change);
     return change;
   }
 
   @Override
   public List<MetadataChange> batch(List<? extends MetadataMutation> mutations) throws IOException {
-    List<MetadataChange> changes = storage.batch(mutations);
+    List<MetadataChange> changes;
+    try {
+      changes = storage.batch(mutations);
+      for (MetadataMutation metadataMutation : mutations) {
+        emitMetrics(MUTATION_COUNT_MAP.get(metadataMutation.getType()));
+      }
+    } catch (Exception e) {
+      for (MetadataMutation metadataMutation : mutations) {
+        emitMetrics(MUTATION_ERROR_MAP.get(metadataMutation.getType()));
+      }
+      throw e;
+    }
+
     for (MetadataChange change : changes) {
       publishAudit(change);
     }
@@ -89,17 +140,36 @@ public class AuditMetadataStorage implements MetadataStorage {
 
   @Override
   public Metadata read(Read read) throws IOException {
-    return storage.read(read);
+    try {
+      Metadata metadata = storage.read(read);
+      emitMetrics("read.count");
+      return metadata;
+    } catch (Exception e) {
+      emitMetrics("read.error");
+      throw e;
+    }
   }
 
   @Override
   public SearchResponse search(SearchRequest request) throws IOException {
-    return storage.search(request);
+    try {
+      SearchResponse result = storage.search(request);
+      emitMetrics("search.count");
+      return result;
+    } catch (Exception e) {
+      emitMetrics("search.error");
+      throw e;
+    }
   }
 
   @Override
   public void close() {
     storage.close();
+  }
+
+  private void emitMetrics(String metricSuffix) {
+    MetricsCollector metricsCollector = metricsCollectionService.getContext(Constants.Metrics.STORAGE_METRICS_TAGS);
+    metricsCollector.increment(Constants.Metrics.MetadataStorage.METRICS_PREFIX + metricSuffix, 1L);
   }
 
   private void publishAudit(MetadataChange change) {
