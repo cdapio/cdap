@@ -20,6 +20,7 @@ import co.cask.cdap.common.io.ByteBuffers;
 import co.cask.cdap.logging.logbuffer.ConcurrentLogBufferWriter;
 import co.cask.cdap.logging.logbuffer.LogBufferRequest;
 import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.HandlerContext;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -31,6 +32,7 @@ import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -70,5 +72,14 @@ public class LogBufferHandler extends AbstractHttpHandler {
     //return new LogBufferRequest(partitionId, events);
     return new LogBufferRequest(partitionId,
                                 events.stream().map(ByteBuffers::getByteArray).collect(Collectors.toList()));
+  }
+
+  @Override
+  public void destroy(HandlerContext context) {
+    try {
+      writer.close();
+    } catch (IOException e) {
+      // close quietly
+    }
   }
 }

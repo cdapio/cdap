@@ -27,7 +27,10 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.framework.LogPipelineLoader;
 import co.cask.cdap.logging.framework.LogPipelineSpecification;
+import co.cask.cdap.logging.logbuffer.cleaner.LogBufferCleaner;
 import co.cask.cdap.logging.logbuffer.handler.LogBufferHandler;
+import co.cask.cdap.logging.logbuffer.recover.LogBufferRecoveryService;
+import co.cask.cdap.logging.meta.CheckpointManager;
 import co.cask.cdap.logging.meta.CheckpointManagerFactory;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.logbuffer.LogBufferPipelineConfig;
@@ -49,24 +52,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Service responsible for loading, starting and stopping log buffer pipelines, creating concurrent writer and
+ * Log Buffer Service responsible for:
+ * loading, starting and stopping log buffer pipelines
+ * creating concurrent writer
+ * starting log buffer cleaner service to clean up logs that have been persisted by log buffer pipelines
+ * recovering logs from log buffer
  * starting netty-http service to expose endpoint to process logs.
- *
- * TODO CDAP-14937 add log recovery mechanism upon restart
  */
 public class LogBufferService extends AbstractIdleService {
   private final DiscoveryService discoveryService;
-
   private final CConfiguration cConf;
   private final Provider<AppenderContext> contextProvider;
   private final CheckpointManagerFactory checkpointManagerFactory;
   private final List<Service> pipelines = new ArrayList<>();
+  private final List<CheckpointManager<LogBufferFileOffset>> checkpointManagers = new ArrayList<>();
 
   private Cancellable cancellable;
   private NettyHttpService httpService;
   private ConcurrentLogBufferWriter concurrentWriter;
+  private LogBufferRecoveryService recoveryService;
 
   @Inject
   public LogBufferService(CConfiguration cConf, DiscoveryService discoveryService,
@@ -85,8 +92,18 @@ public class LogBufferService extends AbstractIdleService {
     // start all the log pipelines
     validateAllFutures(Iterables.transform(pipelines, Service::start));
 
+    // recovery service and http handler will send log events to log pipelines. In order to avoid deleting file while
+    // reading them in recovery service, we will pass in an atomic boolean will be set to true by recovery service
+    // when it is done recovering data. So while recovery service is running, cleanup task will be a no-op
+    AtomicBoolean startCleanup = new AtomicBoolean(false);
+    // start log recovery service to recover all the pending logs.
+    recoveryService = new LogBufferRecoveryService(cConf, bufferPipelines, checkpointManagers, startCleanup);
+    recoveryService.startAndWait();
+
     // create concurrent writer
-    concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines);
+    concurrentWriter = new ConcurrentLogBufferWriter(cConf, bufferPipelines,
+                                                     new LogBufferCleaner(cConf, checkpointManagers,
+                                                                          startCleanup));
 
     // create and start http service
     httpService = createHttpService();
@@ -102,10 +119,7 @@ public class LogBufferService extends AbstractIdleService {
         cancellable.cancel();
       }
     } finally {
-      httpService.stop();
-      concurrentWriter.close();
-      // Stops all pipeline
-      validateAllFutures(Iterables.transform(pipelines, Service::stop));
+      stopAllServices();
     }
   }
 
@@ -147,16 +161,18 @@ public class LogBufferService extends AbstractIdleService {
       LogBufferPipelineConfig config =
         new LogBufferPipelineConfig(bufferSize, cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS),
                                     cConf.getLong(Constants.Logging.PIPELINE_CHECKPOINT_INTERVAL_MS),
-                                    cConf.getLong(Constants.LogBuffer.LOG_BUFFER_PIPELINE_BATCHSIZE, 1000));
+                                    cConf.getLong(Constants.LogBuffer.LOG_BUFFER_PIPELINE_BATCH_SIZE, 1000));
 
+      CheckpointManager checkpointManager = checkpointManagerFactory.create(pipelineSpec.getCheckpointPrefix(),
+                                                                            CheckpointManagerFactory.Type.LOG_BUFFER);
       LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
         new LogProcessorPipelineContext(cConf, context.getName(), context,
                                         context.getMetricsContext(), context.getInstanceId()), config,
-        checkpointManagerFactory.create(pipelineSpec.getCheckpointPrefix(),
-                                        CheckpointManagerFactory.Type.LOG_BUFFER), 0);
-      bufferPipelines.add(pipeline);
+        checkpointManager, 0);
       RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.log.process.");
       pipelines.add(new RetryOnStartFailureService(() -> pipeline, retryStrategy));
+      bufferPipelines.add(pipeline);
+      checkpointManagers.add(checkpointManager);
     }
 
     return bufferPipelines;
@@ -186,5 +202,16 @@ public class LogBufferService extends AbstractIdleService {
       .setHost(cConf.get(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.LogBuffer.LOG_BUFFER_SERVER_BIND_PORT))
       .build();
+  }
+
+  private void stopAllServices() throws Exception {
+    if (httpService != null) {
+      httpService.stop();
+    }
+    if (recoveryService != null) {
+      recoveryService.stopAndWait();
+    }
+    // Stops all pipeline
+    validateAllFutures(Iterables.transform(pipelines, Service::stop));
   }
 }

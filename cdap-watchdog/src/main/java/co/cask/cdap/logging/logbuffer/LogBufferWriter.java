@@ -19,6 +19,7 @@ package co.cask.cdap.logging.logbuffer;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.io.Closeables;
+import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -36,6 +37,8 @@ import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Appends logs to log buffer file. The file is rotated when it reaches max size. The log buffer file name is
@@ -52,6 +55,8 @@ public class LogBufferWriter implements Flushable, Closeable {
   private final LoggingEventSerializer logEventSerializer;
   private final LocationFactory locationFactory;
   private final long maxFileSizeInBytes;
+  private final Runnable cleaner;
+  private final ExecutorService executorService;
 
   // output stream to write to
   private OutputStream currOutputStream;
@@ -61,19 +66,20 @@ public class LogBufferWriter implements Flushable, Closeable {
   private long currFileId;
   private long writtenBytes;
 
-  public LogBufferWriter(String logBufferBaseDir, long maxFileSize) throws IOException {
+  public LogBufferWriter(String logBufferBaseDir, long maxFileSize, Runnable cleaner) throws IOException {
     File baseDir = new File(logBufferBaseDir);
     // make sure base dir already exists, if not create it.
     Files.createDirectories(baseDir.toPath());
     this.locationFactory = new LocalLocationFactory(baseDir);
     // max file size after which rotation should happen.
     this.maxFileSizeInBytes = maxFileSize;
+    this.cleaner = cleaner;
+    this.executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("log-buffer-cleaner"));
     this.logEventSerializer = new LoggingEventSerializer();
 
     // scan file names under base dir and get next monotonically increasing file id
     this.currFileId = getNextFileId(baseDir);
-    this.currOutputStream = new BufferedOutputStream(locationFactory.create(getFileName(currFileId))
-                                                       .getOutputStream());
+    this.currOutputStream = new BufferedOutputStream(locationFactory.create(getFileName(currFileId)).getOutputStream());
   }
 
   /**
@@ -103,7 +109,9 @@ public class LogBufferWriter implements Flushable, Closeable {
    * @throws IOException if there is any problem while writing to log buffer
    */
   private LogBufferFileOffset write(byte[] eventBytes) throws IOException {
+    long startFileId = currFileId;
     long startOffset = currOffset;
+
     // write size of the log event
     currOutputStream.write(Bytes.toBytes(eventBytes.length));
     currOffset = currOffset + Bytes.SIZEOF_INT;
@@ -119,7 +127,8 @@ public class LogBufferWriter implements Flushable, Closeable {
       currOutputStream = new BufferedOutputStream(rotateFile(currOutputStream).getOutputStream());
     }
 
-    return new LogBufferFileOffset(currFileId, startOffset);
+    // the file id and file pos in offset is where current event is written.
+    return new LogBufferFileOffset(startFileId, startOffset);
   }
 
   @Override
@@ -134,7 +143,9 @@ public class LogBufferWriter implements Flushable, Closeable {
     } catch (IOException e) {
       LOG.warn("Error while flushing log buffer output stream.", e);
     }
+
     Closeables.closeQuietly(currOutputStream);
+    executorService.shutdown();
   }
 
   /**
@@ -169,7 +180,10 @@ public class LogBufferWriter implements Flushable, Closeable {
     currOffset = 0;
     // update current file id to next monotonically increasing file id
     currFileId = currFileId + 1;
-    return locationFactory.create(getFileName(currFileId));
+    Location rotatedLocation = locationFactory.create(getFileName(currFileId));
+    // executes log buffer cleaner runnable
+    executorService.execute(cleaner);
+    return rotatedLocation;
   }
 
   private String getFileName(long fileId) {

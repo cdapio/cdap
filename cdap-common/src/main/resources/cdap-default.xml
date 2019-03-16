@@ -1537,6 +1537,15 @@
   </property>
 
   <property>
+    <name>log.buffer.recovery.batch.size</name>
+    <value>5000</value>
+    <description>
+      Log buffer recovery batch size in number of log events read. This will be used to recover logs in batches from
+      log buffer upon log service restart
+    </description>
+  </property>
+
+  <property>
     <name>log.kafka.topic</name>
     <value>logs.user-v2</value>
     <description>

@@ -84,7 +84,7 @@ public class ConcurrentLogBufferWriterTest {
     // start the pipeline
     pipeline.startAndWait();
 
-    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline));
+    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
     writer.process(new LogBufferRequest(0, events));
 
@@ -99,6 +99,7 @@ public class ConcurrentLogBufferWriterTest {
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(5, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     pipeline.stopAndWait();
+    loggerContext.stop();
   }
 
   @Test
@@ -124,7 +125,7 @@ public class ConcurrentLogBufferWriterTest {
     // start the pipeline
     pipeline.startAndWait();
 
-    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline));
+    ConcurrentLogBufferWriter writer = new ConcurrentLogBufferWriter(cConf, ImmutableList.of(pipeline), () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
 
     ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -157,6 +158,7 @@ public class ConcurrentLogBufferWriterTest {
     // verify if the pipeline has processed the messages.
     Tasks.waitFor(100, () -> appender.getEvents().size(), 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     pipeline.stopAndWait();
+    loggerContext.stop();
   }
 
   private ImmutableList<byte[]> getLoggingEvents() {

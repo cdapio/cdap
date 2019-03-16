@@ -49,7 +49,7 @@ public class LogBufferWriterTest {
   public void testLogBufferWriter() throws Exception {
     String absolutePath = TMP_FOLDER.newFolder().getAbsolutePath();
 
-    LogBufferWriter writer = new LogBufferWriter(absolutePath, 100000);
+    LogBufferWriter writer = new LogBufferWriter(absolutePath, 100000, () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
     Iterator<LogBufferEvent> writtenEvents = writer.write(events.iterator()).iterator();
     writer.close();
@@ -59,7 +59,7 @@ public class LogBufferWriterTest {
     // verify if correct offsets were set without file rotation
     while (writtenEvents.hasNext()) {
       LogBufferEvent bufferEvent = writtenEvents.next();
-      Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), "" + i++);
+      Assert.assertEquals(String.valueOf(i++), bufferEvent.getLogEvent().getMessage());
       // There will not be any rotation.
       Assert.assertEquals(bufferEvent.getOffset().getFilePos(), startPos);
       startPos = startPos + Bytes.SIZEOF_INT + serializer.toBytes(bufferEvent.getLogEvent()).length;
@@ -77,7 +77,7 @@ public class LogBufferWriterTest {
   @Test
   public void testFileRotation() throws Exception {
     // Make sure rotation happens after every event is written
-    LogBufferWriter writer = new LogBufferWriter(TMP_FOLDER.newFolder().getAbsolutePath(), 10);
+    LogBufferWriter writer = new LogBufferWriter(TMP_FOLDER.newFolder().getAbsolutePath(), 10, () -> { });
     ImmutableList<byte[]> events = getLoggingEvents();
     Iterator<LogBufferEvent> writtenEvents = writer.write(events.iterator()).iterator();
     writer.close();
@@ -86,16 +86,16 @@ public class LogBufferWriterTest {
     // verify if correct offsets and file id were set with file rotation
     while (writtenEvents.hasNext()) {
       LogBufferEvent bufferEvent = writtenEvents.next();
-      Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), "" + i++);
-      // There will be one rotation per event.
-      Assert.assertEquals(bufferEvent.getOffset().getFileId() + ".buf", i + ".buf");
-      Assert.assertEquals(bufferEvent.getOffset().getFilePos(), 0);
+      Assert.assertEquals(bufferEvent.getLogEvent().getMessage(), String.valueOf(i));
+      // There will be 2 events in one file.
+      Assert.assertEquals(i++ + ".buf", bufferEvent.getOffset().getFileId() + ".buf");
+      Assert.assertEquals(0, bufferEvent.getOffset().getFilePos());
     }
   }
 
   @Test (expected = IOException.class)
   public void testWritesOnClosedWriter() throws IOException {
-    LogBufferWriter writer = new LogBufferWriter(TMP_FOLDER.newFolder().getAbsolutePath(), 100000);
+    LogBufferWriter writer = new LogBufferWriter(TMP_FOLDER.newFolder().getAbsolutePath(), 100000, () -> { });
     writer.close();
     // should throw IOException
     writer.write(ImmutableList.of(
