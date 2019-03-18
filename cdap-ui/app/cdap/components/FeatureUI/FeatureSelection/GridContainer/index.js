@@ -37,7 +37,7 @@ class GridContainer extends Component {
       if (nextProps.isDataLoading) {
         this.gridApi.showLoadingOverlay();
       } else {
-        if (isEmpty(nextProps.data)) {
+        if (isEmpty(nextProps.rowData)) {
           this.gridApi.showNoRowsOverlay();
         } else {
           this.gridApi.hideOverlay();
