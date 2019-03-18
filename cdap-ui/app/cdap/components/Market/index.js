@@ -64,14 +64,18 @@ export default class Market extends Component {
   }
 
   getCategories = (packages) => {
+    const filteredPackages = packages.filter((packet) => {
+      return packet.categories.indexOf('datapack') === -1;
+    });
+
     MyMarketApi.getCategories().subscribe(
       (categories) => {
-        this.processPackagesAndCategories(packages, categories);
+        this.processPackagesAndCategories(filteredPackages, categories);
       },
       () => {
         // If categories do not come from backend, revert back to get categories from existing packages
         const categoriesMap = {};
-        packages.forEach((pack) => {
+        filteredPackages.forEach((pack) => {
           pack.categories.forEach((category) => {
             categoriesMap[category] = true;
           });
@@ -95,7 +99,7 @@ export default class Market extends Component {
           };
         });
 
-        this.processPackagesAndCategories(packages, aggregateCategories);
+        this.processPackagesAndCategories(filteredPackages, aggregateCategories);
       }
     );
   };
