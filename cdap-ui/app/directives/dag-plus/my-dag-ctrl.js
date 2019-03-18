@@ -183,14 +183,12 @@ angular.module(PKG.name + '.commons')
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
       Mousetrap.bind(['del', 'backspace'], onKeyboardDelete);
       Mousetrap.bind(['command+c', 'ctrl+c'], onKeyboardCopy);
-      Mousetrap.bind(['command+v', 'ctrl+v'], vm.onNodePaste);
     }
 
     function unbindKeyboardEvents() {
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['command+c', 'ctrl+c']);
-      Mousetrap.unbind(['command+v', 'ctrl+v']);
       Mousetrap.unbind(['del', 'backspace']);
     }
 
@@ -1300,7 +1298,14 @@ angular.module(PKG.name + '.commons')
         stages: [config]
       };
 
-      navigator.clipboard.writeText(JSON.stringify(clipboardObj));
+      const clipboardText = JSON.stringify(clipboardObj);
+
+      const textArea = document.createElement('textarea');
+      textArea.value = clipboardText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
     };
 
     function onKeyboardCopy() {
@@ -1309,11 +1314,26 @@ angular.module(PKG.name + '.commons')
       vm.onNodeCopy(vm.selectedNode);
     }
 
-    vm.onNodePaste = _.debounce(() => {
-      navigator.clipboard.readText().then(handleNodePaste, (err) => {
-        console.log('error pasting', err);
-      });
-    }, 300);
+    // handling node paste
+    document.body.onpaste = (e) => {
+      const activeNode = DAGPlusPlusNodesStore.getActiveNodeId();
+      const target = myHelpers.objectQuery(e, 'target', 'tagName');
+      const INVALID_TAG_NAME = ['INPUT', 'TEXTAREA'];
+
+      if (activeNode || INVALID_TAG_NAME.indexOf(target) !== -1) {
+        return;
+      }
+
+      let nodeText;
+      if (window.clipboardData && window.clipboardData.getData) {
+        // for IE......
+        nodeText = window.clipboardData.getData('Text');
+      } else {
+        nodeText = e.clipboardData.getData('text/plain');
+      }
+
+      handleNodePaste(nodeText);
+    };
 
     function handleNodePaste(text) {
       try {
@@ -1397,5 +1417,7 @@ angular.module(PKG.name + '.commons')
       dispatcher.unregister('onUndoActions', undoListenerId);
       dispatcher.unregister('onRedoActions', redoListenerId);
       vm.instance.reset();
+
+      document.body.onpaste = null;
     });
   });
