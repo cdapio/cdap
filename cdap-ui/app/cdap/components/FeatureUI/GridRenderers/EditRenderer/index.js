@@ -14,8 +14,8 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class EditRenderer extends React.Component {
   constructor(props) {
@@ -35,3 +35,7 @@ class EditRenderer extends React.Component {
   }
 }
 export default EditRenderer;
+EditRenderer.propTypes = {
+  context: PropTypes.object,
+  data: PropTypes.any
+};

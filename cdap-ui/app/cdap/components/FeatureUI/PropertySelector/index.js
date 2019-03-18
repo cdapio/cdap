@@ -13,8 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import isNil from 'lodash/isNil';
@@ -22,6 +20,7 @@ import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import find from 'lodash/find';
 import difference from 'lodash/difference';
+import PropTypes from 'prop-types';
 
 import CheckList from '../CheckList';
 import { InputGroup, Input } from 'reactstrap';
@@ -77,10 +76,10 @@ class PropertySelector extends React.Component {
 
   }
 
-  setDefaultPropertyTobeConigured(){
+  setDefaultPropertyTobeConigured() {
     if (!isEmpty(this.props.availableProperties)) {
       this.currentProperty = find(this.props.availableProperties, {groupName : 'basic'});
-      if(this.currentProperty){
+      if (this.currentProperty) {
         this.onAccordionChange(this.currentProperty.paramName);
       }
     }
@@ -115,7 +114,6 @@ class PropertySelector extends React.Component {
         detectedPropertyMap[column.columnType][schema.dataSchemaName].push(column.columnName);
       });
     });
-    console.log("Detected properties -> ", detectedPropertyMap);
     for (let propertyName in detectedPropertyMap) {
       let property = find(this.props.availableProperties, { paramName: propertyName });
       if (property) {
@@ -124,11 +122,7 @@ class PropertySelector extends React.Component {
           let schema = find(this.state.schemas, { schemaName: schemaName });
           if (schema) {
             let schemaColumns = schema.schemaColumns.filter((item) => {
-              if (detectedPropertyMap[propertyName][schemaName].indexOf(item.columnName) >= 0) {
-                return true;
-              } else {
-                return false; //to be handled later
-              }
+              return (detectedPropertyMap[propertyName][schemaName].indexOf(item.columnName) >= 0);
             }).map(column => {
               column.checked = true;
               return column;
@@ -466,3 +460,11 @@ class PropertySelector extends React.Component {
 }
 
 export default PropertySelector;
+PropertySelector.propTypes = {
+  selectedSchemas: PropTypes.array,
+  detectedProperties: PropTypes.array,
+  availableProperties: PropTypes.array,
+  setDetectedProperties: PropTypes.func,
+  propertyMap: PropTypes.any,
+  updatePropertyMap: PropTypes.func
+};

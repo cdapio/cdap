@@ -14,8 +14,8 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class CloneRenderer extends React.Component {
   constructor(props) {
@@ -34,3 +34,7 @@ class CloneRenderer extends React.Component {
   }
 }
 export default CloneRenderer;
+CloneRenderer.propTypes = {
+  context: PropTypes.object,
+  data: PropTypes.any
+};

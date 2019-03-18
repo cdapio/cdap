@@ -15,15 +15,13 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { isNil, cloneDeep } from 'lodash';
+import PropTypes from 'prop-types';
 import StatusItem from "./StatusItem";
 import './StatusBar.scss';
 
 class StatusBar extends Component {
-
-
   constructor(props) {
     super(props);
     this.state = {
@@ -33,7 +31,6 @@ class StatusBar extends Component {
       totalSelected: true,
       totalTypeSelected: true,
     };
-
   }
 
   getTotalCount = (list) => {
@@ -119,3 +116,9 @@ class StatusBar extends Component {
 }
 
 export default StatusBar;
+StatusBar.propTypes = {
+  statusList: PropTypes.array,
+  featureTypes: PropTypes.array,
+  statusSelectionChange: PropTypes.func,
+  pipeLineSelectionTypeChange: PropTypes.func
+};

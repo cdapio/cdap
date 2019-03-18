@@ -14,10 +14,10 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
-
 import React from 'react';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import PropTypes from 'prop-types';
+
 require('./AlertModal.scss');
 
 class AlertModal extends React.Component {
@@ -57,3 +57,8 @@ class AlertModal extends React.Component {
 }
 
 export default AlertModal;
+AlertModal.propTypes = {
+  onClose: PropTypes.func,
+  open: PropTypes.any,
+  message: PropTypes.string
+};

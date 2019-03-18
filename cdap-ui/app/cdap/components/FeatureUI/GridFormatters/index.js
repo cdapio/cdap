@@ -14,11 +14,10 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import { isNil } from 'lodash';
 
 export function getEpochDateString(params) {
-  if(!isNil(params)) {
+  if (!isNil(params)) {
     if (isNaN(params.value)) {
       return "—";
     } else {

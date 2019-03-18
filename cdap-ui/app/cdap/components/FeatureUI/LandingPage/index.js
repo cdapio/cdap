@@ -14,11 +14,11 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import isNil from 'lodash/isNil';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
+import PropTypes from 'prop-types';
 import AddFeatureWizard from '../AddFeatureWizard';
 import FeatureTable from '../FeatureTable';
 import {
@@ -35,13 +35,12 @@ import {
   PIPELINE_SCHEMAS,
   CLONE_PIPELINE,
   GET_PIPE_LINE_DATA,
-  ERROR_MESSAGES,
   TOTAL
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
 import FeatureSelection from '../FeatureSelection';
-import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError, getErrorMessage } from '../util';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError } from '../util';
 import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
 import { Theme } from 'services/ThemeHelper';
@@ -252,7 +251,6 @@ class LandingPage extends React.Component {
 
   updateStoreForEdit(type, pipelineData) {
     if (!isEmpty(pipelineData)) {
-      console.log("Pipeline Props ->", pipelineData);
       let propertyMap = new Map();
       let configurationList = [];
       this.props.updateOperationType(type);
@@ -315,15 +313,18 @@ class LandingPage extends React.Component {
                     if (!isNil(subProperty)) {
                       if (subProperty.isCollection) {
                         let schemaMap = new Map();
-                        dataObj[subPropertyName].forEach(propData => {
-                          if (schemaMap.has(propData.table)) {
-                            let columns = schemaMap.get(propData.table);
-                            columns.push({ columnName: propData.column });
-                            schemaMap.set(propData.table, columns);
-                          } else {
-                            schemaMap.set(propData.table, [{ columnName: propData.column }]);
-                          }
-                        });
+                        if (dataObj[subPropertyName]) {
+                          dataObj[subPropertyName].forEach(propData => {
+                            if (schemaMap.has(propData.table)) {
+                              let columns = schemaMap.get(propData.table);
+                              columns.push({ columnName: propData.column });
+                              schemaMap.set(propData.table, columns);
+                            } else {
+                              schemaMap.set(propData.table, [{ columnName: propData.column }]);
+                            }
+                          });
+                        }
+
                         schemaMap.forEach((value, key) => {
                           let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, key, value);
                           updatePropertyMapWithObj(propertyMap, updatedObj);
@@ -410,11 +411,10 @@ class LandingPage extends React.Component {
   }
 
   handleError(error, type) {
-    alert(getErrorMessage(error, ERROR_MESSAGES[type]));
+    console.log('error ==> '+ error + "| type => " + type);
   }
 
   onWizardClose() {
-    console.log('Toggle');
     this.setState({
       showFeatureWizard: !this.state.showFeatureWizard
     });
@@ -447,7 +447,6 @@ class LandingPage extends React.Component {
         pipeline: featureObject.pipelineRunName
       }, featureObject);
     }
-    console.log(featureObject);
 
     return Observable.create((observer) => {
       fetchObserver.subscribe(
@@ -678,3 +677,18 @@ class LandingPage extends React.Component {
   }
 }
 export default LandingPage;
+LandingPage.propTypes = {
+  setAvailableProperties: PropTypes.func,
+  setAvailableConfigurations: PropTypes.func,
+  setAvailableSchemas: PropTypes.func,
+  resetStore: PropTypes.func,
+  updateOperationType: PropTypes.func,
+  updateFeatureName: PropTypes.func,
+  availableSchemas: PropTypes.array,
+  setSelectedSchemas: PropTypes.func,
+  availableProperties: PropTypes.array,
+  updatePropertyMap: PropTypes.func,
+  availableConfigurations: PropTypes.array,
+  updateConfigurationList: PropTypes.func,
+  operationType: PropTypes.string
+};

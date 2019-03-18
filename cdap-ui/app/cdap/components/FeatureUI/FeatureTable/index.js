@@ -14,12 +14,12 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import isEmpty from 'lodash/isEmpty';
+import PropTypes from 'prop-types';
 import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE, AFEGridColumns } from '../config';
 import StatusRenderer from '../GridRenderers/StatusRenderer';
 import DeleteRenderer from '../GridRenderers/DeleteRenderer';
@@ -156,3 +156,12 @@ class FeatureTable extends React.Component {
 
 }
 export default FeatureTable;
+FeatureTable.propTypes = {
+  isDataLoading: PropTypes.any,
+  data: PropTypes.array,
+  onView: PropTypes.func,
+  onFeatureSelection: PropTypes.func,
+  onEdit: PropTypes.func,
+  onDelete: PropTypes.func,
+  onClone: PropTypes.func
+};

@@ -14,7 +14,6 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import FilterContainer from './FilterContainer';
 import './FeatureSelection.scss';
@@ -32,8 +31,9 @@ import classnames from 'classnames';
 import CorrelationContainer from './CorrelationContainer';
 import FEDataServiceApi from '../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
-import { checkResponseError, getErrorMessage } from '../util';
+import { checkResponseError } from '../util';
 import SaveFeatureModal from './SaveFeatureModal';
+import PropTypes from 'prop-types';
 
 class FeatureSelection extends Component {
 
@@ -106,11 +106,10 @@ class FeatureSelection extends Component {
   }
 
   storeGridInfo(isFilter, columDefs, rows) {
-    if(isFilter){
+    if (isFilter) {
       this.filterColumnDefs = cloneDeep(columDefs);
       this.filterGridRows = cloneDeep(rows);
-    }
-    else {
+    } else {
       this.correlationColumnDefs = cloneDeep(columDefs);
       this.correlationGridRows = cloneDeep(rows);
     }
@@ -209,9 +208,9 @@ class FeatureSelection extends Component {
 
   toggle(tab) {
     if (this.state.activeTab !== tab) {
-      if(tab == '1'){
+      if (tab == '1') {
         this.setState({ gridColumnDefs: this.filterColumnDefs, gridRowData: this.filterGridRows, activeTab: tab });
-      }else {
+      } else {
         this.setState({ gridColumnDefs: this.correlationColumnDefs, gridRowData: this.correlationGridRows, activeTab: tab });
       }
     }
@@ -262,8 +261,7 @@ class FeatureSelection extends Component {
 
 
   handleError(error, type) {
-    console.log(type, error);
-    alert(getErrorMessage(error));
+    console.log('error ==> '+ error + "| type => " + type);
   }
 
   praseCorrelation = (value) => {
@@ -313,7 +311,7 @@ class FeatureSelection extends Component {
           });
         } else {
           const data = this.dataParser(result["featureStatsList"]);
-          if(!isFilter){
+          if (!isFilter) {
             this.storeGridInfo(false, data.gridColumnDefs, data.gridRowData);
             this.setState({
               gridColumnDefs:data.gridColumnDefs,
@@ -383,5 +381,8 @@ class FeatureSelection extends Component {
 }
 
 export default FeatureSelection;
-
-
+FeatureSelection.propTypes = {
+  pipeLineData: PropTypes.array,
+  nagivateToParent: PropTypes.func,
+  selectedPipeline: PropTypes.object
+};

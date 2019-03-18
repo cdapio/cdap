@@ -18,9 +18,7 @@ import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, ListGroup, ListGroupItem, InputGroup, Input } from 'reactstrap';
 import './CorrelationContainer.scss';
 import { isNil, cloneDeep } from 'lodash';
-import propTypes from 'prop-types';
-// import CorrelationItem from '../CorrelationItem';
-
+import PropTypes from 'prop-types';
 
 class CorrelationContainer extends Component {
   algolist = [{ id: 1, name: "pearson" }, { id: 2, name: "spearman" }, { id: 3, name: "ChiSqTest" },{ id: 4, name: "mic" }, { id: 5, name: "anova" },{ id: 6, name: "kendallTau" }];
@@ -244,8 +242,8 @@ class CorrelationContainer extends Component {
 export default CorrelationContainer;
 
 CorrelationContainer.propTypes = {
-  applyCorrelation: propTypes.func,
-  featureNames: propTypes.array,
-  onClear: propTypes.func
+  applyCorrelation: PropTypes.func,
+  featureNames: PropTypes.array,
+  onClear: PropTypes.func
 };
 

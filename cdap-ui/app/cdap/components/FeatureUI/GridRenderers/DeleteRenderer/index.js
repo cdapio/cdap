@@ -14,8 +14,8 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class DeleteRenderer extends React.Component {
   constructor(props) {
@@ -34,3 +34,7 @@ class DeleteRenderer extends React.Component {
   }
 }
 export default DeleteRenderer;
+DeleteRenderer.propTypes = {
+  context: PropTypes.object,
+  data: PropTypes.any
+};

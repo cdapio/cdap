@@ -15,9 +15,9 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
+import PropTypes from 'prop-types';
 
 require("./List.scss");
 
@@ -39,7 +39,7 @@ class List extends React.Component {
         {
           listData.map(item => {
             return (
-              <div className="schema-list-item" key={item}>
+              <div className="schema-list-item" key={item.parent+item.child}>
                 <div className="parent-item">{item.parent+ ": "} </div>
                 <div className="child-item">{item.child}</div>
               </div>);
@@ -49,3 +49,9 @@ class List extends React.Component {
   }
 }
 export default List;
+List.propTypes = {
+  dataProvider: PropTypes.array,
+  header: PropTypes.string,
+  headerClass: PropTypes.string,
+  onHeaderClick: PropTypes.func
+};

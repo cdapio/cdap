@@ -45,7 +45,7 @@ const FEDataServiceApi = {
 
 
 function serviceCreator (dataSrc, method, type, path, options = {}) {
-  if(USE_REMOTE_SERVER) {
+  if (USE_REMOTE_SERVER) {
     dataSrc = remoteDataSource;
   }
   return apiCreator(dataSrc, method, type, path, options);

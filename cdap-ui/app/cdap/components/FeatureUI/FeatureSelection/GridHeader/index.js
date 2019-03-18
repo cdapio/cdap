@@ -15,9 +15,8 @@
  * the License.
  */
 
- /* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
-
+import PropTypes from 'prop-types';
 import './GridHeader.scss';
 
 class GridHeader extends Component {
@@ -52,3 +51,9 @@ class GridHeader extends Component {
 }
 
 export default GridHeader;
+GridHeader.propTypes = {
+  selectedPipeline: PropTypes.object,
+  backnavigation: PropTypes.func,
+  save: PropTypes.func,
+  enableSave: PropTypes.any
+};

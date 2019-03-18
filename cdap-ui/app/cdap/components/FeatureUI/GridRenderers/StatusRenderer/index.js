@@ -14,9 +14,10 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { SUCCEEDED, FAILED, DEPLOYED, RUNNING } from 'components/FeatureUI/config';
+
 require('./StatusRenderer.scss');
 
 class StatusRenderer extends React.Component {
@@ -53,3 +54,6 @@ class StatusRenderer extends React.Component {
   }
 }
 export default StatusRenderer;
+StatusRenderer.propTypes = {
+  value: PropTypes.string
+};

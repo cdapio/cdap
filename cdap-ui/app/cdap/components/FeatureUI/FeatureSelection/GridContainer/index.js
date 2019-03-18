@@ -14,13 +14,13 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import isEmpty from 'lodash/isEmpty';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './GridContainer.scss';
+import PropTypes from 'prop-types';
 
 class GridContainer extends Component {
   gridApi;
@@ -51,11 +51,6 @@ class GridContainer extends Component {
     this.gridColumnApi = params.columnApi;
   }
 
-
-  refreshGridColumns = (data) => {
-    console.log(data);
-  }
-
   onSelectionChanged = (data) => {
     this.props.selectionChange(data.api.getSelectedRows());
   }
@@ -80,3 +75,10 @@ class GridContainer extends Component {
 }
 
 export default GridContainer;
+GridContainer.propTypes = {
+  isDataLoading: PropTypes.func,
+  data: PropTypes.object,
+  selectionChange: PropTypes.func,
+  gridColums: PropTypes.array,
+  rowData: PropTypes.array
+};

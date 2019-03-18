@@ -15,13 +15,11 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { isNil } from 'lodash';
+import PropTypes from 'prop-types';
 import './StatusItem.scss';
 import {SUCCEEDED,DEPLOYED,FAILED,RUNNING} from '../../../config';
-
-
 
 class StatusItem extends Component {
 
@@ -34,7 +32,6 @@ class StatusItem extends Component {
   }
 
   itemClicked =() => {
-    // console.log("hello");
   }
 
   getClassName = (item) => {
@@ -68,3 +65,8 @@ class StatusItem extends Component {
 }
 
 export default StatusItem;
+StatusItem.propTypes = {
+  item: PropTypes.object,
+  showIcon: PropTypes.func,
+  itemClick: PropTypes.func
+};

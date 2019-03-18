@@ -14,8 +14,8 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { FEATURE_GENERATED_PIPELINE } from 'components/FeatureUI/config';
 
 class FSLinkRenderer extends React.Component {
@@ -43,3 +43,7 @@ class FSLinkRenderer extends React.Component {
   }
 }
 export default FSLinkRenderer;
+FSLinkRenderer.propTypes = {
+  context: PropTypes.object,
+  data: PropTypes.any
+};

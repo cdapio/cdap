@@ -14,8 +14,8 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { UncontrolledTooltip } from 'reactstrap';
 
 require("./InfoTip.scss");
@@ -36,3 +36,7 @@ class InfoTip extends React.Component {
   }
 }
 export default InfoTip;
+InfoTip.propTypes = {
+  id: PropTypes.string,
+  description: PropTypes.string
+};

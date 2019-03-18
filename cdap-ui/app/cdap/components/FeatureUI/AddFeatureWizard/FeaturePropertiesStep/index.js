@@ -14,7 +14,6 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import { Provider, connect } from 'react-redux';
 import AddFeatureActions from '../../../../services/WizardStores/AddFeature/AddFeatureActions';
@@ -23,7 +22,6 @@ import PropertySelector from '../../PropertySelector';
 
 
 const mapStateToConfigurationProps = (state) => {
-  console.log("mapStateToConfigurationProps -> " ,state);
   return {
     selectedSchemas: state.featureState.selectedSchemas,
     propertyMap: state.featureState.propertyMap,

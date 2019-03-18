@@ -14,12 +14,9 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { isNil } from 'lodash';
 import './CorrelationItem.scss';
-
-
 
 class CorrelationItem extends Component {
 

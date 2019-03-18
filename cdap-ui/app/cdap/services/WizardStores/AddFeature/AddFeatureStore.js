@@ -196,7 +196,6 @@ const featureState = (state = defaultState, action = defaultAction) => {
       };
       break;
   }
-  console.log("Feature Store ->", action, state);
   return {
     ...state,
     __complete: isFeatureComplete(state)
