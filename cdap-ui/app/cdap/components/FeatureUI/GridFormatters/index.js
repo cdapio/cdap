@@ -14,29 +14,16 @@
  * the License.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import { UncontrolledTooltip } from 'reactstrap';
+import { isNil } from 'lodash';
 
-require("./InfoTip.scss");
-
-class InfoTip extends React.Component {
-  constructor(props) {
-    super(props);
+export function getEpochDateString(params) {
+  if (!isNil(params)) {
+    if (isNaN(params.value)) {
+      return "—";
+    } else {
+      let date = new Date(params.value * 1000);
+      return date.toDateString();
+    }
   }
-
-  render() {
-    return (
-        <i className="fa fa-info-circle info-tip" id = {this.props.id}>
-          <UncontrolledTooltip placement="right" target = {this.props.id}>
-              {this.props.description}
-          </UncontrolledTooltip>
-        </i>
-    );
-  }
+  return "—";
 }
-export default InfoTip;
-InfoTip.propTypes = {
-  id: PropTypes.string,
-  description: PropTypes.string
-};

@@ -14,7 +14,6 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import FilterContainer from './FilterContainer';
 import './FeatureSelection.scss';
@@ -32,8 +31,9 @@ import classnames from 'classnames';
 import CorrelationContainer from './CorrelationContainer';
 import FEDataServiceApi from '../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
-import { checkResponseError, getErrorMessage } from '../util';
+import { checkResponseError } from '../util';
 import SaveFeatureModal from './SaveFeatureModal';
+import PropTypes from 'prop-types';
 
 class FeatureSelection extends Component {
 
@@ -48,7 +48,8 @@ class FeatureSelection extends Component {
     this.state = Object.assign({
       activeTab: "1", selectedFeatures: [],
       openSaveModal: false,
-      enableSave:false
+      enableSave:false,
+      isDataLoading: false,
     }, dataInfo);
 
 
@@ -76,10 +77,10 @@ class FeatureSelection extends Component {
 
         // generate column def
         if (!isNil(item.featureName)) {
-          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, tooltipField:'featureName' });
+          columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 500, checkboxSelection: true, headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField:'featureName' });
         }
         columns.forEach(element => {
-          columDefs.push({ headerName: element.name, field: element.name , resizable: true});
+          columDefs.push({ headerName: element.name, field: element.name , resizable: true, filter:'agNumberColumnFilter'});
         });
       }
 
@@ -105,11 +106,10 @@ class FeatureSelection extends Component {
   }
 
   storeGridInfo(isFilter, columDefs, rows) {
-    if(isFilter){
+    if (isFilter) {
       this.filterColumnDefs = cloneDeep(columDefs);
       this.filterGridRows = cloneDeep(rows);
-    }
-    else {
+    } else {
       this.correlationColumnDefs = cloneDeep(columDefs);
       this.correlationGridRows = cloneDeep(rows);
     }
@@ -172,6 +172,9 @@ class FeatureSelection extends Component {
 
   getFilteredRecords(requestObj) {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
+    this.setState ({
+      isDataLoading: true
+    });
     FEDataServiceApi.pipelineFilteredData(
       {
         namespace: NamespaceStore.getState().selectedNamespace,
@@ -180,23 +183,34 @@ class FeatureSelection extends Component {
         result => {
           if (checkResponseError(result) || isNil(result["featureStatsList"])) {
             this.handleError(result, GET_PIPE_LINE_FILTERED);
+            this.setState ({
+              isDataLoading: false,
+              gridRowData: []
+            });
           } else {
             const parsedResult = this.dataParser(result["featureStatsList"]);
             this.storeGridInfo(true, parsedResult.gridColumnDefs, parsedResult.gridRowData);
-            this.setState({ gridRowData: parsedResult.gridRowData });
+            this.setState({
+              isDataLoading: false,
+              gridRowData: parsedResult.gridRowData
+            });
           }
         },
         error => {
           this.handleError(error, GET_PIPE_LINE_FILTERED);
+          this.setState ({
+            isDataLoading: false,
+            gridRowData: []
+          });
         }
       );
   }
 
   toggle(tab) {
     if (this.state.activeTab !== tab) {
-      if(tab == '1'){
+      if (tab == '1') {
         this.setState({ gridColumnDefs: this.filterColumnDefs, gridRowData: this.filterGridRows, activeTab: tab });
-      }else {
+      } else {
         this.setState({ gridColumnDefs: this.correlationColumnDefs, gridRowData: this.correlationGridRows, activeTab: tab });
       }
     }
@@ -205,6 +219,9 @@ class FeatureSelection extends Component {
   applyCorrelation = (value) => {
     const featureGenerationPipelineName = !isNil(this.props.selectedPipeline) ? this.props.selectedPipeline.pipelineName : "";
     const selectedFeatures = [value.selectedfeatures.name];
+    this.setState ({
+      isDataLoading: true
+    });
     FEDataServiceApi.featureCorrelationData(
       {
         namespace: NamespaceStore.getState().selectedNamespace,
@@ -214,13 +231,24 @@ class FeatureSelection extends Component {
         result => {
           if (checkResponseError(result) || isNil(result["featureCorrelationScores"])) {
             this.handleError(result, GET_FEATURE_CORRELAION);
+            this.setState ({
+              isDataLoading: false,
+              gridRowData: [],
+            });
           } else {
             const parsedResult = this.praseCorrelation(result["featureCorrelationScores"]);
             this.storeGridInfo(false, parsedResult.gridColumnDefs, parsedResult.gridRowData);
-            this.setState({ gridColumnDefs: parsedResult.gridColumnDefs, gridRowData: parsedResult.gridRowData });
+            this.setState({
+              isDataLoading: false,
+              gridColumnDefs: parsedResult.gridColumnDefs,
+              gridRowData: parsedResult.gridRowData });
           }
         },
         error => {
+          this.setState ({
+            isDataLoading: false,
+            gridRowData: [],
+          });
           this.handleError(error, GET_FEATURE_CORRELAION);
         }
       );
@@ -233,8 +261,7 @@ class FeatureSelection extends Component {
 
 
   handleError(error, type) {
-    console.log(type, error);
-    alert(getErrorMessage(error));
+    console.log('error ==> '+ error + "| type => " + type);
   }
 
   praseCorrelation = (value) => {
@@ -243,8 +270,8 @@ class FeatureSelection extends Component {
     // generate column def\featureCorrelationScores
     if (!isNil(value) && value.length > 0) {
       const item = value[0]['featureCorrelationScores'];
-      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true, tooltipField:'featureName'  });
-      columDefs.push({ headerName: "Value", field: "value" });
+      columDefs.push({ headerName: "Generated Feature", field: "featureName", width: 700, checkboxSelection: true,headerCheckboxSelection: true, headerCheckboxSelectionFilteredOnly: true, tooltipField:'featureName'  });
+      columDefs.push({ headerName: "Value", field: "value", filter:'agNumberColumnFilter' });
 
       if (!isNil(item)) {
         for (let key in item) {
@@ -268,6 +295,9 @@ class FeatureSelection extends Component {
 
   onFeatureSelection(pipeline, isFilter=false) {
     this.currentPipeline = pipeline;
+    this.setState ({
+      isDataLoading: true
+    });
     FEDataServiceApi.pipelineData({
       namespace: NamespaceStore.getState().selectedNamespace,
       pipeline: pipeline.pipelineName
@@ -275,16 +305,28 @@ class FeatureSelection extends Component {
       result => {
         if (checkResponseError(result) || isNil(result["featureStatsList"])) {
           this.handleError(result, GET_PIPE_LINE_DATA);
+          this.setState ({
+            isDataLoading: false,
+            gridRowData: []
+          });
         } else {
           const data = this.dataParser(result["featureStatsList"]);
-          if(!isFilter){
+          if (!isFilter) {
             this.storeGridInfo(false, data.gridColumnDefs, data.gridRowData);
-            this.setState({gridColumnDefs:data.gridColumnDefs, gridRowData: data.gridRowData });
+            this.setState({
+              gridColumnDefs:data.gridColumnDefs,
+              gridRowData: data.gridRowData,
+              isDataLoading: false
+           });
           }
         }
       },
       error => {
         this.handleError(error, GET_PIPELINE);
+        this.setState ({
+          isDataLoading: false,
+          gridRowData: []
+        });
       }
     );
   }
@@ -339,5 +381,8 @@ class FeatureSelection extends Component {
 }
 
 export default FeatureSelection;
-
-
+FeatureSelection.propTypes = {
+  pipeLineData: PropTypes.array,
+  nagivateToParent: PropTypes.func,
+  selectedPipeline: PropTypes.object
+};

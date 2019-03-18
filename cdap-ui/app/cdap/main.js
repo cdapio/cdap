@@ -190,7 +190,7 @@ CDAP.propTypes = {
 
 const appContainer = document.getElementById('app-container');
 const className = getClassNameForHeaderFooter();
-if(className){
+if (className) {
   appContainer.classList.add(className);
 }
 

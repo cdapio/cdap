@@ -14,14 +14,17 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { AgGridReact } from 'ag-grid-react';
+import isEmpty from 'lodash/isEmpty';
 import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import './GridContainer.scss';
+import PropTypes from 'prop-types';
 
 class GridContainer extends Component {
+  gridApi;
+  gridColumnApi;
   defaultColDef = {
     resizable: true
   }
@@ -29,8 +32,23 @@ class GridContainer extends Component {
     super(props);
   }
 
-  refreshGridColumns = (data) => {
-    console.log(data);
+  componentWillReceiveProps(nextProps) {
+    if (this.gridApi) {
+      if (nextProps.isDataLoading) {
+        this.gridApi.showLoadingOverlay();
+      } else {
+        if (isEmpty(nextProps.rowData)) {
+          this.gridApi.showNoRowsOverlay();
+        } else {
+          this.gridApi.hideOverlay();
+        }
+      }
+    }
+  }
+
+  onGridReady = params => {
+    this.gridApi = params.api;
+    this.gridColumnApi = params.columnApi;
   }
 
   onSelectionChanged = (data) => {
@@ -42,10 +60,13 @@ class GridContainer extends Component {
       <div
         className="ag-theme-balham grid-container"    >
         <AgGridReact
+          suppressMenuHide = {true}
           columnDefs={this.props.gridColums}
           defaultColDef={this.defaultColDef}
+          enableFilter={true}
           rowSelection="multiple"
           rowData={this.props.rowData}
+          onGridReady={this.onGridReady}
           onSelectionChanged={this.onSelectionChanged.bind(this)}>
         </AgGridReact>
       </div>
@@ -54,3 +75,10 @@ class GridContainer extends Component {
 }
 
 export default GridContainer;
+GridContainer.propTypes = {
+  isDataLoading: PropTypes.func,
+  data: PropTypes.object,
+  selectionChange: PropTypes.func,
+  gridColums: PropTypes.array,
+  rowData: PropTypes.array
+};

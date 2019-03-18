@@ -14,13 +14,12 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
-
 import React from 'react';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import AddFeatureWizardConfig from '../../../services/WizardConfigs/AddFeatureWizardConfig';
 import AddFeatureStore from '../../../services/WizardStores/AddFeature/AddFeatureStore';
+import PropTypes from 'prop-types';
 
 require('./AddFeatureWizard.scss');
 
@@ -55,3 +54,8 @@ class AddFeatureWizard extends React.Component {
 }
 
 export default AddFeatureWizard;
+AddFeatureWizard.propTypes = {
+  showWizard: PropTypes.any,
+  onClose: PropTypes.func,
+  onSubmit: PropTypes.func,
+};

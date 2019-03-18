@@ -17,7 +17,7 @@
 
 import React from 'react';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
-import propTypes from 'prop-types';
+import PropTypes from 'prop-types';
 import FEDataServiceApi from '../../feDataService';
 import NamespaceStore from 'services/NamespaceStore';
 import { isNil } from 'lodash';
@@ -117,8 +117,8 @@ class SaveFeatureModal extends React.Component {
 
 export default SaveFeatureModal;
 SaveFeatureModal.propTypes = {
-  onClose: propTypes.func,
-  open: propTypes.bool,
-  selectedPipeline: propTypes.object,
-  selectedFeatures: propTypes.array
+  onClose: PropTypes.func,
+  open: PropTypes.any,
+  selectedPipeline: PropTypes.object,
+  selectedFeatures: PropTypes.array
 };

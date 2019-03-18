@@ -13,14 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import cloneDeep from 'lodash/cloneDeep';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import find from 'lodash/find';
+import difference from 'lodash/difference';
+import PropTypes from 'prop-types';
+
 import CheckList from '../CheckList';
 import { InputGroup, Input } from 'reactstrap';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
@@ -36,13 +37,16 @@ import 'react-accessible-accordion/dist/fancy-example.css';
 import List from '../List';
 import { getPropertyUpdateObj, updatePropertyMapWithObj, toCamelCase } from '../util';
 import InfoTip from '../InfoTip';
+import FEDataServiceApi from '../feDataService';
+import NamespaceStore from 'services/NamespaceStore';
+
 require('./PropertySelector.scss');
 
 class PropertySelector extends React.Component {
-  currentPropertyIndex = 0;
   currentProperty = undefined;
   currentSubProperty = "none";
   propertyMap;
+  lastSchemas;
 
   constructor(props) {
     super(props);
@@ -52,11 +56,86 @@ class PropertySelector extends React.Component {
       filterKey: '',
       dropdownOpen: false,
       filterType: 'All',
+      showAdvance: false,
     };
   }
 
+  isSchemaChanged() {
+    let detectedSchemas = this.props.detectedProperties.map(schema => schema.dataSchemaName);
+    let currentSchemas = this.state.schemas.map(schema => schema.schemaName);
+    let diff = difference(currentSchemas, detectedSchemas);
+    return diff.length > 0;
+  }
+
   componentDidMount() {
-    this.onAccordionChange(0);
+    if (this.isSchemaChanged()) {
+      this.detectProperties();
+    } else {
+      this.setDefaultPropertyTobeConigured();
+    }
+
+  }
+
+  setDefaultPropertyTobeConigured() {
+    if (!isEmpty(this.props.availableProperties)) {
+      this.currentProperty = find(this.props.availableProperties, {groupName : 'basic'});
+      if (this.currentProperty) {
+        this.onAccordionChange(this.currentProperty.paramName);
+      }
+    }
+  }
+
+  detectProperties() {
+    FEDataServiceApi.detectProperties({
+      namespace: NamespaceStore.getState().selectedNamespace
+    },
+      this.props.selectedSchemas.map(schema => schema.schemaName)
+    ).subscribe(
+      result => {
+        this.setDetectedProperties(result);
+        this.props.setDetectedProperties(result);
+        setTimeout(() => {
+          this.setDefaultPropertyTobeConigured();
+        });
+      }
+    );
+  }
+
+  setDetectedProperties(result) {
+    let detectedPropertyMap = {};
+    result.forEach(schema => {
+      schema.columnInfo.forEach(column => {
+        if (!detectedPropertyMap.hasOwnProperty(column.columnType)) {
+          detectedPropertyMap[column.columnType] = {};
+        }
+        if (!detectedPropertyMap[column.columnType].hasOwnProperty(schema.dataSchemaName)) {
+          detectedPropertyMap[column.columnType][schema.dataSchemaName] = [];
+        }
+        detectedPropertyMap[column.columnType][schema.dataSchemaName].push(column.columnName);
+      });
+    });
+    for (let propertyName in detectedPropertyMap) {
+      let property = find(this.props.availableProperties, { paramName: propertyName });
+      if (property) {
+        let updatePropMap = cloneDeep(this.props.propertyMap);
+        for (let schemaName in detectedPropertyMap[propertyName]) {
+          let schema = find(this.state.schemas, { schemaName: schemaName });
+          if (schema) {
+            let schemaColumns = schema.schemaColumns.filter((item) => {
+              return (detectedPropertyMap[propertyName][schemaName].indexOf(item.columnName) >= 0);
+            }).map(column => {
+              column.checked = true;
+              return column;
+            });
+
+            let updateObj = getPropertyUpdateObj(property, "none", schema.schemaName, schemaColumns);
+            updatePropertyMapWithObj(updatePropMap, updateObj);
+            this.props.updatePropertyMap(updatePropMap);
+          }
+        }
+      }
+    }
+
   }
 
   handleColumnChange(schema, checkList) {
@@ -108,9 +187,9 @@ class PropertySelector extends React.Component {
     return schemas;
   }
 
-  onAccordionChange(index) {
-    this.currentPropertyIndex = index % this.props.availableProperties.length;
-    this.currentProperty = this.props.availableProperties[this.currentPropertyIndex];
+
+  onAccordionChange(property) {
+    this.currentProperty = find(this.props.availableProperties, {paramName: property});
     if (this.currentProperty) {
       if (isEmpty(this.currentProperty.subParams)) {
         this.currentSubProperty = "none";
@@ -191,12 +270,19 @@ class PropertySelector extends React.Component {
   }
 
   render() {
-    let updatedPropMap = new Map();
-    if (isNil(this.currentProperty) && !isEmpty(this.props.availableProperties)) {
-      this.currentProperty = this.props.availableProperties[this.currentPropertyIndex];
-    }
+    let updatedPropMap;
+    let basicPropMap = new Map();
+    let advancePropMap = new Map();
     let propertyDisplayNameMap = new Map();
+    if (isNil(this.currentProperty) && !isEmpty(this.props.availableProperties)) {
+      this.currentProperty = find(this.props.availableProperties, {groupName : 'basic'});
+    }
     this.props.availableProperties.map((property) => {
+      if (property.groupName == 'basic') {
+        updatedPropMap = basicPropMap;
+      } else {
+        updatedPropMap = advancePropMap;
+      }
       propertyDisplayNameMap.set(property.paramName, isEmpty(property.displayName) ? property.paramName : property.displayName);
       if (isEmpty(property.subParams)) {
         updatedPropMap.set(property.paramName, [{
@@ -229,49 +315,104 @@ class PropertySelector extends React.Component {
       <div className="property-step-container">
         <div className="property-container">
           <div className="config-selector-header">Property</div>
-          <Accordion onChange={this.onAccordionChange.bind(this)}>
-            {
-              Array.from(updatedPropMap.keys()).map((property, index) => {
-                let isMandatory = false;
-                let subParams = updatedPropMap.get(property);
-                let description;
-                if (!isEmpty(subParams)) {
-                  isMandatory = subParams[0].isMandatory;
-                  description = subParams[0].description;
+          <div className="config-container">
+            <div className="config-header-label">Basic</div>
+            <div className="config-item-container">
+              <Accordion onChange={this.onAccordionChange.bind(this)}>
+                {
+                  Array.from(basicPropMap.keys()).map((property, index) => {
+                    let isMandatory = false;
+                    let subParams = basicPropMap.get(property);
+                    let description;
+                    if (!isEmpty(subParams)) {
+                      isMandatory = subParams[0].isMandatory;
+                      description = subParams[0].description;
+                    }
+                    return (
+                      <AccordionItem key={property} uuid = {property} expanded={index == 0 ? true : false}>
+                        <AccordionItemTitle className = { property == this.currentProperty.paramName ? "accordion__title selected" : "accordion__title"}>
+                          <div className="title-items">
+                            {
+                              description && <InfoTip id={property + '_InfoTip'} description={description} />
+                            }
+                            {
+                              isMandatory && <i className="fa fa-asterisk mandatory"></i>
+                            }
+                            <div className="heading" title={propertyDisplayNameMap.get(property)}>{propertyDisplayNameMap.get(property)}</div>
+                          </div>
+                          <div className="accordion__arrow" role="presentation" />
+                        </AccordionItemTitle>
+
+                        <AccordionItemBody>
+                          {
+                            basicPropMap.get(property).map(propValue => {
+                              return (<List dataProvider={propValue.values}
+                                key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
+                                header={(propValue.header == "none") ? undefined : propValue.displayName}
+                                headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
+                                onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
+                            })
+                          }
+                        </AccordionItemBody>
+                      </AccordionItem>
+                    );
+                  })
                 }
-                return (
-                  <AccordionItem key={property} expanded={index == 0 ? true : false}>
-                    <AccordionItemTitle className={index == this.currentPropertyIndex ? "accordion__title selected" : "accordion__title"}>
-                      <div className="title-items">
-                        {
-                          description && <InfoTip id={property + '_InfoTip'} description={description} />
-                        }
-                        {
-                          isMandatory && <i className="fa fa-asterisk mandatory"></i>
-                        }
-                        <div className="heading" title={propertyDisplayNameMap.get(property)}>{propertyDisplayNameMap.get(property)}</div>
-                      </div>
-                      <div className="accordion__arrow" role="presentation" />
-                    </AccordionItemTitle>
-
-                    <AccordionItemBody>
-                      {
-                        updatedPropMap.get(property).map(propValue => {
-                          return (<List dataProvider={propValue.values}
-                            key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
-                            header={(propValue.header == "none") ? undefined : propValue.displayName}
-                            headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
-                            onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
-                        })
+              </Accordion>
+            </div>
+          </div>
+          <div className="config-container">
+            <div className="advance-control" onClick={() => { this.setState(prevState => ({ showAdvance: !prevState.showAdvance })); }}>
+              <div className="config-header-label">Advance</div>
+              <i className={this.state.showAdvance ? "fa fa-caret-up" : "fa fa-caret-down"}></i>
+            </div>
+            {
+              this.state.showAdvance &&
+              <div className="config-item-container">
+                <Accordion onChange={this.onAccordionChange.bind(this)}>
+                  {
+                    Array.from(advancePropMap.keys()).map((property) => {
+                      let isMandatory = false;
+                      let subParams = advancePropMap.get(property);
+                      let description;
+                      if (!isEmpty(subParams)) {
+                        isMandatory = subParams[0].isMandatory;
+                        description = subParams[0].description;
                       }
+                      return (
+                        <AccordionItem key={property} uuid = {property}>
+                          <AccordionItemTitle className = { property == this.currentProperty.paramName? "accordion__title selected" : "accordion__title"}>
+                            <div className="title-items">
+                              {
+                                description && <InfoTip id={property + '_InfoTip'} description={description} />
+                              }
+                              {
+                                isMandatory && <i className="fa fa-asterisk mandatory"></i>
+                              }
+                              <div className="heading" title={propertyDisplayNameMap.get(property)}>{propertyDisplayNameMap.get(property)}</div>
+                            </div>
+                            <div className="accordion__arrow" role="presentation" />
+                          </AccordionItemTitle>
 
-                      {/* <List dataProvider={updatedPropMap.get(property)} /> */}
-                    </AccordionItemBody>
-                  </AccordionItem>
-                );
-              })
+                          <AccordionItemBody>
+                            {
+                              advancePropMap.get(property).map(propValue => {
+                                return (<List dataProvider={propValue.values}
+                                  key={(propValue.header == "none") ? property : (propValue.header + propValue.isSelected)}
+                                  header={(propValue.header == "none") ? undefined : propValue.displayName}
+                                  headerClass={propValue.isSelected ? "list-header-selected" : "list-header"}
+                                  onHeaderClick={this.onHeaderClick.bind(this, property, propValue.header)} />);
+                              })
+                            }
+                          </AccordionItemBody>
+                        </AccordionItem>
+                      );
+                    })
+                  }
+                </Accordion>
+              </div>
             }
-          </Accordion>
+          </div>
         </div>
         <div className="schema-container">
           <div className="config-selector-header">{"Select dataset columns for : " + propertyDisplayNameMap.get(this.currentProperty.paramName)
@@ -319,3 +460,11 @@ class PropertySelector extends React.Component {
 }
 
 export default PropertySelector;
+PropertySelector.propTypes = {
+  selectedSchemas: PropTypes.array,
+  detectedProperties: PropTypes.array,
+  availableProperties: PropTypes.array,
+  setDetectedProperties: PropTypes.func,
+  propertyMap: PropTypes.any,
+  updatePropertyMap: PropTypes.func
+};

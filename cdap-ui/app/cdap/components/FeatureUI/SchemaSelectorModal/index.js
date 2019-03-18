@@ -13,12 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
-
+import PropTypes from 'prop-types';
 
 import { ListGroup, ListGroupItem } from 'reactstrap';
 import { toCamelCase } from '../util';
@@ -79,7 +77,7 @@ class SchemaSelectorModal extends React.Component {
 
   onSchemaChecked(item, event) {
     const isChecked = event.target.checked;
-    if(isChecked) {
+    if (isChecked) {
       this.checkedList.add(item.schemaName);
     } else {
       this.checkedList.delete(item.schemaName);
@@ -153,3 +151,10 @@ class SchemaSelectorModal extends React.Component {
 }
 
 export default SchemaSelectorModal;
+SchemaSelectorModal.propTypes = {
+  open: PropTypes.any,
+  selectedSchemas: PropTypes.array,
+  operationType: PropTypes.string,
+  onClose: PropTypes.func,
+  dataProvider: PropTypes.array
+};

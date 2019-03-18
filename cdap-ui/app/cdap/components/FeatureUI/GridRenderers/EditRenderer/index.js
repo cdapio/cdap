@@ -16,27 +16,26 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { UncontrolledTooltip } from 'reactstrap';
 
-require("./InfoTip.scss");
-
-class InfoTip extends React.Component {
+class EditRenderer extends React.Component {
   constructor(props) {
     super(props);
   }
 
+  invokeParentMethod(item) {
+    if (this.props.context && this.props.context.componentParent && this.props.context.componentParent.onEdit) {
+      this.props.context.componentParent.onEdit(item);
+    }
+  }
   render() {
-    return (
-        <i className="fa fa-info-circle info-tip" id = {this.props.id}>
-          <UncontrolledTooltip placement="right" target = {this.props.id}>
-              {this.props.description}
-          </UncontrolledTooltip>
-        </i>
-    );
+    return <span className="fa fa-edit"
+      onClick={this.invokeParentMethod.bind(this, this.props.data)}>
+    </span>;
+
   }
 }
-export default InfoTip;
-InfoTip.propTypes = {
-  id: PropTypes.string,
-  description: PropTypes.string
+export default EditRenderer;
+EditRenderer.propTypes = {
+  context: PropTypes.object,
+  data: PropTypes.any
 };

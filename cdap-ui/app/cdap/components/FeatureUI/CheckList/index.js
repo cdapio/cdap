@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
+import PropTypes from 'prop-types';
+
 require('./CheckList.scss');
 
 class CheckList extends React.Component {
@@ -90,3 +90,9 @@ class CheckList extends React.Component {
   }
 }
 export default CheckList;
+CheckList.propTypes = {
+  isSingleSelect: PropTypes.any,
+  handleChange: PropTypes.func,
+  dataProvider: PropTypes.array,
+  title: PropTypes.string
+};

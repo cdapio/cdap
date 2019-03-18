@@ -15,15 +15,13 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { isNil, cloneDeep } from 'lodash';
+import PropTypes from 'prop-types';
 import StatusItem from "./StatusItem";
 import './StatusBar.scss';
 
 class StatusBar extends Component {
-
-
   constructor(props) {
     super(props);
     this.state = {
@@ -33,7 +31,6 @@ class StatusBar extends Component {
       totalSelected: true,
       totalTypeSelected: true,
     };
-
   }
 
   getTotalCount = (list) => {
@@ -106,40 +103,22 @@ class StatusBar extends Component {
   render() {
     return (
       <div className="status-bar-box">
-        <label className="status-header">PipeLine</label>
-        <div className="status-box">
-          <div className={this.state.totalSelected ? 'all-status-box-selected' : 'all-status-box'} onClick={this.allStatusClicked}>
-            Total ( {this.state.totalCount})
-            </div>
-          <div className="child-status-box">
-            {
-              this.state.statusList.map((status) => {
+           {
+              this.props.statusList.map((status) => {
                 return (
-                  <StatusItem item={status}
-                    itemClick={this.statusItemClicked.bind(this, status)} key={'status_' + status.id.toString()} ></StatusItem>
+                  <StatusItem item={status} key={'status_' + status.id.toString()} ></StatusItem>
                 );
               })
             }
-          </div>
         </div>
-        <div className="type-box">
-          <div className={this.state.totalTypeSelected ? 'all-type-box all-type-box-selected' : 'all-type-box all-type-box-un-selected'}
-            onClick={this.allTypeClicked}>
-            All</div>
-          <div className="child-type-box">
-            {
-              this.state.featureTypes.map((type) => {
-                return (
-                  <StatusItem item={type}
-                    itemClick={this.typeItemClicked.bind(this, type)} key={'status_' + type.id.toString()} ></StatusItem>
-                );
-              })
-            }
-          </div>
-        </div>
-      </div>
     );
   }
 }
 
 export default StatusBar;
+StatusBar.propTypes = {
+  statusList: PropTypes.array,
+  featureTypes: PropTypes.array,
+  statusSelectionChange: PropTypes.func,
+  pipeLineSelectionTypeChange: PropTypes.func
+};

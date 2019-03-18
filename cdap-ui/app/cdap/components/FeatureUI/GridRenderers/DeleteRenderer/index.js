@@ -16,27 +16,25 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { UncontrolledTooltip } from 'reactstrap';
 
-require("./InfoTip.scss");
-
-class InfoTip extends React.Component {
+class DeleteRenderer extends React.Component {
   constructor(props) {
     super(props);
   }
-
+  invokeParentMethod(item) {
+    if (this.props.context && this.props.context.componentParent && this.props.context.componentParent.onDelete) {
+      this.props.context.componentParent.onDelete(item);
+    }
+  }
   render() {
-    return (
-        <i className="fa fa-info-circle info-tip" id = {this.props.id}>
-          <UncontrolledTooltip placement="right" target = {this.props.id}>
-              {this.props.description}
-          </UncontrolledTooltip>
-        </i>
-    );
+    return <span className="fa fa-trash text-danger"
+      onClick={this.invokeParentMethod.bind(this, this.props.data)}>
+    </span>;
+
   }
 }
-export default InfoTip;
-InfoTip.propTypes = {
-  id: PropTypes.string,
-  description: PropTypes.string
+export default DeleteRenderer;
+DeleteRenderer.propTypes = {
+  context: PropTypes.object,
+  data: PropTypes.any
 };

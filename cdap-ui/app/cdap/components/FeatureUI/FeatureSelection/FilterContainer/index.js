@@ -14,17 +14,13 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem, Button, ButtonGroup } from 'reactstrap';
 import FilterItem from '../FilterItem/index';
 import './FilterContainer.scss';
 import { cloneDeep } from "lodash";
 import ToggleSwitch from 'components/ToggleSwitch';
-
-
-
-
+import PropTypes from 'prop-types';
 
 class FilterContainer extends Component {
   filterTypeList = [{ id: 1, name: 'TopN' }, { id: 2, name: 'LowN' }, { id: 3, name: 'Range' }]
@@ -191,7 +187,7 @@ class FilterContainer extends Component {
       }
     }
 
-    //check limit range
+    // check limit range
     if (this.state.hasLimitError || !isValidFilterItems) {
       this.setState({ activeApplyBtn: false });
     } else {
@@ -290,3 +286,7 @@ class FilterContainer extends Component {
 }
 
 export default FilterContainer;
+FilterContainer.propTypes = {
+  filterColumns: PropTypes.array,
+  applyFilter: PropTypes.func
+};

@@ -14,11 +14,11 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import isNil from 'lodash/isNil';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
+import PropTypes from 'prop-types';
 import AddFeatureWizard from '../AddFeatureWizard';
 import FeatureTable from '../FeatureTable';
 import {
@@ -35,16 +35,17 @@ import {
   PIPELINE_SCHEMAS,
   CLONE_PIPELINE,
   GET_PIPE_LINE_DATA,
-  ERROR_MESSAGES
+  TOTAL
 } from '../config';
 import { Observable } from 'rxjs/Observable';
 import AlertModal from '../AlertModal';
 import FeatureSelection from '../FeatureSelection';
-import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError, getErrorMessage } from '../util';
+import { getPropertyUpdateObj, updatePropertyMapWithObj, getFeatureObject, checkResponseError } from '../util';
 import NamespaceStore from 'services/NamespaceStore';
 import FEDataServiceApi from '../feDataService';
 import { Theme } from 'services/ThemeHelper';
 import StatusBar from "./StatusBar";
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { SUCCEEDED, DEPLOYED, FAILED, RUNNING, FEATURE_GENERATED, FEATURE_SELECTED } from '../config';
 
 
@@ -78,6 +79,7 @@ class LandingPage extends React.Component {
       displayFeatureSelection: false,
       pipeLineData: this.sampleData,
       selectedPipeline: {},
+      isDataLoading: false,
       currentNamespace: NamespaceStore.getState().selectedNamespace,
       statusList: this.generateStatusList([])
 
@@ -142,7 +144,9 @@ class LandingPage extends React.Component {
     let sucessCount = 0;
     let deployedCount = 0;
     let failCount = 0;
+    let totalCount = 0;
     list.forEach(element => {
+      totalCount++;
       if (element.status === RUNNING) {
         runningCount++;
       } else if (element.status === SUCCEEDED) {
@@ -153,13 +157,18 @@ class LandingPage extends React.Component {
         failCount++;
       }
     });
-    return  [{ id: 1, name: RUNNING, count: runningCount, selected: false },
-      { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
-      { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
-      { id: 4, name: FAILED, count: failCount, selected: false }];
+    return [
+    { id: 0, name: TOTAL, count: totalCount, selected: false },
+    { id: 1, name: RUNNING, count: runningCount, selected: false },
+    { id: 2, name: SUCCEEDED, count: sucessCount, selected: false },
+    { id: 3, name: DEPLOYED, count: deployedCount, selected: false },
+    { id: 4, name: FAILED, count: failCount, selected: false }];
   }
 
   getPipelines(type) {
+    this.setState({
+      isDataLoading: true
+    });
     FEDataServiceApi.pipelines(
       {
         namespace: NamespaceStore.getState().selectedNamespace,
@@ -168,15 +177,24 @@ class LandingPage extends React.Component {
         result => {
           if (checkResponseError(result) || isNil(result["pipelineInfoList"])) {
             this.handleError(result, GET_PIPELINE);
+            this.setState({
+              data: [],
+              isDataLoading: false
+            });
           } else {
             this.data_original = result["pipelineInfoList"];
             this.setState({
               data: result["pipelineInfoList"],
-              statusList:this.generateStatusList(this.data_original)
+              statusList: this.generateStatusList(this.data_original),
+              isDataLoading: false
             });
           }
         },
         error => {
+          this.setState({
+            data: [],
+            isDataLoading: false
+          });
           this.handleError(error, GET_PIPELINE);
         }
       );
@@ -233,7 +251,6 @@ class LandingPage extends React.Component {
 
   updateStoreForEdit(type, pipelineData) {
     if (!isEmpty(pipelineData)) {
-      console.log("Pipeline Props ->", pipelineData);
       let propertyMap = new Map();
       let configurationList = [];
       this.props.updateOperationType(type);
@@ -265,7 +282,7 @@ class LandingPage extends React.Component {
           }
             break;
           default:
-            {
+            if (!isEmpty(pipelineData[property])) {
               let propertyData = find(this.props.availableProperties, { paramName: property });
               if (!isNil(propertyData)) {
                 if (isEmpty(propertyData.subParams)) {
@@ -273,7 +290,8 @@ class LandingPage extends React.Component {
                     let schemaMap = new Map();
                     pipelineData[property].forEach(propData => {
                       if (schemaMap.has(propData.table)) {
-                        let columns = schemaMap.get(propData.table).push({ columnName: propData.column });
+                        let columns = schemaMap.get(propData.table);
+                        columns.push({ columnName: propData.column });
                         schemaMap.set(propData.table, columns);
                       } else {
                         schemaMap.set(propData.table, [{ columnName: propData.column }]);
@@ -289,30 +307,32 @@ class LandingPage extends React.Component {
                     updatePropertyMapWithObj(propertyMap, updatedObj);
                   }
                 } else {
-                  if (!isEmpty(pipelineData[property])) {
-                    let dataObj = pipelineData[property][0];
-                    for (let subPropertyName in dataObj) {
-                      let subProperty = find(propertyData.subParams, { paramName: subPropertyName });
-                      if (!isNil(subProperty)) {
-                        if (subProperty.isCollection) {
-                          let schemaMap = new Map();
+                  let dataObj = pipelineData[property][0];
+                  for (let subPropertyName in dataObj) {
+                    let subProperty = find(propertyData.subParams, { paramName: subPropertyName });
+                    if (!isNil(subProperty)) {
+                      if (subProperty.isCollection) {
+                        let schemaMap = new Map();
+                        if (dataObj[subPropertyName]) {
                           dataObj[subPropertyName].forEach(propData => {
                             if (schemaMap.has(propData.table)) {
-                              let columns = schemaMap.get(propData.table).push({ columnName: propData.column });
+                              let columns = schemaMap.get(propData.table);
+                              columns.push({ columnName: propData.column });
                               schemaMap.set(propData.table, columns);
                             } else {
                               schemaMap.set(propData.table, [{ columnName: propData.column }]);
                             }
                           });
-                          schemaMap.forEach((value, key) => {
-                            let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, key, value);
-                            updatePropertyMapWithObj(propertyMap, updatedObj);
-                          });
-                        } else {
-                          let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, dataObj[subPropertyName].table,
-                            [{ columnName: dataObj[subPropertyName].column }]);
-                          updatePropertyMapWithObj(propertyMap, updatedObj);
                         }
+
+                        schemaMap.forEach((value, key) => {
+                          let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, key, value);
+                          updatePropertyMapWithObj(propertyMap, updatedObj);
+                        });
+                      } else {
+                        let updatedObj = getPropertyUpdateObj(propertyData, subPropertyName, dataObj[subPropertyName].table,
+                          [{ columnName: dataObj[subPropertyName].column }]);
+                        updatePropertyMapWithObj(propertyMap, updatedObj);
                       }
                     }
                   }
@@ -391,11 +411,10 @@ class LandingPage extends React.Component {
   }
 
   handleError(error, type) {
-    alert(getErrorMessage(error, ERROR_MESSAGES[type]));
+    console.log('error ==> '+ error + "| type => " + type);
   }
 
   onWizardClose() {
-    console.log('Toggle');
     this.setState({
       showFeatureWizard: !this.state.showFeatureWizard
     });
@@ -428,7 +447,6 @@ class LandingPage extends React.Component {
         pipeline: featureObject.pipelineRunName
       }, featureObject);
     }
-    console.log(featureObject);
 
     return Observable.create((observer) => {
       fetchObserver.subscribe(
@@ -611,30 +629,32 @@ class LandingPage extends React.Component {
           </div>
           : <div className="feature-generation">
             <div className='top-control'>
-              <StatusBar statusList={this.state.statusList} featureTypes={this.featureTypes} pipeLineSelectionTypeChange={this.onPipeLineTypeChange.bind(this)}
-                statusSelectionChange={this.onStatusSelectionChange.bind(this)}></StatusBar>
-              <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
-              {/* <div className='type-selector'>
-                <div className="type-label">Pipeline Type:</div>
-                <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
-                  <DropdownToggle caret>
-                    {this.state.selectedPipelineType}
-                  </DropdownToggle>
-                  <DropdownMenu>
-                    {
-                      this.state.pipelineTypes.map((type) => {
-                        return (
-                          <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
-                        );
-                      })
-                    }
-                  </DropdownMenu>
-                </Dropdown>
-                <i className="fa fa-refresh refresh-button" onClick = {() => this.getPipelines(this.state.selectedPipelineType)}></i>
+              <div className='top-panel'>
+                <div className='type-selector'>
+                  <div className="type-label">Pipeline Type:</div>
+                  <Dropdown isOpen={this.state.dropdownOpen} toggle={this.toggleDropDown.bind(this)}>
+                    <DropdownToggle caret>
+                      {this.state.selectedPipelineType}
+                    </DropdownToggle>
+                    <DropdownMenu>
+                      {
+                        this.state.pipelineTypes.map((type) => {
+                          return (
+                            <DropdownItem key={type} onClick={this.onPipeLineTypeChange.bind(this, type)}>{type}</DropdownItem>
+                          );
+                        })
+                      }
+                    </DropdownMenu>
+                  </Dropdown>
+                  <i className="fa fa-refresh refresh-button" onClick={() => this.getPipelines(this.state.selectedPipelineType)}></i>
+                </div>
               </div>
-              <button className={"feature-button "+ (Theme && Theme.isCustomerMWC ? 'feature-button-mwc':'')}  onClick={this.toggleFeatureWizard}>+ Add New</button> */}
+
+              <StatusBar statusList={this.state.statusList}></StatusBar>
+              <button className={"feature-button " + (Theme && Theme.isCustomerMWC ? 'feature-button-mwc' : '')} onClick={this.toggleFeatureWizard}>+ Add New</button>
             </div>
             <FeatureTable data={this.state.data}
+              isDataLoading = {this.state.isDataLoading}
               onView={this.viewPipeline.bind(this)}
               onEdit={this.editPipeline.bind(this, EDIT_PIPELINE)}
               onClone={this.editPipeline.bind(this, CLONE_PIPELINE)}
@@ -657,3 +677,18 @@ class LandingPage extends React.Component {
   }
 }
 export default LandingPage;
+LandingPage.propTypes = {
+  setAvailableProperties: PropTypes.func,
+  setAvailableConfigurations: PropTypes.func,
+  setAvailableSchemas: PropTypes.func,
+  resetStore: PropTypes.func,
+  updateOperationType: PropTypes.func,
+  updateFeatureName: PropTypes.func,
+  availableSchemas: PropTypes.array,
+  setSelectedSchemas: PropTypes.func,
+  availableProperties: PropTypes.array,
+  updatePropertyMap: PropTypes.func,
+  availableConfigurations: PropTypes.array,
+  updateConfigurationList: PropTypes.func,
+  operationType: PropTypes.string
+};

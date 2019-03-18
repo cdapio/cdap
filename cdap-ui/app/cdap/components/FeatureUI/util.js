@@ -204,3 +204,4 @@ export function getClassNameForHeaderFooter() {
   }
   return className;
 }
+

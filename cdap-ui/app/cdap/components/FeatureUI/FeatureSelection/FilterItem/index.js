@@ -14,13 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
- /* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { isNil } from 'lodash';
 import './FilterItem.scss';
-
+import PropTypes from 'prop-types';
 
 class FilterItem extends Component {
 
@@ -48,7 +46,7 @@ class FilterItem extends Component {
       this.setState({ 'doubleView': true });
     } else {
       this.setState({ 'doubleView': false });
-      //remove the max value
+      // remove the max value
       this.maxValueChange(null);
     }
     const result = { selectedFilterType: item };
@@ -138,3 +136,9 @@ class FilterItem extends Component {
 }
 
 export default FilterItem;
+FilterItem.propTypes = {
+  itemVO: PropTypes.object,
+  changFilterItem: PropTypes.func,
+  itemIndex: PropTypes.number,
+  removeFilterItem: PropTypes.func
+};
