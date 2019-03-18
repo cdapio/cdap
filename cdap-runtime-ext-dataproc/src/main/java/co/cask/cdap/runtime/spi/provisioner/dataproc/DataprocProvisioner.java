@@ -27,6 +27,7 @@ import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
+import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.annotations.VisibleForTesting;
@@ -136,33 +137,20 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
-    // Generates and set the ssh key
-    SSHKeyPair sshKeyPair = context.getSSHContext().generate("cdap");
-    context.getSSHContext().setSSHKeyPair(sshKeyPair);
+    // Generates and set the ssh key if it does not have one.
+    // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
+    SSHContext sshContext = context.getSSHContext();
+    SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
+    if (sshKeyPair == null) {
+      sshKeyPair = sshContext.generate("cdap");
+      sshContext.setSSHKeyPair(sshKeyPair);
+    }
 
     // Reload system context properties and get system labels
     systemContext.reloadProperties();
     Map<String, String> systemLabels = getSystemLabels(systemContext);
 
-    // Default the project id from system config if missing or if it is auto-detect
-    Map<String, String> contextProperties = new HashMap<>(context.getProperties());
-    String contextProjectId = contextProperties.get(DataprocConf.PROJECT_ID_KEY);
-    if (contextProjectId == null || DataprocConf.AUTO_DETECT.equals(contextProjectId)) {
-      contextProjectId = systemContext.getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, contextProjectId);
-      if (contextProjectId != null) {
-        contextProperties.put(DataprocConf.PROJECT_ID_KEY, contextProjectId);
-      }
-    }
-
-    // If preferExternalIp has been set to true in system context then it gets the highest preference.
-    String systemPreferExternalIP = systemContext.getProperties().getOrDefault(DataprocConf.PREFER_EXTERNAL_IP,
-                                                                               "false");
-    if (Boolean.parseBoolean(systemPreferExternalIP.trim())) {
-      LOG.debug("System configuration set to prefer external IP. Will use external IPs for DataProc cluster.");
-      contextProperties.put(DataprocConf.PREFER_EXTERNAL_IP, "true");
-    }
-
-    DataprocConf conf = DataprocConf.create(contextProperties, sshKeyPair.getPublicKey());
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
@@ -191,7 +179,7 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
@@ -200,9 +188,8 @@ public class DataprocProvisioner implements Provisioner {
   }
 
   @Override
-  public Cluster getClusterDetail(ProvisionerContext context,
-                                  Cluster cluster) throws Exception {
-    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
+  public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
+    DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
@@ -237,7 +224,7 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
@@ -260,7 +247,7 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
-    DataprocConf conf = DataprocConf.fromProperties(context.getProperties());
+    DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     PollingStrategy strategy = PollingStrategies.fixedInterval(conf.getPollInterval(), TimeUnit.SECONDS);
     switch (cluster.getStatus()) {
       case CREATING:
@@ -293,6 +280,31 @@ public class DataprocProvisioner implements Provisioner {
     }
 
     return Collections.unmodifiableMap(labels);
+  }
+
+  /**
+   * Creates properties for the current context. It will default missing values from the system context properties.
+   */
+  private Map<String, String> createContextProperties(ProvisionerContext context) {
+    // Default the project id from system config if missing or if it is auto-detect
+    Map<String, String> contextProperties = new HashMap<>(context.getProperties());
+    String contextProjectId = contextProperties.get(DataprocConf.PROJECT_ID_KEY);
+    if (contextProjectId == null || DataprocConf.AUTO_DETECT.equals(contextProjectId)) {
+      contextProjectId = systemContext.getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, contextProjectId);
+      if (contextProjectId != null) {
+        contextProperties.put(DataprocConf.PROJECT_ID_KEY, contextProjectId);
+      }
+    }
+
+    // If preferExternalIp has been set to true in system context then it gets the highest preference.
+    String systemPreferExternalIP = systemContext.getProperties().getOrDefault(DataprocConf.PREFER_EXTERNAL_IP,
+                                                                               "false");
+    if (Boolean.parseBoolean(systemPreferExternalIP.trim())) {
+      LOG.debug("System configuration set to prefer external IP. Will use external IPs for DataProc cluster.");
+      contextProperties.put(DataprocConf.PREFER_EXTERNAL_IP, "true");
+    }
+
+    return contextProperties;
   }
 
   // Name must start with a lowercase letter followed by up to 51 lowercase letters,
