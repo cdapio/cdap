@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import DataPrepBrowserStore, {
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import { objectQuery } from 'services/helpers';
 
 const setSpannerAsActiveBrowser = (payload, getInstances = false) => {
   let { spanner, activeBrowser } = DataPrepBrowserStore.getState();
@@ -52,11 +51,10 @@ const setSpannerAsActiveBrowser = (payload, getInstances = false) => {
 
   MyDataPrepApi.getConnection(params).subscribe(
     (res) => {
-      let info = objectQuery(res, 'values', 0);
       DataPrepBrowserStore.dispatch({
         type: BrowserStoreActions.SET_SPANNER_CONNECTION_DETAILS,
         payload: {
-          info,
+          info: res,
           connectionId,
         },
       });
