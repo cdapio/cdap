@@ -28,6 +28,7 @@ const AddFeatureActions = {
   deleteSelectedSchema: 'DELETE-SELECTED-SCHEMA',
   updatePropertyMap: 'UPDATE-PROPERTY-MAP',
   updateConfigurationList: 'UPDATE-CONFIGURATION-LIST',
+  setDetectedProperties: 'SET-DETECTED-PROPERTIES',
 };
 
 export default AddFeatureActions;

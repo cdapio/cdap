@@ -402,7 +402,7 @@ export default class DataPrepTopPanel extends Component {
 
   render() {
     let plusBtn = null;
-    if(Theme && Theme.showDataPrepPlusButton){
+    if (Theme && Theme.showDataPrepPlusButton) {
       plusBtn = !this.props.singleWorkspaceMode ? <DataPrepPlusButton /> : null;
     }
 

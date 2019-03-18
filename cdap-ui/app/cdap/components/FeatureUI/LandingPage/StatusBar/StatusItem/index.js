@@ -15,26 +15,23 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React, { Component } from 'react';
 import { isNil } from 'lodash';
+import PropTypes from 'prop-types';
 import './StatusItem.scss';
 import {SUCCEEDED,DEPLOYED,FAILED,RUNNING} from '../../../config';
-
-
 
 class StatusItem extends Component {
 
   constructor(props) {
     super(props);
 
-    this.state = {className:this.getClassName(this.props.item),
-      count:isNil(this.props.item.count) ? undefined : this.props.item.count,
+    this.state = {
+      className:this.getClassName(this.props.item),
       name:this.props.item.name};
   }
 
   itemClicked =() => {
-    console.log("hello");
   }
 
   getClassName = (item) => {
@@ -50,13 +47,16 @@ class StatusItem extends Component {
   }
 
   render() {
+    let showIcon = isNil(this.props.showIcon)? true: this.props.showIcon;
+    let count = isNil(this.props.item.count) ? undefined : this.props.item.count;
     return (
-      <div className={this.props.item.selected ? 'status-item-box box-selected': 'status-item-box box-un-selected' } onClick={this.props.itemClick}>
+      <div className = "status-item-box" onClick={this.props.itemClick}>
+         <span className="status-name">{this.state.name} </span>
         <div className="header">
-          <span className={this.state.className}></span>
-          <span className="status-name">{this.state.name} </span>
+          { showIcon &&
+           <span className={this.state.className}></span> }
           {
-            isNil(this.state.count) ? null : <span>({this.state.count})</span>
+            isNil(count) ? "-" : <span className = "status-count" > {count}</span>
           }
         </div>
       </div>
@@ -65,3 +65,8 @@ class StatusItem extends Component {
 }
 
 export default StatusItem;
+StatusItem.propTypes = {
+  item: PropTypes.object,
+  showIcon: PropTypes.func,
+  itemClick: PropTypes.func
+};

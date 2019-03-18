@@ -14,8 +14,8 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
+import PropTypes from 'prop-types';
 
 require('./AddSchema.scss');
 
@@ -51,3 +51,10 @@ class AddSchema extends React.Component {
 }
 
 export default AddSchema;
+
+AddSchema.propTypes = {
+  title: PropTypes.string,
+  type: PropTypes.string,
+  operation: PropTypes.func,
+  data: PropTypes.any,
+};

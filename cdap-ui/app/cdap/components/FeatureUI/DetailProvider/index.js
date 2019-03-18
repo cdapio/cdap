@@ -13,12 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-/* eslint react/prop-types: 0 */
-
 import React from 'react';
 import { Input } from 'reactstrap';
 import { EDIT_PIPELINE } from '../config';
+import PropTypes from 'prop-types';
+
 require('./DetailProvider.scss');
 
 class DetailProvider extends React.Component {
@@ -54,3 +53,8 @@ class DetailProvider extends React.Component {
 }
 
 export default DetailProvider;
+DetailProvider.propTypes = {
+  updateFeatureName: PropTypes.func,
+  operationType: PropTypes.string,
+  featureName: PropTypes.string
+};

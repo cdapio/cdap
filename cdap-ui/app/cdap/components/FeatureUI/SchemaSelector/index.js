@@ -14,7 +14,6 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import AddSchema from '../AddSchema';
 import SchemaSelectorModal from '../SchemaSelectorModal';
@@ -23,7 +22,9 @@ import isEmpty from 'lodash/isEmpty';
 import findIndex from 'lodash/findIndex';
 import cloneDeep from 'lodash/cloneDeep';
 import find from 'lodash/find';
+import remove from 'lodash/remove';
 import { removeSchemaFromPropertyMap } from '../util';
+import PropTypes from 'prop-types';
 
 
 require('./SchemaSelector.scss');
@@ -124,12 +125,14 @@ class SchemaSelector extends React.Component {
   }
 
   onAlertClose(action) {
-    console.log(this.state.schemaSelected);
     if (action === 'OK' && this.state.schemaSelected) {
       this.props.deleteSelectedSchema(this.state.schemaSelected);
       let propertyMap = cloneDeep(this.props.propertyMap);
       removeSchemaFromPropertyMap(propertyMap, this.state.schemaSelected.schemaName);
       this.props.updatePropertyMap(propertyMap);
+      let detectedProperties = cloneDeep(this.props.detectedProperties);
+      remove(detectedProperties, { dataSchemaName: this.state.schemaSelected.schemaName });
+      this.props.setDetectedProperties(detectedProperties);
     }
     this.setState({
       openAlertModal: false
@@ -158,3 +161,15 @@ class SchemaSelector extends React.Component {
 }
 
 export default SchemaSelector;
+
+SchemaSelector.propTypes = {
+  availableSchemas: PropTypes.array,
+  setSelectedSchemas: PropTypes.func,
+  updateSelectedSchema: PropTypes.func,
+  selectedSchemas: PropTypes.array,
+  deleteSelectedSchema: PropTypes.func,
+  propertyMap: PropTypes.object,
+  updatePropertyMap: PropTypes.func,
+  detectedProperties: PropTypes.array,
+  setDetectedProperties: PropTypes.func,
+};

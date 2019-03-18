@@ -14,11 +14,11 @@
  * the License.
  */
 
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import isEmpty from 'lodash/isEmpty';
 import { Input } from 'reactstrap';
 import InfoTip from '../InfoTip';
+import PropTypes from 'prop-types';
 
 require('./NameValueList.scss');
 
@@ -66,13 +66,8 @@ class NameValueList extends React.Component {
   }
 
   render() {
-    let listData = (isEmpty(this.props.dataProvider) ? [] : this.props.dataProvider).map((item,index) => {
-      item.itemIndex = index;
-      return item;
-    });
     let basicData = this.props.dataProvider.filter(item => item.isMandatory);
     let advanceData = this.props.dataProvider.filter(item => !item.isMandatory);
-    console.log("Rendering list ", listData);
     return (
       <div className="engine-config-container">
         {
@@ -138,3 +133,8 @@ class NameValueList extends React.Component {
   }
 }
 export default NameValueList;
+NameValueList.propTypes = {
+  updateNameValue: PropTypes.func,
+  addNameValue: PropTypes.func,
+  dataProvider: PropTypes.array
+};

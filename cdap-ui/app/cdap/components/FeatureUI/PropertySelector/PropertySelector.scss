@@ -22,7 +22,7 @@
   border-bottom: 1px solid #e2e2e2;
   margin-bottom: 8px;
   .property-container {
-    width: 30%;
+    width: 35%;
     overflow: auto;
     box-shadow: 2px 3px 3px 1px #888888;
   }
@@ -39,7 +39,7 @@
     padding-bottom: 15px;
     display: flex;
     flex-direction: column;
-    width: 70%;
+    width: 65%;
     .schema-filter-container {
       display: flex;
       justify-content: space-between;
@@ -88,6 +88,34 @@
         }
       }
     }
+  }
+
+  .config-header-label {
+    margin-bottom: 5px;
+    padding: 5px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333333;
+    background: #eeeeee;
+  }
+  .advance-control {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 15px;
+    background: #eeeeee;
+    font-size: 30px;
+    margin-bottom: 5px;
+  }
+
+  .config-item-container {
+    padding: 15px;
+    margin-right: 10px;
+    box-shadow: 0px 3px 2px 0px #bbbbbb;
+    border: 1px solid #e1e1e1;
+    border-radius: 4px;
+    background-color: #d1d6e0;
   }
 }
 

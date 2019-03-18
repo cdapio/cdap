@@ -13,11 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-/* eslint react/prop-types: 0 */
 import React from 'react';
 import NameValueList from '../NameValueList';
 import cloneDeep from 'lodash/cloneDeep';
+import PropTypes from 'prop-types';
 
 require('./Configurator.scss');
 
@@ -53,3 +52,7 @@ class Configurator extends React.Component {
   }
 }
 export default Configurator;
+Configurator.propTypes = {
+  configurationList: PropTypes.array,
+  updateConfigurationList: PropTypes.func
+};
