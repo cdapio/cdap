@@ -528,6 +528,7 @@ angular.module(PKG.name + '.commons')
     vm.handleCanvasClick = () => {
       vm.toggleNodeMenu();
       vm.selectedNode = null;
+      vm.clearCommentSelection();
     };
 
     function addConnection(newConnObj) {
@@ -997,6 +998,7 @@ angular.module(PKG.name + '.commons')
             $timeout.cancel(nodesTimeout);
           }
           nodesTimeout = $timeout(function () {
+            makeCommentsDraggable();
             makeNodesDraggable();
             initNodes();
           });
@@ -1234,15 +1236,15 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.addComment(config);
     };
 
-    function clearCommentSelection() {
+    vm.clearCommentSelection = function clearCommentSelection() {
       angular.forEach(vm.comments, function (comment) {
         comment.isActive = false;
       });
-    }
+    };
 
     vm.commentSelect = function (event, comment) {
       event.stopPropagation();
-      clearCommentSelection();
+      vm.clearCommentSelection();
 
       if (dragged) {
         dragged = false;
