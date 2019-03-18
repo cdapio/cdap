@@ -67,6 +67,9 @@ class HydratorPlusPlusTopPanelCtrl {
     this.fetchMacrosTimeout = null;
     this.timeoutInMinutes = 2;
 
+    const themeShowSchedule = window.CaskCommon.ThemeHelper.Theme.showSchedules !== false;
+    this.showSchedule = this.state.artifact.name === this.GLOBALS.etlDataPipeline && themeShowSchedule;
+
     if ($stateParams.isClone) {
       this.openMetadata();
     }
