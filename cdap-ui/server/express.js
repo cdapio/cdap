@@ -79,8 +79,10 @@ function getFaviconPath(uiThemeConfig) {
       themeFaviconPath = `${CDAP_DIST_PATH}/${themeFaviconPath}`;
     }
     try {
-      if (require.resolve(themeFaviconPath)) {
+      if (fs.existsSync(themeFaviconPath)) {
         faviconPath = themeFaviconPath;
+      } else {
+        log.warn(`Unable to find favicon at path ${themeFaviconPath}`);
       }
     } catch (e) {
       log.warn(`Unable to find favicon at path ${themeFaviconPath}`);
