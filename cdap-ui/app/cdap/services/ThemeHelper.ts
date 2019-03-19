@@ -65,6 +65,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'footer-text'?: string;
     'footer-link'?: string;
     'feature-names'?: IJsonFeatureNames;
+    'welcome-banner-image'?: string;
   };
   features?: {
     'about-product'?: boolean;
@@ -123,7 +124,6 @@ export function applyTheme() {
     if ('page-name-color' in stylesJSON && isColor(stylesJSON['page-name-color'])) {
       stylesToApply['page-name-color'] = stylesJSON['page-name-color'];
     }
-
     // this is what's going on under the hood for modern browsers:
     // document.documentElement.style.setProperty(`--${cssVar}`, cssValue);
     cssVars({
@@ -272,6 +272,14 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
           content.productLogoAbout = objectQuery(productLogoAbout, 'arguments', 'url');
         }
       }
+    }
+    if ('welcome-banner-image' in contentJson) {
+      const welcomeBannerImage = window.CDAP_UI_THEME.content['welcome-banner-image'];
+      cssVars({
+        variables: {
+          'welcome-banner-image': `url('${welcomeBannerImage}')`,
+        },
+      });
     }
     if ('feature-names' in contentJson) {
       const featureNames = { ...content.featureNames };
