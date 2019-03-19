@@ -84,7 +84,7 @@ export default class ConnectionPopover extends Component {
     let connectionId = this.props.connectionInfo.id;
 
     let params = {
-      namespace,
+      context: namespace,
       connectionId,
     };
 
