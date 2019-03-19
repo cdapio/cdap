@@ -177,14 +177,22 @@ public class DataprocClient implements AutoCloseable {
                                                          .build())
                                         .build())
                      .setGceClusterConfig(clusterConfig.build())
-                     // The additional property is needed to be able to provision a singlenode cluster on
-                     // dataproc. Dataproc has an issue that it will treat 0 number of worker
-                     // nodes as the default number, which means it will always provision a
-                     // cluster with 2 worker nodes if this property is not set. Refer to
-                     // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
-                     // for more information.
-                     .setSoftwareConfig(SoftwareConfig.newBuilder().setImageVersion(imageVersion)
-                                          .putProperties("dataproc:dataproc.allow.zero.workers", "true"))
+                     .setSoftwareConfig(
+                       SoftwareConfig.newBuilder()
+                         // The additional property is needed to be able to provision a singlenode cluster on
+                         // dataproc. Dataproc has an issue that it will treat 0 number of worker
+                         // nodes as the default number, which means it will always provision a
+                         // cluster with 2 worker nodes if this property is not set. Refer to
+                         // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
+                         // for more information.
+                         .setImageVersion(imageVersion)
+                         .putProperties("dataproc:dataproc.allow.zero.workers", "true")
+                         // Enable/Disable stackdriver
+                         .putProperties("dataproc:dataproc.logging.stackdriver.enable",
+                                        Boolean.toString(conf.isStackdriverLoggingEnabled()))
+                         .putProperties("dataproc:dataproc.monitoring.stackdriver.enable",
+                                        Boolean.toString(conf.isStackdriverMonitoringEnabled()))
+                     )
                      .build())
         .build();
 
@@ -376,7 +384,7 @@ public class DataprocClient implements AutoCloseable {
       ts = -1L;
     }
     String ip = properties.get("ip.external");
-    if (network.equals(systemNetwork) && !conf.preferExternalIP()) {
+    if (network.equals(systemNetwork) && !conf.isPreferExternalIP()) {
       ip = properties.get("ip.internal");
     }
     return new Node(nodeName, type, ip, ts, properties);

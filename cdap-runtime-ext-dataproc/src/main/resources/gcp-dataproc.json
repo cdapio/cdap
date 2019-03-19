@@ -113,6 +113,34 @@
             "default": "false",
             "size": "medium"
           }
+        },
+        {
+          "widget-type": "select",
+          "label": "Enable Stackdriver Logging Integration",
+          "name": "stackdriverLoggingEnabled",
+          "description": "Enable or disable Stackdriver logging integration.",
+          "widget-attributes": {
+            "values": [
+              "false",
+              "true"
+            ],
+            "default": "true",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Enable Stackdriver Monitoring Integration",
+          "name": "stackdriverMonitoringEnabled",
+          "description": "Enable or disable Stackdriver monitoring integration.",
+          "widget-attributes": {
+            "values": [
+              "false",
+              "true"
+            ],
+            "default": "true",
+            "size": "medium"
+          }
         }
       ]
     },
