@@ -42,6 +42,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -54,6 +55,7 @@ class KubeTwillController implements TwillController {
   private final RunId runId;
   private final ApiClient apiClient;
   private final CompletableFuture<KubeTwillController> completion;
+  private final AtomicBoolean terminateCalled;
   private final DiscoveryServiceClient discoveryServiceClient;
 
   KubeTwillController(String name, String kubeNamespace, RunId runId, ApiClient apiClient,
@@ -63,6 +65,7 @@ class KubeTwillController implements TwillController {
     this.runId = runId;
     this.apiClient = apiClient;
     this.completion = new CompletableFuture<>();
+    this.terminateCalled = new AtomicBoolean();
     this.discoveryServiceClient = discoveryServiceClient;
   }
 
@@ -158,7 +161,7 @@ class KubeTwillController implements TwillController {
 
   @Override
   public Future<? extends ServiceController> terminate() {
-    if (!completion.isDone()) {
+    if (terminateCalled.compareAndSet(false, true)) {
       // delete the deployment, then delete the config map
       try {
         V1DeleteOptions deleteOptions = new V1DeleteOptions();
