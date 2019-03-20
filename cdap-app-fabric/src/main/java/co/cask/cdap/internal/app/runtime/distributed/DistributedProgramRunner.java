@@ -388,6 +388,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   private CConfiguration createContainerCConf(CConfiguration cConf) {
     CConfiguration result = CConfiguration.copy(cConf);
+    // reload config
+    result.reloadConfiguration();
     // don't have tephra retry in order to give CDAP more control over when to retry and how.
     result.set(TxConstants.Service.CFG_DATA_TX_CLIENT_RETRY_STRATEGY, "n-times");
     result.setInt(TxConstants.Service.CFG_DATA_TX_CLIENT_ATTEMPTS, 0);
