@@ -41,6 +41,8 @@ public class DataprocConf {
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
+  static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
+  static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
 
   private final String accountKey;
   private final String region;
@@ -64,13 +66,16 @@ public class DataprocConf {
   private final long pollInterval;
 
   private final boolean preferExternalIP;
+  private final boolean stackdriverLoggingEnabled;
+  private final boolean stackdriverMonitoringEnabled;
   private final SSHPublicKey publicKey;
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        String network, int masterNumNodes, int masterCPUs, int masterMemoryMB, int masterDiskGB,
                        int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
-                       boolean preferExternalIP, @Nullable SSHPublicKey publicKey) {
+                       boolean preferExternalIP, boolean stackdriverLoggingEnabled,
+                       boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -89,6 +94,8 @@ public class DataprocConf {
     this.pollDeleteDelay = pollDeleteDelay;
     this.pollInterval = pollInterval;
     this.preferExternalIP = preferExternalIP;
+    this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
+    this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
   }
 
@@ -148,8 +155,16 @@ public class DataprocConf {
     return pollInterval;
   }
 
-  public boolean preferExternalIP() {
+  public boolean isPreferExternalIP() {
     return preferExternalIP;
+  }
+
+  public boolean isStackdriverLoggingEnabled() {
+    return stackdriverLoggingEnabled;
+  }
+
+  public boolean isStackdriverMonitoringEnabled() {
+    return stackdriverMonitoringEnabled;
   }
 
   @Nullable
@@ -263,13 +278,18 @@ public class DataprocConf {
     long pollInterval = getLong(properties, "pollInterval", 2);
 
     boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
+    // By default stackdriver is enabled. This is for backward compatibility
+    boolean stackdriverLoggingEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_LOGGING_ENABLED,
+                                                                                     "true"));
+    boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
+                                                                                        "true"));
 
     // always use 'global' region until CDAP-14376 is fixed.
     return new DataprocConf(accountKey, "global", zone, projectId, network,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            preferExternalIP, publicKey);
+                            preferExternalIP, stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey);
   }
 
   // the UI never sends nulls, it only sends empty strings.

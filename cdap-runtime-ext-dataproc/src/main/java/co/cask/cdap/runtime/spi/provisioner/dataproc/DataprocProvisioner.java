@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -286,22 +287,30 @@ public class DataprocProvisioner implements Provisioner {
    * Creates properties for the current context. It will default missing values from the system context properties.
    */
   private Map<String, String> createContextProperties(ProvisionerContext context) {
-    // Default the project id from system config if missing or if it is auto-detect
     Map<String, String> contextProperties = new HashMap<>(context.getProperties());
+
+    // Default the project id from system config if missing or if it is auto-detect
     String contextProjectId = contextProperties.get(DataprocConf.PROJECT_ID_KEY);
     if (contextProjectId == null || DataprocConf.AUTO_DETECT.equals(contextProjectId)) {
       contextProjectId = systemContext.getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, contextProjectId);
       if (contextProjectId != null) {
+        LOG.debug("Setting default Dataproc project ID to {}", contextProjectId);
         contextProperties.put(DataprocConf.PROJECT_ID_KEY, contextProjectId);
       }
     }
 
-    // If preferExternalIp has been set to true in system context then it gets the highest preference.
-    String systemPreferExternalIP = systemContext.getProperties().getOrDefault(DataprocConf.PREFER_EXTERNAL_IP,
-                                                                               "false");
-    if (Boolean.parseBoolean(systemPreferExternalIP.trim())) {
-      LOG.debug("System configuration set to prefer external IP. Will use external IPs for DataProc cluster.");
-      contextProperties.put(DataprocConf.PREFER_EXTERNAL_IP, "true");
+    // Default settings from the system context
+    List<String> keys = Arrays.asList(DataprocConf.PREFER_EXTERNAL_IP,
+                                      DataprocConf.STACKDRIVER_LOGGING_ENABLED,
+                                      DataprocConf.STACKDRIVER_MONITORING_ENABLED);
+    for (String key : keys) {
+      if (!contextProperties.containsKey(key)) {
+        String value = systemContext.getProperties().get(key);
+        if (value != null) {
+          LOG.debug("Setting default Dataproc property {} to {}", key, value);
+          contextProperties.put(key, value.trim());
+        }
+      }
     }
 
     return contextProperties;
