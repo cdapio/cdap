@@ -18,6 +18,10 @@
 @import '../../../../styles/variables.scss';
 @import '../AdminManagementTabContentVariables.scss';
 
+.services-table-section.full-width .services-table {
+  @include stickyheader(6%, 34%, 20%, 20%, 20%, $bgColor: $table-background-color);
+}
+
 .services-table {
   background: $cdap-white;
   padding: 25px;

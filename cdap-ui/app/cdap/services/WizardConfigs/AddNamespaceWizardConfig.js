@@ -20,6 +20,8 @@ import MappingStep from 'components/CaskWizards/AddNamespace/MappingStep';
 import SecurityStep from 'components/CaskWizards/AddNamespace/SecurityStep';
 import PreferencesStep from 'components/CaskWizards/AddNamespace/PreferencesStep';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
+import findIndex from 'lodash/findIndex';
 
 const AddNamespaceWizardConfig = {
   steps: [
@@ -54,5 +56,15 @@ const AddNamespaceWizardConfig = {
     },
   ],
 };
+
+if (Theme.showNamespaceMapping === false) {
+  const mappingIndex = findIndex(AddNamespaceWizardConfig.steps, { id: 'mapping' });
+  AddNamespaceWizardConfig.steps.splice(mappingIndex, 1);
+}
+
+if (Theme.showNamespaceSecurity === false) {
+  const securityIndex = findIndex(AddNamespaceWizardConfig.steps, { id: 'security' });
+  AddNamespaceWizardConfig.steps.splice(securityIndex, 1);
+}
 
 export default AddNamespaceWizardConfig;

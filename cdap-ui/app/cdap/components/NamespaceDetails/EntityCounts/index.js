@@ -32,20 +32,23 @@ const mapStateToProps = (state) => {
 
 const NamespaceDetailsEntityCounts = ({ customAppCount, pipelineCount, datasetCount }) => {
   return (
-    <div className="namespace-details-entity-count">
-      <div className="entity-count">
-        <span>{T.translate(`${PREFIX}.customApps`)}</span>
-        <div>{customAppCount}</div>
+    <React.Fragment>
+      <hr />
+      <div className="namespace-details-entity-count">
+        <div className="entity-count">
+          <span>{T.translate(`${PREFIX}.customApps`)}</span>
+          <div>{customAppCount}</div>
+        </div>
+        <div className="entity-count">
+          <span>{T.translate('commons.pipelines')}</span>
+          <div>{pipelineCount}</div>
+        </div>
+        <div className="entity-count">
+          <span>{T.translate('commons.entity.dataset.plural')}</span>
+          <div>{datasetCount}</div>
+        </div>
       </div>
-      <div className="entity-count">
-        <span>{T.translate('commons.pipelines')}</span>
-        <div>{pipelineCount}</div>
-      </div>
-      <div className="entity-count">
-        <span>{T.translate('commons.entity.dataset.plural')}</span>
-        <div>{datasetCount}</div>
-      </div>
-    </div>
+    </React.Fragment>
   );
 };
 

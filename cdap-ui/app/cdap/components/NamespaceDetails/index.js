@@ -52,15 +52,10 @@ const NamespaceDetailsComp = ({ loading }) => {
       />
       <div className="namespace-details-content">
         <Description />
-        <hr />
         <EntityCounts />
-        <hr />
         <ComputeProfiles />
-        <hr className="more-margin-top" />
         <Preferences />
-        <hr className="more-margin-top" />
         <Mapping />
-        <hr />
         <Security />
       </div>
     </div>

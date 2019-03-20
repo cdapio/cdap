@@ -20,6 +20,7 @@ import PropTypes from 'prop-types';
 import T from 'i18n-react';
 import AddNamespaceWizard from 'components/CaskWizards/AddNamespace';
 import { getNamespaceProperties } from 'components/NamespaceDetails/store/ActionCreator';
+import { Theme } from 'services/ThemeHelper';
 require('./Security.scss');
 
 const PREFIX = 'features.NamespaceDetails.security';
@@ -65,35 +66,42 @@ class NamespaceDetailsSecurity extends Component {
   };
 
   render() {
+    if (Theme.showNamespaceSecurity === false) {
+      return null;
+    }
+
     return (
-      <div className="namespace-details-security">
-        <div className="namespace-details-section-label">
-          <strong>{T.translate(`${PREFIX}.label`)}</strong>
-          {this.props.principal && this.props.keytabURI ? (
-            <span className="edit-label" onClick={this.toggleModal}>
-              {T.translate('features.NamespaceDetails.edit')}
-            </span>
+      <React.Fragment>
+        <hr />
+        <div className="namespace-details-security">
+          <div className="namespace-details-section-label">
+            <strong>{T.translate(`${PREFIX}.label`)}</strong>
+            {this.props.principal && this.props.keytabURI ? (
+              <span className="edit-label" onClick={this.toggleModal}>
+                {T.translate('features.NamespaceDetails.edit')}
+              </span>
+            ) : null}
+          </div>
+          <div className="security-values">
+            <strong>{T.translate(`${PREFIX}.principal`)}</strong>
+            <span title={this.props.principal}>{this.props.principal || '- -'}</span>
+          </div>
+          <div className="security-values">
+            <strong>{T.translate(`${PREFIX}.keytabURI`)}</strong>
+            <span title={this.props.keytabURI}>{this.props.keytabURI || '- -'}</span>
+          </div>
+          {this.state.modalOpen ? (
+            <AddNamespaceWizard
+              isOpen={this.state.modalOpen}
+              onClose={this.toggleModal}
+              isEdit={true}
+              editableFields={['keyTab']}
+              properties={{ ...this.props }}
+              activeStepId="security"
+            />
           ) : null}
         </div>
-        <div className="security-values">
-          <strong>{T.translate(`${PREFIX}.principal`)}</strong>
-          <span title={this.props.principal}>{this.props.principal || '- -'}</span>
-        </div>
-        <div className="security-values">
-          <strong>{T.translate(`${PREFIX}.keytabURI`)}</strong>
-          <span title={this.props.keytabURI}>{this.props.keytabURI || '- -'}</span>
-        </div>
-        {this.state.modalOpen ? (
-          <AddNamespaceWizard
-            isOpen={this.state.modalOpen}
-            onClose={this.toggleModal}
-            isEdit={true}
-            editableFields={['keyTab']}
-            properties={{ ...this.props }}
-            activeStepId="security"
-          />
-        ) : null}
-      </div>
+      </React.Fragment>
     );
   }
 }
