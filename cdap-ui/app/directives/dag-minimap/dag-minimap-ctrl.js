@@ -20,6 +20,7 @@ class DAGMinimapCtrl {
     this.DAGMinimapUtilities = DAGMinimapUtilities;
     this.$timeout = $timeout;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
+    this.MINIMAP_MIN_NUMBER_NODES = 6;
 
     this.state = {
       nodes: [],
