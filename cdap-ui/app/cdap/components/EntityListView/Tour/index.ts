@@ -17,6 +17,7 @@
 import GuidedTour, { ITourStep } from 'services/GuidedTour';
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
+import ee from 'event-emitter';
 
 const PREFIX = 'features.NUX';
 const featureNames = Theme.featureNames;
@@ -99,5 +100,14 @@ const steps: ITourStep[] = [
 ];
 
 tour.addSteps(steps);
+
+const eventEmitter = ee(ee);
+
+function hideAppDrawer() {
+  eventEmitter.emit('NUX-TOUR-END');
+}
+
+tour.on('cancel', hideAppDrawer);
+tour.on('complete', hideAppDrawer);
 
 export default tour;
