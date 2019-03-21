@@ -37,8 +37,10 @@ import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Appends logs to log buffer file. The file is rotated when it reaches max size. The log buffer file name is
@@ -57,6 +59,7 @@ public class LogBufferWriter implements Flushable, Closeable {
   private final long maxFileSizeInBytes;
   private final Runnable cleaner;
   private final ExecutorService executorService;
+  private Future<?> cleanerFuture;
 
   // output stream to write to
   private OutputStream currOutputStream;
@@ -74,6 +77,8 @@ public class LogBufferWriter implements Flushable, Closeable {
     // max file size after which rotation should happen.
     this.maxFileSizeInBytes = maxFileSize;
     this.cleaner = cleaner;
+    // Mark cleaner future as completed when its initialized
+    this.cleanerFuture =  CompletableFuture.completedFuture(0);
     this.executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("log-buffer-cleaner"));
     this.logEventSerializer = new LoggingEventSerializer();
 
@@ -181,8 +186,11 @@ public class LogBufferWriter implements Flushable, Closeable {
     // update current file id to next monotonically increasing file id
     currFileId = currFileId + 1;
     Location rotatedLocation = locationFactory.create(getFileName(currFileId));
-    // executes log buffer cleaner runnable
-    executorService.execute(cleaner);
+    // executes log buffer cleaner runnable. Only submit cleaner thread if future is complete. This is because if the
+    // rotation is happening faster than clean up, there can be multiple clean up tasks in executorService.
+    if (cleanerFuture.isDone()) {
+      cleanerFuture = executorService.submit(cleaner);
+    }
     return rotatedLocation;
   }
 

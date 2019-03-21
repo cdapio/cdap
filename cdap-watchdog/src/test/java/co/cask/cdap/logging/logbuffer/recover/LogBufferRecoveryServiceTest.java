@@ -30,6 +30,7 @@ import co.cask.cdap.logging.appender.LogMessage;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.logging.logbuffer.LogBufferWriter;
 import co.cask.cdap.logging.logbuffer.MockCheckpointManager;
+import co.cask.cdap.logging.logbuffer.cleaner.LogBufferCleaner;
 import co.cask.cdap.logging.pipeline.LogPipelineTestUtil;
 import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.pipeline.MockAppender;
@@ -38,6 +39,9 @@ import co.cask.cdap.logging.pipeline.logbuffer.LogBufferProcessorPipeline;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.Service;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -65,18 +69,23 @@ public class LogBufferRecoveryServiceTest {
                                                                           MockAppender.class.getName());
     final MockAppender appender = LogPipelineTestUtil.getAppender(loggerContext.getLogger(Logger.ROOT_LOGGER_NAME),
                                                                   "Test", MockAppender.class);
+    CConfiguration cConf = CConfiguration.create();
     MockCheckpointManager checkpointManager = new MockCheckpointManager();
     LogBufferPipelineConfig config = new LogBufferPipelineConfig(1024L, 300L, 500L, 4);
     loggerContext.start();
     LogBufferProcessorPipeline pipeline = new LogBufferProcessorPipeline(
-      new LogProcessorPipelineContext(CConfiguration.create(), "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
+      new LogProcessorPipelineContext(cConf, "test", loggerContext, NO_OP_METRICS_CONTEXT, 0),
       config, checkpointManager, 0);
 
     // start the pipeline
     pipeline.startAndWait();
 
     // write directly to log buffer
-    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250, () -> { });
+
+    AtomicBoolean startCleanup = new AtomicBoolean(false);
+    LogBufferWriter writer = new LogBufferWriter(absolutePath, 250,
+                                                 new LogBufferCleaner(cConf, ImmutableList.of(checkpointManager),
+                                                                      startCleanup));
     ImmutableList<byte[]> events = getLoggingEvents();
     writer.write(events.iterator()).iterator();
     writer.close();
@@ -85,7 +94,34 @@ public class LogBufferRecoveryServiceTest {
     // iterations
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
-                                                                    absolutePath, 2, new AtomicBoolean(true));
+                                                                    absolutePath, 2, startCleanup);
+    service.addListener(new Service.Listener() {
+      @Override
+      public void starting() {
+        //no-op
+      }
+
+      @Override
+      public void running() {
+        Assert.assertFalse(startCleanup.get());
+      }
+
+      @Override
+      public void stopping(Service.State from) {
+        //no-op
+      }
+
+      @Override
+      public void terminated(Service.State from) {
+        Assert.assertTrue(startCleanup.get());
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        //no-op
+      }
+    }, MoreExecutors.sameThreadExecutor());
+
     service.startAndWait();
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
