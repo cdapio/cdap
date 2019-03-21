@@ -2262,6 +2262,16 @@
     </description>
   </property>
 
+  <property>
+    <name>metadata.messaging.retries.on.conflict</name>
+    <value>100</value>
+    <description>
+      The maximal number of times a metadata message will be processed if it
+      repeatedly causes a conflict exception. After this, the mesaage will be
+      discarded.
+    </description>
+  </property>
+
   <!-- Metrics Configuration -->
 
   <property>

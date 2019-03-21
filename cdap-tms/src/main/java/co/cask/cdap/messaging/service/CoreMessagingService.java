@@ -87,8 +87,8 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   private final long txMaxLifeTimeInMillis;
 
   @Inject
-  CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
-                       MetricsCollectionService metricsCollectionService) {
+  protected CoreMessagingService(CConfiguration cConf, TableFactory tableFactory,
+                                 MetricsCollectionService metricsCollectionService) {
     this(cConf, tableFactory, TimeProvider.SYSTEM_TIME, metricsCollectionService);
   }
 

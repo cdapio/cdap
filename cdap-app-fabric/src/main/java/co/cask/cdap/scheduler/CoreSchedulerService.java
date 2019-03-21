@@ -64,6 +64,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -224,7 +225,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     }
     try {
       execute((StoreAndProfileTxRunnable<Void, Exception>) (store, profileDataset) -> {
-        store.addSchedules(schedules);
+        long updatedTime = store.addSchedules(schedules);
         for (ProgramSchedule schedule : schedules) {
           if (schedule.getProperties() != null) {
             Optional<ProfileId> profile = SystemArguments.getProfileIdFromArgs(
@@ -251,7 +252,6 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         }
         for (ProgramSchedule schedule : schedules) {
           ScheduleId scheduleId = schedule.getScheduleId();
-          adminEventPublisher.publishScheduleCreation(scheduleId);
 
           // if the added properties contains profile assignment, add the assignment
           Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
@@ -259,6 +259,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           if (profileId.isPresent()) {
             profileDataset.addProfileAssignment(profileId.get(), scheduleId);
           }
+        }
+        // publish the messages at the end of transaction
+        for (ProgramSchedule schedule : schedules) {
+          adminEventPublisher.publishScheduleCreation(schedule.getScheduleId(), updatedTime);
         }
         return null;
       }, Exception.class);
@@ -377,11 +381,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     checkStarted();
     execute((StoreQueueAndProfileTxRunnable<Void, Exception>) (store, queue, profileDataset) -> {
       long deleteTime = System.currentTimeMillis();
+      List<ProgramSchedule> toNotify = new ArrayList<>();
       for (ScheduleId scheduleId : scheduleIds) {
         ProgramSchedule schedule = store.getSchedule(scheduleId);
         deleteScheduleInScheduler(schedule);
         queue.markJobsForDeletion(scheduleId, deleteTime);
-        adminEventPublisher.publishScheduleDeletion(scheduleId, schedule);
+        toNotify.add(schedule);
         // if the deleted schedule has properties with profile assignment, remove the assignment
         Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
                                                                              schedule.getProperties());
@@ -395,7 +400,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           }
         }
       }
-      store.deleteSchedules(scheduleIds);
+      store.deleteSchedules(scheduleIds, deleteTime);
+      toNotify.forEach(adminEventPublisher::publishScheduleDeletion);
       return null;
     }, NotFoundException.class);
   }
@@ -407,13 +413,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       long deleteTime = System.currentTimeMillis();
       List<ProgramSchedule> schedules = store.listSchedules(appId);
       deleteSchedulesInScheduler(schedules);
-      List<ScheduleId> deleted = store.deleteSchedules(appId);
+      List<ScheduleId> deleted = store.deleteSchedules(appId, deleteTime);
       for (ScheduleId scheduleId : deleted) {
         queue.markJobsForDeletion(scheduleId, deleteTime);
       }
       for (ProgramSchedule programSchedule : schedules) {
         ScheduleId scheduleId = programSchedule.getScheduleId();
-        adminEventPublisher.publishScheduleDeletion(scheduleId, programSchedule);
         // if the deleted schedule has properties with profile assignment, remove the assignment
         Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
                                                                              programSchedule.getProperties());
@@ -427,6 +432,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           }
         }
       }
+      schedules.forEach(adminEventPublisher::publishScheduleDeletion);
       return null;
     }, RuntimeException.class);
   }
@@ -438,13 +444,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       long deleteTime = System.currentTimeMillis();
       List<ProgramSchedule> schedules = store.listSchedules(programId);
       deleteSchedulesInScheduler(schedules);
-      List<ScheduleId> deleted = store.deleteSchedules(programId);
+      List<ScheduleId> deleted = store.deleteSchedules(programId, deleteTime);
       for (ScheduleId scheduleId : deleted) {
         queue.markJobsForDeletion(scheduleId, deleteTime);
       }
       for (ProgramSchedule programSchedule : schedules) {
         ScheduleId scheduleId = programSchedule.getScheduleId();
-        adminEventPublisher.publishScheduleDeletion(scheduleId, programSchedule);
         // if the deleted schedule has properties with profile assignment, remove the assignment
         Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
                                                                              programSchedule.getProperties());
@@ -458,6 +463,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           }
         }
       }
+      schedules.forEach(adminEventPublisher::publishScheduleDeletion);
       return null;
     }, RuntimeException.class);
   }
@@ -466,7 +472,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   public void modifySchedulesTriggeredByDeletedProgram(ProgramId programId) {
     checkStarted();
     execute((StoreAndQueueTxRunnable<Void, Exception>) (store, queue) -> {
-      store.modifySchedulesTriggeredByDeletedProgram(programId);
+      List<ProgramSchedule> deletedSchedules = store.modifySchedulesTriggeredByDeletedProgram(programId);
+      deletedSchedules.forEach(adminEventPublisher::publishScheduleDeletion);
       return null;
     }, RuntimeException.class);
   }

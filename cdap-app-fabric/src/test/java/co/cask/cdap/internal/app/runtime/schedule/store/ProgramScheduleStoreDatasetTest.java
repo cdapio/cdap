@@ -155,13 +155,13 @@ public abstract class ProgramScheduleStoreDatasetTest extends AppFabricTestBase 
       transactionRunner,
       context -> {
         ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context);
-        store.deleteSchedules(APP1_ID);
+        store.deleteSchedules(APP1_ID, System.currentTimeMillis());
         Assert.assertEquals(ImmutableSet.of(),
                             toScheduleSet(store.listScheduleRecords(APP1_ID)));
-        store.deleteSchedules(PROG2_ID);
+        store.deleteSchedules(PROG2_ID, System.currentTimeMillis());
         Assert.assertEquals(ImmutableSet.of(),
                             toScheduleSet(store.listScheduleRecords(PROG2_ID)));
-        store.deleteSchedules(APP3_ID);
+        store.deleteSchedules(APP3_ID, System.currentTimeMillis());
         Assert.assertEquals(ImmutableSet.of(),
                             toScheduleSet(store.listScheduleRecords(APP3_ID)));
       }
