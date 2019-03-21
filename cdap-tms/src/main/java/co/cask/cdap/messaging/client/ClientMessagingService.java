@@ -270,7 +270,7 @@ public final class ClientMessagingService implements MessagingService {
    * Handles error response from the given {@link HttpResponse}.
    */
   private void handleError(final HttpResponse response, String errorPrefix) throws IOException {
-    handleError(response.getResponseCode(), response::getResponseBodyAsString, errorPrefix);
+    handleError(response.getResponseCode(), response::toString, errorPrefix);
   }
 
   /**
@@ -420,8 +420,10 @@ public final class ClientMessagingService implements MessagingService {
       handleError(responseCode, () -> {
         // If there is any error, read the response body from the error stream
         try (InputStream errorStream = urlConn.getErrorStream()) {
-          return errorStream == null ? "" : new String(ByteStreams.toByteArray(errorStream),
-                                                       StandardCharsets.UTF_8);
+          return errorStream == null
+            ? ""
+            : urlConn.getResponseMessage() + new String(ByteStreams.toByteArray(errorStream),
+                                                        StandardCharsets.UTF_8);
         } catch (IOException e) {
           return "";
         } finally {

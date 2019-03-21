@@ -31,8 +31,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.iq80.leveldb.Options;
@@ -88,10 +86,12 @@ public final class LevelDBTableFactory implements TableFactory {
     this.metadataTableName = cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME);
     this.messageTableName = cConf.get(Constants.MessagingSystem.MESSAGE_TABLE_NAME);
     this.payloadTableName = cConf.get(Constants.MessagingSystem.PAYLOAD_TABLE_NAME);
+
+    // Cache LevelDB tables with weak reference.
+    // We shouldn't expire cache by time as the returned instance can be held indefinitely and we cannot
+    // have more than one instance of LevelDB table that points to the same directory due to LevelDB uses FS lock.
     this.messageTableCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(1, TimeUnit.HOURS)
-      .removalListener((RemovalListener<TopicMetadata, LevelDBMessageTable>)
-                         removalNotification -> Closeables.closeQuietly(removalNotification.getValue()))
+      .weakValues()
       .build(new CacheLoader<TopicMetadata, LevelDBMessageTable>() {
       @ParametersAreNonnullByDefault
       @Override
@@ -105,9 +105,7 @@ public final class LevelDBTableFactory implements TableFactory {
     });
 
     this.payloadTableCache = CacheBuilder.newBuilder()
-      .expireAfterAccess(1, TimeUnit.HOURS)
-      .removalListener((RemovalListener<TopicMetadata, LevelDBPayloadTable>)
-                         removalNotification -> Closeables.closeQuietly(removalNotification.getValue()))
+      .weakValues()
       .build(new CacheLoader<TopicMetadata, LevelDBPayloadTable>() {
       @ParametersAreNonnullByDefault
       @Override

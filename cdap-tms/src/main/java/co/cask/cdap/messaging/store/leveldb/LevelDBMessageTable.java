@@ -145,8 +145,9 @@ final class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  public void close() throws IOException {
-    // no-op
+  public void close() {
+    // no-op. Better not to change this contract as the LevelDBTableFactory is caching instance of this class
+    // using Weak Reference.
   }
 
   /**
