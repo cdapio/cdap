@@ -552,6 +552,9 @@ angular.module(PKG.name + '.commons')
         sourceIdSplit = newConnObj.sourceId.split('_');
         connection.from = sourceIdSplit.slice(1, sourceIdSplit.length - 2).join('_');
         connection.condition = sourceIdSplit[sourceIdSplit.length - 1];
+      } else if(newConnObj.sourceId.indexOf('_error') !== -1 || newConnObj.sourceId.indexOf('_alert') !== -1) {
+        sourceIdSplit = newConnObj.sourceId.split('_');
+        connection.from = sourceIdSplit.slice(1, sourceIdSplit.length - 1).join('_');
       } else {
         // The regular endpoints are marked as "endpoint_nodename"
         // So this split just skips the "endpoint" and assigns the rest as nodeid.
@@ -787,6 +790,9 @@ angular.module(PKG.name + '.commons')
          */
         let portSplit = portClass.split('_');
         connObj.sourceId = portSplit.slice(1, portSplit.length - 2).join('_');
+      } else if (connObj.sourceId.indexOf('_error') !== -1 || connObj.sourceId.indexOf('_alert') !== -1) {
+        let errorOrAlertSplit = connObj.sourceId.split('_');
+        connObj.sourceId = errorOrAlertSplit.slice(1, errorOrAlertSplit.length - 1).join('_');
       } else if (connObj.sourceId.indexOf('_condition_') !== -1) {
         let conditionalSplit = connObj.sourceId.split('_');
         connObj.sourceId = conditionalSplit.slice(1, conditionalSplit.length - 2).join('_');
