@@ -148,6 +148,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
                 featureName: Theme.featureNames.pipelineStudio,
                 featureFlag: Theme.showPipelineStudio,
                 featureUrl: `/pipelines/${nsurl}/studio`,
+                id: 'navbar-pipeline-studio',
                 featureSVGIconName: 'icon-pipeline_filled',
                 componentDidNavigate,
                 isAngular: true,

@@ -1677,7 +1677,7 @@ features:
     Metadata:
       text: "{featureName} enables data discovery through search, and data governance through lineage."
     Pipelines:
-      text: "{featureName} enable you to create, schedule, and manage complex data processing workflows (both batch and realtime) using an intuitive UI."
+      text: "{featureName} is a visual tool to build data pipelines by connecting nodes in a logical flow."
     Preparation:
       text: "{featureName} allows you to easily connect to a variety of data sources and cleanse data using point and click interactions. Once you are satisfied, you can operationalize your transformations in a pipeline."
     Welcome:

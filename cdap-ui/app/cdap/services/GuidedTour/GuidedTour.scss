@@ -31,7 +31,7 @@ body:not(.theme-cdap) .guided-tour-tooltip.shepherd-element {
 .guided-tour-tooltip.shepherd-element {
   z-index: 1201;
   max-width: 600px;
-  border: 2px solid $blue-02;
+  border: 2px solid white;
   border-radius: 4px;
 
   .shepherd-buttons .shepherd-button.btn-primary {
@@ -39,13 +39,13 @@ body:not(.theme-cdap) .guided-tour-tooltip.shepherd-element {
   }
   &[x-placement^="right"] {
     .popper__arrow {
-      border-right-color: $blue-02;
+      border-right-color: white;
     }
   }
 
   &[x-placement^="bottom"] {
     .popper__arrow {
-      border-bottom-color: $blue-02;
+      border-bottom-color: white;
     }
   }
 
