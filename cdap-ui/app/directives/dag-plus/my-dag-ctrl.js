@@ -555,7 +555,16 @@ angular.module(PKG.name + '.commons')
       } else {
         // The regular endpoints are marked as "endpoint_nodename"
         // So this split just skips the "endpoint" and assigns the rest as nodeid.
-        sourceIdSplit = newConnObj.sourceId.split('_').slice(1).join('_');
+
+        sourceIdSplit = newConnObj.sourceId.split('_');
+        let endIndex = sourceIdSplit.length;
+
+        // solving case where the source is coming from alert or error port. "nodename_alert"
+        if (newConnObj.sourceId.endsWith('_alert') || newConnObj.sourceId.endsWith('_error')) {
+          endIndex = sourceIdSplit.length - 1;
+        }
+        sourceIdSplit = sourceIdSplit.slice(1, endIndex).join('_');
+
         connection.from = sourceIdSplit;
       }
       $scope.connections.push(connection);
@@ -587,7 +596,13 @@ angular.module(PKG.name + '.commons')
       } else {
         // The regular endpoints are marked as "endpoint_nodename"
         // So this split just skips the "endpoint" and assigns the rest as nodeid.
-        connObj.sourceId = detachedConnObj.sourceId.split('_').slice(1).join('_');
+        let sourceIdSplit = detachedConnObj.sourceId.split('_');
+        let endIndex = sourceIdSplit.length;
+        if (detachedConnObj.sourceId.endsWith('_alert') || detachedConnObj.sourceId.endsWith('_error')) {
+          endIndex = sourceIdSplit.length - 1;
+        }
+
+        connObj.sourceId = sourceIdSplit.slice(1, endIndex).join('_');
       }
       var connectionIndex = _.findIndex($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
@@ -793,7 +808,14 @@ angular.module(PKG.name + '.commons')
       } else {
         // The regular endpoints are marked as "endpoint_nodename"
         // So this split just skips the "endpoint" and assigns the rest as nodeid.
-        connObj.sourceId = connObj.sourceId.split('_').slice(1).join('_');
+        let sourceIdSplit = connObj.sourceId.split('_');
+        let endIndex = sourceIdSplit.length;
+
+        if (connObj.sourceId.endsWith('_alert') || connObj.sourceId.endsWith('_error')) {
+          endIndex = sourceIdSplit.length - 1;
+        }
+
+        connObj.sourceId = sourceIdSplit.slice(1, endIndex).join('_');
       }
 
       var exists = _.find($scope.connections, function (conn) {
@@ -806,8 +828,14 @@ angular.module(PKG.name + '.commons')
         return false;
       }
 
+      let sourceName = connObj.sourceId;
+      if (sourceName.endsWith('_alert') || sourceName.endsWith('_error')) {
+        const sourceNameSplit = sourceName.split('_');
+        sourceName = sourceNameSplit.slice(0, sourceNameSplit.length - 1).join('_');
+      }
+
       // else check if the connection is valid
-      var sourceNode = $scope.nodes.find( node => node.name === connObj.sourceId);
+      var sourceNode = $scope.nodes.find( node => node.name === sourceName);
       var targetNode = $scope.nodes.find( node => node.name === connObj.targetId);
 
       var valid = true;

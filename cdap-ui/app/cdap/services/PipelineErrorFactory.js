@@ -201,7 +201,6 @@ let connectionIsValid = (fromNode, toNode, cb) => {
    *    3. Action can only connect to Action, Source or Condition
    *    4. Condition can connect to anything
    **/
-
   let fromType = GLOBALS.pluginConvert[fromNode.type],
     toType = GLOBALS.pluginConvert[toNode.type];
 
@@ -257,7 +256,6 @@ let hasValidConfig = (importConfig) => {
   return importConfig.config;
 };
 let hasValidSchedule = (importConfig) => {
-  console.log(GLOBALS);
   let isBatchPipeline = GLOBALS.etlBatchPipelines.indexOf(importConfig.artifact.name) !== -1;
   return !isBatchPipeline ? true : importConfig.config.schedule;
 };
