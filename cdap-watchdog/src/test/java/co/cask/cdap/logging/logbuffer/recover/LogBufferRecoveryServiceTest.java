@@ -95,6 +95,8 @@ public class LogBufferRecoveryServiceTest {
     LogBufferRecoveryService service = new LogBufferRecoveryService(ImmutableList.of(pipeline),
                                                                     ImmutableList.of(checkpointManager),
                                                                     absolutePath, 2, startCleanup);
+    AtomicBoolean beforeTermination = new AtomicBoolean(true);
+    AtomicBoolean afterTermination = new AtomicBoolean(false);
     service.addListener(new Service.Listener() {
       @Override
       public void starting() {
@@ -103,7 +105,8 @@ public class LogBufferRecoveryServiceTest {
 
       @Override
       public void running() {
-        Assert.assertFalse(startCleanup.get());
+        // startCleanup should be false while log recovery service is running
+        beforeTermination.set(startCleanup.get());
       }
 
       @Override
@@ -113,7 +116,8 @@ public class LogBufferRecoveryServiceTest {
 
       @Override
       public void terminated(Service.State from) {
-        Assert.assertTrue(startCleanup.get());
+        // startCleanup should be true after log recovery service is not running
+        afterTermination.set(startCleanup.get());
       }
 
       @Override
@@ -125,8 +129,9 @@ public class LogBufferRecoveryServiceTest {
     service.startAndWait();
 
     Tasks.waitFor(5, () -> appender.getEvents().size(), 120, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
     service.stopAndWait();
+    Assert.assertFalse(beforeTermination.get());
+    Assert.assertTrue(afterTermination.get());
     pipeline.stopAndWait();
     loggerContext.stop();
   }
