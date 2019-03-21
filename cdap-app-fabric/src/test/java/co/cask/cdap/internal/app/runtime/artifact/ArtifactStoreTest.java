@@ -238,6 +238,7 @@ public abstract class ArtifactStoreTest {
 
     // write a child artifact that extends the parent with some plugins
     Id.Artifact childId = Id.Artifact.from(Id.Namespace.DEFAULT, "myplugins", "1.0.0");
+    Id.Artifact anotherId = Id.Artifact.from(Id.Namespace.SYSTEM, "myplugins", "1.0.0");
     List<PluginClass> plugins = ImmutableList.of(
       new PluginClass("atype", "plugin1", "", "c.c.c.plugin1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
       new PluginClass("atype", "plugin2", "", "c.c.c.plugin2", "cfg", ImmutableMap.<String, PluginPropertyField>of())
@@ -247,12 +248,17 @@ public abstract class ArtifactStoreTest {
       new ArtifactVersion("0.1.0"), new ArtifactVersion("2.0.0")));
     artifactMeta = new ArtifactMeta(ArtifactClasses.builder().addPlugins(plugins).build(), parents);
     writeArtifact(childId, artifactMeta, "child contents");
+    writeArtifact(anotherId, artifactMeta, "child contents");
 
     // check parent has plugins from the child
     Assert.assertFalse(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 
     // delete the child artifact
     artifactStore.delete(childId);
+
+    // check that the other artifact is not getting deleted and the plugin classes are not getting deleted
+    artifactStore.getArtifact(anotherId);
+    Assert.assertFalse(artifactStore.getPluginClasses(NamespaceId.SYSTEM, parentId).isEmpty());
 
     // shouldn't be able to get artifact detail
     try {
@@ -266,6 +272,19 @@ public abstract class ArtifactStoreTest {
     List<ArtifactDetail> artifactList = artifactStore.getArtifacts(parentId.getNamespace().toEntityId());
     Assert.assertEquals(1, artifactList.size());
     Assert.assertEquals(parentId.getName(), artifactList.get(0).getDescriptor().getArtifactId().getName());
+
+    // delete the one in system scope
+    artifactStore.delete(anotherId);
+
+    // shouldn't be able to get artifact detail
+    try {
+      artifactStore.getArtifact(anotherId);
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
+    Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.SYSTEM, parentId).isEmpty());
+
     // shouldn't see any more plugins for parent
     Assert.assertTrue(artifactStore.getPluginClasses(NamespaceId.DEFAULT, parentId).isEmpty());
 

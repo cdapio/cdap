@@ -938,7 +938,7 @@ public class ArtifactStore {
         PluginKeyPrefix pluginKey = new PluginKeyPrefix(artifactRange.getNamespace(),
                                                         artifactRange.getName(), pluginClass.getType(),
                                                         pluginClass.getName());
-        deleteRangeFromTable(pluginDataTable, Range.singleton(pluginKey.keys));
+        pluginDataTable.delete(concatFields(pluginKey.keys, artifactCell.keys));
       }
     }
 
@@ -948,7 +948,7 @@ public class ArtifactStore {
       if (oldMeta.meta.getUsableBy().isEmpty()) {
         UniversalPluginKeyPrefix pluginKey = new UniversalPluginKeyPrefix(artifactId.getNamespace().getId(),
                                                                           pluginClass.getType(), pluginClass.getName());
-        deleteRangeFromTable(uniPluginTable, Range.singleton(pluginKey.keys));
+        uniPluginTable.delete(concatFields(pluginKey.keys, artifactCell.keys));
       }
     }
 
