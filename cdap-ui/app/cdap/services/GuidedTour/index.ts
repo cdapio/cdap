@@ -17,7 +17,6 @@
 import Shepherd from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd-theme-arrows-plain-buttons.css';
 import 'services/GuidedTour/GuidedTour.scss';
-import ee from 'event-emitter';
 
 interface IStepButton {
   text: string;
@@ -42,7 +41,6 @@ export interface ITourStep {
 }
 
 const GuidedTour = function() {
-  this.eventEmitter = ee(ee);
   this.addSteps = (stepsArray: ITourStep[]) => {
     stepsArray.forEach((step, index) => {
       const stepId: string = step.id;
@@ -74,7 +72,6 @@ const GuidedTour = function() {
         classes: 'btn btn-primary',
         action: () => {
           this.complete();
-          this.eventEmitter.emit('NUX-TOUR-END');
         },
       };
 
