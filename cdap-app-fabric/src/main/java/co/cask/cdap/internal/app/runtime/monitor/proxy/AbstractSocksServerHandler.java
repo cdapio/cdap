@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -28,41 +27,53 @@ import io.netty.handler.codec.socksx.v5.Socks5InitialRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.ws.rs.NotSupportedException;
 
 /**
- * A {@link ChannelHandler} for handling SOCKS handshake requests.
+ * Abstract base class for implementing SOCKS proxy handler.
  */
-final class SocksServerHandler extends SimpleChannelInboundHandler<SocksMessage> {
+abstract class AbstractSocksServerHandler extends SimpleChannelInboundHandler<SocksMessage> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SocksServerHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractSocksServerHandler.class);
 
-  private final SSHSessionProvider sshSessionProvider;
+  @Nullable
+  protected abstract ChannelHandler createSocks4ConnectHandler();
 
-  SocksServerHandler(SSHSessionProvider sshSessionProvider) {
-    this.sshSessionProvider = sshSessionProvider;
-  }
+  @Nullable
+  protected abstract ChannelHandler createSocks5ConnectHandler();
 
   @Override
-  protected void channelRead0(ChannelHandlerContext ctx, SocksMessage msg) throws Exception {
+  protected void channelRead0(ChannelHandlerContext ctx, SocksMessage msg) {
     switch (msg.version()) {
-      case SOCKS4a:
+      case SOCKS4a: {
+        ChannelHandler connectHandler = createSocks4ConnectHandler();
+        if (connectHandler == null) {
+          throw new NotSupportedException("SOCKS4 is not supported");
+        }
         ctx.pipeline().remove(this);
-        ctx.pipeline().addLast(new SocksServerConnectHandler(sshSessionProvider));
+        ctx.pipeline().addLast(connectHandler);
         ctx.fireChannelRead(msg);
         break;
-      case SOCKS5:
+      }
+      case SOCKS5: {
+        ChannelHandler connectHandler = createSocks5ConnectHandler();
+        if (connectHandler == null) {
+          throw new NotSupportedException("SOCKS5 is not supported");
+        }
+
         // For SOCKS5 protocol, needs to handle the initial authentication handshake
         if (msg instanceof Socks5InitialRequest) {
           ctx.pipeline().remove(this);
           ctx.pipeline().addFirst(new Socks5CommandRequestDecoder());
-          ctx.pipeline().addLast(new SocksServerConnectHandler(sshSessionProvider));
+          ctx.pipeline().addLast(connectHandler);
           ctx.write(new DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH));
         } else {
           // We don't expect other type of Socks5 message
           throw new NotSupportedException("Unsupported SOCKS message " + msg);
         }
         break;
+      }
       default:
         throw new NotSupportedException("Unsupported SOCKS version '" + msg.version() + "'");
     }

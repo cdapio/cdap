@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -32,6 +29,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.socksx.SocksPortUnificationServerHandler;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import org.apache.twill.common.Threads;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,29 +38,28 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The SOCKS proxy server for forwarding runtime monitor https calls. It uses SSH port forwarding (tunneling)
- * to relay data between client and server. Unlike regular SSH dynamic tunneling, this proxy server
- * always forward network traffic to the {@code localhost} of the destination SSH host as specified from the request.
+ * A SOCKS proxy service for proxying calls from remote runtime to CDAP services.
  */
-public class MonitorSocksProxy extends AbstractIdleService {
+public class ServiceSocksProxy extends AbstractIdleService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MonitorSocksProxy.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceSocksProxy.class);
 
-  private final CConfiguration cConf;
-  private final SSHSessionProvider sshSessionProvider;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private volatile InetSocketAddress bindAddress;
   private ChannelGroup channelGroup;
   private EventLoopGroup eventLoopGroup;
 
-  public MonitorSocksProxy(CConfiguration cConf, SSHSessionProvider sshSessionProvider) {
-    this.cConf = cConf;
-    this.sshSessionProvider = sshSessionProvider;
+  public ServiceSocksProxy(DiscoveryServiceClient discoveryServiceClient) {
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
+  /**
+   * Returns the address that this SOCKS proxy bind to.
+   */
   public InetSocketAddress getBindAddress() {
     InetSocketAddress addr = this.bindAddress;
     if (addr == null) {
-      throw new IllegalStateException("Monitor proxy server hasn't been started");
+      throw new IllegalStateException("Proxy server hasn't been started");
     }
     return addr;
   }
@@ -71,10 +68,7 @@ public class MonitorSocksProxy extends AbstractIdleService {
   protected void startUp() throws Exception {
     ServerBootstrap bootstrap = new ServerBootstrap();
 
-    // Use a thread pool of size runtime monitor threads + 1. There can be at most that many threads making
-    // call to this socks proxy, plus 1 for the boss thread.
-    eventLoopGroup = new NioEventLoopGroup(cConf.getInt(Constants.RuntimeMonitor.THREADS) + 1,
-                                           Threads.createDaemonThreadFactory("monitor-socks-proxy-%d"));
+    eventLoopGroup = new NioEventLoopGroup(20, Threads.createDaemonThreadFactory("service-socks-proxy-%d"));
     bootstrap
       .group(eventLoopGroup)
       .channel(NioServerSocketChannel.class)
@@ -85,7 +79,7 @@ public class MonitorSocksProxy extends AbstractIdleService {
 
           ch.pipeline()
             .addLast(new SocksPortUnificationServerHandler())
-            .addLast(new MonitorSocksServerHandler(sshSessionProvider));
+            .addLast(new ServiceSocksServerHandler(discoveryServiceClient));
         }
       });
 
@@ -95,7 +89,7 @@ public class MonitorSocksProxy extends AbstractIdleService {
     channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     channelGroup.add(serverChannel);
 
-    LOG.info("Runtime monitor socks proxy started on {}", bindAddress);
+    LOG.info("Runtime service socks proxy started on {}", bindAddress);
   }
 
   @Override
