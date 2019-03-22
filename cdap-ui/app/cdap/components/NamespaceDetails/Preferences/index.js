@@ -215,23 +215,26 @@ class NamespaceDetailsPreferences extends Component {
 
   render() {
     return (
-      <div className="namespace-details-preferences">
-        {this.renderPreferencesLabel()}
-        {this.renderPreferencesTable()}
-        <ViewAllLabel
-          arrayToLimit={this.state.prefs}
-          limit={5}
-          viewAllState={this.state.viewAll}
-          toggleViewAll={this.toggleViewAll}
-        />
-        {this.state.modalOpen ? (
-          <SetPreferenceModal
-            isOpen={this.state.modalOpen}
-            toggleModal={this.toggleModal}
-            setAtLevel={PREFERENCES_LEVEL.NAMESPACE}
+      <React.Fragment>
+        <hr className="more-margin-top" />
+        <div className="namespace-details-preferences">
+          {this.renderPreferencesLabel()}
+          {this.renderPreferencesTable()}
+          <ViewAllLabel
+            arrayToLimit={this.state.prefs}
+            limit={5}
+            viewAllState={this.state.viewAll}
+            toggleViewAll={this.toggleViewAll}
           />
-        ) : null}
-      </div>
+          {this.state.modalOpen ? (
+            <SetPreferenceModal
+              isOpen={this.state.modalOpen}
+              toggleModal={this.toggleModal}
+              setAtLevel={PREFERENCES_LEVEL.NAMESPACE}
+            />
+          ) : null}
+        </div>
+      </React.Fragment>
     );
   }
 }

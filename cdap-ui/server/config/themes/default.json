@@ -41,6 +41,11 @@
     "triggers": true,
     "lineage": true,
     "realtime-pipeline": true,
-    "native-profile": true
+    "native-profile": true,
+    "application-upload": true,
+    "system-services-instance": true,
+    "system-metrics": true,
+    "namespace-mapping": true,
+    "namespace-security": true
   }
 }

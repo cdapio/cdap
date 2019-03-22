@@ -25,6 +25,14 @@ import LoadingSVG from 'components/LoadingSVG';
 import { MyServiceProviderApi } from 'api/serviceproviders';
 import TextboxOnValium from 'components/TextboxOnValium';
 import Alert from 'components/Alert';
+import If from 'components/If';
+import { Theme } from 'services/ThemeHelper';
+import moment from 'moment';
+import { MyAppApi } from 'api/app';
+import { Observable } from 'rxjs/Observable';
+import sortBy from 'lodash/sortBy';
+import startCase from 'lodash/startCase';
+import { convertProgramToApi } from 'services/program-api-converter';
 
 require('./ServicesTable.scss');
 
@@ -64,9 +72,14 @@ const tableHeaders = [
     property: '',
   },
 ];
+
+if (Theme.showSystemServicesInstance === false) {
+  tableHeaders.splice(2, 2);
+}
 export default class ServicesTable extends Component {
   state = {
     services: SystemServicesStore.getState().services.list,
+    systemProgramsStatus: [],
     showAlert: false,
     alertType: null,
     alertMessage: null,
@@ -85,10 +98,13 @@ export default class ServicesTable extends Component {
     });
   };
 
-  editRequestedServiceInstance = (serviceName, index) => {
-    if (this.state.services[index].editInstance) {
+  editRequestedServiceInstance = (service) => {
+    if (service.editInstance || service.isSystemProgram) {
       return;
     }
+
+    const serviceName = service.name;
+
     let services = [...this.state.services];
     services = services.map((service) => {
       if (serviceName === service.name) {
@@ -222,6 +238,59 @@ export default class ServicesTable extends Component {
     DEFAULTSERVICES.forEach((service) => this.fetchServiceStatus(service));
   };
 
+  fetchSystemApps = () => {
+    const programs = [];
+    MyAppApi.list({ namespace: 'system' }).subscribe((apps) => {
+      const requestPrograms = [];
+      apps.forEach((app) => {
+        requestPrograms.push(MyAppApi.get({ namespace: 'system', appId: app.name }));
+      });
+
+      Observable.combineLatest(requestPrograms).subscribe((res) => {
+        res.forEach((appResponse) => {
+          appResponse.programs.forEach((program) => {
+            programs.push(program);
+          });
+        });
+
+        this.fetchSystemProgramsStatus(programs);
+      });
+    });
+  };
+
+  fetchSystemProgramsStatus = (programs) => {
+    const requestBody = programs.map((program) => {
+      return {
+        appId: program.app,
+        programType: program.type,
+        programId: program.name,
+      };
+    });
+
+    MyAppApi.batchStatus({ namespace: 'system' }, requestBody).subscribe((res) => {
+      const statuses = [];
+
+      res.forEach((program) => {
+        const systemProgram = {
+          name: `${program.appId}.${program.programId}`,
+          provisioned: '--',
+          requested: '--',
+          status: program.status,
+          isSystemProgram: true,
+          programId: program.programId,
+          programType: program.programType,
+          appId: program.appId,
+        };
+
+        statuses.push(systemProgram);
+      });
+
+      this.setState({
+        systemProgramsStatus: statuses,
+      });
+    });
+  };
+
   componentDidMount() {
     this.systemServicesSubscription = SystemServicesStore.subscribe(() => {
       let { list: services, __error } = SystemServicesStore.getState().services;
@@ -236,6 +305,8 @@ export default class ServicesTable extends Component {
         this.servicePolls.forEach((servicePoll) => servicePoll.unsubscribe());
       }
     });
+
+    this.fetchSystemApps();
   }
 
   componentWillUnmount() {
@@ -245,13 +316,28 @@ export default class ServicesTable extends Component {
   }
 
   renderTableBody = (services) => {
+    const start = moment()
+      .subtract(7, 'days')
+      .format('X');
+    const stop = moment().format('X');
+
     return (
       <table className="table-sm">
         <tbody>
           {services.map((service, i) => {
             let logUrl = `/v3/system/services/${service.name}/logs`;
+            if (service.isSystemProgram) {
+              logUrl = `/v3/namespaces/system/apps/${service.appId}/${convertProgramToApi(
+                service.programType
+              )}/${service.programId}/logs`;
+            }
 
+            logUrl = `${logUrl}?start=${start}&stop=${stop}`;
             logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
+
+            const displayName = service.isSystemProgram
+              ? startCase(service.name)
+              : T.translate(`${ADMINPREFIX}.${service.name.replace(/\./g, '_')}`);
 
             return (
               <tr key={service.name}>
@@ -260,37 +346,41 @@ export default class ServicesTable extends Component {
                     <IconSVG
                       name="icon-circle"
                       className={classnames({
-                        'text-success': service.status === 'OK',
-                        'text-danger': service.status === 'NOTOK',
+                        'text-success': ['OK', 'RUNNING'].indexOf(service.status) !== -1,
+                        'text-warning': service.status === 'STARTING',
+                        'text-danger':
+                          ['OK', 'NOTOK', 'RUNNING', 'STARTING'].indexOf(service.status) === -1,
                       })}
                     />
                   </span>
                 </td>
                 <td>
-                  <span>{T.translate(`${ADMINPREFIX}.${service.name.replace(/\./g, '_')}`)}</span>
+                  <span>{displayName}</span>
                 </td>
-                <td>
-                  <span>{service.provisioned || '--'}</span>
-                </td>
-                <td>
-                  <span
-                    onClick={this.editRequestedServiceInstance.bind(this, service.name, i)}
-                    className="request-instances"
-                  >
-                    {service.editInstance ? (
-                      <TextboxOnValium
-                        className="form-control"
-                        value={service.requested}
-                        onBlur={this.resetEditInstances}
-                        onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
-                      />
-                    ) : (
-                      <span className="requested-instances-holder">
-                        {service.requested || '--'}
-                      </span>
-                    )}
-                  </span>
-                </td>
+                <If condition={Theme.showSystemServicesInstance !== false}>
+                  <td>
+                    <span>{service.provisioned || '--'}</span>
+                  </td>
+                  <td>
+                    <span
+                      onClick={this.editRequestedServiceInstance.bind(this, service)}
+                      className="request-instances"
+                    >
+                      {service.editInstance ? (
+                        <TextboxOnValium
+                          className="form-control"
+                          value={service.requested}
+                          onBlur={this.resetEditInstances}
+                          onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
+                        />
+                      ) : (
+                        <span className="requested-instances-holder">
+                          {service.requested || '--'}
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                </If>
                 <td>
                   <a href={logUrl} target="_blank">
                     {T.translate(`${ADMINPREFIX}.viewlogs`)}
@@ -312,11 +402,17 @@ export default class ServicesTable extends Component {
         </div>
       );
     }
+
+    const combinedSystemServices = sortBy(
+      this.state.services.concat(this.state.systemProgramsStatus),
+      ['name']
+    );
+
     return (
       <div className="services-table">
         <SortableStickyTable
           className="table-sm"
-          entities={this.state.services}
+          entities={combinedSystemServices}
           tableHeaders={tableHeaders}
           renderTableBody={this.renderTableBody}
         />

@@ -77,10 +77,13 @@ class NamespaceDetailsComputeProfiles extends Component {
 
   render() {
     return (
-      <div className="namespace-details-compute-profiles">
-        {this.renderProfilesLabel()}
-        <ProfilesListView namespace={getCurrentNamespace()} />
-      </div>
+      <React.Fragment>
+        <hr />
+        <div className="namespace-details-compute-profiles">
+          {this.renderProfilesLabel()}
+          <ProfilesListView namespace={getCurrentNamespace()} />
+        </div>
+      </React.Fragment>
     );
   }
 }

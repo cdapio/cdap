@@ -18,6 +18,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 require('./Mapping.scss');
 
 const PREFIX = 'features.NamespaceDetails.mapping';
@@ -37,32 +38,39 @@ const NamespaceDetailsMapping = ({
   hiveDatabaseName,
   schedulerQueueName,
 }) => {
+  if (Theme.showNamespaceMapping === false) {
+    return null;
+  }
+
   return (
-    <div className="namespace-details-mapping">
-      <div className="namespace-details-section-label">
-        <strong>{T.translate(`${PREFIX}.label`)}</strong>
+    <React.Fragment>
+      <hr className="more-margin-top" />
+      <div className="namespace-details-mapping">
+        <div className="namespace-details-section-label">
+          <strong>{T.translate(`${PREFIX}.label`)}</strong>
+        </div>
+        <div className="mapping-values-group">
+          <span className="mapping-values">
+            <strong>{T.translate(`${PREFIX}.hdfsRootDirectory`)}</strong>
+            <span title={hdfsRootDirectory}>{hdfsRootDirectory || '- -'}</span>
+          </span>
+          <span className="mapping-values">
+            <strong>{T.translate(`${PREFIX}.hbaseNamespaceName`)}</strong>
+            <span title={hbaseNamespaceName}>{hbaseNamespaceName || '- -'}</span>
+          </span>
+        </div>
+        <div className="mapping-values-group">
+          <span className="mapping-values">
+            <strong>{T.translate(`${PREFIX}.hiveDatabaseName`)}</strong>
+            <span title={hiveDatabaseName}>{hiveDatabaseName || '- -'}</span>
+          </span>
+          <span className="mapping-values">
+            <strong>{T.translate(`${PREFIX}.schedulerQueueName`)}</strong>
+            <span title={schedulerQueueName}>{schedulerQueueName || '- -'}</span>
+          </span>
+        </div>
       </div>
-      <div className="mapping-values-group">
-        <span className="mapping-values">
-          <strong>{T.translate(`${PREFIX}.hdfsRootDirectory`)}</strong>
-          <span title={hdfsRootDirectory}>{hdfsRootDirectory || '- -'}</span>
-        </span>
-        <span className="mapping-values">
-          <strong>{T.translate(`${PREFIX}.hbaseNamespaceName`)}</strong>
-          <span title={hbaseNamespaceName}>{hbaseNamespaceName || '- -'}</span>
-        </span>
-      </div>
-      <div className="mapping-values-group">
-        <span className="mapping-values">
-          <strong>{T.translate(`${PREFIX}.hiveDatabaseName`)}</strong>
-          <span title={hiveDatabaseName}>{hiveDatabaseName || '- -'}</span>
-        </span>
-        <span className="mapping-values">
-          <strong>{T.translate(`${PREFIX}.schedulerQueueName`)}</strong>
-          <span title={schedulerQueueName}>{schedulerQueueName || '- -'}</span>
-        </span>
-      </div>
-    </div>
+    </React.Fragment>
   );
 };
 

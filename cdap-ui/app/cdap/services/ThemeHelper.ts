@@ -85,6 +85,11 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     lineage?: boolean;
     'realtime-pipeline'?: boolean;
     'native-profile'?: boolean;
+    'application-upload'?: boolean;
+    'system-services-instance'?: boolean;
+    'system-metrics'?: boolean;
+    'namespace-mapping'?: boolean;
+    'namespace-security'?: boolean;
   };
 }
 
@@ -180,6 +185,11 @@ interface IThemeObj {
   showRealtimePipeline?: boolean;
   showAboutProductModal?: boolean;
   showNativeProfile?: boolean;
+  showApplicationUpload?: boolean;
+  showSystemServicesInstance?: boolean;
+  showSystemMetrics?: boolean;
+  showNamespaceMapping?: boolean;
+  showNamespaceSecurity?: boolean;
   featureNames?: IFeatureNames;
 }
 
@@ -343,6 +353,11 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showTriggers: true,
       showLineage: true,
       showNativeProfile: true,
+      showApplicationUpload: true,
+      showSystemServicesInstance: true,
+      showSystemMetrics: true,
+      showNamespaceMapping: true,
+      showNamespaceSecurity: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -397,6 +412,24 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('native-profile' in featuresJson && isBoolean(featuresJson['native-profile'])) {
       features.showNativeProfile = featuresJson['native-profile'];
+    }
+    if ('application-upload' in featuresJson && isBoolean(featuresJson['application-upload'])) {
+      features.showApplicationUpload = featuresJson['application-upload'];
+    }
+    if (
+      'system-services-instance' in featuresJson &&
+      isBoolean(featuresJson['system-services-instance'])
+    ) {
+      features.showSystemServicesInstance = featuresJson['system-services-instance'];
+    }
+    if ('system-metrics' in featuresJson && isBoolean(featuresJson['system-metrics'])) {
+      features.showSystemMetrics = featuresJson['system-metrics'];
+    }
+    if ('namespace-mapping' in featuresJson && isBoolean(featuresJson['namespace-mapping'])) {
+      features.showNamespaceMapping = featuresJson['namespace-mapping'];
+    }
+    if ('namespace-security' in featuresJson && isBoolean(featuresJson['namespace-security'])) {
+      features.showNamespaceSecurity = featuresJson['namespace-security'];
     }
     return features;
   }

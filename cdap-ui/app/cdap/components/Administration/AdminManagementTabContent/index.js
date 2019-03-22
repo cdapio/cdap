@@ -21,6 +21,8 @@ import PlatformsDetails from 'components/Administration/AdminManagementTabConten
 import ServicesTable from 'components/Administration/AdminManagementTabContent/ServicesTable';
 import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
+import If from 'components/If';
+import classnames from 'classnames';
 
 const PREFIX = 'features.Administration';
 const I18NPREFIX = `${PREFIX}.Management`;
@@ -35,13 +37,20 @@ export default function AdminManagementTabContent(props) {
         })}
       />
       <div className="services-details">
-        <div className="services-table-section">
+        <div
+          className={classnames('services-table-section', {
+            'full-width': Theme.showSystemMetrics === false,
+          })}
+        >
           <strong> {T.translate(`${PREFIX}.Services.title`)} </strong>
           <ServicesTable />
         </div>
-        <div className="platform-section">
-          <PlatformsDetails platformDetails={props.platformsDetails} />
-        </div>
+
+        <If condition={Theme.showSystemMetrics !== false}>
+          <div className="platform-section">
+            <PlatformsDetails platformDetails={props.platformsDetails} />
+          </div>
+        </If>
       </div>
     </div>
   );
