@@ -64,17 +64,23 @@ public class ConcurrencyConstraintTest {
   private void setStartAndRunning(Store store, ProgramRunId id,
                                   Map<String, String> runtimeArgs,
                                   Map<String, String> systemArgs) {
+    setProvisioning(store, id, runtimeArgs, systemArgs);
+    long startTime = RunIds.getTime(id.getRun(), TimeUnit.SECONDS);
+    store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+  }
+
+  private void setProvisioning(Store store, ProgramRunId id,
+                                  Map<String, String> runtimeArgs,
+                                  Map<String, String> systemArgs) {
     if (!systemArgs.containsKey(SystemArguments.PROFILE_NAME)) {
       systemArgs = ImmutableMap.<String, String>builder()
         .putAll(systemArgs)
         .put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName())
         .build();
     }
-    long startTime = RunIds.getTime(id.getRun(), TimeUnit.SECONDS);
     store.setProvisioning(id, runtimeArgs, systemArgs, AppFabricTestHelper.createSourceId(++sourceId), ARTIFACT_ID);
-    store.setProvisioned(id, 0, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setStart(id, null, systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
-    store.setRunning(id, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   @Test
@@ -126,6 +132,16 @@ public class ConcurrencyConstraintTest {
 
       // but the constraint will be satisfied with it completes, as there is only 1 remaining RUNNING
       store.setStop(pid3, System.currentTimeMillis(), ProgramRunStatus.KILLED,
+                    AppFabricTestHelper.createSourceId(++sourceId));
+      assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
+
+      // add a run in provisioning state, constraint will not be satisfied since active runs increased to 2
+      ProgramRunId pid4 = WORKFLOW_ID.run(RunIds.generate().getId());
+      setProvisioning(store, pid4, Collections.emptyMap(), Collections.emptyMap());
+      assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
+
+      // stop the provisioning run, constraint will be satisfied since active runs decreased to 1
+      store.setStop(pid4, System.currentTimeMillis(), ProgramRunStatus.FAILED,
                     AppFabricTestHelper.createSourceId(++sourceId));
       assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
 
