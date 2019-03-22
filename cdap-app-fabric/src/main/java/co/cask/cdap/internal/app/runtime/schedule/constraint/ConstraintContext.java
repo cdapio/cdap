@@ -43,8 +43,8 @@ public final class ConstraintContext {
     return checkTimeMillis;
   }
 
-  public Map<ProgramRunId, RunRecordMeta> getProgramRuns(ProgramId programId, ProgramRunStatus status, int limit) {
-    return store.getRuns(programId, status, 0, Long.MAX_VALUE, limit);
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
+    return store.getActiveRuns(programId);
   }
 
   public Map<ProgramRunId, RunRecordMeta> getProgramRuns(ProgramId programId, ProgramRunStatus status,

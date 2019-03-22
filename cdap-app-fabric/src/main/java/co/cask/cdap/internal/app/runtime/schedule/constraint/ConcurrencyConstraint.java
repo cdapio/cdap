@@ -17,11 +17,13 @@
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -36,19 +38,10 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    int numRunning = context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.RUNNING, maxConcurrency).size();
-    if (numRunning >= maxConcurrency) {
-        LOG.debug("Skipping run of program {} from schedule {} because there are at least {} running runs.",
-                  schedule.getProgramId(), schedule.getName(), maxConcurrency);
-      return notSatisfied(context);
-    }
-
-    int numSuspended =
-      context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.SUSPENDED, maxConcurrency).size();
-    if (numRunning + numSuspended >= maxConcurrency) {
-        LOG.debug("Skipping run of program {} from schedule {} because there are at least" +
-                    "{} running runs and at least {} suspended runs.",
-                  schedule.getProgramId(), schedule.getName(), numRunning, numSuspended);
+    Map<ProgramRunId, RunRecordMeta> activeRuns = context.getActiveRuns(schedule.getProgramId());
+    if (activeRuns.size() >= maxConcurrency) {
+      LOG.debug("Skipping run of program {} from schedule {} because there are {} active runs.",
+                schedule.getProgramId(), schedule.getName(), activeRuns.size());
       return notSatisfied(context);
     }
     return ConstraintResult.SATISFIED;
