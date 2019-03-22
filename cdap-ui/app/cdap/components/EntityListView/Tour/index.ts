@@ -52,12 +52,14 @@ const steps: ITourStep[] = [
   },
   {
     id: 'pipelines',
-    title: featureNames.pipelines,
+    title: `${featureNames.pipelines} ${featureNames.pipelineStudio}`,
     text: [
-      T.translate(`${PREFIX}.Pipelines.text`, { featureName: featureNames.pipelines }).toString(),
-      '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_NUX.png" />',
+      T.translate(`${PREFIX}.Pipelines.text`, {
+        featureName: featureNames.pipelineStudio,
+      }).toString(),
+      '<img class="img-fluid" src="/cdap_assets/img/nux/Pipeline_studio_NUX.png" />',
     ],
-    attachTo: '#navbar-pipelines > div right',
+    attachTo: '#navbar-pipeline-studio > div right',
     popperOptions,
     shouldFocus: true,
   },
