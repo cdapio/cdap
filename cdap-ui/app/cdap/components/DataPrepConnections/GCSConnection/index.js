@@ -329,7 +329,7 @@ export default class GCSConnection extends Component {
     if (this.state.error) {
       return (
         <CardActionFeedback
-          type={this.state.connectionResult.type}
+          type={CARD_ACTION_TYPES.DANGER}
           message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
           extendedMessage={this.state.error}
         />

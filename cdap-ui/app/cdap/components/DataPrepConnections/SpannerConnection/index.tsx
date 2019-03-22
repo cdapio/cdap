@@ -355,7 +355,7 @@ export default class SpannerConnection extends React.PureComponent<
     if (this.state.error) {
       return (
         <CardActionFeedback
-          type={connectionResult.type}
+          type={CARD_ACTION_TYPES.DANGER}
           message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
           extendedMessage={this.state.error}
         />

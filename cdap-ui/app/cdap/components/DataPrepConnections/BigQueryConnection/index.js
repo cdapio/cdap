@@ -350,7 +350,7 @@ export default class BigQueryConnection extends Component {
     if (this.state.error) {
       return (
         <CardActionFeedback
-          type={this.state.connectionResult.type}
+          type={CARD_ACTION_TYPES.DANGER}
           message={T.translate(`${PREFIX}.ErrorMessages.${this.props.mode}`)}
           extendedMessage={this.state.error}
         />
@@ -373,13 +373,6 @@ export default class BigQueryConnection extends Component {
     );
   }
 
-  renderModalFooter = () => {
-    if (this.state.error) {
-      return this.renderError();
-    }
-    return this.renderAddConnectionButton();
-  };
-
   render() {
     return (
       <div>
@@ -399,7 +392,7 @@ export default class BigQueryConnection extends Component {
 
           <ModalBody>{this.renderContent()}</ModalBody>
 
-          {this.renderModalFooter()}
+          {this.renderAddConnectionButton()}
           {this.renderMessage()}
         </Modal>
       </div>
