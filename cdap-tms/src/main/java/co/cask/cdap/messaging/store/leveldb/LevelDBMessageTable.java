@@ -81,7 +81,7 @@ final class LevelDBMessageTable extends AbstractMessageTable {
   }
 
   @Override
-  protected CloseableIterator<RawMessageTableEntry> read(byte[] startRow, byte[] stopRow) throws IOException {
+  protected CloseableIterator<RawMessageTableEntry> read(byte[] startRow, byte[] stopRow) {
     final DBScanIterator iterator = new DBScanIterator(levelDB, startRow, stopRow);
     final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
     return new AbstractCloseableIterator<RawMessageTableEntry>() {
@@ -146,18 +146,17 @@ final class LevelDBMessageTable extends AbstractMessageTable {
 
   @Override
   public void close() {
-    // no-op. Better not to change this contract as the LevelDBTableFactory is caching instance of this class
-    // using Weak Reference.
+    // This method has to be an no-op instead of closing the underlying LevelDB object
+    // This is because a given LevelDB object instance is shared within the same JVM
   }
 
   /**
    * Delete messages of a {@link TopicId} that has exceeded the TTL or if it belongs to an older generation
    *
-   * @param topicMetadata {@link TopicMetadata}
    * @param currentTime current timestamp
    * @throws IOException error occurred while trying to delete a row in LevelDB
    */
-  public void pruneMessages(TopicMetadata topicMetadata, long currentTime) throws IOException {
+  void pruneMessages(long currentTime) throws IOException {
     WriteBatch writeBatch = levelDB.createWriteBatch();
     long ttlInMs = TimeUnit.SECONDS.toMillis(topicMetadata.getTTL());
     byte[] startRow = MessagingUtils.toDataKeyPrefix(topicMetadata.getTopicId(),
