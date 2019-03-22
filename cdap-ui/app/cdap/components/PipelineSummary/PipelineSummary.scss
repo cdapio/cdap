@@ -77,6 +77,8 @@ $min_height_of_graph: 340px;
       }
 
       .rv-xy-plot__inner {
+        overflow: visible;
+
         .rv-xy-plot__series--bar {
           rect {
             cursor: pointer;

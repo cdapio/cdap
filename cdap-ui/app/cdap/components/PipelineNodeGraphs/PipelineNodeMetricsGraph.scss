@@ -128,6 +128,7 @@ $legend-checkbox-bg-color: rgb(88, 183, 285);
           border: 0;
           svg.rv-xy-plot__inner {
             padding: 0 0 0 20px;
+            overflow: visible;
           }
 
           .y-axis-title {
