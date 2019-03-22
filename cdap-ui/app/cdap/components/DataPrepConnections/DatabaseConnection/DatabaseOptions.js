@@ -80,16 +80,19 @@ export default class DatabaseOptions extends Component {
 
         driversList = driversList.map((driver) => {
           let matched = find(installedList, (o) => {
-            return o.label === driver.label;
+            return (
+              o.label === driver.label &&
+              o.properties.class === driver.class &&
+              o.properties.name === driver.name
+            );
           });
 
           driver.uniqueId = uuidV4();
+          driver.installed = false;
 
           if (matched) {
             driver.installed = true;
             driver.pluginInfo = matched;
-          } else {
-            driver.installed = false;
           }
 
           return driver;
