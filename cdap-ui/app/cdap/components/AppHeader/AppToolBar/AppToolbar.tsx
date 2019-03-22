@@ -32,6 +32,7 @@ import T from 'i18n-react';
 import If from 'components/If';
 import AboutPageModal from 'components/AppHeader/AboutPageModal';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
+import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
 
 const styles = (theme) => {
   return {
@@ -139,6 +140,7 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             <IconSVG name="icon-cogs" className={classes.cogWheelFontSize} />
           </IconButton>
         </div>
+        <ProductEdition />
         <Menu
           id="simple-menu"
           anchorEl={anchorEl as HTMLElement}
