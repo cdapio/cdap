@@ -25,14 +25,18 @@ import co.cask.cdap.api.lineage.field.Operation;
 import co.cask.cdap.api.lineage.field.ReadOperation;
 import co.cask.cdap.api.lineage.field.TransformOperation;
 import co.cask.cdap.api.lineage.field.WriteOperation;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.metadata.MetadataEntity;
 import co.cask.cdap.api.metadata.MetadataScope;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.config.PreferencesService;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -61,7 +65,12 @@ import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.profile.AdminEventPublisher;
 import co.cask.cdap.internal.profile.ProfileService;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.RollbackDetail;
+import co.cask.cdap.messaging.StoreRequest;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
+import co.cask.cdap.messaging.service.CoreMessagingService;
+import co.cask.cdap.messaging.store.TableFactory;
+import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -85,9 +94,15 @@ import co.cask.cdap.spi.metadata.Read;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
+import com.google.inject.Scopes;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -116,6 +131,27 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
 
   private final ProgramId spark1 = NamespaceId.DEFAULT.app("app2").program(ProgramType.SPARK, "spark1");
   private final WorkflowId workflow1 = NamespaceId.DEFAULT.app("app3").workflow("workflow1");
+
+  @BeforeClass
+  public static void beforeClass() throws Throwable {
+    CConfiguration cConfiguration = createBasicCConf();
+    // use a fast retry strategy with not too many retries, to speed up the test
+    String prefix = "system.metadata.";
+    cConfiguration.set(prefix + Constants.Retry.TYPE, RetryStrategyType.FIXED_DELAY.toString());
+    cConfiguration.set(prefix + Constants.Retry.MAX_RETRIES, "100");
+    cConfiguration.set(prefix + Constants.Retry.MAX_TIME_SECS, "10");
+    cConfiguration.set(prefix + Constants.Retry.DELAY_BASE_MS, "200");
+    cConfiguration.set(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT, "20");
+    // use a messaging service that helps reproduce race conditions in metadata consumption
+    initializeAndStartServices(cConfiguration, null, new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);
+        bind(MessagingService.class).to(DelayMessagingService.class).in(Scopes.SINGLETON);
+        expose(MessagingService.class);
+      }
+    });
+  }
 
   @Test
   public void testSubscriber() throws InterruptedException, ExecutionException, TimeoutException {
@@ -389,6 +425,12 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ProgramId workflowId = appId.workflow("SampleWorkflow");
     ScheduleId scheduleId = appId.schedule("tsched1");
 
+    // publish a creation of a schedule that will never exist
+    // this tests that such a message is eventually discarded
+    // note that for this test, we configure a fast retry strategy and a small number of retries
+    // therefore this will cost only a few seconds delay
+    publishBogusCreationEvent();
+
     // get the mds should be empty property since we haven't started the MetadataSubscriberService
     MetadataStorage mds = injector.getInstance(MetadataStorage.class);
     Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(workflowId.toMetadataEntity())).getProperties());
@@ -511,6 +553,15 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     }
   }
 
+  private void publishBogusCreationEvent() {
+    MultiThreadMessagingContext messagingContext =
+      new MultiThreadMessagingContext(getInjector().getInstance(MessagingService.class));
+    AdminEventPublisher adminEventPublisher =
+      new AdminEventPublisher(getInjector().getInstance(CConfiguration.class), messagingContext);
+    adminEventPublisher.publishScheduleCreation(NamespaceId.DEFAULT.app("nosuch").schedule("none"),
+                                                System.currentTimeMillis());
+  }
+
   @Test
   public void testProfileMetadataWithNoProfilePreferences() throws Exception {
     Injector injector = getInjector();
@@ -616,5 +667,35 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     // Verify the workflow profile metadata is removed because of the publish app deletion message
     Tasks.waitFor(true, () -> mds.read(new Read(workflowId.toMetadataEntity())).isEmpty(),
                   10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
+  /**
+   * A messaging service that inserts a delay after publishing each message. This slows
+   * down the test a little (from 7  to 11 seconds), but helps reproduce race conditions
+   * that can happen when a message is processed by the subscriber before the metadata
+   * changes that caused the message have been committed.
+   */
+  public static class DelayMessagingService extends CoreMessagingService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DelayMessagingService.class);
+
+    @Inject
+    DelayMessagingService(CConfiguration cConf, TableFactory tableFactory,
+                          MetricsCollectionService metricsCollectionService) {
+      super(cConf, tableFactory, metricsCollectionService);
+    }
+
+    @Nullable
+    @Override
+    public RollbackDetail publish(StoreRequest request) throws TopicNotFoundException, IOException {
+      RollbackDetail result = super.publish(request);
+      try {
+        LOG.debug("Sleeping 200ms after message publish to topic '{}'", request.getTopicId());
+        TimeUnit.MILLISECONDS.sleep(200L);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      return result;
+    }
   }
 }

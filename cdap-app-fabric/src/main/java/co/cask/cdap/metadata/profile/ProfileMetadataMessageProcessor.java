@@ -26,6 +26,7 @@ import co.cask.cdap.data2.metadata.writer.MetadataMessage;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
@@ -113,6 +114,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         updateProfileMetadata(entityId, message);
         break;
       case ENTITY_CREATION:
+        validateCreateEntityUpdateTime(entityId, message);
         updateProfileMetadata(entityId, message);
         break;
       case ENTITY_DELETION:
@@ -123,6 +125,17 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         // This shouldn't happen
         LOG.warn("Unknown message type for profile metadata update. Ignoring the message {}", message);
     }
+  }
+
+  private void validateCreateEntityUpdateTime(EntityId entityId, MetadataMessage message)
+    throws IOException, ConflictException {
+    // here we expect only APP and SCHEDULE. For apps, no need to validate: that message
+    // is emitted after the app is committed to the store. So, only validate for schedules.
+    if (entityId.getEntityType() != EntityType.SCHEDULE) {
+      return;
+    }
+    long expectedUpdateTime = GSON.fromJson(message.getRawPayload(), long.class);
+    scheduleDataset.ensureUpdateTime((ScheduleId) entityId, expectedUpdateTime);
   }
 
   private void validatePreferenceSequenceId(EntityId entityId, MetadataMessage message)

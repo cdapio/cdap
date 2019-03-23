@@ -24,6 +24,7 @@ import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.spi.data.StructuredTableContext;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import co.cask.cdap.spi.data.transaction.TxCallable;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +98,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
    * @param message the message to process
    * @return whether the message should be processed in its own transaction
    */
-  protected boolean shouldRunInSeparateTx(T message) {
+  protected boolean shouldRunInSeparateTx(ImmutablePair<String, T> message) {
     return false;
   }
 
@@ -127,35 +128,30 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
   @Nullable
   @Override
   protected final String loadMessageId() {
-    return TransactionRunners.run(getTransactionRunner(), context -> {
-      return loadMessageId(context);
-    });
+    return TransactionRunners.run(getTransactionRunner(), (TxCallable<String>) this::loadMessageId);
   }
 
   @Nullable
   @Override
-  protected String processMessages(Iterator<ImmutablePair<String, T>> messages) {
+  protected String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception {
     MessageTrackingIterator iterator;
 
-    while (true) {
-      // Process the notifications and record the message id of where the processing is up to.
-      // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
-      long timeBoundMillis = 900L * txTimeoutSeconds;
-      iterator = TransactionRunners.run(getTransactionRunner(), context -> {
-        TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
-                                                                                                timeBoundMillis);
-        MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
-        processMessages(context, trackingIterator);
-        String lastMessageId = trackingIterator.getLastMessageId();
+    // Process the notifications and record the message id of where the processing is up to.
+    // 90% of the tx timeout is .9 * 1000 * txTimeoutSeconds = 900 * txTimeoutSeconds
+    long timeBoundMillis = 900L * txTimeoutSeconds;
+    iterator = TransactionRunners.run(getTransactionRunner(), context -> {
+      TimeBoundIterator<ImmutablePair<String, T>> timeBoundMessages = new TimeBoundIterator<>(messages,
+                                                                                              timeBoundMillis);
+      MessageTrackingIterator trackingIterator = new MessageTrackingIterator(timeBoundMessages);
+      processMessages(context, trackingIterator);
+      String lastMessageId = trackingIterator.getLastMessageId();
 
-        // Persist the message id of the last message being consumed from the iterator
-        if (lastMessageId != null) {
-          storeMessageId(context, lastMessageId);
-        }
-        return trackingIterator;
-      });
-      break;
-    }
+      // Persist the message id of the last message being consumed from the iterator
+      if (lastMessageId != null) {
+        storeMessageId(context, lastMessageId);
+      }
+      return trackingIterator;
+    }, Exception.class);
 
     return iterator.getLastMessageId();
   }
@@ -183,7 +179,7 @@ public abstract class AbstractMessagingSubscriberService<T> extends AbstractMess
       }
 
       ImmutablePair<String, T> message = messages.next();
-      if (shouldRunInSeparateTx(message.getSecond())) {
+      if (shouldRunInSeparateTx(message)) {
         // if we should process this message in a separate tx and we've already processed other messages,
         // pretend we've gone through all messages already. The next time we try to process a batch of messages,
         // this expensive one will be the first message.

@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -62,6 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /**
  * Dataset that stores and indexes program schedules, so that they can be looked by their trigger keys.
@@ -82,6 +84,14 @@ import java.util.function.Predicate;
  *
  * Lookup of schedules by trigger key is by first finding the all triggers for that event key (using the index),
  * then mapping each of these triggers to the schedule it belongs to.
+ *
+ * Note that deleting a schedule will leave an empty row with a deletion timestamp in the table. The reason for this
+ * is that any addition or removal of a schedule also publishes a message about that operation, which includes the
+ * update timestamp. A consumer of that message must be able to determine whether it is reading a state that is
+ * at least as recent as that update, by comparing the update time it received in the message with the last update
+ * time it sees in the table. If deletion removed the entire row, it would not be possible to distinguish the case
+ * where a message arrived faster than the change was committed to the table, from the case where the schedule was
+ * deleted before the message arrived.
  */
 public class ProgramScheduleStoreDataset {
 
@@ -123,10 +133,10 @@ public class ProgramScheduleStoreDataset {
    */
   private void addScheduleWithStatus(ProgramSchedule schedule, ProgramScheduleStatus status, long currentTime)
     throws AlreadyExistsException, IOException {
-    Collection<Field<?>> scheduleKeys =
-      getScheduleKeys(schedule.getProgramId().getParent().schedule(schedule.getName()));
-    if (scheduleStore.read(scheduleKeys).isPresent()) {
-      throw new AlreadyExistsException(schedule.getProgramId().getParent().schedule(schedule.getName()));
+    Collection<Field<?>> scheduleKeys = getScheduleKeys(schedule.getScheduleId());
+    Optional<StructuredRow> existing = scheduleStore.read(scheduleKeys);
+    if (existing.isPresent() && existing.get().getString(StoreDefinition.ProgramScheduleStore.SCHEDULE) != null) {
+      throw new AlreadyExistsException(schedule.getScheduleId());
     }
     
     Collection<Field<?>> scheduleFields = new ArrayList<>(scheduleKeys);
@@ -160,21 +170,17 @@ public class ProgramScheduleStoreDataset {
 
   /**
    * Update the status of a schedule. This also updates the last-updated timestamp.
-   * @return the updated schedule's last modified timestamp
    */
-  public long updateScheduleStatus(ScheduleId scheduleId, ProgramScheduleStatus newStatus)
+  public void updateScheduleStatus(ScheduleId scheduleId, ProgramScheduleStatus newStatus)
     throws NotFoundException, IOException {
     long currentTime = System.currentTimeMillis();
-    Collection<Field<?>> scheduleFields = getScheduleKeys(scheduleId);
-    if (!scheduleStore.read(scheduleFields).isPresent()) {
-      throw new NotFoundException(scheduleId);
-    }
-
+    // ensure it exists
+    readExistingScheduleRow(scheduleId);
     // record current time
+    Collection<Field<?>> scheduleFields = getScheduleKeys(scheduleId);
     scheduleFields.add(Fields.longField(StoreDefinition.ProgramScheduleStore.UPDATE_TIME, currentTime));
     scheduleFields.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.STATUS, newStatus.toString()));
     scheduleStore.upsert(scheduleFields);
-    return currentTime;
   }
 
   /**
@@ -182,7 +188,7 @@ public class ProgramScheduleStoreDataset {
    *
    * @param schedule the schedule to update
    * @return the updated schedule's last modified timestamp
-   * @throws NotFoundException if one of the schedules already exists
+   * @throws NotFoundException if the schedule does not exists
    */
   public long updateSchedule(ProgramSchedule schedule) throws NotFoundException, IOException {
     deleteSchedule(schedule.getScheduleId());
@@ -202,7 +208,29 @@ public class ProgramScheduleStoreDataset {
    * @throws NotFoundException if the schedule does not exist in the store
    */
   public void deleteSchedule(ScheduleId scheduleId) throws NotFoundException, IOException {
-    deleteSchedules(Collections.singleton(scheduleId));
+    deleteSchedules(Collections.singleton(scheduleId), null);
+  }
+
+  /**
+   * Delete schedule from store while maintaining its update time.
+   *
+   * @param row a row with the same primary keys as the schedule to delete
+   * @param deleteTime the timestamp for this deletion
+   */
+  private void markScheduleAsDeleted(StructuredRow row, long deleteTime) throws IOException {
+    markScheduleAsDeleted(getScheduleKeys(row), deleteTime);
+  }
+
+  private void markScheduleAsDeleted(ScheduleId scheduleId, long deleteTime) throws IOException {
+    markScheduleAsDeleted(getScheduleKeys(scheduleId), deleteTime);
+  }
+
+  private void markScheduleAsDeleted(Collection<Field<?>> deleteFields, long deleteTime) throws IOException {
+    // set all fields to null except for the update time
+    deleteFields.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.SCHEDULE, null));
+    deleteFields.add(Fields.stringField(StoreDefinition.ProgramScheduleStore.STATUS, null));
+    deleteFields.add(Fields.longField(StoreDefinition.ProgramScheduleStore.UPDATE_TIME, deleteTime));
+    scheduleStore.upsert(deleteFields);
   }
 
   /**
@@ -211,13 +239,15 @@ public class ProgramScheduleStoreDataset {
    * @param scheduleIds the schedules to delete
    * @throws NotFoundException if one of the schedules does not exist in the store
    */
-  public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException, IOException {
+  public void deleteSchedules(Iterable<? extends ScheduleId> scheduleIds, @Nullable Long deleteTime)
+    throws NotFoundException, IOException {
+    if (deleteTime == null) {
+      deleteTime = System.currentTimeMillis();
+    }
     for (ScheduleId scheduleId : scheduleIds) {
+      StructuredRow existingRow = readExistingScheduleRow(scheduleId);
+      markScheduleAsDeleted(existingRow, deleteTime);
       Collection<Field<?>> scheduleKeys = getScheduleKeys(scheduleId);
-      if (!scheduleStore.read(scheduleKeys).isPresent()) {
-        throw new NotFoundException(scheduleId);
-      }
-      scheduleStore.delete(scheduleKeys);
       triggerStore.deleteAll(Range.singleton(scheduleKeys));
     }
   }
@@ -229,18 +259,21 @@ public class ProgramScheduleStoreDataset {
    * @return the IDs of the schedules that were deleted
    */
   // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
-  public List<ScheduleId> deleteSchedules(ApplicationId appId) throws IOException {
+  public List<ScheduleId> deleteSchedules(ApplicationId appId, long deleteTime) throws IOException {
     List<ScheduleId> deleted = new ArrayList<>();
     Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(appId);
     Range range = Range.singleton(scanKeys);
     // First collect all the schedules that are going to be deleted
     try (CloseableIterator<StructuredRow> iterator = scheduleStore.scan(range, Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
-        deleted.add(rowToScheduleId(iterator.next()));
+        StructuredRow row = iterator.next();
+        if (row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE) != null) {
+          markScheduleAsDeleted(row, deleteTime);
+          deleted.add(rowToScheduleId(row));
+        }
       }
     }
-    // Then delete both schedules and the triggers for the app
-    scheduleStore.deleteAll(range);
+    // Then delete all triggers for the app
     triggerStore.deleteAll(range);
     return deleted;
   }
@@ -252,7 +285,7 @@ public class ProgramScheduleStoreDataset {
    * @return the IDs of the schedules that were deleted
    */
   // TODO: fix the bug that this method will return fake schedule id https://issues.cask.co/browse/CDAP-13626
-  public List<ScheduleId> deleteSchedules(ProgramId programId) throws IOException {
+  public List<ScheduleId> deleteSchedules(ProgramId programId, long deleteTime) throws IOException {
     List<ScheduleId> deleted = new ArrayList<>();
     Collection<Field<?>> scanKeys = getScheduleKeysForApplicationScan(programId.getParent());
     Range range = Range.singleton(scanKeys);
@@ -264,10 +297,10 @@ public class ProgramScheduleStoreDataset {
         if (serializedSchedule != null) {
           ProgramSchedule schedule = GSON.fromJson(serializedSchedule, ProgramSchedule.class);
           if (programId.equals(schedule.getProgramId())) {
-            deleted.add(rowToScheduleId(row));
+            markScheduleAsDeleted(row, deleteTime);
             Collection<Field<?>> deleteKeys = getScheduleKeys(row);
-            scheduleStore.delete(deleteKeys);
             triggerStore.deleteAll(Range.singleton(deleteKeys));
+            deleted.add(rowToScheduleId(row));
           }
         }
       }
@@ -284,28 +317,24 @@ public class ProgramScheduleStoreDataset {
    * @param programId the program id for which to delete the schedules
    * @return the IDs of the schedules that were deleted
    */
-  public List<ScheduleId> modifySchedulesTriggeredByDeletedProgram(ProgramId programId) throws IOException {
-    List<ScheduleId> deleted = new ArrayList<>();
+  public List<ProgramSchedule> modifySchedulesTriggeredByDeletedProgram(ProgramId programId) throws IOException {
+    long deleteTime = System.currentTimeMillis();
+    List<ProgramSchedule> deleted = new ArrayList<>();
     Set<ProgramScheduleRecord> scheduleRecords = new HashSet<>();
     for (ProgramStatus status : ProgramStatus.values()) {
       scheduleRecords.addAll(findSchedules(Schedulers.triggerKeyForProgramStatus(programId, status)));
     }
     for (ProgramScheduleRecord scheduleRecord : scheduleRecords) {
       ProgramSchedule schedule = scheduleRecord.getSchedule();
-      try {
-        deleteSchedule(schedule.getScheduleId());
-      } catch (NotFoundException e) {
-        // this should never happen
-        LOG.warn("Failed to delete the schedule '{}' triggered by '{}', skip this schedule.",
-                 schedule.getScheduleId(), programId, e);
-        continue;
-      }
+      markScheduleAsDeleted(schedule.getScheduleId(), deleteTime);
+      triggerStore.deleteAll(Range.singleton(getScheduleKeys(schedule.getScheduleId())));
+
       if (schedule.getTrigger() instanceof AbstractSatisfiableCompositeTrigger) {
         // get the updated composite trigger by removing the program status trigger of the given program
         Trigger updatedTrigger =
           ((AbstractSatisfiableCompositeTrigger) schedule.getTrigger()).getTriggerWithDeletedProgram(programId);
         if (updatedTrigger == null) {
-          deleted.add(schedule.getScheduleId());
+          deleted.add(schedule);
           continue;
         }
         // if the updated composite trigger is not null, add the schedule back with updated composite trigger
@@ -320,7 +349,7 @@ public class ProgramScheduleStoreDataset {
                      "skip adding this schedule.", schedule.getScheduleId(), programId, updatedTrigger, e);
         }
       } else {
-        deleted.add(schedule.getScheduleId());
+        deleted.add(schedule);
       }
     }
     return deleted;
@@ -334,7 +363,7 @@ public class ProgramScheduleStoreDataset {
    * @throws NotFoundException if the schedule does not exist in the store
    */
   public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException, IOException {
-    StructuredRow row = readScheduleRow(scheduleId);
+    StructuredRow row = readExistingScheduleRow(scheduleId);
     String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
     if (serializedSchedule == null) {
       throw new NotFoundException(scheduleId);
@@ -350,7 +379,7 @@ public class ProgramScheduleStoreDataset {
    * @throws NotFoundException if the schedule does not exist in the store
    */
   public ProgramScheduleRecord getScheduleRecord(ScheduleId scheduleId) throws NotFoundException, IOException {
-    StructuredRow row = readScheduleRow(scheduleId);
+    StructuredRow row = readExistingScheduleRow(scheduleId);
     String serializedSchedule = row.getString(StoreDefinition.ProgramScheduleStore.SCHEDULE);
     if (serializedSchedule == null) {
       throw new NotFoundException(scheduleId);
@@ -511,13 +540,38 @@ public class ProgramScheduleStoreDataset {
     return result;
   }
 
-  private StructuredRow readScheduleRow(ScheduleId scheduleId) throws IOException, NotFoundException {
+  /**
+   * Validate that the last update time for a schedule is at least as expected.
+   *
+   * @throws ConflictException if no row exists for the schedule, or a row exists without an update time,
+   *                           or with an update time that is before the expected time.
+   */
+  public void ensureUpdateTime(ScheduleId scheduleId, long expectedUpdateTime) throws IOException, ConflictException {
+    Collection<Field<?>> keys = getScheduleKeys(scheduleId);
+    Optional<StructuredRow> optional = scheduleStore.read(keys);
+    if (!optional.isPresent()) {
+      throw new ConflictException(String.format("Expected update time >= %d for schedule %s, but nothing was found",
+                                                expectedUpdateTime, scheduleId));
+    }
+    Long actualUpdateTime = optional.get().getLong(StoreDefinition.ProgramScheduleStore.UPDATE_TIME);
+    if (actualUpdateTime == null || actualUpdateTime < expectedUpdateTime) {
+      throw new ConflictException(String.format("Expected update time >= %d for schedule %s, but found %s",
+                                                expectedUpdateTime, scheduleId, actualUpdateTime));
+    }
+  }
+
+  /**
+   * Read an existing for a schedule.
+   *
+   * @throws NotFoundException if the schedule does not exist
+   */
+  private StructuredRow readExistingScheduleRow(ScheduleId scheduleId) throws IOException, NotFoundException {
     Collection<Field<?>> scheduleKeys = getScheduleKeys(scheduleId);
-    Optional<StructuredRow> rowOptional = scheduleStore.read(scheduleKeys);
-    if (!rowOptional.isPresent()) {
+    Optional<StructuredRow> existing = scheduleStore.read(scheduleKeys);
+    if (!existing.isPresent() || existing.get().getString(StoreDefinition.ProgramScheduleStore.SCHEDULE) == null) {
       throw new NotFoundException(scheduleId);
     }
-    return rowOptional.get();
+    return existing.get();
   }
 
   /**

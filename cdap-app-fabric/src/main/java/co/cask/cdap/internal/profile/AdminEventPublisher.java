@@ -38,7 +38,6 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +105,8 @@ public class AdminEventPublisher {
    *
    * @param scheduleId the schedule id that get created
    */
-  public void publishScheduleCreation(ScheduleId scheduleId) {
-    publishMessage(scheduleId, MetadataMessage.Type.ENTITY_CREATION);
+  public void publishScheduleCreation(ScheduleId scheduleId, long updatedTime) {
+    publishMessage(scheduleId, MetadataMessage.Type.ENTITY_CREATION, updatedTime);
   }
 
   /**
@@ -127,15 +126,10 @@ public class AdminEventPublisher {
    * might already get deleted when we process the message. So we must specify it to make sure the profile metadata is
    * removed.
    *
-   * @param scheduleId schedule id who gets deleted
-   * @param programSchedule the detail of this schedule
+   * @param programSchedule the detail of the schedule that was deleted
    */
-  public void publishScheduleDeletion(ScheduleId scheduleId, ProgramSchedule programSchedule) {
-    publishMessage(scheduleId, MetadataMessage.Type.ENTITY_DELETION, programSchedule);
-  }
-
-  private void publishMessage(EntityId entityId, MetadataMessage.Type type) {
-    publishMessage(entityId, type, JsonNull.INSTANCE);
+  public void publishScheduleDeletion(ProgramSchedule programSchedule) {
+    publishMessage(programSchedule.getScheduleId(), MetadataMessage.Type.ENTITY_DELETION, programSchedule);
   }
 
   private void publishMessage(EntityId entityId, MetadataMessage.Type type,

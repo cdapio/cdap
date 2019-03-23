@@ -102,6 +102,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.common.http.HttpRequest;
@@ -214,15 +215,20 @@ public abstract class AppFabricTestBase {
 
   protected static void initializeAndStartServices(CConfiguration cConf,
                                                    @Nullable SConfiguration sConf) throws Exception {
+    initializeAndStartServices(cConf, sConf, new AbstractModule() {
+      @Override
+      protected void configure() {
+        // needed because we set Kerberos to true in DefaultNamespaceAdminTest
+        bind(UGIProvider.class).to(CurrentUGIProvider.class);
+        bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
+      }
+    });
+  }
+
+  protected static void initializeAndStartServices(CConfiguration cConf, @Nullable SConfiguration sConf,
+                                                   Module overrides) throws Exception {
     injector = Guice.createInjector(
-      Modules.override(new AppFabricTestModule(cConf, sConf)).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          // needed because we set Kerberos to true in DefaultNamespaceAdminTest
-          bind(UGIProvider.class).to(CurrentUGIProvider.class);
-          bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
-        }
-      }));
+      Modules.override(new AppFabricTestModule(cConf, sConf)).with(overrides));
 
     int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);

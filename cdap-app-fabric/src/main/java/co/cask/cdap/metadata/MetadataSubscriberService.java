@@ -108,6 +108,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MetadataStorage metadataStorage;
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
+  private final int maxRetriesOnConflict;
+
+  private String conflictMessageId = null;
+  private int conflictCount = 0;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -127,14 +131,14 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
         Constants.Metrics.Tag.TOPIC, cConf.get(Constants.Metadata.MESSAGING_TOPIC),
         Constants.Metrics.Tag.CONSUMER, "metadata.writer"
-      ))
-    );
+      )));
 
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.datasetFramework = datasetFramework;
     this.metadataStorage = metadataStorage;
     this.transactionRunner = transactionRunner;
+    this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
   }
 
   @Override
@@ -167,8 +171,13 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   @Override
-  protected boolean shouldRunInSeparateTx(MetadataMessage message) {
-    EntityType entityType = message.getEntityId().getEntityType();
+  protected boolean shouldRunInSeparateTx(ImmutablePair<String, MetadataMessage> message) {
+    // if this message caused a conflict last time we tried, stop here to commit all messages processed so far
+    if (message.getFirst().equals(conflictMessageId)) {
+      return true;
+    }
+    // operations at the instance or namespace level can take time. Stop here to process in a new transaction
+    EntityType entityType = message.getSecond().getEntityId().getEntityType();
     return entityType.equals(EntityType.INSTANCE) || entityType.equals(EntityType.NAMESPACE);
   }
 
@@ -180,7 +189,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     // Loop over all fetched messages and process them with corresponding MetadataMessageProcessor
     while (messages.hasNext()) {
-      MetadataMessage message = messages.next().getSecond();
+      ImmutablePair<String, MetadataMessage> next = messages.next();
+      String messageId = next.getFirst();
+      MetadataMessage message = next.getSecond();
 
       MetadataMessageProcessor processor = processors.computeIfAbsent(message.getType(), type -> {
         switch (type) {
@@ -207,14 +218,30 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
         }
       });
 
-      // look like intellij doesn't understand return from closures and consider it as function return.
+      // Intellij would warn here that the condition is always false - because the switch above covers all cases.
+      // But if there is ever an unexpected message, we can't throw exception, that would leave the message there.
       // noinspection ConstantConditions
       if (processor == null) {
         LOG.warn("Unsupported metadata message type {}. Message ignored.", message.getType());
         continue;
       }
-
-      processor.processMessage(message, structuredTableContext);
+      try {
+        processor.processMessage(message, structuredTableContext);
+        conflictCount = 0;
+      } catch (ConflictException e) {
+        if (messageId.equals(conflictMessageId)) {
+          conflictCount++;
+          if (conflictCount >= maxRetriesOnConflict) {
+            LOG.warn("Skipping metadata message {} after processing it has caused {} consecutive conflicts: {}",
+                     message, conflictCount, e.getMessage());
+            continue;
+          }
+        } else {
+          conflictMessageId = messageId;
+          conflictCount = 1;
+        }
+        throw e;
+      }
     }
   }
 
