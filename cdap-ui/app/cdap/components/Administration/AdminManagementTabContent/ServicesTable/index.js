@@ -319,7 +319,6 @@ export default class ServicesTable extends Component {
     const start = moment()
       .subtract(7, 'days')
       .format('X');
-    const stop = moment().format('X');
 
     return (
       <table className="table-sm">
@@ -332,7 +331,7 @@ export default class ServicesTable extends Component {
               )}/${service.programId}/logs`;
             }
 
-            logUrl = `${logUrl}?start=${start}&stop=${stop}`;
+            logUrl = `${logUrl}?start=${start}`;
             logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
 
             const displayName = service.isSystemProgram
