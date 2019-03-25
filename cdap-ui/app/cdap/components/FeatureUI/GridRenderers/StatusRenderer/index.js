@@ -49,6 +49,9 @@ class StatusRenderer extends React.Component {
       case RUNNING:
         className += " status-running";
         break;
+
+      default:
+      className +=" status-others";
     }
     return className;
   }
