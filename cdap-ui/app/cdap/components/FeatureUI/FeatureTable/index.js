@@ -20,11 +20,9 @@ import 'ag-grid-community/dist/styles/ag-grid.css';
 import 'ag-grid-community/dist/styles/ag-theme-balham.css';
 import isEmpty from 'lodash/isEmpty';
 import PropTypes from 'prop-types';
-import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE, AFEGridColumns } from '../config';
+import { FAILED, DEPLOYED, SUCCEEDED, RUNNING, FEATURE_GENERATED_PIPELINE, AFEGridColumns, EDIT, CLONE, DELETE } from '../config';
 import StatusRenderer from '../GridRenderers/StatusRenderer';
-import DeleteRenderer from '../GridRenderers/DeleteRenderer';
-import EditRenderer from '../GridRenderers/EditRenderer';
-import CloneRenderer from '../GridRenderers/CloneRenderer';
+import ActionRenderer from '../GridRenderers/ActionRenderer';
 import FELinkRenderer from '../GridRenderers/FELinkRenderer';
 import FSLinkRenderer from '../GridRenderers/FSLinkRenderer';
 
@@ -39,9 +37,7 @@ class FeatureTable extends React.Component {
       columnDefs: AFEGridColumns,
       frameworkComponents: {
         'statusRenderer': StatusRenderer,
-        'deleteRenderer': DeleteRenderer,
-        'editRenderer': EditRenderer,
-        'cloneRenderer': CloneRenderer,
+        'actionRenderer': ActionRenderer,
         'fsLinkRenderer': FSLinkRenderer,
         'feLinkRenderer': FELinkRenderer
       },
@@ -110,6 +106,20 @@ class FeatureTable extends React.Component {
   onFeatureSelection(item) {
     if (this.props.onFeatureSelection) {
       this.props.onFeatureSelection(item);
+    }
+  }
+
+  onAction(item, type){
+    switch(type) {
+      case EDIT:
+        this.onEdit(item);
+        break;
+      case CLONE:
+        this.onClone(item);
+        break;
+      case DELETE:
+        this.onDelete(item);
+        break;
     }
   }
 

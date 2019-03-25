@@ -21,6 +21,7 @@ import AddFeatureWizardConfig from '../../../services/WizardConfigs/AddFeatureWi
 import AddFeatureStore from '../../../services/WizardStores/AddFeature/AddFeatureStore';
 import PropTypes from 'prop-types';
 
+
 require('./AddFeatureWizard.scss');
 
 class AddFeatureWizard extends React.Component {
@@ -55,7 +56,7 @@ class AddFeatureWizard extends React.Component {
 
 export default AddFeatureWizard;
 AddFeatureWizard.propTypes = {
-  showWizard: PropTypes.any,
+  showWizard: PropTypes.bool,
   onClose: PropTypes.func,
   onSubmit: PropTypes.func,
 };

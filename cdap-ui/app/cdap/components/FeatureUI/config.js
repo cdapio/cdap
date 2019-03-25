@@ -68,6 +68,10 @@ export const FAILED = "Failed";
 export const RUNNING = "Running";
 export const TOTAL = "Total";
 
+export const EDIT = "edit";
+export const CLONE = "clone";
+export const DELETE = "delete";
+
 export const FEATURE_GENERATED = "Feature Generated";
 export const FEATURE_SELECTED = "Feature Selected";
 export const AFEGridColumns = [
@@ -110,23 +114,96 @@ export const AFEGridColumns = [
   },
   {
     headerName: "",
-    field: "pipelineName",
+    field: "clone",
     width: 40,
-    cellRenderer: 'cloneRenderer',
+    cellRenderer: 'actionRenderer',
+    cellRendererParams:{action:CLONE},
     suppressMenu: true,
   },
   {
     headerName: "",
-    field: "pipelineName",
+    field: "edit",
     width: 40,
-    cellRenderer: 'editRenderer',
+    cellRenderer: 'actionRenderer',
+    cellRendererParams:{action:EDIT},
     suppressMenu: true,
   },
   {
     headerName: "",
-    field: "pipelineName",
+    field: "delete",
     width: 40,
-    cellRenderer: 'deleteRenderer',
+    cellRenderer: 'actionRenderer',
+    cellRendererParams:{action:DELETE},
     suppressMenu: true,
   }
 ];
+
+export const PipeLineStatusConfig = [
+  {
+    name:'DEPLOYED',
+    edit:true,
+    clone:true,
+    delete:true
+  },
+  {
+    name:'DRAFT',
+    edit:true,
+    clone:true,
+    delete:true
+  },
+  {
+    name:'FAILED',
+    edit:true,
+    clone:true,
+    delete:true
+  },
+  {
+    name:'KILLED',
+    edit:true,
+    clone:true,
+    delete:true
+  },
+  {
+    name:'PENDING',
+    edit:false,
+    clone:false,
+    delete:false
+  },
+  {
+    name:'RESUMING',
+    edit:false,
+    clone:false,
+    delete:false
+  },
+  {
+    name:'RUNNING',
+    edit:false,
+    clone:false,
+    delete:false
+  },
+  {
+    name:'STARTING',
+    edit:false,
+    clone:false,
+    delete:false
+  },
+  {
+    name:'SUCCEDED',
+    edit:true,
+    clone:true,
+    delete:true
+  },
+  {
+    name:'SUSPENDED',
+    edit:false,
+    clone:false,
+    delete:false
+  },
+  {
+    name:'UNKNOWN',
+    edit:true,
+    clone:true,
+    delete:true
+  }
+];
+

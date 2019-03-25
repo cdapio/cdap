@@ -38,6 +38,7 @@ const FEDataServiceApi = {
   deletePipeline: serviceCreator(dataSrc, "DELETE", "REQUEST",`${autoFeatureGenerationService}/:pipeline/features/delete`),
   pipelineData: serviceCreator(dataSrc, "GET", "REQUEST",`${manualFeatureSelectionService}/features/stats/get?pipelineName=:pipeline`),
   pipelineFilteredData: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/filter`),
+  readFSPipeline: serviceCreator(dataSrc, "GET", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/selected/read/pipeline`),
   featureCorrelationData: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/correlation/:coefficientType/score/targetfeature/get`),
   saveFeaturePipeline: serviceCreator(dataSrc, "POST", "REQUEST",`${manualFeatureSelectionService}/:pipeline/features/selected/create/pipeline`),
   detectProperties:  serviceCreator(dataSrc, "POST", "REQUEST",`${dataPrepSchemaService}/dataset/selected/schema/identified/get`),
