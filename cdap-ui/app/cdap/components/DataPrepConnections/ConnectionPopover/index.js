@@ -28,6 +28,7 @@ import S3Connection from 'components/DataPrepConnections/S3Connection';
 import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
+import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 import {ConnectionType} from 'components/DataPrepConnections/ConnectionType';
@@ -44,6 +45,7 @@ const COMPONENT_MAP = {
   [ConnectionType.GCS]: GCSConnection,
   [ConnectionType.BIGQUERY]: BigQueryConnection,
   [ConnectionType.SPANNER]: SpannerConnection,
+  [ConnectionType.ADLS]: ADLSConnection,
 };
 
 export default class ConnectionPopover extends Component {

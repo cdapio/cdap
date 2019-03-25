@@ -24,4 +24,5 @@ export enum ConnectionType {
   BIGQUERY = "BIGQUERY",
   KAFKA = "KAFKA",
   SPANNER = "SPANNER",
+  ADLS = "ADLS",
 }

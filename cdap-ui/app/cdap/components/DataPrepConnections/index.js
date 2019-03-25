@@ -27,6 +27,7 @@ import {
   setGCSAsActiveBrowser,
   setBigQueryAsActiveBrowser,
   setSpannerAsActiveBrowser,
+  setAdlsAsActiveBrowser,
   reset as resetDataPrepBrowserStore
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, Switch, Redirect} from 'react-router-dom';
@@ -101,6 +102,7 @@ export default class DataPrepConnections extends Component {
       gcsList: [],
       bigQueryList: [],
       spannerList: [],
+      adlsList: [],
       activeConnectionid,
       activeConnectionType,
       showAddConnectionPopover: false,
@@ -239,6 +241,10 @@ export default class DataPrepConnections extends Component {
       setSpannerAsActiveBrowser({name: ConnectionType.SPANNER, id: browserName.id}, true);
       activeConnectionid = browserName.id;
       activeConnectionType = ConnectionType.SPANNER;
+    } else if (typeof browserName === 'object' && browserName.type === ConnectionType.ADLS) {
+      setAdlsAsActiveBrowser({name: ConnectionType.ADLS, id: browserName.id, path: '/'});
+      activeConnectionid = browserName.id;
+      activeConnectionType = ConnectionType.ADLS;
     }
 
     this.setState({
@@ -317,7 +323,8 @@ export default class DataPrepConnections extends Component {
           s3List = [],
           gcsList = [],
           bigQueryList = [],
-          spannerList = [];
+          spannerList = [],
+          adlsList = [];
 
       if (!state.activeConnectionId && !state.activeConnectionType && state.defaultConnection) {
         let defaultConnectionObj = find(res.values, {id: state.defaultConnection});
@@ -340,6 +347,8 @@ export default class DataPrepConnections extends Component {
           bigQueryList.push(connection);
         } else if (connection.type === ConnectionType.SPANNER) {
           spannerList.push(connection);
+        } else if (connection.type === ConnectionType.ADLS) {
+          adlsList.push(connection);
         }
       });
 
@@ -352,13 +361,13 @@ export default class DataPrepConnections extends Component {
         gcsList,
         bigQueryList,
         spannerList,
+        adlsList,
         loading: false
       };
 
       if (!state.defaultConnection && this.props.singleWorkspaceMode && this.props.sidePanelExpanded) {
         state.sidePanelExpanded = true;
       }
-
       this.setState(state);
     });
   }
@@ -519,6 +528,40 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={gcs}
+                onAction={this.onActionFromConnectionsPopover}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderADLSDetail() {
+    let namespace = getCurrentNamespace();
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.adlsList.map((adls) => {
+          return (
+            <div
+              key={adls.id}
+              title={adls.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/adls/${adls.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, {...adls, name: ConnectionType.ADLS})}
+                isNativeLink={this.props.singleWorkspaceMode}
+              >
+                {adls.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={adls}
                 onAction={this.onActionFromConnectionsPopover}
               />
             </div>
@@ -728,7 +771,7 @@ export default class DataPrepConnections extends Component {
             </ExpandableMenu>
           </If>
 
-           <If condition={find(this.state.connectionTypes, {type: ConnectionType.SPANNER})}>
+          <If condition={find(this.state.connectionTypes, {type: ConnectionType.SPANNER})}>
             <ExpandableMenu>
               <div>
                 <span className="fa fa-fw">
@@ -739,6 +782,20 @@ export default class DataPrepConnections extends Component {
                 </span>
               </div>
               {this.renderSpannerDetail()}
+            </ExpandableMenu>
+          </If>
+
+          <If condition={find(this.state.connectionTypes, {type: ConnectionType.ADLS})}>
+            <ExpandableMenu>
+              <div>
+                <span className="fa fa-fw">
+                  <IconSVG name="icon-spanner" />
+                </span>
+                <span>
+                {T.translate(`${PREFIX}.adls`, {count: this.state.adlsList.length})}
+                </span>
+              </div>
+              {this.renderADLSDetail()}
             </ExpandableMenu>
           </If>
         </div>
@@ -879,6 +936,21 @@ export default class DataPrepConnections extends Component {
             );
           }}
         />
+        <Route
+          path={`${BASEPATH}/adls/:adlsId`}
+          render={({match}) => {
+            const id  = match.params.adlsId;
+            const setActiveConnection = setAdlsAsActiveBrowser.bind(null, {name: ConnectionType.ADLS, id});
+            return (
+              <DataPrepBrowser
+                match={match}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+                setActiveConnection={setActiveConnection}
+              />
+            );
+          }}
+        />
         <Route render={() => {
           let doesFileExists = find(this.state.connectionTypes, {type: ConnectionType.FILE});
           if (!this.state.defaultConnection && doesFileExists) {
@@ -985,6 +1057,8 @@ export default class DataPrepConnections extends Component {
       setActiveConnection = setBigQueryAsActiveBrowser.bind(null, {name: ConnectionType.BIGQUERY, id: this.state.activeConnectionid}, true);
     } else if (this.state.activeConnectionType === ConnectionType.SPANNER) {
       setActiveConnection = setSpannerAsActiveBrowser.bind(null, {name: ConnectionType.SPANNER, id: this.state.activeConnectionid}, true);
+    } else if (this.state.activeConnectionType === ConnectionType.ADLS) {
+      setActiveConnection = setAdlsAsActiveBrowser.bind(null, {name: ConnectionType.ADLS, id: this.state.activeConnectionid, path:'/'});
     }
 
     const isFileConnectionValid = find(connectionTypes, {type: ConnectionType.FILE});
