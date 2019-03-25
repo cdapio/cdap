@@ -25,6 +25,7 @@ import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.proto.MetricQueryRequest;
@@ -72,6 +73,7 @@ public class MetricsQueryHelper {
   private static final String ANY_TAG_VALUE = "*";
 
   private final MetricStore metricStore;
+  private final int minResolution;
 
   private static final Map<String, String> tagNameToHuman;
   private static final Map<String, String> humanToTagName;
@@ -119,8 +121,10 @@ public class MetricsQueryHelper {
   }
 
   @Inject
-  public MetricsQueryHelper(MetricStore metricStore) {
+  public MetricsQueryHelper(MetricStore metricStore, CConfiguration cConf) {
     this.metricStore = metricStore;
+    int minimumResolution = cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS);
+    this.minResolution = minimumResolution < 60 ? minimumResolution : 60;
   }
 
   public List<MetricTagValue> searchTags(List<String> tags) {
@@ -246,7 +250,7 @@ public class MetricsQueryHelper {
         ((start == null) && (end == null));
 
     Integer resolution = queryTimeParams.containsKey(PARAM_RESOLUTION) ?
-      getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : 1;
+      getResolution(queryTimeParams.get(PARAM_RESOLUTION).get(0), start, end) : minResolution;
 
     Interpolator interpolator = null;
     if (queryTimeParams.containsKey(PARAM_INTERPOLATE)) {
@@ -280,7 +284,7 @@ public class MetricsQueryHelper {
     if (resolution.equals(PARAM_AUTO_RESOLUTION)) {
       if (start != null && end != null) {
         long difference = end - start;
-        return MetricQueryParser.getResolution(difference).getResolution();
+        return getResolution(difference);
       } else {
         throw new IllegalArgumentException("if resolution=auto, start and end timestamp " +
                                              "should be provided to determine resolution");
@@ -289,11 +293,22 @@ public class MetricsQueryHelper {
       // if not auto, check if the given resolution matches available resolutions that we support.
       int resolutionInterval = TimeMathParser.resolutionInSeconds(resolution);
       if (!((resolutionInterval == Integer.MAX_VALUE) || (resolutionInterval == 3600) ||
-        (resolutionInterval == 60) || (resolutionInterval == 1))) {
-        throw new IllegalArgumentException("Resolution interval not supported, only 1 second, 1 minute and " +
-                                             "1 hour resolutions are supported currently");
+        (resolutionInterval == 60) || (resolutionInterval == minResolution))) {
+        throw new IllegalArgumentException(String.format("Resolution interval not supported, only %d second, " +
+                                                           "1 minute and 1 hour resolutions are supported currently",
+                                                         minResolution));
       }
       return resolutionInterval;
+    }
+  }
+
+  private int getResolution(long difference) {
+    if (difference > Constants.Metrics.Query.MAX_HOUR_RESOLUTION_QUERY_INTERVAL) {
+      return 3600;
+    } else if (difference > Constants.Metrics.Query.MAX_MINUTE_RESOLUTION_QUERY_INTERVAL) {
+      return 60;
+    } else {
+      return minResolution;
     }
   }
 
