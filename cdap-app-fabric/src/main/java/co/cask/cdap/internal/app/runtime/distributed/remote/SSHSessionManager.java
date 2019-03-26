@@ -21,6 +21,7 @@ import co.cask.cdap.common.ssh.SSHConfig;
 import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import co.cask.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
+import co.cask.cdap.runtime.spi.ssh.RemotePortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHProcess;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 
@@ -242,6 +243,11 @@ final class SSHSessionManager implements SSHSessionProvider, AutoCloseable {
     public PortForwarding createLocalPortForward(String targetHost, int targetPort, int originatePort,
                                                  PortForwarding.DataConsumer dataConsumer) throws IOException {
       return getDelegate().createLocalPortForward(targetHost, targetPort, originatePort, dataConsumer);
+    }
+
+    @Override
+    public RemotePortForwarding createRemotePortForward(int remotePort, int localPort) throws IOException {
+      return getDelegate().createRemotePortForward(remotePort, localPort);
     }
 
     @Override

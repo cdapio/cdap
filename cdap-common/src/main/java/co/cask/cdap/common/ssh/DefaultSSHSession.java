@@ -17,6 +17,7 @@
 package co.cask.cdap.common.ssh;
 
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
+import co.cask.cdap.runtime.spi.ssh.RemotePortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHProcess;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.ByteStreams;
@@ -240,6 +241,33 @@ public class DefaultSSHSession implements SSHSession {
       sshChannel.setOrgPort(originatePort);
 
       return new DefaultPortForwarding(sshChannel, dataConsumer);
+    } catch (JSchException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public RemotePortForwarding createRemotePortForward(int remotePort, int localPort) throws IOException {
+    try {
+      int port = session.setPortForwardingR(String.format("%d:%s:%d",
+                                                          remotePort,
+                                                          InetAddress.getLoopbackAddress().getHostAddress(),
+                                                          localPort));
+      return new RemotePortForwarding() {
+        @Override
+        public int getRemotePort() {
+          return port;
+        }
+
+        @Override
+        public void close() throws IOException {
+          try {
+            session.delPortForwardingR(port);
+          } catch (JSchException e) {
+            throw new IOException(e);
+          }
+        }
+      };
     } catch (JSchException e) {
       throw new IOException(e);
     }

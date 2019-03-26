@@ -130,6 +130,17 @@ public interface SSHSession extends AutoCloseable {
                                         PortForwarding.DataConsumer dataConsumer) throws IOException;
 
   /**
+   * Creates a remote port forwarding from this SSH session.
+   *
+   * @param remotePort port listening on the remote host "localhost" interface. If it is {@code 0}, a random port
+   *                   will be acquired on the remote host
+   * @param localPort traffic from remote host will forward to the local port in the local host "localhost" interface
+   * @return a {@link RemotePortForwarding}
+   * @throws IOException if failed to create the port forwarding
+   */
+  RemotePortForwarding createRemotePortForward(int remotePort, int localPort) throws IOException;
+
+  /**
    * Close this SSH session.
    */
   @Override
