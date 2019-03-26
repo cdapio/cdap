@@ -37,7 +37,7 @@ angular.module(`${PKG.name}.feature.hydrator`)
 
           myAlertOnValium.show({
             type: 'success',
-            content: 'Plugin template save successfull'
+            content: 'Plugin template saved successfully'
           });
           $scope.$close();
         }
