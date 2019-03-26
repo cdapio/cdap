@@ -82,7 +82,7 @@ export default class AddConnection extends Component {
       {
         type: ConnectionType.ADLS,
         label: 'ADLS Handler',
-        icon: 'icon-spanner',
+        icon: 'icon-adls',
         component: ADLSConnection
       },
     ];

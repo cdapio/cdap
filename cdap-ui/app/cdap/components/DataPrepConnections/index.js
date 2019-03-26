@@ -789,7 +789,7 @@ export default class DataPrepConnections extends Component {
             <ExpandableMenu>
               <div>
                 <span className="fa fa-fw">
-                  <IconSVG name="icon-spanner" />
+                  <IconSVG name="icon-adls" />
                 </span>
                 <span>
                 {T.translate(`${PREFIX}.adls`, {count: this.state.adlsList.length})}
