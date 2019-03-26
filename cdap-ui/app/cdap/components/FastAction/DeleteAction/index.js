@@ -88,12 +88,16 @@ export default class DeleteAction extends Component {
 
     api(params).subscribe(
       (res) => {
-        this.props.onSuccess(res);
-        this.setState({
-          loading: false,
-          modal: false,
-        });
-        this.eventEmitter.emit(globalEvents.DELETEENTITY, params);
+        // Adding a 1.5 second delay
+        // Metadata gets flushed after 1 second, so giving extra time for the async processing to finish.
+        setTimeout(() => {
+          this.props.onSuccess(res);
+          this.setState({
+            loading: false,
+            modal: false,
+          });
+          this.eventEmitter.emit(globalEvents.DELETEENTITY, params);
+        }, 1500);
       },
       (err) => {
         this.setState({
