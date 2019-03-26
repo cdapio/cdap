@@ -16,14 +16,17 @@
 
 package co.cask.cdap.master.environment.k8s;
 
+import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MetricsSystemClient;
 import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.metrics.process.RemoteMetricsSystemClient;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
@@ -34,6 +37,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,6 +76,20 @@ public class MetricsServiceMainTest extends MasterServiceMainTestBase {
 
     // Need to poll because metrics processing is async.
     Tasks.waitFor(10L, () -> {
+      MetricQueryResult result = metricsClient.query(context.getTags(), "system.name");
+      MetricQueryResult.TimeSeries[] series = result.getSeries();
+      if (series.length == 0) {
+        return 0L;
+      }
+      return series[0].getData()[0].getValue();
+
+    }, 10, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+
+    MetricsSystemClient metricsSystemClient = injector.getInstance(RemoteMetricsSystemClient.class);
+    metricsSystemClient.delete(new MetricDeleteQuery(0, Integer.MAX_VALUE, Collections.emptySet(),
+                                                     context.getTags(), new ArrayList<>(context.getTags().keySet())));
+
+    Tasks.waitFor(0L, () -> {
       MetricQueryResult result = metricsClient.query(context.getTags(), "system.name");
       MetricQueryResult.TimeSeries[] series = result.getSeries();
       if (series.length == 0) {

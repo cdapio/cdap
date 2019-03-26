@@ -32,6 +32,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.guice.MetricsProcessorStatusServiceModule;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
+import co.cask.cdap.metrics.process.MetricsAdminSubscriberService;
 import co.cask.cdap.metrics.process.MetricsProcessorStatusService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -94,6 +95,7 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                    .create(topicNumbers, metricsContext, 0));
     services.add(injector.getInstance(MetricsProcessorStatusService.class));
     services.add(injector.getInstance(MetricsQueryService.class));
+    services.add(injector.getInstance(MetricsAdminSubscriberService.class));
   }
 
   @Nullable
