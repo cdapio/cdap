@@ -359,9 +359,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                                                clusterKeyInfo.getCluster());
       RuntimeMonitor runtimeMonitor = new RuntimeMonitor(key, cConf, runtimeMonitorClient,
                                                          messagingContext, monitorScheduler, logProcessor,
-                                                         profileMetricsService,
                                                          remoteProcessController, programStateWriter,
-                                                         transactionRunner);
+                                                         transactionRunner, profileMetricsService);
       RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
         RunIds.fromString(key.getRun()), runtimeMonitor);
 

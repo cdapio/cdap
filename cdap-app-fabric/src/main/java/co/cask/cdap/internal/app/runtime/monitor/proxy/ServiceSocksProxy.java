@@ -68,7 +68,8 @@ public class ServiceSocksProxy extends AbstractIdleService {
   protected void startUp() throws Exception {
     ServerBootstrap bootstrap = new ServerBootstrap();
 
-    eventLoopGroup = new NioEventLoopGroup(20, Threads.createDaemonThreadFactory("service-socks-proxy-%d"));
+    // We don't perform any blocking task in the proxy, only IO relying, hence doesn't need large amount of threads.
+    eventLoopGroup = new NioEventLoopGroup(10, Threads.createDaemonThreadFactory("service-socks-proxy-%d"));
     bootstrap
       .group(eventLoopGroup)
       .channel(NioServerSocketChannel.class)

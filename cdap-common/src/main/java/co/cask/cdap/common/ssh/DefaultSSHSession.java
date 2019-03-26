@@ -68,6 +68,7 @@ public class DefaultSSHSession implements SSHSession {
     try {
       jsch.addIdentity(config.getUser(), config.getPrivateKey(), null, null);
       Session session = jsch.getSession(config.getUser(), config.getHost(), config.getPort());
+      session.setDaemonThread(true);
       session.setConfig("StrictHostKeyChecking", "no");
 
       for (Map.Entry<String, String> entry : config.getConfigs().entrySet()) {

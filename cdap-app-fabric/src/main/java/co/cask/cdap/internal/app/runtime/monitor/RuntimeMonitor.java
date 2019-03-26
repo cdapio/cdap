@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteProcessController;
 import co.cask.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeTable;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
-import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -39,17 +38,22 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import co.cask.cdap.spi.data.transaction.TransactionRunners;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
@@ -79,20 +83,19 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private final MessagingContext messagingContext;
   private final ScheduledExecutorService scheduledExecutorService;
   private final RemoteExecutionLogProcessor logProcessor;
-  private final ProfileMetricService metricScheduledService;
   private final RemoteProcessController remoteProcessController;
   private final ProgramStateWriter programStateWriter;
   private final TransactionRunner transactionRunner;
+  private final List<Service> extraServices;
 
   private Map<String, MonitorConsumeRequest> topicsToRequest;
   private long programFinishTime;
 
   public RuntimeMonitor(ProgramRunId programRunId, CConfiguration cConf, RuntimeMonitorClient monitorClient,
                         MessagingContext messagingContext, ScheduledExecutorService scheduledExecutorService,
-                        RemoteExecutionLogProcessor logProcessor,
-                        ProfileMetricService metricScheduledService,
-                        RemoteProcessController remoteProcessController, ProgramStateWriter programStateWriter,
-                        TransactionRunner transactionRunner) {
+                        RemoteExecutionLogProcessor logProcessor, RemoteProcessController remoteProcessController,
+                        ProgramStateWriter programStateWriter, TransactionRunner transactionRunner,
+                        Service... extraServices) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
 
     this.programRunId = programRunId;
@@ -108,10 +111,10 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.programFinishTime = -1L;
     this.lastProgramStateMessages = new LinkedList<>();
     this.requestKeyToLocalTopic = createTopicConfigs(cConf);
-    this.metricScheduledService = metricScheduledService;
     this.remoteProcessController = remoteProcessController;
     this.programStateWriter = programStateWriter;
     this.transactionRunner = transactionRunner;
+    this.extraServices = new ArrayList<>(Arrays.asList(extraServices));
   }
 
   @Override
@@ -122,20 +125,23 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   @Override
   protected void doStartUp() {
     LOG.debug("Start monitoring program run {}", programRunId);
-    try {
-      metricScheduledService.startAndWait();
-    } catch (Exception e) {
-      LOG.warn("Failed to start metrics service for program run {}, node minute metrics will not be updated.",
-               programRunId);
+    for (Service service : extraServices) {
+      try {
+        service.startAndWait();
+      } catch (Exception e) {
+        LOG.warn("Failed to start service {} for program run {}", service, programRunId);
+      }
     }
   }
 
   @Override
   protected void doShutdown() {
-    try {
-      metricScheduledService.stopAndWait();
-    } catch (Exception e) {
-      LOG.warn("Failed to stop metrics service for program run {}", programRunId);
+    for (Service service : Lists.reverse(extraServices)) {
+      try {
+        service.stopAndWait();
+      } catch (Exception e) {
+        LOG.warn("Failed to stop service {} for program run {}", service, programRunId);
+      }
     }
     LOG.debug("Stopped monitoring program run {}", programRunId);
   }
