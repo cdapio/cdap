@@ -49,7 +49,7 @@ export default class DatabaseDetail extends Component {
     let customId = uuidV4();
 
     this.state = {
-      connType: this.props.db.name === 'oraclethin' ? CONN_TYPE.advanced : CONN_TYPE.basic,
+      connType: !this.props.db.basicAllowed ? CONN_TYPE.advanced : CONN_TYPE.basic,
       name: '',
       hostname: 'localhost',
       port: this.props.mode === 'ADD' ? defaultPort : '',
@@ -553,7 +553,7 @@ export default class DatabaseDetail extends Component {
   }
 
   renderConnectionType() {
-    if (this.props.db.name === 'oraclethin') {
+    if (!this.props.db.basicAllowed) {
       return null;
     }
 

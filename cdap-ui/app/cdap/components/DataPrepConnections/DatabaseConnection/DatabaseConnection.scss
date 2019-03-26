@@ -230,3 +230,12 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
 .db-redshift {
   @include db-image(10);
 }
+
+.db-sap-hana {
+  @include db-image(11);
+}
+
+.db-cloudsql-mysql,
+.db-cloudsql-postgresql {
+  @include db-image(12);
+}
