@@ -61,8 +61,7 @@ angular.module(PKG.name + '.commons')
 
     vm.selectedNode = null;
 
-    var repaintTimeout,
-        commentsTimeout,
+    var commentsTimeout,
         nodesTimeout,
         fitToScreenTimeout,
         initTimeout,
@@ -78,12 +77,16 @@ angular.module(PKG.name + '.commons')
       vm.selectedNode = node;
     };
 
-    function repaintEverything() {
-      if (repaintTimeout) {
-        $timeout.cancel(repaintTimeout);
-      }
+    const repaintTimeoutsMap = {};
 
-      repaintTimeout = $timeout(function () { vm.instance.repaintEverything(); });
+    function repaintEverything() {
+      const id = uuid.v4();
+
+      repaintTimeoutsMap[id] =  $timeout(function () { vm.instance.repaintEverything(); })
+        .then(() => {
+          $timeout.cancel(repaintTimeoutsMap[id]);
+          delete repaintTimeoutsMap[id];
+        });
     }
 
     function init() {
@@ -1044,7 +1047,6 @@ angular.module(PKG.name + '.commons')
           unbindKeyboardEvents();
         }
       });
-
     });
 
     vm.onPreviewData = function(event, node) {
@@ -1232,8 +1234,6 @@ angular.module(PKG.name + '.commons')
 
       $scope.getGraphMargins($scope.nodes);
 
-      repaintEverything();
-
       vm.panning.left = 0;
       vm.panning.top = 0;
 
@@ -1244,6 +1244,8 @@ angular.module(PKG.name + '.commons')
 
       DAGPlusPlusNodesActionsFactory.resetPluginCount();
       DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
+
+      repaintEverything();
     };
 
     vm.addComment = function () {
@@ -1437,7 +1439,10 @@ angular.module(PKG.name + '.commons')
       angular.element($window).off('resize', vm.instance.repaintEverything);
 
       // Cancelling all timeouts, key bindings and event listeners
-      $timeout.cancel(repaintTimeout);
+      Object.keys(repaintTimeoutsMap).forEach((id) => {
+        $timeout.cancel(repaintTimeoutsMap[id]);
+      });
+
       $timeout.cancel(commentsTimeout);
       $timeout.cancel(nodesTimeout);
       $timeout.cancel(fitToScreenTimeout);
