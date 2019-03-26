@@ -20,13 +20,7 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.AbstractHttpHandler;
-import io.cdap.http.HttpHandler;
-import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
@@ -43,16 +37,12 @@ import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 /**
  * Unit tests for {@link ServiceSocksProxy}.
@@ -149,24 +139,6 @@ public class ServiceSocksProxyTest {
       Assert.assertEquals(200, response.getResponseCode());
     } finally {
       future.get(5, TimeUnit.SECONDS).cancel();
-    }
-  }
-
-  /**
-   * A {@link HttpHandler} for unit-test.
-   */
-  public static final class TestHandler extends AbstractHttpHandler {
-
-    @GET
-    @Path("/ping")
-    public void ping(HttpRequest request, HttpResponder responder) {
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
-
-    @POST
-    @Path("/echo")
-    public void echo(FullHttpRequest request, HttpResponder responder) {
-      responder.sendString(HttpResponseStatus.OK, request.content().toString(StandardCharsets.UTF_8));
     }
   }
 }

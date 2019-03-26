@@ -17,9 +17,6 @@
 package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.http.Channels;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -29,7 +26,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -37,21 +33,12 @@ import io.netty.util.concurrent.Promise;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.SocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The Netty handler for handling socks connect request and relaying data to CDAP services.
  * The connection is established based on service discovery.
  */
 final class ServiceSocksServerConnectHandler extends AbstractSocksServerConnectHandler {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ServiceSocksServerConnectHandler.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(
-    LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(TimeUnit.MINUTES.toMillis(1))));
 
   private final DiscoveryServiceClient discoveryServiceClient;
 
@@ -119,51 +106,5 @@ final class ServiceSocksServerConnectHandler extends AbstractSocksServerConnectH
     });
 
     return promise;
-  }
-
-  /**
-   * A {@link RelayChannelHandler} that relay traffic from one {@link Channel} to another.
-   */
-  private static final class SimpleRelayChannelHandler
-    extends ChannelInboundHandlerAdapter implements RelayChannelHandler {
-
-    private final Channel outboundChannel;
-
-    private SimpleRelayChannelHandler(Channel outboundChannel) {
-      this.outboundChannel = outboundChannel;
-    }
-
-    @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
-      if (outboundChannel.isActive()) {
-        outboundChannel.write(msg);
-      } else {
-        ReferenceCountUtil.release(msg);
-      }
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) {
-      outboundChannel.flush();
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
-      if (outboundChannel.isActive()) {
-        Channels.closeOnFlush(outboundChannel);
-      }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-      // If there is exception, just close the channel
-      OUTAGE_LOG.warn("Exception raised when relaying messages", cause);
-      ctx.close();
-    }
-
-    @Override
-    public SocketAddress getRelayAddress() {
-      return outboundChannel.remoteAddress();
-    }
   }
 }

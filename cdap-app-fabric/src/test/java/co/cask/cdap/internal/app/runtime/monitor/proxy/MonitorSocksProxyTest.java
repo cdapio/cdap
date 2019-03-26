@@ -30,19 +30,9 @@ import com.jcraft.jsch.KeyPair;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import io.cdap.http.AbstractHttpHandler;
-import io.cdap.http.BodyProducer;
-import io.cdap.http.HttpHandler;
-import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,10 +59,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 /**
  * Unit tests for {@link MonitorSocksProxy}.
@@ -268,44 +254,4 @@ public class MonitorSocksProxyTest {
     }
   }
 
-  /**
-   * A {@link HttpHandler} for testing.
-   */
-  public static final class TestHandler extends AbstractHttpHandler {
-
-    @GET
-    @Path("/ping")
-    public void ping(HttpRequest request, HttpResponder responder) {
-      responder.sendStatus(HttpResponseStatus.OK);
-    }
-
-    @POST
-    @Path("/chunk")
-    public void chunk(FullHttpRequest request, HttpResponder responder) {
-      ByteBuf content = request.content().copy();
-
-      responder.sendContent(HttpResponseStatus.OK, new BodyProducer() {
-
-        int count = 0;
-
-        @Override
-        public ByteBuf nextChunk() {
-          if (count++ < 10) {
-            return content.copy();
-          }
-          return Unpooled.EMPTY_BUFFER;
-        }
-
-        @Override
-        public void finished() {
-          // no-op
-        }
-
-        @Override
-        public void handleError(@Nullable Throwable cause) {
-          // no-op
-        }
-      }, new DefaultHttpHeaders());
-    }
-  }
 }
