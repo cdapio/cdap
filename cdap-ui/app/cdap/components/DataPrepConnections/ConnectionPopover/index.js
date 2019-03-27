@@ -215,19 +215,21 @@ export default class ConnectionPopover extends Component {
   render() {
     return (
       <span className="expanded-menu-popover-icon text-center float-right">
-        <UncontrolledPopover icon="fa-ellipsis-v" popoverClassName="connection-action-popover">
-          <div className="connection-action-item" onClick={this.toggleEdit}>
-            <span>{T.translate(`${PREFIX}.edit`)}</span>
-          </div>
+        <If condition={!this.props.connectionInfo.preconfigured}>
+          <UncontrolledPopover icon="fa-ellipsis-v" popoverClassName="connection-action-popover">
+            <div className="connection-action-item" onClick={this.toggleEdit}>
+              <span>{T.translate(`${PREFIX}.edit`)}</span>
+            </div>
 
-          <div className="connection-action-item" onClick={this.toggleDuplicate}>
-            <span>{T.translate(`${PREFIX}.duplicate`)}</span>
-          </div>
+            <div className="connection-action-item" onClick={this.toggleDuplicate}>
+              <span>{T.translate(`${PREFIX}.duplicate`)}</span>
+            </div>
 
-          <div className="connection-action-item" onClick={this.toggleDeleteConfirmation}>
-            <span>{T.translate(`${PREFIX}.delete`)}</span>
-          </div>
-        </UncontrolledPopover>
+            <div className="connection-action-item" onClick={this.toggleDeleteConfirmation}>
+              <span>{T.translate(`${PREFIX}.delete`)}</span>
+            </div>
+          </UncontrolledPopover>
+        </If>
 
         {this.renderDeleteConfirmationModal()}
         {this.renderEdit()}

@@ -107,9 +107,14 @@ $expanded-menu-icon-width: 40px;
           text-overflow: ellipsis;
         }
 
-        .expanded-menu-popover-icon > .fa {
-          margin-right: 0;
+        .expanded-menu-popover-icon {
           width: $expanded-menu-icon-width;
+          height: 39px;
+          display: inline-block;
+
+          > .fa {
+            margin-right: 0;
+          }
         }
 
         &.expandable {
