@@ -90,6 +90,7 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.ProxySelector;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -180,20 +181,24 @@ public final class SparkRuntimeContextProvider {
       Program program = createProgram(cConf, contextConfig);
 
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
+      ProxySelector oldProxySelector = ProxySelector.getDefault();
+      ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       SparkServiceAnnouncer serviceAnnouncer = injector.getInstance(SparkServiceAnnouncer.class);
 
       Deque<Service> coreServices = new LinkedList<>();
       coreServices.add(new LogAppenderService(injector.getInstance(LogAppenderInitializer.class), programOptions));
-      coreServices.add(injector.getInstance(ZKClientService.class));
-      coreServices.add(metricsCollectionService);
-      coreServices.add(serviceAnnouncer);
 
       if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE) {
+        // Add ZK for discovery and Kafka
+        coreServices.add(injector.getInstance(ZKClientService.class));
         // Add the Kafka client for logs collection
         coreServices.add(injector.getInstance(KafkaClientService.class));
       }
+
+      coreServices.add(metricsCollectionService);
+      coreServices.add(serviceAnnouncer);
 
       // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
       // of the spark executor, hence there should be exactly one instance only.
@@ -216,6 +221,7 @@ public final class SparkRuntimeContextProvider {
               LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
             }
           }
+          ProxySelector.setDefault(oldProxySelector);
           System.out.println("Spark runtime services shutdown completed");
         }
       });
@@ -373,19 +379,28 @@ public final class SparkRuntimeContextProvider {
   }
 
   /**
-   * The {@link ServiceAnnouncer} for announcing user Spark http service.
+   * The {@link ServiceAnnouncer} for announcing user Spark http service. The announcer will be no-op if ZKClient is
+   * not present.
    */
   private static final class SparkServiceAnnouncer extends AbstractIdleService implements ServiceAnnouncer {
 
-    private final ZKClient zkClient;
+    private final CConfiguration cConf;
+    private final ProgramId programId;
+    private ZKClient zkClient;
     private ZKDiscoveryService discoveryService;
 
     @Inject
-    SparkServiceAnnouncer(CConfiguration cConf, ZKClient zKClient, ProgramId programId) {
+    SparkServiceAnnouncer(CConfiguration cConf, ProgramId programId) {
+      this.cConf = cConf;
+      this.programId = programId;
+    }
+
+    @Inject(optional = true)
+    void setZKClient(ZKClient zkClient) {
       // Use the ZK path that points to the Twill application of the Spark client.
       String ns = String.format("%s/%s", cConf.get(Constants.CFG_TWILL_ZK_NAMESPACE),
                                 ServiceDiscoverable.getName(programId));
-      this.zkClient = ZKClients.namespace(zKClient, ns);
+      this.zkClient = ZKClients.namespace(zkClient, ns);
     }
 
     @Override
@@ -395,13 +410,18 @@ public final class SparkRuntimeContextProvider {
 
     @Override
     public Cancellable announce(String serviceName, int port, byte[] payload) {
+      if (discoveryService == null) {
+        return () -> { };
+      }
       Discoverable discoverable = new Discoverable(serviceName, new InetSocketAddress(getHostname(), port), payload);
       return discoveryService.register(discoverable);
     }
 
     @Override
     protected void startUp() throws Exception {
-      discoveryService = new ZKDiscoveryService(zkClient);
+      if (zkClient != null) {
+        discoveryService = new ZKDiscoveryService(zkClient);
+      }
     }
 
     @Override

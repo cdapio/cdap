@@ -294,7 +294,7 @@ public class DataprocProvisioner implements Provisioner {
     if (contextProjectId == null || DataprocConf.AUTO_DETECT.equals(contextProjectId)) {
       contextProjectId = systemContext.getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, contextProjectId);
       if (contextProjectId != null) {
-        LOG.debug("Setting default Dataproc project ID to {}", contextProjectId);
+        LOG.trace("Setting default Dataproc project ID to {}", contextProjectId);
         contextProperties.put(DataprocConf.PROJECT_ID_KEY, contextProjectId);
       }
     }
@@ -307,7 +307,7 @@ public class DataprocProvisioner implements Provisioner {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);
         if (value != null) {
-          LOG.debug("Setting default Dataproc property {} to {}", key, value);
+          LOG.trace("Setting default Dataproc property {} to {}", key, value);
           contextProperties.put(key, value.trim());
         }
       }

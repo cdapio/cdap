@@ -149,8 +149,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
-    modules.add(new ZKClientModule());
-    modules.add(new ZKDiscoveryModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingClientModule());
     modules.add(new AuditModule());
@@ -195,6 +193,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private void addOnPremiseModules(List<Module> modules) {
     String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
 
+    modules.add(new ZKClientModule());
+    modules.add(new ZKDiscoveryModule());
     modules.add(new DFSLocationModule());
     modules.add(new KafkaClientModule());
     modules.add(new KafkaLogAppenderModule());
@@ -211,6 +211,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addIsolatedModules(List<Module> modules) {
+    modules.add(new RemoteExecutionDiscoveryModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());

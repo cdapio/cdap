@@ -39,7 +39,7 @@ import org.apache.twill.common.Threads;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 /**
  * A netty based traffic relay server that passes network traffic between two endpoints.
@@ -47,20 +47,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class TrafficRelayServer extends AbstractIdleService {
 
   private final InetAddress bindHost;
-  private final AtomicReference<InetSocketAddress> targetAddress = new AtomicReference<>();
-  private final ChannelGroup serverChannelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
-  private final ChannelGroup clientChannelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
+  private final Supplier<InetSocketAddress> targetAddressSupplier;
+  private final ChannelGroup serverChannelGroup;
+  private final ChannelGroup clientChannelGroup;
 
   private EventLoopGroup eventLoopGroup;
   private InetSocketAddress bindAddress;
 
-  public TrafficRelayServer(InetAddress bindHost) {
+  public TrafficRelayServer(InetAddress bindHost, Supplier<InetSocketAddress> targetAddressSupplier) {
     this.bindHost = bindHost;
-  }
-
-  public void setTargetAddress(InetSocketAddress targetAddress) {
-    this.targetAddress.set(targetAddress);
-    clientChannelGroup.disconnect();
+    this.targetAddressSupplier = targetAddressSupplier;
+    this.serverChannelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
+    this.clientChannelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
   }
 
   public InetSocketAddress getBindAddress() {
@@ -97,7 +95,7 @@ public final class TrafficRelayServer extends AbstractIdleService {
           ch.pipeline().addLast("connector", new ChannelInboundHandlerAdapter() {
             @Override
             public void channelActive(ChannelHandlerContext ctx) {
-              InetSocketAddress targetAddr = targetAddress.get();
+              InetSocketAddress targetAddr = targetAddressSupplier.get();
 
               // If target address is not available, just close the connection.
               Channel serverChannel = ctx.channel();

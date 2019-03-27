@@ -43,11 +43,10 @@ public class TrafficRelayServerTest {
     httpServer.start();
 
     try {
-      TrafficRelayServer relayServer = new TrafficRelayServer(InetAddress.getLoopbackAddress());
+      TrafficRelayServer relayServer = new TrafficRelayServer(InetAddress.getLoopbackAddress(),
+                                                              httpServer::getBindAddress);
       relayServer.startAndWait();
       try {
-        relayServer.setTargetAddress(httpServer.getBindAddress());
-
         InetSocketAddress relayAddr = relayServer.getBindAddress();
 
         // GET

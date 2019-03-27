@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import io.netty.channel.ChannelHandler;
 
 /**
@@ -24,19 +23,19 @@ import io.netty.channel.ChannelHandler;
  */
 final class MonitorSocksServerHandler extends AbstractSocksServerHandler {
 
-  private final SSHSessionProvider sshSessionProvider;
+  private final PortForwardingProvider portForwardingProvider;
 
-  MonitorSocksServerHandler(SSHSessionProvider sshSessionProvider) {
-    this.sshSessionProvider = sshSessionProvider;
+  MonitorSocksServerHandler(PortForwardingProvider portForwardingProvider) {
+    this.portForwardingProvider = portForwardingProvider;
   }
 
   @Override
   protected ChannelHandler createSocks4ConnectHandler() {
-    return new MonitorSocksServerConnectHandler(sshSessionProvider);
+    return new MonitorSocksServerConnectHandler(portForwardingProvider);
   }
 
   @Override
   protected ChannelHandler createSocks5ConnectHandler() {
-    return new MonitorSocksServerConnectHandler(sshSessionProvider);
+    return new MonitorSocksServerConnectHandler(portForwardingProvider);
   }
 }

@@ -506,7 +506,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     services.add(metricsCollectionService);
-    services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(LogAppenderLoaderService.class));
 
     switch (ProgramRunners.getClusterMode(programOptions)) {
@@ -532,6 +531,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void addOnPremiseServices(Injector injector, ProgramOptions programOptions,
                                     MetricsCollectionService metricsCollectionService, Collection<Service> services) {
+    services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(BrokerService.class));
     services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));

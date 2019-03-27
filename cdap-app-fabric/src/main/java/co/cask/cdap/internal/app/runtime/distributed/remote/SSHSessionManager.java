@@ -18,58 +18,73 @@ package co.cask.cdap.internal.app.runtime.distributed.remote;
 
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import co.cask.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
+import co.cask.cdap.internal.app.runtime.monitor.proxy.PortForwardingProvider;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
 import co.cask.cdap.runtime.spi.ssh.RemotePortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHProcess;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
+import com.google.common.io.Closeables;
+import org.apache.twill.common.Cancellable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
  * Manages SSH sessions for the runtime {@link MonitorSocksProxy}.
  */
-final class SSHSessionManager implements SSHSessionProvider, AutoCloseable {
+final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
 
-  private final ConcurrentMap<InetSocketAddress, SSHInfo> sshInfos;
+  private final ConcurrentMap<ProgramRunId, SSHInfo> sshInfos;
+  private final ConcurrentMap<InetSocketAddress, ProgramRunId> allowedPortForwardings;
 
   SSHSessionManager() {
     this.sshInfos = new ConcurrentHashMap<>();
+    this.allowedPortForwardings = new ConcurrentHashMap<>();
   }
 
   /**
-   * Adds a {@link SSHConfig} to this manager such that {@link SSHSession} can be acquired from the
-   * {@link #getSession(InetSocketAddress)} method that goes to the same host.
+   * Adds a {@link SSHConfig} for the given program run
    *
-   * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
-   * @param sshConfig the {@link SSHConfig} to add
+   * @param programRunId the {@link ProgramRunId} for the run that running in the given cluster
+   * @param sshConfig the {@link SSHConfig} for where the program is running
+   * @param sessionConsumer a {@link Consumer} that gets called every time when a new {@link SSHSession} is created
+   *                        for the given program run id
+   * @return a {@link Cancellable} to remove the program run SSH config
    */
-  void addSSHConfig(InetSocketAddress serverAddr, SSHConfig sshConfig) {
-    sshInfos.putIfAbsent(serverAddr, new SSHInfo(sshConfig));
+  Cancellable addSSHConfig(ProgramRunId programRunId, SSHConfig sshConfig, Consumer<SSHSession> sessionConsumer) {
+    sshInfos.put(programRunId, new SSHInfo(sshConfig, sessionConsumer));
+    return () ->
+      Optional.ofNullable(sshInfos.remove(programRunId)).map(SSHInfo::getSession).ifPresent(Closeables::closeQuietly);
   }
 
   /**
-   * Removes a {@link SSHConfig} from this manager such that {@link SSHSession} cannot be acquired from the
-   * {@link #getSession(InetSocketAddress)} method that goes to the same host.
-   * This method will also InetSocketAddress the active {@link SSHSession} managed by this manager that is
-   * associated with the given {@link SSHConfig}.
+   * Associates the remote runtime server address with the given program run.
    *
+   * @param programRunId the {@link ProgramRunId} to have the runtime server information added
    * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
    */
-  void removeSSHConfig(InetSocketAddress serverAddr) {
-    SSHInfo info = sshInfos.remove(serverAddr);
-    CloseDisabledSSHSession session = info.getSession();
-    if (session != null) {
-      session.getDelegate().close();
-    }
+  void addRuntimeServer(ProgramRunId programRunId, InetSocketAddress serverAddr) {
+    allowedPortForwardings.put(serverAddr, programRunId);
+  }
+
+  /**
+   * Removes the remote runtime server address with the given program run.
+   *
+   * @param programRunId the {@link ProgramRunId} to have the runtime server information removed
+   * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
+   */
+  void removeRuntimeServer(ProgramRunId programRunId, InetSocketAddress serverAddr) {
+    allowedPortForwardings.remove(serverAddr, programRunId);
   }
 
   /**
@@ -77,72 +92,90 @@ final class SSHSessionManager implements SSHSessionProvider, AutoCloseable {
    */
   @Override
   public void close() {
-    for (SSHInfo info : sshInfos.values()) {
-      CloseDisabledSSHSession session = info.getSession();
-      if (session != null) {
-        session.getDelegate().close();
-      }
-    }
+    sshInfos.values().stream().map(SSHInfo::getSession).forEach(Closeables::closeQuietly);
     sshInfos.clear();
   }
 
   @Override
-  public SSHSession getSession(InetSocketAddress serverAddr) {
-    SSHSession session = getAliveSession(serverAddr);
+  public PortForwarding createPortForwarding(InetSocketAddress serverAddr,
+                                             PortForwarding.DataConsumer dataConsumer) throws IOException {
+    ProgramRunId programRunId = allowedPortForwardings.get(serverAddr);
+    if (programRunId == null) {
+      throw new IllegalStateException("No SSHSession available for server " + serverAddr);
+    }
+    return getSession(programRunId).createLocalPortForward("localhost", serverAddr.getPort(),
+                                                           serverAddr.getPort(), dataConsumer);
+  }
+
+  /**
+   * Returns an alive {@link SSHSession} for the given program run.
+   */
+  SSHSession getSession(ProgramRunId programRunId) {
+    SSHSession session = getAliveSession(programRunId);
     if (session != null) {
       return session;
     }
 
     synchronized (this) {
       // Check again to make sure we don't create multiple SSHSession
-      session = getAliveSession(serverAddr);
+      session = getAliveSession(programRunId);
       if (session != null) {
         return session;
       }
 
       try {
-        SSHInfo sshInfo = sshInfos.get(serverAddr);
+        SSHInfo sshInfo = sshInfos.get(programRunId);
         if (sshInfo == null) {
-          throw new IllegalStateException("No SSHSession available for " + serverAddr);
+          throw new IllegalStateException("No SSHSession available for run " + programRunId);
         }
         SSHConfig config = sshInfo.getConfig();
+        Consumer<SSHSession> sessionConsumer = sshInfo.getSessionConsumer();
 
         session = new DefaultSSHSession(config) {
           @Override
           public void close() {
             // On closing of the ssh session, replace the SSHInfo with a null session
             // We do replace such that if the SSHInfo was removed, we won't add it back.
-            sshInfos.replace(serverAddr, new SSHInfo(config));
+            sshInfos.replace(programRunId, new SSHInfo(config, sessionConsumer));
           }
         };
+
+        // Call the session consumer. If failed, close the session and rethrow
+        try {
+          sessionConsumer.accept(session);
+        } catch (Exception e) {
+          Closeables.closeQuietly(session);
+          throw e;
+        }
 
         // Replace the SSHInfo. If the replacement was not successful, it means the removeSSHConfig was called
         // in between, hence we should close the new session and throw exception.
         // It is also possible that the info was removed and then added back.
         // In that case, we still treat that it is no longer valid to create the SSH session using the old config.
         CloseDisabledSSHSession resultSession = new CloseDisabledSSHSession(session);
-        if (!sshInfos.replace(serverAddr, sshInfo, new SSHInfo(config, resultSession))) {
-          session.close();
-          throw new IllegalStateException("No SSHSession available for " + serverAddr);
+        if (!sshInfos.replace(programRunId, sshInfo, new SSHInfo(config, sessionConsumer, resultSession))) {
+          Closeables.closeQuietly(session);
+          throw new IllegalStateException("No SSHSession available for run " + programRunId);
         }
         return resultSession;
       } catch (IOException e) {
-        throw new IllegalStateException("Failed to create SSHSession for " + serverAddr);
+        throw new IllegalStateException("Failed to create SSHSession for run " + programRunId);
       }
     }
   }
 
   /**
-   * Returns an existing {@link SSHSession} for the given host.
+   * Returns an existing {@link SSHSession} for the given run.
    *
-   * @param serverAddr the {@link InetSocketAddress} of where the runtime monitor server is running
-   * @return a {@link SSHSession} or {@code null} if no existing {@link SSHSession} are available.
+   * @param programRunId the {@link ProgramRunId} to get the SSH session
+   * @return a {@link SSHSession} or {@code null} if no existing {@link SSHSession} are available
+   * @throws IllegalStateException if there is no SSH information associated with the given run
    */
   @Nullable
-  private SSHSession getAliveSession(InetSocketAddress serverAddr) {
-    SSHInfo sshInfo = sshInfos.get(serverAddr);
+  private SSHSession getAliveSession(ProgramRunId programRunId) {
+    SSHInfo sshInfo = sshInfos.get(programRunId);
     if (sshInfo == null) {
-      throw new IllegalStateException("No SSHSession available for " + serverAddr);
+      throw new IllegalStateException("No SSHSession available for run " + programRunId);
     }
 
     SSHSession session = sshInfo.getSession();
@@ -154,9 +187,11 @@ final class SSHSessionManager implements SSHSessionProvider, AutoCloseable {
       return session;
     }
 
-    // If the session is not alive, remove it from the map by replacing the value with a SSHInfo that
-    // doesn't have SSHSession.
-    sshInfos.replace(serverAddr, sshInfo, new SSHInfo(sshInfo.getConfig()));
+    // Close the not alive session
+    session.close();
+
+    // If the session is not alive, replacing the value with a SSHInfo that doesn't have SSHSession.
+    sshInfos.replace(programRunId, sshInfo, new SSHInfo(sshInfo.getConfig(), sshInfo.getSessionConsumer()));
     return null;
   }
 
@@ -166,14 +201,16 @@ final class SSHSessionManager implements SSHSessionProvider, AutoCloseable {
   private static final class SSHInfo {
 
     private final SSHConfig config;
-    private final CloseDisabledSSHSession session;
+    private final Consumer<SSHSession> sessionConsumer;
+    private final SSHSession session;
 
-    SSHInfo(SSHConfig config) {
-      this(config, null);
+    SSHInfo(SSHConfig config, Consumer<SSHSession> sessionConsumer) {
+      this(config, sessionConsumer, null);
     }
 
-    SSHInfo(SSHConfig config, @Nullable CloseDisabledSSHSession session) {
+    SSHInfo(SSHConfig config, Consumer<SSHSession> sessionConsumer, @Nullable SSHSession session) {
       this.config = config;
+      this.sessionConsumer = sessionConsumer;
       this.session = session;
     }
 
@@ -181,8 +218,12 @@ final class SSHSessionManager implements SSHSessionProvider, AutoCloseable {
       return config;
     }
 
+    Consumer<SSHSession> getSessionConsumer() {
+      return sessionConsumer;
+    }
+
     @Nullable
-    CloseDisabledSSHSession getSession() {
+    SSHSession getSession() {
       return session;
     }
   }

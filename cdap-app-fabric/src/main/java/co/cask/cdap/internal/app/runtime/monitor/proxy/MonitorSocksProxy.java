@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -49,14 +48,14 @@ public class MonitorSocksProxy extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorSocksProxy.class);
 
   private final CConfiguration cConf;
-  private final SSHSessionProvider sshSessionProvider;
+  private final PortForwardingProvider portForwardingProvider;
   private volatile InetSocketAddress bindAddress;
   private ChannelGroup channelGroup;
   private EventLoopGroup eventLoopGroup;
 
-  public MonitorSocksProxy(CConfiguration cConf, SSHSessionProvider sshSessionProvider) {
+  public MonitorSocksProxy(CConfiguration cConf, PortForwardingProvider portForwardingProvider) {
     this.cConf = cConf;
-    this.sshSessionProvider = sshSessionProvider;
+    this.portForwardingProvider = portForwardingProvider;
   }
 
   public InetSocketAddress getBindAddress() {
@@ -85,7 +84,7 @@ public class MonitorSocksProxy extends AbstractIdleService {
 
           ch.pipeline()
             .addLast(new SocksPortUnificationServerHandler())
-            .addLast(new MonitorSocksServerHandler(sshSessionProvider));
+            .addLast(new MonitorSocksServerHandler(portForwardingProvider));
         }
       });
 

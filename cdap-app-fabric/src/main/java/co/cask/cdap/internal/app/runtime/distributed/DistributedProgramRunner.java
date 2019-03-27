@@ -431,12 +431,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       result.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, masterBindAddrConf);
       result.set(Constants.Dataset.Executor.ADDRESS, masterBindAddrConf);
       result.set(Constants.Metadata.SERVICE_BIND_ADDRESS, masterBindAddrConf);
-
-      // TODO (CDAP-13410): Ideally we don't need ZK in isolated runtime cluster
-      result.set(Constants.Zookeeper.QUORUM, masterBindAddrConf + ":2181/cdap");
-
-      // TODO (CDAP-13586): provisioners should set the secure store provider and properties
-      result.set(Constants.Security.Store.PROVIDER, "none");
     }
 
     return result;

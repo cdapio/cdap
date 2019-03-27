@@ -56,7 +56,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -90,9 +89,8 @@ public class MonitorSocksProxyTest {
     httpService.start();
 
     sshSession = new TestSSHSession(getSSHConfig());
-    proxyServer = new MonitorSocksProxy(CConfiguration.create(), host ->
-      Optional.ofNullable(sshSession).orElseThrow(() -> new IllegalArgumentException("No SSH session available for "
-                                                                                       + host)));
+    proxyServer = new MonitorSocksProxy(CConfiguration.create(), (serverAddr, dataConsumer) ->
+      sshSession.createLocalPortForward("localhost", serverAddr.getPort(), serverAddr.getPort(), dataConsumer));
     proxyServer.startAndWait();
 
     Proxy proxy = new Proxy(Proxy.Type.SOCKS, proxyServer.getBindAddress());

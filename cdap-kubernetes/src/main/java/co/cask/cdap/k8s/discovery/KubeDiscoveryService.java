@@ -17,6 +17,7 @@
 package co.cask.cdap.k8s.discovery;
 
 import co.cask.cdap.k8s.common.AbstractWatcherThread;
+import co.cask.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.okhttp.Call;
 import io.kubernetes.client.ApiClient;

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.runtime.spi.ssh;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * This interface represents an SSH session, which allow performing remote ssh commands and scp.
  */
-public interface SSHSession extends AutoCloseable {
+public interface SSHSession extends Closeable {
 
   /**
    * Returns {@code true} if the session is alive; otherwise return {@code false}.

@@ -170,6 +170,8 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected long runTask() throws Exception {
+    LOG.trace("Monitoring remote runtime {}", programRunId);
+
     // Initialize the topic requests.
     if (topicsToRequest.isEmpty()) {
       topicsToRequest = initTopics(requestKeyToLocalTopic.keySet());

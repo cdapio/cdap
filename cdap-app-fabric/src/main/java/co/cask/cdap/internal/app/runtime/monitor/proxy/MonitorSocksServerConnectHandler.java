@@ -19,9 +19,7 @@ package co.cask.cdap.internal.app.runtime.monitor.proxy;
 import co.cask.cdap.common.http.Channels;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.io.Closeables;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -50,10 +48,10 @@ final class MonitorSocksServerConnectHandler extends AbstractSocksServerConnectH
   private static final Logger OUTAGE_LOG = Loggers.sampling(
     LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(TimeUnit.MINUTES.toMillis(1))));
 
-  private final SSHSessionProvider sshSessionProvider;
+  private final PortForwardingProvider portForwardingProvider;
 
-  MonitorSocksServerConnectHandler(SSHSessionProvider sshSessionProvider) {
-    this.sshSessionProvider = sshSessionProvider;
+  MonitorSocksServerConnectHandler(PortForwardingProvider portForwardingProvider) {
+    this.portForwardingProvider = portForwardingProvider;
   }
 
   @Override
@@ -63,27 +61,26 @@ final class MonitorSocksServerConnectHandler extends AbstractSocksServerConnectH
     // destination host.
     Promise<RelayChannelHandler> promise = new DefaultPromise<>(inboundChannel.eventLoop());
     InetSocketAddress destSocketAddress = new InetSocketAddress(destAddress, destPort);
-    SSHSession sshSession = sshSessionProvider.getSession(destSocketAddress);
     try {
-      PortForwarding portForwarding = sshSession.createLocalPortForward("localhost", destPort,
-                                                                        destPort, new PortForwarding.DataConsumer() {
-        @Override
-        public void received(ByteBuffer buffer) {
-          // Copy and write the buffer to the channel.
-          // It needs to be copied because writing to channel is asynchronous
-          inboundChannel.write(Unpooled.wrappedBuffer(buffer).copy());
-        }
+      PortForwarding portForwarding = portForwardingProvider
+        .createPortForwarding(destSocketAddress, new PortForwarding.DataConsumer() {
+          @Override
+          public void received(ByteBuffer buffer) {
+            // Copy and write the buffer to the channel.
+            // It needs to be copied because writing to channel is asynchronous
+            inboundChannel.write(Unpooled.wrappedBuffer(buffer).copy());
+          }
 
-        @Override
-        public void flushed() {
-          inboundChannel.flush();
-        }
+          @Override
+          public void flushed() {
+            inboundChannel.flush();
+          }
 
-        @Override
-        public void finished() {
-          Channels.closeOnFlush(inboundChannel);
-        }
-      });
+          @Override
+          public void finished() {
+            Channels.closeOnFlush(inboundChannel);
+          }
+        });
 
       // Close the port forwarding channel when the connect get closed
       inboundChannel.closeFuture().addListener(future -> Closeables.closeQuietly(portForwarding));

@@ -87,6 +87,11 @@ public final class SSHConfig {
     return new Builder(host);
   }
 
+  @Override
+  public String toString() {
+    return user + "@" + host + ":" + port;
+  }
+
   /**
    * A builder for constructing {@link SSHConfig}.
    */
