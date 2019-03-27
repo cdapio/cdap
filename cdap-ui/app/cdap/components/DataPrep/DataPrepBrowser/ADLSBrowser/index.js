@@ -22,7 +22,7 @@ import classnames from 'classnames';
 import {Link} from 'react-router-dom';
 import {preventPropagation as preventPropagationService, objectQuery} from 'services/helpers';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import {setError, goToADLSfilePath, trimSuffixSlash} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {setError, setADLSLoading, goToADLSfilePath, trimSuffixSlash} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
@@ -218,7 +218,7 @@ export default class ADLSBrowser extends Component {
     let headers = {
       'Content-Type': 'text/plain'
     };
-
+    setADLSLoading();
     MyDataPrepApi.adlsReadFile(params, null, headers)
       .subscribe((res) => {
         let workspaceId = res.values[0].id;

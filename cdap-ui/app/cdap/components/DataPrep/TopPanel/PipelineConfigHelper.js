@@ -344,7 +344,7 @@ function constructAdlsSource(artifactsList, adlsInfo) {
     return T.translate(`${PREFIX}.adls`);
   }
 
-  batchArtifact.version = '[0.9.2, 3.0.0)';
+  batchArtifact.version = '[0.9.2, 9.0.0)';
   let plugin = objectQuery(adlsInfo, 'values', 0);
 
   let pluginName = Object.keys(plugin)[0];
