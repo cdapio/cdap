@@ -39,7 +39,7 @@ const BrandImage: React.SFC<IBrandImageProps> = ({ classes, context }) => {
 
 const imageStyle = {
   img: {
-    height: '45px',
+    height: '48px',
   },
 };
 const StyledBrandImage = withStyles(imageStyle)(withContext(BrandImage));

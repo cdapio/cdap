@@ -20,6 +20,7 @@ import IconSVG from 'components/IconSVG';
 import { connect } from 'react-redux';
 import { DashboardActions } from 'components/OpsDashboard/store/DashboardStore';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 require('./TypeSelector.scss');
 
 const PREFIX = 'features.OpsDashboard.RunsGraph.TypeSelector';
@@ -32,6 +33,10 @@ function TypeSelectorView({
   pipelineCount,
   customAppCount,
 }) {
+  if (Theme.showApplicationUpload === false) {
+    return null;
+  }
+
   return (
     <div className="type-selector">
       <div className="type-item" onClick={togglePipeline}>

@@ -91,6 +91,8 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
     'system-metrics'?: boolean;
     'namespace-mapping'?: boolean;
     'namespace-security'?: boolean;
+    'create-profile'?: boolean;
+    'reload-system-artifacts'?: boolean;
   };
 }
 
@@ -192,6 +194,8 @@ interface IThemeObj {
   showSystemMetrics?: boolean;
   showNamespaceMapping?: boolean;
   showNamespaceSecurity?: boolean;
+  showCreateProfile?: boolean;
+  showReloadSystemArtifacts?: boolean;
   featureNames?: IFeatureNames;
 }
 
@@ -364,6 +368,8 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showSystemMetrics: true,
       showNamespaceMapping: true,
       showNamespaceSecurity: true,
+      showCreateProfile: true,
+      showReloadSystemArtifacts: true,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
@@ -436,6 +442,15 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('namespace-security' in featuresJson && isBoolean(featuresJson['namespace-security'])) {
       features.showNamespaceSecurity = featuresJson['namespace-security'];
+    }
+    if ('create-profile' in featuresJson && isBoolean(featuresJson['create-profile'])) {
+      features.showCreateProfile = featuresJson['create-profile'];
+    }
+    if (
+      'reload-system-artifacts' in featuresJson &&
+      isBoolean(featuresJson['reload-system-artifacts'])
+    ) {
+      features.showReloadSystemArtifacts = featuresJson['reload-system-artifacts'];
     }
     return features;
   }

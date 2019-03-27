@@ -56,6 +56,10 @@ const GRID_HEADERS = [
   },
 ];
 
+if (Theme.showApplicationUpload === false) {
+  GRID_HEADERS.splice(1, 1);
+}
+
 const NUM_NS_TO_SHOW = 5;
 
 export default class NamespacesAccordion extends Component {

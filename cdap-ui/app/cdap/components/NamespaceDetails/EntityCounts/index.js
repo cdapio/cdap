@@ -18,6 +18,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
+import If from 'components/If';
 require('./EntityCounts.scss');
 
 const PREFIX = 'features.NamespaceDetails.entityCounts';
@@ -35,10 +37,12 @@ const NamespaceDetailsEntityCounts = ({ customAppCount, pipelineCount, datasetCo
     <React.Fragment>
       <hr />
       <div className="namespace-details-entity-count">
-        <div className="entity-count">
-          <span>{T.translate(`${PREFIX}.customApps`)}</span>
-          <div>{customAppCount}</div>
-        </div>
+        <If condition={Theme.showApplicationUpload !== false}>
+          <div className="entity-count">
+            <span>{T.translate(`${PREFIX}.customApps`)}</span>
+            <div>{customAppCount}</div>
+          </div>
+        </If>
         <div className="entity-count">
           <span>{T.translate('commons.pipelines')}</span>
           <div>{pipelineCount}</div>

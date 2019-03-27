@@ -24,6 +24,8 @@ import ProfilesStore from 'components/Cloud/Profiles/Store';
 import { importProfile } from 'components/Cloud/Profiles/Store/ActionCreator';
 import { connect, Provider } from 'react-redux';
 import { Label, Input } from 'reactstrap';
+import { Theme } from 'services/ThemeHelper';
+import If from 'components/If';
 
 require('./ComputeProfiles.scss');
 
@@ -49,25 +51,28 @@ class NamespaceDetailsComputeProfiles extends Component {
     return (
       <div className="namespace-details-section-label">
         {label}
-        <Link
-          to={`/ns/${getCurrentNamespace()}/profiles/create`}
-          className="create-new-profile-label"
-        >
-          {T.translate(`${PREFIX}.create`)}
-        </Link>
-        <span> | </span>
-        <Label className="import-profile-label" for="import-profile">
-          {T.translate(`${PREFIX}.import`)}
-          {/* The onClick here is to clear the file, so if the user uploads the same file
+        <If condition={Theme.showCreateProfile !== false}>
+          <Link
+            to={`/ns/${getCurrentNamespace()}/profiles/create`}
+            className="create-new-profile-label"
+          >
+            {T.translate(`${PREFIX}.create`)}
+          </Link>
+          <span> | </span>
+          <Label className="import-profile-label" for="import-profile">
+            {T.translate(`${PREFIX}.import`)}
+            {/* The onClick here is to clear the file, so if the user uploads the same file
           twice then we can show the error, instead of showing nothing */}
-          <Input
-            type="file"
-            accept=".json"
-            id="import-profile"
-            onChange={importProfile.bind(this, getCurrentNamespace())}
-            onClick={(e) => (e.target.value = null)}
-          />
-        </Label>
+            <Input
+              type="file"
+              accept=".json"
+              id="import-profile"
+              onChange={importProfile.bind(this, getCurrentNamespace())}
+              onClick={(e) => (e.target.value = null)}
+            />
+          </Label>
+        </If>
+
         {this.props.profilesCount ? (
           <p className="create-new-profile-description">{T.translate(`${PREFIX}.description`)}</p>
         ) : null}
