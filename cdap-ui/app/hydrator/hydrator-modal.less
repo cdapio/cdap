@@ -65,9 +65,9 @@
 
         // Adjust max-width of modal title when my-jump-link is present
         &.with-jump {
-          max-width: ~"calc(100% - 215px)";
-          max-width: ~"-moz-calc(100% - 215px)";
-          max-width: ~"-webkit-calc(100% - 215px)";
+          max-width: ~"calc(100% - 240px)";
+          max-width: ~"-moz-calc(100% - 240px)";
+          max-width: ~"-webkit-calc(100% - 240px)";
         }
 
         p {
@@ -80,8 +80,16 @@
         }
       }
 
+      div.btn-group {
+        max-width: none;
+      }
+
       > div {
         @media (max-width: @screen-sm-max) {
+          max-width: none;
+        }
+
+        &.btn-group {
           max-width: none;
         }
       }

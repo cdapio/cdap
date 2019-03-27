@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import ConfirmationModal from 'components/ConfirmationModal';
 import { MyArtifactApi } from 'api/artifact';
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 
 const PREFIX = 'features.Administration.Configure.buttons.ReloadSystemArtifacts';
 
@@ -58,6 +59,10 @@ export default class ReloadSystemArtifacts extends Component {
   };
 
   render() {
+    if (Theme.showReloadSystemArtifacts === false) {
+      return null;
+    }
+
     return (
       <span>
         <button className="btn btn-secondary" onClick={this.onClick}>

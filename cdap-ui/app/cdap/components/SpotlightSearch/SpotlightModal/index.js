@@ -30,6 +30,7 @@ import SpotlightModalHeader from 'components/SpotlightSearch/SpotlightModal/Spot
 import T from 'i18n-react';
 
 import { Col, Modal, ModalBody, Badge } from 'reactstrap';
+import { objectQuery } from 'services/helpers';
 
 require('./SpotlightModal.scss');
 
@@ -146,11 +147,20 @@ export default class SpotlightModal extends Component {
       .map((entity, index) => {
         let entityTypeLabel = convertEntityTypeToApi(entity.type);
         let entityUrl = `/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`;
+
+        let description = entity.metadata.metadata.properties.find(
+          (property) => property.name === 'description'
+        );
+        description = description ? description.value : null;
+
+        let entityTags = entity.metadata.metadata.tags || [];
+
         return (
           <NavLinkWrapper
             key={entity.id}
             to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
             isNativeLink={this.props.isNativeLink}
+            className="search-results-item-link"
           >
             <div
               key={uuidV4()}
@@ -166,19 +176,13 @@ export default class SpotlightModal extends Component {
                   <span className="entity-name">{entity.id}</span>
                 </div>
                 <div className="entity-description">
-                  <span>
-                    {
-                      entity.metadata.metadata.properties.find(
-                        (property) => property.name === 'description'
-                      ).value
-                    }
-                  </span>
+                  <span>{description}</span>
                 </div>
               </Col>
 
               <Col xs="6">
                 <div className="entity-tags-container text-right">
-                  {entity.metadata.metadata.tags.map((tag) => {
+                  {entityTags.map((tag) => {
                     return <Badge key={uuidV4()}>{tag.name}</Badge>;
                   })}
                 </div>
@@ -192,6 +196,8 @@ export default class SpotlightModal extends Component {
   }
 
   render() {
+    const results = objectQuery(this.state.searchResults, 'results') || [];
+
     return (
       <Modal
         isOpen={this.props.isOpen}
@@ -207,7 +213,7 @@ export default class SpotlightModal extends Component {
           query={this.props.query}
           tag={this.props.tag}
           numPages={this.state.numPages}
-          total={this.state.searchResults.total}
+          total={results.length}
         />
         <ModalBody>
           <div className="search-results-container">

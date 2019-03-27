@@ -27,6 +27,8 @@ import { connect, Provider } from 'react-redux';
 import { Label, Input } from 'reactstrap';
 import { getProfiles, resetProfiles } from 'components/Cloud/Profiles/Store/ActionCreator';
 import { SYSTEM_NAMESPACE } from 'services/global-constants';
+import { Theme } from 'services/ThemeHelper';
+import If from 'components/If';
 require('./SystemProfilesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.SystemProfiles';
@@ -75,21 +77,27 @@ class SystemProfilesAccordion extends Component {
 
     return (
       <div className="admin-config-container-content system-profiles-container-content">
-        <div className="create-import-profile">
-          <Link className="btn btn-secondary create-profile-button" to="/ns/system/profiles/create">
-            {T.translate(`${PREFIX}.create`)}
-          </Link>
-          <Label className="import-profile-label" for="import-profile">
-            {T.translate(`${PREFIX}.import`)}
-            <Input
-              type="file"
-              accept=".json"
-              id="import-profile"
-              onChange={importProfile.bind(this, SYSTEM_NAMESPACE)}
-              onClick={(e) => (e.target.value = null)}
-            />
-          </Label>
-        </div>
+        <If condition={Theme.showCreateProfile !== false}>
+          <div className="create-import-profile">
+            <Link
+              className="btn btn-secondary create-profile-button"
+              to="/ns/system/profiles/create"
+            >
+              {T.translate(`${PREFIX}.create`)}
+            </Link>
+            <Label className="import-profile-label" for="import-profile">
+              {T.translate(`${PREFIX}.import`)}
+              <Input
+                type="file"
+                accept=".json"
+                id="import-profile"
+                onChange={importProfile.bind(this, SYSTEM_NAMESPACE)}
+                onClick={(e) => (e.target.value = null)}
+              />
+            </Label>
+          </div>
+        </If>
+
         <ProfilesListView namespace={SYSTEM_NAMESPACE} />
       </div>
     );

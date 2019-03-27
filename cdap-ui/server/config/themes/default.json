@@ -46,6 +46,8 @@
     "system-services-instance": true,
     "system-metrics": true,
     "namespace-mapping": true,
-    "namespace-security": true
+    "namespace-security": true,
+    "create-profile": true,
+    "reload-system-artifacts": true
   }
 }

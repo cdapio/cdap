@@ -211,6 +211,9 @@ export function search(e) {
 export function getOperations(direction) {
   Store.dispatch({
     type: Actions.operationsLoading,
+    payload: {
+      direction,
+    },
   });
 
   const state = Store.getState().lineage;

@@ -119,6 +119,7 @@ const operations = (state = operationsInitialState, action = defaultAction) => {
         ...state,
         loading: true,
         showOperations: true,
+        direction: action.payload.direction,
       };
     case Actions.setOperations:
       return {

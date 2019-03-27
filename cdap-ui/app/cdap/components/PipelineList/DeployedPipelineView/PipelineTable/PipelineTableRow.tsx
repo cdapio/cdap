@@ -47,7 +47,7 @@ export default class PipelineTableRow extends React.PureComponent<IProps> {
     return (
       <a href={pipelineLink} className=" grid-row">
         <div className="name" title={pipeline.name}>
-          <h5>{pipeline.name}</h5>
+          <h5 className="truncate">{pipeline.name}</h5>
         </div>
         <div className="type">{T.translate(`${PREFIX}.${pipeline.artifact.name}`)}</div>
         <Status pipeline={pipeline} />
