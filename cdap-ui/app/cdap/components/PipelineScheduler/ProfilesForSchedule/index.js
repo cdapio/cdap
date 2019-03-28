@@ -143,7 +143,9 @@ class ProfilesForSchedule extends Component {
       if (!this.state.selectedProfile) {
         return <span>{T.translate(`${PREFIX}.selectAProfile`)}</span>;
       }
-      let profileLabel = extractProfileName(this.state.selectedProfile);
+
+      let profileLabel =
+        this.state.profileDetails.label || extractProfileName(this.state.selectedProfile);
       if (provisionerLabel) {
         profileLabel += ` (${provisionerLabel})`;
       }
