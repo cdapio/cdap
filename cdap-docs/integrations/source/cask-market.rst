@@ -69,7 +69,7 @@ Hub HTTP RESTful API
 
 The Hub HTTP RESTful APIs are simply a contract about the directory structure of the Hub.
 All APIs are relative to a base path. For example, the base path for the public Cask-hosted Hub
-is ``market.cask.co``.
+is ``hub.cdap.io``.
 
 .. directory-structure-start
 
