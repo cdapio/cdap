@@ -195,7 +195,7 @@ gulp.task('js:lib', function() {
       './bower_components/ngstorage/ngStorage.js',
       './bower_components/angular-loading-bar/build/loading-bar.js',
 
-      './bower_components/d3/d3.min.js',
+      './bower_components/d3/d3.js',
       // './bower_components/d3-tip/index.js', FIXME: add this when we fix multiple versions of d3 issue.
       './bower_components/d3-timeline/src/d3-timeline.js',
 
