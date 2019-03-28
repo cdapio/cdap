@@ -306,10 +306,11 @@ class HydratorPlusPlusLeftPanelCtrl {
     let filteredNodes = this.HydratorPlusPlusConfigStore.getNodes()
         .filter( node => (node.plugin.label ? node.plugin.label.indexOf(name) !== -1 : false) );
     let config;
+
     if (item.pluginTemplate) {
       config = {
         plugin: {
-          label: (filteredNodes.length > 0 ? item.pluginTemplate + (filteredNodes.length+1): item.pluginTemplate),
+          label: (filteredNodes.length > 0 ? item.pluginTemplate + (filteredNodes.length+1) : item.pluginTemplate),
           name: item.pluginName,
           artifact: item.artifact,
           properties: item.properties,
