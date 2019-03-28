@@ -561,11 +561,11 @@ features:
           string: String
         title: Change data type
       ColumnActions:
-        label: Column actions
+        label: Column names
         actions:
-          bulkset: Set column names
-          cleanse: Cleanse column names
-          replaceColumns: Replace column names
+          bulkset: Set all
+          cleanse: Cleanse
+          replaceColumns: Replace
         Bulkset:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
