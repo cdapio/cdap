@@ -13,7 +13,7 @@ Example Walk-Through
 This example walks you through using CDAP Sandbox to train a model that predicts the home sale prices for unsold homes on the market.
 
 The data source for this example is 2017 real estate sales for a few cities in the San Francisco Bay Area,
-which you can download `here <https://market.cask.co/v2/packages/datapack-realestate-sales/1.0.0/sales.tsv>`__.
+which you can download `here <https://hub.cdap.io/v2/packages/datapack-realestate-sales/1.0.0/sales.tsv>`__.
 Place the file on your local machine.
 
 Creating an Experiment
@@ -146,7 +146,7 @@ Making Predicitons
 ------------------
 
 You will be making predictions on sample real estate listings.
-Download the `listing file <https://market.cask.co/v2/packages/datapack-realestate-listings/1.0.0/listings.tsv>`__ and place it on your local machine.
+Download the `listing file <https://hub.cdap.io/v2/packages/datapack-realestate-listings/1.0.0/listings.tsv>`__ and place it on your local machine.
 
 Now click the `Creating a scoring pipeline` button to use the model we just trained to create a scoring pipeline.
 This brings you to the Pipeline Studio with part of a pipeline preconfigured for you.
