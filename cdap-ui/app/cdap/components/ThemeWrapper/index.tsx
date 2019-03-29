@@ -62,6 +62,9 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
       fontFamily: 'var(--font-family)',
       useNextVariants: true,
     },
+    zIndex: {
+      drawer: 1060,
+    },
     overrides: {
       MuiTypography: {
         caption: {

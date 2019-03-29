@@ -81,7 +81,7 @@ export default class PlusButtonModal extends Component {
           'add-entity-modal': this.state.viewMode === 'resourcecenter',
         })}
         size="lg"
-        zIndex="1202"
+        zIndex="1061"
         fade
       >
         <ModalHeader>
