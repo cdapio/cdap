@@ -56,59 +56,16 @@
     <tag>HEAD</tag>
   </scm>
 
-  <repositories>
-    <repository>
-      <id>apache</id>
-      <url>https://repository.apache.org/content/repositories/public/</url>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>daily</updatePolicy>
-        <checksumPolicy>fail</checksumPolicy>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>sonatype</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-        <checksumPolicy>fail</checksumPolicy>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>snapshot</id>
-      <url>https://repository.apache.org/content/repositories/snapshots/</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-        <checksumPolicy>fail</checksumPolicy>
-      </snapshots>
-    </repository>
-  </repositories>
-
 
   <distributionManagement>
-    <repository>
-      <id>sonatype.release</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-    </repository>
-    <snapshotRepository>
-      <id>sonatype.snapshots</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
-    <site>
-      <id>cask</id>
-      <url>http://cask.co</url>
-    </site>
+           <repository>
+               <id>central</id>
+               <url>http://artifacts.ggn.in.guavus.com:80/libs-release-local</url>
+           </repository>
+           <snapshotRepository>
+               <id>snapshots</id>
+               <url>http://artifacts.ggn.in.guavus.com:8081/artifactory/libs-snapshot-local</url>
+           </snapshotRepository>
   </distributionManagement>
 
   <properties>
@@ -1856,7 +1813,7 @@
         </plugin>
 
         <!-- Nexus deploy plugin -->
-        <plugin>
+        <!--<plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
           <version>1.6.2</version>
@@ -1866,7 +1823,7 @@
             <serverId>sonatype.release</serverId>
             <stagingProfileId>655dc88dc770c3</stagingProfileId>
           </configuration>
-        </plugin>
+        </plugin>-->
       </plugins>
     </pluginManagement>
 
@@ -1900,11 +1857,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8</version>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <version>1.6.2</version>
       </plugin>
     </plugins>
   </build>
