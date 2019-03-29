@@ -158,11 +158,16 @@ public class PreferencesTable {
   public String getResolvedPreference(EntityId entityId, String name) throws IOException {
     // get the preference for the entity itself
     String value = getPreferences(entityId).get(name);
-    // if the value is null and the entity has a parent, defer to the parent
-    if (value == null && entityId instanceof ParentedId) {
-      value = getResolvedPreference(((ParentedId) entityId).getParent(), name);
+    if (value != null) {
+      return value;
     }
-    // return whatever we have
+    // if the value is null and the entity has a parent, defer to the parent
+    if (entityId instanceof ParentedId) {
+      value = getResolvedPreference(((ParentedId) entityId).getParent(), name);
+    } else {
+      // if there is no parent get from the instance id
+      value = getPreferences(new InstanceId("")).get(name);
+    }
     return value;
   }
 

@@ -64,6 +64,9 @@ public class ProfileMetadataTest extends AppFabricTestBase {
     // create my profile 2
     ProfileId myProfile2 = new NamespaceId(TEST_NAMESPACE1).profile("MyProfile2");
     putProfile(myProfile2, Profile.NATIVE, 200);
+    // create system profile 3
+    ProfileId myProfile3 = NamespaceId.SYSTEM.profile("MyProfile3");
+    putSystemProfile(myProfile3.getProfile(), Profile.NATIVE, 200);
 
     try {
       // deploy an app with schedule
@@ -149,9 +152,24 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       Tasks.waitFor(ProfileId.NATIVE.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
+      // set it at instance level through preferences
+      setPreferences(getPreferenceURI(),
+                     Collections.singletonMap(SystemArguments.PROFILE_NAME, "SYSTEM:MyProfile3"), 200);
+
+      // Verify the workflow and schedule has been updated to profile 3
+      Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(programId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(mapReduceProgramId).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(scheduleId1).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      Tasks.waitFor(myProfile3.getScopedName(), () -> getMetadataProperties(scheduleId2).get("profile"),
+                    10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+      deletePreferences(getPreferenceURI(), 200);
       deleteApp(defaultAppId, 200);
 
-      // Verify the workflow and schedule has been updated to native profile
+      // Verify the workflow and schedule metadata has been deleted
       Tasks.waitFor(false, () -> getMetadataProperties(programId).containsKey("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       Tasks.waitFor(false, () -> getMetadataProperties(mapReduceProgramId).containsKey("profile"),
@@ -164,8 +182,10 @@ public class ProfileMetadataTest extends AppFabricTestBase {
       // make sure these profiles always get disabled, otherwise deleting the namespace will fail in @AfterClass
       disableProfile(myProfile, 200);
       disableProfile(myProfile2, 200);
+      disableSystemProfile(myProfile3.getProfile(), 200);
       deleteProfile(myProfile, 200);
       deleteProfile(myProfile2, 200);
+      deleteSystemProfile(myProfile3.getProfile(), 200);
     }
   }
 }
