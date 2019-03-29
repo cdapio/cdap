@@ -173,7 +173,16 @@ export default class LogsMetricsGraph extends Component {
     if (errors.length > 0 || warnings.length > 0) {
       xDomain = getXDomain(this.props);
     }
-    let { tickTotals, yDomain, tickFormat } = getYAxisProps(errors.concat(warnings));
+
+    // since this is a stacked bar graph, the data has to be aggregated to calculate the yAxis properly
+    const data = errors.map((errorData, i) => {
+      return {
+        ...errorData,
+        y: errorData.y + warnings[i].y,
+      };
+    });
+
+    let { tickTotals, yDomain, tickFormat } = getYAxisProps(data);
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.runs.find(
