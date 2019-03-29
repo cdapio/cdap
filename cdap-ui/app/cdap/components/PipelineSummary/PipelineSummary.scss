@@ -26,6 +26,8 @@ $graph_containers_border_color: lightgray;
 $min_height_of_graph: 340px;
 
 .pipeline-summary {
+  width: 100%;
+
   .graphs-container {
     width: 100%;
     display: flex;
