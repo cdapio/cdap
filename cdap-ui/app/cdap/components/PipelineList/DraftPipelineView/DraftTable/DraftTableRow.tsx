@@ -44,7 +44,7 @@ export default class DraftTableRow extends React.PureComponent<IProps> {
     return (
       <a href={link} className="grid-row">
         <div className="name" title={draft.name}>
-          <h5 className="truncate">{draft.name}</h5>
+          {draft.name}
         </div>
         <div className="type">{T.translate(`${PREFIX}.${draft.artifact.name}`)}</div>
         <div className="last-saved">{lastSaved}</div>
