@@ -80,6 +80,10 @@ class NamespacesPopoverView extends Component {
   };
 
   render() {
+    if (this.state.namespaces.length === 0) {
+      return null;
+    }
+
     const targetElem = (
       <div className="monitor-more text-right">{T.translate(`${PREFIX}.monitorMore`)}</div>
     );

@@ -186,7 +186,7 @@ export default class ProfileAssociations extends Component {
             .value,
           metadata: {
             ...existingEntry.metadata,
-            type: m.entity.type,
+            type: m.entity.details.type,
             program: m.entity.details.program,
           },
         };

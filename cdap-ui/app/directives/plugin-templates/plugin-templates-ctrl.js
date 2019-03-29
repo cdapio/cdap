@@ -268,8 +268,13 @@ angular.module(`${PKG.name}.commons`)
 
       var outputPropertyName = myHelpers.objectQuery(vm.groupsConfig, 'outputSchema', 'outputSchemaProperty', '0');
 
+      let outputSchema = myHelpers.objectQuery(vm.pluginConfig, 'outputSchema');
       if (outputPropertyName && vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties[outputPropertyName]) {
-        vm.pluginConfig.plugin.properties[outputPropertyName] = vm.pluginConfig.outputSchema;
+        if (Array.isArray(outputSchema)) {
+          outputSchema = myHelpers.objectQuery(outputSchema, 0, 'schema');
+        }
+
+        vm.pluginConfig.plugin.properties[outputPropertyName] = outputSchema;
       }
 
       var properties = {
@@ -280,7 +285,7 @@ angular.module(`${PKG.name}.commons`)
         pluginType: vm.pluginType,
         templateType: vm.templateType,
         pluginName: vm.pluginName,
-        outputSchema: vm.pluginConfig.outputSchema,
+        outputSchema: outputSchema,
         lock: vm.pluginConfig.lock,
         nodeClass: 'plugin-templates'
       };

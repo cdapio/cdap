@@ -27,7 +27,7 @@
 
 .increase-border-height-width(@currentHeight, @currentWidth) {
   @current-border-width: 2px;
-  @new-border-width: 3px;
+  @new-border-width: 4px;
   border-width: @new-border-width;
 
   margin: -(@new-border-width - @current-border-width);
@@ -47,7 +47,7 @@
     .increase-border-height-width(@currentHeight, @currentWidth);
 
     .node {
-      background-color: @configure-btn-bg-hover-color;
+      background-color: @drag-drop-bg-color;
     }
   }
 }
