@@ -19,6 +19,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
 import Store, { Actions } from 'components/PipelineList/DraftPipelineView/store';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
+import orderBy from 'lodash/orderBy';
 
 const DRAFTS_KEY = 'hydratorDrafts';
 const PROPERTY = 'property';
@@ -28,11 +29,13 @@ export function getDrafts() {
     const namespace = getCurrentNamespace();
     const draftsObj = objectQuery(res, PROPERTY, DRAFTS_KEY, namespace) || {};
 
-    const drafts: IDraft[] = [];
+    let drafts: IDraft[] = [];
 
     Object.keys(draftsObj).forEach((id) => {
       drafts.push(draftsObj[id]);
     });
+
+    drafts = orderBy(drafts, [(draft) => draft.name.toLowerCase()], ['asc']);
 
     Store.dispatch({
       type: Actions.setDrafts,
