@@ -55,6 +55,7 @@ interface IOnePoint0SpecJSON extends IThemeJSON {
         data?: string;
       };
     };
+    'product-documentation-link'?: string;
     'product-logo-about'?: {
       type?: string;
       arguments?: {
@@ -171,6 +172,7 @@ interface IThemeObj {
   footerLink?: string;
   productLogoNavbar?: string;
   productLogoAbout?: string;
+  productDocumentationLink?: string;
   favicon?: string;
   showDashboard?: boolean;
   showReports?: boolean;
@@ -233,6 +235,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       productEdition: null,
       productLogoNavbar: '/cdap_assets/img/company_logo-20-all.png',
       productLogoAbout: '/cdap_assets/img/CDAP_darkgray.png',
+      productDocumentationLink: null,
       favicon: '/cdap_assets/img/favicon.png',
       footerText: 'Licensed under the Apache License, Version 2.0',
       footerLink: 'https://www.apache.org/licenses/LICENSE-2.0',
@@ -264,6 +267,9 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
     }
     if ('product-edition' in contentJson) {
       content.productEdition = contentJson['product-edition'];
+    }
+    if ('product-documentation-link' in contentJson) {
+      content.productDocumentationLink = contentJson['product-documentation-link'];
     }
     if ('footer-text' in contentJson) {
       content.footerText = contentJson['footer-text'];
