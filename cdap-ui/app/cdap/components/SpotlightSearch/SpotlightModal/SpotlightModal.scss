@@ -14,12 +14,12 @@
  * the License.
  */
 
-@import '../../../styles/variables.scss';
+@import '~styles/variables.scss';
 $spotlight-bg-color: $modal-header-color;
 $row-dark-color: $grey-07;
 $description-color: $grey-02;
 $light-grey: $grey-05;
-$hightlight-color: #7f8c8d;
+$highlight-color: $grey-06;
 
 .modal-dialog.search-results-modal {
   margin-top: 95px;
@@ -153,8 +153,7 @@ $hightlight-color: #7f8c8d;
         }
 
         &:hover {
-          background-color: $hightlight-color;
-          color: white;
+          background-color: $highlight-color;
           text-decoration: none;
         }
       }
