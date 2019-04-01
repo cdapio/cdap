@@ -41,6 +41,7 @@ $popover-width: 100px;
     width: $popover-width;
     min-width: $popover-width;
     padding: 0;
+    z-index: 1;
 
     hr { margin: 5px 0; }
     ul { padding: 10px 0; }
