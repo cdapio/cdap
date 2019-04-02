@@ -27,6 +27,8 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +53,7 @@ import javax.annotation.Nullable;
  * The default implementation of {@link SSHSession} that uses {@link JSch} library.
  */
 public class DefaultSSHSession implements SSHSession {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSSHSession.class);
 
   private final InetSocketAddress remoteAddress;
   private final String user;
@@ -74,7 +77,12 @@ public class DefaultSSHSession implements SSHSession {
         session.setConfig(entry.getKey(), entry.getValue());
       }
 
-      session.connect();
+      int connectTimeout = (int) TimeUnit.MINUTES.toMillis(15);
+      int readTimeout = (int) TimeUnit.MINUTES.toMillis(1);
+      LOG.warn("Setting SSH connect timeout to {} ms", connectTimeout);
+      LOG.warn("Setting SSH read timeout to {} ms", readTimeout);
+      session.connect(connectTimeout);
+      session.setTimeout(readTimeout);
       this.session = session;
     } catch (JSchException e) {
       throw new IOException(e);
