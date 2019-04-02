@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,7 +75,7 @@ public class MacroParser {
    */
   private String parse(String str, int depth) throws InvalidMacroException {
     if (depth > MAX_SUBSTITUTION_DEPTH) {
-      throw new InvalidMacroException(String.format("Failed substituting maco '%s', expansion exceeded %d levels.",
+      throw new InvalidMacroException(String.format("Failed substituting macro '%s', expansion exceeded %d levels.",
                                                     str, MAX_SUBSTITUTION_DEPTH));
     }
 
