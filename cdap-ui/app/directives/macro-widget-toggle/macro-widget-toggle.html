@@ -39,7 +39,7 @@
       FIXME: We need to rename this widget to code-editor and have a mode.
       -->
       <fieldset
-        ng-disabled="MacroWidget.disabled"
+        ng-disabled="MacroWidget.otherAceEditorWidgets.indexOf(MacroWidget.field['widget-type']) === -1 && MacroWidget.disabled"
         ng-if="(MacroWidget.editorTypeWidgets.indexOf(MacroWidget.field['widget-type']) === -1)"
         ng-class="{
           'highlight-error': !MacroWidget.node.warning &&

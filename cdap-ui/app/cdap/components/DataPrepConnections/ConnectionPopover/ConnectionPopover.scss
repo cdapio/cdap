@@ -17,6 +17,7 @@
 @import '~styles/variables.scss';
 
 $action-hover-bg-color: $grey-08;
+$border-color: $grey-04;
 
 .expanded-menu-popover-icon {
   padding: 10px 0;
@@ -32,6 +33,7 @@ $action-hover-bg-color: $grey-08;
   z-index: 1061;
   display: block;
   min-width: 100px;
+  border-color: $border-color;
 
   &.bs-tether-element-attached-right { margin-left: 0; }
   &.bs-tether-element-attached-top { margin-top: -20px; }
@@ -41,18 +43,22 @@ $action-hover-bg-color: $grey-08;
     display: none;
   }
 
+  .popover-body {
+    padding: 0;
+  }
+
   .connection-action-item {
     padding: 10px 15px;
     cursor: pointer;
 
     &:hover { background-color: $action-hover-bg-color; }
   }
-  .arrow {
-    &:before {
-      // This is because the active state of link is white bg color and the arrow
-      // becomes invisible when opened.
-      border-bottom-color: black;
-    }
+
+  &.bs-popover-top > .arrow:before {
+    border-top-color: $border-color;
+  }
+  &.bs-popover-bottom > .arrow:before {
+    border-bottom-color: $border-color;
   }
 }
 

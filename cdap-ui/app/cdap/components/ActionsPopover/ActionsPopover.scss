@@ -41,6 +41,7 @@ $popover-width: 100px;
     width: $popover-width;
     min-width: $popover-width;
     padding: 0;
+    z-index: 1;
 
     hr { margin: 5px 0; }
     ul { padding: 10px 0; }
@@ -50,6 +51,10 @@ $popover-width: 100px;
     .disabled {
       color: $disabled-color;
       cursor: not-allowed;
+    }
+
+    .popper__arrow {
+      border-color: $grey-04;
     }
   }
 }

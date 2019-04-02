@@ -44,6 +44,11 @@ $action-width: 60px;
     .grid-row {
       grid-template-columns: 1fr $type-width $last-saved-width $action-width;
 
+      > div {
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+
       > * {
         &:first-child {
           padding-left: 25px;

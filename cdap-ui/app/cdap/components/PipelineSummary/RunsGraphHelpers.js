@@ -71,10 +71,14 @@ export function getYDomain(data = {}) {
       minYDomain.y = 0;
     }
   }
-  if (data.length == 1) {
+  if (data.length === 1) {
     maxYDomain = data[0];
   }
-  return [minYDomain.y, maxYDomain.y];
+
+  const MULTIPLIER = 1.1; // adding 10% top padding on the graph
+  const maxDomain = maxYDomain.y * MULTIPLIER;
+
+  return [minYDomain.y, maxDomain];
 }
 
 export function getYAxisProps(data) {
@@ -91,8 +95,14 @@ export function getYAxisProps(data) {
     yDomain: getYDomain(data),
     tickFormat: function(d) {
       if (d <= 999) {
+        // removing decimal ticks
+        if (parseInt(d) !== d) {
+          return;
+        }
+
         return d;
       }
+
       return numeral(d).format('0.0a');
     },
   };

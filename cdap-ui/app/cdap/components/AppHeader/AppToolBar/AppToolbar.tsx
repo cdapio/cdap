@@ -96,13 +96,20 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     });
     this.closeSettings();
   };
+  private getDocsUrl = () => {
+    if (Theme.productDocumentationLink === null) {
+      const cdapVersion = VersionStore.getState().version;
+      return `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
+    }
+
+    return Theme.productDocumentationLink;
+  };
 
   public render() {
     const { onMenuIconClick, classes } = this.props;
     const { anchorEl } = this.state;
     const { namespace } = this.props.context;
     const cdapVersion = VersionStore.getState().version;
-    const docsUrl = `http://docs.cdap.io/cdap/${cdapVersion}/en/index.html`;
     return (
       <Toolbar className={classes.customToolbar} data-cy="navbar-toolbar">
         <IconButton
@@ -153,7 +160,7 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
         >
           <a
             className={classes.anchorMenuItem}
-            href={docsUrl}
+            href={this.getDocsUrl()}
             target="_blank"
             rel="noopener noreferrer"
           >

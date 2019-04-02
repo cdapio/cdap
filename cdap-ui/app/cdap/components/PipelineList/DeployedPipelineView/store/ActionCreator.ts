@@ -26,6 +26,7 @@ import {
   IStatusMap,
   IRunsCountMap,
 } from 'components/PipelineList/DeployedPipelineView/types';
+import orderBy from 'lodash/orderBy';
 
 const ProgramType = {
   [GLOBALS.etlDataPipeline]: 'Workflow',
@@ -52,10 +53,12 @@ export function fetchPipelineList() {
   };
 
   MyPipelineApi.list(params).subscribe((res: IPipeline[]) => {
+    const pipelines = orderBy(res, [(pipeline) => pipeline.name.toLowerCase()], ['asc']);
+
     Store.dispatch({
       type: Actions.setPipeline,
       payload: {
-        pipelines: res,
+        pipelines,
       },
     });
 
