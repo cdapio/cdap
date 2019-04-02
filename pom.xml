@@ -1824,6 +1824,14 @@
             <stagingProfileId>655dc88dc770c3</stagingProfileId>
           </configuration>
         </plugin>-->
+        <!--<plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>-->
       </plugins>
     </pluginManagement>
 
@@ -1853,11 +1861,11 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.14.1</version>
       </plugin>
-      <plugin>
+      <!--<plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
         <version>2.8</version>
-      </plugin>
+      </plugin>-->
     </plugins>
   </build>
 
