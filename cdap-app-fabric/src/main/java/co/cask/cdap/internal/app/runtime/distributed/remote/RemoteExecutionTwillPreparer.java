@@ -24,6 +24,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.ssh.DefaultSSHSession;
 import co.cask.cdap.common.ssh.SSHConfig;
+import co.cask.cdap.common.ssh.TimedSSHSession;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -426,7 +427,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
         RuntimeSpecification runtimeSpec = twillRuntimeSpec.getTwillSpecification().getRunnables().values()
           .stream().findFirst().orElseThrow(IllegalStateException::new);
 
-        try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+        try (SSHSession session = new TimedSSHSession(new DefaultSSHSession(sshConfig))) {
           String targetPath = session.executeAndWait("mkdir -p ./" + programRunId.getRun(),
                                                      "echo `pwd`/" + programRunId.getRun()).trim();
           // Upload files

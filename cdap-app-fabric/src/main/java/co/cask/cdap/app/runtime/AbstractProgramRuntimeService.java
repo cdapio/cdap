@@ -169,7 +169,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       return runtimeInfo;
     } catch (Exception e) {
       cleanUpTask.run();
-      LOG.error("Exception while trying to run program", e);
+      LOG.error("Exception while trying to run program {} with runID {}", programId, runId, e);
       throw Throwables.propagate(e);
     }
   }
