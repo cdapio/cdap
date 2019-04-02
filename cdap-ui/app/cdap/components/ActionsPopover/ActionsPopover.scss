@@ -52,5 +52,9 @@ $popover-width: 100px;
       color: $disabled-color;
       cursor: not-allowed;
     }
+
+    .popper__arrow {
+      border-color: $grey-04;
+    }
   }
 }
