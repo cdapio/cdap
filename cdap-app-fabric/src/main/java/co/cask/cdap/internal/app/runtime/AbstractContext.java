@@ -304,6 +304,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return null;
   }
 
+  /**
+   * Returns the {@link LoggingContext} for the program.
+   */
   public LoggingContext getLoggingContext() {
     return loggingContext;
   }

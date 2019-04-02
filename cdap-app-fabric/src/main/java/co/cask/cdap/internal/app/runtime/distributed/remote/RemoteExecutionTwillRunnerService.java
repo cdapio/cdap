@@ -357,14 +357,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                                         ClusterKeyInfo clusterKeyInfo) {
     return () -> controllers.computeIfAbsent(programRunId, key -> {
       SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      Cancellable removeSSHConfig = sshSessionManager.addSSHConfig(
-        programRunId, clusterKeyInfo.getSSHConfig(),
-        new ProgramRunSSHSessionConsumer(programRunId, clusterKeyInfo.getServerKeyStoreHash()));
+      LOG.info("Creating controller for program run {} with SSH config {}", programRunId, sshConfig);
+
+      Cancellable removeSSHConfig = sshSessionManager.addSSHConfig(programRunId, clusterKeyInfo.getSSHConfig(),
+                                                                   new ProgramRunSSHSessionConsumer(programRunId));
 
       // Allow the remote runtime to use the service proxy
       serviceSocksProxyAuthenticator.add(clusterKeyInfo.getServerKeyStoreHash());
-
-      LOG.info("Creating controller for program run {} with SSH config {}", programRunId, sshConfig);
 
       MonitorServerAddressSupplier serverAddressSupplier = new MonitorServerAddressSupplier(programRunId);
 
@@ -521,11 +520,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final class ProgramRunSSHSessionConsumer implements Consumer<SSHSession> {
 
     private final ProgramRunId programRunId;
-    private final String serviceSocksProxyPassword;
 
-    private ProgramRunSSHSessionConsumer(ProgramRunId programRunId, String serviceSocksProxyPassword) {
+    private ProgramRunSSHSessionConsumer(ProgramRunId programRunId) {
       this.programRunId = programRunId;
-      this.serviceSocksProxyPassword = serviceSocksProxyPassword;
     }
 
     @Override
@@ -536,8 +533,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         // in which the remote port forwarding will be closed automatically
         int remotePort = session.createRemotePortForward(0,
                                                          serviceSocksProxy.getBindAddress().getPort()).getRemotePort();
-        ServiceSocksProxyInfo info = new ServiceSocksProxyInfo(remotePort, serviceSocksProxyPassword);
+        ServiceSocksProxyInfo info = new ServiceSocksProxyInfo(remotePort);
 
+        // Upload the service socks proxy information to the remote runtime
         String targetPath = session.executeAndWait("echo `pwd`/" + programRunId.getRun()).trim();
         byte[] content = GSON.toJson(info).getBytes(StandardCharsets.UTF_8);
         session.copy(new ByteArrayInputStream(content),

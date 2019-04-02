@@ -41,6 +41,7 @@ public class RemoteExecutionAuthenticator extends Authenticator {
     this.cConf = cConf;
   }
 
+  @Nullable
   @Override
   protected PasswordAuthentication getPasswordAuthentication() {
     if (!"SOCKS5".equals(getRequestingProtocol())) {

@@ -22,18 +22,12 @@ package co.cask.cdap.internal.app.runtime.monitor;
 public final class ServiceSocksProxyInfo {
 
   private final int port;
-  private final String password;
 
-  public ServiceSocksProxyInfo(int port, String password) {
+  public ServiceSocksProxyInfo(int port) {
     this.port = port;
-    this.password = password;
   }
 
   public int getPort() {
     return port;
-  }
-
-  public String getPassword() {
-    return password;
   }
 }
