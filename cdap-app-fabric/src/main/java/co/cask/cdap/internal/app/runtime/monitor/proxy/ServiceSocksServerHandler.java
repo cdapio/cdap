@@ -25,14 +25,27 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 final class ServiceSocksServerHandler extends AbstractSocksServerHandler {
 
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ServiceSocksProxyAuthenticator authenticator;
 
-  ServiceSocksServerHandler(DiscoveryServiceClient discoveryServiceClient) {
+  ServiceSocksServerHandler(DiscoveryServiceClient discoveryServiceClient,
+                            ServiceSocksProxyAuthenticator authenticator) {
     this.discoveryServiceClient = discoveryServiceClient;
+    this.authenticator = authenticator;
+  }
+
+  @Override
+  protected boolean requireAuthentication() {
+    return true;
+  }
+
+  @Override
+  protected boolean authenticate(String username, String password) {
+    return authenticator.authenticate(username, password);
   }
 
   @Override
   protected ChannelHandler createSocks4ConnectHandler() {
-    return new ServiceSocksServerConnectHandler(discoveryServiceClient);
+    return null;
   }
 
   @Override

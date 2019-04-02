@@ -865,6 +865,8 @@ public final class Constants {
 
     // Configuration key for the service proxy in the format of "host:port"
     public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
+    // Configuration key for the service proxy password. It is only used within a runtime cluster.
+    public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
 
     // Constants for secure connections
     public static final String SSH_USER = "ssh.user";

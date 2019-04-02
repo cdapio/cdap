@@ -41,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServerInfo;
 import co.cask.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import co.cask.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
 import co.cask.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
+import co.cask.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenticator;
 import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.internal.provision.LocationBasedSSHKeyPair;
 import co.cask.cdap.internal.provision.ProvisioningService;
@@ -102,7 +103,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
@@ -139,6 +142,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final SSHSessionManager sshSessionManager;
   private final MonitorSocksProxy monitorSocksProxy;
   private final ServiceSocksProxy serviceSocksProxy;
+  private final RuntimeServiceSocksProxyAuthenticator serviceSocksProxyAuthenticator;
   private final TransactionRunner transactionRunner;
 
   private LocationCache locationCache;
@@ -165,7 +169,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     this.programStateWriter = programStateWriter;
     this.sshSessionManager = new SSHSessionManager();
     this.monitorSocksProxy = new MonitorSocksProxy(cConf, sshSessionManager);
-    this.serviceSocksProxy = new ServiceSocksProxy(discoveryServiceClient);
+    this.serviceSocksProxyAuthenticator = new RuntimeServiceSocksProxyAuthenticator();
+    this.serviceSocksProxy = new ServiceSocksProxy(discoveryServiceClient, serviceSocksProxyAuthenticator);
   }
 
   @Override
@@ -352,8 +357,12 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                                         ClusterKeyInfo clusterKeyInfo) {
     return () -> controllers.computeIfAbsent(programRunId, key -> {
       SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      Cancellable removeSSHConfig = sshSessionManager.addSSHConfig(programRunId, clusterKeyInfo.getSSHConfig(),
-                                                                   new ProgramRunSSHSessionConsumer(programRunId));
+      Cancellable removeSSHConfig = sshSessionManager.addSSHConfig(
+        programRunId, clusterKeyInfo.getSSHConfig(),
+        new ProgramRunSSHSessionConsumer(programRunId, clusterKeyInfo.getServerKeyStoreHash()));
+
+      // Allow the remote runtime to use the service proxy
+      serviceSocksProxyAuthenticator.add(clusterKeyInfo.getServerKeyStoreHash());
 
       LOG.info("Creating controller for program run {} with SSH config {}", programRunId, sshConfig);
 
@@ -381,6 +390,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       // Also remove the ssh config from the session manager so that it can't be used again.
       controller.onTerminated(() -> {
         LOG.info("Controller completed for program run {} with SSH config {}", programRunId, sshConfig);
+        serviceSocksProxyAuthenticator.remove(clusterKeyInfo.getServerKeyStoreHash());
         controllers.remove(key, controller);
         serverAddressSupplier.close();
         removeSSHConfig.cancel();
@@ -511,9 +521,11 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final class ProgramRunSSHSessionConsumer implements Consumer<SSHSession> {
 
     private final ProgramRunId programRunId;
+    private final String serviceSocksProxyPassword;
 
-    private ProgramRunSSHSessionConsumer(ProgramRunId programRunId) {
+    private ProgramRunSSHSessionConsumer(ProgramRunId programRunId, String serviceSocksProxyPassword) {
       this.programRunId = programRunId;
+      this.serviceSocksProxyPassword = serviceSocksProxyPassword;
     }
 
     @Override
@@ -524,7 +536,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         // in which the remote port forwarding will be closed automatically
         int remotePort = session.createRemotePortForward(0,
                                                          serviceSocksProxy.getBindAddress().getPort()).getRemotePort();
-        ServiceSocksProxyInfo info = new ServiceSocksProxyInfo(remotePort);
+        ServiceSocksProxyInfo info = new ServiceSocksProxyInfo(remotePort, serviceSocksProxyPassword);
 
         String targetPath = session.executeAndWait("echo `pwd`/" + programRunId.getRun()).trim();
         byte[] content = GSON.toJson(info).getBytes(StandardCharsets.UTF_8);
@@ -617,6 +629,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     private final SSHConfig sshConfig;
     private final KeyStore serverKeyStore;
     private final KeyStore clientKeyStore;
+    private final String serverKeyStoreHash;
 
     ClusterKeyInfo(ProgramOptions programOptions,
                    LocationFactory locationFactory) throws IOException, GeneralSecurityException {
@@ -627,6 +640,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       this.sshConfig = createSSHConfig(cluster, keysDir);
       this.serverKeyStore = KeyStores.load(keysDir.append(Constants.RuntimeMonitor.SERVER_KEYSTORE), () -> "");
       this.clientKeyStore = KeyStores.load(keysDir.append(Constants.RuntimeMonitor.CLIENT_KEYSTORE), () -> "");
+      this.serverKeyStoreHash = KeyStores.hash(serverKeyStore);
     }
 
     Cluster getCluster() {
@@ -643,6 +657,10 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
     KeyStore getClientKeyStore() {
       return clientKeyStore;
+    }
+
+    String getServerKeyStoreHash() {
+      return serverKeyStoreHash;
     }
 
     /**
@@ -681,6 +699,27 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         .setUser(sshKeyPair.getPublicKey().getUser())
         .setPrivateKeySupplier(sshKeyPair.getPrivateKeySupplier())
         .build();
+    }
+  }
+
+  /**
+   * A {@link ServiceSocksProxyAuthenticator} that authenticates based on a known set of usernames and passwords.
+   */
+  private static final class RuntimeServiceSocksProxyAuthenticator implements ServiceSocksProxyAuthenticator {
+
+    private final Set<String> allowed = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    void add(String password) {
+      allowed.add(password);
+    }
+
+    void remove(String password) {
+      allowed.remove(password);
+    }
+
+    @Override
+    public boolean authenticate(String username, String password) {
+      return Objects.equals(username, password) && allowed.contains(password);
     }
   }
 }

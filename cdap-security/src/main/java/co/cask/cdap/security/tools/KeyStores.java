@@ -18,6 +18,7 @@ package co.cask.cdap.security.tools;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import com.google.common.hash.Hashing;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.twill.filesystem.Location;
 import sun.security.x509.AlgorithmId;
@@ -32,6 +33,7 @@ import sun.security.x509.X500Name;
 import sun.security.x509.X509CertImpl;
 import sun.security.x509.X509CertInfo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -159,6 +161,15 @@ public final class KeyStores {
       ks.load(is, keystorePassSupplier.get().toCharArray());
     }
     return ks;
+  }
+
+  /**
+   * Computes a secure hash from the given {@link KeyStore} content.
+   */
+  public static String hash(KeyStore keyStore) throws IOException, GeneralSecurityException {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    keyStore.store(bos, "".toCharArray());
+    return Hashing.sha512().hashBytes(bos.toByteArray()).toString();
   }
 
   /**

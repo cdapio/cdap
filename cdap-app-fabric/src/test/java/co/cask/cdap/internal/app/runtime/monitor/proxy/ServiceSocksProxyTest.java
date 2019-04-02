@@ -32,9 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
@@ -50,6 +53,13 @@ import java.util.concurrent.TimeUnit;
 public class ServiceSocksProxyTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(ServiceSocksProxy.class);
+  private static final String USER = "test";
+  private static final String PASS = "testpass";
+
+  // Username and password used by the Authenticator
+  private static String authUser = USER;
+  private static String authPass = PASS;
+  private static Authenticator authenticator;
 
   private static InMemoryDiscoveryService discoveryService;
   private static NettyHttpService httpService;
@@ -70,7 +80,7 @@ public class ServiceSocksProxyTest {
     discoveryService = new InMemoryDiscoveryService();
     discoveryService.register(ResolvingDiscoverable.of((new Discoverable("test-service",
                                                                          httpService.getBindAddress()))));
-    proxyServer = new ServiceSocksProxy(discoveryService);
+    proxyServer = new ServiceSocksProxy(discoveryService, (user, pass) -> USER.equals(user) && PASS.equals(pass));
     proxyServer.startAndWait();
 
     defaultProxySelector = ProxySelector.getDefault();
@@ -88,10 +98,20 @@ public class ServiceSocksProxyTest {
         LOG.error("Connect failed {} {}", uri, sa, ioe);
       }
     });
+
+    authenticator = new Authenticator() {
+      @Override
+      protected PasswordAuthentication getPasswordAuthentication() {
+        return new PasswordAuthentication(authUser, authPass.toCharArray());
+      }
+    };
+
+    Authenticator.setDefault(authenticator);
   }
 
   @AfterClass
   public static void finish() throws Exception {
+    Authenticator.setDefault(null);
     ProxySelector.setDefault(defaultProxySelector);
     proxyServer.stopAndWait();
     httpService.stop();
@@ -139,6 +159,39 @@ public class ServiceSocksProxyTest {
       Assert.assertEquals(200, response.getResponseCode());
     } finally {
       future.get(5, TimeUnit.SECONDS).cancel();
+    }
+  }
+
+  @Test (expected = SocketException.class)
+  public void testAuthFailure() throws Exception {
+    String oldPass = authPass;
+    authPass += "xyz";
+    Cancellable cancellable = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable("test-auth-failure", httpService.getBindAddress())));
+    try {
+      // Use a different hostname to make sure the connection is not getting reused. Otherwise it may not have auth
+      // failure as intended
+      URL url = new URL("http://test-auth-failure/ping");
+      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+    } finally {
+      cancellable.cancel();
+      authPass = oldPass;
+    }
+  }
+
+  @Test (expected = SocketException.class)
+  public void testNoAuth() throws Exception {
+    Authenticator.setDefault(null);
+    Cancellable cancellable = discoveryService.register(
+      ResolvingDiscoverable.of(new Discoverable("test-no-auth", httpService.getBindAddress())));
+    try {
+      // Use a different hostname to make sure the connection is not getting reused. Otherwise it may not have auth
+      // failure as intended
+      URL url = new URL("http://test-no-auth/ping");
+      HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url).build());
+    } finally {
+      cancellable.cancel();
+      Authenticator.setDefault(authenticator);
     }
   }
 }

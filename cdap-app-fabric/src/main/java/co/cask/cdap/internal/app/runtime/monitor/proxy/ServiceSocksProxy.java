@@ -45,12 +45,15 @@ public class ServiceSocksProxy extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ServiceSocksProxy.class);
 
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ServiceSocksProxyAuthenticator authenticator;
   private volatile InetSocketAddress bindAddress;
   private ChannelGroup channelGroup;
   private EventLoopGroup eventLoopGroup;
 
-  public ServiceSocksProxy(DiscoveryServiceClient discoveryServiceClient) {
+  public ServiceSocksProxy(DiscoveryServiceClient discoveryServiceClient,
+                           ServiceSocksProxyAuthenticator authenticator) {
     this.discoveryServiceClient = discoveryServiceClient;
+    this.authenticator = authenticator;
   }
 
   /**
@@ -80,7 +83,7 @@ public class ServiceSocksProxy extends AbstractIdleService {
 
           ch.pipeline()
             .addLast(new SocksPortUnificationServerHandler())
-            .addLast(new ServiceSocksServerHandler(discoveryServiceClient));
+            .addLast(new ServiceSocksServerHandler(discoveryServiceClient, authenticator));
         }
       });
 

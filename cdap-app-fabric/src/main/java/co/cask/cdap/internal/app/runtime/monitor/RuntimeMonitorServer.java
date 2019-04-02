@@ -30,6 +30,7 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.security.tools.HttpsEnabler;
+import co.cask.cdap.security.tools.KeyStores;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -55,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
@@ -84,19 +86,22 @@ public class RuntimeMonitorServer extends AbstractIdleService {
   private final CountDownLatch shutdownLatch;
   private final Cancellable programRunCancellable;
   private final ProxySelector proxySelector;
+  private final Authenticator authenticator;
   private final NettyHttpService httpService;
   private TrafficRelayServer trafficRelayServer;
   private ProxySelector oldProxySelector;
+  private volatile String keyStoreHash;
 
   @Inject
   RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService,
-                       Cancellable programRunCancellable, ProxySelector proxySelector,
+                       Cancellable programRunCancellable, ProxySelector proxySelector, Authenticator authenticator,
                        @Constants.AppFabric.KeyStore KeyStore keyStore,
                        @Constants.AppFabric.TrustStore KeyStore trustStore) {
     this.cConf = cConf;
     this.shutdownLatch = new CountDownLatch(1);
     this.programRunCancellable = programRunCancellable;
     this.proxySelector = proxySelector;
+    this.authenticator = authenticator;
 
     // Creates the http service
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
@@ -130,6 +135,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
     LOG.info("Runtime monitor server started on {}", httpService.getBindAddress());
 
+    // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
     trafficRelayServer = new TrafficRelayServer(InetAddress.getLocalHost(), this::getTrafficRelayTarget);
     trafficRelayServer.startAndWait();
 
@@ -140,6 +146,10 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     // Set the proxy selector
     oldProxySelector = ProxySelector.getDefault();
     ProxySelector.setDefault(proxySelector);
+
+    // Set the authenticator
+    Authenticator.setDefault(authenticator);
+
     LOG.info("Runtime traffic relay server started on {}", trafficRelayServer.getBindAddress());
   }
 
@@ -174,6 +184,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
       LOG.error("Exception raised when stopping program run.", e);
     }
 
+    Authenticator.setDefault(null);
     ProxySelector.setDefault(oldProxySelector);
 
     // Wait for the shutdown signal from the runtime monitor before shutting off the http server.
@@ -182,6 +193,18 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     trafficRelayServer.stopAndWait();
     httpService.stop();
     LOG.info("Runtime monitor server stopped");
+  }
+
+  @Nullable
+  private String getKeyStoreHash(KeyStore keyStore) {
+    if (keyStoreHash == null) {
+      try {
+        keyStoreHash = KeyStores.hash(keyStore);
+      } catch (Exception e) {
+        return null;
+      }
+    }
+    return keyStoreHash;
   }
 
   /**

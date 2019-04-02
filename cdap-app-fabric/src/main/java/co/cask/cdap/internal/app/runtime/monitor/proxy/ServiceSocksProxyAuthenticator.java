@@ -14,26 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.monitor;
+package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
 /**
- * A simple POJO for serializing service socks proxy information.
+ * An interface to provide authentication for requests to the service socks proxy
  */
-public final class ServiceSocksProxyInfo {
+public interface ServiceSocksProxyAuthenticator {
 
-  private final int port;
-  private final String password;
-
-  public ServiceSocksProxyInfo(int port, String password) {
-    this.port = port;
-    this.password = password;
-  }
-
-  public int getPort() {
-    return port;
-  }
-
-  public String getPassword() {
-    return password;
-  }
+  /**
+   * Authenticates the given username and password.
+   *
+   * @param username the username to authenticate
+   * @param password the password to authenticate
+   * @return {@code true} if passed, {@code false} otherwise.
+   */
+  boolean authenticate(String username, String password);
 }

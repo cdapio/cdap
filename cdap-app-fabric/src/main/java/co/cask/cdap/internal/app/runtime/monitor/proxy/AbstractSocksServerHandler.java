@@ -16,14 +16,19 @@
 
 package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.socksx.SocksMessage;
 import io.netty.handler.codec.socksx.v5.DefaultSocks5InitialResponse;
+import io.netty.handler.codec.socksx.v5.DefaultSocks5PasswordAuthResponse;
 import io.netty.handler.codec.socksx.v5.Socks5AuthMethod;
 import io.netty.handler.codec.socksx.v5.Socks5CommandRequestDecoder;
 import io.netty.handler.codec.socksx.v5.Socks5InitialRequest;
+import io.netty.handler.codec.socksx.v5.Socks5PasswordAuthRequest;
+import io.netty.handler.codec.socksx.v5.Socks5PasswordAuthRequestDecoder;
+import io.netty.handler.codec.socksx.v5.Socks5PasswordAuthStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,10 +43,30 @@ abstract class AbstractSocksServerHandler extends SimpleChannelInboundHandler<So
   private static final Logger LOG = LoggerFactory.getLogger(AbstractSocksServerHandler.class);
 
   @Nullable
-  protected abstract ChannelHandler createSocks4ConnectHandler();
+  protected ChannelHandler createSocks4ConnectHandler() {
+    return null;
+  }
 
   @Nullable
   protected abstract ChannelHandler createSocks5ConnectHandler();
+
+  /**
+   * Returns {@code true} if password authentication is needed for Socks5 connection.
+   */
+  protected boolean requireAuthentication() {
+    return false;
+  }
+
+  /**
+   * Authenticates the given username and password.
+   *
+   * @param username the username
+   * @param password the password
+   * @return {@code true} if authenticated, {@code false} otherwise
+   */
+  protected boolean authenticate(String username, String password) {
+    return true;
+  }
 
   @Override
   protected void channelRead0(ChannelHandlerContext ctx, SocksMessage msg) {
@@ -64,10 +89,27 @@ abstract class AbstractSocksServerHandler extends SimpleChannelInboundHandler<So
 
         // For SOCKS5 protocol, needs to handle the initial authentication handshake
         if (msg instanceof Socks5InitialRequest) {
-          ctx.pipeline().remove(this);
-          ctx.pipeline().addFirst(new Socks5CommandRequestDecoder());
-          ctx.pipeline().addLast(connectHandler);
-          ctx.write(new DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH));
+          if (requireAuthentication()) {
+            ctx.pipeline().addFirst("auth", new Socks5PasswordAuthRequestDecoder());
+            ctx.write(new DefaultSocks5InitialResponse(Socks5AuthMethod.PASSWORD));
+          } else {
+            ctx.pipeline().remove(this);
+            ctx.pipeline().addFirst(new Socks5CommandRequestDecoder());
+            ctx.pipeline().addLast(connectHandler);
+            ctx.write(new DefaultSocks5InitialResponse(Socks5AuthMethod.NO_AUTH));
+          }
+        } else if (msg instanceof Socks5PasswordAuthRequest) {
+          Socks5PasswordAuthRequest authRequest = (Socks5PasswordAuthRequest) msg;
+          if (!authenticate(authRequest.username(), authRequest.password())) {
+            ctx.write(new DefaultSocks5PasswordAuthResponse(Socks5PasswordAuthStatus.FAILURE))
+              .addListener(ChannelFutureListener.CLOSE);
+          } else {
+            ctx.pipeline().remove("auth");
+            ctx.pipeline().remove(this);
+            ctx.pipeline().addFirst(new Socks5CommandRequestDecoder());
+            ctx.pipeline().addLast(connectHandler);
+            ctx.write(new DefaultSocks5PasswordAuthResponse(Socks5PasswordAuthStatus.SUCCESS));
+          }
         } else {
           // We don't expect other type of Socks5 message
           throw new NotSupportedException("Unsupported SOCKS message " + msg);

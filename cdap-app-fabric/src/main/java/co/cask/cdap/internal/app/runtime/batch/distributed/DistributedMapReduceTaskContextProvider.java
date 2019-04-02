@@ -36,6 +36,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -78,6 +79,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     try {
       oldProxySelector = ProxySelector.getDefault();
       ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
+      Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
 
       for (Service service : coreServices) {
         service.startAndWait();
@@ -116,6 +118,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
         }
       }
     }
+    Authenticator.setDefault(null);
     ProxySelector.setDefault(oldProxySelector);
     if (failure != null) {
       throw failure;
