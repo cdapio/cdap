@@ -21,6 +21,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.app.guice.RemoteExecutionDiscoveryModule;
 import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
@@ -58,6 +59,7 @@ import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
+import com.google.inject.util.Modules;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -129,7 +131,7 @@ public class RuntimeMonitorTest {
     serverKeyStore = KeyStores.generatedCertKeyStore(1, "");
     clientKeyStore = KeyStores.generatedCertKeyStore(1, "");
 
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf), new PrivateModule() {
+    Injector injector = Guice.createInjector(new PrivateModule() {
       @Override
       protected void configure() {
         bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(serverKeyStore);
@@ -145,7 +147,7 @@ public class RuntimeMonitorTest {
           }
         });
       }
-    });
+    }, Modules.override(new AppFabricTestModule(cConf)).with(new RemoteExecutionDiscoveryModule()));
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
