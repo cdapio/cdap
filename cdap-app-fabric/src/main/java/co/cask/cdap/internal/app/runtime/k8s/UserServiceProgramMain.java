@@ -58,7 +58,7 @@ import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
-import co.cask.cdap.logging.context.UserServiceLoggingContext;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.master.environment.k8s.AbstractServiceMain;
 import co.cask.cdap.master.spi.environment.MasterEnvironment;
 import co.cask.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -188,10 +188,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     File programOptionsFile = new File(options.getProgramOptionsPath());
     programOptions = readJsonFile(programOptionsFile, ProgramOptions.class);
     programRunId = programOptions.getProgramId().run(ProgramRunners.getRunId(programOptions));
-    // TODO: (CDAP-15018) figure out service instances
-    return new UserServiceLoggingContext(programRunId.getNamespace(), programRunId.getApplication(),
-                                         programRunId.getProgram(), programRunId.getProgram(),
-                                         programRunId.getRun(), "0");
+    return LoggingContextHelper.getLoggingContextWithRunId(programRunId, programOptions.getArguments().asMap());
   }
 
   @Override

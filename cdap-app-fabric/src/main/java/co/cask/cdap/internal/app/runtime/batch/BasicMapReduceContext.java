@@ -35,7 +35,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -50,17 +49,12 @@ import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.logging.context.MapReduceLoggingContext;
-import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
@@ -79,7 +73,6 @@ import javax.annotation.Nullable;
 final class BasicMapReduceContext extends AbstractContext implements MapReduceContext {
 
   private final MapReduceSpecification spec;
-  private final LoggingContext loggingContext;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
@@ -114,7 +107,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
           messagingService, pluginInstantiator, metadataReader, metadataPublisher, namespaceQueryAdmin);
 
     this.workflowProgramInfo = workflowProgramInfo;
-    this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.spec = spec;
     this.mapperResources = SystemArguments.getResources(getMapperRuntimeArguments(), spec.getMapperResources());
     this.reducerResources = SystemArguments.getResources(getReducerRuntimeArguments(), spec.getReducerResources());
@@ -130,20 +122,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     if (spec.getOutputDataSet() != null) {
       addOutput(Output.ofDataset(spec.getOutputDataSet()));
     }
-  }
-
-  private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
-                                              @Nullable WorkflowProgramInfo workflowProgramInfo) {
-    if (workflowProgramInfo == null) {
-      return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
-                                         programId.getProgram(), runId.getId());
-    }
-
-    ProgramId workflowProramId = programId.getParent().workflow(workflowProgramInfo.getName());
-
-    return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
-                                             workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.MAPREDUCE, programId.getProgram(), runId.getId());
   }
 
   @Override
@@ -272,10 +250,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   @Override
   public void setReducerResources(Resources resources) {
     this.reducerResources = resources;
-  }
-
-  public LoggingContext getLoggingContext() {
-    return loggingContext;
   }
 
   public Resources getMapperResources() {

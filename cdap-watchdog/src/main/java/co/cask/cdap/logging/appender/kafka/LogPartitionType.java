@@ -16,9 +16,9 @@
 
 package co.cask.cdap.logging.appender.kafka;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
+import co.cask.cdap.logging.context.ApplicationLoggingContext;
 import co.cask.cdap.proto.id.NamespaceId;
 
 /**

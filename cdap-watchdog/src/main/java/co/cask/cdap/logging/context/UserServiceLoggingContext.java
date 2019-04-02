@@ -16,7 +16,7 @@
 
 package co.cask.cdap.logging.context;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
+import javax.annotation.Nullable;
 
 /**
  * Logging Context for Services defined by users.
@@ -27,7 +27,7 @@ public class UserServiceLoggingContext extends ApplicationLoggingContext {
   public static final String TAG_HANDLER_ID = ".userhandlerid";
 
   public UserServiceLoggingContext(String namespaceId, String applicationId, String serviceId, String handlerId,
-                                   String runId, String instanceId) {
+                                   String runId, @Nullable String instanceId) {
     super(namespaceId, applicationId, runId);
     setSystemTag(TAG_USER_SERVICE_ID, serviceId);
     setSystemTag(TAG_HANDLER_ID, handlerId);

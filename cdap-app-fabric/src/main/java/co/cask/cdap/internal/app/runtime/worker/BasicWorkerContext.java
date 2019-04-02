@@ -26,18 +26,14 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.logging.context.WorkerLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import javax.annotation.Nullable;
@@ -49,7 +45,6 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
 
   private final WorkerSpecification specification;
   private final int instanceId;
-  private final LoggingContext loggingContext;
   private volatile int instanceCount;
 
   BasicWorkerContext(WorkerSpecification spec, Program program, ProgramOptions programOptions,
@@ -73,19 +68,8 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
     this.specification = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.loggingContext = createLoggingContext(Id.Program.fromEntityId(program.getId()), getRunId());
   }
 
-  private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
-    return new WorkerLoggingContext(programId.getNamespaceId(), programId.getApplicationId(), programId.getId(),
-                                    runId.getId(), String.valueOf(getInstanceId()));
-  }
-
-  public LoggingContext getLoggingContext() {
-    return loggingContext;
-  }
-
-  @Override
   public WorkerSpecification getSpecification() {
     return specification;
   }

@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -45,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.loader.LogAppenderLoaderService;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -230,6 +232,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     programRunId = programOptions.getProgramId().run(ProgramRunners.getRunId(programOptions));
 
     Arguments systemArgs = programOptions.getArguments();
+    LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+                                                                                             systemArgs.asMap()));
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
 
     // Loads configurations

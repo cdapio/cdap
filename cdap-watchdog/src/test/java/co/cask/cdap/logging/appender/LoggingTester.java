@@ -18,10 +18,10 @@ package co.cask.cdap.logging.appender;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
+import co.cask.cdap.logging.context.ApplicationLoggingContext;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.filter.Filter;
 import co.cask.cdap.logging.read.Callback;

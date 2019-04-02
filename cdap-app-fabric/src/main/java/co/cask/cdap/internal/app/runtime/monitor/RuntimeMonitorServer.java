@@ -24,14 +24,11 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.tools.HttpsEnabler;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -117,9 +114,6 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.RUNTIME_HTTP));
     httpService.start();
 
     // Writes the port to a local file

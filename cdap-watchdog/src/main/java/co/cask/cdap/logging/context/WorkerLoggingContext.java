@@ -17,7 +17,8 @@
 package co.cask.cdap.logging.context;
 
 import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
+
+import javax.annotation.Nullable;
 
 /**
  * Logging Context for {@link Worker}
@@ -26,7 +27,8 @@ public class WorkerLoggingContext extends ApplicationLoggingContext {
 
   public static final String TAG_WORKER_ID = ".workerid";
 
-  public WorkerLoggingContext(String namespaceId, String appId, String workerId, String runId, String instanceId) {
+  public WorkerLoggingContext(String namespaceId, String appId, String workerId, String runId,
+                              @Nullable String instanceId) {
     super(namespaceId, appId, runId);
     setSystemTag(TAG_WORKER_ID, workerId);
     setInstanceId(instanceId);

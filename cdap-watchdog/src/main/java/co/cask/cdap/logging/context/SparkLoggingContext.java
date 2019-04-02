@@ -16,8 +16,6 @@
 
 package co.cask.cdap.logging.context;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
-
 /**
  * Spark logging context
  */

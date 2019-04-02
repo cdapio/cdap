@@ -16,7 +16,7 @@
 
 package co.cask.cdap.common.logging.logback;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
+import co.cask.cdap.logging.context.ApplicationLoggingContext;
 
 /**
  * Logging context used for testing purpose.

@@ -53,7 +53,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.Retries;
@@ -72,7 +71,7 @@ import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.logging.context.WorkflowLoggingContext;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
@@ -127,7 +126,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final CConfiguration cConf;
   private final ProgramWorkflowRunnerFactory workflowProgramRunnerFactory;
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
-  private final LoggingContext loggingContext;
   private final Lock lock;
   private final java.util.concurrent.locks.Condition condition;
   private final MetricsCollectionService metricsCollectionService;
@@ -187,9 +185,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                     discoveryServiceClient, nodeStates, pluginInstantiator,
                                                     secureStore, secureStoreManager, messagingService, null,
                                                     metadataReader, metadataPublisher, namespaceQueryAdmin);
-
-    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
-                                                     program.getName(), workflowRunId.getRun());
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -202,7 +197,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   @Override
   protected void startUp() throws Exception {
-    LoggingContextAccessor.setLoggingContext(loggingContext);
+    LoggingContextAccessor.setLoggingContext(
+      LoggingContextHelper.getLoggingContextWithRunId(workflowRunId, programOptions.getArguments().asMap()));
     runningThread = Thread.currentThread();
     createLocalDatasets();
     workflow = initializeWorkflow();

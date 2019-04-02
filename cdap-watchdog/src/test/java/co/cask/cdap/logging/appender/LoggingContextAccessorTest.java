@@ -16,9 +16,9 @@
 
 package co.cask.cdap.logging.appender;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
+import co.cask.cdap.logging.context.ApplicationLoggingContext;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;

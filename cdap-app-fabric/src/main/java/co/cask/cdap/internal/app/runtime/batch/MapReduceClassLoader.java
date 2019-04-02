@@ -33,10 +33,9 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceT
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
@@ -160,16 +159,9 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(parameters.getHConf());
     ProgramId programId = contextConfig.getProgramId();
     RunId runId = ProgramRunners.getRunId(contextConfig.getProgramOptions());
-    WorkflowProgramInfo workflowProgramInfo = contextConfig.getWorkflowProgramInfo();
-    if (workflowProgramInfo == null) {
-      return new MapReduceLoggingContext(programId.getNamespace(), programId.getApplication(),
-                                         programId.getProgram(), runId.getId());
-    }
-    String workflowId = workflowProgramInfo.getName();
-    String workflowRunId = workflowProgramInfo.getRunId().getId();
-    return new WorkflowProgramLoggingContext(programId.getNamespace(), programId.getApplication(), workflowId,
-                                             workflowRunId, ProgramType.MAPREDUCE, programId.getProgram(),
-                                             runId.getId());
+
+    return LoggingContextHelper.getLoggingContextWithRunId(programId.run(runId),
+                                                           contextConfig.getProgramOptions().getArguments().asMap());
   }
 
   /**
