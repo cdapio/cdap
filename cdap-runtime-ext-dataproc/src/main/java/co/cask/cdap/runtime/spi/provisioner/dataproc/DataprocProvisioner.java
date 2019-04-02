@@ -29,15 +29,11 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -196,30 +192,6 @@ public class DataprocProvisioner implements Provisioner {
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
-    }
-  }
-
-  @Override
-  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    // Start the ZK server
-    try (SSHSession session = createSSHSession(context, getMasterExternalIp(cluster))) {
-      LOG.debug("Starting zookeeper server.");
-      String output = session.executeAndWait("sudo zookeeper-server start");
-      LOG.debug("Zookeeper server started: {}", output);
-    }
-  }
-
-  private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host) throws IOException {
-    try {
-      return provisionerContext.getSSHContext().createSSHSession(host);
-    } catch (IOException ioe) {
-      if (Throwables.getRootCause(ioe) instanceof ConnectException) {
-        throw new IOException(String.format(
-                "Failed to connect to host %s. Ensure that GCP Firewall Ingress Rules exist that allow ssh " +
-                        "on port 22.", host),
-                ioe);
-      }
-      throw ioe;
     }
   }
 
