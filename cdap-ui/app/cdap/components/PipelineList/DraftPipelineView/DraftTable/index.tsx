@@ -16,28 +16,32 @@
 
 import * as React from 'react';
 import DraftTableRow from 'components/PipelineList/DraftPipelineView/DraftTable/DraftTableRow';
-import T from 'i18n-react';
 import { connect } from 'react-redux';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
+import SortableHeader from 'components/PipelineList/DraftPipelineView/DraftTable/SortableHeader';
 
 interface IProps {
   drafts: IDraft[];
+  currentPage: number;
+  pageLimit: number;
 }
 
 require('./DraftTable.scss');
 
-const PREFIX = 'features.PipelineList';
-
-const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
+const DraftTableView: React.SFC<IProps> = ({ drafts, currentPage, pageLimit }) => {
   function renderBody() {
     if (drafts.length === 0) {
       return <EmptyList type={VIEW_TYPES.draft} />;
     }
 
+    const startIndex = (currentPage - 1) * pageLimit;
+    const endIndex = startIndex + pageLimit;
+    const filteredDrafts = drafts.slice(startIndex, endIndex);
+
     return (
       <div className="grid-body">
-        {drafts.map((draft) => {
+        {filteredDrafts.map((draft) => {
           return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
         })}
       </div>
@@ -49,12 +53,10 @@ const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
       <div className="grid grid-container">
         <div className="grid-header">
           <div className="grid-row">
-            <strong className="table-column name">{T.translate(`${PREFIX}.pipelineName`)}</strong>
-            <strong className="table-column type">{T.translate(`${PREFIX}.type`)}</strong>
-            <strong className="table-column last-saved">
-              {T.translate(`${PREFIX}.lastSaved`)}
-            </strong>
-            <strong className="table-column action" />
+            <SortableHeader columnName="name" />
+            <SortableHeader columnName="type" />
+            <SortableHeader columnName="lastSaved" />
+            <strong />
           </div>
         </div>
 
@@ -67,6 +69,8 @@ const DraftTableView: React.SFC<IProps> = ({ drafts }) => {
 const mapStateToProps = (state) => {
   return {
     drafts: state.drafts.list,
+    currentPage: state.drafts.currentPage,
+    pageLimit: state.drafts.pageLimit,
   };
 };
 

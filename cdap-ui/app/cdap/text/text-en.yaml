@@ -1946,8 +1946,8 @@ features:
         DEPLOYED: There are no pipelines deployed
     lastSaved: Last saved
     lastStartTime: Last start time
+    name: Pipeline name
     nextRun: Next run in
-    pipelineName: Pipeline name
     runs: Total runs
     selectOne: " - Select one to view"
     status: Status

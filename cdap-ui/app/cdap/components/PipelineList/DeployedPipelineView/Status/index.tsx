@@ -27,7 +27,7 @@ interface IProps {
 
 const StatusView: React.SFC<IProps> = ({ statusMap, pipeline }) => {
   const pipelineStatus = statusMap[pipeline.name] || {};
-  const displayStatus = StatusMapper.lookupDisplayStatus(pipelineStatus.status);
+  const displayStatus = pipelineStatus.displayStatus;
   const statusClassName = StatusMapper.getStatusIndicatorClass(displayStatus);
 
   return (

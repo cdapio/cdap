@@ -20,8 +20,17 @@ import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import { Reducer, Store as StoreInterface } from 'redux';
 import { IAction } from 'services/redux-helpers';
 
+enum SORT_ORDER {
+  asc = 'asc',
+  desc = 'desc',
+}
+
 interface IState {
   list: IDraft[];
+  sortColumn: string;
+  sortOrder: SORT_ORDER;
+  currentPage: number;
+  pageLimit: number;
 }
 
 interface IStore {
@@ -30,11 +39,17 @@ interface IStore {
 
 const Actions = {
   setDrafts: 'SET_PIPELINE_DRAFTS',
+  setSort: 'SET_PIPELINE_DRAFTS_SORT',
+  setPage: 'SET_PIPELINE_DRAFTS_PAGE',
   reset: 'DRAFTS_RESET',
 };
 
 const defaultInitialState: IState = {
   list: [],
+  sortColumn: 'name',
+  sortOrder: SORT_ORDER.asc,
+  currentPage: 1,
+  pageLimit: 25,
 };
 
 const drafts: Reducer<IState> = (state = defaultInitialState, action: IAction) => {
@@ -43,6 +58,20 @@ const drafts: Reducer<IState> = (state = defaultInitialState, action: IAction) =
       return {
         ...state,
         list: action.payload.list,
+        currentPage: 1,
+      };
+    case Actions.setSort:
+      return {
+        ...state,
+        sortColumn: action.payload.sortColumn,
+        sortOrder: action.payload.sortOrder,
+        list: action.payload.list,
+        currentPage: 1,
+      };
+    case Actions.setPage:
+      return {
+        ...state,
+        currentPage: action.payload.currentPage,
       };
     case Actions.reset:
       return defaultInitialState;
@@ -62,4 +91,4 @@ const Store: StoreInterface<IStore> = createStore(
 );
 
 export default Store;
-export { Actions };
+export { Actions, SORT_ORDER };
