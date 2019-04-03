@@ -243,7 +243,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
         analytics: 'Analytics',
         controlCenter: 'Control Center',
         dashboard: 'Dashboard',
-        dataPrep: 'Preparation',
+        dataPrep: 'Wrangler',
         entities: 'Entities',
         hub: 'Hub',
         metadata: 'Metadata',
