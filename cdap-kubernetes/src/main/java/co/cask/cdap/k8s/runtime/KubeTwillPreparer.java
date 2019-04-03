@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 /**
@@ -432,21 +433,27 @@ class KubeTwillPreparer implements TwillPreparer {
                        .mountPath(configDir).readOnly(true));
     container.setVolumeMounts(volumeMounts);
 
-    List<V1EnvVar> envVars = new ArrayList<>();
-    // assumption is there is only a single runnable
-    for (Map.Entry<String, String> envEntry : environments.values().iterator().next().entrySet()) {
-      V1EnvVar envVar = new V1EnvVar();
-      envVar.setName(envEntry.getKey());
-      envVar.setValue(envEntry.getValue());
-      envVars.add(envVar);
-    }
-    container.setEnv(envVars);
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
     quantityMap.put("cpu", new Quantity(String.valueOf(vcores)));
-    quantityMap.put("memory", new Quantity(String.format("%dMi", memoryMB)));
+    // Use slight larger container size
+    quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
     resourceRequirements.setRequests(quantityMap);
     container.setResources(resourceRequirements);
+
+    // Setup the container environment. Inherit everything from the current pod.
+    Map<String, String> environs = podInfo.getContainerEnvironments().stream()
+      .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+
+    // assumption is there is only a single runnable
+    environs.putAll(environments.values().iterator().next());
+
+    // Set the process memory is through the JAVA_HEAPMAX variable.
+    environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", memoryMB));
+    container.setEnv(environs.entrySet().stream()
+                       .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
+                       .collect(Collectors.toList()));
+
     // when other program types are supported, there will need to be a mapping from program type to main class
     container.setArgs(Arrays.asList("co.cask.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
                                     String.format("--appSpecPath=%s/%s", configDir, APP_SPEC),
