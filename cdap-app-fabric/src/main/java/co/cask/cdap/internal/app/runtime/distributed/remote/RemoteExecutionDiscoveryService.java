@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import co.cask.cdap.master.spi.discovery.DefaultServiceDiscovered;
+import co.cask.cdap.proto.ProgramType;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -80,6 +81,14 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
   @Override
   public ServiceDiscovered discover(String name) {
+    // In Remote runtime, we don't support program discovery, hence always return an empty ServiceDiscovered
+    for (ProgramType programType : ProgramType.values()) {
+      if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverablePrefix())) {
+        return new DefaultServiceDiscovered(name);
+      }
+    }
+
+    // Discovery for system services
     DefaultServiceDiscovered serviceDiscovered = services.get(name);
     String key = Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + name;
 

@@ -18,6 +18,9 @@ package co.cask.cdap.internal.app.runtime.distributed.remote;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.service.ServiceDiscoverable;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -25,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
 /**
@@ -81,5 +85,18 @@ public class RemoteExecutionDiscoveryServiceTest {
         .map(Discoverable::getSocketAddress)
         .allMatch(addr -> InetSocketAddress.createUnresolved("xyz", 12345).equals(addr))
     );
+  }
+
+  @Test
+  public void testAppDisabled() {
+    CConfiguration cConf = CConfiguration.create();
+    RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf);
+
+    // Discovery of app is disabled. It always return a ServiceDiscovered without endpoint in it
+    String name = ServiceDiscoverable.getName(NamespaceId.DEFAULT.app("test").service("service"));
+    Discoverable discoverable = new RandomEndpointStrategy(() -> discoveryService.discover(name))
+      .pick(1, TimeUnit.SECONDS);
+
+    Assert.assertNull(discoverable);
   }
 }
