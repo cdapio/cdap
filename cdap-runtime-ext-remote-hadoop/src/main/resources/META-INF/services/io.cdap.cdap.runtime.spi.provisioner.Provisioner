@@ -14,4 +14,4 @@
 # the License.
 #
 
-co.cask.cdap.runtime.spi.provisioner.emr.ElasticMapReduceProvisioner
+io.cdap.cdap.runtime.spi.provisioner.remote.RemoteHadoopProvisioner

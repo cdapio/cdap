@@ -14,4 +14,4 @@
 # the License.
 #
 
-co.cask.cdap.app.runtime.spark.sql.datasources.dataset.DefaultSource
+io.cdap.cdap.app.runtime.spark.sql.datasources.dataset.DefaultSource

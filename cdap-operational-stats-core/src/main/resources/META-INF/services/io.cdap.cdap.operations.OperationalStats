@@ -14,6 +14,7 @@
 # the License.
 #
 
-co.cask.cdap.extension.ExtensionLoaderTest$HiExtension
-co.cask.cdap.extension.ExtensionLoaderTest$HelloExtension
-co.cask.cdap.extension.ExtensionLoaderTest$LoadingErrorExtension
+io.cdap.cdap.operations.cdap.CDAPEntities
+io.cdap.cdap.operations.cdap.CDAPInfo
+io.cdap.cdap.operations.cdap.CDAPLoad
+io.cdap.cdap.operations.cdap.CDAPTransactions
