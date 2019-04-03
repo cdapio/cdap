@@ -19,6 +19,8 @@ package co.cask.cdap.internal.app.runtime.service.http;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactManager;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
+import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metadata.MetadataReader;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.plugin.PluginConfigurer;
@@ -38,6 +40,7 @@ import co.cask.cdap.internal.app.DefaultPluginConfigurer;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
+import co.cask.cdap.internal.app.runtime.plugin.MacroParser;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import co.cask.cdap.messaging.MessagingService;
@@ -72,6 +75,7 @@ import javax.annotation.Nullable;
  */
 public class BasicHttpServiceContext extends AbstractContext implements SystemHttpServiceContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicHttpServiceContext.class);
+  private static final String SECURE_FUNCTION = "secure";
 
   private final CConfiguration cConf;
   private final NamespaceId namespaceId;
@@ -229,5 +233,22 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
       }
     }
     closeables.clear();
+  }
+
+  @Override
+  public Map<String, String> evaluateMacros(String namespace, Map<String, String> macros,
+                                            MacroEvaluator evaluator) throws InvalidMacroException {
+    MacroParser macroParser = MacroParser.builder(evaluator)
+      .whitelistFunctions(SECURE_FUNCTION)
+      .build();
+    Map<String, String> evaluated = new HashMap<>();
+
+    for (Map.Entry<String, String> property : macros.entrySet()) {
+      String key = property.getKey();
+      String val = property.getValue();
+      evaluated.put(key, macroParser.parse(val));
+    }
+
+    return evaluated;
   }
 }

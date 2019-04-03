@@ -49,7 +49,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
 
 
     // The following are bindings are for ProgramRunners. They are private to this module and only
-    // available to the remote exeuction ProgramRunnerFactory exposed.
+    // available to the remote execution ProgramRunnerFactory exposed.
 
     // This set of program runners are for on_premise mode
     bind(ClusterMode.class).toInstance(ClusterMode.ON_PREMISE);

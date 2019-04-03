@@ -17,7 +17,11 @@
 package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.macro.InvalidMacroException;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
+
+import java.util.Map;
 
 /**
  * A System HttpServiceContext that exposes capabilities beyond those available to service contexts for user services.
@@ -25,4 +29,15 @@ import co.cask.cdap.spi.data.transaction.TransactionRunner;
 @Beta
 public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner {
 
+  /**
+   * Evaluates macros using provided macro evaluator.
+   *
+   * @param namespace namespace in which macros needs to be evaluated
+   * @param macros key-value map of evaluated macros
+   * @param evaluator macro evaluator to be used to evaluate macros
+   * @return map of evaluated macros
+   * @throws InvalidMacroException indicates that there is an invalid macro
+   */
+  Map<String, String> evaluateMacros(String namespace, Map<String, String> macros,
+                                     MacroEvaluator evaluator) throws InvalidMacroException;
 }
