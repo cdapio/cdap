@@ -197,7 +197,7 @@ CALL :CHECK_JAVA
 CALL :CREATE_LOG_DIR
 CALL :SET_ACCESS_TOKEN
 
-set class=co.cask.cdap.data2.transaction.TransactionManagerDebuggerMain
+set class=io.cdap.cdap.data2.transaction.TransactionManagerDebuggerMain
 
 REM Skip first parameter
 for /f "usebackq tokens=1*" %%i in (`echo %*`) DO @ set params=%%j
@@ -221,11 +221,11 @@ GOTO FINALLY
 
 :CLI
 REM See TX_DEBUGGER for notes on setting CLASSPATH
-SET "CLASSPATH=%CDAP_HOME%\libexec\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\co.cask.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
+SET "CLASSPATH=%CDAP_HOME%\libexec\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\lib\io.cdap.cdap.cdap-cli-%CDAP_VERSION%.jar;%CDAP_HOME%\conf\;"
 CALL :CHECK_WINDOWS
 CALL :CHECK_JAVA
 
-set class=co.cask.cdap.cli.CLIMain
+set class=io.cdap.cdap.cli.CLIMain
 
 REM Skip first parameter if first parameter is "cli"
 set params=%*
@@ -331,7 +331,7 @@ IF "%3" == "--enable-debug" (
   )
   set "DEBUG_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=localhost:!port!,server=y,suspend=n"
 )
-set class=co.cask.cdap.StandaloneMain
+set class=io.cdap.cdap.StandaloneMain
 REM Note use of an empty title "" in the start command; without it, Windows will
 REM mis-interpret the JAVACMD incorrectly if it has spaces in it
 start "" /B "%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %HIVE_SCRATCH_DIR_OPTS% %HIVE_LOCAL_SCRATCH_DIR_OPTS% !DEBUG_OPTIONS! %SECURITY_OPTS% -classpath "%CLASSPATH%" %class% >> "%CDAP_HOME%\logs\cdap-process.log" 2>&1 < NUL

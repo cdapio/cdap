@@ -34,7 +34,7 @@ echo "  <property>
 
   <property>
     <name>security.authentication.handlerClassName</name>
-    <value>co.cask.cdap.security.server.BasicAuthenticationHandler</value>
+    <value>io.cdap.cdap.security.server.BasicAuthenticationHandler</value>
   </property>
 
 </configuration>" >> /opt/cdap/sandbox/conf/cdap-site.xml.new

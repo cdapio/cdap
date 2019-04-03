@@ -248,7 +248,7 @@ function build_javadocs() {
   if [[ -d ${HOME}/.m2/repository ]]; then
     cp -a ${HOME}/.m2/repository/* ${temp_repo}
     # Cleanup any CDAP JARs, so we use our own
-    rm -rf ${temp_repo}/co/cask/cdap
+    rm -rf ${temp_repo}/io/cdap/cdap
   fi
   display_start_title "Building and installing CDAP to ${temp_repo}"
   mvn clean package ${javadoc_run} -P templates,release -Dmaven.repo.local=${temp_repo} -DskipTests -Dgpg.skip=true -DisOffline=false ${debug_flag}
@@ -279,7 +279,7 @@ function build_docs_cli() {
     mvn package -pl cdap-docs-gen -am -DskipTests
     warnings=$?
     if [[ ${warnings} -eq 0 ]]; then
-      ${JAVA} -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
+      ${JAVA} -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar io.cdap.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
       warnings=$?
       echo
       echo "Completed building of CLI"

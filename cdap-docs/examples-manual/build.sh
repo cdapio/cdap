@@ -94,8 +94,8 @@ function download_includes() {
   fi
 
   local project_source="${source1}/${source2}/Wise"
-  local project_main=$project_source/src/main/java/co/cask/cdap/apps/wise
-  local project_test=$project_source/src/test/java/co/cask/cdap/apps/wise
+  local project_main=$project_source/src/main/java/io/cdap/cdap/apps/wise
+  local project_test=$project_source/src/test/java/io/cdap/cdap/apps/wise
   local project_img=$project_source/docs/img
 
   # 1:Includes directory  2:GitHub directory 3:Java filename       4:MD5 hash of file
@@ -129,38 +129,38 @@ function download_includes() {
 
   # Group alphabetically each example separately, files from each example together
 
-  test_an_include 0d1fdc6d75995c3c417886786ccc8997 ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViews.java
-  test_an_include 8d900a51c902750a7013dd5d76c46c7e ../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
+  test_an_include 0d1fdc6d75995c3c417886786ccc8997 ../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViews.java
+  test_an_include 8d900a51c902750a7013dd5d76c46c7e ../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
 
-  test_an_include 5a0df16e31ae9187160a84b5bb5ad013 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
-  test_an_include 56b92f6e32879b55363fbde823d5e0ea ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
+  test_an_include 5a0df16e31ae9187160a84b5bb5ad013 ../../cdap-examples/DataCleansing/src/main/java/io/cdap/cdap/examples/datacleansing/DataCleansing.java
+  test_an_include 56b92f6e32879b55363fbde823d5e0ea ../../cdap-examples/DataCleansing/src/main/java/io/cdap/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
-  test_an_include ce5a99853f6e2d2298888fdf15d3cfb7 ../../cdap-examples/DecisionTreeRegression/src/main/java/co/cask/cdap/examples/dtree/DecisionTreeRegressionApp.java
+  test_an_include ce5a99853f6e2d2298888fdf15d3cfb7 ../../cdap-examples/DecisionTreeRegression/src/main/java/io/cdap/cdap/examples/dtree/DecisionTreeRegressionApp.java
 
-  test_an_include fe679b53a1dc757a15fd3fcafc2046fd ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
-  test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
-  test_an_include 4107ad528a3e9ca569a0cdee43b189c5 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
+  test_an_include fe679b53a1dc757a15fd3fcafc2046fd ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetExample.java
+  test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
+  test_an_include 4107ad528a3e9ca569a0cdee43b189c5 ../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/WordCount.java
 
-  test_an_include 4626aaec1bbc5bdbfd1de28cc721ec76 ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
+  test_an_include 4626aaec1bbc5bdbfd1de28cc721ec76 ../../cdap-examples/LogAnalysis/src/main/java/io/cdap/cdap/examples/loganalysis/LogAnalysisApp.java
 
-  test_an_include 8d6bea3f2e94c8d49370858a32c64922 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
-  test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
-  test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+  test_an_include 8d6bea3f2e94c8d49370858a32c64922 ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseApp.java
+  test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseStore.java
+  test_an_include 1b4cbbca8854950d67230f9062b2548e ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryService.java
 
-  test_an_include 04abc21d3a3423cecc3b9c9619aa960d ../../cdap-examples/SpamClassifier/src/main/java/co/cask/cdap/examples/sparkstreaming/SpamClassifier.java
+  test_an_include 04abc21d3a3423cecc3b9c9619aa960d ../../cdap-examples/SpamClassifier/src/main/java/io/cdap/cdap/examples/sparkstreaming/SpamClassifier.java
 
-  test_an_include 3f25e035b2de8bd2d127733df1c58ff1 ../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
+  test_an_include 3f25e035b2de8bd2d127733df1c58ff1 ../../cdap-examples/SparkKMeans/src/main/java/io/cdap/cdap/examples/sparkkmeans/SparkKMeansApp.java
 
-  test_an_include fdf59cc4d67aef9abda0bc35e806a809 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include fdf59cc4d67aef9abda0bc35e806a809 ../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
-  test_an_include 61aac2c868c7966847aec6520dcf7529 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
-  test_an_include 26486a370532d820bde854d42990a868 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
-  test_an_include 6e0ed4027acafd163e8b891a1045717f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
+  test_an_include 61aac2c868c7966847aec6520dcf7529 ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/SportResults.java
+  test_an_include 26486a370532d820bde854d42990a868 ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
+  test_an_include 6e0ed4027acafd163e8b891a1045717f ../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/ScoreCounter.java
 
-  test_an_include 8a608fa3ffdaa8ac5c79456591ca7603 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
+  test_an_include 8a608fa3ffdaa8ac5c79456591ca7603 ../../cdap-examples/WikipediaPipeline/src/main/java/io/cdap/cdap/examples/wikipedia/WikipediaPipelineApp.java
 
-  test_an_include cfe55afe338b6c4aa40debc840594e0b ../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
+  test_an_include cfe55afe338b6c4aa40debc840594e0b ../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/WordCount.java
 
   echo_red_bold "Rewriting the Apps-Packs file"
   rewrite ${includes}/../../source/_includes/apps-packs.txt      ${includes}/apps-packs.txt      "<placeholder-version>" ${source2}

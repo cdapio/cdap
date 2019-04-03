@@ -55,7 +55,7 @@ LEVEL_1       = 'cdap-level-1-dependencies'
 LOCAL_SANDBOX = 'cdap-sandbox-dependencies'
 CDAP_UI       = 'cdap-ui-dependencies'
 
-CASK_REVERSE_DOMAIN = 'co.cask'
+CASK_REVERSE_DOMAIN = 'io.cdap'
 
 LICENSES_SOURCE = '../../reference-manual/source/licenses'
 
