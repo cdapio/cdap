@@ -106,12 +106,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -133,7 +139,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final LocationFactory locationFactory;
-  private final ConcurrentMap<ProgramRunId, RemoteExecutionTwillController> controllers;
+  private final Map<ProgramRunId, RemoteExecutionTwillController> controllers;
+  private final Lock controllersLock;
   private final MultiThreadMessagingContext messagingContext;
   private final RemoteExecutionLogProcessor logProcessor;
   private final MetricsCollectionService metricsCollectionService;
@@ -147,6 +154,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
   private LocationCache locationCache;
   private Path cachePath;
+  private ExecutorService startupTaskExecutor;
   private ScheduledExecutorService monitorScheduler;
   
   @Inject
@@ -163,6 +171,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.transactionRunner = transactionRunner;
     this.controllers = new ConcurrentHashMap<>();
+    this.controllersLock = new ReentrantLock();
     this.logProcessor = logProcessor;
     this.metricsCollectionService = metricsCollectionService;
     this.provisioningService = provisioningService;
@@ -187,6 +196,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
     monitorSocksProxy.startAndWait();
     serviceSocksProxy.startAndWait();
+
+    startupTaskExecutor = Executors.newCachedThreadPool(Threads.createDaemonThreadFactory("runtime-startup-%d"));
     monitorScheduler = Executors.newScheduledThreadPool(cConf.getInt(Constants.RuntimeMonitor.THREADS),
                                                         Threads.createDaemonThreadFactory("runtime-monitor-%d"));
     long startMillis = System.currentTimeMillis();
@@ -226,6 +237,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     } catch (IOException e) {
       LOG.warn("Exception raised during stop", e);
     } finally {
+      if (startupTaskExecutor != null) {
+        startupTaskExecutor.shutdownNow();
+      }
       if (monitorScheduler != null) {
         monitorScheduler.shutdownNow();
       }
@@ -271,7 +285,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                               serverKeyStore, clientKeyStore,
                                               application.configure(), programRunId, programOptions, null,
                                               locationCache, locationFactory,
-                                              createControllerFactory(programRunId, programOptions, clusterKeyInfo)) {
+                                              new ControllerFactory(programRunId, programOptions, clusterKeyInfo)) {
         @Override
         public TwillController start(long timeout, TimeUnit timeoutUnit) {
           try {
@@ -350,56 +364,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   }
 
   /**
-   * Creates a new instance of {@link RemoteExecutionTwillControllerFactory} for a given run.
-   */
-  private RemoteExecutionTwillControllerFactory createControllerFactory(ProgramRunId programRunId,
-                                                                        ProgramOptions programOptions,
-                                                                        ClusterKeyInfo clusterKeyInfo) {
-    return () -> controllers.computeIfAbsent(programRunId, key -> {
-      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
-      LOG.info("Creating controller for program run {} with SSH config {}", programRunId, sshConfig);
-
-      Cancellable removeSSHConfig = sshSessionManager.addSSHConfig(programRunId, clusterKeyInfo.getSSHConfig(),
-                                                                   new ProgramRunSSHSessionConsumer(programRunId));
-
-      // Allow the remote runtime to use the service proxy
-      serviceSocksProxyAuthenticator.add(clusterKeyInfo.getServerKeyStoreHash());
-
-      MonitorServerAddressSupplier serverAddressSupplier = new MonitorServerAddressSupplier(programRunId);
-
-      // Creates a runtime monitor
-      RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
-        HttpRequestConfig.DEFAULT, clusterKeyInfo.getClientKeyStore(),
-        KeyStores.createTrustStore(clusterKeyInfo.getServerKeyStore()),
-        serverAddressSupplier, new Proxy(Proxy.Type.SOCKS, monitorSocksProxy.getBindAddress())
-      );
-
-      RemoteProcessController remoteProcessController = new SSHRemoteProcessController(key, programOptions,
-                                                                                       sshConfig, provisioningService);
-      ProfileMetricService profileMetricsService = createProfileMetricsService(key, programOptions,
-                                                                               clusterKeyInfo.getCluster());
-      RuntimeMonitor runtimeMonitor = new RuntimeMonitor(key, cConf, runtimeMonitorClient,
-                                                         messagingContext, monitorScheduler, logProcessor,
-                                                         remoteProcessController, programStateWriter,
-                                                         transactionRunner, profileMetricsService);
-      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
-        RunIds.fromString(key.getRun()), runtimeMonitor);
-
-      // When the program completed, remove the controller from the map.
-      // Also remove the ssh config from the session manager so that it can't be used again.
-      controller.onTerminated(() -> {
-        LOG.info("Controller completed for program run {} with SSH config {}", programRunId, sshConfig);
-        serviceSocksProxyAuthenticator.remove(clusterKeyInfo.getServerKeyStoreHash());
-        controllers.remove(key, controller);
-        serverAddressSupplier.close();
-        removeSSHConfig.cancel();
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-      return controller;
-    });
-  }
-
-  /**
    * Creates a {@link ProfileMetricService} for the profile being used for the given program run.
    */
   private ProfileMetricService createProfileMetricsService(ProgramRunId programRunId,
@@ -461,9 +425,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
             }
 
             ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(programOptions, locationFactory);
-            RemoteExecutionTwillController controller = createControllerFactory(programRunId, programOptions,
-                                                                                clusterKeyInfo).create();
-            controller.getRuntimeMonitor().start();
+            // Creates a controller via the controller factory.
+            // Since there is no startup start needed, the timeout is arbitrarily short
+            new ControllerFactory(programRunId, programOptions, clusterKeyInfo).create(null, 5, TimeUnit.SECONDS);
           }
 
           return scanResult.isEmpty();
@@ -512,6 +476,127 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private static Location getKeysDirLocation(ProgramOptions programOptions, LocationFactory locationFactory) {
     return locationFactory.create(
       GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.SECURE_KEYS_DIR), URI.class));
+  }
+
+  /**
+   * Implementation of {@link RemoteExecutionTwillControllerFactory}.
+   */
+  private final class ControllerFactory implements RemoteExecutionTwillControllerFactory {
+
+    private final ProgramRunId programRunId;
+    private final ProgramOptions programOptions;
+    private final ClusterKeyInfo clusterKeyInfo;
+
+    ControllerFactory(ProgramRunId programRunId, ProgramOptions programOptions, ClusterKeyInfo clusterKeyInfo) {
+      this.programRunId = programRunId;
+      this.programOptions = programOptions;
+      this.clusterKeyInfo = clusterKeyInfo;
+    }
+
+    @Override
+    public RemoteExecutionTwillController create(@Nullable Callable<Void> startupTask,
+                                                 long timeout, TimeUnit timeoutUnit) {
+      // Make sure we don't run the startup task and create controller if there is already one existed.
+      controllersLock.lock();
+      try {
+        RemoteExecutionTwillController controller = controllers.get(programRunId);
+        if (controller != null) {
+          return controller;
+        }
+
+        CompletableFuture<Void> startupTaskCompletion = new CompletableFuture<>();
+
+        // Execute the startup task if provided
+        if (startupTask != null) {
+          Future<?> startupTaskFuture = startupTaskExecutor.submit(() -> {
+            try {
+              startupTaskCompletion.complete(startupTask.call());
+            } catch (Throwable t) {
+              startupTaskCompletion.completeExceptionally(t);
+            }
+          });
+
+          // Schedule the timeout check and cancel the startup task if timeout reached.
+          // This is a quick task, hence just piggy back on the monitor scheduler to do so.
+          monitorScheduler.schedule(() -> {
+            if (!startupTaskFuture.isDone()) {
+              startupTaskFuture.cancel(true);
+              startupTaskCompletion.completeExceptionally(
+                new TimeoutException("Starting of program run " + programRunId + " takes longer then "
+                                       + timeout + " " + timeoutUnit.name().toLowerCase()));
+            }
+          }, timeout, timeoutUnit);
+
+          // If the startup task failed, publish failure state and delete the program running state
+          startupTaskCompletion.whenComplete((res, throwable) -> {
+            if (throwable == null) {
+              LOG.debug("Startup task completed for program run {}", programRunId);
+            } else {
+              LOG.error("Fail to start program run {}", programRunId, throwable);
+              deleteRunningState(programRunId);
+              programStateWriter.error(programRunId, throwable);
+            }
+          });
+        } else {
+          // Otherwise, complete the startup task immediately
+          startupTaskCompletion.complete(null);
+        }
+
+        controller = createController(startupTaskCompletion);
+        controllers.put(programRunId, controller);
+        return controller;
+      } finally {
+        controllersLock.unlock();
+      }
+    }
+
+    /**
+     * Creates a new instance of {@link RemoteExecutionTwillController}.
+     */
+    private RemoteExecutionTwillController createController(CompletableFuture<Void> startupTaskCompletion) {
+      // Create a new controller
+      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
+      LOG.info("Creating controller for program run {} with SSH config {}", programRunId, sshConfig);
+
+      Cancellable removeSSHConfig = sshSessionManager.addSSHConfig(programRunId, clusterKeyInfo.getSSHConfig(),
+                                                                   new ProgramRunSSHSessionConsumer(programRunId));
+
+      // Allow the remote runtime to use the service proxy
+      serviceSocksProxyAuthenticator.add(clusterKeyInfo.getServerKeyStoreHash());
+
+      MonitorServerAddressSupplier serverAddressSupplier = new MonitorServerAddressSupplier(programRunId);
+
+      // Creates a runtime monitor
+      RuntimeMonitorClient runtimeMonitorClient = new RuntimeMonitorClient(
+        HttpRequestConfig.DEFAULT, clusterKeyInfo.getClientKeyStore(),
+        KeyStores.createTrustStore(clusterKeyInfo.getServerKeyStore()),
+        serverAddressSupplier, new Proxy(Proxy.Type.SOCKS, monitorSocksProxy.getBindAddress())
+      );
+
+      RemoteProcessController processController = new SSHRemoteProcessController(programRunId, programOptions,
+                                                                                 sshConfig, provisioningService);
+      ProfileMetricService profileMetricsService = createProfileMetricsService(programRunId, programOptions,
+                                                                               clusterKeyInfo.getCluster());
+      RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, cConf, runtimeMonitorClient,
+                                                         messagingContext, monitorScheduler, logProcessor,
+                                                         processController, programStateWriter,
+                                                         transactionRunner, profileMetricsService);
+      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
+        RunIds.fromString(programRunId.getRun()), runtimeMonitor);
+
+      // When the program completed, remove the controller from the map.
+      // Also remove the ssh config from the session manager so that it can't be used again.
+      controller.onTerminated(() -> {
+        LOG.info("Controller completed for program run {} with SSH config {}", programRunId, sshConfig);
+        serviceSocksProxyAuthenticator.remove(clusterKeyInfo.getServerKeyStoreHash());
+        controllers.remove(programRunId, controller);
+        serverAddressSupplier.close();
+        removeSSHConfig.cancel();
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+      controller.start(startupTaskCompletion);
+      return controller;
+    }
   }
 
   /**

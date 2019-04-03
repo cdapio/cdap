@@ -301,7 +301,7 @@ public class CoreMessagingService extends AbstractIdleService implements Messagi
   private void createTopicIfNotExists(TopicId topicId) throws IOException {
     try {
       createTopic(new TopicMetadata(topicId));
-      LOG.info("System topic created: {}", topicId);
+      LOG.debug("System topic created: {}", topicId);
     } catch (TopicAlreadyExistsException e) {
       // OK for the topic already created. Just log a debug as it happens on every restart.
       LOG.debug("System topic already exists: {}", topicId);
