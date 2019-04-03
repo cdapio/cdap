@@ -17,7 +17,7 @@
 import MyUserStoreApi from 'api/userstore';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
-import Store, { Actions } from 'components/PipelineList/DraftPipelineView/store';
+import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DraftPipelineView/store';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import orderBy from 'lodash/orderBy';
 
@@ -64,5 +64,40 @@ export function deleteDraft(draft: IDraft) {
 
       MyUserStoreApi.set(null, res.property).subscribe(getDrafts);
     }
+  });
+}
+
+export function setSort(columnName: string) {
+  const state = Store.getState().drafts;
+  const currentColumn = state.sortColumn;
+  const currentSortOrder = state.sortOrder;
+
+  let sortOrder = SORT_ORDER.asc;
+  if (currentColumn === columnName && currentSortOrder === SORT_ORDER.asc) {
+    sortOrder = SORT_ORDER.desc;
+  }
+
+  let orderColumnFunction;
+  switch (columnName) {
+    case 'name':
+      orderColumnFunction = (draft) => draft.name;
+      break;
+    case 'type':
+      orderColumnFunction = (draft) => draft.artifact.name;
+      break;
+    case 'lastSaved':
+      orderColumnFunction = (draft) => draft.__ui__.lastSaved;
+      break;
+  }
+
+  const drafts = orderBy(state.list, [orderColumnFunction], [sortOrder]);
+
+  Store.dispatch({
+    type: Actions.setSort,
+    payload: {
+      sortColumn: columnName,
+      sortOrder,
+      list: drafts,
+    },
   });
 }

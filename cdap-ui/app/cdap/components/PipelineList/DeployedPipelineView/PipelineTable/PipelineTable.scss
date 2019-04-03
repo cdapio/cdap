@@ -22,7 +22,7 @@ $row-hover-color: $grey-08;
 $row-color: $grey-01;
 
 $type-width: 100px;
-$runs-width: 100px;
+$runs-width: 120px;
 $status-width: 150px;
 $last-start-width: 200px;
 $next-run-width: 150px;
@@ -38,6 +38,15 @@ $action-width: 60px;
 
     .grid-header > .grid-row {
       border-width: 3px;
+
+      .sortable {
+        cursor: pointer;
+      }
+
+      .fa.fa-lg {
+        vertical-align: top;
+        margin-left: 5px;
+      }
     }
 
     .grid-row {

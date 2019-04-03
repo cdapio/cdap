@@ -20,6 +20,7 @@ import { getDrafts, reset } from 'components/PipelineList/DraftPipelineView/stor
 import { Provider } from 'react-redux';
 import Store from 'components/PipelineList/DraftPipelineView/store';
 import DraftCount from 'components/PipelineList/DraftPipelineView/DraftCount';
+import Pagination from 'components/PipelineList/DraftPipelineView/Pagination';
 
 import './DraftPipelineView.scss';
 
@@ -38,6 +39,7 @@ export default class DraftPipelineView extends React.PureComponent {
         <div className="pipeline-draft-view pipeline-list-content">
           <div className="draft-header">
             <DraftCount />
+            <Pagination />
           </div>
 
           <DraftTable />

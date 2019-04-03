@@ -17,7 +17,7 @@
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { GLOBALS } from 'services/global-constants';
 import { MyPipelineApi } from 'api/pipeline';
-import Store, { Actions } from 'components/PipelineList/DeployedPipelineView/store';
+import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DeployedPipelineView/store';
 import { objectQuery } from 'services/helpers';
 import { PROGRAM_STATUSES } from 'services/global-constants';
 import {
@@ -27,6 +27,7 @@ import {
   IRunsCountMap,
 } from 'components/PipelineList/DeployedPipelineView/types';
 import orderBy from 'lodash/orderBy';
+import StatusMapper from 'services/StatusMapper';
 
 const ProgramType = {
   [GLOBALS.etlDataPipeline]: 'Workflow',
@@ -129,9 +130,11 @@ function fetchRuns(namespace: string, pipelines: IPipelineParams[]) {
 
     res.forEach((pipeline) => {
       const latestRun = objectQuery(pipeline, 'runs', 0) || DEFAULT_STATUS;
+      const displayStatus = StatusMapper.lookupDisplayStatus(latestRun.status);
 
       statusMap[pipeline.appId] = {
         status: latestRun.status,
+        displayStatus,
         lastStarting: latestRun.starting,
       };
     });
@@ -173,5 +176,54 @@ function fetchRunsCount(namespace: string, pipelines: IPipelineParams[]) {
         runsCountMap,
       },
     });
+  });
+}
+
+export function setSort(columnName: string) {
+  const state = Store.getState().deployed;
+  const currentColumn = state.sortColumn;
+  const currentSortOrder = state.sortOrder;
+  const statusMap = state.statusMap;
+  const runsCountMap = state.runsCountMap;
+
+  let sortOrder = SORT_ORDER.asc;
+  if (currentColumn === columnName && currentSortOrder === SORT_ORDER.asc) {
+    sortOrder = SORT_ORDER.desc;
+  }
+
+  let orderColumnFunction;
+  switch (columnName) {
+    case 'name':
+      orderColumnFunction = (pipeline) => pipeline.name.toLowerCase();
+      break;
+    case 'type':
+      orderColumnFunction = (pipeline) => pipeline.artifact.name;
+      break;
+    case 'status':
+      orderColumnFunction = (pipeline) => statusMap[pipeline.name].displayStatus;
+      break;
+    case 'lastStartTime':
+      orderColumnFunction = (pipeline) => {
+        const lastStarting = statusMap[pipeline.name].lastStarting;
+        if (!lastStarting) {
+          return sortOrder === SORT_ORDER.asc ? Infinity : -1;
+        }
+        return lastStarting;
+      };
+      break;
+    case 'runs':
+      orderColumnFunction = (pipeline) => runsCountMap[pipeline.name] || 0;
+      break;
+  }
+
+  const pipelines = orderBy(state.pipelines, [orderColumnFunction], [sortOrder]);
+
+  Store.dispatch({
+    type: Actions.setSort,
+    payload: {
+      sortColumn: columnName,
+      sortOrder,
+      pipelines,
+    },
   });
 }

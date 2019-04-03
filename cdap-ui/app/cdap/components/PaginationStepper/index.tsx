@@ -18,6 +18,7 @@ import * as React from 'react';
 import IconButton from '@material-ui/core/IconButton';
 import ChevronLeft from '@material-ui/icons/ChevronLeft';
 import ChevronRight from '@material-ui/icons/ChevronRight';
+import './PaginationStepper.scss';
 
 interface IPaginationStepperProps {
   onPrev: () => void;
@@ -34,11 +35,11 @@ const PaginationStepper: React.SFC<IPaginationStepperProps> = ({
 }) => {
   return (
     <div className="pagination-stepper-container">
-      <IconButton onClick={onPrev} disabled={prevDisabled}>
+      <IconButton onClick={onPrev} disabled={prevDisabled} className="step-button">
         <ChevronLeft fontSize="small" />
       </IconButton>
 
-      <IconButton onClick={onNext} disabled={nextDisabled}>
+      <IconButton onClick={onNext} disabled={nextDisabled} className="step-button">
         <ChevronRight fontSize="small" />
       </IconButton>
     </div>
