@@ -542,7 +542,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
           startupTaskCompletion.complete(null);
         }
 
-        return createController(startupTaskCompletion);
+        controller = createController(startupTaskCompletion);
+        controllers.put(programRunId, controller);
+        return controller;
       } finally {
         controllersLock.unlock();
       }
@@ -579,21 +581,21 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                          messagingContext, monitorScheduler, logProcessor,
                                                          processController, programStateWriter,
                                                          transactionRunner, profileMetricsService);
-      RemoteExecutionTwillController newController = new RemoteExecutionTwillController(
+      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
         RunIds.fromString(programRunId.getRun()), runtimeMonitor);
 
       // When the program completed, remove the controller from the map.
       // Also remove the ssh config from the session manager so that it can't be used again.
-      newController.onTerminated(() -> {
+      controller.onTerminated(() -> {
         LOG.info("Controller completed for program run {} with SSH config {}", programRunId, sshConfig);
         serviceSocksProxyAuthenticator.remove(clusterKeyInfo.getServerKeyStoreHash());
-        controllers.remove(programRunId, newController);
+        controllers.remove(programRunId, controller);
         serverAddressSupplier.close();
         removeSSHConfig.cancel();
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      newController.start(startupTaskCompletion);
-      return newController;
+      controller.start(startupTaskCompletion);
+      return controller;
     }
   }
 
