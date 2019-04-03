@@ -496,6 +496,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     @Override
     public RemoteExecutionTwillController create(@Nullable Callable<Void> startupTask,
                                                  long timeout, TimeUnit timeoutUnit) {
+      // Make sure we don't run the startup task and create controller if there is already one existed.
       controllersLock.lock();
       try {
         RemoteExecutionTwillController controller = controllers.get(programRunId);
