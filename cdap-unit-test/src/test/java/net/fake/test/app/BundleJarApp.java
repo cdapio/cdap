@@ -49,7 +49,7 @@ import javax.ws.rs.PathParam;
 public class BundleJarApp extends AbstractApplication {
   private static final Logger LOG = LoggerFactory.getLogger(BundleJarApp.class);
   public static final String EXPECTED_LOAD_TEST_CLASSES_OUTPUT =
-    "hello_HelloWorld__co_cask_cdap_api_schedule_Trigger";
+    "hello_HelloWorld__io_cdap_cdap_api_schedule_Trigger";
 
   @Override
   public void configure() {
