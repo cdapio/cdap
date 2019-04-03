@@ -17,7 +17,7 @@
 import Version from 'services/VersionRange/Version';
 
 // FE implementation of ArtifactRange
-// co.cask.cdap.proto.artifact.ArtifactRange
+// io.cdap.cdap.proto.artifact.ArtifactRange
 export default class VersionRange {
   constructor(range) {
     let { lower, upper, isLowerInclusive, isUpperInclusive } = parseRange(range);
