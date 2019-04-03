@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1Container;
+import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1OwnerReference;
 import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1Volume;
@@ -229,12 +230,14 @@ public class KubeMasterEnvironment implements MasterEnvironment {
       .filter(m -> CONFIG_NAMES.contains(m.getName()))
       .collect(Collectors.toList());
 
+    List<V1EnvVar> envs = container.getEnv();
+
     // Use the same service account as the current process for now.
     // Ideally we should use a more restricted role.
     String serviceAccountName = pod.getSpec().getServiceAccountName();
     return new PodInfo(podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
-                       podNameFile.getName(), namespace, podLabels, ownerReferences,
-                       serviceAccountName,
-                       volumes, containerLabelName, container.getImage(), mounts);
+                       podNameFile.getName(), namespace, podLabels, ownerReferences, serviceAccountName,
+                       volumes, containerLabelName, container.getImage(), mounts,
+                       envs == null ? Collections.emptyList() : envs);
   }
 }
