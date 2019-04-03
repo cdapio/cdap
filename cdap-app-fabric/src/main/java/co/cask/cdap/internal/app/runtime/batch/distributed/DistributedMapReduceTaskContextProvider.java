@@ -48,6 +48,7 @@ import java.util.LinkedList;
  */
 public final class DistributedMapReduceTaskContextProvider extends MapReduceTaskContextProvider {
 
+  private final ClusterMode clusterMode;
   private final Deque<Service> coreServices;
   private final MapReduceContextConfig mapReduceContextConfig;
   private final LogAppenderInitializer logAppenderInitializer;
@@ -58,11 +59,12 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     super(createInjector(cConf, hConf), mapReduceClassLoader);
 
     MapReduceContextConfig mapReduceContextConfig = new MapReduceContextConfig(hConf);
+    this.clusterMode = ProgramRunners.getClusterMode(mapReduceContextConfig.getProgramOptions());
 
     Injector injector = getInjector();
 
     Deque<Service> coreServices = new LinkedList<>();
-    if (ProgramRunners.getClusterMode(mapReduceContextConfig.getProgramOptions()) == ClusterMode.ON_PREMISE) {
+    if (clusterMode == ClusterMode.ON_PREMISE) {
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
     }
@@ -78,8 +80,10 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     super.startUp();
     try {
       oldProxySelector = ProxySelector.getDefault();
-      ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
-      Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
+      if (clusterMode == ClusterMode.ISOLATED) {
+        ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
+        Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
+      }
 
       for (Service service : coreServices) {
         service.startAndWait();
@@ -118,8 +122,10 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
         }
       }
     }
+
     Authenticator.setDefault(null);
     ProxySelector.setDefault(oldProxySelector);
+
     if (failure != null) {
       throw failure;
     }
