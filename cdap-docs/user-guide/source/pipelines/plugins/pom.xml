@@ -18,7 +18,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 <modelVersion>4.0.0</modelVersion>
 
-  <groupId>co.cask.hydrator</groupId>
+  <groupId>io.cdap.hydrator</groupId>
   <artifactId>hydrator-plugins</artifactId>
   <version>1.7.0</version>
   <packaging>pom</packaging>
@@ -162,72 +162,72 @@
         <version>1.0</version>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-api</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-api-spark</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-etl-proto</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-etl-api</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-etl-api-spark</artifactId>
         <version>${cdap.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-formats</artifactId>
         <version>${cdap.version}</version>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-data-pipeline</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-data-streams</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>hydrator-test</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-etl-realtime</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-test</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-unit-test</artifactId>
         <version>${cdap.version}</version>
         <scope>test</scope>

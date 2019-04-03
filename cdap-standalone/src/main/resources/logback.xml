@@ -46,9 +46,9 @@
   <logger name="org.quartz.core" level="WARN"/>
   <logger name="org.eclipse.jetty" level="WARN"/>
   <logger name="io.netty.util.internal" level="WARN"/>
-  <logger name="co.cask" level="DEBUG"/>
-  <logger name="co.cask.cdap.operations.OperationalStats" level="ERROR"/>
-  <logger name="co.cask.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
+  <logger name="io.cdap" level="DEBUG"/>
+  <logger name="io.cdap.cdap.operations.OperationalStats" level="ERROR"/>
+  <logger name="io.cdap.cdap.extension.AbstractExtensionLoader" level="ERROR"/>
   <logger name="akka" level="WARN"/>
   <logger name="Remoting" level="WARN"/>
   <logger name="com.sun.jersey" level="WARN"/>
@@ -58,7 +58,7 @@
     not from user handler, which usually is due to network error.
     Disabling the log to avoid flooding.
   -->
-  <logger name="co.cask.http.HttpDispatcher" level="OFF"/>
+  <logger name="io.cdap.http.HttpDispatcher" level="OFF"/>
 
 
   <logger name="WriteAheadLogManager " level="WARN"/>

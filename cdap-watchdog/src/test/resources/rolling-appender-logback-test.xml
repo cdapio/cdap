@@ -25,7 +25,7 @@
 
   <property name="cdap.log.saver.instance.id" value="instanceId"/>
 
-  <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
+  <appender name="rollingAppender" class="io.cdap.cdap.logging.plugins.RollingLocationLogAppender">
     <!--log file path will be created by appender as: <basePath>/namespaceId/applicationId/<filePath>-->
     <basePath>plugins/applogs</basePath>
     <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
@@ -40,14 +40,14 @@
     modified for fileMaxInactiveTimeMs period of time -->
     <fileMaxInactiveTimeMs>200</fileMaxInactiveTimeMs>
 
-    <rollingPolicy class="co.cask.cdap.logging.plugins.FixedWindowRollingPolicy">
+    <rollingPolicy class="io.cdap.cdap.logging.plugins.FixedWindowRollingPolicy">
       <!--Only specify file name without directory, appender will use appropriate directory specified in filePath-->
       <fileNamePattern>logFile-${cdap.log.saver.instance.id}.log.%i</fileNamePattern>
       <minIndex>1</minIndex>
       <maxIndex>9</maxIndex>
     </rollingPolicy>
 
-    <triggeringPolicy class="co.cask.cdap.logging.plugins.SizeBasedTriggeringPolicy">
+    <triggeringPolicy class="io.cdap.cdap.logging.plugins.SizeBasedTriggeringPolicy">
       <maxFileSize>5KB</maxFileSize>
     </triggeringPolicy>
 
@@ -58,7 +58,7 @@
     </encoder>
   </appender>
 
-  <logger name="co.cask.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">
+  <logger name="io.cdap.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">
     <appender-ref ref="rollingAppender"/>
   </logger>
 

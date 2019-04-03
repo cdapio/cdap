@@ -20,7 +20,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>co.cask.cdap</groupId>
+  <groupId>io.cdap.cdap</groupId>
   <artifactId>cdap</artifactId>
   <version>6.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -1508,7 +1508,7 @@
         <version>${spark2.version}</version>
       </dependency>
       <dependency>
-        <groupId>co.cask.cdap</groupId>
+        <groupId>io.cdap.cdap</groupId>
         <artifactId>cdap-authentication-client</artifactId>
         <version>${cdap.client.version}</version>
       </dependency>
@@ -1870,7 +1870,7 @@
     <profile>
       <id>test-fast</id>
       <properties>
-        <testcase.groups>!co.cask.cdap.test.SlowTests</testcase.groups>
+        <testcase.groups>!io.cdap.cdap.test.SlowTests</testcase.groups>
       </properties>
       <build>
         <pluginManagement>
@@ -1892,7 +1892,7 @@
     <profile>
       <id>test-slow</id>
       <properties>
-        <testcase.groups>!co.cask.cdap.test.XSlowTests</testcase.groups>
+        <testcase.groups>!io.cdap.cdap.test.XSlowTests</testcase.groups>
       </properties>
       <build>
         <pluginManagement>
@@ -2267,10 +2267,10 @@
                   <source>
                     if (project.version.endsWith("-SNAPSHOT")){
                       project.properties['deploy.url'] = project.properties['cask.packages.snapshot.repo'];
-                      project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.snapshots";
+                      project.properties['dist.deploy.groupId'] = "io.cdap.cdap.distributions.snapshots";
                     } else {
                       project.properties['deploy.url'] = project.properties['cask.packages.release.repo'];
-                      project.properties['dist.deploy.groupId'] = "co.cask.cdap.distributions.release";
+                      project.properties['dist.deploy.groupId'] = "io.cdap.cdap.distributions.release";
                     }
                   </source>
                 </configuration>
@@ -2788,15 +2788,15 @@
           <groups>
             <group>
               <title>Core Packages</title>
-              <packages>co.cask.cdap.api:co.cask.cdap.api.*:co.cask.cdap.test</packages>
+              <packages>io.cdap.cdap.api:io.cdap.cdap.api.*:io.cdap.cdap.test</packages>
             </group>
             <group>
               <title>Application Template Packages</title>
-              <packages>co.cask.cdap.etl.*</packages>
+              <packages>io.cdap.cdap.etl.*</packages>
             </group>
             <group>
               <title>Java Client Packages</title>
-              <packages>co.cask.cdap.client:co.cask.cdap.client.*</packages>
+              <packages>io.cdap.cdap.client:io.cdap.cdap.client.*</packages>
             </group>
           </groups>
         </configuration>
@@ -2811,8 +2811,8 @@
               <excludePackageNames>*.internal.*</excludePackageNames>
               <sourceFileIncludes>
                 <include>**/api/**/*.java</include>
-                <include>co/cask/cdap/client/**/*.java</include>
-                <include>co/cask/cdap/test/*.java</include>
+                <include>io/cdap/cdap/client/**/*.java</include>
+                <include>io/cdap/cdap/test/*.java</include>
               </sourceFileIncludes>
             </configuration>
           </reportSet>
