@@ -195,7 +195,7 @@ their preferences before the program starts.
 
   For example, if you want to set the log level of the ``UploadService`` class of the
   :ref:`Sport Results example <examples-sport-results>` to ``DEBUG``, you would use
-  ``system.log.level.co.cask.cdap.examples.sportresults.UploadService`` as the key and ``DEBUG``
+  ``system.log.level.io.cdap.cdap.examples.sportresults.UploadService`` as the key and ``DEBUG``
   as the value. This can be applied to any package or classes. If the logger name is
   omitted, it will change the log level of ROOT.
 
@@ -511,7 +511,7 @@ Here is an example "logback" file, using two appenders (``STDOUT`` and
 
     <property name="cdap.log.saver.instance.id" value="instanceId"/>
 
-    <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
+    <appender name="rollingAppender" class="io.cdap.cdap.logging.plugins.RollingLocationLogAppender">
 
       <!-- log file path will be created by the appender as: <basePath>/<namespace-id>/<application-id>/<filePath> -->
       <basePath>plugins/applogs</basePath>
@@ -530,7 +530,7 @@ Here is an example "logback" file, using two appenders (``STDOUT`` and
       period of time. Here it is set for thirty minutes. -->
       <fileMaxInactiveTimeMs>1800000</fileMaxInactiveTimeMs>
 
-      <rollingPolicy class="co.cask.cdap.logging.plugins.FixedWindowRollingPolicy">
+      <rollingPolicy class="io.cdap.cdap.logging.plugins.FixedWindowRollingPolicy">
         <!-- Only specify the file name without a directory, as the appender will use the
         appropriate directory specified in filePath -->
         <fileNamePattern>logFile-${cdap.log.saver.instance.id}.log.%i</fileNamePattern>
@@ -538,7 +538,7 @@ Here is an example "logback" file, using two appenders (``STDOUT`` and
         <maxIndex>9</maxIndex>
       </rollingPolicy>
 
-      <triggeringPolicy class="co.cask.cdap.logging.plugins.SizeBasedTriggeringPolicy">
+      <triggeringPolicy class="io.cdap.cdap.logging.plugins.SizeBasedTriggeringPolicy">
         <!-- Set the maximum file size appropriately to avoid a large number of small files -->
         <maxFileSize>100MB</maxFileSize>
       </triggeringPolicy>
@@ -550,7 +550,7 @@ Here is an example "logback" file, using two appenders (``STDOUT`` and
       </encoder>
     </appender>
 
-    <logger name="co.cask.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">
+    <logger name="io.cdap.cdap.logging.plugins.RollingLocationLogAppenderTest" level="INFO">
       <appender-ref ref="rollingAppender"/>
     </logger>
 
@@ -604,7 +604,7 @@ extension of Logback's ``LoggerContext``::
   }
 
 Adding a dependency on the ``cdap-watchdog`` API will allow you to access the
-:cdap-java-source-github:`cdap-watchdog-api/src/main/java/co/cask/cdap/api/logging/AppenderContext.java`
+:cdap-java-source-github:`cdap-watchdog-api/src/main/java/io/cdap/cdap/api/logging/AppenderContext.java`
 in your appender.
 
 

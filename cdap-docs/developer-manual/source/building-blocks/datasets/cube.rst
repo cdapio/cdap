@@ -13,7 +13,7 @@ Cube Dataset
 Overview
 ========
 A `Cube dataset
-<../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/cube/package-summary.html>`__
+<../../../reference-manual/javadocs/io/cdap/cdap/api/dataset/lib/cube/package-summary.html>`__
 is an implementation of an `OLAP Cube <http://en.wikipedia.org/wiki/OLAP_cube>`__ that is
 pre-packaged with CDAP. Cube datasets store multidimensional facts and provide a querying
 interface for the retrieval of the data. Additionally, Cube datasets allows for

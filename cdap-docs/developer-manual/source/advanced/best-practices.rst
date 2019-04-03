@@ -70,7 +70,7 @@ boxed types (such as an ``Integer``), ``String``, and ``enum``.
 Scanning Over Tables with Byte Array Keys
 =========================================
 In the CDAP Java API, 
-`Bytes.stopKeyForPrefix() <../../reference-manual/javadocs/co/cask/cdap/api/common/Bytes.html#stopKeyForPrefix(byte[])>`__
+`Bytes.stopKeyForPrefix() <../../reference-manual/javadocs/io/cdap/cdap/api/common/Bytes.html#stopKeyForPrefix(byte[])>`__
 is a very handy tool when performing scans over tables with byte array (``byte[]``) keys.
 
 The method returns a given prefix, incremented by one, in a form that is suitable for

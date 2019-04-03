@@ -148,7 +148,7 @@ For example, as shown in the :ref:`WordCount example <examples-word-count>`, the
 transaction for this handler method, and the handler can rely on the transactional
 consistency of the data it reads from the dataset:
 
-.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/RetrieveCountsHandler.java
+.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/RetrieveCountsHandler.java
    :language: java
    :lines: 118-140
    :dedent: 2
@@ -169,7 +169,7 @@ turned off by annotating the method with ``@TransactionPolicy(TransactionControl
 
 For example, in the ``FileSetService`` of the :ref:`FileSetExample <examples-fileset>`:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
    :language: java
    :lines: 79-83
    :dedent: 4
@@ -208,7 +208,7 @@ For example, this service handler method (from the ``UploadService`` of the
 access the partition metadata, whereas the streaming of the file contents to the client is
 performed outside the transaction:
 
-.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
+.. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/io/cdap/cdap/examples/sportresults/UploadService.java
    :language: java
    :lines: 75-104
    :dedent: 4

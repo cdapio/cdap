@@ -506,18 +506,18 @@ Deprecated and Removed Features
 
 - :cask-issue:`CDAP-5966` - Removed multiple deprecated programmatic and RESTful API's in CDAP.
     - Deprecated public APIs removed from the ``cdap-api`` module:
-    	- Scheduling workflow using ``co.cask.cdap.api.schedule.Schedule`` in ``AbstractApplication`` has been removed,
-    	  use ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for scheduling workflow.
-    	- Adding schedule using ``co.cask.cdap.api.schedule.Schedule`` is removed in ``ApplicationConfigurer``, use
-    	  ``co.cask.cdap.internal.schedule.ScheduleCreationSpec`` for adding schedules.
+    	- Scheduling workflow using ``io.cdap.cdap.api.schedule.Schedule`` in ``AbstractApplication`` has been removed,
+    	  use ``io.cdap.cdap.internal.schedule.ScheduleCreationSpec`` for scheduling workflow.
+    	- Adding schedule using ``io.cdap.cdap.api.schedule.Schedule`` is removed in ``ApplicationConfigurer``, use
+    	  ``io.cdap.cdap.internal.schedule.ScheduleCreationSpec`` for adding schedules.
     	- Deprecated methods ``getStreams``, ``getDatasetModules``
     	  and ``getDatasetSpecs`` have been removed from ``FlowletDefinition``.
     	- ``beforeSubmit`` and ``onFinish`` methods have been removed from ``Mapreduce`` and ``Spark`` interfaces, use
     	  ``ProgramLifecycle#initialize`` and ``ProgramLifecycle#destroy`` instead.
     	- ``RunConstraints``, ``ScheduleSpecification`` and ``Schedule`` classes in package
-    	  ``co.cask.cdap.api.schedule`` have been removed.
+    	  ``io.cdap.cdap.api.schedule`` have been removed.
     	- ``WorkflowAction``, ``WorkflowActionConfigurer``, ``WorkflowActionSpecification``, ``AbstractWorkflowAction``
-    	  have been removed from the package ``co.cask.cdap.api.workflow``. Use ``CustomAction`` for workflows instead.
+    	  have been removed from the package ``io.cdap.cdap.api.workflow``. Use ``CustomAction`` for workflows instead.
     	- ``WorkflowConfigurer#addAction(WorkflowAction action)`` has been removed, use
     	  ``addAction(CustomAction action)`` instead.
     	- ``MapReduceTaskContext#getInputName`` has been removed, use ``getInputContext`` instead.
@@ -532,7 +532,7 @@ Deprecated and Removed Features
     	  ``toScheduleSpecs(List<ScheduleDetail> details)``, have been removed from ``ScheduleDetail``.
     	- Deprecated ``MetadataRecord`` class has been removed.
     - The following deprecations have been removed from the ``cdap-client`` module:
-     	- Removed methods which were using the old ``co.cask.cdap.proto.Id`` classes in ``ApplicationClient``,
+     	- Removed methods which were using the old ``io.cdap.cdap.proto.Id`` classes in ``ApplicationClient``,
      	  ``ArtifactClient``, ``ClientConfig``, ``DatsetClient``, ``DatasetModuleClient``, ``DatasetTypeClient``,
      	  ``LineageClient``, ``MetricsClient``, ``ProgramClient``, ``ScheduleClient``, ``ServiceClient``,
      	  ``StreamClient``, ``StreamViewClient`` and ``WorkflowClient``.
@@ -2050,11 +2050,11 @@ New Features
     in CDAP. Provided extensions for operational stats from YARN, HDFS, HBase, and CDAP.
 
   - :cask-issue:`CDAP-7703` - Added reporting operational statistics for YARN. They can be
-    retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
+    retrieved using JMX with the domain name ``io.cdap.cdap.operations`` and the property
     ``name`` set to ``yarn``.
 
   - :cask-issue:`CDAP-7704` - Added reporting operational statistics for HBase. They can be
-    retrieved using JMX with the domain name ``co.cask.cdap.operations`` and the property
+    retrieved using JMX with the domain name ``io.cdap.cdap.operations`` and the property
     ``name`` set to ``hbase`` as well as through the CDAP UI Administration page.
 
 - Dynamic Log Level
@@ -5974,7 +5974,7 @@ Bug Fixes
   Fixed a problem with CLI and UI listing system.queue as a dataset.
 
 - `CDAP-2769 <https://issues.cask.co/browse/CDAP-2769>`__ -
-  Fixed a problem with Use co.cask.cdap.common.app.RunIds instead of
+  Fixed a problem with Use io.cdap.cdap.common.app.RunIds instead of
   org.apache.twill.internal.RunIds for InMemoryServiceProgramRunner.
 
 - `CDAP-2787 <https://issues.cask.co/browse/CDAP-2787>`__ -
@@ -6425,7 +6425,7 @@ Improvements
 **Tools**
 
 - Added a tool (`HBaseQueueDebugger
-  <https://github.com/caskdata/cdap/blob/release/3.0/cdap-master/src/main/java/co/cask/cdap/data/tools/HBaseQueueDebugger.java>`__)
+  <https://github.com/caskdata/cdap/blob/release/3.0/cdap-master/src/main/java/io/cdap/cdap/data/tools/HBaseQueueDebugger.java>`__)
   that counts consumed and unconsumed entries in a flowlet queue
   (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 

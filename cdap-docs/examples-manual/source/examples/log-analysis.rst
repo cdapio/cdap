@@ -54,7 +54,7 @@ The *LogAnalysis* Application
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``LogAnalysisApp``:
 
-.. literalinclude:: /../../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
+.. literalinclude:: /../../../cdap-examples/LogAnalysis/src/main/java/io/cdap/cdap/examples/loganalysis/LogAnalysisApp.java
    :language: java
    :lines: 62-99
    :append: . . .

@@ -40,7 +40,7 @@ The *SparkPageRank* Application
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SparkPageRankApp``:
 
-.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
    :lines: 54-95
    :append: ...
@@ -61,7 +61,7 @@ Memory Requirements
 -------------------
 When a Spark program is running inside a workflow, the memory requirements configured for the Spark program may need increasing beyond the defaults:
 
-.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/io/cdap/cdap/examples/sparkpagerank/SparkPageRankApp.java
     :language: java
     :lines: 119-120
     :dedent: 6

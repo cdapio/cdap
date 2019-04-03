@@ -1031,7 +1031,7 @@ Transforming Your Data
             | applicatio | program    | program type | name       | type       | descriptio | properties | runtime args |
             | n          |            |              |            |            | n          |            |              |
             +===========================================================================================================+
-            | logEventSt | DataPipeli | WORKFLOW     | dataPipeli | co.cask.cd | Data pipel | cron entry | {}           |
+            | logEventSt | DataPipeli | WORKFLOW     | dataPipeli | io.cdap.cd | Data pipel | cron entry | {}           |
             | reamConver | neWorkflow |              | neSchedule | ap.interna | ine schedu | : */5 * *  |              |
             | ter        |            |              |            | l.schedule | le         | * *        |              |
             |            |            |              |            | .TimeSched |            |            |              |
@@ -1094,7 +1094,7 @@ Transforming Your Data
             +=================================================================================+
             | name                      | type                                                |
             +=================================================================================+
-            | logEventStream_converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
+            | logEventStream_converted  | io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet |
             +=================================================================================+
 
 .. container:: table-block
@@ -1256,7 +1256,7 @@ Building Real World Applications
          .. tabbed-parsed-literal::
 
             $ cd cdap-sandbox-|release|/examples
-            $ curl -O https://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
+            $ curl -O https://repository.cask.co/downloads/io/cdap/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
             $ unzip cdap-wise-|cdap-apps-version|.zip
 
          From within the CDAP CLI:
@@ -1652,9 +1652,9 @@ Building Real World Applications
             +================================================================================+
             | name                     | type                                                |
             +================================================================================+
-            | pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |
-            | bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |
-            | logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
+            | pageViewStore            | io.cdap.cdap.apps.wise.PageViewStore                |
+            | bounceCountStore         | io.cdap.cdap.apps.wise.BounceCountStore             |
+            | logEventStream.converted | io.cdap.cdap.api.dataset.lib.TimePartitionedFileSet |
             +================================================================================+
 
 .. rubric:: View bounce count results

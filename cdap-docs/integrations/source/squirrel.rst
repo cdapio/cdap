@@ -18,8 +18,8 @@ Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
 
 #. Add a new Driver by entering a ``Name``, such as ``CDAP Driver``. The ``Example URL`` is of the form
    ``jdbc:cdap://<host>:11015?auth.token=<token>``. The ``Website URL`` can be left blank. In the ``Class Name``
-   field, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
-   Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``co.cask.cdap.cdap-explore-jdbc-<version>.jar``.
+   field, enter ``io.cdap.cdap.explore.jdbc.ExploreDriver``.
+   Click on the ``Extra Class Path`` tab, then on ``Add``, and put the path to ``io.cdap.cdap.cdap-explore-jdbc-<version>.jar``.
 
    .. image:: _images/jdbc/squirrel_add_driver.png
       :width: 6in

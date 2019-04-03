@@ -53,9 +53,9 @@ be granted::
 .. highlight:: console
 
 In the above JSON body, the ``authorizable`` object is the JSON-serialized form of the CDAP
-:cdap-java-source-github:`Authorizable <cdap-proto/src/main/java/co/cask/cdap/proto/id/Authorizable.java>` class.
+:cdap-java-source-github:`Authorizable <cdap-proto/src/main/java/io/cdap/cdap/proto/id/Authorizable.java>` class.
 |---| for example, for datasets, its entity type is DATASET and it can be constructed by the namespace and dataset name.
-More info can be found at the :cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/co/cask/cdap/proto/id/Authorizable.java>`
+More info can be found at the :cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/io/cdap/cdap/proto/id/Authorizable.java>`
 class. In entity parts, the name of the entity can be represented using wildcard by including * and ? in the name.
 For example, ``ns*`` represents all namespaces that starts with ``ns``.
 ``ns?`` represents all namespaces that starts with ``ns`` and follows by a single character.

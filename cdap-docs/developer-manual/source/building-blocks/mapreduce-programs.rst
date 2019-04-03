@@ -380,7 +380,7 @@ as part of the configuration. They can also be set at runtime through the use of
 example of this is shown in the :ref:`Purchase <examples-purchase>` example, where the memory requirements
 are set:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
    :lines: 47-57
    :append: ...

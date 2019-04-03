@@ -57,7 +57,7 @@ The *Purchase* Application
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``PurchaseApp``:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseApp.java
     :language: java
     :lines: 33-
 
@@ -66,7 +66,7 @@ Storing Purchases with the *Purchase* ObjectStore Data Storage
 The raw purchase data is stored in an ``ObjectMappedTable`` dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseStore.java
     :language: java
     :start-after: @ProcessInput
     :end-before: @Override
@@ -82,7 +82,7 @@ implements the ``RecordScannable`` interface to allow SQL queries over the datas
 
 The memory requirements of the flowlet *PurchaseStore* are set in its ``configure`` method:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseStore.java
    :language: java
    :lines: 61-72
    :start-after: }
@@ -94,7 +94,7 @@ The memory requirements of the flowlet *PurchaseStore* are set in its ``configur
 This MapReduce program demonstrates the setting of the YARN container resources, both as
 default values used in configuration and as runtime arguments:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
    :lines: 47-78
    :append: ...
@@ -104,7 +104,7 @@ default values used in configuration and as runtime arguments:
 This service has a ``history/{customer}`` endpoint to obtain the purchase history of a given customer. It also demonstrates
 the use of ``Resources`` to configure the memory requirements of the service:
 
-.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/io/cdap/cdap/examples/purchase/PurchaseHistoryService.java
     :language: java
     :lines: 39-46
     :dedent: 2

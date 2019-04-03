@@ -38,7 +38,7 @@ The *DecisionTreeRegression* Application
 As in the other :ref:`examples <examples-index>`, the components of the application are
 tied together by the class ``DecisionTreeRegressionApp``:
 
-.. literalinclude:: /../../../cdap-examples/DecisionTreeRegression/src/main/java/co/cask/cdap/examples/dtree/DecisionTreeRegressionApp.java
+.. literalinclude:: /../../../cdap-examples/DecisionTreeRegression/src/main/java/io/cdap/cdap/examples/dtree/DecisionTreeRegressionApp.java
    :language: java
    :lines: 31-55
    :append: . . .

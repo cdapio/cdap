@@ -131,12 +131,12 @@ Currently, TMS:
 Java API
 ========
 Javadocs describing the TMS Java API are available in the
-:javadoc:`package co.cask.cdap.api.messaging <co/cask/cdap/api/messaging/package-summary>`:
+:javadoc:`package io.cdap.cdap.api.messaging <io/cdap/cdap/api/messaging/package-summary>`:
 
-- :javadoc:`MessagingAdmin <co/cask/cdap/api/messaging/MessagingAdmin>`: Provides topic administration functions
-- :javadoc:`MessagingContext <co/cask/cdap/api/messaging/MessagingContext>`: Provides access to the Transactional Messaging System
-- :javadoc:`MessagePublisher <co/cask/cdap/api/messaging/MessagePublisher>`: Provides message publishing functions
-- :javadoc:`MessageFetcher <co/cask/cdap/api/messaging/MessageFetcher>`: Provides message fetching functions
+- :javadoc:`MessagingAdmin <io/cdap/cdap/api/messaging/MessagingAdmin>`: Provides topic administration functions
+- :javadoc:`MessagingContext <io/cdap/cdap/api/messaging/MessagingContext>`: Provides access to the Transactional Messaging System
+- :javadoc:`MessagePublisher <io/cdap/cdap/api/messaging/MessagePublisher>`: Provides message publishing functions
+- :javadoc:`MessageFetcher <io/cdap/cdap/api/messaging/MessageFetcher>`: Provides message fetching functions
 
 .. _tms-limitations:
 

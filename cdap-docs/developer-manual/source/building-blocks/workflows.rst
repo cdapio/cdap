@@ -48,12 +48,12 @@ Executing MapReduce or Spark Programs
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can (optionally) add a :ref:`schedule
 <schedules>` to a workflow using the `schedule
-<../../reference-manual/javadocs/co/cask/cdap/api/app/ApplicationConfigurer.html#schedule(co.cask.cdap.internal.schedule.ScheduleCreationSpec)>`__
+<../../reference-manual/javadocs/io/cdap/cdap/api/app/ApplicationConfigurer.html#schedule(io.cdap.cdap.internal.schedule.ScheduleCreationSpec)>`__
 Java API.
 
 To add a schedule to an application extended from ``AbstractApplication``, use the method
 `schedule
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#schedule(co.cask.cdap.internal.schedule.ScheduleCreationSpec)>`__
+<../../reference-manual/javadocs/io/cdap/cdap/api/app/AbstractApplication.html#schedule(io.cdap.cdap.internal.schedule.ScheduleCreationSpec)>`__
 instead::
 
   public void configure() {
@@ -323,7 +323,7 @@ tokens.
 Here is an example, taken from the
 :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``TopNMapReduce.java``:
 
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/io/cdap/cdap/examples/wikipedia/TopNMapReduce.java
    :language: java
    :lines: 112-130
 
@@ -332,7 +332,7 @@ be used outside of a workflow. When run from within a workflow, the token is gua
 be non-null.
 
 The `WorkflowToken Java API 
-<../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html>`__
+<../../reference-manual/javadocs/io/cdap/cdap/api/workflow/WorkflowToken.html>`__
 includes methods for getting values for different keys, scopes, and nodes. The same
 key can be added to the workflow by different nodes, and there are methods to return a map of those
 key-value pairs. Convenience methods allow the putting and getting of non-string values
@@ -391,7 +391,7 @@ can be accessed through the SparkContext, and used with workflow tokens. This al
 values in the accumulators to be accessed through workflow tokens. An example of this is in
 the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ClusteringUtils.scala``:
 
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/io/cdap/cdap/examples/wikipedia/ClusteringUtils.scala
    :language: scala
    :lines: 121-125
    :dedent: 4

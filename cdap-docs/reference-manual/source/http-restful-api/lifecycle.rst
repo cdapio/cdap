@@ -335,11 +335,11 @@ will return in a JSON array information about the *UploadService* of the applica
 be similar to this (pretty-printed and portions deleted to fit)::
 
   {
-      "className": "co.cask.cdap.examples.sportresults.UploadService",
+      "className": "io.cdap.cdap.examples.sportresults.UploadService",
       "description": "A service for uploading sport results for a given league and season.",
       "handlers": {
           "UploadHandler": {
-              "className": "co.cask.cdap.examples.sportresults.UploadService$UploadHandler",
+              "className": "io.cdap.cdap.examples.sportresults.UploadService$UploadHandler",
               "datasets": [
                   "results"
               ],

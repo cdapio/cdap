@@ -50,7 +50,7 @@ remove software, the admin user and password are both ``cdap``.
     :independent:
 
     $ mvn archetype:generate \
-        -DarchetypeGroupId=co.cask.cdap \
+        -DarchetypeGroupId=io.cdap.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
         |archetype-repository| \
         |archetype-version| \
@@ -64,7 +64,7 @@ remove software, the admin user and password are both ``cdap``.
     :independent:
 
     $ mvn archetype:generate \
-        -DarchetypeGroupId=co.cask.cdap \
+        -DarchetypeGroupId=io.cdap.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
         |archetype-version| \
         -DartifactId=myExampleApp \

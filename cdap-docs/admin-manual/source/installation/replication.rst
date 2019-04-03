@@ -56,11 +56,11 @@ HBase
     </property>
     <property>
       <name>hbase.coprocessor.regionserver.classes</name>
-      <value>co.cask.cdap.data2.replication.LastReplicateTimeObserver</value>
+      <value>io.cdap.cdap.data2.replication.LastReplicateTimeObserver</value>
     </property>
     <property>
       <name>hbase.coprocessor.wal.classes</name>
-      <value>co.cask.cdap.data2.replication.LastWriteTimeObserver</value>
+      <value>io.cdap.cdap.data2.replication.LastWriteTimeObserver</value>
     </property>
 
 .. highlight:: console
@@ -233,7 +233,7 @@ To manually failover from the master to a slave cluster, follow these steps:
 #. Copy any HDFS files that have not yet been copied using either your distro's solution or ``distcp``
 #. Run the CDAP replication status tool to retrieve the cluster state::
 
-    [master] $ cdap run co.cask.cdap.data.tools.ReplicationStatusTool -m -o /tmp/master_state
+    [master] $ cdap run io.cdap.cdap.data.tools.ReplicationStatusTool -m -o /tmp/master_state
 
 #. Copy the master state onto your slave cluster::
 
@@ -241,7 +241,7 @@ To manually failover from the master to a slave cluster, follow these steps:
 
 #. Verify that replication has copied the required data onto the slave::
 
-    [slave] $ cdap run co.cask.cdap.data.tools.ReplicationStatusTool -i /tmp/master_state
+    [slave] $ cdap run io.cdap.cdap.data.tools.ReplicationStatusTool -i /tmp/master_state
     ...
     Master and Slave Checksums match. HDFS Replication is complete.
     HBase Replication is complete.
@@ -300,7 +300,7 @@ To upgrade the replicated clusters, follow these steps:
 
 7. Run the upgrade tool on the slave cluster.::
 
-     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run io.cdap.cdap.data.tools.UpgradeTool upgrade
 
    Since replication is enabled and HBaseDDLExecutor is in place, HBase tables on the master cluster will also get
    upgraded.

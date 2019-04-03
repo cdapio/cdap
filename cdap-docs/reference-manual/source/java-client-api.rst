@@ -21,7 +21,7 @@ Maven Dependency
 To use the Java Client API in your project, add this Maven dependency::
 
   <dependency>
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-client</artifactId>
     <version>${cdap.version}</version>
   </dependency>
@@ -65,7 +65,7 @@ In a non-secure (default) CDAP instance, instantiate as follows::
 In a secure CDAP instance, first pull in the ``cdap-authentication-client`` Maven dependency::
 
   <dependency>
-    <groupId>co.cask.cdap</groupId>
+    <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-authentication-client</artifactId>
     <version>${cdap.client.version}</version>
   </dependency>

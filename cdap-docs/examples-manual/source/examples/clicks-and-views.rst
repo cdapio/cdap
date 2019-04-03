@@ -26,7 +26,7 @@ The Clicks and Views Application
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``ClicksAndViews``:
 
-.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViews.java
+.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViews.java
    :language: java
    :lines: 29-
 
@@ -43,7 +43,7 @@ MapReduce over Multiple Inputs
 the *joined* ``PartitionedFileSet``. The ``initialize()`` method prepares the MapReduce program. It sets up the
 two streams as input and sets up the ``PartitionedFileSet`` as output, with the appropriate ``PartitionKey``:
 
-.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
+.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
    :language: java
    :lines: 58-79
    :dedent: 2
@@ -53,7 +53,7 @@ for a particular ``viewId`` going to a single Reducer for joining. In order to d
 to know which source each record came from. This is possible by calling the ``getInputName`` method of the
 ``MapReduceTaskContext`` that is passed to ``initialize``. Note that the Mapper needs to implement ``ProgramLifeCycle``:
 
-.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/co/cask/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
+.. literalinclude:: /../../../cdap-examples/ClicksAndViews/src/main/java/io/cdap/cdap/examples/clicksandviews/ClicksAndViewsMapReduce.java
    :language: java
    :lines: 86-96
    :dedent: 2

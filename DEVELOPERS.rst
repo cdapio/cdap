@@ -22,7 +22,7 @@ Then, configure a run configuration to run CDAP Sandbox:
 
 - Select Run > Edit Configurations...
 - Add a new "Application" run configuration
-- Set "Main class" to be ``co.cask.cdap.StandaloneMain``
+- Set "Main class" to be ``io.cdap.cdap.StandaloneMain``
 - Set "VM options" to ``-Xmx1024m`` (for in-memory Map/Reduce jobs)
 - Click "OK"
 

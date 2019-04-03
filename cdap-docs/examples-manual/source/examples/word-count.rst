@@ -39,7 +39,7 @@ The Word Count Application
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``WordCount``:
 
-.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/co/cask/cdap/examples/wordcount/WordCount.java
+.. literalinclude:: /../../../cdap-examples/WordCount/src/main/java/io/cdap/cdap/examples/wordcount/WordCount.java
    :language: java
    :lines: 33-
 

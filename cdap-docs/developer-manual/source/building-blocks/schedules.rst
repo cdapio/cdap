@@ -28,7 +28,7 @@ be used in different applications), and additionally consists of:
 
 To add a schedule to an application extended from ``AbstractApplication``, use the method
 `schedule
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#schedule(co.cask.cdap.internal.schedule.ScheduleCreationSpec)>`__
+<../../reference-manual/javadocs/io/cdap/cdap/api/app/AbstractApplication.html#schedule(io.cdap.cdap.internal.schedule.ScheduleCreationSpec)>`__
 . For example, the Purchase example creates a schedule for the PurchaseHistoryWorkflow
 as follows::
 
@@ -53,7 +53,7 @@ the same workflow is executing at that time. Note that:
 
 If more than one conditions are required to construct the *Trigger* for the schedule,
 to an application extended from ``AbstractApplication``, call method `getTriggerFactory
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#getTriggerFactory()>`__
+<../../reference-manual/javadocs/io/cdap/cdap/api/app/AbstractApplication.html#getTriggerFactory()>`__
 to get a ``TriggerFactory`` to create a specific *Trigger* as follows::
 
   schedule(

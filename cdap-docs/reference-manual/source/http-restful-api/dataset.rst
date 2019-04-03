@@ -42,7 +42,7 @@ The response body will contain a JSON-formatted list of the existing datasets::
 
   {
      "name": "cdap.user.purchases",
-     "type": "co.cask.cdap.api.dataset.lib.ObjectStore",
+     "type": "io.cdap.cdap.api.dataset.lib.ObjectStore",
      "description": "Purchases Dataset",
      "properties": {
         "schema":"...",
@@ -123,7 +123,7 @@ with JSON-formatted name of the dataset type, properties, and description in a b
    * - HTTP Request
      - ``PUT /v3/namespaces/default/data/datasets/mydataset``
    * - Body
-     - ``{"typeName":"co.cask.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
+     - ``{"typeName":"io.cdap.cdap.api.dataset.table.Table",`` ``"properties":{"dataset.table.ttl":"3600"},``
        ``"description":"My Dataset Description",`` ``"principal":"user/example.net@EXAMPLEKDC.NET"}``
    * - Description
      - Creates a dataset named *mydataset* of the type ``Table`` in the namespace *default*
@@ -229,7 +229,7 @@ The response body will contain JSON-formatted metadata of the existing dataset::
        "modules": [
          {
            "name": "module1",
-           "className": "co.cask.cdap.data2.datafabric.dataset.service.TestModule1",
+           "className": "io.cdap.cdap.data2.datafabric.dataset.service.TestModule1",
            "jarLocationPath": "/path/data/module1/archive/module1.jar",
            "types": [
              "datasetType1"

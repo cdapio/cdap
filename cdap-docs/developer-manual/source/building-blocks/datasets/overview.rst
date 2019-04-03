@@ -44,7 +44,7 @@ You can create a dataset in CDAP using either the :ref:`http-restful-api-dataset
 You tell applications to create a dataset if it does not already
 exist by declaring the dataset details in the application specification.
 For example, to create a DataSet named *myCounters* of type
-`KeyValueTable <../../../reference-manual/javadocs/co/cask/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
+`KeyValueTable <../../../reference-manual/javadocs/io/cdap/cdap/api/dataset/lib/KeyValueTable.html>`__, write::
 
   public void configure() {
     createDataset("myCounters", KeyValueTable.class);
@@ -214,7 +214,7 @@ a service handler, you can obtain the ``Admin`` through the ``HttpServiceContext
 :ref:`examples-fileset` extends ``AbstractHttpServiceHandler`` |---| its ``configure`` method saves the context
 in an instance variable and makes it available through ``getContext()``:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
     :language: java
     :lines: 65-71
     :dedent: 2
@@ -224,7 +224,7 @@ in an instance variable and makes it available through ``getContext()``:
 The handler defines several endpoints for dataset management, one of which can be used to create a new file set,
 either by cloning an existing file set's dataset properties, or by using the properties submitted in the request body:
 
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/io/cdap/cdap/examples/fileset/FileSetService.java
     :language: java
     :lines: 161-201
     :dedent: 4
