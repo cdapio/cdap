@@ -54,6 +54,7 @@ class RemoteExecutionTwillController implements TwillController {
 
   private final RunId runId;
   private final RuntimeMonitor runtimeMonitor;
+  private final CompletableFuture<RemoteExecutionTwillController> started;
   private final CompletableFuture<RemoteExecutionTwillController> completion;
 
   RemoteExecutionTwillController(RunId runId, RuntimeMonitor runtimeMonitor) {
@@ -74,6 +75,20 @@ class RemoteExecutionTwillController implements TwillController {
     }, Threads.SAME_THREAD_EXECUTOR);
 
     this.completion = completion;
+    this.started = new CompletableFuture<>();
+  }
+
+  void start(CompletableFuture<Void> startupTaskFuture) {
+    startupTaskFuture.whenComplete((res, throwable) -> {
+      // If the startup task completed successfully, start the runtime monitor, otherwise, terminate this controller
+      // with fail state
+      if (throwable == null) {
+        runtimeMonitor.start();
+        started.complete(this);
+      } else {
+        completion.completeExceptionally(throwable);
+      }
+    });
   }
 
   /**
@@ -190,7 +205,7 @@ class RemoteExecutionTwillController implements TwillController {
 
   @Override
   public void onRunning(Runnable runnable, Executor executor) {
-    executor.execute(runnable);
+    started.thenRunAsync(runnable, executor);
   }
 
   @Override
