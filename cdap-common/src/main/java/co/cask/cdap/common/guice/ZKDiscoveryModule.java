@@ -18,6 +18,7 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -82,26 +83,6 @@ public final class ZKDiscoveryModule extends PrivateModule {
     private static final Logger LOG = LoggerFactory.getLogger(ProgramDiscoveryServiceClient.class);
     private static final long CACHE_EXPIRES_MINUTES = 1;
 
-    /**
-     * Defines the set of program types that are discoverable.
-     * TODO: We have program type in app-fabric, but here is common. Worth to refactor Type into one place.
-     */
-    private enum DiscoverableProgramType {
-      WORKFLOW,
-      SERVICE,
-      SPARK;
-
-      private final String prefix;
-
-      DiscoverableProgramType() {
-        prefix = name().toLowerCase() + ".";
-      }
-
-      boolean isPrefixOf(String name) {
-        return name.startsWith(prefix);
-      }
-    }
-
     private final ZKClient zkClient;
     private final ZKDiscoveryService masterDiscoveryService;
     private final String twillNamespace;
@@ -123,8 +104,8 @@ public final class ZKDiscoveryModule extends PrivateModule {
 
     @Override
     public ServiceDiscovered discover(final String name) {
-      for (DiscoverableProgramType type : DiscoverableProgramType.values()) {
-        if (type.isPrefixOf(name)) {
+      for (ProgramType programType : ProgramType.values()) {
+        if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverablePrefix())) {
           return clients.getUnchecked(name).discover(name);
         }
       }
