@@ -40,6 +40,7 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.proto.v2.spec.StageSpec;
 import co.cask.cdap.etl.spark.StreamingCompat;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Strings;
@@ -84,16 +85,19 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                                DataStreamsPipelineSpec.class);
 
+    Set<StageSpec> stageSpecs = pipelineSpec.getStages();
     final PipelinePhase pipelinePhase = PipelinePhase.builder(SUPPORTED_PLUGIN_TYPES)
       .addConnections(pipelineSpec.getConnections())
-      .addStages(pipelineSpec.getStages())
+      .addStages(stageSpecs)
       .build();
 
     boolean checkpointsDisabled = pipelineSpec.isCheckpointsDisabled();
+    boolean isPreviewEnabled =
+      stageSpecs.isEmpty() || sec.getDataTracer(stageSpecs.iterator().next().getName()).isEnabled();
 
     String checkpointDir = null;
     JavaSparkContext context = null;
-    if (!checkpointsDisabled) {
+    if (!checkpointsDisabled && !isPreviewEnabled) {
       String pipelineName = sec.getApplicationSpecification().getName();
       String configCheckpointDir = pipelineSpec.getCheckpointDirectory();
       if (Strings.isNullOrEmpty(configCheckpointDir)) {
