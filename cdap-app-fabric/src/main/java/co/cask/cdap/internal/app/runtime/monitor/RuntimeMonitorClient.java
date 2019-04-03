@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -118,15 +118,7 @@ public final class RuntimeMonitorClient {
    * @throws ServiceUnavailableException if the runtime monitor server is not available
    */
   void requestShutdown() throws IOException {
-    HttpURLConnection urlConn = connect("runtime/shutdown");
-    try {
-      urlConn.setRequestMethod("POST");
-      throwIfNotOK(urlConn.getResponseCode(), urlConn);
-    } catch (ConnectException e) {
-      throw new ServiceUnavailableException("runtime.monitor", e);
-    } finally {
-      releaseConnection(urlConn);
-    }
+    postCall("runtime/shutdown");
   }
 
   /**
@@ -137,7 +129,14 @@ public final class RuntimeMonitorClient {
    * @throws ServiceUnavailableException if the runtime monitor server is not available
    */
   void requestStop() throws IOException {
-    HttpURLConnection urlConn = connect("runtime/kill");
+    postCall("runtime/kill");
+  }
+
+  /**
+   * Make a POST call to the given path with body.
+   */
+  private void postCall(String path) throws IOException {
+    HttpURLConnection urlConn = connect(path);
     try {
       urlConn.setRequestMethod("POST");
       throwIfNotOK(urlConn.getResponseCode(), urlConn);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,8 @@
 package co.cask.cdap.logging.context;
 
 import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
+
+import javax.annotation.Nullable;
 
 /**
  * Logging Context for {@link Worker}
@@ -26,7 +27,8 @@ public class WorkerLoggingContext extends ApplicationLoggingContext {
 
   public static final String TAG_WORKER_ID = ".workerid";
 
-  public WorkerLoggingContext(String namespaceId, String appId, String workerId, String runId, String instanceId) {
+  public WorkerLoggingContext(String namespaceId, String appId, String workerId, String runId,
+                              @Nullable String instanceId) {
     super(namespaceId, appId, runId);
     setSystemTag(TAG_WORKER_ID, workerId);
     setInstanceId(instanceId);

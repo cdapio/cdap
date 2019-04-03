@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
 
+import java.net.Authenticator;
+import java.net.ProxySelector;
 import java.util.Deque;
 import java.util.LinkedList;
 
@@ -49,6 +51,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private final Deque<Service> coreServices;
   private final MapReduceContextConfig mapReduceContextConfig;
   private final LogAppenderInitializer logAppenderInitializer;
+  private ProxySelector oldProxySelector;
 
   public DistributedMapReduceTaskContextProvider(CConfiguration cConf, Configuration hConf,
                                                  MapReduceClassLoader mapReduceClassLoader) {
@@ -59,12 +62,11 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     Injector injector = getInjector();
 
     Deque<Service> coreServices = new LinkedList<>();
-    coreServices.add(injector.getInstance(ZKClientService.class));
-    coreServices.add(injector.getInstance(MetricsCollectionService.class));
-
     if (ProgramRunners.getClusterMode(mapReduceContextConfig.getProgramOptions()) == ClusterMode.ON_PREMISE) {
+      coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
     }
+    coreServices.add(injector.getInstance(MetricsCollectionService.class));
 
     this.coreServices = coreServices;
     this.logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -75,6 +77,10 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   protected void startUp() throws Exception {
     super.startUp();
     try {
+      oldProxySelector = ProxySelector.getDefault();
+      ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
+      Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
+
       for (Service service : coreServices) {
         service.startAndWait();
       }
@@ -112,6 +118,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
         }
       }
     }
+    Authenticator.setDefault(null);
+    ProxySelector.setDefault(oldProxySelector);
     if (failure != null) {
       throw failure;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,15 +28,11 @@ import co.cask.cdap.runtime.spi.provisioner.Provisioner;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerContext;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -104,31 +100,6 @@ public class ElasticMapReduceProvisioner implements Provisioner {
     try (EMRClient client = EMRClient.fromConf(conf)) {
       Optional<Cluster> existing = client.getCluster(cluster.getName());
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
-    }
-  }
-
-  @Override
-  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    // Start the ZK server
-    try (SSHSession session = createSSHSession(context, getMasterExternalIp(cluster))) {
-      LOG.debug("Starting zookeeper server.");
-      String output = session.executeAndWait("sudo zookeeper-server start");
-      LOG.debug("Zookeeper server started: {}", output);
-    }
-  }
-
-  private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host) throws IOException {
-    try {
-      return provisionerContext.getSSHContext().createSSHSession(host);
-    } catch (IOException ioe) {
-      if (Throwables.getRootCause(ioe) instanceof ConnectException) {
-        throw new IOException(String.format(
-                "Failed to connect to host %s. Ensure that the the provisioner property for \"Additional Master" +
-                        " Security Group\" has been configured with an EC2 Security Group that has inbound rules" +
-                        " allowing ssh on port 22.", host),
-                ioe);
-      }
-      throw ioe;
     }
   }
 

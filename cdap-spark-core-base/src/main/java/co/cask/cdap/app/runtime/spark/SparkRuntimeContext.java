@@ -27,7 +27,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
-import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.MetadataPublisher;
@@ -35,12 +34,7 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.artifact.PluginFinder;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.logging.context.SparkLoggingContext;
-import co.cask.cdap.logging.context.WorkflowProgramLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.Ids;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Objects;
@@ -48,7 +42,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
@@ -68,7 +61,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
   private final WorkflowProgramInfo workflowProgramInfo;
-  private final LoggingContext loggingContext;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -105,27 +97,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
     this.workflowProgramInfo = workflowProgramInfo;
-    this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.serviceAnnouncer = serviceAnnouncer;
     this.pluginFinder = pluginFinder;
     this.locationFactory = locationFactory;
-  }
-
-  private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
-                                              @Nullable WorkflowProgramInfo workflowProgramInfo) {
-    if (workflowProgramInfo == null) {
-      return new SparkLoggingContext(programId.getNamespace(), programId.getApplication(), programId.getProgram(),
-                                     runId.getId());
-    }
-
-    ProgramId workflowProramId = Ids.namespace(programId.getNamespace()).app(programId.getApplication())
-      .workflow(workflowProgramInfo.getName());
-
-    return new WorkflowProgramLoggingContext(workflowProramId.getNamespace(), workflowProramId.getApplication(),
-                                             workflowProramId.getProgram(), workflowProgramInfo.getRunId().getId(),
-                                             ProgramType.SPARK, programId.getProgram(), runId.getId());
   }
 
   @Override
@@ -186,13 +162,6 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public Configuration getConfiguration() {
     return hConf;
-  }
-
-  /**
-   * Returns the {@link LoggingContext} representing the program.
-   */
-  public LoggingContext getLoggingContext() {
-    return loggingContext;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,9 @@
 
 package co.cask.cdap.logging.appender;
 
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
+import co.cask.cdap.logging.context.ApplicationLoggingContext;
 import co.cask.cdap.logging.context.GenericLoggingContext;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;

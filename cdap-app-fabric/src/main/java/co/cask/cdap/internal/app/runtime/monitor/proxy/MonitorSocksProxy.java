@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.monitor.proxy;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.runtime.monitor.SSHSessionProvider;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -49,14 +48,14 @@ public class MonitorSocksProxy extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(MonitorSocksProxy.class);
 
   private final CConfiguration cConf;
-  private final SSHSessionProvider sshSessionProvider;
+  private final PortForwardingProvider portForwardingProvider;
   private volatile InetSocketAddress bindAddress;
   private ChannelGroup channelGroup;
   private EventLoopGroup eventLoopGroup;
 
-  public MonitorSocksProxy(CConfiguration cConf, SSHSessionProvider sshSessionProvider) {
+  public MonitorSocksProxy(CConfiguration cConf, PortForwardingProvider portForwardingProvider) {
     this.cConf = cConf;
-    this.sshSessionProvider = sshSessionProvider;
+    this.portForwardingProvider = portForwardingProvider;
   }
 
   public InetSocketAddress getBindAddress() {
@@ -74,7 +73,7 @@ public class MonitorSocksProxy extends AbstractIdleService {
     // Use a thread pool of size runtime monitor threads + 1. There can be at most that many threads making
     // call to this socks proxy, plus 1 for the boss thread.
     eventLoopGroup = new NioEventLoopGroup(cConf.getInt(Constants.RuntimeMonitor.THREADS) + 1,
-                                           Threads.createDaemonThreadFactory("monitor-socks-proxy"));
+                                           Threads.createDaemonThreadFactory("monitor-socks-proxy-%d"));
     bootstrap
       .group(eventLoopGroup)
       .channel(NioServerSocketChannel.class)
@@ -85,7 +84,7 @@ public class MonitorSocksProxy extends AbstractIdleService {
 
           ch.pipeline()
             .addLast(new SocksPortUnificationServerHandler())
-            .addLast(new SocksServerHandler(sshSessionProvider));
+            .addLast(new MonitorSocksServerHandler(portForwardingProvider));
         }
       });
 
@@ -94,6 +93,8 @@ public class MonitorSocksProxy extends AbstractIdleService {
 
     channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     channelGroup.add(serverChannel);
+
+    LOG.info("Runtime monitor socks proxy started on {}", bindAddress);
   }
 
   @Override

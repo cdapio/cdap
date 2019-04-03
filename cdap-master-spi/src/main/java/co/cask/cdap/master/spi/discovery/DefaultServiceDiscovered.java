@@ -14,18 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.k8s.discovery;
+package co.cask.cdap.master.spi.discovery;
 
-import com.google.common.collect.Lists;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -38,11 +39,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * A default implementation of {@link ServiceDiscovered}.
  *
- * This implementation is copied from Twill with small modification as cleanup.
- * The one in Twill is in protected package and also in the twill-discovery-core
- * module, which will bring in dependencies that is conflicting with kubernetes.
+ * This implementation is copied from Twill with small modification as cleanup, and the one in twill is package
+ * protected, hence can't be used directly.
  */
-final class DefaultServiceDiscovered implements ServiceDiscovered {
+public final class DefaultServiceDiscovered implements ServiceDiscovered {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultServiceDiscovered.class);
 
@@ -51,14 +51,14 @@ final class DefaultServiceDiscovered implements ServiceDiscovered {
   private final List<ListenerCaller> listenerCallers;
   private final ReadWriteLock callerLock;
 
-  DefaultServiceDiscovered(String name) {
+  public DefaultServiceDiscovered(String name) {
     this.name = name;
     this.discoverables = new AtomicReference<>(Collections.emptySet());
-    this.listenerCallers = Lists.newLinkedList();
+    this.listenerCallers = new LinkedList<>();
     this.callerLock = new ReentrantReadWriteLock();
   }
 
-  void setDiscoverables(Set<Discoverable> discoverables) {
+  public void setDiscoverables(Set<Discoverable> discoverables) {
     Set<Discoverable> newDiscoverables = Collections.unmodifiableSet(new HashSet<>(discoverables));
     Set<Discoverable> oldDiscoverables = this.discoverables.getAndUpdate(old -> newDiscoverables);
     if (oldDiscoverables.equals(newDiscoverables)) {
@@ -68,7 +68,7 @@ final class DefaultServiceDiscovered implements ServiceDiscovered {
     LOG.debug("Discoverables for service {} changed from {} to {}", name, oldDiscoverables, newDiscoverables);
 
     // Collect all listeners with a read lock to the listener list.
-    List<ListenerCaller> callers = Lists.newArrayList();
+    List<ListenerCaller> callers = new ArrayList<>();
     Lock readLock = callerLock.readLock();
     readLock.lock();
     try {

@@ -21,7 +21,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.guice.RemoteExecutionDiscoveryModule;
 import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
@@ -43,12 +43,10 @@ import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServerInfo;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
-import co.cask.cdap.internal.profile.ProfileMetricService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProfileId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.tools.KeyStores;
 import co.cask.cdap.spi.data.StructuredTableAdmin;
@@ -61,6 +59,7 @@ import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
+import com.google.inject.util.Modules;
 import io.cdap.common.http.HttpRequestConfig;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
@@ -109,9 +108,7 @@ public class RuntimeMonitorTest {
   private TransactionManager txManager;
   private DatasetOpExecutorService dsOpExecService;
   private DatasetService datasetService;
-  private DatasetFramework datasetFramework;
   private Transactional transactional;
-  private MetricsCollectionService metricsCollectionService;
   private TransactionRunner transactionRunner;
 
   private KeyStore serverKeyStore;
@@ -134,7 +131,7 @@ public class RuntimeMonitorTest {
     serverKeyStore = KeyStores.generatedCertKeyStore(1, "");
     clientKeyStore = KeyStores.generatedCertKeyStore(1, "");
 
-    Injector injector = Guice.createInjector(new AppFabricTestModule(cConf), new PrivateModule() {
+    Injector injector = Guice.createInjector(new PrivateModule() {
       @Override
       protected void configure() {
         bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(serverKeyStore);
@@ -150,7 +147,7 @@ public class RuntimeMonitorTest {
           }
         });
       }
-    });
+    }, Modules.override(new AppFabricTestModule(cConf)).with(new RemoteExecutionDiscoveryModule()));
 
     messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -166,7 +163,7 @@ public class RuntimeMonitorTest {
     StoreDefinition.createAllTables(injector.getInstance(StructuredTableAdmin.class), structuredTableRegistry);
     TransactionSystemClient transactionSystemClient = injector.getInstance(TransactionSystemClient.class);
 
-    datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
 
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
@@ -184,7 +181,6 @@ public class RuntimeMonitorTest {
 
     runtimeServer = injector.getInstance(RuntimeMonitorServer.class);
     runtimeServer.startAndWait();
-    metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     verifyServerPortWritten();
   }
@@ -221,7 +217,6 @@ public class RuntimeMonitorTest {
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("myworkflow").run(runId);
-    ProfileId profileId = NamespaceId.DEFAULT.profile("myProfile");
     publishProgramStatus(programRunId, ProgramStatus.INITIALIZING);
     publishProgramStatus(programRunId, ProgramStatus.RUNNING);
     verifyPublishedMessages(cConf, 2, null);
@@ -234,14 +229,11 @@ public class RuntimeMonitorTest {
     RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore,
                                                                   runtimeServer::getBindAddress, Proxy.NO_PROXY);
-    ProfileMetricService profileMetricService =
-      new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
                                                        messagingContext, scheduler,
-                                                       monitorMessage -> { }, profileMetricService,
-                                                       new MockRemoteProcessController(), new NoOpProgramStateWriter(),
-                                                       transactionRunner);
+                                                       monitorMessage -> { }, new MockRemoteProcessController(),
+                                                       new NoOpProgramStateWriter(), transactionRunner);
 
     runtimeMonitor.startAndWait();
     // use different configuration for verification
@@ -254,8 +246,7 @@ public class RuntimeMonitorTest {
     verifyPublishedMessages(cConf, 2, lastProcessed);
 
     runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                        messagingContext, scheduler,
-                                        monitorMessage -> { }, profileMetricService,
+                                        messagingContext, scheduler, monitorMessage -> { },
                                         new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                         transactionRunner);
     runtimeMonitor.startAndWait();
@@ -280,7 +271,6 @@ public class RuntimeMonitorTest {
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("testTopicExpansion").run(runId);
-    ProfileId profileId = NamespaceId.DEFAULT.profile("myProfile");
 
     // change topic name because cdap config is different than runtime config
     CConfiguration monitorCConf = CConfiguration.copy(cConf);
@@ -303,16 +293,12 @@ public class RuntimeMonitorTest {
       messagingContext.getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(), metricsPrefix + i, "test" + i);
     }
 
-    ProfileMetricService profileMetricService =
-      new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
-
     RuntimeMonitorClient monitorClient = new RuntimeMonitorClient(HttpRequestConfig.DEFAULT,
                                                                   clientKeyStore, serverKeyStore,
                                                                   runtimeServer::getBindAddress, Proxy.NO_PROXY);
 
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       messagingContext, scheduler,
-                                                       monitorMessage -> { }, profileMetricService,
+                                                       messagingContext, scheduler, monitorMessage -> { },
                                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                                        transactionRunner);
     runtimeMonitor.startAndWait();
@@ -352,7 +338,6 @@ public class RuntimeMonitorTest {
 
     RunId runId = RunIds.generate();
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("app1").workflow("testkill").run(runId);
-    ProfileId profileId = NamespaceId.DEFAULT.profile("myProfile");
     publishProgramStatus(programRunId, ProgramStatus.INITIALIZING);
     publishProgramStatus(programRunId, ProgramStatus.RUNNING);
 
@@ -365,12 +350,8 @@ public class RuntimeMonitorTest {
                                                                   clientKeyStore, serverKeyStore,
                                                                   runtimeServer::getBindAddress, Proxy.NO_PROXY);
 
-    ProfileMetricService profileMetricService =
-      new ProfileMetricService(metricsCollectionService, programRunId, profileId, 1, scheduler);
-
     RuntimeMonitor runtimeMonitor = new RuntimeMonitor(programRunId, monitorCConf, monitorClient,
-                                                       messagingContext, scheduler,
-                                                       monitorMessage -> { }, profileMetricService,
+                                                       messagingContext, scheduler, monitorMessage -> { },
                                                        new MockRemoteProcessController(), new NoOpProgramStateWriter(),
                                                        transactionRunner);
 
@@ -445,11 +426,9 @@ public class RuntimeMonitorTest {
 
   private static final class MockRemoteProcessController implements RemoteProcessController {
 
-    private boolean isRunning;
-
     @Override
     public boolean isRunning() {
-      return isRunning;
+      return false;
     }
 
     @Override

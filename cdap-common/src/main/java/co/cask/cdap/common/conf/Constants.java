@@ -860,12 +860,23 @@ public final class Constants {
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
     public static final String SERVER_INFO_FILE = "app.program.runtime.monitor.server.info.file";
 
+    // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
+    public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
+
+    // Configuration key for the service proxy in the format of "host:port"
+    public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
+    // Configuration key for the service proxy password. It is only used within a runtime cluster.
+    public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
+
     // Constants for secure connections
     public static final String SSH_USER = "ssh.user";
     public static final String PUBLIC_KEY = "id_rsa.pub";
     public static final String PRIVATE_KEY = "id_rsa";
     public static final String SERVER_KEYSTORE = "server.jks";
     public static final String CLIENT_KEYSTORE = "client.jks";
+
+    // File name that stores the service proxy information
+    public static final String SERVICE_PROXY_FILE = "service.proxy.json";
   }
 
   /**

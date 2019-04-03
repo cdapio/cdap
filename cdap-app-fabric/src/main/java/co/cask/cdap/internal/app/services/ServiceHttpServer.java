@@ -49,10 +49,8 @@ import co.cask.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.logging.context.UserServiceLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.spi.data.transaction.TransactionRunner;
 import com.google.common.reflect.TypeToken;
 import io.cdap.http.NettyHttpService;
@@ -130,13 +128,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
 
   @Override
   protected LoggingContext getLoggingContext() {
-    ProgramId programId = getProgram().getId();
-    return new UserServiceLoggingContext(programId.getNamespace(),
-                                         programId.getApplication(),
-                                         programId.getProgram(),
-                                         programId.getProgram(),
-                                         context.getRunId().getId(),
-                                         String.valueOf(getInstanceId()));
+    return context.getLoggingContext();
   }
 
   private BasicHttpServiceContextFactory createContextFactory(Program program, ProgramOptions programOptions,

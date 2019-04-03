@@ -65,6 +65,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.Retries;
@@ -87,6 +88,7 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.context.BasicMessagingAdmin;
 import co.cask.cdap.messaging.context.MultiThreadMessagingContext;
@@ -167,6 +169,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final MetadataReader metadataReader;
   private final MetadataPublisher metadataPublisher;
   private final Set<Operation> fieldLineageOperations;
+  private final LoggingContext loggingContext;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -239,6 +242,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageOperations = new HashSet<>();
+    this.loggingContext = LoggingContextHelper.getLoggingContextWithRunId(program.getId().run(getRunId()),
+                                                                          programOptions.getArguments().asMap());
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -297,6 +302,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   @Nullable
   protected NamespacedEntityId getComponentId() {
     return null;
+  }
+
+  /**
+   * Returns the {@link LoggingContext} for the program.
+   */
+  public LoggingContext getLoggingContext() {
+    return loggingContext;
   }
 
   /**

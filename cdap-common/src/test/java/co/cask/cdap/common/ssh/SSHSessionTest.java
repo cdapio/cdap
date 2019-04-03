@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package co.cask.cdap.common.ssh;
 
 
 import co.cask.cdap.runtime.spi.ssh.PortForwarding;
+import co.cask.cdap.runtime.spi.ssh.RemotePortForwarding;
 import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.base.Splitter;
 import com.google.common.io.Closeables;
@@ -33,12 +34,15 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -232,6 +236,34 @@ public class SSHSessionTest {
         // expected
       }
 
+    } finally {
+      echoServer.stopAndWait();
+    }
+  }
+
+  @Test
+  public void testRemotePortForwarding() throws Exception {
+    EchoServer echoServer = new EchoServer();
+
+    echoServer.startAndWait();
+    try {
+      SSHConfig sshConfig = getSSHConfig();
+
+      try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+        InetSocketAddress echoServerAddr = echoServer.getBindAddress();
+
+        try (RemotePortForwarding forwarding = session.createRemotePortForward(0, echoServerAddr.getPort())) {
+          // Send data to the remotePort, it should get forwarded to the echoServer
+          try (Socket socket = new Socket(session.getAddress().getAddress(), forwarding.getRemotePort())) {
+            PrintStream printer = new PrintStream(socket.getOutputStream(), true, "UTF-8");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(),
+                                                                             StandardCharsets.UTF_8));
+            String msg = "Testing message";
+            printer.println(msg);
+            Assert.assertEquals(msg, reader.readLine());
+          }
+        }
+      }
     } finally {
       echoServer.stopAndWait();
     }

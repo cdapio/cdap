@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.runtime.spi.ssh;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -27,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * This interface represents an SSH session, which allow performing remote ssh commands and scp.
  */
-public interface SSHSession extends AutoCloseable {
+public interface SSHSession extends Closeable {
 
   /**
    * Returns {@code true} if the session is alive; otherwise return {@code false}.
@@ -128,6 +129,17 @@ public interface SSHSession extends AutoCloseable {
    */
   PortForwarding createLocalPortForward(String targetHost, int targetPort, int originatePort,
                                         PortForwarding.DataConsumer dataConsumer) throws IOException;
+
+  /**
+   * Creates a remote port forwarding from this SSH session.
+   *
+   * @param remotePort port listening on the remote host "localhost" interface. If it is {@code 0}, a random port
+   *                   will be acquired on the remote host
+   * @param localPort traffic from remote host will forward to the local port in the local host "localhost" interface
+   * @return a {@link RemotePortForwarding}
+   * @throws IOException if failed to create the port forwarding
+   */
+  RemotePortForwarding createRemotePortForward(int remotePort, int localPort) throws IOException;
 
   /**
    * Close this SSH session.

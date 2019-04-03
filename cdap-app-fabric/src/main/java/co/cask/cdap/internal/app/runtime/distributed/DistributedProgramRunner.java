@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -431,12 +431,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       result.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, masterBindAddrConf);
       result.set(Constants.Dataset.Executor.ADDRESS, masterBindAddrConf);
       result.set(Constants.Metadata.SERVICE_BIND_ADDRESS, masterBindAddrConf);
-
-      // TODO (CDAP-13410): Ideally we don't need ZK in isolated runtime cluster
-      result.set(Constants.Zookeeper.QUORUM, masterBindAddrConf + ":2181/cdap");
-
-      // TODO (CDAP-13586): provisioners should set the secure store provider and properties
-      result.set(Constants.Security.Store.PROVIDER, "none");
     }
 
     return result;

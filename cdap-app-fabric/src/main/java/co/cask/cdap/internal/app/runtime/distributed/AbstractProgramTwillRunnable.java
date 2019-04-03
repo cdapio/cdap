@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -45,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.loader.LogAppenderLoaderService;
+import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.messaging.server.MessagingHttpService;
@@ -230,6 +232,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     programRunId = programOptions.getProgramId().run(ProgramRunners.getRunId(programOptions));
 
     Arguments systemArgs = programOptions.getArguments();
+    LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
+                                                                                             systemArgs.asMap()));
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
 
     // Loads configurations
@@ -506,7 +510,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     services.add(metricsCollectionService);
-    services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(LogAppenderLoaderService.class));
 
     switch (ProgramRunners.getClusterMode(programOptions)) {
@@ -532,6 +535,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void addOnPremiseServices(Injector injector, ProgramOptions programOptions,
                                     MetricsCollectionService metricsCollectionService, Collection<Service> services) {
+    services.add(injector.getInstance(ZKClientService.class));
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(BrokerService.class));
     services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));

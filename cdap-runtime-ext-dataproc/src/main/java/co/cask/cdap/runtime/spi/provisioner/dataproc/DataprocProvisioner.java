@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,15 +29,11 @@ import co.cask.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import co.cask.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import co.cask.cdap.runtime.spi.ssh.SSHContext;
 import co.cask.cdap.runtime.spi.ssh.SSHKeyPair;
-import co.cask.cdap.runtime.spi.ssh.SSHSession;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -200,30 +196,6 @@ public class DataprocProvisioner implements Provisioner {
   }
 
   @Override
-  public void initializeCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    // Start the ZK server
-    try (SSHSession session = createSSHSession(context, getMasterExternalIp(cluster))) {
-      LOG.debug("Starting zookeeper server.");
-      String output = session.executeAndWait("sudo zookeeper-server start");
-      LOG.debug("Zookeeper server started: {}", output);
-    }
-  }
-
-  private SSHSession createSSHSession(ProvisionerContext provisionerContext, String host) throws IOException {
-    try {
-      return provisionerContext.getSSHContext().createSSHSession(host);
-    } catch (IOException ioe) {
-      if (Throwables.getRootCause(ioe) instanceof ConnectException) {
-        throw new IOException(String.format(
-                "Failed to connect to host %s. Ensure that GCP Firewall Ingress Rules exist that allow ssh " +
-                        "on port 22.", host),
-                ioe);
-      }
-      throw ioe;
-    }
-  }
-
-  @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     String clusterName = getClusterName(context.getProgramRun());
@@ -294,7 +266,7 @@ public class DataprocProvisioner implements Provisioner {
     if (contextProjectId == null || DataprocConf.AUTO_DETECT.equals(contextProjectId)) {
       contextProjectId = systemContext.getProperties().getOrDefault(DataprocConf.PROJECT_ID_KEY, contextProjectId);
       if (contextProjectId != null) {
-        LOG.debug("Setting default Dataproc project ID to {}", contextProjectId);
+        LOG.trace("Setting default Dataproc project ID to {}", contextProjectId);
         contextProperties.put(DataprocConf.PROJECT_ID_KEY, contextProjectId);
       }
     }
@@ -307,7 +279,7 @@ public class DataprocProvisioner implements Provisioner {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);
         if (value != null) {
-          LOG.debug("Setting default Dataproc property {} to {}", key, value);
+          LOG.trace("Setting default Dataproc property {} to {}", key, value);
           contextProperties.put(key, value.trim());
         }
       }

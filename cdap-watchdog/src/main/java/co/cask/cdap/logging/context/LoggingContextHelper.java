@@ -18,7 +18,6 @@ package co.cask.cdap.logging.context;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.id.Id;
-import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
@@ -173,8 +172,8 @@ public final class LoggingContextHelper {
     return getLoggingContext(namespaceId, applicationId, entityId, programType, null, null);
   }
 
-
-  public static LoggingContext getLoggingContextWithRunId(ProgramRunId programRun, Map<String, String> systemArgs) {
+  public static LoggingContext getLoggingContextWithRunId(ProgramRunId programRun,
+                                                          @Nullable Map<String, String> systemArgs) {
     return getLoggingContext(programRun.getNamespace(), programRun.getApplication(), programRun.getProgram(),
                              programRun.getType(), programRun.getRun(), systemArgs);
   }
@@ -202,9 +201,11 @@ public final class LoggingContextHelper {
         }
         return new SparkLoggingContext(namespaceId, applicationId, entityId, runId);
       case SERVICE:
-        return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "", runId, null);
+        return new UserServiceLoggingContext(namespaceId, applicationId, entityId, "", runId,
+                                             systemArgs == null ? null : systemArgs.get("instanceId"));
       case WORKER:
-        return new WorkerLoggingContext(namespaceId, applicationId, entityId, runId, null);
+        return new WorkerLoggingContext(namespaceId, applicationId, entityId, runId,
+                                        systemArgs == null ? null : systemArgs.get("instanceId"));
       default:
         throw new IllegalArgumentException(String.format("Illegal entity type for logging context: %s", programType));
     }

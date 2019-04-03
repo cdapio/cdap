@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.common.logging;
+package co.cask.cdap.logging.context;
+
+import co.cask.cdap.common.logging.NamespaceLoggingContext;
+
+import javax.annotation.Nullable;
 
 /**
  * Application logging context.
@@ -30,14 +34,14 @@ public abstract class ApplicationLoggingContext extends NamespaceLoggingContext 
    * @param applicationId application id
    * @param runId run id of the application
    */
-  public ApplicationLoggingContext(String namespaceId, String applicationId, String runId) {
+  protected ApplicationLoggingContext(String namespaceId, String applicationId, String runId) {
     super(namespaceId);
     setSystemTag(TAG_APPLICATION_ID, applicationId);
     setSystemTag(TAG_RUN_ID, runId);
   }
 
-  protected void setInstanceId(String instanceId) {
-    setSystemTag(TAG_INSTANCE_ID, instanceId);
+  protected void setInstanceId(@Nullable String instanceId) {
+    setSystemTag(TAG_INSTANCE_ID, instanceId == null ? "0" : instanceId);
   }
 
   @Override

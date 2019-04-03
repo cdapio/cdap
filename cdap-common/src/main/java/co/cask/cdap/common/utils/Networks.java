@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2019 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,18 @@
  */
 package co.cask.cdap.common.utils;
 
+import co.cask.cdap.common.conf.CConfiguration;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -76,6 +82,101 @@ public final class Networks {
       return null;
     }
     return inetAddress.getHostAddress();
+  }
+
+  /**
+   * Adds the {@link InetSocketAddress} into the given {@link CConfiguration} with the given key that stores
+   * a set of addresses. It is expected to be read back by the {@link #getAddresses(CConfiguration, String)} method.
+   *
+   * @param cConf the configuration to set to
+   * @param key the configuration key
+   * @param addr the {@link InetSocketAddress} to set
+   */
+  public static void addAddress(CConfiguration cConf, String key, InetSocketAddress addr) {
+    Set<String> currentSet = new HashSet<>(cConf.getTrimmedStringCollection(key));
+    currentSet.add(String.format("%s:%d", addr.getHostName(), addr.getPort()));
+    cConf.set(key, currentSet.stream().collect(Collectors.joining(",")));
+  }
+
+  /**
+   * Removes the given {@link InetSocketAddress} from the given {@link CConfiguration} stored with the given key.
+   *
+   * @param cConf the configuration to remove from
+   * @param key the configuration key
+   * @param addr the {@link InetSocketAddress} to remove
+   */
+  public static void removeAddress(CConfiguration cConf, String key, InetSocketAddress addr) {
+    Set<String> currentSet = new HashSet<>(cConf.getTrimmedStringCollection(key));
+    currentSet.remove(String.format("%s:%d", addr.getHostName(), addr.getPort()));
+
+    if (currentSet.isEmpty()) {
+      cConf.unset(key);
+    } else {
+      cConf.set(key, currentSet.stream().collect(Collectors.joining(",")));
+    }
+  }
+
+  /**
+   * Gets a set of {@link InetSocketAddress}es from the given {@link CConfiguration} with the given key. It expects
+   * the value in the format of {@code host1:port1,host2:port2,...}. The returned addresses are not resolved.
+   *
+   * @param cConf the configuration to read from
+   * @param key the configuration key
+   * @return the a set of addresses or empty set if the key doesn't exists / has empty value
+   * @throws NumberFormatException if failed to parse the port
+   * @throws IllegalArgumentException if the value is not in correct format
+   */
+  public static Set<InetSocketAddress> getAddresses(CConfiguration cConf, String key) {
+    Set<String> currentSet = new HashSet<>(cConf.getTrimmedStringCollection(key));
+    return Collections.unmodifiableSet(currentSet.stream().map(Networks::parseAddress).collect(Collectors.toSet()));
+  }
+
+  /**
+   * Sets the {@link InetSocketAddress} into the given {@link CConfiguration} with the given key.
+   * It is expected to be read back by the {@link #getAddress(CConfiguration, String)} method.
+   *
+   * @param cConf the configuration to set to
+   * @param key the configuration key
+   * @param addr the {@link InetSocketAddress} to set
+   */
+  public static void setAddress(CConfiguration cConf, String key, InetSocketAddress addr) {
+    cConf.set(key, String.format("%s:%d", addr.getHostName(), addr.getPort()));
+  }
+
+  /**
+   * Gets a {@link InetSocketAddress} from the given {@link CConfiguration} with the given key. It expects
+   * the value in the format of {@code host:port}. The returned address is not resolved.
+   *
+   * @param cConf the configuration to read from
+   * @param key the configuration key
+   * @return the address or {@code null} if the key doesn't exists
+   * @throws NumberFormatException if failed to parse the port
+   * @throws IllegalArgumentException if the value is not in correct format
+   */
+  @Nullable
+  public static InetSocketAddress getAddress(CConfiguration cConf, String key) {
+    // Look it up from the configuration
+    String value = cConf.get(key);
+
+    // If not found, return null
+    if (value == null) {
+      return null;
+    }
+    return parseAddress(value);
+  }
+
+  /**
+   * Parses a string value of form {@code host:port} into an unresolved {@link InetSocketAddress}.
+   */
+  private static InetSocketAddress parseAddress(String value) {
+    int idx = value.lastIndexOf(':');
+    if (idx < 0) {
+      throw new IllegalArgumentException("Failed to parse address from " + value
+                                           + ". Expected to be in the format of host:port.");
+    }
+
+    // Parse and return the address
+    return InetSocketAddress.createUnresolved(value.substring(0, idx), Integer.parseInt(value.substring(idx + 1)));
   }
 
   private Networks() {

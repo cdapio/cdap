@@ -26,6 +26,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.guice.ZKDiscoveryModule;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacePathLocator;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NoLookupNamespacePathLocator;
@@ -78,7 +79,6 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -119,7 +119,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    List<Module> modules = getCoreModules(programRunId.getParent());
+    List<Module> modules = getCoreModules();
     String principal = systemArgs.getOption(ProgramOptionConstants.PRINCIPAL);
 
     AuthenticationContextModules authModules = new AuthenticationContextModules();
@@ -140,7 +140,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
     }));
   }
 
-  private List<Module> getCoreModules(final ProgramId programId) {
+  private List<Module> getCoreModules() {
     ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
       ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
       : ClusterMode.ON_PREMISE;
@@ -149,8 +149,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
-    modules.add(new ZKClientModule());
-    modules.add(new ZKDiscoveryModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingClientModule());
     modules.add(new AuditModule());
@@ -170,7 +168,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
         // For example see ProgramDiscoveryExploreClient.
         // Also binding to instance is fine here as the programId is guaranteed to not change throughout the
         // lifecycle of this program runnable
-        bind(ProgramId.class).toInstance(programId);
+        bind(ProgramId.class).toInstance(programRunId.getParent());
+        bind(ProgramRunId.class).toInstance(programRunId);
 
         if (serviceAnnouncer != null) {
           bind(ServiceAnnouncer.class).toInstance(serviceAnnouncer);
@@ -195,6 +194,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
   private void addOnPremiseModules(List<Module> modules) {
     String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
 
+    modules.add(new ZKClientModule());
+    modules.add(new ZKDiscoveryModule());
     modules.add(new DFSLocationModule());
     modules.add(new KafkaClientModule());
     modules.add(new KafkaLogAppenderModule());
@@ -211,6 +212,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addIsolatedModules(List<Module> modules) {
+    modules.add(new RemoteExecutionDiscoveryModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());
@@ -276,8 +278,11 @@ public class DistributedProgramContainerModule extends AbstractModule {
         return;
       }
 
-      KeyStore keyStore = loadKeyStore(keyStorePath);
-      KeyStore trustStore = loadKeyStore(trustStorePath);
+      KeyStore keyStore = KeyStores.load(Locations.toLocation(keyStorePath), () -> "");
+      KeyStore trustStore = KeyStores.load(Locations.toLocation(trustStorePath), () -> "");
+
+      // Update the cConf as well to store the service proxy password
+      cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD, KeyStores.hash(keyStore));
 
       binder.install(new PrivateModule() {
         @Override
@@ -292,17 +297,6 @@ public class DistributedProgramContainerModule extends AbstractModule {
     } catch (Exception e) {
       // Just log if failed to load the KeyStores. It will fail when RuntimeMonitorServer is needed.
       LOG.error("Failed to load key store and/or trust store", e);
-    }
-  }
-
-  /**
-   * Loads a {@link KeyStore} by reading the given file path.
-   */
-  private KeyStore loadKeyStore(Path keyStorePath) throws Exception {
-    KeyStore keyStore = KeyStore.getInstance(KeyStores.SSL_KEYSTORE_TYPE);
-    try (InputStream is = Files.newInputStream(keyStorePath)) {
-      keyStore.load(is, "".toCharArray());
-      return keyStore;
     }
   }
 
